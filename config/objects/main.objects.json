@@ -5409,9 +5409,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001207A0",
+     "name": "FlushCache",
      "size": 16,
-     "splat_name": "func_001207A0",
+     "splat_name": "FlushCache",
      "va": "0x001207a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -5850,9 +5850,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00120E18",
+     "name": "SyncDCache",
      "size": 124,
-     "splat_name": "func_00120E18",
+     "splat_name": "SyncDCache",
      "va": "0x00120e18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -6867,18 +6867,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001246C0",
+     "name": "sceOpen",
      "size": 644,
-     "splat_name": "func_001246C0",
+     "splat_name": "sceOpen",
      "va": "0x001246c0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00124948",
+     "name": "sceClose",
      "size": 380,
-     "splat_name": "func_00124948",
+     "splat_name": "sceClose",
      "va": "0x00124948",
      "name_basis": "address",
      "provenance": "estimated"
@@ -6894,18 +6894,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00124D00",
+     "name": "sceRead",
      "size": 608,
-     "splat_name": "func_00124D00",
+     "splat_name": "sceRead",
      "va": "0x00124d00",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00124F60",
+     "name": "sceWrite",
      "size": 704,
-     "splat_name": "func_00124F60",
+     "splat_name": "sceWrite",
      "va": "0x00124f60",
      "name_basis": "address",
      "provenance": "estimated"
@@ -6939,9 +6939,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00125920",
+     "name": "sceRemove",
      "size": 28,
-     "splat_name": "func_00125920",
+     "splat_name": "sceRemove",
      "va": "0x00125920",
      "name_basis": "address",
      "provenance": "estimated"
@@ -6993,45 +6993,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00125EC0",
+     "name": "sceDopen",
      "size": 200,
-     "splat_name": "func_00125EC0",
+     "splat_name": "sceDopen",
      "va": "0x00125ec0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00125F88",
+     "name": "sceDclose",
      "size": 360,
-     "splat_name": "func_00125F88",
+     "splat_name": "sceDclose",
      "va": "0x00125f88",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001260F0",
+     "name": "sceDread",
      "size": 344,
-     "splat_name": "func_001260F0",
+     "splat_name": "sceDread",
      "va": "0x001260f0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00126248",
+     "name": "sceGetstat",
      "size": 416,
-     "splat_name": "func_00126248",
+     "splat_name": "sceGetstat",
      "va": "0x00126248",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001263E8",
+     "name": "sceChstat",
      "size": 572,
-     "splat_name": "func_001263E8",
+     "splat_name": "sceChstat",
      "va": "0x001263e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -7065,18 +7065,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001269D0",
+     "name": "sceMount",
      "size": 620,
-     "splat_name": "func_001269D0",
+     "splat_name": "sceMount",
      "va": "0x001269d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00126C40",
+     "name": "sceUmount",
      "size": 28,
-     "splat_name": "func_00126C40",
+     "splat_name": "sceUmount",
      "va": "0x00126c40",
      "name_basis": "address",
      "provenance": "estimated"
@@ -7092,9 +7092,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00126E98",
+     "name": "sceDevctl",
      "size": 568,
-     "splat_name": "func_00126E98",
+     "splat_name": "sceDevctl",
      "va": "0x00126e98",
      "name_basis": "address",
      "provenance": "estimated"
@@ -7317,9 +7317,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001283C8",
+     "name": "sceSifLoadModule",
      "size": 32,
-     "splat_name": "func_001283C8",
+     "splat_name": "sceSifLoadModule",
      "va": "0x001283c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -7605,18 +7605,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00129260",
+     "name": "DIntr",
      "size": 72,
-     "splat_name": "func_00129260",
+     "splat_name": "DIntr",
      "va": "0x00129260",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001292A8",
+     "name": "EIntr",
      "size": 24,
-     "splat_name": "func_001292A8",
+     "splat_name": "EIntr",
      "va": "0x001292a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -7884,9 +7884,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00129A88",
+     "name": "sceGsResetGraph",
      "size": 400,
-     "splat_name": "func_00129A88",
+     "splat_name": "sceGsResetGraph",
      "va": "0x00129a88",
      "name_basis": "address",
      "provenance": "estimated"
@@ -7965,9 +7965,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012A428",
+     "name": "sceGsPutDrawEnv",
      "size": 232,
-     "splat_name": "func_0012A428",
+     "splat_name": "sceGsPutDrawEnv",
      "va": "0x0012a428",
      "name_basis": "address",
      "provenance": "estimated"
@@ -7983,9 +7983,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012A5A8",
+     "name": "sceGsSyncPath",
      "size": 788,
-     "splat_name": "func_0012A5A8",
+     "splat_name": "sceGsSyncPath",
      "va": "0x0012a5a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8037,9 +8037,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012AAA8",
+     "name": "sceGsSetDefStoreImage",
      "size": 320,
-     "splat_name": "func_0012AAA8",
+     "splat_name": "sceGsSetDefStoreImage",
      "va": "0x0012aaa8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8055,9 +8055,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012AD68",
+     "name": "sceGsExecStoreImage",
      "size": 156,
-     "splat_name": "func_0012AD68",
+     "splat_name": "sceGsExecStoreImage",
      "va": "0x0012ad68",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8109,9 +8109,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012B3F8",
+     "name": "sceGsSyncVCallback",
      "size": 160,
-     "splat_name": "func_0012B3F8",
+     "splat_name": "sceGsSyncVCallback",
      "va": "0x0012b3f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8154,18 +8154,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012B528",
+     "name": "sceVif1PkCnt",
      "size": 88,
-     "splat_name": "func_0012B528",
+     "splat_name": "sceVif1PkCnt",
      "va": "0x0012b528",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012B580",
+     "name": "sceVif1PkRef",
      "size": 152,
-     "splat_name": "func_0012B580",
+     "splat_name": "sceVif1PkRef",
      "va": "0x0012b580",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8271,9 +8271,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012B9B8",
+     "name": "sceVif1PkAddDataN",
      "size": 64,
-     "splat_name": "func_0012B9B8",
+     "splat_name": "sceVif1PkAddDataN",
      "va": "0x0012b9b8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8307,18 +8307,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012BC60",
+     "name": "sceVif1PkOpenDirectHLCode",
      "size": 88,
-     "splat_name": "func_0012BC60",
+     "splat_name": "sceVif1PkOpenDirectHLCode",
      "va": "0x0012bc60",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012BCB8",
+     "name": "sceVif1PkCloseDirectHLCode",
      "size": 44,
-     "splat_name": "func_0012BCB8",
+     "splat_name": "sceVif1PkCloseDirectHLCode",
      "va": "0x0012bcb8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8334,9 +8334,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012BD60",
+     "name": "sceVif1PkAddDirectDataN",
      "size": 116,
-     "splat_name": "func_0012BD60",
+     "splat_name": "sceVif1PkAddDirectDataN",
      "va": "0x0012bd60",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8757,9 +8757,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012DE30",
+     "name": "sceCdSync",
      "size": 160,
-     "splat_name": "func_0012DE30",
+     "splat_name": "sceCdSync",
      "va": "0x0012de30",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8811,9 +8811,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012E638",
+     "name": "sceCdDiskReady",
      "size": 516,
-     "splat_name": "func_0012E638",
+     "splat_name": "sceCdDiskReady",
      "va": "0x0012e638",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8829,9 +8829,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012E870",
+     "name": "sceCdRead",
      "size": 480,
-     "splat_name": "func_0012E870",
+     "splat_name": "sceCdRead",
      "va": "0x0012e870",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8928,9 +8928,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012F1A0",
+     "name": "sceCdReadClock",
      "size": 248,
-     "splat_name": "func_0012F1A0",
+     "splat_name": "sceCdReadClock",
      "va": "0x0012f1a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -9081,9 +9081,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012FC38",
+     "name": "sceMcOpen",
      "size": 292,
-     "splat_name": "func_0012FC38",
+     "splat_name": "sceMcOpen",
      "va": "0x0012fc38",
      "name_basis": "address",
      "provenance": "estimated"
@@ -9099,9 +9099,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012FD98",
+     "name": "sceMcClose",
      "size": 184,
-     "splat_name": "func_0012FD98",
+     "splat_name": "sceMcClose",
      "va": "0x0012fd98",
      "name_basis": "address",
      "provenance": "estimated"
@@ -9126,18 +9126,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012FFB8",
+     "name": "sceMcRead",
      "size": 276,
-     "splat_name": "func_0012FFB8",
+     "splat_name": "sceMcRead",
      "va": "0x0012ffb8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001300D0",
+     "name": "sceMcWrite",
      "size": 372,
-     "splat_name": "func_001300D0",
+     "splat_name": "sceMcWrite",
      "va": "0x001300d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -9162,9 +9162,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00130288",
+     "name": "sceMcSync",
      "size": 224,
-     "splat_name": "func_00130288",
+     "splat_name": "sceMcSync",
      "va": "0x00130288",
      "name_basis": "address",
      "provenance": "estimated"
@@ -9180,9 +9180,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001303C0",
+     "name": "sceMcGetInfo",
      "size": 380,
-     "splat_name": "func_001303C0",
+     "splat_name": "sceMcGetInfo",
      "va": "0x001303c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -36915,9 +36915,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00194890",
+     "name": "xglSleep",
      "size": 36,
-     "splat_name": "func_00194890",
+     "splat_name": "xglSleep",
      "va": "0x00194890",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37008,7 +37008,7 @@
    "path": "src/main/xgl_timer0.c",
    "scaffold_path": "scaffold/src/main/xgl_timer0.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -37061,9 +37061,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_001948D8",
+     "name": "xglTimer0Get",
      "size": 16,
-     "splat_name": "func_001948D8",
+     "splat_name": "xglTimer0Get",
      "va": "0x001948d8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37106,7 +37106,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm"
    },
@@ -37171,6 +37171,17 @@
      "0x00194d08"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_timer0.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -37318,7 +37329,7 @@
    "path": "src/main/xgl_font.c",
    "scaffold_path": "scaffold/src/main/xgl_font.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -37460,9 +37471,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001955A0",
+     "name": "xglFontPrintf",
      "size": 80,
-     "splat_name": "func_001955A0",
+     "splat_name": "xglFontPrintf",
      "va": "0x001955a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37478,9 +37489,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00195640",
+     "name": "xglFontPrintDirect",
      "size": 28,
-     "splat_name": "func_00195640",
+     "splat_name": "xglFontPrintDirect",
      "va": "0x00195640",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37514,9 +37525,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00195760",
+     "name": "xglFontDebugPrintf",
      "size": 288,
-     "splat_name": "func_00195760",
+     "splat_name": "xglFontDebugPrintf",
      "va": "0x00195760",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37532,18 +37543,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00195938",
+     "name": "xglFontGetStringWidth2",
      "size": 1344,
-     "splat_name": "func_00195938",
+     "splat_name": "xglFontGetStringWidth2",
      "va": "0x00195938",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00195E78",
+     "name": "xglFontGetStringWidth",
      "size": 24,
-     "splat_name": "func_00195E78",
+     "splat_name": "xglFontGetStringWidth",
      "va": "0x00195e78",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37820,27 +37831,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00198F50",
+     "name": "xglFontGetLoadAddress",
      "size": 12,
-     "splat_name": "func_00198F50",
+     "splat_name": "xglFontGetLoadAddress",
      "va": "0x00198f50",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00198F60",
+     "name": "xglFontGetFlags",
      "size": 12,
-     "splat_name": "func_00198F60",
+     "splat_name": "xglFontGetFlags",
      "va": "0x00198f60",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00198F70",
+     "name": "xglFontSetFlags",
      "size": 16,
-     "splat_name": "func_00198F70",
+     "splat_name": "xglFontSetFlags",
      "va": "0x00198f70",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37865,7 +37876,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".sdata": "asm",
@@ -37980,6 +37991,17 @@
      "0x00199078"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_font.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -37990,7 +38012,7 @@
    "path": "src/main/xgl_dma.c",
    "scaffold_path": "scaffold/src/main/xgl_dma.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -38059,9 +38081,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00199178",
+     "name": "xglDmaBufferReset",
      "size": 12,
-     "splat_name": "func_00199178",
+     "splat_name": "xglDmaBufferReset",
      "va": "0x00199178",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38077,18 +38099,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001991E0",
+     "name": "xglDmaBufferRef",
      "size": 40,
-     "splat_name": "func_001991E0",
+     "splat_name": "xglDmaBufferRef",
      "va": "0x001991e0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00199208",
+     "name": "xglDmaBufferCall",
      "size": 36,
-     "splat_name": "func_00199208",
+     "splat_name": "xglDmaBufferCall",
      "va": "0x00199208",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38131,7 +38153,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".sbss": "asm"
    },
    "sections": {
@@ -38171,6 +38193,17 @@
      "0x00199428"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_dma.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -38343,7 +38376,7 @@
    "path": "src/main/xgl_task.c",
    "scaffold_path": "scaffold/src/main/xgl_task.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -38403,18 +38436,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00199F80",
+     "name": "xglTaskEntryPrev",
      "size": 116,
-     "splat_name": "func_00199F80",
+     "splat_name": "xglTaskEntryPrev",
      "va": "0x00199f80",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00199FF8",
+     "name": "xglTaskEntryNext",
      "size": 116,
-     "splat_name": "func_00199FF8",
+     "splat_name": "xglTaskEntryNext",
      "va": "0x00199ff8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38430,9 +38463,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019A0D8",
+     "name": "xglTaskWaitRemove",
      "size": 20,
-     "splat_name": "func_0019A0D8",
+     "splat_name": "xglTaskWaitRemove",
      "va": "0x0019a0d8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38448,7 +38481,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -38462,6 +38495,17 @@
      "0x0019a148"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_task.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -38472,7 +38516,7 @@
    "path": "src/main/xgl_menu.c",
    "scaffold_path": "scaffold/src/main/xgl_menu.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -38532,9 +38576,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019A320",
+     "name": "xglMenuDrawType0",
      "size": 8,
-     "splat_name": "func_0019A320",
+     "splat_name": "xglMenuDrawType0",
      "va": "0x0019a320",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38568,16 +38612,16 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019A858",
+     "name": "xglMenuInitial",
      "size": 52,
-     "splat_name": "func_0019A858",
+     "splat_name": "xglMenuInitial",
      "va": "0x0019a858",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".sdata": "asm"
    },
@@ -38642,6 +38686,17 @@
      "0x0019a890"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_menu.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -38652,7 +38707,7 @@
    "path": "src/main/xgl_cd.c",
    "scaffold_path": "scaffold/src/main/xgl_cd.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -38703,18 +38758,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0019A890",
+     "name": "hdd_error",
      "size": 52,
-     "splat_name": "func_0019A890",
+     "splat_name": "hdd_error",
      "va": "0x0019a890",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019A8C8",
+     "name": "xglCdPowerOffCB",
      "size": 16,
-     "splat_name": "func_0019A8C8",
+     "splat_name": "xglCdPowerOffCB",
      "va": "0x0019a8c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38766,9 +38821,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019AE28",
+     "name": "BCD2INT",
      "size": 32,
-     "splat_name": "func_0019AE28",
+     "splat_name": "BCD2INT",
      "va": "0x0019ae28",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38811,18 +38866,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019B2A8",
+     "name": "xglCdDefaultCallback",
      "size": 8,
-     "splat_name": "func_0019B2A8",
+     "splat_name": "xglCdDefaultCallback",
      "va": "0x0019b2a8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019B2B0",
+     "name": "xglCdDummyCallback",
      "size": 8,
-     "splat_name": "func_0019B2B0",
+     "splat_name": "xglCdDummyCallback",
      "va": "0x0019b2b0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38874,9 +38929,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019B720",
+     "name": "xglCdGetFilePos",
      "size": 1236,
-     "splat_name": "func_0019B720",
+     "splat_name": "xglCdGetFilePos",
      "va": "0x0019b720",
      "name_basis": "address",
      "provenance": "estimated"
@@ -38901,18 +38956,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019BC98",
+     "name": "xglCdReadFilePart",
      "size": 1352,
-     "splat_name": "func_0019BC98",
+     "splat_name": "xglCdReadFilePart",
      "va": "0x0019bc98",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019C1E0",
+     "name": "xglCdReadFile",
      "size": 28,
-     "splat_name": "func_0019C1E0",
+     "splat_name": "xglCdReadFile",
      "va": "0x0019c1e0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -39000,9 +39055,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019C938",
+     "name": "xglCdStreamReadRingCore",
      "size": 44,
-     "splat_name": "func_0019C938",
+     "splat_name": "xglCdStreamReadRingCore",
      "va": "0x0019c938",
      "name_basis": "address",
      "provenance": "estimated"
@@ -39144,9 +39199,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019DA48",
+     "name": "xglCdArcCheck",
      "size": 52,
-     "splat_name": "func_0019DA48",
+     "splat_name": "xglCdArcCheck",
      "va": "0x0019da48",
      "name_basis": "address",
      "provenance": "estimated"
@@ -39162,7 +39217,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".sdata": "asm",
@@ -39302,6 +39357,17 @@
      "0x0019db58"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_cd.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -39409,9 +39475,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019DE70",
+     "name": "xglMcSetFullPath",
      "size": 40,
-     "splat_name": "func_0019DE70",
+     "splat_name": "xglMcSetFullPath",
      "va": "0x0019de70",
      "name_basis": "address",
      "provenance": "estimated"
@@ -39463,9 +39529,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019E630",
+     "name": "xglMcMain",
      "size": 2536,
-     "splat_name": "func_0019E630",
+     "splat_name": "xglMcMain",
      "va": "0x0019e630",
      "name_basis": "address",
      "provenance": "estimated"
@@ -39622,7 +39688,7 @@
    "path": "src/main/xgl_mc.c",
    "scaffold_path": "scaffold/src/main/xgl_mc.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -39701,7 +39767,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -39715,6 +39781,17 @@
      "0x0019f260"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_mc.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -39725,7 +39802,7 @@
    "path": "src/main/xgl_1_014.c",
    "scaffold_path": "scaffold/src/main/xgl_1_014.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -39785,7 +39862,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -39799,6 +39876,17 @@
      "0x0019f300"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_1_014.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -39809,7 +39897,7 @@
    "path": "src/main/sce_ipu.c",
    "scaffold_path": "scaffold/src/main/sce_ipu.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -39869,7 +39957,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -39883,6 +39971,17 @@
      "0x0019f360"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sce_ipu.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -39893,7 +39992,7 @@
    "path": "src/main/xgl_1_016.c",
    "scaffold_path": "scaffold/src/main/xgl_1_016.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -40007,7 +40106,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".rodata": "asm"
    },
    "sections": {
@@ -40047,6 +40146,17 @@
      "0x001a01d8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_1_016.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -40308,7 +40418,7 @@
    "path": "src/main/xgl_flags.c",
    "scaffold_path": "scaffold/src/main/xgl_flags.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -40369,54 +40479,54 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0A78",
+     "name": "xglFlagsSet1",
      "size": 28,
-     "splat_name": "func_001A0A78",
+     "splat_name": "xglFlagsSet1",
      "va": "0x001a0a78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0A98",
+     "name": "xglFlagsSet2",
      "size": 28,
-     "splat_name": "func_001A0A98",
+     "splat_name": "xglFlagsSet2",
      "va": "0x001a0a98",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0AB8",
+     "name": "xglFlagsSet4",
      "size": 28,
-     "splat_name": "func_001A0AB8",
+     "splat_name": "xglFlagsSet4",
      "va": "0x001a0ab8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0AD8",
+     "name": "xglFlagsSet8",
      "size": 28,
-     "splat_name": "func_001A0AD8",
+     "splat_name": "xglFlagsSet8",
      "va": "0x001a0ad8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0AF8",
+     "name": "xglFlagsSet16",
      "size": 28,
-     "splat_name": "func_001A0AF8",
+     "splat_name": "xglFlagsSet16",
      "va": "0x001a0af8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0B18",
+     "name": "xglFlagsSet32",
      "size": 28,
-     "splat_name": "func_001A0B18",
+     "splat_name": "xglFlagsSet32",
      "va": "0x001a0b18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -40441,54 +40551,54 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0C08",
+     "name": "xglFlagsGet1",
      "size": 24,
-     "splat_name": "func_001A0C08",
+     "splat_name": "xglFlagsGet1",
      "va": "0x001a0c08",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0C20",
+     "name": "xglFlagsGet2",
      "size": 24,
-     "splat_name": "func_001A0C20",
+     "splat_name": "xglFlagsGet2",
      "va": "0x001a0c20",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0C38",
+     "name": "xglFlagsGet4",
      "size": 24,
-     "splat_name": "func_001A0C38",
+     "splat_name": "xglFlagsGet4",
      "va": "0x001a0c38",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0C50",
+     "name": "xglFlagsGet8",
      "size": 24,
-     "splat_name": "func_001A0C50",
+     "splat_name": "xglFlagsGet8",
      "va": "0x001a0c50",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0C68",
+     "name": "xglFlagsGet16",
      "size": 24,
-     "splat_name": "func_001A0C68",
+     "splat_name": "xglFlagsGet16",
      "va": "0x001a0c68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0C80",
+     "name": "xglFlagsGet32",
      "size": 24,
-     "splat_name": "func_001A0C80",
+     "splat_name": "xglFlagsGet32",
      "va": "0x001a0c80",
      "name_basis": "address",
      "provenance": "estimated"
@@ -40513,7 +40623,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -40527,6 +40637,17 @@
      "0x001a0d10"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_flags.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -40537,7 +40658,7 @@
    "path": "src/main/xgl_jpeg.c",
    "scaffold_path": "scaffold/src/main/xgl_jpeg.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -40597,9 +40718,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A0F30",
+     "name": "FFDCT",
      "size": 420,
-     "splat_name": "func_001A0F30",
+     "splat_name": "FFDCT",
      "va": "0x001a0f30",
      "name_basis": "address",
      "provenance": "estimated"
@@ -40678,9 +40799,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A2070",
+     "name": "DefineRestartInterval",
      "size": 40,
-     "splat_name": "func_001A2070",
+     "splat_name": "DefineRestartInterval",
      "va": "0x001a2070",
      "name_basis": "address",
      "provenance": "estimated"
@@ -40786,7 +40907,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".lit4": "asm",
     ".sdata": "asm"
@@ -40876,6 +40997,17 @@
      "0x001a3110"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_jpeg.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -42152,7 +42284,7 @@
    "path": "src/main/xgl_hdd.c",
    "scaffold_path": "scaffold/src/main/xgl_hdd.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -42213,9 +42345,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A4ED0",
+     "name": "xglHddCheck2",
      "size": 56,
-     "splat_name": "func_001A4ED0",
+     "splat_name": "xglHddCheck2",
      "va": "0x001a4ed0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -42249,9 +42381,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A50A0",
+     "name": "xglHddMcUmount",
      "size": 48,
-     "splat_name": "func_001A50A0",
+     "splat_name": "xglHddMcUmount",
      "va": "0x001a50a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -42438,7 +42570,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".sdata": "asm"
@@ -42528,6 +42660,17 @@
      "0x001a6888"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_hdd.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -43004,7 +43147,7 @@
    "path": "src/main/xgl_2_028.c",
    "scaffold_path": "scaffold/src/main/xgl_2_028.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -43055,9 +43198,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_001A75A8",
+     "name": "xglSRand",
      "size": 92,
-     "splat_name": "func_001A75A8",
+     "splat_name": "xglSRand",
      "va": "0x001a75a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43073,16 +43216,16 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A7690",
+     "name": "xglFRand",
      "size": 44,
-     "splat_name": "func_001A7690",
+     "splat_name": "xglFRand",
      "va": "0x001a7690",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -43096,6 +43239,17 @@
      "0x001a76bc"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_2_028.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -43167,18 +43321,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A76EC",
+     "name": "F2I",
      "size": 60,
-     "splat_name": "func_001A76EC",
+     "splat_name": "F2I",
      "va": "0x001a76ec",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A7728",
+     "name": "I2F",
      "size": 48,
-     "splat_name": "func_001A7728",
+     "splat_name": "I2F",
      "va": "0x001a7728",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43356,7 +43510,7 @@
    "path": "src/main/xgl_2_031.c",
    "scaffold_path": "scaffold/src/main/xgl_2_031.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -43471,126 +43625,126 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8014",
+     "name": "xglSin",
      "size": 76,
-     "splat_name": "func_001A8014",
+     "splat_name": "xglSin",
      "va": "0x001a8014",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8060",
+     "name": "xglCos",
      "size": 76,
-     "splat_name": "func_001A8060",
+     "splat_name": "xglCos",
      "va": "0x001a8060",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A80AC",
+     "name": "xglVectorDiv",
      "size": 188,
-     "splat_name": "func_001A80AC",
+     "splat_name": "xglVectorDiv",
      "va": "0x001a80ac",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8168",
+     "name": "xglVectorDivXYZ",
      "size": 168,
-     "splat_name": "func_001A8168",
+     "splat_name": "xglVectorDivXYZ",
      "va": "0x001a8168",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8210",
+     "name": "xglVectorMulAdd",
      "size": 208,
-     "splat_name": "func_001A8210",
+     "splat_name": "xglVectorMulAdd",
      "va": "0x001a8210",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A82E0",
+     "name": "xglVectorMulAddXYZ",
      "size": 184,
-     "splat_name": "func_001A82E0",
+     "splat_name": "xglVectorMulAddXYZ",
      "va": "0x001a82e0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8398",
+     "name": "xglVectorMulSub",
      "size": 208,
-     "splat_name": "func_001A8398",
+     "splat_name": "xglVectorMulSub",
      "va": "0x001a8398",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8468",
+     "name": "xglVectorMulSubXYZ",
      "size": 184,
-     "splat_name": "func_001A8468",
+     "splat_name": "xglVectorMulSubXYZ",
      "va": "0x001a8468",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8520",
+     "name": "xglVectorDivAdd",
      "size": 240,
-     "splat_name": "func_001A8520",
+     "splat_name": "xglVectorDivAdd",
      "va": "0x001a8520",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8610",
+     "name": "xglVectorDivAddXYZ",
      "size": 208,
-     "splat_name": "func_001A8610",
+     "splat_name": "xglVectorDivAddXYZ",
      "va": "0x001a8610",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A86E0",
+     "name": "xglVectorDivSub",
      "size": 240,
-     "splat_name": "func_001A86E0",
+     "splat_name": "xglVectorDivSub",
      "va": "0x001a86e0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A87D0",
+     "name": "xglVectorDivSubXYZ",
      "size": 208,
-     "splat_name": "func_001A87D0",
+     "splat_name": "xglVectorDivSubXYZ",
      "va": "0x001a87d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A88A0",
+     "name": "xglVectorScale",
      "size": 140,
-     "splat_name": "func_001A88A0",
+     "splat_name": "xglVectorScale",
      "va": "0x001a88a0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A892C",
+     "name": "xglVectorScaleXYZ",
      "size": 132,
-     "splat_name": "func_001A892C",
+     "splat_name": "xglVectorScaleXYZ",
      "va": "0x001a892c",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43651,9 +43805,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8E48",
+     "name": "xglVectorInner",
      "size": 152,
-     "splat_name": "func_001A8E48",
+     "splat_name": "xglVectorInner",
      "va": "0x001a8e48",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43669,9 +43823,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A8F70",
+     "name": "xglVectorOuter",
      "size": 76,
-     "splat_name": "func_001A8F70",
+     "splat_name": "xglVectorOuter",
      "va": "0x001a8f70",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43705,9 +43859,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A90F8",
+     "name": "xglVectorLength",
      "size": 84,
-     "splat_name": "func_001A90F8",
+     "splat_name": "xglVectorLength",
      "va": "0x001a90f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43732,9 +43886,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A9200",
+     "name": "xglVectorNormal_001A9200",
      "size": 80,
-     "splat_name": "func_001A9200",
+     "splat_name": "xglVectorNormal_001A9200",
      "va": "0x001a9200",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43768,9 +43922,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A973C",
+     "name": "xglVectorMulMat",
      "size": 96,
-     "splat_name": "func_001A973C",
+     "splat_name": "xglVectorMulMat",
      "va": "0x001a973c",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43813,9 +43967,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A99CC",
+     "name": "xglMatrixMul",
      "size": 168,
-     "splat_name": "func_001A99CC",
+     "splat_name": "xglMatrixMul",
      "va": "0x001a99cc",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43894,9 +44048,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001AA628",
+     "name": "xglMatrixFrustum",
      "size": 392,
-     "splat_name": "func_001AA628",
+     "splat_name": "xglMatrixFrustum",
      "va": "0x001aa628",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43966,27 +44120,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001AA988",
+     "name": "xglMatrixStackRotX",
      "size": 72,
-     "splat_name": "func_001AA988",
+     "splat_name": "xglMatrixStackRotX",
      "va": "0x001aa988",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001AA9D0",
+     "name": "xglMatrixStackRotY",
      "size": 72,
-     "splat_name": "func_001AA9D0",
+     "splat_name": "xglMatrixStackRotY",
      "va": "0x001aa9d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001AAA18",
+     "name": "xglMatrixStackRotZ",
      "size": 72,
-     "splat_name": "func_001AAA18",
+     "splat_name": "xglMatrixStackRotZ",
      "va": "0x001aaa18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -44002,18 +44156,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001AAB30",
+     "name": "xglMatrixStackSave",
      "size": 60,
-     "splat_name": "func_001AAB30",
+     "splat_name": "xglMatrixStackSave",
      "va": "0x001aab30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001AAB6C",
+     "name": "xglMatrixStackLoad",
      "size": 60,
-     "splat_name": "func_001AAB6C",
+     "splat_name": "xglMatrixStackLoad",
      "va": "0x001aab6c",
      "name_basis": "address",
      "provenance": "estimated"
@@ -44074,9 +44228,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001AB134",
+     "name": "xglQuaternion2Matrix",
      "size": 168,
-     "splat_name": "func_001AB134",
+     "splat_name": "xglQuaternion2Matrix",
      "va": "0x001ab134",
      "name_basis": "address",
      "provenance": "estimated"
@@ -44092,9 +44246,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001AB2C4",
+     "name": "xglRandSeedInit",
      "size": 44,
-     "splat_name": "func_001AB2C4",
+     "splat_name": "xglRandSeedInit",
      "va": "0x001ab2c4",
      "name_basis": "address",
      "provenance": "estimated"
@@ -44371,7 +44525,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -44511,6 +44665,17 @@
      "0x001af32c"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_2_031.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -44651,7 +44816,7 @@
    "path": "src/main/sdv_033.c",
    "scaffold_path": "scaffold/src/main/sdv_033.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -44811,27 +44976,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B10D4",
+     "name": "xglCameraViewScreen",
      "size": 1172,
-     "splat_name": "func_001B10D4",
+     "splat_name": "xglCameraViewScreen",
      "va": "0x001b10d4",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B1568",
+     "name": "xglCameraViewTravel",
      "size": 616,
-     "splat_name": "func_001B1568",
+     "splat_name": "xglCameraViewTravel",
      "va": "0x001b1568",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B17D0",
+     "name": "xglCameraViewVolume",
      "size": 1280,
-     "splat_name": "func_001B17D0",
+     "splat_name": "xglCameraViewVolume",
      "va": "0x001b17d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -44847,18 +45012,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B1D34",
+     "name": "xglCameraMove",
      "size": 132,
-     "splat_name": "func_001B1D34",
+     "splat_name": "xglCameraMove",
      "va": "0x001b1d34",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B1DB8",
+     "name": "xglCameraMoveOffset",
      "size": 96,
-     "splat_name": "func_001B1DB8",
+     "splat_name": "xglCameraMoveOffset",
      "va": "0x001b1db8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -44874,9 +45039,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B1FCC",
+     "name": "xglCameraClipRangeDefault",
      "size": 60,
-     "splat_name": "func_001B1FCC",
+     "splat_name": "xglCameraClipRangeDefault",
      "va": "0x001b1fcc",
      "name_basis": "address",
      "provenance": "estimated"
@@ -44946,9 +45111,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B23B8",
+     "name": "xglPacketGetCurrent",
      "size": 36,
-     "splat_name": "func_001B23B8",
+     "splat_name": "xglPacketGetCurrent",
      "va": "0x001b23b8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -44973,16 +45138,16 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B26DC",
+     "name": "xglPacketSend",
      "size": 72,
-     "splat_name": "func_001B26DC",
+     "splat_name": "xglPacketSend",
      "va": "0x001b26dc",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -45122,6 +45287,17 @@
      "0x001b2724"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sdv_033.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -45132,7 +45308,7 @@
    "path": "src/main/xgl_studio.c",
    "scaffold_path": "scaffold/src/main/xgl_studio.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -45219,9 +45395,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B27EC",
+     "name": "xglStudioGetCamera",
      "size": 80,
-     "splat_name": "func_001B27EC",
+     "splat_name": "xglStudioGetCamera",
      "va": "0x001b27ec",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45237,18 +45413,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B28C8",
+     "name": "xglStudioSelectGetActiveCamera",
      "size": 184,
-     "splat_name": "func_001B28C8",
+     "splat_name": "xglStudioSelectGetActiveCamera",
      "va": "0x001b28c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B2980",
+     "name": "xglStudioFlushActiveCamera",
      "size": 132,
-     "splat_name": "func_001B2980",
+     "splat_name": "xglStudioFlushActiveCamera",
      "va": "0x001b2980",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45273,9 +45449,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B2A50",
+     "name": "xglStudioGetLight2",
      "size": 36,
-     "splat_name": "func_001B2A50",
+     "splat_name": "xglStudioGetLight2",
      "va": "0x001b2a50",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45291,9 +45467,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B2AB8",
+     "name": "xglStudioMainCameraInit",
      "size": 156,
-     "splat_name": "func_001B2AB8",
+     "splat_name": "xglStudioMainCameraInit",
      "va": "0x001b2ab8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45309,9 +45485,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B2B98",
+     "name": "xglStudioInit",
      "size": 220,
-     "splat_name": "func_001B2B98",
+     "splat_name": "xglStudioInit",
      "va": "0x001b2b98",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45345,7 +45521,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".sdata": "asm",
     ".sbss": "asm",
     ".bss": "asm"
@@ -45435,6 +45611,17 @@
      "0x001b2de4"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_studio.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -45445,7 +45632,7 @@
    "path": "src/main/xgl_render.c",
    "scaffold_path": "scaffold/src/main/xgl_render.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -45559,18 +45746,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B394C",
+     "name": "xglRenderVSyncCallback",
      "size": 196,
-     "splat_name": "func_001B394C",
+     "splat_name": "xglRenderVSyncCallback",
      "va": "0x001b394c",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B3A10",
+     "name": "xglRenderSyncInit",
      "size": 60,
-     "splat_name": "func_001B3A10",
+     "splat_name": "xglRenderSyncInit",
      "va": "0x001b3a10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45586,27 +45773,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B3D2C",
+     "name": "xglRenderDrawEnvInit",
      "size": 2868,
-     "splat_name": "func_001B3D2C",
+     "splat_name": "xglRenderDrawEnvInit",
      "va": "0x001b3d2c",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B4860",
+     "name": "xglRenderDrawEnvMove",
      "size": 256,
-     "splat_name": "func_001B4860",
+     "splat_name": "xglRenderDrawEnvMove",
      "va": "0x001b4860",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B4960",
+     "name": "xglRenderDispEnvInit",
      "size": 216,
-     "splat_name": "func_001B4960",
+     "splat_name": "xglRenderDispEnvInit",
      "va": "0x001b4960",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45622,54 +45809,54 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B4CCC",
+     "name": "xglRenderClearDepth",
      "size": 48,
-     "splat_name": "func_001B4CCC",
+     "splat_name": "xglRenderClearDepth",
      "va": "0x001b4ccc",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B4CFC",
+     "name": "xglRenderClearFrame",
      "size": 48,
-     "splat_name": "func_001B4CFC",
+     "splat_name": "xglRenderClearFrame",
      "va": "0x001b4cfc",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B4D2C",
+     "name": "xglRenderClearColor",
      "size": 112,
-     "splat_name": "func_001B4D2C",
+     "splat_name": "xglRenderClearColor",
      "va": "0x001b4d2c",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B4D9C",
+     "name": "xglRenderClearEnvInit",
      "size": 300,
-     "splat_name": "func_001B4D9C",
+     "splat_name": "xglRenderClearEnvInit",
      "va": "0x001b4d9c",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B4EC8",
+     "name": "xglRenderClearEnvMove",
      "size": 88,
-     "splat_name": "func_001B4EC8",
+     "splat_name": "xglRenderClearEnvMove",
      "va": "0x001b4ec8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B4F20",
+     "name": "xglRenderSetReso",
      "size": 248,
-     "splat_name": "func_001B4F20",
+     "splat_name": "xglRenderSetReso",
      "va": "0x001b4f20",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45685,18 +45872,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B50A4",
+     "name": "xglRenderDispOff",
      "size": 56,
-     "splat_name": "func_001B50A4",
+     "splat_name": "xglRenderDispOff",
      "va": "0x001b50a4",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B50DC",
+     "name": "xglRenderDispOn",
      "size": 56,
-     "splat_name": "func_001B50DC",
+     "splat_name": "xglRenderDispOn",
      "va": "0x001b50dc",
      "name_basis": "address",
      "provenance": "estimated"
@@ -45811,7 +45998,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".sdata": "asm"
    },
@@ -45876,6 +46063,17 @@
      "0x001b5e80"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xgl_render.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -45886,7 +46084,7 @@
    "path": "src/main/face_point.c",
    "scaffold_path": "scaffold/src/main/face_point.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -45973,9 +46171,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B6194",
+     "name": "culling_cell_disp",
      "size": 36,
-     "splat_name": "func_001B6194",
+     "splat_name": "culling_cell_disp",
      "va": "0x001b6194",
      "name_basis": "address",
      "provenance": "estimated"
@@ -46000,9 +46198,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B641C",
+     "name": "plane_from_points",
      "size": 356,
-     "splat_name": "func_001B641C",
+     "splat_name": "plane_from_points",
      "va": "0x001b641c",
      "name_basis": "address",
      "provenance": "estimated"
@@ -46036,9 +46234,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B6CD0",
+     "name": "xglCullingExist",
      "size": 40,
-     "splat_name": "func_001B6CD0",
+     "splat_name": "xglCullingExist",
      "va": "0x001b6cd0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -46063,9 +46261,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B6DB4",
+     "name": "check_culling_map",
      "size": 212,
-     "splat_name": "func_001B6DB4",
+     "splat_name": "check_culling_map",
      "va": "0x001b6db4",
      "name_basis": "address",
      "provenance": "estimated"
@@ -46099,34 +46297,34 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B7344",
+     "name": "xglCullingIgnore",
      "size": 40,
-     "splat_name": "func_001B7344",
+     "splat_name": "xglCullingIgnore",
      "va": "0x001b7344",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B736C",
+     "name": "xglCullingIgnoreOff",
      "size": 36,
-     "splat_name": "func_001B736C",
+     "splat_name": "xglCullingIgnoreOff",
      "va": "0x001b736c",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B7390",
+     "name": "xglCullingMapDebug",
      "size": 32,
-     "splat_name": "func_001B7390",
+     "splat_name": "xglCullingMapDebug",
      "va": "0x001b7390",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".rodata": "asm",
     ".sdata": "asm",
     ".bss": "asm"
@@ -46216,6 +46414,17 @@
      "0x001b73b0"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/face_point.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -46346,7 +46555,7 @@
    "path": "src/main/nml_packet_add.c",
    "scaffold_path": "scaffold/src/main/nml_packet_add.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -46398,9 +46607,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_001B74D8",
+     "name": "_CurApplyMatrix",
      "size": 72,
-     "splat_name": "func_001B74D8",
+     "splat_name": "_CurApplyMatrix",
      "va": "0x001b74d8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -46416,16 +46625,16 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001B7564",
+     "name": "_CurMatrixMul",
      "size": 132,
-     "splat_name": "func_001B7564",
+     "splat_name": "_CurMatrixMul",
      "va": "0x001b7564",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -46439,6 +46648,17 @@
      "0x001b75e8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/nml_packet_add.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -47087,7 +47307,7 @@
    "path": "src/main/nml_model_set.c",
    "scaffold_path": "scaffold/src/main/nml_model_set.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -47742,36 +47962,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001BB7B8",
+     "name": "nmlModelSetZwrite",
      "size": 68,
-     "splat_name": "func_001BB7B8",
+     "splat_name": "nmlModelSetZwrite",
      "va": "0x001bb7b8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001BB7FC",
+     "name": "nmlModelSetTransparency",
      "size": 156,
-     "splat_name": "func_001BB7FC",
+     "splat_name": "nmlModelSetTransparency",
      "va": "0x001bb7fc",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001BB898",
+     "name": "nmlModelSetReflTransparency",
      "size": 144,
-     "splat_name": "func_001BB898",
+     "splat_name": "nmlModelSetReflTransparency",
      "va": "0x001bb898",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001BB928",
+     "name": "nmlModelSetStencil",
      "size": 68,
-     "splat_name": "func_001BB928",
+     "splat_name": "nmlModelSetStencil",
      "va": "0x001bb928",
      "name_basis": "address",
      "provenance": "estimated"
@@ -48354,7 +48574,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -48494,6 +48714,17 @@
      "0x001cc998"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/nml_model_set.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -51616,7 +51847,7 @@
    "path": "src/main/res_get_path.c",
    "scaffold_path": "scaffold/src/main/res_get_path.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -52271,7 +52502,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -52436,6 +52667,17 @@
      "0x001e4cf8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/res_get_path.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -52446,7 +52688,7 @@
    "path": "src/main/game_snap_shot.c",
    "scaffold_path": "scaffold/src/main/game_snap_shot.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -52498,18 +52740,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_001E4CF8",
+     "name": "GameSnapShotNumber",
      "size": 32,
-     "splat_name": "func_001E4CF8",
+     "splat_name": "GameSnapShotNumber",
      "va": "0x001e4cf8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E4D18",
+     "name": "GameSnapShotCheck",
      "size": 8,
-     "splat_name": "func_001E4D18",
+     "splat_name": "GameSnapShotCheck",
      "va": "0x001e4d18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52561,7 +52803,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".sdata": "asm"
@@ -52651,6 +52893,17 @@
      "0x001e54e0"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/game_snap_shot.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -52661,7 +52914,7 @@
    "path": "src/main/game_defocus.c",
    "scaffold_path": "scaffold/src/main/game_defocus.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -52795,9 +53048,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E69B0",
+     "name": "DefocusMainType09Final",
      "size": 60,
-     "splat_name": "func_001E69B0",
+     "splat_name": "DefocusMainType09Final",
      "va": "0x001e69b0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52867,7 +53120,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm"
@@ -52957,6 +53210,17 @@
      "0x001e7570"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/game_defocus.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -52967,7 +53231,7 @@
    "path": "src/main/game_movie.c",
    "scaffold_path": "scaffold/src/main/game_movie.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -53081,7 +53345,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".rodata": "asm",
     ".sdata": "asm"
    },
@@ -53146,6 +53410,17 @@
      "0x001e8430"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/game_movie.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -53156,7 +53431,7 @@
    "path": "src/main/game_over_059.c",
    "scaffold_path": "scaffold/src/main/game_over_059.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -53217,9 +53492,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E8498",
+     "name": "DrawImage",
      "size": 312,
-     "splat_name": "func_001E8498",
+     "splat_name": "DrawImage",
      "va": "0x001e8498",
      "name_basis": "address",
      "provenance": "estimated"
@@ -53253,9 +53528,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E8910",
+     "name": "redraw_frame",
      "size": 60,
-     "splat_name": "func_001E8910",
+     "splat_name": "redraw_frame",
      "va": "0x001e8910",
      "name_basis": "address",
      "provenance": "estimated"
@@ -53325,7 +53600,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".bss": "asm"
@@ -53415,6 +53690,17 @@
      "0x001e9740"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/game_over_059.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -54581,7 +54867,7 @@
    "path": "src/main/game_over_065.c",
    "scaffold_path": "scaffold/src/main/game_over_065.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -54660,7 +54946,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm"
    },
@@ -54725,6 +55011,17 @@
      "0x001eebc8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/game_over_065.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -58939,7 +59236,7 @@
    "path": "src/main/init_uwamono_sys.c",
    "scaffold_path": "scaffold/src/main/init_uwamono_sys.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -59045,18 +59342,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00200080",
+     "name": "HitCheckMapUnitPos",
      "size": 24,
-     "splat_name": "func_00200080",
+     "splat_name": "HitCheckMapUnitPos",
      "va": "0x00200080",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00200098",
+     "name": "HitCheckMapUnitPosSize",
      "size": 208,
-     "splat_name": "func_00200098",
+     "splat_name": "HitCheckMapUnitPosSize",
      "va": "0x00200098",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59414,7 +59711,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".lit4": "asm"
    },
    "sections": {
@@ -59454,6 +59751,17 @@
      "0x00203118"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/init_uwamono_sys.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -60660,7 +60968,7 @@
    "path": "src/main/get.c",
    "scaffold_path": "scaffold/src/main/get.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -60838,9 +61146,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00209FA8",
+     "name": "Get_Angle",
      "size": 44,
-     "splat_name": "func_00209FA8",
+     "splat_name": "Get_Angle",
      "va": "0x00209fa8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -60874,9 +61182,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020A368",
+     "name": "Check_CrossingOver",
      "size": 156,
-     "splat_name": "func_0020A368",
+     "splat_name": "Check_CrossingOver",
      "va": "0x0020a368",
      "name_basis": "address",
      "provenance": "estimated"
@@ -61018,7 +61326,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -61133,6 +61441,17 @@
      "0x0020b268"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/get.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -61143,7 +61462,7 @@
    "path": "src/main/outer_product.c",
    "scaffold_path": "scaffold/src/main/outer_product.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -61230,9 +61549,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020B4C0",
+     "name": "CheckCrossLine",
      "size": 156,
-     "splat_name": "func_0020B4C0",
+     "splat_name": "CheckCrossLine",
      "va": "0x0020b4c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -61248,7 +61567,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -61262,6 +61581,17 @@
      "0x0020b5c0"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/outer_product.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -62080,7 +62410,7 @@
    "path": "src/main/game_over_095.c",
    "scaffold_path": "scaffold/src/main/game_over_095.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -62177,7 +62507,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm"
    },
    "sections": {
@@ -62217,6 +62547,17 @@
      "0x0020ccc0"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/game_over_095.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -70790,9 +71131,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00236270",
+     "name": "objRemove",
      "size": 80,
-     "splat_name": "func_00236270",
+     "splat_name": "objRemove",
      "va": "0x00236270",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71945,7 +72286,7 @@
    "path": "src/main/test_128.c",
    "scaffold_path": "scaffold/src/main/test_128.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -72006,9 +72347,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023D058",
+     "name": "_Link",
      "size": 12,
-     "splat_name": "func_0023D058",
+     "splat_name": "_Link",
      "va": "0x0023d058",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72033,36 +72374,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023D0F8",
+     "name": "_Unlink",
      "size": 28,
-     "splat_name": "func_0023D0F8",
+     "splat_name": "_Unlink",
      "va": "0x0023d0f8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023D118",
+     "name": "_MarkAlloc",
      "size": 12,
-     "splat_name": "func_0023D118",
+     "splat_name": "_MarkAlloc",
      "va": "0x0023d118",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023D128",
+     "name": "_UnmarkAlloc",
      "size": 8,
-     "splat_name": "func_0023D128",
+     "splat_name": "_UnmarkAlloc",
      "va": "0x0023d128",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023D130",
+     "name": "_IsAllocated",
      "size": 12,
-     "splat_name": "func_0023D130",
+     "splat_name": "_IsAllocated",
      "va": "0x0023d130",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72078,9 +72419,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023D170",
+     "name": "_IsCollectMagicString",
      "size": 64,
-     "splat_name": "func_0023D170",
+     "splat_name": "_IsCollectMagicString",
      "va": "0x0023d170",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72150,9 +72491,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023D8E8",
+     "name": "RgHeapIsInSelf",
      "size": 48,
-     "splat_name": "func_0023D8E8",
+     "splat_name": "RgHeapIsInSelf",
      "va": "0x0023d8e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72276,7 +72617,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".sdata": "asm",
@@ -72391,6 +72732,17 @@
      "0x0023e978"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/test_128.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -73713,7 +74065,7 @@
    "path": "src/main/gifState.c",
    "scaffold_path": "scaffold/src/main/gifState.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -73975,9 +74327,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00246D80",
+     "name": "nmlModelSetMulColor",
      "size": 24,
-     "splat_name": "func_00246D80",
+     "splat_name": "nmlModelSetMulColor",
      "va": "0x00246d80",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74038,9 +74390,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00246E08",
+     "name": "nmlModelUseSubWindow",
      "size": 36,
-     "splat_name": "func_00246E08",
+     "splat_name": "nmlModelUseSubWindow",
      "va": "0x00246e08",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74146,7 +74498,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".bss": "asm"
@@ -74236,6 +74588,17 @@
      "0x00247130"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/gifState.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -77427,7 +77790,7 @@
    "path": "src/main/sef_print.c",
    "scaffold_path": "scaffold/src/main/sef_print.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -77506,7 +77869,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".sdata": "asm"
    },
    "sections": {
@@ -77546,6 +77909,17 @@
      "0x00251f78"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sef_print.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -78700,7 +79074,7 @@
    "path": "src/main/sv_get_image_item_158.c",
    "scaffold_path": "scaffold/src/main/sv_get_image_item_158.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -78752,18 +79126,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00253B18",
+     "name": "svGetImageItem",
      "size": 32,
-     "splat_name": "func_00253B18",
+     "splat_name": "svGetImageItem",
      "va": "0x00253b18",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00253B38",
+     "name": "svImageListCreate",
      "size": 36,
-     "splat_name": "func_00253B38",
+     "splat_name": "svImageListCreate",
      "va": "0x00253b38",
      "name_basis": "address",
      "provenance": "estimated"
@@ -78779,18 +79153,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00253BB0",
+     "name": "svImageListAlloc",
      "size": 64,
-     "splat_name": "func_00253BB0",
+     "splat_name": "svImageListAlloc",
      "va": "0x00253bb0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00253BF0",
+     "name": "svGetTypeList",
      "size": 28,
-     "splat_name": "func_00253BF0",
+     "splat_name": "svGetTypeList",
      "va": "0x00253bf0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -78878,7 +79252,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".lit4": "asm",
     ".sdata": "asm"
@@ -78968,6 +79342,17 @@
      "0x00254280"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sv_get_image_item_158.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -78978,7 +79363,7 @@
    "path": "src/main/sv_get_image_item_159.c",
    "scaffold_path": "scaffold/src/main/sv_get_image_item_159.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -79030,18 +79415,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00254280",
+     "name": "svGetSizeBit",
      "size": 64,
-     "splat_name": "func_00254280",
+     "splat_name": "svGetSizeBit",
      "va": "0x00254280",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002542C0",
+     "name": "svAddImage",
      "size": 484,
-     "splat_name": "func_002542C0",
+     "splat_name": "svAddImage",
      "va": "0x002542c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -79066,18 +79451,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00254628",
+     "name": "svAddScript",
      "size": 136,
-     "splat_name": "func_00254628",
+     "splat_name": "svAddScript",
      "va": "0x00254628",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002546B0",
+     "name": "svAddScript2",
      "size": 136,
-     "splat_name": "func_002546B0",
+     "splat_name": "svAddScript2",
      "va": "0x002546b0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -79147,7 +79532,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -79161,6 +79546,17 @@
      "0x00254aa0"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sv_get_image_item_159.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -79345,7 +79741,7 @@
    "path": "src/main/sv_get_image_item_161.c",
    "scaffold_path": "scaffold/src/main/sv_get_image_item_161.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -79424,9 +79820,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00255398",
+     "name": "sefInitClipViewVolume",
      "size": 40,
-     "splat_name": "func_00255398",
+     "splat_name": "sefInitClipViewVolume",
      "va": "0x00255398",
      "name_basis": "address",
      "provenance": "estimated"
@@ -79712,9 +80108,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002590C0",
+     "name": "svDrawAlters",
      "size": 44,
-     "splat_name": "func_002590C0",
+     "splat_name": "svDrawAlters",
      "va": "0x002590c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -79757,7 +80153,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -79922,6 +80318,17 @@
      "0x002594e8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sv_get_image_item_161.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -80218,7 +80625,7 @@
    "path": "src/main/sef_164.c",
    "scaffold_path": "scaffold/src/main/sef_164.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -80549,9 +80956,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0025BD10",
+     "name": "sefFreeLineData",
      "size": 84,
-     "splat_name": "func_0025BD10",
+     "splat_name": "sefFreeLineData",
      "va": "0x0025bd10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -80954,7 +81361,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -81094,6 +81501,17 @@
      "0x0025fb90"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sef_164.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -82078,7 +82496,7 @@
    "path": "src/main/sef_169.c",
    "scaffold_path": "scaffold/src/main/sef_169.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -82157,7 +82575,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -82171,6 +82589,17 @@
      "0x00261960"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sef_169.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -82181,7 +82610,7 @@
    "path": "src/main/tu170.c",
    "scaffold_path": "scaffold/src/main/tu170.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -82296,9 +82725,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00261B98",
+     "name": "sefMergeMatrixPos",
      "size": 40,
-     "splat_name": "func_00261B98",
+     "splat_name": "sefMergeMatrixPos",
      "va": "0x00261b98",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82458,18 +82887,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00262FC0",
+     "name": "sefGetCubePosBtm",
      "size": 88,
-     "splat_name": "func_00262FC0",
+     "splat_name": "sefGetCubePosBtm",
      "va": "0x00262fc0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00263018",
+     "name": "sefGetCubePosTop",
      "size": 48,
-     "splat_name": "func_00263018",
+     "splat_name": "sefGetCubePosTop",
      "va": "0x00263018",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82557,7 +82986,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".lit4": "asm",
     ".sdata": "asm",
@@ -82672,6 +83101,17 @@
      "0x00263bf8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu170.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -83816,7 +84256,7 @@
    "path": "src/main/srs.c",
    "scaffold_path": "scaffold/src/main/srs.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -83904,9 +84344,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00265AB8",
+     "name": "srsSetLoadMode",
      "size": 8,
-     "splat_name": "func_00265AB8",
+     "splat_name": "srsSetLoadMode",
      "va": "0x00265ab8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83922,9 +84362,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00265AC8",
+     "name": "srsSetViewPath",
      "size": 32,
-     "splat_name": "func_00265AC8",
+     "splat_name": "srsSetViewPath",
      "va": "0x00265ac8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83967,9 +84407,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00265DB8",
+     "name": "fileLoad",
      "size": 500,
-     "splat_name": "func_00265DB8",
+     "splat_name": "fileLoad",
      "va": "0x00265db8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83985,9 +84425,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00265FC8",
+     "name": "srsGetEffectName",
      "size": 80,
-     "splat_name": "func_00265FC8",
+     "splat_name": "srsGetEffectName",
      "va": "0x00265fc8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84012,9 +84452,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002660A0",
+     "name": "srsInitCdRead",
      "size": 8,
-     "splat_name": "func_002660A0",
+     "splat_name": "srsInitCdRead",
      "va": "0x002660a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84057,7 +84497,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".sdata": "asm",
@@ -84197,6 +84637,17 @@
      "0x002661b0"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/srs.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -84433,7 +84884,7 @@
    "path": "src/main/tu179.c",
    "scaffold_path": "scaffold/src/main/tu179.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -84494,9 +84945,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266A28",
+     "name": "srsFileLoad",
      "size": 20,
-     "splat_name": "func_00266A28",
+     "splat_name": "srsFileLoad",
      "va": "0x00266a28",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84512,7 +84963,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -84526,6 +84977,17 @@
      "0x00266b50"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu179.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -84536,7 +84998,7 @@
    "path": "src/main/sdv_180.c",
    "scaffold_path": "scaffold/src/main/sdv_180.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -84597,18 +85059,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266B78",
+     "name": "scGetImmAdrImmIdx2",
      "size": 60,
-     "splat_name": "func_00266B78",
+     "splat_name": "scGetImmAdrImmIdx2",
      "va": "0x00266b78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266BB8",
+     "name": "scGetImmNumIdx",
      "size": 16,
-     "splat_name": "func_00266BB8",
+     "splat_name": "scGetImmNumIdx",
      "va": "0x00266bb8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84633,18 +85095,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266D58",
+     "name": "scOfsToAdr",
      "size": 32,
-     "splat_name": "func_00266D58",
+     "splat_name": "scOfsToAdr",
      "va": "0x00266d58",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266D78",
+     "name": "sdvInitAmbient",
      "size": 12,
-     "splat_name": "func_00266D78",
+     "splat_name": "sdvInitAmbient",
      "va": "0x00266d78",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84660,9 +85122,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266D90",
+     "name": "sdvSetAmbStateSub",
      "size": 88,
-     "splat_name": "func_00266D90",
+     "splat_name": "sdvSetAmbStateSub",
      "va": "0x00266d90",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84678,27 +85140,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266E00",
+     "name": "sdvSetAmbState2",
      "size": 24,
-     "splat_name": "func_00266E00",
+     "splat_name": "sdvSetAmbState2",
      "va": "0x00266e00",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266E18",
+     "name": "sdvSetAmbient",
      "size": 8,
-     "splat_name": "func_00266E18",
+     "splat_name": "sdvSetAmbient",
      "va": "0x00266e18",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266E20",
+     "name": "sdvRestoreAmbient",
      "size": 36,
-     "splat_name": "func_00266E20",
+     "splat_name": "sdvRestoreAmbient",
      "va": "0x00266e20",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84714,7 +85176,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".sdata": "asm",
     ".sbss": "asm"
@@ -84804,6 +85266,17 @@
      "0x00266f68"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sdv_180.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -85391,7 +85864,7 @@
    "path": "src/main/sdv_184.c",
    "scaffold_path": "scaffold/src/main/sdv_184.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -85641,9 +86114,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026BAC8",
+     "name": "sdvDrawAlters",
      "size": 172,
-     "splat_name": "func_0026BAC8",
+     "splat_name": "sdvDrawAlters",
      "va": "0x0026bac8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -85659,7 +86132,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -85799,6 +86272,17 @@
      "0x0026bc28"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/sdv_184.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87017,7 +87501,7 @@
    "path": "src/main/m_math_188.c",
    "scaffold_path": "scaffold/src/main/m_math_188.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -87078,9 +87562,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271E18",
+     "name": "MMathCalcHermitePrm",
      "size": 60,
-     "splat_name": "func_00271E18",
+     "splat_name": "MMathCalcHermitePrm",
      "va": "0x00271e18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87096,9 +87580,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271E80",
+     "name": "MMathDeg2RadVectorI",
      "size": 40,
-     "splat_name": "func_00271E80",
+     "splat_name": "MMathDeg2RadVectorI",
      "va": "0x00271e80",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87114,16 +87598,16 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271ED0",
+     "name": "MMathRad2DegVectorI",
      "size": 40,
-     "splat_name": "func_00271ED0",
+     "splat_name": "MMathRad2DegVectorI",
      "va": "0x00271ed0",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".lit4": "asm"
    },
    "sections": {
@@ -87163,6 +87647,17 @@
      "0x00271ef8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/m_math_188.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87173,7 +87668,7 @@
    "path": "src/main/tu189.c",
    "scaffold_path": "scaffold/src/main/tu189.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -87225,9 +87720,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00271EF8",
+     "name": "MMathNormalizeVector2",
      "size": 48,
-     "splat_name": "func_00271EF8",
+     "splat_name": "MMathNormalizeVector2",
      "va": "0x00271ef8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87270,7 +87765,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -87284,6 +87779,17 @@
      "0x00271fe8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu189.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87397,7 +87903,7 @@
    "path": "src/main/m_math_191.c",
    "scaffold_path": "scaffold/src/main/m_math_191.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -87476,45 +87982,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00272198",
+     "name": "MMathCalcOffsetXYZ",
      "size": 64,
-     "splat_name": "func_00272198",
+     "splat_name": "MMathCalcOffsetXYZ",
      "va": "0x00272198",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002721D8",
+     "name": "MMathSubVectorMulS",
      "size": 40,
-     "splat_name": "func_002721D8",
+     "splat_name": "MMathSubVectorMulS",
      "va": "0x002721d8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00272200",
+     "name": "MMathSubVectorDivS",
      "size": 48,
-     "splat_name": "func_00272200",
+     "splat_name": "MMathSubVectorDivS",
      "va": "0x00272200",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00272230",
+     "name": "MMathDivVector",
      "size": 64,
-     "splat_name": "func_00272230",
+     "splat_name": "MMathDivVector",
      "va": "0x00272230",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00272270",
+     "name": "MMathDivVectorS",
      "size": 40,
-     "splat_name": "func_00272270",
+     "splat_name": "MMathDivVectorS",
      "va": "0x00272270",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87530,9 +88036,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002722E8",
+     "name": "MMathDivVectorS4",
      "size": 40,
-     "splat_name": "func_002722E8",
+     "splat_name": "MMathDivVectorS4",
      "va": "0x002722e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87557,7 +88063,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".rodata": "asm"
    },
    "sections": {
@@ -87597,6 +88103,17 @@
      "0x00272370"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/m_math_191.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87607,7 +88124,7 @@
    "path": "src/main/tu192.c",
    "scaffold_path": "scaffold/src/main/tu192.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -87668,25 +88185,25 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00272398",
+     "name": "MMathVectorCrossProduct",
      "size": 36,
-     "splat_name": "func_00272398",
+     "splat_name": "MMathVectorCrossProduct",
      "va": "0x00272398",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002723C0",
+     "name": "MMathVectorInterpolation",
      "size": 44,
-     "splat_name": "func_002723C0",
+     "splat_name": "MMathVectorInterpolation",
      "va": "0x002723c0",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -87700,6 +88217,17 @@
      "0x002723f0"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu192.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87867,7 +88395,7 @@
    "path": "src/main/tu194.c",
    "scaffold_path": "scaffold/src/main/tu194.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -87919,9 +88447,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00272928",
+     "name": "MMathApplyMatrix",
      "size": 52,
-     "splat_name": "func_00272928",
+     "splat_name": "MMathApplyMatrix",
      "va": "0x00272928",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87937,16 +88465,16 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002729E0",
+     "name": "MMathScaleMatrix",
      "size": 64,
-     "splat_name": "func_002729E0",
+     "splat_name": "MMathScaleMatrix",
      "va": "0x002729e0",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -87960,6 +88488,17 @@
      "0x00272a20"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu194.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87970,7 +88509,7 @@
    "path": "src/main/m_math_195.c",
    "scaffold_path": "scaffold/src/main/m_math_195.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -88040,9 +88579,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00272AA8",
+     "name": "MMathTranslateMatrix",
      "size": 64,
-     "splat_name": "func_00272AA8",
+     "splat_name": "MMathTranslateMatrix",
      "va": "0x00272aa8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -88112,7 +88651,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -88126,6 +88665,17 @@
      "0x00272d38"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/m_math_195.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -98614,7 +99164,7 @@
    "path": "src/main/act_3.c",
    "scaffold_path": "scaffold/src/main/act_3.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -98774,7 +99324,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm"
@@ -98864,6 +99414,17 @@
      "0x0028d4c8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/act_3.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -99852,9 +100413,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00292E90",
+     "name": "xglVectorNormal",
      "size": 40,
-     "splat_name": "func_00292E90",
+     "splat_name": "xglVectorNormal",
      "va": "0x00292e90",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101196,7 +101757,7 @@
    "path": "src/main/xrg_rand_int.c",
    "scaffold_path": "scaffold/src/main/xrg_rand_int.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -101293,9 +101854,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00296C58",
+     "name": "XrgInnerVector",
      "size": 48,
-     "splat_name": "func_00296C58",
+     "splat_name": "XrgInnerVector",
      "va": "0x00296c58",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101347,7 +101908,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -101361,6 +101922,17 @@
      "0x00297168"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "X1 C under express order (user 2026-11-05)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/xrg_rand_int.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -104511,9 +105083,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1A30",
+     "name": "cosf",
      "size": 212,
-     "splat_name": "func_002A1A30",
+     "splat_name": "cosf",
      "va": "0x002a1a30",
      "name_basis": "address",
      "provenance": "estimated"
@@ -104538,9 +105110,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1C20",
+     "name": "sinf",
      "size": 232,
-     "splat_name": "func_002A1C20",
+     "splat_name": "sinf",
      "va": "0x002a1c20",
      "name_basis": "address",
      "provenance": "estimated"
@@ -104601,9 +105173,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1DF8",
+     "name": "atan2f",
      "size": 20,
-     "splat_name": "func_002A1DF8",
+     "splat_name": "atan2f",
      "va": "0x002a1df8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -104619,9 +105191,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1E28",
+     "name": "sqrtf",
      "size": 20,
-     "splat_name": "func_002A1E28",
+     "splat_name": "sqrtf",
      "va": "0x002a1e28",
      "name_basis": "address",
      "provenance": "estimated"
@@ -104781,9 +105353,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A4EE8",
+     "name": "__muldi3",
      "size": 116,
-     "splat_name": "func_002A4EE8",
+     "splat_name": "__muldi3",
      "va": "0x002a4ee8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -105348,9 +105920,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A9EB4",
+     "name": "memset",
      "size": 192,
-     "splat_name": "func_002A9EB4",
+     "splat_name": "memset",
      "va": "0x002a9eb4",
      "name_basis": "address",
      "provenance": "estimated"
@@ -105384,9 +105956,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AA0A8",
+     "name": "printf",
      "size": 112,
-     "splat_name": "func_002AA0A8",
+     "splat_name": "printf",
      "va": "0x002aa0a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -105564,36 +106136,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AA91C",
+     "name": "strchr",
      "size": 400,
-     "splat_name": "func_002AA91C",
+     "splat_name": "strchr",
      "va": "0x002aa91c",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AAAAC",
+     "name": "strcmp",
      "size": 324,
-     "splat_name": "func_002AAAAC",
+     "splat_name": "strcmp",
      "va": "0x002aaaac",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AABF0",
+     "name": "strcpy",
      "size": 276,
-     "splat_name": "func_002AABF0",
+     "splat_name": "strcpy",
      "va": "0x002aabf0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AAD04",
+     "name": "strlen",
      "size": 312,
-     "splat_name": "func_002AAD04",
+     "splat_name": "strlen",
      "va": "0x002aad04",
      "name_basis": "address",
      "provenance": "estimated"
@@ -105609,9 +106181,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AAFF0",
+     "name": "strncmp",
      "size": 440,
-     "splat_name": "func_002AAFF0",
+     "splat_name": "strncmp",
      "va": "0x002aaff0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -105780,9 +106352,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AF050",
+     "name": "vsprintf",
      "size": 84,
-     "splat_name": "func_002AF050",
+     "splat_name": "vsprintf",
      "va": "0x002af050",
      "name_basis": "address",
      "provenance": "estimated"

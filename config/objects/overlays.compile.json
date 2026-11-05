@@ -406,7 +406,7 @@
       "asm/nonmatchings/ov01/tu005/func_00A80C88.s",
       "asm/nonmatchings/ov01/tu005/func_00A80D20.s",
       "asm/nonmatchings/ov01/tu005/func_00A80D78.s",
-      "asm/nonmatchings/ov01/tu005/func_00A80D88.s",
+      "asm/nonmatchings/ov01/tu005/rnd.s",
       "asm/nonmatchings/ov01/tu005/func_00A80DC0.s",
       "asm/nonmatchings/ov01/tu005/func_00A80DF8.s"
      ],
@@ -465,7 +465,7 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu006/func_00A80E40.s",
+      "asm/nonmatchings/ov01/tu006/grWorldMatGet.s",
       "asm/nonmatchings/ov01/tu006/func_00A80E68.s",
       "asm/nonmatchings/ov01/tu006/grRotMatrix.s",
       "asm/nonmatchings/ov01/tu006/func_00A80F80.s",
@@ -769,7 +769,7 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu010/func_00A840F0.s",
+      "asm/nonmatchings/ov01/tu010/unitInit.s",
       "asm/nonmatchings/ov01/tu010/func_00A84128.s",
       "asm/nonmatchings/ov01/tu010/func_00A84168.s",
       "asm/nonmatchings/ov01/tu010/func_00A841B8.s"
@@ -1582,7 +1582,7 @@
       "asm/nonmatchings/ov01/tu022/func_00A89268.s",
       "asm/nonmatchings/ov01/tu022/func_00A89280.s",
       "asm/nonmatchings/ov01/tu022/func_00A89340.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89448.s",
+      "asm/nonmatchings/ov01/tu022/dataVPadModeSet.s",
       "asm/nonmatchings/ov01/tu022/dataVPadSet.s",
       "asm/nonmatchings/ov01/tu022/dataPadRead.s",
       "asm/nonmatchings/ov01/tu022/func_00A89520.s",
@@ -1619,7 +1619,7 @@
       "asm/nonmatchings/ov01/tu022/func_00A8A538.s",
       "asm/nonmatchings/ov01/tu022/func_00A8A730.s",
       "asm/nonmatchings/ov01/tu022/func_00A8A878.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A8B0.s"
+      "asm/nonmatchings/ov01/tu022/dataDummySet.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -1928,7 +1928,7 @@
       "asm/nonmatchings/ov01/tu026/func_00A8E540.s",
       "asm/nonmatchings/ov01/tu026/func_00A8E630.s",
       "asm/nonmatchings/ov01/tu026/calcStatBit2Idx.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8E6D8.s",
+      "asm/nonmatchings/ov01/tu026/calcStatIdx2Bit.s",
       "asm/nonmatchings/ov01/tu026/func_00A8E6E8.s",
       "asm/nonmatchings/ov01/tu026/func_00A8E748.s",
       "asm/nonmatchings/ov01/tu026/func_00A8E808.s",
@@ -2270,7 +2270,7 @@
       "asm/nonmatchings/ov01/tu031/func_00A912D0.s",
       "asm/nonmatchings/ov01/tu031/func_00A913C8.s",
       "asm/nonmatchings/ov01/tu031/func_00A91418.s",
-      "asm/nonmatchings/ov01/tu031/func_00A916A0.s",
+      "asm/nonmatchings/ov01/tu031/tgtFindNext.s",
       "asm/nonmatchings/ov01/tu031/func_00A916E0.s",
       "asm/nonmatchings/ov01/tu031/func_00A91708.s",
       "asm/nonmatchings/ov01/tu031/func_00A91730.s",
@@ -2338,7 +2338,7 @@
       "asm/nonmatchings/ov01/tu032/func_00A91978.s",
       "asm/nonmatchings/ov01/tu032/func_00A91A00.s",
       "asm/nonmatchings/ov01/tu032/func_00A91A38.s",
-      "asm/nonmatchings/ov01/tu032/func_00A91A78.s",
+      "asm/nonmatchings/ov01/tu032/sdvInitSpecialWork.s",
       "asm/nonmatchings/ov01/tu032/func_00A91AA0.s",
       "asm/nonmatchings/ov01/tu032/func_00A91AF0.s",
       "asm/nonmatchings/ov01/tu032/func_00A91B38.s",
@@ -2695,13 +2695,13 @@
       "asm/nonmatchings/ov01/tu036/func_00A98C88.s",
       "asm/nonmatchings/ov01/tu036/func_00A98CF8.s",
       "asm/nonmatchings/ov01/tu036/func_00A98DA8.s",
-      "asm/nonmatchings/ov01/tu036/func_00A98F30.s",
+      "asm/nonmatchings/ov01/tu036/objCurRemove.s",
       "asm/nonmatchings/ov01/tu036/func_00A98F70.s",
       "asm/nonmatchings/ov01/tu036/func_00A99A98.s",
       "asm/nonmatchings/ov01/tu036/func_00A99CA0.s",
-      "asm/nonmatchings/ov01/tu036/func_00A99CD8.s",
-      "asm/nonmatchings/ov01/tu036/func_00A99D50.s",
-      "asm/nonmatchings/ov01/tu036/func_00A99D70.s",
+      "asm/nonmatchings/ov01/tu036/tgtUnitAdrGet.s",
+      "asm/nonmatchings/ov01/tu036/tgtUnitGet.s",
+      "asm/nonmatchings/ov01/tu036/tgtUnitSet.s",
       "asm/nonmatchings/ov01/tu036/func_00A99D98.s",
       "asm/nonmatchings/ov01/tu036/func_00A99DA8.s",
       "asm/nonmatchings/ov01/tu036/func_00A99DB8.s",
@@ -3201,8 +3201,8 @@
      },
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu043/func_00A9C610.s",
-      "asm/nonmatchings/ov01/tu043/func_00A9C670.s",
-      "asm/nonmatchings/ov01/tu043/func_00A9C6D8.s",
+      "asm/nonmatchings/ov01/tu043/dataBoxPtrGet.s",
+      "asm/nonmatchings/ov01/tu043/dataBoxChk.s",
       "asm/nonmatchings/ov01/tu043/dataBoxInc.s",
       "asm/nonmatchings/ov01/tu043/dataBoxDec.s",
       "asm/nonmatchings/ov01/tu043/func_00A9C7A8.s",
@@ -3683,7 +3683,7 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu048/func_00AA1BE0.s",
+      "asm/nonmatchings/ov01/tu048/grGpInit.s",
       "asm/nonmatchings/ov01/tu048/func_00AA1BF0.s",
       "asm/nonmatchings/ov01/tu048/func_00AA1C58.s",
       "asm/nonmatchings/ov01/tu048/func_00AA1C78.s",
@@ -3699,10 +3699,10 @@
       "asm/nonmatchings/ov01/tu048/grPutFT4.s",
       "asm/nonmatchings/ov01/tu048/grPutFT4STQ.s",
       "asm/nonmatchings/ov01/tu048/grPutSpr.s",
-      "asm/nonmatchings/ov01/tu048/func_00AA27E8.s",
+      "asm/nonmatchings/ov01/tu048/grPacketSend.s",
       "asm/nonmatchings/ov01/tu048/grGsRegSet.s",
       "asm/nonmatchings/ov01/tu048/grGsRegListSet.s",
-      "asm/nonmatchings/ov01/tu048/func_00AA29B8.s",
+      "asm/nonmatchings/ov01/tu048/grFBAdrGet.s",
       "asm/nonmatchings/ov01/tu048/grBBIdxGet.s",
       "asm/nonmatchings/ov01/tu048/grDBIdxGet.s",
       "asm/nonmatchings/ov01/tu048/func_00AA2AA0.s",
@@ -3763,7 +3763,7 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu049/func_00AA2CE0.s",
+      "asm/nonmatchings/ov01/tu049/GS_REG_SET.s",
       "asm/nonmatchings/ov01/tu049/func_00AA2D18.s",
       "asm/nonmatchings/ov01/tu049/func_00AA2D50.s",
       "asm/nonmatchings/ov01/tu049/func_00AA2D90.s",
@@ -5432,7 +5432,7 @@
       "asm/nonmatchings/ov01/tu075/func_00AAADC0.s",
       "asm/nonmatchings/ov01/tu075/func_00AAADE0.s",
       "asm/nonmatchings/ov01/tu075/func_00AAADF0.s",
-      "asm/nonmatchings/ov01/tu075/func_00AAAE00.s",
+      "asm/nonmatchings/ov01/tu075/MGsGPInit.s",
       "asm/nonmatchings/ov01/tu075/func_00AAAE28.s",
       "asm/nonmatchings/ov01/tu075/func_00AAAEC8.s",
       "asm/nonmatchings/ov01/tu075/MSeFire.s"
@@ -5555,7 +5555,7 @@
      },
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu077/MSeGetActorMatrix.s",
-      "asm/nonmatchings/ov01/tu077/func_00AAB9B0.s",
+      "asm/nonmatchings/ov01/tu077/MEfGetActorCoord.s",
       "asm/nonmatchings/ov01/tu077/func_00AAB9E8.s",
       "asm/nonmatchings/ov01/tu077/func_00AABA30.s",
       "asm/nonmatchings/ov01/tu077/func_00AABB20.s",

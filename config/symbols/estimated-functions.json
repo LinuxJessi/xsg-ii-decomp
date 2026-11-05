@@ -342,7 +342,7 @@
      1
     ],
     [
-     "func_00A80D88",
+     "rnd",
      11013512,
      56,
      1
@@ -360,7 +360,7 @@
      1
     ],
     [
-     "func_00A80E40",
+     "grWorldMatGet",
      11013696,
      40,
      1
@@ -840,7 +840,7 @@
      1
     ],
     [
-     "func_00A840F0",
+     "unitInit",
      11026672,
      56,
      1
@@ -1686,7 +1686,7 @@
      1
     ],
     [
-     "func_00A89448",
+     "dataVPadModeSet",
      11048008,
      20,
      1
@@ -1908,7 +1908,7 @@
      1
     ],
     [
-     "func_00A8A8B0",
+     "dataDummySet",
      11053232,
      8,
      1
@@ -2418,7 +2418,7 @@
      1
     ],
     [
-     "func_00A8E6D8",
+     "calcStatIdx2Bit",
      11069144,
      12,
      1
@@ -2790,7 +2790,7 @@
      1
     ],
     [
-     "func_00A916A0",
+     "tgtFindNext",
      11081376,
      64,
      1
@@ -2862,7 +2862,7 @@
      1
     ],
     [
-     "func_00A91A78",
+     "sdvInitSpecialWork",
      11082360,
      36,
      1
@@ -3660,7 +3660,7 @@
      1
     ],
     [
-     "func_00A98F30",
+     "objCurRemove",
      11112240,
      60,
      1
@@ -3684,19 +3684,19 @@
      1
     ],
     [
-     "func_00A99CD8",
+     "tgtUnitAdrGet",
      11115736,
      120,
      1
     ],
     [
-     "func_00A99D50",
+     "tgtUnitGet",
      11115856,
      32,
      1
     ],
     [
-     "func_00A99D70",
+     "tgtUnitSet",
      11115888,
      40,
      1
@@ -4344,13 +4344,13 @@
      1
     ],
     [
-     "func_00A9C670",
+     "dataBoxPtrGet",
      11126384,
      104,
      1
     ],
     [
-     "func_00A9C6D8",
+     "dataBoxChk",
      11126488,
      48,
      1
@@ -5556,7 +5556,7 @@
      1
     ],
     [
-     "func_00AA1BE0",
+     "grGpInit",
      11148256,
      16,
      1
@@ -5652,7 +5652,7 @@
      1
     ],
     [
-     "func_00AA27E8",
+     "grPacketSend",
      11151336,
      144,
      1
@@ -5670,7 +5670,7 @@
      1
     ],
     [
-     "func_00AA29B8",
+     "grFBAdrGet",
      11151800,
      24,
      1
@@ -5700,7 +5700,7 @@
      1
     ],
     [
-     "func_00AA2CE0",
+     "GS_REG_SET",
      11152608,
      56,
      1
@@ -6978,7 +6978,7 @@
      1
     ],
     [
-     "func_00AAAE00",
+     "MGsGPInit",
      11185664,
      40,
      1
@@ -7044,7 +7044,7 @@
      1
     ],
     [
-     "func_00AAB9B0",
+     "MEfGetActorCoord",
      11188656,
      56,
      1
@@ -8364,7 +8364,7 @@
      2
     ],
     [
-     "func_001207A0",
+     "FlushCache",
      1181600,
      16,
      2
@@ -8658,7 +8658,7 @@
      2
     ],
     [
-     "func_00120E18",
+     "SyncDCache",
      1183256,
      124,
      2
@@ -9336,13 +9336,13 @@
      2
     ],
     [
-     "func_001246C0",
+     "sceOpen",
      1197760,
      644,
      2
     ],
     [
-     "func_00124948",
+     "sceClose",
      1198408,
      380,
      2
@@ -9354,13 +9354,13 @@
      2
     ],
     [
-     "func_00124D00",
+     "sceRead",
      1199360,
      608,
      2
     ],
     [
-     "func_00124F60",
+     "sceWrite",
      1199968,
      704,
      2
@@ -9384,7 +9384,7 @@
      2
     ],
     [
-     "func_00125920",
+     "sceRemove",
      1202464,
      28,
      2
@@ -9420,31 +9420,31 @@
      2
     ],
     [
-     "func_00125EC0",
+     "sceDopen",
      1203904,
      200,
      2
     ],
     [
-     "func_00125F88",
+     "sceDclose",
      1204104,
      360,
      2
     ],
     [
-     "func_001260F0",
+     "sceDread",
      1204464,
      344,
      2
     ],
     [
-     "func_00126248",
+     "sceGetstat",
      1204808,
      416,
      2
     ],
     [
-     "func_001263E8",
+     "sceChstat",
      1205224,
      572,
      2
@@ -9468,13 +9468,13 @@
      2
     ],
     [
-     "func_001269D0",
+     "sceMount",
      1206736,
      620,
      2
     ],
     [
-     "func_00126C40",
+     "sceUmount",
      1207360,
      28,
      2
@@ -9486,7 +9486,7 @@
      2
     ],
     [
-     "func_00126E98",
+     "sceDevctl",
      1207960,
      568,
      2
@@ -9636,7 +9636,7 @@
      2
     ],
     [
-     "func_001283C8",
+     "sceSifLoadModule",
      1213384,
      32,
      2
@@ -9828,13 +9828,13 @@
      2
     ],
     [
-     "func_00129260",
+     "DIntr",
      1217120,
      72,
      2
     ],
     [
-     "func_001292A8",
+     "EIntr",
      1217192,
      24,
      2
@@ -10014,7 +10014,7 @@
      2
     ],
     [
-     "func_00129A88",
+     "sceGsResetGraph",
      1219208,
      400,
      2
@@ -10068,7 +10068,7 @@
      2
     ],
     [
-     "func_0012A428",
+     "sceGsPutDrawEnv",
      1221672,
      232,
      2
@@ -10080,7 +10080,7 @@
      2
     ],
     [
-     "func_0012A5A8",
+     "sceGsSyncPath",
      1222056,
      788,
      2
@@ -10116,7 +10116,7 @@
      2
     ],
     [
-     "func_0012AAA8",
+     "sceGsSetDefStoreImage",
      1223336,
      320,
      2
@@ -10128,7 +10128,7 @@
      2
     ],
     [
-     "func_0012AD68",
+     "sceGsExecStoreImage",
      1224040,
      156,
      2
@@ -10164,7 +10164,7 @@
      2
     ],
     [
-     "func_0012B3F8",
+     "sceGsSyncVCallback",
      1225720,
      160,
      2
@@ -10194,13 +10194,13 @@
      2
     ],
     [
-     "func_0012B528",
+     "sceVif1PkCnt",
      1226024,
      88,
      2
     ],
     [
-     "func_0012B580",
+     "sceVif1PkRef",
      1226112,
      152,
      2
@@ -10272,7 +10272,7 @@
      2
     ],
     [
-     "func_0012B9B8",
+     "sceVif1PkAddDataN",
      1227192,
      64,
      2
@@ -10296,13 +10296,13 @@
      2
     ],
     [
-     "func_0012BC60",
+     "sceVif1PkOpenDirectHLCode",
      1227872,
      88,
      2
     ],
     [
-     "func_0012BCB8",
+     "sceVif1PkCloseDirectHLCode",
      1227960,
      44,
      2
@@ -10314,7 +10314,7 @@
      2
     ],
     [
-     "func_0012BD60",
+     "sceVif1PkAddDirectDataN",
      1228128,
      116,
      2
@@ -10596,7 +10596,7 @@
      2
     ],
     [
-     "func_0012DE30",
+     "sceCdSync",
      1236528,
      160,
      2
@@ -10632,7 +10632,7 @@
      2
     ],
     [
-     "func_0012E638",
+     "sceCdDiskReady",
      1238584,
      516,
      2
@@ -10644,7 +10644,7 @@
      2
     ],
     [
-     "func_0012E870",
+     "sceCdRead",
      1239152,
      480,
      2
@@ -10710,7 +10710,7 @@
      2
     ],
     [
-     "func_0012F1A0",
+     "sceCdReadClock",
      1241504,
      248,
      2
@@ -10812,7 +10812,7 @@
      2
     ],
     [
-     "func_0012FC38",
+     "sceMcOpen",
      1244216,
      292,
      2
@@ -10824,7 +10824,7 @@
      2
     ],
     [
-     "func_0012FD98",
+     "sceMcClose",
      1244568,
      184,
      2
@@ -10842,13 +10842,13 @@
      2
     ],
     [
-     "func_0012FFB8",
+     "sceMcRead",
      1245112,
      276,
      2
     ],
     [
-     "func_001300D0",
+     "sceMcWrite",
      1245392,
      372,
      2
@@ -10866,7 +10866,7 @@
      2
     ],
     [
-     "func_00130288",
+     "sceMcSync",
      1245832,
      224,
      2
@@ -10878,7 +10878,7 @@
      2
     ],
     [
-     "func_001303C0",
+     "sceMcGetInfo",
      1246144,
      380,
      2
@@ -29064,7 +29064,7 @@
      2
     ],
     [
-     "func_00194890",
+     "xglSleep",
      1656976,
      36,
      2
@@ -29076,7 +29076,7 @@
      2
     ],
     [
-     "func_001948D8",
+     "xglTimer0Get",
      1657048,
      16,
      2
@@ -29190,7 +29190,7 @@
      2
     ],
     [
-     "func_001955A0",
+     "xglFontPrintf",
      1660320,
      80,
      2
@@ -29202,7 +29202,7 @@
      2
     ],
     [
-     "func_00195640",
+     "xglFontPrintDirect",
      1660480,
      28,
      2
@@ -29226,7 +29226,7 @@
      2
     ],
     [
-     "func_00195760",
+     "xglFontDebugPrintf",
      1660768,
      288,
      2
@@ -29238,13 +29238,13 @@
      2
     ],
     [
-     "func_00195938",
+     "xglFontGetStringWidth2",
      1661240,
      1344,
      2
     ],
     [
-     "func_00195E78",
+     "xglFontGetStringWidth",
      1662584,
      24,
      2
@@ -29430,19 +29430,19 @@
      2
     ],
     [
-     "func_00198F50",
+     "xglFontGetLoadAddress",
      1675088,
      12,
      2
     ],
     [
-     "func_00198F60",
+     "xglFontGetFlags",
      1675104,
      12,
      2
     ],
     [
-     "func_00198F70",
+     "xglFontSetFlags",
      1675120,
      16,
      2
@@ -29472,7 +29472,7 @@
      2
     ],
     [
-     "func_00199178",
+     "xglDmaBufferReset",
      1675640,
      12,
      2
@@ -29484,13 +29484,13 @@
      2
     ],
     [
-     "func_001991E0",
+     "xglDmaBufferRef",
      1675744,
      40,
      2
     ],
     [
-     "func_00199208",
+     "xglDmaBufferCall",
      1675784,
      36,
      2
@@ -29550,13 +29550,13 @@
      2
     ],
     [
-     "func_00199F80",
+     "xglTaskEntryPrev",
      1679232,
      116,
      2
     ],
     [
-     "func_00199FF8",
+     "xglTaskEntryNext",
      1679352,
      116,
      2
@@ -29568,7 +29568,7 @@
      2
     ],
     [
-     "func_0019A0D8",
+     "xglTaskWaitRemove",
      1679576,
      20,
      2
@@ -29586,7 +29586,7 @@
      2
     ],
     [
-     "func_0019A320",
+     "xglMenuDrawType0",
      1680160,
      8,
      2
@@ -29610,19 +29610,19 @@
      2
     ],
     [
-     "func_0019A858",
+     "xglMenuInitial",
      1681496,
      52,
      2
     ],
     [
-     "func_0019A890",
+     "hdd_error",
      1681552,
      52,
      2
     ],
     [
-     "func_0019A8C8",
+     "xglCdPowerOffCB",
      1681608,
      16,
      2
@@ -29658,7 +29658,7 @@
      2
     ],
     [
-     "func_0019AE28",
+     "BCD2INT",
      1682984,
      32,
      2
@@ -29688,13 +29688,13 @@
      2
     ],
     [
-     "func_0019B2A8",
+     "xglCdDefaultCallback",
      1684136,
      8,
      2
     ],
     [
-     "func_0019B2B0",
+     "xglCdDummyCallback",
      1684144,
      8,
      2
@@ -29730,7 +29730,7 @@
      2
     ],
     [
-     "func_0019B720",
+     "xglCdGetFilePos",
      1685280,
      1236,
      2
@@ -29748,13 +29748,13 @@
      2
     ],
     [
-     "func_0019BC98",
+     "xglCdReadFilePart",
      1686680,
      1352,
      2
     ],
     [
-     "func_0019C1E0",
+     "xglCdReadFile",
      1688032,
      28,
      2
@@ -29814,7 +29814,7 @@
      2
     ],
     [
-     "func_0019C938",
+     "xglCdStreamReadRingCore",
      1689912,
      44,
      2
@@ -29910,7 +29910,7 @@
      2
     ],
     [
-     "func_0019DA48",
+     "xglCdArcCheck",
      1694280,
      52,
      2
@@ -29952,7 +29952,7 @@
      2
     ],
     [
-     "func_0019DE70",
+     "xglMcSetFullPath",
      1695344,
      40,
      2
@@ -29988,7 +29988,7 @@
      2
     ],
     [
-     "func_0019E630",
+     "xglMcMain",
      1697328,
      2536,
      2
@@ -30138,37 +30138,37 @@
      2
     ],
     [
-     "func_001A0A78",
+     "xglFlagsSet1",
      1706616,
      28,
      2
     ],
     [
-     "func_001A0A98",
+     "xglFlagsSet2",
      1706648,
      28,
      2
     ],
     [
-     "func_001A0AB8",
+     "xglFlagsSet4",
      1706680,
      28,
      2
     ],
     [
-     "func_001A0AD8",
+     "xglFlagsSet8",
      1706712,
      28,
      2
     ],
     [
-     "func_001A0AF8",
+     "xglFlagsSet16",
      1706744,
      28,
      2
     ],
     [
-     "func_001A0B18",
+     "xglFlagsSet32",
      1706776,
      28,
      2
@@ -30186,37 +30186,37 @@
      2
     ],
     [
-     "func_001A0C08",
+     "xglFlagsGet1",
      1707016,
      24,
      2
     ],
     [
-     "func_001A0C20",
+     "xglFlagsGet2",
      1707040,
      24,
      2
     ],
     [
-     "func_001A0C38",
+     "xglFlagsGet4",
      1707064,
      24,
      2
     ],
     [
-     "func_001A0C50",
+     "xglFlagsGet8",
      1707088,
      24,
      2
     ],
     [
-     "func_001A0C68",
+     "xglFlagsGet16",
      1707112,
      24,
      2
     ],
     [
-     "func_001A0C80",
+     "xglFlagsGet32",
      1707136,
      24,
      2
@@ -30240,7 +30240,7 @@
      2
     ],
     [
-     "func_001A0F30",
+     "FFDCT",
      1707824,
      420,
      2
@@ -30294,7 +30294,7 @@
      2
     ],
     [
-     "func_001A2070",
+     "DefineRestartInterval",
      1712240,
      40,
      2
@@ -30792,7 +30792,7 @@
      2
     ],
     [
-     "func_001A4ED0",
+     "xglHddCheck2",
      1724112,
      56,
      2
@@ -30816,7 +30816,7 @@
      2
     ],
     [
-     "func_001A50A0",
+     "xglHddMcUmount",
      1724576,
      48,
      2
@@ -31050,7 +31050,7 @@
      2
     ],
     [
-     "func_001A75A8",
+     "xglSRand",
      1734056,
      92,
      2
@@ -31062,7 +31062,7 @@
      2
     ],
     [
-     "func_001A7690",
+     "xglFRand",
      1734288,
      44,
      2
@@ -31074,13 +31074,13 @@
      2
     ],
     [
-     "func_001A76EC",
+     "F2I",
      1734380,
      60,
      2
     ],
     [
-     "func_001A7728",
+     "I2F",
      1734440,
      48,
      2
@@ -31158,85 +31158,85 @@
      2
     ],
     [
-     "func_001A8014",
+     "xglSin",
      1736724,
      76,
      2
     ],
     [
-     "func_001A8060",
+     "xglCos",
      1736800,
      76,
      2
     ],
     [
-     "func_001A80AC",
+     "xglVectorDiv",
      1736876,
      188,
      2
     ],
     [
-     "func_001A8168",
+     "xglVectorDivXYZ",
      1737064,
      168,
      2
     ],
     [
-     "func_001A8210",
+     "xglVectorMulAdd",
      1737232,
      208,
      2
     ],
     [
-     "func_001A82E0",
+     "xglVectorMulAddXYZ",
      1737440,
      184,
      2
     ],
     [
-     "func_001A8398",
+     "xglVectorMulSub",
      1737624,
      208,
      2
     ],
     [
-     "func_001A8468",
+     "xglVectorMulSubXYZ",
      1737832,
      184,
      2
     ],
     [
-     "func_001A8520",
+     "xglVectorDivAdd",
      1738016,
      240,
      2
     ],
     [
-     "func_001A8610",
+     "xglVectorDivAddXYZ",
      1738256,
      208,
      2
     ],
     [
-     "func_001A86E0",
+     "xglVectorDivSub",
      1738464,
      240,
      2
     ],
     [
-     "func_001A87D0",
+     "xglVectorDivSubXYZ",
      1738704,
      208,
      2
     ],
     [
-     "func_001A88A0",
+     "xglVectorScale",
      1738912,
      140,
      2
     ],
     [
-     "func_001A892C",
+     "xglVectorScaleXYZ",
      1739052,
      132,
      2
@@ -31278,7 +31278,7 @@
      2
     ],
     [
-     "func_001A8E48",
+     "xglVectorInner",
      1740360,
      152,
      2
@@ -31290,7 +31290,7 @@
      2
     ],
     [
-     "func_001A8F70",
+     "xglVectorOuter",
      1740656,
      76,
      2
@@ -31314,7 +31314,7 @@
      2
     ],
     [
-     "func_001A90F8",
+     "xglVectorLength",
      1741048,
      84,
      2
@@ -31332,7 +31332,7 @@
      2
     ],
     [
-     "func_001A9200",
+     "xglVectorNormal_001A9200",
      1741312,
      80,
      2
@@ -31356,7 +31356,7 @@
      2
     ],
     [
-     "func_001A973C",
+     "xglVectorMulMat",
      1742652,
      96,
      2
@@ -31386,7 +31386,7 @@
      2
     ],
     [
-     "func_001A99CC",
+     "xglMatrixMul",
      1743308,
      168,
      2
@@ -31440,7 +31440,7 @@
      2
     ],
     [
-     "func_001AA628",
+     "xglMatrixFrustum",
      1746472,
      392,
      2
@@ -31488,19 +31488,19 @@
      2
     ],
     [
-     "func_001AA988",
+     "xglMatrixStackRotX",
      1747336,
      72,
      2
     ],
     [
-     "func_001AA9D0",
+     "xglMatrixStackRotY",
      1747408,
      72,
      2
     ],
     [
-     "func_001AAA18",
+     "xglMatrixStackRotZ",
      1747480,
      72,
      2
@@ -31512,13 +31512,13 @@
      2
     ],
     [
-     "func_001AAB30",
+     "xglMatrixStackSave",
      1747760,
      60,
      2
     ],
     [
-     "func_001AAB6C",
+     "xglMatrixStackLoad",
      1747820,
      60,
      2
@@ -31560,7 +31560,7 @@
      2
     ],
     [
-     "func_001AB134",
+     "xglQuaternion2Matrix",
      1749300,
      168,
      2
@@ -31572,7 +31572,7 @@
      2
     ],
     [
-     "func_001AB2C4",
+     "xglRandSeedInit",
      1749700,
      44,
      2
@@ -31866,19 +31866,19 @@
      2
     ],
     [
-     "func_001B10D4",
+     "xglCameraViewScreen",
      1773780,
      1172,
      2
     ],
     [
-     "func_001B1568",
+     "xglCameraViewTravel",
      1774952,
      616,
      2
     ],
     [
-     "func_001B17D0",
+     "xglCameraViewVolume",
      1775568,
      1280,
      2
@@ -31890,13 +31890,13 @@
      2
     ],
     [
-     "func_001B1D34",
+     "xglCameraMove",
      1776948,
      132,
      2
     ],
     [
-     "func_001B1DB8",
+     "xglCameraMoveOffset",
      1777080,
      96,
      2
@@ -31908,7 +31908,7 @@
      2
     ],
     [
-     "func_001B1FCC",
+     "xglCameraClipRangeDefault",
      1777612,
      60,
      2
@@ -31956,7 +31956,7 @@
      2
     ],
     [
-     "func_001B23B8",
+     "xglPacketGetCurrent",
      1778616,
      36,
      2
@@ -31974,7 +31974,7 @@
      2
     ],
     [
-     "func_001B26DC",
+     "xglPacketSend",
      1779420,
      72,
      2
@@ -32004,7 +32004,7 @@
      2
     ],
     [
-     "func_001B27EC",
+     "xglStudioGetCamera",
      1779692,
      80,
      2
@@ -32016,13 +32016,13 @@
      2
     ],
     [
-     "func_001B28C8",
+     "xglStudioSelectGetActiveCamera",
      1779912,
      184,
      2
     ],
     [
-     "func_001B2980",
+     "xglStudioFlushActiveCamera",
      1780096,
      132,
      2
@@ -32040,7 +32040,7 @@
      2
     ],
     [
-     "func_001B2A50",
+     "xglStudioGetLight2",
      1780304,
      36,
      2
@@ -32052,7 +32052,7 @@
      2
     ],
     [
-     "func_001B2AB8",
+     "xglStudioMainCameraInit",
      1780408,
      156,
      2
@@ -32064,7 +32064,7 @@
      2
     ],
     [
-     "func_001B2B98",
+     "xglStudioInit",
      1780632,
      220,
      2
@@ -32130,13 +32130,13 @@
      2
     ],
     [
-     "func_001B394C",
+     "xglRenderVSyncCallback",
      1784140,
      196,
      2
     ],
     [
-     "func_001B3A10",
+     "xglRenderSyncInit",
      1784336,
      60,
      2
@@ -32148,19 +32148,19 @@
      2
     ],
     [
-     "func_001B3D2C",
+     "xglRenderDrawEnvInit",
      1785132,
      2868,
      2
     ],
     [
-     "func_001B4860",
+     "xglRenderDrawEnvMove",
      1788000,
      256,
      2
     ],
     [
-     "func_001B4960",
+     "xglRenderDispEnvInit",
      1788256,
      216,
      2
@@ -32172,37 +32172,37 @@
      2
     ],
     [
-     "func_001B4CCC",
+     "xglRenderClearDepth",
      1789132,
      48,
      2
     ],
     [
-     "func_001B4CFC",
+     "xglRenderClearFrame",
      1789180,
      48,
      2
     ],
     [
-     "func_001B4D2C",
+     "xglRenderClearColor",
      1789228,
      112,
      2
     ],
     [
-     "func_001B4D9C",
+     "xglRenderClearEnvInit",
      1789340,
      300,
      2
     ],
     [
-     "func_001B4EC8",
+     "xglRenderClearEnvMove",
      1789640,
      88,
      2
     ],
     [
-     "func_001B4F20",
+     "xglRenderSetReso",
      1789728,
      248,
      2
@@ -32214,13 +32214,13 @@
      2
     ],
     [
-     "func_001B50A4",
+     "xglRenderDispOff",
      1790116,
      56,
      2
     ],
     [
-     "func_001B50DC",
+     "xglRenderDispOn",
      1790172,
      56,
      2
@@ -32322,7 +32322,7 @@
      2
     ],
     [
-     "func_001B6194",
+     "culling_cell_disp",
      1794452,
      36,
      2
@@ -32340,7 +32340,7 @@
      2
     ],
     [
-     "func_001B641C",
+     "plane_from_points",
      1795100,
      356,
      2
@@ -32364,7 +32364,7 @@
      2
     ],
     [
-     "func_001B6CD0",
+     "xglCullingExist",
      1797328,
      40,
      2
@@ -32382,7 +32382,7 @@
      2
     ],
     [
-     "func_001B6DB4",
+     "check_culling_map",
      1797556,
      212,
      2
@@ -32406,19 +32406,19 @@
      2
     ],
     [
-     "func_001B7344",
+     "xglCullingIgnore",
      1798980,
      40,
      2
     ],
     [
-     "func_001B736C",
+     "xglCullingIgnoreOff",
      1799020,
      36,
      2
     ],
     [
-     "func_001B7390",
+     "xglCullingMapDebug",
      1799056,
      32,
      2
@@ -32454,7 +32454,7 @@
      2
     ],
     [
-     "func_001B74D8",
+     "_CurApplyMatrix",
      1799384,
      72,
      2
@@ -32466,7 +32466,7 @@
      2
     ],
     [
-     "func_001B7564",
+     "_CurMatrixMul",
      1799524,
      132,
      2
@@ -33012,25 +33012,25 @@
      2
     ],
     [
-     "func_001BB7B8",
+     "nmlModelSetZwrite",
      1816504,
      68,
      2
     ],
     [
-     "func_001BB7FC",
+     "nmlModelSetTransparency",
      1816572,
      156,
      2
     ],
     [
-     "func_001BB898",
+     "nmlModelSetReflTransparency",
      1816728,
      144,
      2
     ],
     [
-     "func_001BB928",
+     "nmlModelSetStencil",
      1816872,
      68,
      2
@@ -34950,13 +34950,13 @@
      2
     ],
     [
-     "func_001E4CF8",
+     "GameSnapShotNumber",
      1985784,
      32,
      2
     ],
     [
-     "func_001E4D18",
+     "GameSnapShotCheck",
      1985816,
      8,
      2
@@ -35046,7 +35046,7 @@
      2
     ],
     [
-     "func_001E69B0",
+     "DefocusMainType09Final",
      1993136,
      60,
      2
@@ -35142,7 +35142,7 @@
      2
     ],
     [
-     "func_001E8498",
+     "DrawImage",
      2000024,
      312,
      2
@@ -35166,7 +35166,7 @@
      2
     ],
     [
-     "func_001E8910",
+     "redraw_frame",
      2001168,
      60,
      2
@@ -36762,13 +36762,13 @@
      2
     ],
     [
-     "func_00200080",
+     "HitCheckMapUnitPos",
      2097280,
      24,
      2
     ],
     [
-     "func_00200098",
+     "HitCheckMapUnitPosSize",
      2097304,
      208,
      2
@@ -37416,7 +37416,7 @@
      2
     ],
     [
-     "func_00209FA8",
+     "Get_Angle",
      2138024,
      44,
      2
@@ -37440,7 +37440,7 @@
      2
     ],
     [
-     "func_0020A368",
+     "Check_CrossingOver",
      2138984,
      156,
      2
@@ -37560,7 +37560,7 @@
      2
     ],
     [
-     "func_0020B4C0",
+     "CheckCrossLine",
      2143424,
      156,
      2
@@ -41142,7 +41142,7 @@
      2
     ],
     [
-     "func_00236270",
+     "objRemove",
      2318960,
      80,
      2
@@ -41514,7 +41514,7 @@
      2
     ],
     [
-     "func_0023D058",
+     "_Link",
      2347096,
      12,
      2
@@ -41532,25 +41532,25 @@
      2
     ],
     [
-     "func_0023D0F8",
+     "_Unlink",
      2347256,
      28,
      2
     ],
     [
-     "func_0023D118",
+     "_MarkAlloc",
      2347288,
      12,
      2
     ],
     [
-     "func_0023D128",
+     "_UnmarkAlloc",
      2347304,
      8,
      2
     ],
     [
-     "func_0023D130",
+     "_IsAllocated",
      2347312,
      12,
      2
@@ -41562,7 +41562,7 @@
      2
     ],
     [
-     "func_0023D170",
+     "_IsCollectMagicString",
      2347376,
      64,
      2
@@ -41610,7 +41610,7 @@
      2
     ],
     [
-     "func_0023D8E8",
+     "RgHeapIsInSelf",
      2349288,
      48,
      2
@@ -42180,7 +42180,7 @@
      2
     ],
     [
-     "func_00246D80",
+     "nmlModelSetMulColor",
      2387328,
      24,
      2
@@ -42222,7 +42222,7 @@
      2
     ],
     [
-     "func_00246E08",
+     "nmlModelUseSubWindow",
      2387464,
      36,
      2
@@ -43788,13 +43788,13 @@
      2
     ],
     [
-     "func_00253B18",
+     "svGetImageItem",
      2439960,
      32,
      2
     ],
     [
-     "func_00253B38",
+     "svImageListCreate",
      2439992,
      36,
      2
@@ -43806,13 +43806,13 @@
      2
     ],
     [
-     "func_00253BB0",
+     "svImageListAlloc",
      2440112,
      64,
      2
     ],
     [
-     "func_00253BF0",
+     "svGetTypeList",
      2440176,
      28,
      2
@@ -43872,13 +43872,13 @@
      2
     ],
     [
-     "func_00254280",
+     "svGetSizeBit",
      2441856,
      64,
      2
     ],
     [
-     "func_002542C0",
+     "svAddImage",
      2441920,
      484,
      2
@@ -43896,13 +43896,13 @@
      2
     ],
     [
-     "func_00254628",
+     "svAddScript",
      2442792,
      136,
      2
     ],
     [
-     "func_002546B0",
+     "svAddScript2",
      2442928,
      136,
      2
@@ -44016,7 +44016,7 @@
      2
     ],
     [
-     "func_00255398",
+     "sefInitClipViewVolume",
      2446232,
      40,
      2
@@ -44208,7 +44208,7 @@
      2
     ],
     [
-     "func_002590C0",
+     "svDrawAlters",
      2461888,
      44,
      2
@@ -44496,7 +44496,7 @@
      2
     ],
     [
-     "func_0025BD10",
+     "sefFreeLineData",
      2473232,
      84,
      2
@@ -45222,7 +45222,7 @@
      2
     ],
     [
-     "func_00261B98",
+     "sefMergeMatrixPos",
      2497432,
      40,
      2
@@ -45330,13 +45330,13 @@
      2
     ],
     [
-     "func_00262FC0",
+     "sefGetCubePosBtm",
      2502592,
      88,
      2
     ],
     [
-     "func_00263018",
+     "sefGetCubePosTop",
      2502680,
      48,
      2
@@ -45702,7 +45702,7 @@
      2
     ],
     [
-     "func_00265AB8",
+     "srsSetLoadMode",
      2513592,
      8,
      2
@@ -45714,7 +45714,7 @@
      2
     ],
     [
-     "func_00265AC8",
+     "srsSetViewPath",
      2513608,
      32,
      2
@@ -45744,7 +45744,7 @@
      2
     ],
     [
-     "func_00265DB8",
+     "fileLoad",
      2514360,
      500,
      2
@@ -45756,7 +45756,7 @@
      2
     ],
     [
-     "func_00265FC8",
+     "srsGetEffectName",
      2514888,
      80,
      2
@@ -45774,7 +45774,7 @@
      2
     ],
     [
-     "func_002660A0",
+     "srsInitCdRead",
      2515104,
      8,
      2
@@ -45876,7 +45876,7 @@
      2
     ],
     [
-     "func_00266A28",
+     "srsFileLoad",
      2517544,
      20,
      2
@@ -45894,13 +45894,13 @@
      2
     ],
     [
-     "func_00266B78",
+     "scGetImmAdrImmIdx2",
      2517880,
      60,
      2
     ],
     [
-     "func_00266BB8",
+     "scGetImmNumIdx",
      2517944,
      16,
      2
@@ -45918,13 +45918,13 @@
      2
     ],
     [
-     "func_00266D58",
+     "scOfsToAdr",
      2518360,
      32,
      2
     ],
     [
-     "func_00266D78",
+     "sdvInitAmbient",
      2518392,
      12,
      2
@@ -45936,7 +45936,7 @@
      2
     ],
     [
-     "func_00266D90",
+     "sdvSetAmbStateSub",
      2518416,
      88,
      2
@@ -45948,19 +45948,19 @@
      2
     ],
     [
-     "func_00266E00",
+     "sdvSetAmbState2",
      2518528,
      24,
      2
     ],
     [
-     "func_00266E18",
+     "sdvSetAmbient",
      2518552,
      8,
      2
     ],
     [
-     "func_00266E20",
+     "sdvRestoreAmbient",
      2518560,
      36,
      2
@@ -46218,7 +46218,7 @@
      2
     ],
     [
-     "func_0026BAC8",
+     "sdvDrawAlters",
      2538184,
      172,
      2
@@ -46704,7 +46704,7 @@
      2
     ],
     [
-     "func_00271E18",
+     "MMathCalcHermitePrm",
      2563608,
      60,
      2
@@ -46716,7 +46716,7 @@
      2
     ],
     [
-     "func_00271E80",
+     "MMathDeg2RadVectorI",
      2563712,
      40,
      2
@@ -46728,13 +46728,13 @@
      2
     ],
     [
-     "func_00271ED0",
+     "MMathRad2DegVectorI",
      2563792,
      40,
      2
     ],
     [
-     "func_00271EF8",
+     "MMathNormalizeVector2",
      2563832,
      48,
      2
@@ -46800,31 +46800,31 @@
      2
     ],
     [
-     "func_00272198",
+     "MMathCalcOffsetXYZ",
      2564504,
      64,
      2
     ],
     [
-     "func_002721D8",
+     "MMathSubVectorMulS",
      2564568,
      40,
      2
     ],
     [
-     "func_00272200",
+     "MMathSubVectorDivS",
      2564608,
      48,
      2
     ],
     [
-     "func_00272230",
+     "MMathDivVector",
      2564656,
      64,
      2
     ],
     [
-     "func_00272270",
+     "MMathDivVectorS",
      2564720,
      40,
      2
@@ -46836,7 +46836,7 @@
      2
     ],
     [
-     "func_002722E8",
+     "MMathDivVectorS4",
      2564840,
      40,
      2
@@ -46860,13 +46860,13 @@
      2
     ],
     [
-     "func_00272398",
+     "MMathVectorCrossProduct",
      2565016,
      36,
      2
     ],
     [
-     "func_002723C0",
+     "MMathVectorInterpolation",
      2565056,
      44,
      2
@@ -46926,7 +46926,7 @@
      2
     ],
     [
-     "func_00272928",
+     "MMathApplyMatrix",
      2566440,
      52,
      2
@@ -46938,7 +46938,7 @@
      2
     ],
     [
-     "func_002729E0",
+     "MMathScaleMatrix",
      2566624,
      64,
      2
@@ -46956,7 +46956,7 @@
      2
     ],
     [
-     "func_00272AA8",
+     "MMathTranslateMatrix",
      2566824,
      64,
      2
@@ -50646,7 +50646,7 @@
      2
     ],
     [
-     "func_00292E90",
+     "xglVectorNormal",
      2698896,
      40,
      2
@@ -51030,7 +51030,7 @@
      2
     ],
     [
-     "func_00296C58",
+     "XrgInnerVector",
      2714712,
      48,
      2
@@ -52140,7 +52140,7 @@
      2
     ],
     [
-     "func_002A1A30",
+     "cosf",
      2759216,
      212,
      2
@@ -52158,7 +52158,7 @@
      2
     ],
     [
-     "func_002A1C20",
+     "sinf",
      2759712,
      232,
      2
@@ -52200,7 +52200,7 @@
      2
     ],
     [
-     "func_002A1DF8",
+     "atan2f",
      2760184,
      20,
      2
@@ -52212,7 +52212,7 @@
      2
     ],
     [
-     "func_002A1E28",
+     "sqrtf",
      2760232,
      20,
      2
@@ -52320,7 +52320,7 @@
      2
     ],
     [
-     "func_002A4EE8",
+     "__muldi3",
      2772712,
      116,
      2
@@ -52698,7 +52698,7 @@
      2
     ],
     [
-     "func_002A9EB4",
+     "memset",
      2793140,
      192,
      2
@@ -52722,7 +52722,7 @@
      2
     ],
     [
-     "func_002AA0A8",
+     "printf",
      2793640,
      112,
      2
@@ -52842,25 +52842,25 @@
      2
     ],
     [
-     "func_002AA91C",
+     "strchr",
      2795804,
      400,
      2
     ],
     [
-     "func_002AAAAC",
+     "strcmp",
      2796204,
      324,
      2
     ],
     [
-     "func_002AABF0",
+     "strcpy",
      2796528,
      276,
      2
     ],
     [
-     "func_002AAD04",
+     "strlen",
      2796804,
      312,
      2
@@ -52872,7 +52872,7 @@
      2
     ],
     [
-     "func_002AAFF0",
+     "strncmp",
      2797552,
      440,
      2
@@ -52986,7 +52986,7 @@
      2
     ],
     [
-     "func_002AF050",
+     "vsprintf",
      2814032,
      84,
      2

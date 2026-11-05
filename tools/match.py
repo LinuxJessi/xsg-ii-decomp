@@ -76,6 +76,10 @@ def extent(elf, span):
     return section, data
 
 
+SHARED_VECTOR_TYPEDEFS = ('typedef Vector4 AlignedVector4 __attribute__((aligned(16)));',
+                          'typedef Vector4 DoublewordAlignedVector4 __attribute__((aligned(8)));')
+
+
 def ordinary_c(text, staged=None, headers=(), allow_nested=False):
     require('\x00' not in text and '??' not in text and '%:' not in text,
             'non-ordinary C encoding or alternative preprocessor tokens')
@@ -90,6 +94,10 @@ def ordinary_c(text, staged=None, headers=(), allow_nested=False):
     # not packed records, arbitrary attributes, or a different compiler.
     from tools import unaligned_scalar
     text = unaligned_scalar.admission_text(text)
+    # include/shared.h's two vector typedefs reach every preprocessed search base; tools/tu_audit.py admits
+    # exactly these two lines too (user 2026-11-01 and 2026-11-02).
+    for typedef in SHARED_VECTOR_TYPEDEFS:
+        text = text.replace(typedef, ' ')
     require(not re.search(r'\b(?:asm|__asm|__asm__|__attribute|__attribute__|_Pragma)\b|\.incbin', text),
             'ASM, incbin, attributes or pragmas are not ordinary candidate C')
     if not allow_nested:

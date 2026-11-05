@@ -14,29 +14,13 @@ The Sony SDK and public libraries do not need to be recovered.
 
 ## Progress
 
-Recovery has not started. There is no published source yet, and the function count is
-an estimate. All three files rebuild byte-identical from assembly and data scaffolding,
-which counts for nothing below.
-
-<!-- coverage-report:begin -->
-Recovered 0 of 5,055 in-scope game function(s) (0.000%).
-
-- `exact_c` (pure C): 0 function(s)
-- `exact_c_with_asm`: 0 function(s)
-- `exact_asm`: 0 function(s)
-- `exact_vu_microcode`: no accepted VU microprogram
-- empty-body functions: 0 of the counted function(s) are 8-byte `jr ra; nop` bodies
-- These counts come from the tracked object tables, the tracked symbol
-  tables and the published source. This tree cannot check that each
-  counted function matches its accepted record under its recorded
-  contract, independently reviewed: config/vu-build.json are not tracked.
-<!-- coverage-report:end -->
+Recovered 289 of 5,055 in-scope game function(s) (5.717%).
 
 | Version | Target | Functions | Progress |
 | --- | --- | ---: | ---: |
-| NTSC-U | `SLUS_208.92` | 0 / 3,774 | 0.000% |
-| NTSC-U | `OV01.OVL` | 0 / 1,259 | 0.000% |
-| NTSC-U | `OV02.OVL` | 0 / 22 | 0.000% |
+| NTSC-U | `SLUS_208.92` | 256 / 3,774 | 6.783% |
+| NTSC-U | `OV01.OVL` | 30 / 1,259 | 2.383% |
+| NTSC-U | `OV02.OVL` | 3 / 22 | 13.636% |
 
 ## Building
 
@@ -124,11 +108,6 @@ ninja gate          # + per-unit status and the whole-file SHA-256 gate
 
 `ninja gate` writes `build/gate.json`. `"result": "pass"` means every one of the
 three files came out byte for byte identical to your original.
-
-## Contributing
-
-Recovery has not started. A function will count when its translation unit's source
-defines it in C and the whole-file gate passes.
 
 ## Acknowledgments
 

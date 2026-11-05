@@ -39,6 +39,7 @@ from elfinfo import Elf  # noqa: E402
 MAIN_MAP = ROOT / ".work/tu-migration/map-main/tu-map-main.json"
 OVL_MAP = ROOT / ".work/tu-migration/map-ovl/tu-map-ovl.json"
 REVIEWED_NAMES = ROOT / "config/symbols/function-names.json"
+REVIEWED_DATA = ROOT / "config/symbols/data-names.json"
 GAME = ROOT / "game/extracted-iso"
 OVERLAYS = ("ov01", "ov02")
 FILES = dict(main="SLUS_208.92", ov01="OV01.OVL", ov02="OV02.OVL")
@@ -202,6 +203,15 @@ def yaml_options(unit, image, overlay):
     return lines
 
 
+def data_symbol_lines(unit):
+    """Data labels chosen for one unit's link (tools/tu/x1_port.py plan), after its functions."""
+    if not REVIEWED_DATA.is_file():
+        return ""
+    wanted = json.loads(REVIEWED_DATA.read_bytes()).get("units", {}).get(unit) or {}
+    return "".join(f"{name} = 0x{int(va, 16):08X};\n"
+                   for va, name in sorted(wanted.items(), key=lambda item: int(item[0], 16)))
+
+
 def symbol_line(name, va, size=None):
     tail = "type:func" + (f" size:0x{size:X}" if size else "")
     return f"{name} = 0x{va:08X}; // {tail}\n"
@@ -271,7 +281,7 @@ def build_overlay(unit, image, record, main_names, out):
     externals = {va: (name if name not in own else f"func_{va:08X}")
                  for va, name in main_names.items()}
     table += "".join(symbol_line(name, va) for va, name in sorted(externals.items()))
-    out[f"config/symbols/{unit}.txt"] = table
+    out[f"config/symbols/{unit}.txt"] = table + data_symbol_lines(unit)
     out[f"config/symbols/{unit}.main-symbols.ld"] = (
         "/* MAIN function symbols for overlay links (estimated, tools/tu/x2_scaffold.py) */\n"
         + "".join(f"{name} = 0x{va:08X};\n" for va, name in sorted(externals.items())))
@@ -521,7 +531,7 @@ def build_main(image, record, ov02_tus, ov02_stems, ov02_names, ov02_sizes, out)
     for va, name in sorted(ov02_names.items()):
         # OV02's functions at their shared VAs, by address where main spells a name otherwise.
         table += symbol_line(name if name not in own else f"func_{va:08X}", va)
-    out["config/symbols/main.txt"] = table
+    out["config/symbols/main.txt"] = table + data_symbol_lines("main")
     out["config/symbols/main.externals.ld"] = (
         "/* symbols accepted unit records take from other units (witnessed overlay addresses) */\n")
     symbols = [[names[hx(f["va"])], hx(f["va"]), f["size"], text.index]

@@ -1,5 +1,200 @@
 {
- "doc": "Native C data routes and guarded compiler storage allocations (tools/tu/data_carve.py).",
+ "doc": "C-owned data runs carved out of scaffold data pieces: the jump tables and literals a recovered C function generates (tools/tu/data_carve.py, docs/tu-build.md \"Data ownership\"). Written by tools/worker.py (private), tools/review_stage.py (private) and tools/tu_publish.py (published).",
  "schema": "tu-data-carves/1",
- "tus": {}
+ "tus": {
+  "main/tu019": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b624",
+      "0x0069b62c"
+     ],
+     "generated": [
+      "0x0069b624",
+      "0x0069b62c"
+     ],
+     "generated_by": [
+      "RebuildQuantizeTable"
+     ],
+     "c_owned_symbols": [
+      "D_0069B624",
+      "D_0069B628"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_jpeg.o"
+     }
+    }
+   ]
+  },
+  "main/tu057": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069af10",
+      "0x0069af20"
+     ],
+     "generated": [
+      "0x0069af10",
+      "0x0069af20"
+     ],
+     "generated_by": [
+      "DefocusMainType07",
+      "DefocusMainType08",
+      "DefocusMainType11"
+     ],
+     "c_owned_symbols": [
+      "D_0069AF10",
+      "D_0069AF14",
+      "D_0069AF18",
+      "D_0069AF1C"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/game_defocus.o"
+     }
+    }
+   ]
+  },
+  "main/tu090": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b15c",
+      "0x0069b16c"
+     ],
+     "generated": [
+      "0x0069b15c",
+      "0x0069b16c"
+     ],
+     "generated_by": [
+      "Get_Decimal_Surplus_for_Radius"
+     ],
+     "c_owned_symbols": [
+      "D_0069B15C",
+      "D_0069B160",
+      "D_0069B164",
+      "D_0069B168"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/get.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b19c",
+      "0x0069b1ac"
+     ],
+     "generated": [
+      "0x0069b19c",
+      "0x0069b1ac"
+     ],
+     "generated_by": [
+      "Get_Angle_Relative"
+     ],
+     "c_owned_symbols": [
+      "D_0069B19C",
+      "D_0069B1A0",
+      "D_0069B1A4",
+      "D_0069B1A8"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/get.o"
+     }
+    }
+   ]
+  },
+  "main/tu164": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b2b8",
+      "0x0069b2dc"
+     ],
+     "generated": [
+      "0x0069b2b8",
+      "0x0069b2dc"
+     ],
+     "generated_by": [
+      "srsAtan2"
+     ],
+     "c_owned_symbols": [
+      "D_0069B2B8",
+      "D_0069B2BC",
+      "D_0069B2C0",
+      "D_0069B2C4",
+      "D_0069B2C8",
+      "D_0069B2CC",
+      "D_0069B2D0",
+      "D_0069B2D4",
+      "D_0069B2D8"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sef_164.o"
+     }
+    }
+   ]
+  },
+  "main/tu188": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b504",
+      "0x0069b508"
+     ],
+     "generated": [
+      "0x0069b504",
+      "0x0069b508"
+     ],
+     "generated_by": [
+      "MMathDeg2RadVectorI"
+     ],
+     "c_owned_symbols": [
+      "D_0069B504"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/m_math_188.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b50c",
+      "0x0069b510"
+     ],
+     "generated": [
+      "0x0069b50c",
+      "0x0069b510"
+     ],
+     "generated_by": [
+      "MMathRad2DegVectorI"
+     ],
+     "c_owned_symbols": [
+      "D_0069B50C"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/m_math_188.o"
+     }
+    }
+   ]
+  }
+ }
 }
