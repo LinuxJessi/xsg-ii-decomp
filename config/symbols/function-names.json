@@ -1,0 +1,5 @@
+{
+ "note": "Function names chosen after the map was inferred, by unit and address. Labels only, never identity (docs/x2-bootstrap.md, D1). After a change: x2_scaffold.py, tu_build_manifest.py, tu_ledger.py, repin.py, configure.py.",
+ "schema": "x2-function-names/1",
+ "units": {}
+}

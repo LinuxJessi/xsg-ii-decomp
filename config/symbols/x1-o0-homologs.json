@@ -1,0 +1,269 @@
+{
+ "schema": "x2-o0-homologs/1",
+ "generated_by": "tools/tu/x2_o0_provenance.py",
+ "note": [
+  "Functions of the -O0 zone whose whole body equals X1 C compiled at -O0 under the X2 contract.",
+  "Only bodies of 64 bytes or more with one candidate function. Evidence for the TU map, not names."
+ ],
+ "functions": [
+  {
+   "va": "0x001a75a8",
+   "size": 92,
+   "function": "xglSRand",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 15980
+  },
+  {
+   "va": "0x001a80ac",
+   "size": 188,
+   "function": "xglVectorDiv",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 2200
+  },
+  {
+   "va": "0x001a8168",
+   "size": 168,
+   "function": "xglVectorDivXYZ",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 2388
+  },
+  {
+   "va": "0x001a8210",
+   "size": 208,
+   "function": "xglVectorMulAdd",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 2556
+  },
+  {
+   "va": "0x001a82e0",
+   "size": 184,
+   "function": "xglVectorMulAddXYZ",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 2764
+  },
+  {
+   "va": "0x001a8398",
+   "size": 208,
+   "function": "xglVectorMulSub",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 2948
+  },
+  {
+   "va": "0x001a8468",
+   "size": 184,
+   "function": "xglVectorMulSubXYZ",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 3156
+  },
+  {
+   "va": "0x001a8520",
+   "size": 240,
+   "function": "xglVectorDivAdd",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 3340
+  },
+  {
+   "va": "0x001a8610",
+   "size": 208,
+   "function": "xglVectorDivAddXYZ",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 3580
+  },
+  {
+   "va": "0x001a86e0",
+   "size": 240,
+   "function": "xglVectorDivSub",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 3788
+  },
+  {
+   "va": "0x001a87d0",
+   "size": 208,
+   "function": "xglVectorDivSubXYZ",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 4028
+  },
+  {
+   "va": "0x001a88a0",
+   "size": 140,
+   "function": "xglVectorScale",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 4236
+  },
+  {
+   "va": "0x001a892c",
+   "size": 132,
+   "function": "xglVectorScaleXYZ",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 4376
+  },
+  {
+   "va": "0x001a90f8",
+   "size": 84,
+   "function": "xglVectorLength",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 6204
+  },
+  {
+   "va": "0x001a9200",
+   "size": 80,
+   "function": "xglVectorNormal",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 6492
+  },
+  {
+   "va": "0x001a973c",
+   "size": 96,
+   "function": "xglVectorMulMat",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 7840
+  },
+  {
+   "va": "0x001a99cc",
+   "size": 168,
+   "function": "xglMatrixMul",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 8528
+  },
+  {
+   "va": "0x001aa628",
+   "size": 392,
+   "function": "xglMatrixFrustum",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 12480
+  },
+  {
+   "va": "0x001ab134",
+   "size": 168,
+   "function": "xglQuaternion2Matrix",
+   "file": "src/main/xgl_2.c",
+   "x1_offset": 15596
+  },
+  {
+   "va": "0x001af494",
+   "size": 64,
+   "function": "sdvInitSpecialWork",
+   "file": "src/main/sdv.c",
+   "x1_offset": 6720
+  },
+  {
+   "va": "0x001b1db8",
+   "size": 96,
+   "function": "xglCameraMoveOffset",
+   "file": "src/main/xgl_camera.c",
+   "x1_offset": 8012
+  },
+  {
+   "va": "0x001b26dc",
+   "size": 72,
+   "function": "xglPacketSend",
+   "file": "src/main/xgl_packet.c",
+   "x1_offset": 1052
+  },
+  {
+   "va": "0x001b2980",
+   "size": 132,
+   "function": "xglStudioFlushActiveCamera",
+   "file": "src/main/xgl_studio.c",
+   "x1_offset": 508
+  },
+  {
+   "va": "0x001b3d2c",
+   "size": 2868,
+   "function": "xglRenderDrawEnvInit",
+   "file": "src/main/xgl_render.c",
+   "x1_offset": 1528
+  },
+  {
+   "va": "0x001b4860",
+   "size": 256,
+   "function": "xglRenderDrawEnvMove",
+   "file": "src/main/xgl_render.c",
+   "x1_offset": 4396
+  },
+  {
+   "va": "0x001b4d2c",
+   "size": 112,
+   "function": "xglRenderClearColor",
+   "file": "src/main/xgl_render.c",
+   "x1_offset": 5560
+  },
+  {
+   "va": "0x001b4ec8",
+   "size": 88,
+   "function": "xglRenderClearEnvMove",
+   "file": "src/main/xgl_render.c",
+   "x1_offset": 5956
+  },
+  {
+   "va": "0x001b4f20",
+   "size": 248,
+   "function": "xglRenderSetReso",
+   "file": "src/main/xgl_render.c",
+   "x1_offset": 6044
+  },
+  {
+   "va": "0x001b5e40",
+   "size": 64,
+   "function": "HddTestMakeYS",
+   "file": "src/main/yajima_test.c",
+   "x1_offset": 9192
+  },
+  {
+   "va": "0x001b641c",
+   "size": 356,
+   "function": "plane_from_points",
+   "file": "src/main/face_point.c",
+   "x1_offset": 1288
+  },
+  {
+   "va": "0x001b6db4",
+   "size": 212,
+   "function": "check_culling_map",
+   "file": "src/main/face_point.c",
+   "x1_offset": 4164
+  },
+  {
+   "va": "0x001b7564",
+   "size": 132,
+   "function": "_CurMatrixMul",
+   "file": "src/main/nml_packet_add.c",
+   "x1_offset": 112
+  },
+  {
+   "va": "0x001bb6a8",
+   "size": 64,
+   "function": "srsSetViewPath",
+   "file": "src/main/srs.c",
+   "x1_offset": 2536
+  },
+  {
+   "va": "0x001bb7b8",
+   "size": 68,
+   "function": "nmlModelSetZwrite",
+   "file": "src/main/nml_model_set.c",
+   "x1_offset": 14896
+  },
+  {
+   "va": "0x001bb7fc",
+   "size": 156,
+   "function": "nmlModelSetTransparency",
+   "file": "src/main/nml_model_set.c",
+   "x1_offset": 14964
+  },
+  {
+   "va": "0x001bb898",
+   "size": 144,
+   "function": "nmlModelSetReflTransparency",
+   "file": "src/main/nml_model_set.c",
+   "x1_offset": 15120
+  },
+  {
+   "va": "0x001bb928",
+   "size": 68,
+   "function": "nmlModelSetStencil",
+   "file": "src/main/nml_model_set.c",
+   "x1_offset": 14828
+  }
+ ]
+}

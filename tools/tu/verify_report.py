@@ -1,0 +1,548 @@
+#!/usr/bin/env python3
+"""Verify public progress claims against the current compiled and linked build.
+
+Run --begin before configure/ninja, then --finish after ninja gate. Reporting-only
+CI may use ninja report and --finish --reporting to retain nonmatching C. Only hashes,
+symbol identities and counts go in verification.json; never original bytes.
+This is public CI evidence, not a replacement for the recovery acceptance audit.
+"""
+import argparse
+from concurrent.futures import ProcessPoolExecutor
+import hashlib
+import json
+import multiprocessing
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+import coverage_report as cov
+from tu.elfinfo import Elf
+from tu.mapcheck import parse as parse_link_map
+
+
+class VerificationError(ValueError):
+    pass
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def inputs(root):
+    """Bind evidence to HEAD and every public build/source input, including edits."""
+    def git(*args):
+        return subprocess.check_output(['git', '-C', str(root), *args], timeout=30)
+    paths = git('ls-files', '-z', '--cached', '--others', '--exclude-standard',
+                '--', 'src', 'include', 'config', 'tools', '.github', '.gitignore',
+                'configure.py', 'requirements.txt', 'README.md').split(b'\0')
+    files = {p.decode(): digest(root / p.decode()) for p in sorted(set(paths)) if p}
+    return dict(commit=git('rev-parse', 'HEAD').decode().strip(), files=files)
+
+
+def require(ok, message):
+    if not ok:
+        raise VerificationError(message)
+
+
+def read(path):
+    try:
+        return json.loads(path.read_bytes())
+    except (OSError, ValueError) as error:
+        raise VerificationError(f'{path}: {error}') from error
+
+
+def same_inputs(root, snapshot):
+    require(inputs(root) == snapshot,
+            'source/build inputs changed since verification began; rebuild before reporting')
+
+
+def compiler_functions(assembly):
+    """Only cc1's .ent directives outside #APP count as C emission.
+
+    INCLUDE_ASM and ACCEPTED_ASM are inserted inside #APP, so assembling the
+    original scaffold cannot accidentally earn C matching credit.
+    """
+    emitted, app = set(), False
+    for line in assembly.splitlines():
+        if line.strip() == '#APP':
+            app = True
+        elif line.strip() == '#NO_APP':
+            app = False
+        elif not app:
+            match = re.match(r'\s*\.ent\s+(\S+)', line)
+            if match:
+                emitted.add(match[1])
+    return emitted
+
+
+def function_indexes(elf):
+    """Index the verifier's read-only ELF once, retaining every duplicate."""
+    indexes = getattr(elf, '_verification_function_indexes', None)
+    if indexes is None:
+        names, locations = {}, {}
+        for entry in elf.symbols:
+            if entry.type == 2 and entry.shndx not in (0, 0xfff1):
+                names.setdefault((entry.name, entry.size), []).append(entry)
+                locations.setdefault((entry.value, entry.size), []).append(entry)
+        indexes = names, locations
+        elf._verification_function_indexes = indexes
+    return indexes
+
+
+def symbol(elf, name, size, value=None):
+    found = (function_indexes(elf)[0].get((name, size), ()) if size is not None else
+             [s for s in elf.symbols if s.name == name and s.type == 2
+              and s.shndx not in (0, 0xfff1) and s.size > 0])
+    if value is not None:
+        found = [s for s in found if s.value == value]
+    require(len(found) == 1, f'{name}: missing/ambiguous FUNC symbol or wrong address/size')
+    return found[0]
+
+
+def original_symbol(elf, label, size, va):
+    """Resolve annotation labels using the original ELF's function identity.
+
+    Splat disambiguates repeated local names with address suffixes. Those
+    labels do not rename the original symbol or the compiler's definition.
+    """
+    found = function_indexes(elf)[1].get((va, size), ())
+    named = [s for s in found if s.name == label]
+    if named:
+        found = named
+    require(len(found) == 1, f'{label}: missing/ambiguous original FUNC identity')
+    return found[0]
+
+
+def emitted_name(root, tu_id, target, size, emitted, compiled, *, reporting=False):
+    """The compiler's name for an original function, allowing registered nested renumbering.
+
+    cc1 names a GNU nested function `name.N` by its count of private names
+    emitted before it, so while earlier owners are still INCLUDE_ASM the C
+    object numbers it differently from the original. Only a function the
+    registered nested-function mapping names (tools/tu_edit.gnu_nested_specs,
+    as tools/tu/mapcheck.py uses it) qualifies, and exactly one LOCAL FUNC
+    `source_name.M` of the original size must have been emitted.
+    """
+    if target.name in emitted:
+        return target.name
+    import tu_edit
+    for spec in tu_edit.gnu_nested_specs(root, tu_id).values():
+        for item in spec.get('nested_functions') or []:
+            if (item.get('original_name') != target.name
+                    or int(item.get('va', '0'), 16) != target.value
+                    or item.get('size') != size or item.get('binding') != 'LOCAL'
+                    or item.get('type') != 'FUNC'):
+                continue
+            pattern = re.escape(item['source_name']) + r'\.[0-9]+'
+            found = [s.name for s in compiled.symbols
+                     if s.name in emitted and re.fullmatch(pattern, s.name)
+                     and s.type == 2 and s.bind == 0
+                     and (s.size > 0 if reporting else s.size == size)]
+            if len(found) == 1:
+                return found[0]
+    return None
+
+
+def function_bytes(elf, sym):
+    section = elf.sections[sym.shndx]
+    offset = section.offset + sym.value - section.addr
+    require(section.type != 8 and 0 <= offset <= len(elf.data) - sym.size,
+            f'{sym.name}: invalid function extent')
+    return elf.data[offset:offset + sym.size]
+
+
+def build_object(root, build, obj):
+    stem = Path(obj['source']).stem
+    unit_dir = build / obj['unit']
+    if obj['unit'] == 'main':
+        path = unit_dir / 'build/c' / (stem + '.o')
+        asm = Path(str(path) + '.s')
+    else:
+        path = unit_dir / 'build/src' / obj['unit'] / (stem + '.o')
+        if not path.is_file():
+            # Public links can retain the skeleton object's destination while
+            # their cc edge compiles the published source into that destination.
+            path = unit_dir / 'build/scaffold/src' / obj['unit'] / (stem + '.o')
+        asm = path.with_suffix('.s')
+    require(path.is_file() and asm.is_file(),
+            f'{obj["id"]}: no compiled published object/cc1 assembly; run configure and ninja gate')
+    return path, asm
+
+
+def data_sizes(root, objects):
+    """Original TU data remains in the denominator even when it is scaffolding.
+    """
+    sizes = {}
+    main = read(root / cov.MAIN_OBJECTS)
+    for tu in main['tus']:
+        sizes[tu['id']] = sum(s.get('size', 0) for s in tu.get('sections', {}).values())
+    for unit in cov.OVERLAY_UNITS:
+        layout = read(root / 'config/objects' / f'{unit}.layout.json')
+        for runs in layout['families'].values():
+            for name, start, end in runs:
+                sizes[name] = sizes.get(name, 0) + int(end, 16) - int(start, 16)
+    return {o['id']: sizes.get(o['id'], sizes.get(
+        f'{o["unit"]}/{Path(o["source"]).stem}' if o['source'] else '', 0))
+        for o in objects}
+
+
+def linked_object_complete(root, build, obj, placed, derived, fills, original, linked=None):
+    """Objdiff's complete flag means the entire original object is recompiled.
+
+    Check actual linker inputs, including initialized data and BSS. Partial
+    data carves do not complete a TU while any original storage comes from an
+    assembly input. Linker alignment fill is not an unrecovered data object.
+    """
+    linked_object_complete.last_alignment_artifacts = {}
+    unit, stem = obj['unit'], Path(obj['source']).stem
+    compiled, _ = build_object(root, build, obj)
+    owned = {str(compiled.relative_to(build / unit))}
+    while True:
+        additions = {output for output, input_path in derived.items() if input_path in owned}
+        if additions <= owned:
+            break
+        owned.update(additions)
+    if unit == 'main':
+        manifest = read(build / unit / 'tu-manifest.carved.json')
+        tu = next(t for t in manifest['tus'] if t['name'] == stem)
+        from tu.data_completion import validate_compiler_suffix_alignments
+        if not validate_compiler_suffix_alignments(root, build / unit, tu,
+                                                   compiled, build_object(root, build, obj)[1],
+                                                   manifest=manifest, placed=placed, fills=fills, linked=linked):
+            return False
+        linked_object_complete.last_alignment_artifacts = dict(
+            validate_compiler_suffix_alignments.last_artifacts)
+        spans = [(int(p['start'], 16), int(p['end'], 16))
+                 for section in tu['sections'].values() for p in section.get('pieces', [])]
+    else:
+        layout = read(root / 'config/objects' / f'{unit}.layout.json')
+        spans = [(int(lo, 16), int(hi, 16)) for rows in layout['families'].values()
+                 for name, lo, hi in rows if name == f'{unit}/{stem}']
+    for lo, hi in spans:
+        covered = []
+        for (input_path, section), (start, size) in placed.items():
+            if start < hi and lo < start + size:
+                if input_path not in owned:
+                    return False
+                covered.append((max(lo, start), min(hi, start + size)))
+        for start, end in fills:
+            a, b = max(lo, start), min(hi, end)
+            if a < b and not any(s.type == 1 and s.size and s.value < b
+                                 and a < s.value + s.size for s in original.symbols):
+                covered.append((a, b))
+        cursor = lo
+        for start, end in sorted(covered):
+            if start > cursor:
+                return False
+            cursor = max(cursor, end)
+        if cursor < hi:
+            return False
+    return True
+
+
+_completion_context = None
+
+
+def _init_completion_context(context):
+    global _completion_context
+    _completion_context = context
+
+
+def _complete_object_with_context(obj, context):
+    root, build, placed, derived, fills, original, linked = context
+    complete = linked_object_complete(root, build, obj, placed, derived, fills, original, linked)
+    return complete, dict(linked_object_complete.last_alignment_artifacts)
+
+
+def _complete_object(obj):
+    return _complete_object_with_context(obj, _completion_context)
+
+
+def complete_objects(root, build, objects, placed, derived, fills, original, linked):
+    """Run the same read-only DATA proofs in at most four isolated processes."""
+    context = root, build, placed, derived, fills, original, linked
+    if len(objects) > 1 and 'fork' in multiprocessing.get_all_start_methods():
+        with ProcessPoolExecutor(max_workers=4,
+                                 mp_context=multiprocessing.get_context('fork'),
+                                 initializer=_init_completion_context,
+                                 initargs=(context,)) as pool:
+            return list(pool.map(_complete_object, objects))
+    return [_complete_object_with_context(obj, context) for obj in objects]
+
+
+def compiled_placement(root, unit_dir, object_path, compiled, placed, derived, fresh, artifacts):
+    """Bind C emission to the actual ordinary link input, including data splits.
+
+    Reporting does not assume original function sizes or addresses. It still
+    requires the compiler's symbol identities/offsets in the input the linker
+    actually selected, and pins that fresh input for later unchanged checks.
+    """
+    owned = {str(object_path.relative_to(unit_dir))}
+    while True:
+        additions = {out for out, source in derived.items() if source in owned}
+        if additions <= owned:
+            break
+        owned.update(additions)
+    text = compiled.section('.text')
+    matches = [(path, start, size) for (path, section), (start, size) in placed.items()
+               if path in owned and section == '.text']
+    require(len(matches) == 1 and matches[0][2] == text.size,
+            f'{object_path}: missing/ambiguous ordinary C text placement')
+    path, start, _ = matches[0]
+    selected_path = unit_dir / path
+    artifacts[str(selected_path.relative_to(root))] = fresh(selected_path)
+    selected = Elf(selected_path.read_bytes())
+    actual = {(s.name, s.bind, s.size, s.value) for s in selected.symbols
+              if s.type == 2 and s.shndx == selected.section('.text').index}
+    expected = {(s.name, s.bind, s.size, s.value) for s in compiled.symbols
+                if s.type == 2 and s.shndx == text.index}
+    require(actual == expected, f'{object_path}: selected link input changed C function identities')
+    return start - text.addr
+
+
+def finish(root, build, snapshot, iop_report=None, *, reporting=False):
+    same_inputs(root, snapshot)
+    started = (build / 'verification-inputs.json').stat().st_mtime_ns
+    def fresh(path):
+        require(path.stat().st_mtime_ns >= started,
+                f'{path}: predates this verification; use a fresh build checkout')
+        return digest(path)
+    gate = None
+    if not reporting:
+        gate = read(build / 'gate.json')
+        fresh(build / 'gate.json')
+    originals = read(root / cov.ORIGINALS)['units']
+    if not reporting:
+        require(gate.get('result') == 'pass', 'whole-file gate did not pass')
+        require(set(gate.get('targets', {})) == set(cov.EE_UNITS), 'gate must cover all three EE files')
+    objects, _, _, _, _ = cov.tracked_scope(root)
+    parser = cov.import_tu_edit(root)
+    results, artifacts, problems, units = {}, {}, [], {}
+    for unit in cov.EE_UNITS:
+        unit_dir = build / unit
+        original_path = unit_dir / 'orig' / originals[unit]['file']
+        image_path = unit_dir / 'build' / f'{unit}.bin'
+        linked_path = unit_dir / 'build' / f'{unit}.rom.elf'
+        expected = originals[unit]['sha256']
+        require(digest(original_path) == expected, f'{unit}: original hash differs')
+        identical = digest(image_path) == expected
+        units[unit] = dict(whole_file_identical=identical, original_sha256=expected,
+                           rebuilt_sha256=digest(image_path))
+        if not reporting:
+            require(identical, f'{unit}: actual current original/rebuilt whole-file hashes differ')
+            status = read(unit_dir / 'status.json')
+            require(status.get('result') == 'pass', f'{unit}: unit checks failed')
+        elif unit == 'main':
+            # These controls contain only original scaffolding / accepted ASM.
+            # Their failure is not an allowed nonmatching C result.
+            for relative, key in [('build/carve/main.compare.json', 'whole_file_identical'),
+                                  ('build/accepted_asm.json', 'ok')]:
+                path = unit_dir / relative
+                require(read(path).get(key) is True, f'{unit}: {relative} failed')
+                artifacts[str(path.relative_to(root))] = fresh(path)
+        original = Elf(original_path.read_bytes())
+        linked = Elf(linked_path.read_bytes())
+        map_path = unit_dir / 'build' / f'{unit}.rom.elf.map'
+        ninja_path = unit_dir / 'build.ninja'
+        map_text = map_path.read_text()
+        placed, _ = parse_link_map(map_text)
+        fills = [(int(a, 16), int(a, 16) + int(n, 16)) for a, n in
+                 re.findall(r'^ \*fill\*\s+0x([0-9a-f]+)\s+0x([0-9a-f]+)\b', map_text, re.M)]
+        # These existing build transformations only place/split compiler data;
+        # they never import original storage into a compiled object.
+        # An edge may list implicit outputs (`build X | X.report.json: ...`).
+        derived = dict(re.findall(r'^build (\S+)(?: \| [^:]+)?: (?:carvesplit|allocate_bss) (\S+)(?:\s|$)',
+                                  ninja_path.read_text(), re.M))
+        artifacts[str(map_path.relative_to(root))] = fresh(map_path)
+        artifacts[str(ninja_path.relative_to(root))] = digest(ninja_path)
+        if unit == 'main':
+            path = unit_dir / 'tu-manifest.carved.json'
+            artifacts[str(path.relative_to(root))] = digest(path)
+        artifacts[str(original_path.relative_to(root))] = digest(original_path)
+        for path in (image_path, linked_path):
+            artifacts[str(path.relative_to(root))] = fresh(path)
+        if not reporting:
+            path = unit_dir / 'status.json'
+            artifacts[str(path.relative_to(root))] = fresh(path)
+        completion_candidates = []
+        for obj in (o for o in objects if o['unit'] == unit):
+            claimed = cov.count_object(root, obj, parser, problems)
+            verified = []
+            if claimed:
+                object_path, assembly_path = build_object(root, build, obj)
+                compiled = Elf(object_path.read_bytes())
+                emitted = compiler_functions(assembly_path.read_text())
+                preprocessed_path = Path(str(assembly_path)[:-2] + '.i')
+                for path in (object_path, assembly_path, preprocessed_path):
+                    artifacts[str(path.relative_to(root))] = fresh(path)
+                placement = (compiled_placement(root, unit_dir, object_path, compiled,
+                             placed, derived, fresh, artifacts) if reporting else None)
+                for name, va, size in obj['functions']:
+                    if va not in claimed:
+                        continue
+                    category = claimed[va][1]
+                    # Handwritten accepted ASM is reported separately as recovery,
+                    # but never earns decompiled C matching/complete credit.
+                    if category == 'exact_asm':
+                        continue
+                    target = original_symbol(original, name, size, va)
+                    c_name = emitted_name(root, obj['id'], target, size, emitted, compiled,
+                                          reporting=reporting)
+                    require(c_name is not None,
+                            f'{obj["id"]}/{name}: no compiler-emitted C function')
+                    compiled_sym = symbol(compiled, c_name, None if reporting else size)
+                    current = symbol(linked, c_name, compiled_sym.size,
+                                     placement + compiled_sym.value if reporting else va)
+                    require(target.bind == current.bind == compiled_sym.bind,
+                            f'{obj["id"]}/{name}: symbol binding differs')
+                    a, b = function_bytes(original, target), function_bytes(linked, current)
+                    exact = current.value == va and current.size == size and a == b
+                    if not reporting:
+                        require(exact, f'{obj["id"]}/{name}: linked function bytes differ')
+                    row = dict(name=name, original_symbol=target.name,
+                                         va=va, size=size, category=category,
+                                         sha256=hashlib.sha256(b).hexdigest())
+                    if reporting:
+                        row.update(compiled_name=c_name, compiled_size=compiled_sym.size,
+                                   linked_va=current.value, linked_size=current.size, exact=exact,
+                                   source_category=category,
+                                   category=category if exact else category.replace('exact_', 'nonmatching_', 1))
+                    verified.append(row)
+            if obj['functions'] and len(verified) == len(obj['functions']):
+                completion_candidates.append(obj)
+            results[obj['id']] = dict(functions=verified, complete=False)
+        completed = complete_objects(root, build, completion_candidates, placed, derived,
+                                     fills, original, linked)
+        for obj, (complete, alignment_artifacts) in zip(completion_candidates, completed):
+            if reporting:
+                results[obj['id']]['source_complete'] = complete
+            results[obj['id']]['complete'] = complete
+            for name, expected in alignment_artifacts.items():
+                path = Path(name)
+                require(path.resolve().is_relative_to(root.resolve()),
+                        'ordinary alignment object evidence lies outside the build root')
+                relative = path.relative_to(root).as_posix()
+                # This reviewed recipe is a source/config input installed
+                # BEFORE --begin. It must match the frozen public snapshot;
+                # ordinary compiled artifacts still have the freshness gate.
+                if relative == 'config/objects/data-input-provenance.json':
+                    require(snapshot['files'].get(relative) == expected,
+                            'external input authority was absent/different at verification begin')
+                    actual = digest(path)
+                else:
+                    actual = fresh(path)
+                require(actual == expected,
+                        'ordinary alignment object evidence changed or lies outside the build root')
+                artifacts[str(path.relative_to(root))] = expected
+    require(not problems, f'source/object scope inconsistencies: {problems[:3]}')
+    sizes = data_sizes(root, objects)
+    for obj in objects:
+        entry = results[obj['id']]
+        entry['total_data'] = sizes[obj['id']]
+    require(iop_report is not None, 'IOP source build evidence is required; pass --iop-report PATH')
+    from tu import iop_objdiff
+    iop_report = Path(iop_report).resolve()
+    require(iop_report.is_relative_to(root), 'IOP build report must belong to this checkout')
+    artifacts[str(iop_report.relative_to(root))] = fresh(iop_report)
+    groups, _, _, iop_build = iop_objdiff.load_evidence(root, iop_report, reporting=reporting)
+    for unit, group, candidate, original in groups:
+        object_id = f'{unit}/debug-file-{group["fdr_index"]:03d}'
+        verified = []
+        for function in group['functions']:
+            target = original.named_symbol(function['name'])
+            measured = candidate['linked_functions'][target['name']]
+            row = dict(name=target['name'], original_symbol=target['name'],
+                                 va=target['value'], size=target['size'], category='exact_c',
+                                 sha256=measured['sha256'])
+            if reporting:
+                row.update(exact=measured['exact'], original_sha256=measured['original_sha256'],
+                           compiled_name=target['name'], compiled_size=target['size'],
+                           linked_va=measured['va'], linked_size=measured['size'],
+                           source_category='exact_c',
+                           category='exact_c' if measured['exact'] else 'nonmatching_c')
+            verified.append(row)
+        results[object_id] = dict(functions=verified, complete=False, source=group['source'],
+                                 review_state='user_authorized_review_waiver', data_credit=0,
+                                 storage_ownership_complete=False)
+        for key in ('object', 'assembly'):
+            path = Path(candidate[key]).resolve()
+            require(path.is_relative_to(root), 'IOP compiler artifact lies outside this checkout')
+            artifacts[str(path.relative_to(root))] = fresh(path)
+    for unit, proof in iop_build['whole_irx'].items():
+        units[unit] = dict(whole_file_identical=proof['byte_identical'],
+                           original_sha256=proof['original_sha256'], rebuilt_sha256=proof['sha256'])
+        path = Path(proof['path']).resolve()
+        require(path.is_relative_to(root), 'IOP complete-module output lies outside this checkout')
+        artifacts[str(path.relative_to(root))] = fresh(path)
+        linked = Path(iop_build['module_reports'][unit]['linked_elf']).resolve()
+        require(linked.is_relative_to(root), 'IOP linked ELF lies outside this checkout')
+        artifacts[str(linked.relative_to(root))] = fresh(linked)
+    same_inputs(root, snapshot)
+    if not reporting:
+        artifacts[str((build / 'gate.json').relative_to(root))] = digest(build / 'gate.json')
+    return dict(schema='verified-progress/1', inputs=snapshot, artifacts=artifacts,
+                mode='reporting' if reporting else 'exact', units=units,
+                objects=results, iop=dict(build_report=str(iop_report.relative_to(root)),
+                    build_report_sha256=digest(iop_report), functions=495, original_objects=24,
+                    review_state='user_authorized_review_waiver', data_credit=0),
+                note='Reporting mode verifies fresh compiler/link provenance and records differences; '
+                'it does not grant source acceptance or exact credit for nonmatching functions. '
+                'IOP reporting retains fixed valid IRX identities and actual linked hashes; '
+                'strict IOP verification requires complete raw IRX equality. '
+                'review waiver is recorded separately. Complete means '
+                'all original TU code and storage are recompiled and linked from C; '
+                'assembly scaffolding never completes a TU.')
+
+
+def load_verified(root, build, *, reporting=False):
+    evidence = read(build / 'verification.json')
+    require(evidence.get('schema') == 'verified-progress/1', 'wrong verification schema')
+    require(evidence.get('mode', 'exact') == ('reporting' if reporting else 'exact'),
+            'verification mode differs; use the matching explicit reporting option')
+    same_inputs(root, evidence['inputs'])
+    for name, want in evidence['artifacts'].items():
+        require(digest(root / name) == want, f'{name}: build evidence changed; re-verify')
+    return evidence
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--root', type=Path, default=ROOT)
+    ap.add_argument('--reporting', action='store_true',
+                    help='report fresh nonmatching C after ninja report; not an acceptance gate')
+    ap.add_argument('--iop-report', type=Path,
+                    help='fresh tools/iop_build.py report for all 24 original SSD/RSSD objects')
+    mode = ap.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--begin', action='store_true')
+    mode.add_argument('--finish', action='store_true')
+    a = ap.parse_args()
+    root, build = a.root.resolve(), a.root.resolve() / 'build'
+    try:
+        build.mkdir(exist_ok=True)
+        if a.begin:
+            # Invalidate old outputs before attempting a fresh verification.
+            for name in ('verification.json', 'report.json'):
+                (build / name).unlink(missing_ok=True)
+            result = inputs(root)
+            output = build / 'verification-inputs.json'
+        else:
+            report = a.iop_report
+            if report is not None and not report.is_absolute():
+                report = root / report
+            result = finish(root, build, read(build / 'verification-inputs.json'), report,
+                            reporting=a.reporting)
+            output = build / 'verification.json'
+        output.write_text(json.dumps(result, indent=1) + '\n')
+        print(f'verify_report: {output}')
+        return 0
+    except (VerificationError, OSError, subprocess.SubprocessError) as error:
+        print(f'verify_report: {error}', file=sys.stderr)
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

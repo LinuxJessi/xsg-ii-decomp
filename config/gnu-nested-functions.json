@@ -1,0 +1,5 @@
+{
+ "schema": "gnu-nested-functions/1",
+ "policy": "Project-wide GNU C nested-function admission carried over from the user decision of 2026-09-21: admitted where original-binary evidence establishes lexical ownership and the captured-context/static-chain ABI. This registry records discovered groups, not accepted recovery or an exclusive eligibility list.",
+ "tus": {}
+}

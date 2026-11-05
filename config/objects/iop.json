@@ -1,0 +1,9 @@
+{
+ "schema": "iop-objects/1",
+ "note": [
+  "The IOP modules are out of scope (user decision of 2026-11-05: only game code).",
+  "tools/coverage_report.py still reads this file, so it states an empty scope."
+ ],
+ "units": {},
+ "groups": []
+}

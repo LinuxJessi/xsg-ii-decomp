@@ -1,0 +1,5 @@
+{
+ "doc": "Native C data routes and guarded compiler storage allocations (tools/tu/data_carve.py).",
+ "schema": "tu-data-carves/1",
+ "tus": {}
+}

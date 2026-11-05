@@ -1,0 +1,103 @@
+# What this repository tracks: the source, and the inputs a stranger needs to
+# rebuild the three original EE files from it.  Nothing else.  The rule is an
+# allowlist, so a new private file is out by default and has to be let in on
+# purpose.
+#
+#   src/ include/            the recovered source and its headers
+#   config/                  the split configuration, the symbol files, the
+#                            per-object compile contract and the identity of
+#                            the compilers and assemblers
+#   configure.py tools/      the build system
+#   README.md                how to build it
+#   .github/                 the CI job that publishes the bytematch.dev report
+#
+
+/*
+!/.gitignore
+!/README.md
+!/configure.py
+!/requirements.txt
+!/src/
+!/include/
+!/config/
+!/tools/
+!/.github/
+
+# ---------------------------------------------------------------- config/
+# The build inputs
+/config/*
+!/config/originals.json
+!/config/toolchain-identity.json
+!/config/report-tools.json
+!/config/overlay-plan.json
+!/config/overlay-adaptations.json
+!/config/split/
+!/config/symbols/
+!/config/objects/
+!/config/gnu-nested-functions.json
+!/config/iop-build.json
+!/config/iop-publication.json
+!/config/iop-match-profile.json
+!/config/iop-toolchains.json
+!/config/iop-targets.json
+!/config/iop-tools.lock.json
+!/config/targets.json
+!/config/tu-map-model.json
+
+
+/config/toolchain-local.json
+
+# ----------------------------------------------------------------- tools/
+# The build system and reusable header tools are tracked.
+/tools/*
+!/tools/configure.py
+!/tools/elf_gate.py
+!/tools/coverage_report.py
+!/tools/objdiff_report.py
+!/tools/tu_edit.py
+!/tools/header_harvest.py
+!/tools/iop_build.py
+!/tools/iop_ci_stage.py
+!/tools/iop_module.py
+!/tools/iop_prepare.py
+!/tools/iop_backend.py
+!/tools/iop_compare.py
+!/tools/iop_inventory.py
+!/tools/match_iop.py
+!/tools/tu_manifest.py
+!/tools/workqueue.py
+!/tools/header_types.py
+!/tools/header_inputs/
+!/tools/tu/
+
+# The TU acceptance audit and the modules its gate imports directly.
+!/tools/tu_audit.py
+!/tools/asm_contract_lint.py
+!/tools/compiler_calibrate.py
+!/tools/external_reference.py
+!/tools/inventory.py
+!/tools/match.py
+!/tools/native_ti.py
+!/tools/toolchain_probe.py
+!/tools/verify_target.py
+
+# Inside tools/tu/, these regenerate the tracked inputs from the project's
+# private migration evidence, or audit against the acceptance records.
+/tools/tu/gen_main.py
+/tools/tu/gen_ovl.py
+/tools/tu/gen_manifest_ovl.py
+/tools/tu/proto_gen_config.py
+/tools/tu/split_plan.py
+/tools/tu/run_audit.py
+/tools/tu/run_audit_ovl.py
+
+# A workflow tool that happens to live here: it is imported only by
+# tools/preflight.py and tools/worker.py, both of which are themselves untracked
+# workflow tools. Nothing in configure.py or the build graph reaches it, so it is
+# not part of the build system this directory otherwise holds.
+/tools/tu/function_object.py
+
+# -------------------------------------------------------------- generated
+__pycache__/
+*.pyc
+.venv/

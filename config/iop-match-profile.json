@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "revision": "slus-20892-1f978e64c837",
+  "selected": "iop-gcc2_8_1",
+  "compiler_lock": "config/iop-toolchains.json",
+  "compiler_lock_sha256": "598080c2264ce9b7c9399497db831f51f266d86f22b3780ccf59d8370c000a49",
+  "default_flags": [
+    "-O2",
+    "-G0"
+  ],
+  "permitted_flags": [
+    [
+      "-O2",
+      "-G0"
+    ]
+  ],
+  "source_languages": [
+    "c"
+  ],
+  "timeout_seconds": 30,
+  "address_kind": "module_relative",
+  "units": [
+    "iop_korgivag"
+  ],
+  "gate": "complete_irx_and_compiler_emission",
+  "original_object_modes": {
+    "schema": "iop-original-object-float/1",
+    "default_mode": "soft",
+    "units": {
+      "iop_korgivag": {
+        "binary_sha256": "10dc6dc38cee1daeca28302a659e3811ef11afd6e41f7ea171a93a6377e4731b",
+        "hard_fdrs": []
+      }
+    }
+  },
+  "qualification": "Native MIPS-I and observed o32 argument layout; GCC 2.8.1 is a calibrated matching hypothesis, not original-language or compiler-version attribution. No EE ABI aliases, opcode masks, relocation normalization, register bindings, assembly source substitution or output patches. Exactness requires every original module byte plus audited compiler emission. Data and debug/ELF metadata scaffolds remain uncredited.",
+  "port_note": "KORGIVAG.IRX replaces the X1 SSD/RSSD modules in this profile. It is KORG middleware and out of scope by user decision of 2026-11-05; this profile applies only under an explicit user order. GCC 2.8.1 was calibrated on X1 SSD and is unverified here."
+}

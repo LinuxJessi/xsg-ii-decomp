@@ -1,0 +1,68 @@
+# Build every file, compare it with the original, and publish the objdiff
+# progress report for bytematch.dev, which reads the `<version>_report` artifact of
+# successful pushes to the default branch.  Originals and toolchains stay on the
+# private runner; the artifact is the report only.
+name: Verified progress report
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: progress-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    # Never run untrusted fork PR code on the machine holding private inputs.
+    if: github.repository == 'OpokXeno/xsg-ii-decomp' && github.ref == 'refs/heads/master'
+    runs-on: [self-hosted, linux, xenosaga2-ee]
+    timeout-minutes: 30
+    defaults:
+      run:
+        # Legacy GCC allocation can change codegen with Linux's mmap layout.
+        shell: setarch linux32 -L bash --noprofile --norc -e -o pipefail {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Build, link and compare the three EE files
+        run: |
+          : "${XENO_GAME_DIR:?Set this in the runner service environment}"
+          : "${XENO_TOOLCHAIN_DIR:?Set this in the runner service environment}"
+          : "${XENO_SPLAT_PYTHON:?Set this in the runner service environment}"
+          python3 -B configure.py
+          ninja -j4 gate
+
+      - name: Write the objdiff project
+        run: python3 -B tools/tu/objdiff_project.py
+
+      - name: Generate the report with the pinned objdiff-cli
+        run: |
+          python3 -B - <<'PY'
+          import hashlib, json, os, pathlib, urllib.request
+          pin = json.loads(pathlib.Path('config/report-tools.json').read_text())['objdiff-cli']
+          path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'objdiff-cli'
+          with urllib.request.urlopen(pin['url'], timeout=30) as response:
+              data = response.read()
+          assert hashlib.sha256(data).hexdigest() == pin['sha256'], 'objdiff-cli hash mismatch'
+          path.write_bytes(data)
+          path.chmod(0o755)
+          PY
+          # A unit is complete only when its code and data both fully match: the
+          # first report measures that, the second one is published.
+          "$RUNNER_TEMP/objdiff-cli" report generate --project build/objdiff --output build/report-first.json
+          python3 -B tools/tu/objdiff_complete.py --project build/objdiff --report build/report-first.json
+          "$RUNNER_TEMP/objdiff-cli" report generate --project build/objdiff --output build/report.json
+
+      - name: Upload progress report
+        uses: actions/upload-artifact@v4
+        with:
+          name: SLUS_208.92_report
+          path: build/report.json
+          if-no-files-found: error

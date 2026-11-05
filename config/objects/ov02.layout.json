@@ -1,0 +1,37 @@
+{
+ "provenance": "estimated",
+ "text": {
+  "ov02/tu000": [
+   "0x00a80000",
+   "0x00a80798"
+  ],
+  "ov02/tu001": [
+   "0x00a80798",
+   "0x00a81c78"
+  ],
+  "ov02/tu002": [
+   "0x00a81c78",
+   "0x00a82848"
+  ]
+ },
+ "families": {
+  ".data": [
+   [
+    "ov02/unsplit",
+    "0x00a82848",
+    "0x00a83c48"
+   ]
+  ],
+  ".rodata": [],
+  ".bss": [
+   [
+    "ov02/unsplit",
+    "0x00a83c48",
+    "0x00a83e28"
+   ]
+  ]
+ },
+ "reference_witness_symbols": {},
+ "main_shadowed": [],
+ "reference_aliases": {}
+}
