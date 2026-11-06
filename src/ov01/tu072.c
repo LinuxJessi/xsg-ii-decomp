@@ -69,7 +69,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configMenuFrame);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configMainPageDraw);
 
-char *func_001DF678(unsigned int file_id);
+char *xglCdFindFileName(unsigned int file_id);
 int *ptGetStatusBlock(void);
 extern char D_00ABAF10[];
 
@@ -81,7 +81,7 @@ void *unitClothNameGet(int unit)
 
     if (unit < 0xB) {
         table = ptGetStatusBlock();
-        entry = func_001DF678(table[unit + 1]);
+        entry = xglCdFindFileName(table[unit + 1]);
         if (entry != 0) {
             return entry;
         }

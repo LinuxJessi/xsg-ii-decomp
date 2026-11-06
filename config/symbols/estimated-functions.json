@@ -34356,37 +34356,37 @@
      2
     ],
     [
-     "func_001DF1B0",
+     "GameResBlockFindBestFit",
      1962416,
      160,
      2
     ],
     [
-     "func_001DF250",
+     "GameResBlockFindByOwner",
      1962576,
      132,
      2
     ],
     [
-     "func_001DF2D8",
+     "GameResBlockFindByBuffer",
      1962712,
      100,
      2
     ],
     [
-     "func_001DF340",
+     "GameResBlockFindByName",
      1962816,
      208,
      2
     ],
     [
-     "func_001DF410",
+     "GameResBlockAssign",
      1963024,
      176,
      2
     ],
     [
-     "func_001DF4C0",
+     "GameResBlockFree",
      1963200,
      244,
      2
@@ -34404,7 +34404,7 @@
      2
     ],
     [
-     "func_001DF678",
+     "xglCdFindFileName",
      1963640,
      72,
      2
@@ -34422,19 +34422,19 @@
      2
     ],
     [
-     "func_001DF818",
+     "GameResBlockFreeByBuffer",
      1964056,
      60,
      2
     ],
     [
-     "func_001DF858",
+     "GameResBlockFreeByOwner",
      1964120,
      60,
      2
     ],
     [
-     "func_001DF898",
+     "GameResBlockAlloc",
      1964184,
      140,
      2
@@ -34446,7 +34446,7 @@
      2
     ],
     [
-     "func_001DF980",
+     "GameResBlockFindLargestFree",
      1964416,
      108,
      2
@@ -34512,13 +34512,13 @@
      2
     ],
     [
-     "func_001E0458",
+     "xglCdLoadXapFile",
      1967192,
      236,
      2
     ],
     [
-     "func_001E0548",
+     "xglCdLoadEneFile",
      1967432,
      196,
      2
@@ -34530,7 +34530,7 @@
      2
     ],
     [
-     "func_001E0768",
+     "GameResLoadName",
      1967976,
      444,
      2
@@ -34542,7 +34542,7 @@
      2
     ],
     [
-     "func_001E0AA8",
+     "GameResFindName",
      1968808,
      100,
      2

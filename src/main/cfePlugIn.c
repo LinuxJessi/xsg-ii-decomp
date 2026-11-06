@@ -55,7 +55,7 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeLoadActorObject);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BA70);
 
-int func_001E0768(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
+int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
 void XenoActorSetModeInSlot(void *, int, int);
 float XenoActorSetSelector(void *, int);
 int func_A9F0A8(void);
@@ -96,7 +96,7 @@ int cfe_0024BC10(int handle)
     index = func_A9F0C0(handle, 2);
     kind = func_A9F0C0(handle, 3);
     strcpy(buffer, func_A9F238(handle, kind));
-    func_001E0768(buffer, &data, 0, 0);
+    GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
     if (data != 0) {
@@ -130,7 +130,7 @@ int cfe_0024C030(int handle)
     slot = func_A9F0C0(handle, 1);
     text = func_A9F238(handle, func_A9F0C0(handle, 2));
     func_002AA5D8(buffer, D_0068CE50, text);
-    func_001E0768(buffer, &data, 0, 0);
+    GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
     D_0063A868[slot * 0x30] = (int) data;
