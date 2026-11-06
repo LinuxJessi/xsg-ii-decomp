@@ -6,14 +6,14 @@
 
 INCLUDE_ASM("asm/main/nonmatchings/res_get_path", func_001E0B10);
 
-int func_001DF980(void);
+int GameResBlockFindLargestFree(void);
 extern int resSelectedSlot[];
 
-/* Stores the path slot index in resSelectedSlot[0]: the slot found by the search (func_001DF980) when search is
+/* Stores the path slot index in resSelectedSlot[0]: the slot found by the search (GameResBlockFindLargestFree) when search is
    nonzero, otherwise slot 1. Callers pass 1 to search and 0 for the default (proposed resSelectSlot). */
 void resSelectSlot(int search) {
     if (search != 0) {
-        resSelectedSlot[0] = func_001DF980();
+        resSelectedSlot[0] = GameResBlockFindLargestFree();
     } else {
         resSelectedSlot[0] = 1;
     }

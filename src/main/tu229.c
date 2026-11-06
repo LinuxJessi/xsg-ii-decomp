@@ -28,9 +28,9 @@ void talkEndScript(void) {
     talkActive = 0;
 }
 
-int func_001E0768(unsigned char *path, int *status, int option, int reserved);
-extern int talkScriptHandle;
-extern unsigned char talkOmiyaScriptPath[];
+int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
+extern void *talkScriptHandle;
+extern char talkOmiyaScriptPath[];
 
 /*
  * Starts loading "omiya\talk01.xtx" (talkOmiyaScriptPath) into the script handle
@@ -38,16 +38,16 @@ extern unsigned char talkOmiyaScriptPath[];
  * (xglCdServiceIfPending, xglCdServiceIfPending in tu011).
  */
 void talkLoadOmiyaScript(void) {
-    func_001E0768(talkOmiyaScriptPath, &talkScriptHandle, 0, 0);
+    GameResLoadName(talkOmiyaScriptPath, &talkScriptHandle, 0, 0);
     while (xglCdServiceIfPending() != 0) {
     }
 }
 
-int func_001DF818(int value);
+int GameResBlockFreeByBuffer(void *buffer);
 
 /* Releases the script handle talkScriptHandle and clears it. */
 void talkCloseScript(void) {
-    func_001DF818(talkScriptHandle);
+    GameResBlockFreeByBuffer(talkScriptHandle);
     talkScriptHandle = 0;
 }
 

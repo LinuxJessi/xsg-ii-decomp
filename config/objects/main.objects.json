@@ -51657,54 +51657,54 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF1B0",
+     "name": "GameResBlockFindBestFit",
      "size": 160,
-     "splat_name": "func_001DF1B0",
+     "splat_name": "GameResBlockFindBestFit",
      "va": "0x001df1b0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF250",
+     "name": "GameResBlockFindByOwner",
      "size": 132,
-     "splat_name": "func_001DF250",
+     "splat_name": "GameResBlockFindByOwner",
      "va": "0x001df250",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF2D8",
+     "name": "GameResBlockFindByBuffer",
      "size": 100,
-     "splat_name": "func_001DF2D8",
+     "splat_name": "GameResBlockFindByBuffer",
      "va": "0x001df2d8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF340",
+     "name": "GameResBlockFindByName",
      "size": 208,
-     "splat_name": "func_001DF340",
+     "splat_name": "GameResBlockFindByName",
      "va": "0x001df340",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF410",
+     "name": "GameResBlockAssign",
      "size": 176,
-     "splat_name": "func_001DF410",
+     "splat_name": "GameResBlockAssign",
      "va": "0x001df410",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF4C0",
+     "name": "GameResBlockFree",
      "size": 244,
-     "splat_name": "func_001DF4C0",
+     "splat_name": "GameResBlockFree",
      "va": "0x001df4c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51729,9 +51729,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF678",
+     "name": "xglCdFindFileName",
      "size": 72,
-     "splat_name": "func_001DF678",
+     "splat_name": "xglCdFindFileName",
      "va": "0x001df678",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51756,27 +51756,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF818",
+     "name": "GameResBlockFreeByBuffer",
      "size": 60,
-     "splat_name": "func_001DF818",
+     "splat_name": "GameResBlockFreeByBuffer",
      "va": "0x001df818",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF858",
+     "name": "GameResBlockFreeByOwner",
      "size": 60,
-     "splat_name": "func_001DF858",
+     "splat_name": "GameResBlockFreeByOwner",
      "va": "0x001df858",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF898",
+     "name": "GameResBlockAlloc",
      "size": 140,
-     "splat_name": "func_001DF898",
+     "splat_name": "GameResBlockAlloc",
      "va": "0x001df898",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51792,9 +51792,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF980",
+     "name": "GameResBlockFindLargestFree",
      "size": 108,
-     "splat_name": "func_001DF980",
+     "splat_name": "GameResBlockFindLargestFree",
      "va": "0x001df980",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51891,18 +51891,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E0458",
+     "name": "xglCdLoadXapFile",
      "size": 236,
-     "splat_name": "func_001E0458",
+     "splat_name": "xglCdLoadXapFile",
      "va": "0x001e0458",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E0548",
+     "name": "xglCdLoadEneFile",
      "size": 196,
-     "splat_name": "func_001E0548",
+     "splat_name": "xglCdLoadEneFile",
      "va": "0x001e0548",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51918,9 +51918,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E0768",
+     "name": "GameResLoadName",
      "size": 444,
-     "splat_name": "func_001E0768",
+     "splat_name": "GameResLoadName",
      "va": "0x001e0768",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51936,9 +51936,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E0AA8",
+     "name": "GameResFindName",
      "size": 100,
-     "splat_name": "func_001E0AA8",
+     "splat_name": "GameResFindName",
      "va": "0x001e0aa8",
      "name_basis": "address",
      "provenance": "estimated"

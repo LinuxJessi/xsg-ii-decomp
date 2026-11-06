@@ -31,13 +31,13 @@ typedef struct MainObject {
     int flags;
 } MainObject;
 
-void func_001D74E0(void);
-int GameResLoadID(int id, const void *path, int option, void (*callback)(void));
-void func_001DF858(int id);
+void func_001D74E0(int index, void *buffer, unsigned int size, int value);
+int GameResLoadID(int id, void **buffer, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
+int GameResBlockFreeByOwner(int owner);
 void uwamonoResetRecords(int, int);
 void sefResetHandleSlots(void);
 extern MainWork gameWork;
-extern unsigned char D_002B5DB8[];
+extern void *D_002B5DB8[];
 
 /* Makes id the current resource. With mode 1, a reload of the current id releases it first and then
  * uwamonoResetRecords(-1, 1) and sefResetHandleSlots() run. id is loaded (retried until GameResLoadID stops
@@ -49,7 +49,7 @@ void mainSwitchId(int id, signed char mode)
     prev_id = gameWork.current_id;
     if (mode == 1) {
         if (prev_id == id) {
-            func_001DF858(id);
+            GameResBlockFreeByOwner(id);
         }
         uwamonoResetRecords(-1, 1);
         sefResetHandleSlots();
@@ -58,7 +58,7 @@ void mainSwitchId(int id, signed char mode)
     while (GameResLoadID(id, D_002B5DB8, 0, func_001D74E0) == -1) {
     }
     if (id != prev_id) {
-        func_001DF858(prev_id);
+        GameResBlockFreeByOwner(prev_id);
     }
 }
 

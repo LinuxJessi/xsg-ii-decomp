@@ -55,7 +55,7 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeLoadActorObject);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BA70);
 
-void func_001E0768(char *, int *, int, int);
+int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
 void XenoActorSetModeInSlot(void *, int, int);
 float XenoActorSetSelector(void *, int);
 int func_A9F0A8(void);
@@ -81,14 +81,14 @@ extern CfePlugInEntry cfePlugInSlots[];
 int cfe_0024BC10(int handle)
 {
     char buffer[0x80];
-    int value;
+    void *data;
     int slot;
     int index;
     int kind;
     CfePlugInEntry *entry;
     unsigned char *object;
 
-    value = 0;
+    data = 0;
     if (func_A9F0A8() != 3) {
         assertFailed(D_0068CE20, cfeAssertFile, 430);
     }
@@ -96,13 +96,13 @@ int cfe_0024BC10(int handle)
     index = func_A9F0C0(handle, 2);
     kind = func_A9F0C0(handle, 3);
     strcpy(buffer, func_A9F238(handle, kind));
-    func_001E0768(buffer, &value, 0, 0);
+    GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
-    if (value != 0) {
+    if (data != 0) {
         entry = &cfePlugInSlots[slot];
         object = entry->object;
-        *(int *) (object + CFE_OBJECT_RESULTS_OFFSET + index * 4) = value;
+        *(int *) (object + CFE_OBJECT_RESULTS_OFFSET + index * 4) = (int) data;
         if (index == 0) {
             XenoActorSetModeInSlot(object, 0, 0);
             XenoActorSetSelector(entry->object, 0);
@@ -122,18 +122,18 @@ extern unsigned char D_0068CE50[];
 int cfe_0024C030(int handle)
 {
     char buffer[0x40];
-    int value;
+    void *data;
     int slot;
     char *text;
 
-    value = 0;
+    data = 0;
     slot = func_A9F0C0(handle, 1);
     text = func_A9F238(handle, func_A9F0C0(handle, 2));
     func_002AA5D8(buffer, D_0068CE50, text);
-    func_001E0768(buffer, &value, 0, 0);
+    GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
-    D_0063A868[slot * 0x30] = value;
+    D_0063A868[slot * 0x30] = (int) data;
     return 1;
 }
 

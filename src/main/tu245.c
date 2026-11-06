@@ -36,24 +36,24 @@ void textTagTableClear(void)
     memset(textTagTable, 0, 0x78);
 }
 
-void func_001E0768(void *, int *, int, int);
-extern unsigned char msgBotanPath[];
-extern int msgBotanHandle;
+int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
+extern char msgBotanPath[];
+extern void *msgBotanHandle;
 
 /* Loads omiya\botan.xtx (the path string msgBotanPath) into the handle msgBotanHandle and waits for the load. */
 void msgWindowLoadBotanXtx(void)
 {
-    func_001E0768(msgBotanPath, &msgBotanHandle, 0, 0);
+    GameResLoadName(msgBotanPath, &msgBotanHandle, 0, 0);
     while (xglCdServiceIfPending() != 0) {
     }
 }
 
-void func_001DF818(int);
+int GameResBlockFreeByBuffer(void *buffer);
 
 /* Releases the botan.xtx handle. */
 void msgWindowUnloadBotanXtx(void)
 {
-    func_001DF818(msgBotanHandle);
+    GameResBlockFreeByBuffer(msgBotanHandle);
     msgBotanHandle = 0;
 }
 
