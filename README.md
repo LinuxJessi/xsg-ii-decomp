@@ -1,8 +1,7 @@
 # Xenosaga Episode II
 
-<!-- Badge for when the project is on bytematch.dev:
 [![Code](https://bytematch.dev/OpokXeno/xsg-ii-decomp.svg?mode=shield&label=Code)](https://bytematch.dev/OpokXeno/xsg-ii-decomp)
--->
+[![Functions](https://bytematch.dev/OpokXeno/xsg-ii-decomp.svg?mode=shield&label=Functions&measure=matched_functions)](https://bytematch.dev/OpokXeno/xsg-ii-decomp)
 
 > This project is developed with AI assistance.
 
