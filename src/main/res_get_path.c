@@ -6,7 +6,7 @@
 
 INCLUDE_ASM("asm/main/nonmatchings/res_get_path", func_001E0B10);
 
-Síint func_001DF980(void);
+int func_001DF980(void);
 extern int resSelectedSlot[];
 
 /* Stores the path slot index in resSelectedSlot[0]: the slot found by the search (func_001DF980) when search is
