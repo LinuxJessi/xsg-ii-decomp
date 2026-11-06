@@ -110,6 +110,17 @@ void DrawImage_001EE618(void *framebuffer)
     sceVif1PkRef(packet, FlushEnv_2_002BD540.words, 3, 0, 0, 0);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_065", func_001EE730);
+/*
+ * Display adjustment screen (tyaDisplaySetting in X1, src/main/tya_display_setting.c,
+ * same image path and debug format strings): loads data\yajima\mnt_set.jpg into
+ * the framebuffer, moves the picture with the pad and draws DrawImage_001EE618
+ * each frame. The offset it applies is SaveData +0x32 (horizontal) and +0x34
+ * (vertical), the same fields as X1.
+ */
+INCLUDE_ASM("asm/main/nonmatchings/game_over_065", tyaDisplaySetting);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_065", func_001EEB60);
+/*
+ * Applies the display offset to DispEnv: dx = the base dx + 5 * horizontal, dy =
+ * the base dy + vertical (the mode-0 arithmetic of X1 tyaDisplaySetting).
+ */
+INCLUDE_ASM("asm/main/nonmatchings/game_over_065", tyaSetDisplayOffset);

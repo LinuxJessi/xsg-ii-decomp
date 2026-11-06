@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
-
+#include "main/sv_get_image_item_158.h"
+#include "main/sv_get_image_item_159.h"
 #define SV_ENTRY_COUNT 0x100
 
 /* SvTypeListEntry.resourceKind, equal to the chunk kind it was built from. */
@@ -42,10 +43,11 @@ typedef struct SvTypeList {
     int size;
     int capacity;
     unsigned int savedSize;
-    short width;
-    short height;
-    short entryCount;
-    unsigned char unmodeled_16[6];
+    int dimensions;                 /* +0x10: width and height halfwords, cleared as one word */
+    short entryCount;               /* +0x14 */
+    short tag;                      /* +0x16: the fourth svAddImageMapper argument */
+    short pendingCount;             /* +0x18: flushed by svImageListDestroy when nonzero */
+    unsigned char unmodeled_1A[2];
     SvTypeListEntry entries[SV_ENTRY_COUNT];
 } SvTypeList;
 
@@ -82,7 +84,6 @@ typedef struct SvResourceChunk {
     char payload[0x34];
 } SvResourceChunk;
 
-int svImageListAlloc(int typeListAddr);
 int svAddModel(SvTypeList *typeList, SvResourceChunk *chunk);
 int svAddScript(SvTypeList *typeList, SvResourceChunk *chunk);
 
@@ -151,43 +152,66 @@ int svAddScript(SvTypeList *typeList, SvResourceChunk *chunk)
     return index;
 }
 
+/* Registers a script resource of the list: its code sits at +0xC0 of the chunk, its data at +0x14, its id at +0xA. */
 int svAddScript2(int typeListAddr, void *script)
 {
   int index;
   void *codePtr;
   void *dataPtr;
-  void *slot;
-  SvScriptSlot *sub;
+  void *itemSlot;
+  SvScriptSlot *scriptSlot;
 
   index = svImageListAlloc(typeListAddr);
   codePtr = (unsigned char *) script + 0xC0;
   dataPtr = (unsigned char *) script + 0x14;
-  slot = (void *) (typeListAddr + (index * 0x24));
+  itemSlot = (void *) (typeListAddr + (index * 0x24));
   if (index < 0)
   {
     return -1;
   }
-  sub = (SvScriptSlot *) ((unsigned char *) slot + 0x1C);
-  sub->kind = 5;
-  sub->dataPtr = dataPtr;
-  sub->codePtr = codePtr;
-  sub->id = (short) *((u16 *) (((unsigned char *) script) + 0xA));
-  sub->active = 1;
-  sub->clearedB = 0;
-  sub->clearedA = 0;
+  scriptSlot = (SvScriptSlot *) ((unsigned char *) itemSlot + 0x1C);
+  scriptSlot->kind = 5;
+  scriptSlot->dataPtr = dataPtr;
+  scriptSlot->codePtr = codePtr;
+  scriptSlot->id = (short) *((u16 *) (((unsigned char *) script) + 0xA));
+  scriptSlot->active = 1;
+  scriptSlot->clearedB = 0;
+  scriptSlot->clearedA = 0;
   return index;
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", svAnalyzeChunk);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", func_00254840);
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", svInitImageMapper);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", svAddImageMapper);
+void svImageListDestroy(SvTypeList *list);
+void svAnalyzeChunk(SvTypeList *list, void *chunk);
+SvTypeList *svGetTypeList(int type);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", func_00254940);
+void svAddImageMapper(int typeListId, int entryCount, void *chunk, int tag) {
+    SvTypeList *list;
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", func_00254978);
+    list = svGetTypeList(typeListId);
+    if (list->pendingCount != 0) {
+        svImageListDestroy(list);
+    }
+    list->tag = tag;
+    list->entryCount = entryCount;
+    list->pendingCount = list->pendingCount + 1;
+    svAnalyzeChunk(list, chunk);
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", func_002549D8);
+void svDeleteImageMapper(int typeListId) {
+    SvTypeList *list;
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", func_00254A40);
+    list = svGetTypeList(typeListId);
+    if (list->pendingCount != 0) {
+        svImageListDestroy(list);
+    }
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", svDeleteImageMapperByEntryCount);
+
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", svDeleteImageMapperByDimensions);
+
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_159", svDeleteImageMapperByTag);

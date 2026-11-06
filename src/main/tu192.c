@@ -1,7 +1,8 @@
 #include "common.h"
 #include "shared.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu192", func_00272370);
+/* MMathVectorDotProduct (MMathVectorDotProduct): dot product of the xyz lanes, returned in $f0. */
+INCLUDE_ASM("asm/main/nonmatchings/tu192", MMathVectorDotProduct);
 
 Vector4 *MMathVectorCrossProduct(Vector4 *destination, const Vector4 *first, const Vector4 *second)
 {

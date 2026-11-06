@@ -1,0 +1,122 @@
+#include "common.h"
+#include "main/tu012.h"
+
+INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcRequest);
+
+#include "shared.h"
+
+/* Memory-card state block at xglMcState. The full path of the current request starts at +0x20. */
+typedef struct XglMcState {
+    unsigned char state;            /* +0x00: phase of the request state machine */
+    unsigned char unmodeled_01[0x1C];
+    unsigned char selector;         /* +0x1D: selector for the card search */
+    signed char card;               /* +0x1E: card index chosen by the search */
+    unsigned char status;           /* +0x1F */
+    unsigned char buffer[0x10];     /* +0x20: first bytes of the full path */
+    unsigned char unmodeled_30[0x50];
+    short port;                     /* +0x80: sceMc port */
+    unsigned char unmodeled_82[0xA];
+    int size;                       /* +0x8C: work pointer; sceMcGetDir reserves (size + 0xA3) & ~0x3F */
+} XglMcState;
+
+extern XglMcState xglMcState;
+extern int D_00959F3C[];
+extern signed char xglMcQueueTop;
+extern signed char xglMcQueueEnd;
+extern char D_0069DF70[];
+extern char xglMcBasePath[];
+
+/* Returns the status word of the card state (+0x04 of xglMcState). */
+int xglMcGetState(void)
+{
+    return D_00959F3C[0];
+}
+
+/* Clears both queue indices and the request phase of the memory-card state. */
+void xglMcReset(void)
+{
+    xglMcQueueTop = 0;
+    xglMcState.state = 0;
+    xglMcQueueEnd = 0;
+}
+
+/*
+ * Writes decimal numbers into a save entry as full-width Shift-JIS digits (0x82 0x4F + digit).
+ * value goes to object + 0x11B and 0x11D; when source is set, source[3] and source[2] go to object + 0x120..0x129.
+ * A first value below 10 gets a full-width space (0x81 0x40) in front.
+ */
+void xglMcSetEntryNumbers(unsigned char *object, int value, const unsigned char *source)
+{
+    unsigned char *entry_text;
+    unsigned char *source_text;
+    int first_value;
+    int second_value;
+    signed char first_tens;
+
+    entry_text = object + 0x40;
+    if (value > 0)
+    {
+        entry_text[0xDD] = (signed char) ((value % 10) + 0x4F);
+        entry_text[0xDB] = (signed char) (((value / 10) % 10) + 0x4F);
+        if (source != 0)
+        {
+            first_value = source[3];
+            source_text = object + 0x120;
+            second_value = source[2];
+            source_text[3] = (signed char) ((first_value % 10) + 0x4F);
+            if (first_value < 10)
+            {
+                source_text[0] = -0x7F;
+                source_text[1] = 0x40;
+            }
+            else
+            {
+                first_tens = (signed char) ((first_value / 10) + 0x4F);
+                source_text[0] = -0x7E;
+                source_text[1] = first_tens;
+            }
+            source_text[9] = (signed char) ((second_value % 10) + 0x4F);
+            source_text[7] = (signed char) ((second_value / 10) + 0x4F);
+        }
+    }
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcBuildPath);
+
+char *xglMcBuildPath();
+
+/* Full path for card `card` (or -1 for the wildcard) with the suffix path, built on the base path xglMcBasePath. */
+char *xglMcSetFullPath(int card, const char *path)
+{
+    return xglMcBuildPath(xglMcBasePath, card, path);
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcExecute);
+
+INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcCreateStep);
+
+INCLUDE_ASM("asm/main/nonmatchings/tu012", func_0019E408);
+
+int func_001305B0();
+int func_0019E408();
+
+/* Picks a card for the request, then starts a directory scan of 16 entries on it. Returns 1 when no card fits. */
+int xglMcStartDirectoryScan(void)
+{
+    int card;
+
+    card = func_0019E408(xglMcState.size, xglMcState.selector);
+    if (card < 0)
+    {
+        return 1;
+    }
+    xglMcState.card = (signed char) card;
+    xglMcState.status = 0;
+    xglMcSetFullPath(card, D_0069DF70);
+    func_001305B0(xglMcState.port, 0, xglMcState.buffer, 0, 0x10, (xglMcState.size + 0xA3) & ~0x3F);
+    return 0;
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/tu012", func_0019E508);
+
+INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcMain);

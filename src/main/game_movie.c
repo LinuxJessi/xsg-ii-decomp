@@ -2,8 +2,12 @@
 #include "shared.h"
 
 char *caption_nextline(char *cursor);
+void fadeStartOut(int);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_movie", func_001E7570);
+/* Calls fadeStartOut(1); the callee is not named yet, so this wrapper is left as GameMovieCaptionFadeOut. */
+void GameMovieCaptionFadeOut(void) {
+    fadeStartOut(1);
+}
 
 char *caption_nextline(char *cursor)
 {
@@ -28,12 +32,20 @@ char *caption_nextline(char *cursor)
     return cursor;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_movie", func_001E7610);
+/* Proposed caption_getparam(char *cursor, int *time, char *out): parses a time with colons, then the text
+ * segments with their width halves; "[base/ruby]" tags expand to the ruby control strings below. */
+INCLUDE_ASM("asm/main/nonmatchings/game_movie", caption_getparam);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_movie", func_001E7A08);
+/* Proposed caption_convert(char *text): the caption control string, then one (time, text) record per line,
+ * until a negative time. Same body as X1's caption_convert. */
+INCLUDE_ASM("asm/main/nonmatchings/game_movie", caption_convert);
 
+/* Two copies of one sRender-based image transfer packet (func_001E7B08 and func_001E7C08) that differ only in
+ * which of sRender +0x10 / +0x12 goes to each half of the register pair. Direction not decided yet, so unnamed. */
 INCLUDE_ASM("asm/main/nonmatchings/game_movie", func_001E7B08);
 
 INCLUDE_ASM("asm/main/nonmatchings/game_movie", func_001E7C08);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_movie", func_001E7D08);
+/* Proposed GameMovieCaptionPlay: reads a caption script with xglCdReadFile, lays the lines out with
+ * caption_convert, prints them with xglFontPrintDirect and waits on the pad. Called by the mpeg2 playback. */
+INCLUDE_ASM("asm/main/nonmatchings/game_movie", GameMovieCaptionPlay);

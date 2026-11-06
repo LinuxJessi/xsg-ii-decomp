@@ -1,60 +1,45 @@
 #include "common.h"
 #include "shared.h"
+#include "main/get.h"
+#include "main/xgl_2_028.h"
 
 extern float sinf(float angle);
 extern float cosf(float angle);
 extern float atan2f(float y, float x);
-
-int Get_Rnd(int min, int max);
-
 int CheckPointLine(const Vector4 *first, const Vector4 *second,
                    const Vector4 *point);
 
-unsigned short xglSRand(void);
-
 /* GetBSplineLoop: DataSpline holds the weight table (byte offset) at 2048 phases per control-point period; the sum is divided by 6 * 4096. */
 #define GET_BSPLINE_PHASES 2048
-
 #define GET_BSPLINE_WEIGHTS_OFFSET 4304
 #define GET_BSPLINE_WEIGHT_SCALE 24576.0f
 
 typedef struct ParabolaVec { float x, y, z, w; } ParabolaVec;
+
 typedef struct Vector3 { float x, y, z; } Vector3;
 
 float Get_Angle_Relative(const Vector4 *first, const Vector4 *second,
                          float reference);
-
 /* Functions and data used by other translation units. */
 extern unsigned short *DataSpline;
-
 void Get_Point_By_AngleLength(const Vector4 *source, Vector4 *destination,
                               float angle, float length);
-
 float Get_Distance(const Vector4 *first, const Vector4 *second);
-
 int Check_CrossingOver(const Vector4 *first_start, const Vector4 *first_end,
                        const Vector4 *second_start, const Vector4 *second_end);
-
 float Get_Angle(const Vector4 *first, const Vector4 *second);
-
 void BSpline_Add(short frame, short count, short period,
                  Vector4 *destination, const Vector3 *source, short offset);
-
 void Get_One_Step(float length, const Vector4 *source,
                   const Vector4 *destination, Vector4 *output);
-
 float Get_Decimal_Surplus_for_Radius(float angle);
 float Get_Distance3D(const Vector4 *first, const Vector4 *second);
-
 void Get_MiddlePoint(const float *start, const float *following,
                      short point_index, short point_count, float *result);
-
 float Get_Multi_Max_Under(float value, float step, float maximum);
-
 void Get_MiddlePoint_Parabora(const ParabolaVec *first, const ParabolaVec *second,
                               int current, int total, float height,
                               ParabolaVec *destination);
-
 extern unsigned short * DataSpline;
 
 float Get_Decimal_Surplus_for_Radius(float angle)
@@ -74,9 +59,11 @@ float Get_Decimal_Surplus_for_Radius(float angle)
     return angle;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_00208C88);
+/* Debug HUD: prints "%2d(%3d)" from the stick angle (PadData bytes 0x64/0x65 through atan2f). */
+INCLUDE_ASM("asm/main/nonmatchings/get", padDebugPrintDirection);
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_00208E10);
+/* Debug move-square check: same strings and corner offsets as X1 Check_MoveSquare. */
+INCLUDE_ASM("asm/main/nonmatchings/get", unduCheckMoveSquare);
 
 void Get_Point_By_AngleLength(const Vector4 *source, Vector4 *destination,
                               float angle, float length)
@@ -87,7 +74,8 @@ void Get_Point_By_AngleLength(const Vector4 *source, Vector4 *destination,
     destination->w = source->w;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_00209300);
+/* Returns 1.0 when the 1-D spans [0x14, 0x14 + 0x584) of uwamonoRecords entries a and b overlap, else 0.0. */
+INCLUDE_ASM("asm/main/nonmatchings/get", uwamonoRecordsOverlap);
 
 void Get_MiddlePoint(const float *start, const float *following,
                      short point_index, short point_count, float *result)
@@ -155,7 +143,8 @@ void Get_One_Step(float length, const Vector4 *source,
     output->w = 1.0f;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_00209AC0);
+/* Straight-line probe: Check_Undu sweep first, then per-step territory, wall and actor tests (X1 Check_Straight flow). */
+INCLUDE_ASM("asm/main/nonmatchings/get", unduCheckStraight);
 
 INCLUDE_ASM("asm/main/nonmatchings/get", Check_Straight_ID);
 
@@ -184,7 +173,8 @@ float Get_Angle(const Vector4 *first, const Vector4 *second)
     return atan2f(second->x - first->x, second->z - first->z);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_00209FD8);
+/* Three Get_Decimal_Surplus_for_Radius normalisations and the range test of X1 Check_Angle, after a span shortcut. */
+INCLUDE_ASM("asm/main/nonmatchings/get", unduCheckAngle);
 
 float Get_Angle_Relative(const Vector4 *first, const Vector4 *second,
                          float reference)
@@ -216,11 +206,14 @@ int Check_CrossingOver(const Vector4 *first_start, const Vector4 *first_end,
     return 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020A408);
+/* Field-of-view test of a target from origin: range, angle sector, map sweep and height limits (X1 Check_InsideFan). */
+INCLUDE_ASM("asm/main/nonmatchings/get", unduCheckInsideFan);
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020A588);
+/* Angle cursor that moves toward a target by the shorter way round, divided by speed (same body as X1). */
+INCLUDE_ASM("asm/main/nonmatchings/get", cursolGetByReduceSpeedAngleLoop);
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020A658);
+/* Nearest reachable ground point among eight points at radius 2 around the origin (X1 Get_EnemyIDPos flow). */
+INCLUDE_ASM("asm/main/nonmatchings/get", unduGetEnemyIDPos);
 
 float Get_Multi_Max_Under(float value, float step, float maximum)
 {
@@ -236,24 +229,84 @@ float Get_Multi_Max_Under(float value, float step, float maximum)
     return value;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020A910);
+/* Undu query block (X1 UnduParam): UnduParamInit fills it, UnduCheck reads the query and writes the attribute.
+   Offsets come from the stores in the wrappers below. */
+typedef struct UnduParam {
+    int query_flags;
+    unsigned char unmodeled_04[0x4];
+    short attr_mask;
+    unsigned char unmodeled_0A[0xE];
+    int header;
+    unsigned char unmodeled_1C[0x4];
+    int attribute;
+} UnduParam;
+
+extern UnduParam unduTest;
+void mapProbeInit();
+float mapMoveProbe();
+
+/* Height at a position under a query mode, with the parameter block the caller supplies.
+   The first argument is the Vector4 position passed to UnduCheck (typed int by the decompiler). */
+float unduGetHeightAttr(int position, int unused, int attr_mask, UnduParam *request)
+{
+    mapProbeInit(request);
+    request->query_flags = 0;
+    request->attr_mask = (short) attr_mask;
+    return mapMoveProbe(position, 0, request);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/get", func_0020A968);
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020AA48);
+/* Attribute at a position through the shared query block, default header (no map index is used). */
+int unduGetAttr(int position, int unused, int attr_mask)
+{
+    mapProbeInit(&unduTest);
+    unduTest.query_flags = 0;
+    unduTest.attr_mask = (short) attr_mask;
+    mapMoveProbe(position, 0, &unduTest);
+    return unduTest.attribute;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020AAA8);
+int mapFindBlockEntry();
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020AB30);
+/* Attribute at a position with the header of a map index; 0x100 keeps the header UnduParamInit set. */
+int unduGetMapAttr(int position, int map_key, int attr_mask)
+{
+    mapProbeInit(&unduTest);
+    unduTest.attr_mask = (short) attr_mask;
+    unduTest.query_flags = 0;
+    if (map_key != 0x100) {
+        unduTest.header = mapFindBlockEntry(map_key, -1);
+    }
+    mapMoveProbe(position, 0, &unduTest);
+    return unduTest.attribute;
+}
+
+/* Sweeps from start toward end through the Undu query block; returns 1 when the sweep end is within 0.01 of end. */
+INCLUDE_ASM("asm/main/nonmatchings/get", unduCheckSweep);
 
 int Get_Rnd(int min, int max)
 {
     return min + xglSRand() % (max - min + 1);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020AD48);
+f32 xglFRand();
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020AD90);
+int Get_RndFloatRange(float minimum, float maximum)
+{
+    return (int) (minimum + (xglFRand() * (maximum - minimum)));
+}
+
+void vectorCopyPoint(Vector4 *destination, const Vector4 *source)
+{
+    float z;
+
+    destination->x = source->x;
+    destination->y = source->y;
+    z = source->z;
+    destination->w = 1.0f;
+    destination->z = z;
+}
 
 void BSpline_Add(short frame, short count, short period,
                  Vector4 *destination, const Vector3 *source, short offset)
@@ -292,4 +345,5 @@ void GetBSplineLoop(short frame, short count, int period_value,
                      / GET_BSPLINE_WEIGHT_SCALE;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/get", func_0020B008);
+/* Advances a per-actor spline cursor (frame at +0x58, segment steps at +0x5C) and interpolates the current segment (X1 GetBSplineLoopDummy). */
+INCLUDE_ASM("asm/main/nonmatchings/get", bsplineGetLoopDummy);

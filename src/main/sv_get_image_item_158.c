@@ -1,11 +1,11 @@
 #include "common.h"
 #include "shared.h"
+#include "main/sv_get_image_item_158.h"
 
 extern void *memset(void *destination, int value, unsigned int count);
 
 /* The image mapper: SV_TYPE_LIST_COUNT type lists of SV_ENTRY_COUNT entries. */
 #define SV_TYPE_LIST_COUNT 40
-
 #define SV_ENTRY_COUNT 0x100
 
 /*
@@ -58,10 +58,11 @@ typedef struct SvTypeList {
     int size;
     int capacity;
     unsigned int savedSize;
-    short width;
-    short height;
-    short entryCount;
-    unsigned char unmodeled_16[6];
+    int dimensions;                 /* +0x10: width and height halfwords, cleared as one word */
+    short entryCount;               /* +0x14 */
+    short tag;                      /* +0x16: the fourth svAddImageMapper argument */
+    short pendingCount;             /* +0x18: flushed by svImageListDestroy when nonzero */
+    unsigned char unmodeled_1A[2];
     SvTypeListEntry entries[SV_ENTRY_COUNT];
 } SvTypeList;
 
@@ -76,12 +77,8 @@ typedef struct SvImageMapperStorage {
     SvReferenceImageSlot referenceImages[SV_TYPE_LIST_COUNT];
 } SvImageMapperStorage;
 
-int svImageListAlloc(int typeListAddr);
-
 SvTypeList *svGetTypeList(int type);
-
 extern SvImageList _imageList;
-
 /* Forty 0x241C-byte mapper records followed by forty reference-image slots. */
 extern SvImageMapperStorage _imageMapper;
 
@@ -93,7 +90,22 @@ void svImageListCreate(void) {
     memset(&_imageList, 0, sizeof(SvImageList));
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_00253B60);
+/* Releases every entry of a type list (the used flags), then resets its counters, tag and dimensions. */
+void svImageListDestroy(SvTypeList *typeList) {
+    int index;
+
+    for (index = 0; index < SV_ENTRY_COUNT; index++) {
+        if (typeList->entries[index].used != 0) {
+            typeList->entries[index].used = 0;
+        }
+    }
+    typeList->savedSize = typeList->size;
+    typeList->total = 0;
+    typeList->entryCount = 0;
+    typeList->tag = 0;
+    typeList->dimensions = 0;
+    typeList->pendingCount = 0;
+}
 
 int svImageListAlloc(int typeListAddr)
 {
@@ -134,18 +146,44 @@ void *svGetImageListItemSub(int type, unsigned int flags)
     return 0;
 }
 
+/* Looks the list up with the type 0 for flag 0x100, else with the given type; a negative type returns 0. */
 INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_00253C70);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_00253CB0);
+/* Scans type list 0 for an active entry whose name equals `name`. */
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", svGetResFromName);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_00253D28);
+/*
+ * Builds the texture parameters of a bitmap and its CLUT from a base name,
+ * looking the resource names up with svGetResFromName (name pieces "bmp",
+ * "pxy", "clt", "txy"): texture register bits, width and height scaled by
+ * 0.01. Clears the parameter and returns 0 when either resource is missing.
+ */
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", svGetPrmFromName);
 
+/* Page count of a texture for its pixel format: 128x64 pages for PSMT8 (0x13), 128x128 for PSMT4 (0x14), else width * height / 128. */
 INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_00253F38);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_00253FD0);
+/* Buffer width of a texture in 64-pixel units, rounded up to an even number, for PSMT8 and PSMT4; 0 for other formats. */
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", svGetTextureBufferWidth);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_00254010);
+/* Uploads one texture (PSMT8 or PSMT4, buffer width in 64-pixel units) to the current packet. */
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", svLoadTexture);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_002540C8);
+void *xglPacketGetCurrent(void);
+int func_0012BA78(int, u16, int, int, const void *, int, int, int, int, int);
 
-INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", func_00254170);
+/* Uploads a palette: 16x16 for 8-bit entries, 8x2 for 4-bit, to the current packet. */
+void svLoadClut(SvTypeListEntry *entry) {
+    u16 basePointer;
+    void *packet;
+
+    basePointer = entry->basePointer;
+    packet = xglPacketGetCurrent();
+    if (entry->bitsPerPixel == 8) {
+        func_0012BA78(packet, basePointer, 0, 1, entry->data, 0x40, 0, 0, 0x10, 0x10);
+        return;
+    }
+    func_0012BA78(packet, basePointer, 0, 1, entry->data, 4, 0, 0, 8, 2);
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/sv_get_image_item_158", svLoadImageList);

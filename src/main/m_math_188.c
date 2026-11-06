@@ -93,8 +93,10 @@ void MMathCalcHermitePrm(HermiteVector *tangent_start, HermiteVector *tangent_en
     );
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_188", func_00271E58);
+/* Float vector times the degree-to-radian factor (no int conversion; the counterpart of MMathDeg2RadVectorI). */
+INCLUDE_ASM("asm/main/nonmatchings/m_math_188", MMathDeg2RadVector);
 
+/* Int vector converted to float, times the degree-to-radian factor. */
 void *MMathDeg2RadVectorI(void *destination, const Vector4 *source)
 {
     __asm__ __volatile__(
@@ -109,8 +111,10 @@ void *MMathDeg2RadVectorI(void *destination, const Vector4 *source)
     return destination;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_188", func_00271EA8);
+/* Float vector times the radian-to-degree factor (no int conversion; the counterpart of MMathRad2DegVectorI). */
+INCLUDE_ASM("asm/main/nonmatchings/m_math_188", MMathRad2DegVector);
 
+/* Float vector times the radian-to-degree factor, converted to int. */
 void *MMathRad2DegVectorI(void *destination, const Vector4 *source)
 {
     __asm__ __volatile__(

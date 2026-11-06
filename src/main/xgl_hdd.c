@@ -1,5 +1,8 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu012.h"
+#include "main/xgl_cd.h"
+#include "main/xgl_hdd.h"
 
 struct request {
     u8 mode;
@@ -17,14 +20,11 @@ typedef struct {
 } XglClock;
 
 struct stat;
-
 int stat(const char *path, struct stat *status);
-
 extern u8 *buffer;
 extern unsigned int strlen(const char *string);
 extern int strcmp(const char *left, const char *right);
 extern int strncmp(const char *left, const char *right, unsigned int count);
-extern int xglHddActivate(int state);
 extern int xglHddMcUmount(void);
 extern int xglHddMcLoadMount(void);
 extern int xglHddMcLoadCore(void *save);
@@ -85,22 +85,16 @@ struct HddSaveRequest {
  * it.
  */
 extern char xgl_hdd_device[];
-
 extern char hdd_mc_path[];
 extern char mount_device[];
 extern int xglHddMcGetFree(void);
-
 int xglHddMcExist(struct HddExistRequest *request);
 int xglHddMcSave(const struct HddSaveRequest *save);
 
-/* Size of the icon.sys image that opens every save (the icon header). */
+/* Size of the icon.sys image that opens every resCmdSave (the icon header). */
 #define MC_ICON_SYS_SIZE 964
 
-char *xglMcSetFullPath(int card, int selector);
-
 unsigned int xglClockDayTime2UInt(XglClock *clock_time);
-
-void xglCdArcCheck(void);
 
 struct HddIoStat {
     unsigned int mode;
@@ -134,25 +128,17 @@ struct HddDirectoryEntry {
 };
 
 extern u8 system_cnf[];
-
 int sceRead(int descriptor, void *buffer, int bytes);
 int xglHddCheck2(void);
 int xglHddCheckCore(void);
-
 extern int sceUmount(const char *path);
-
 int xglHddMcLoad(void *save);
 int xglHddUninstall(void);
-
 extern int sceRemove(const char *path);
-extern void xglCdArcCheck(void);
-
 extern int sceMount(char *mount_point, char *device, int flags,
                     void *payload, unsigned int payload_length);
-
 extern int sceDevctl(const char *device, int command, const void *input,
                      unsigned int input_size, void *output, unsigned int output_size);
-
 extern int sceOpen(const char *path, int flags, ...);
 extern int sceDopen(const char *path);
 extern int sceDread(int descriptor, struct HddDirectoryEntry *entry);
@@ -163,53 +149,38 @@ extern int strncmp(const char *left, const char *right, unsigned int length);
 extern unsigned int xglClockDayTime2UInt(XglClock *clock_time);
 extern int sceWrite(int descriptor, const void *buffer, int size);
 extern int sceChstat(const char *path, const struct HddIoStat *stat, int flags);
-
 int Judge_MakeNewFolder(void);
-
 extern int Judge_MakeNewSavedata(int descriptor, int card);
-
 static int xglHddMcCheckYourSaves(int);
-
 int xglHddMcCheckCore(struct HddCheckState *state);
-
 extern int xglHddMcCheck(struct HddCheckState *state);
-
 int create_file(int card, int slot, const void *data, int size);
 
 /* sceOpen flags and permission modes (0666, 0555, 0777). */
 #define HDD_OPEN_READ 1
-
 #define HDD_OPEN_WRITE_CREATE_TRUNC 0x602
 #define HDD_MODE_RW 438
-
 /* sceMount flags, and the errors the layer tests for. */
 #define HDD_MOUNT_READ_WRITE 4
-
 #define HDD_MOUNT_READ_ONLY 5
 #define HDD_ERR_NOENT (-2)
 #define HDD_ERR_BUSY (-16)
 #define HDD_ERR_NODEV (-19)
-
 /* Results of xglHddCheckCore() beyond 0 (ready). */
 #define HDD_NOT_READY (-5)
-
 #define HDD_RESET_REQUIRED (-6)
 #define HDD_PATH_MAX 256
 #define HDD_DIR_SCAN_LIMIT 1024
 #define HDD_MAX_FOLDERS 256
 #define HDD_FOLDER_ENTRY_LIMIT 0x3FE
 #define HDD_SLACK_ZONES 7
-
 /* Total free sectors above which the save area can be grown, and the free
  * sectors (total, and the largest free block) the game installation needs. */
 #define HDD_LARGE_DISK_SECTORS 0x1fffff
-
 #define HDD_LARGE_DISK_FREE_KB 0x100000
 #define HDD_SAVE_ERR_WRITE (-24)
-
 /* xglHddMcLoadCore() */
 #define HDD_LOAD_ERR_OPEN (-6)
-
 #define HDD_LOAD_ERR_READ (-7)
 #define HDD_LOAD_ERR_CLOSE (-8)
 
@@ -225,7 +196,6 @@ struct HddSaveImage {
 
 /* xglHddMount removes the high bit from this stored volume identifier. */
 extern char partitionname[];
-
 extern char commonname[];
 extern char yoursaves[];
 extern char pfs1RootPath[];
@@ -241,11 +211,15 @@ extern char parentDirEntryName[8];
 extern u8 HddActive;
 extern char mount_device[6];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", func_001A4EC8);
+/* Core HDD status probe. In this build it always reports -1; xglHddCheck2 and xglHddCheck
+ * compare the result with HDD_RESET_REQUIRED (-6). */
+int xglHddCheckCore(void) {
+    return -1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddCheck2);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", func_001A4F08);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddCheck);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddErrorScreen);
 
@@ -597,7 +571,10 @@ int xglHddMcSave(const struct HddSaveRequest *save)
     return result;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", func_001A5ED0);
+/* Mounts the game partition (mount_device, "pfs0:") with the given sceMount flags. */
+void xglHddMountPartition(int mountFlags) {
+    sceMount(mount_device, partitionname, mountFlags, 0, 0U);
+}
 
 int xglHddUninstall(void)
 {
@@ -611,9 +588,41 @@ int xglHddUninstall(void)
     return result < 0 ? -5 : 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddInstallReadCB);
+int xglCdReadCancel(int);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", func_001A5FF8);
+/* The progress block at hddInstallContext that xglHddInstallReadCB updates: the
+ * installed callback receives a stage, an offset and `param`. */
+struct HddInstallCBParam {
+    int (*callback)(int stage, int offset, void *param);
+    int base;
+    void *param;
+    int status;
+    int total;
+};
+
+extern struct HddInstallCBParam *hddInstallContext;
+
+void xglHddInstallReadCB(int event, int value) {
+    struct HddInstallCBParam *cb;
+    int result;
+
+    cb = hddInstallContext;
+    if (event == 1) {
+        cb->total = value + 1;
+        return;
+    }
+    if (event == 2) {
+        result = cb->callback(6, cb->base * 0x10 + (value * 0x10) / cb->total, cb->param);
+        cb->status = result;
+        if (result != 0) {
+            xglCdReadCancel(0);
+            return;
+        }
+        return;
+    }
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddInstall);
 
 int xglHddActivate(int state)
 {

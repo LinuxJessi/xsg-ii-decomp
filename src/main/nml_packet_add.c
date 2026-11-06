@@ -9,7 +9,8 @@ void _CurApplyMatrix(Vector4 *destination, const Vector4 *vector) {
     Vu0ApplyCurrentMatrix(destination, vector);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_packet_add", func_001B7520);
+/* _CurApplyMatrix33: _CurApplyMatrix33 (medium); applies the current matrix with xyzw lanes and no vf30 term. */
+INCLUDE_ASM("asm/main/nonmatchings/nml_packet_add", _CurApplyMatrix33);
 
 void _CurMatrixMul(Matrix4 matrix)
 {

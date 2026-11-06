@@ -20,10 +20,14 @@ void *MMathNormalizeVector2(void *destination, const Vector4 *source)
     return destination;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu189", func_00271F28);
+/* Vector length over x, y and z (VU0 square, sum, square root; the result is a float returned in $f0). */
+INCLUDE_ASM("asm/main/nonmatchings/tu189", MMathCalcLength);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu189", func_00271F58);
+/* Vector length over x and y only. */
+INCLUDE_ASM("asm/main/nonmatchings/tu189", MMathCalcLengthXY);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu189", func_00271F88);
+/* Vector length over x and z only. */
+INCLUDE_ASM("asm/main/nonmatchings/tu189", MMathCalcLengthXZ);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu189", func_00271FB8);
+/* Vector length over y and z only. */
+INCLUDE_ASM("asm/main/nonmatchings/tu189", MMathCalcLengthYZ);

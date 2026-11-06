@@ -1,9 +1,20 @@
 #include "common.h"
 #include "shared.h"
+#include "main/sef_164.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_191", func_00272088);
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_191", func_002720B8);
+/* Heading in the XZ plane from first to second (MMathCalcDir in X1). The srsAtan2 result is
+ * left in $f0 by the last call; the declared void return does not change that. */
+void MMathCalcDir(const Vector4 *first, const Vector4 *second)
+{
+    const Vector4 **origin;
+
+    origin = &first;
+    srsAtan2(second->x - (*origin)->x, second->z - (*origin)->z);
+}
+
+/* MMathCalcAngle (MMathCalcAngle): pitch to out.x, yaw to out.y; null vectors default to MMathUnitVector. */
+INCLUDE_ASM("asm/main/nonmatchings/m_math_191", MMathCalcAngle);
 
 Vector4 *MMathCalcOffset(Vector4 *destination, const Vector4 *first, const Vector4 *second)
 {
@@ -151,6 +162,8 @@ Vector4 *MMathDivVectorS4(Vector4 *destination, const Vector4 *source, float sca
     return destination;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_191", func_00272310);
+/* MMathIsVectorEqual (MMathIsVectorEqual) and MMathIsVectorEqual4 (MMathIsVectorEqual4): 128-bit equality tests
+ * returning a short 1 when the vectors are equal; they differ only in the permute before the second movn. */
+INCLUDE_ASM("asm/main/nonmatchings/m_math_191", MMathIsVectorEqual);
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_191", func_00272340);
+INCLUDE_ASM("asm/main/nonmatchings/m_math_191", MMathIsVectorEqual4);

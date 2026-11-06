@@ -1,17 +1,13 @@
 #include "common.h"
 #include "shared.h"
-
+#include "main/sce_ipu.h"
 /* DMA tag ID (bits 28..30 of the first tag word). */
 #define DMA_TAG_ID_CNT 0x10000000U
-
 #define DMA_TAG_ID_REF 0x30000000U
-
 /* Clears the tag ID and IRQ bits, turning a REF tag into REFE. */
 #define DMA_TAG_ID_CLEAR_MASK 0x0fffffff
-
 /* GIF tag fields. */
 #define GIF_TAG_EOP 0x8000
-
 #define GIF_TAG_NREG_1 0x1000000000000000
 #define GIF_TAG_FLG_IMAGE 0x0800000000000000
 #define GIF_REG_AD 14
@@ -19,22 +15,16 @@
 #define SCE_GS_TRXPOS 0x51
 #define SCE_GS_TRXREG 0x52
 #define SCE_GS_TRXDIR 0x53
-
 /* transMode values: which GS buffer a decoded strip is uploaded to, or memory only. */
 #define MOVIE_TRANS_BUFFER_0 0
-
 #define MOVIE_TRANS_BUFFER_1 1
 #define MOVIE_TRANS_BITBLTBUF 2
-
 /* A strip is one 16-pixel-high row of macroblocks, each macroblock 16x16 RGBA32 pixels. */
 #define MOVIE_MACROBLOCK 16
-
 #define MOVIE_MACROBLOCK_BYTES 0x400
 #define MOVIE_MACROBLOCK_QWORDS 0x40
-
 /* GIF packets of the strip upload: A+D settings, then one IMAGE tag per macroblock. */
 #define MOVIE_GIF_TAG_AD_2 (GIF_TAG_NREG_1 | GIF_TAG_EOP | 2)
-
 #define MOVIE_GIF_TAG_IMAGE_BLOCK (GIF_TAG_FLG_IMAGE | GIF_TAG_EOP | MOVIE_MACROBLOCK_QWORDS)
 #define MOVIE_BITBLTBUF_DBW_512 0x8000000000000
 #define MOVIE_TRXREG_MACROBLOCK 0x1000000010
@@ -106,6 +96,10 @@ typedef struct XglMovieRenderState {
 
 extern XglMovieRenderState sRender;
 
+/*
+ * Builds the GS upload packet for one 16-line strip at row y: an A+D setting block, then one
+ * image block per macroblock with its TRXPOS and TRXDIR, closed by a REF tag. Returns the next free packet.
+ */
 unsigned long *make_gstrans(XglMovieWork *info, int y)
 {
     int width = info->width;
@@ -159,10 +153,37 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", checkdma);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", xglMovieOpen);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", func_0019F930);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", xglMoviePlay);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", func_0019FFE8);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", xglMovieRewind);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", xglMovieClose);
+typedef signed char s8;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", func_001A0180);
+typedef int s32;
+
+int func_00131380(int, int);
+void xglCdStreamClose(void);
+
+/*
+ * Closes the movie stream of info: runs xglCdStreamClose while streamOpen is set,
+ * clears the D4 channel, writes IPU_CTRL, and returns -1
+ * when func_00131380 reports a failure before or after the write to IPU_CMD.
+ */
+/* EE IPU registers. */
+#define IPU_CMD (*(volatile u32 *) 0x10002000)
+#define IPU_CTRL (*(volatile u32 *) 0x10002010)
+
+int xglMovieClose(XglMovieWork *info) {
+    if (info->streamOpen != 0) {
+        xglCdStreamClose();
+    }
+    setD4_CHCR(0);
+    IPU_CTRL = 0x40000000;
+    if (func_00131380(0, 0x200) < 0) {
+        return -1;
+    }
+    IPU_CMD = 0;
+    return (func_00131380(0, 0x200) >= 0) ? 0 : -1;
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/xgl_1_016", xglMovieInfoInit);

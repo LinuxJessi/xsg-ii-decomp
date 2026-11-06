@@ -1,5 +1,8 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_cd.h"
+#include "main/xgl_hdd.h"
+#include "main/xgl_timer0.h"
 
 struct request {
     u8 mode;
@@ -17,6 +20,7 @@ typedef struct {
 } XglClock;
 
 typedef struct XglTaskPrefix XglTaskPrefix;
+
 typedef struct XglTaskScheduler XglTaskScheduler;
 
 /*
@@ -40,29 +44,23 @@ struct XglTaskScheduler {
 };
 
 typedef struct StreamXssBuffer StreamXssBuffer;
+
 typedef struct StreamRing StreamRing;
 
 extern u8 *buffer;
 extern u8 *WorkEnd;
-extern int xglCdReadFile(const char *name, void *buffer, int mode, int flags);
-
 void xglClockRead(XglClock *clock);
-
-extern int xglHddActivate(int state);
-
 extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
                                 int (*callback)(XglTaskPrefix *task),
                                 XglTaskPrefix *entry);
 
-int xglArxExtract(u32 *dest, u32 *src);
-
 /* Where a file is read from (CdFilePosition.source, CdStreamParam.mode). */
 #define CD_SOURCE_DISC 0
-
 #define CD_SOURCE_HOST 1
 #define CD_SOURCE_HDD 2
 
 typedef void CdCompletionCallback(int event, int value);
+
 typedef struct CdStreamParam CdStreamParam;
 
 struct StreamRing {
@@ -82,7 +80,10 @@ struct StreamXssBuffer {
 
 struct CdStreamParam {
     int iop_buffer;
-    short sector_count;
+    unsigned char sector_count; /* +0x04: only its byte store is evidenced */
+    /* The asm of xglCdStreamSeek, xglCdStreamClose and xglCdStreamStat tests the
+     * stream mode byte at +0x05, not the +0x09 `mode` below. Not changed here. */
+    unsigned char unmodeled_05;
     short block_count;
     unsigned char state;
     unsigned char mode;
@@ -130,35 +131,28 @@ typedef struct CdFilePosition {
 } CdFilePosition;
 
 unsigned int xglClockDayTime2UInt(XglClock *clock_time);
-
 extern int xglCdReadFilePart(const char *name, void *buffer, int mode,
                              CdCompletionCallback *callback, int offset, int length);
 
 /* Events passed to a completion callback (int event, int value). */
 #define CD_EVENT_LOOKUP 0 /* value: the path being looked up */
-
 #define CD_EVENT_SIZE 1
 #define CD_EVENT_PROGRESS 2
 #define CD_EVENT_DONE 4
 #define CD_EVENT_READ_ERROR (-2)
 
 void xglCdPowerOffCB(void);
-void xglCdArcCheck(void);
 void xglClockUInt2DayTime(XglClock *clock_time, unsigned int elapsed);
 void xglCdStreamReadRingCore(CdStreamParam *stream);
-
 int xglCdStreamReadRing(CdStreamParam *stream, int bytes);
-
 extern int xglHddCheck(void);
 extern void xglHddErrorScreen(void);
 
 /* Keep the direct state expression used by both queue loops. */
 #define CD_READ_CONTROL (&LW)
-
 /* A CD sector is fixed at 2048 bytes on this drive/read path (see also
  * xglCdStreamReadRing's own `& -2048` sector rounding later in this TU). */
 #define CD_SECTOR_BYTES 2048
-
 #define ARC_RECORD_EXTENDED        0x80
 #define ARC_RECORD_TYPE_EXTENDED   0x40
 #define ARC_RECORD_LENGTH_MASK     0x3f
@@ -167,22 +161,18 @@ extern void xglHddErrorScreen(void);
 #define ARC_TABLE_ALIGN_BYTES      64
 #define CD_PACKED_MAGIC 0x585241
 #define ARC_ENTRY_UNUSED 0xff
-
 /* CdReadControl.dispatch_state: what the control thread is doing. */
 #define CD_STATE_IDLE 0
-
 #define CD_STATE_SYNC_READ 1
 #define CD_STATE_ASYNC_READ 2
 #define CD_STATE_STREAM 3
-
-/* The request queue is a 32-entry ring. */
+/* The request queue is declared as a 32-entry ring, but the asm of the queue
+ * helpers (xglCdQueueNext, xglCdServiceRead) masks its indices with 0x7F, so the
+ * wrap is not confirmed by them. Left as declared; see the naming notes. */
 #define CD_QUEUE_SIZE 32
-
 #define CD_QUEUE_MASK (CD_QUEUE_SIZE - 1)
-
 /* Host and HDD files are read in pieces of at most 64 KiB. */
 #define CD_FILE_CHUNK_BYTES 0x10000
-
 #define CD_SECTOR_MASK (CD_SECTOR_BYTES - 1)
 #define CD_STREAM_FILE_SECTORS 32
 #define CD_STREAM_XSS_SECTORS 0x4000
@@ -190,10 +180,8 @@ extern void xglHddErrorScreen(void);
 #define CD_PATH_MAX 256
 #define CD_ARC_LOOKAHEAD_BYTES 0x2D000
 #define CD_ARC_HEADER_RESERVE 0x2000
-
 /* Calendar arithmetic of xglClockDayTime2UInt()/xglClockUInt2DayTime(). */
 #define CLOCK_BASE_YEAR 2000
-
 #define CLOCK_SECONDS_PER_MINUTE 60
 #define CLOCK_SECONDS_PER_HOUR 3600
 #define CLOCK_SECONDS_PER_DAY 86400
@@ -201,12 +189,14 @@ extern void xglHddErrorScreen(void);
 
 /*
  * The queue entries occupy 0x80 bytes; only their used prefix is named.
- * xglCdReadFilePart (0x0021DEB8..0x0021E30C, still INCLUDE_ASM) enqueues by
- * storing its own second argument (buffer, a single `sw` at 0x0021DFB4) at
- * entry+0x00 and strcpy'ing its own first argument (name, the lbu/sb loop at
- * 0x0021DF90..0x0021DFA8) into entry+0x10; queue_next below hands those two
- * fields back to it in that same order, matching xglCdReadFile's
- * (name, buffer, ...) shape in shared.h.
+ * xglCdReadFilePart (0x0019BC98..0x0019C1E0, still INCLUDE_ASM) enqueues by
+ * storing its own second argument (buffer) at entry+0x00 and its own first
+ * argument (name) at entry+0x14, with the offset and length at +0x04 and +0x08
+ * and the completion callback at +0x0C. The queue-next helper xglCdQueueNext
+ * passes entry+0x10 to xglCdSetReadTag (xglCdSetReadTag) and entry+0x14 back as
+ * the name, in xglCdReadFile's (name, buffer, ...) order from shared.h.
+ * Layout disagreement, not changed here: the name array below starts at +0x10,
+ * while the asm stores the name from +0x14.
  */
 typedef struct CdRequestPartial {
     void *buffer;
@@ -259,34 +249,20 @@ extern const char xenosagaArc00Name[];
 extern int sceCdStStat(void);
 extern int sceOpen(const char *path, int flags, ...);
 extern int sceSifLoadModule(const char *path, int args_length, const char *args);
-
 /* Defined later in this file (INCLUDE_ASM); declared here, like BCD2INT
  * below, so its LOCAL definition does not follow a non-static declaration. */
 extern CdFilePosition *xglCdGetFilePos(CdFilePosition *file_position, const char *path,
                            void (*callback)(int event, int value));
-
 extern int sceCdReadClock(unsigned char *clock);
-
 int sceLseek(int descriptor, int offset, int whence);
-
 extern int sceCdSync(int mode);
 extern int sceCdDiskReady(int mode);
 extern int sceCdRead(int lbn, int sectors, void *destination, CdReadMode *read_mode);
-
 void xglCdArcInit(void);
-
-static int BCD2INT(unsigned char x);
-
+static int BCD2INT(unsigned char bcd);
 void extract(u32 *destination, u32 *source, int byte_count);
-
 extern int sceCdStRead(int sectors, void *buffer, int mode, int *result);
 extern int sceRead(int descriptor, void *buffer, int bytes);
-
-int StreamReadRingCoreSub(CdStreamParam *stream, void *buffer, int sectors);
-
-void StreamReadRingCoreNormal(CdStreamParam *stream);
-void StreamReadRingCoreXss(CdStreamParam *stream);
-
 extern u32 sceCdGetReadPos(void);
 extern int sceCdGetError(void);
 extern int sceCdLayerSearchFile(CdFilePosition *file, const char *name, int layer);
@@ -295,10 +271,8 @@ extern const char xenosagaArc20Name[16];
 extern const char xenosagaArc30Name[16];
 extern const char xenosagaPfs0Path[24];
 extern const char xenosagaArc00Name[16];
-
 /* Twelve month lengths followed by twelve cumulative month offsets. */
 extern unsigned short monthday[24];
-
 extern char head_8[13];
 extern char root_0[6];
 extern char hdd_head_6[7];
@@ -313,15 +287,11 @@ extern CdReadControl LW;
 extern CdArchiveStorage ArcHeader[4];
 extern signed char ReadClockInterval;
 extern unsigned char PresentTime[8];
-
 void xglCdDefaultCallback(int event, int value);
 void xglCdDummyCallback(int event, int value);
-
 int xglCdGetFilePosSub(CdArchiveEntry *entry, const char *path);
-
 CdFilePosition *xglCdGetFilePos(CdFilePosition *position, const char *name,
                                        CdCompletionCallback *callback);
-
 int xglCdReadFilePart(const char *name, void *buffer, int mode,
                       CdCompletionCallback *notify, int offset, int length);
 
@@ -353,17 +323,35 @@ void extract(u32 *destination, u32 *source, int byte_count)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019A958);
+/* Queue-next helper (proposed xglCdQueueNext): reports CD_EVENT_DONE with the
+ * pending count, starts the request at queue_cursor and advances the cursor. */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdQueueNext);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019AA00);
+/* One step of the active read, chosen by LW.dispatch_state (proposed
+ * xglCdServiceRead). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdServiceRead);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019AC30);
+int func_0017A2E8(unsigned char *table, int mode);
+extern int xglCdDeviceHandle;
+extern signed char xglCdServiceActive;
+extern unsigned char D_0068DEC8[];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019AC60);
-
-static int BCD2INT(unsigned char x)
+/* Clears the busy byte xglCdServiceActive and stores the device handle from the table
+ * at D_0068DEC8 in xglCdDeviceHandle (proposed xglCdOpenDevice). */
+void xglCdOpenDevice(void)
 {
-    return (x >> 4) * 10 + (x & 15);
+    xglCdServiceActive = 0;
+    xglCdDeviceHandle = func_0017A2E8(D_0068DEC8, 0);
+}
+
+/* Per-tick control loop (proposed xglCdControlThread): clock countdown,
+ * power-off devctl calls, then dispatch of the read and stream states. */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdControlThread);
+
+/* One BCD byte: high nibble tens, low nibble units. */
+static int BCD2INT(unsigned char bcd)
+{
+    return (bcd >> 4) * 10 + (bcd & 15);
 }
 
 void xglClockRead(XglClock *clock)
@@ -447,13 +435,20 @@ void xglClockUInt2DayTime(XglClock *clock_time, unsigned int elapsed)
     clock->day = days + 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019B0A8);
+/* Disc identification (proposed xglCdIdentifyDisc): waits for the disc, checks
+ * the sizes of the xenosaga.10 and xenosaga.20 archives and reads system.cnf. */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdIdentifyDisc);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdDefaultCallback);
+void xglCdDefaultCallback(int event, int value)
+{
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdDummyCallback);
+void xglCdDummyCallback(int event, int value)
+{
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019B2B8);
+/* Resets the read control state and the callback, then syncs (proposed xglCdReset). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdReset);
 
 CdCompletionCallback *xglCdSetCallback(int callback_address)
 {
@@ -475,17 +470,28 @@ CdCompletionCallback *xglCdSetCallback(int callback_address)
     return old_callback;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019B390);
+extern int xglCdReadTag;
+
+/* Sets the current read tag xglCdReadTag (proposed xglCdSetReadTag). */
+void xglCdSetReadTag(int value)
+{
+    xglCdReadTag = value;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019B398);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019B458);
+/* Walks the archive record table of one entry for a backslash-separated path
+ * (proposed xglCdGetFilePosSub, declared above). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdGetFilePosSub);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdGetFilePos);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019BBF8);
+/* Probes a path: -1 when missing, closes the descriptor of a host or HDD file
+ * and returns 0 otherwise (proposed xglCdCheckFile). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdCheckFile);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019BC68);
+/* Size of a path in bytes, or -1 when it is missing (proposed xglCdGetFileSize). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdGetFileSize);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdReadFilePart);
 
@@ -494,25 +500,68 @@ int xglCdReadFile(const char *name, void *buffer, int mode, int flags)
     return xglCdReadFilePart(name, buffer, mode, (CdCompletionCallback *)flags, 0, -1);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C200);
+/* Cancels the active read: clears pending requests, breaks or pauses a sync
+ * read, closes an open descriptor and goes idle (proposed xglCdReadCancel). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdReadCancel);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C308);
+void xglCdServiceRead(void);
+extern unsigned char xglCdStreamsActive[];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C338);
+/* Services the stream list when xglCdStreamsActive is set (proposed xglCdServiceIfPending). */
+int xglCdServiceIfPending(void)
+{
+    if ((signed char) xglCdStreamsActive[0] == 0) {
+        return 0;
+    }
+    xglCdServiceRead();
+    return 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C348);
+/* Returns the stream-service flag xglCdStreamsActive (proposed xglCdGetServicePending). */
+signed char xglCdGetServicePending(void)
+{
+    return (signed char) xglCdStreamsActive[0];
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C388);
+int func_0017AF40(int);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C510);
+/* Nonzero when the CD side has finished its last request (proposed xglCdSyncDone). */
+int xglCdSyncDone(void)
+{
+    if (xglCdDeviceHandle != 0) {
+        return func_0017AF40(xglCdDeviceHandle) != 1;
+    }
+    return sceCdSync(1) == 0;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C5A0);
+/* Opens a stream on a file: locate it, sync and check the disc for disc files,
+ * then seek to the start (proposed xglCdStreamOpen). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdStreamOpen);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C5F0);
+/* Reads sectors into a stream buffer; the prototype StreamReadRingCoreSub above
+ * names it. Its second prototype, StreamReadRingCoreSub at the end of this block, uses
+ * the CdPaddedRead view. */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", StreamReadRingCoreSub);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C7A8);
+/* Stream status: sceCdStStat for a disc stream, 32 sectors (CD_STREAM_FILE_SECTORS)
+ * for a host or HDD stream (proposed xglCdStreamStat). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdStreamStat);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdStreamReadRingCore);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", StreamReadRingCoreNormal);
+
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", StreamReadRingCoreXss);
+
+void StreamReadRingCoreNormal(void);
+void StreamReadRingCoreXss(void);
+
+void xglCdStreamReadRingCore(CdStreamParam *stream)
+{
+    if (stream->iop_buffer != 0) {
+        StreamReadRingCoreXss();
+        return;
+    }
+    StreamReadRingCoreNormal();
+}
 
 int xglCdStreamReadRing(CdStreamParam *stream, int bytes)
 {
@@ -528,21 +577,103 @@ int xglCdStreamReadRing(CdStreamParam *stream, int bytes)
     return 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019C9E0);
+/*
+ * The stream record read by xglCdStreamRead (proposed name xglCdStreamRead). Only the evidenced members are
+ * modeled: the exhaustion byte at +0x04, the block size at +0x0C that pads
+ * the tail of a read, and the remaining byte count at +0x18. Bytes between
+ * them are untouched here.
+ */
+typedef struct CdPaddedRead CdPaddedRead;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019CA80);
+struct CdPaddedRead {
+    unsigned char unmodeled_00[0x04];
+    unsigned char exhausted; /* +0x04 */
+    unsigned char unmodeled_05[0x0C - 0x05];
+    int block_size;          /* +0x0C */
+    unsigned char unmodeled_10[0x18 - 0x10];
+    int remaining;           /* +0x18 */
+};
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019CAF8);
+int StreamReadRingCoreSub(CdPaddedRead *stream, unsigned char *buffer, int sectors);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019CB10);
+/*
+ * Reads byte_count bytes (in whole 2048-byte sectors, rounded down) into
+ * buffer, then zero-fills the tail of the last partial block so the read ends
+ * on a block boundary. Returns the bytes covered, padding included.
+ */
+int xglCdStreamRead(CdPaddedRead *stream, unsigned char *buffer, int byte_count)
+{
+    int transferred;
+    int remaining;
+    int block_size;
+    int tail;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019CBD8);
+    transferred = StreamReadRingCoreSub(stream, buffer, byte_count >> 11);
+    remaining = stream->remaining - transferred;
+    if (remaining <= 0)
+    {
+        remaining = 0;
+        stream->exhausted = 1;
+    }
+    block_size = stream->block_size;
+    tail = transferred & (block_size - 1);
+    stream->remaining = remaining;
+    if (tail > 0)
+    {
+        buffer = &buffer[transferred];
+        transferred += block_size - tail;
+        if (tail < block_size)
+        {
+            do
+            {
+                *buffer = 0;
+                tail += 1;
+                buffer += 1;
+            } while (tail < stream->block_size);
+        }
+    }
+    return transferred;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019CBF8);
+/* Seeks a stream to a sector: clears the exhausted byte, sets remaining from the
+ * stored size and seeks the disc or host/HDD descriptor (proposed xglCdStreamSeek). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdStreamSeek);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019CCF0);
+void xglCdStreamSeek(int, int);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019CF48);
+/* Seeks a stream to its first sector (proposed xglCdStreamRewind). */
+void xglCdStreamRewind(int value)
+{
+    xglCdStreamSeek(value, 0);
+}
+
+/* Closes a stream and drops it from the two-entry list xglCdStreamList (proposed
+ * xglCdStreamClose). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdStreamClose);
+
+/* Resets a stream record to idle: descriptor -1, buffers cleared (proposed
+ * xglCdStreamParamInit). */
+void xglCdStreamParamInit(CdStreamParam *stream)
+{
+    stream->alternate_ring.buffer = 0;
+    stream->descriptor = -1;
+    stream->sector_count = 0;
+    do {
+        stream->iop_buffer = 0;
+    } while (0);
+    stream->ring.buffer = 0;
+}
+
+/* Reloads the .filelist name list through xglDebFileRead (proposed
+ * xglCdFileSelectListReload). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdFileSelectListReload);
+
+/* File-select path handling; calls the list reload (proposed xglCdFileSelectSub). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdFileSelectSub);
+
+/* Pad-driven file select: reads PadData and formats PATH:/%s (proposed
+ * xglCdFileSelect). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdFileSelect);
 
 void xglCdSifLoadModule(const char *path, const char *args)
 {
@@ -585,7 +716,9 @@ void xglCdSifLoadModule(const char *path, const char *args)
     sceSifLoadModule(name, args_length, args);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019D5B8);
+/* Loads an overlay ELF from cdrom0 with its .OVL;1 name, after clearing and
+ * flushing caches (proposed xglCdLoadOverlay). */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdLoadOverlay);
 
 static void xglCdArcInitSub0(const int *archive_entry, void *destination, int sectors)
 {
@@ -690,4 +823,6 @@ void xglCdArcCheck(void)
     WorkEnd = saved_work_end;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", func_0019DA80);
+/* Subsystem start after the reset: calls xglCdReset, HDD activation, the HDD
+ * mount and xglCdArcInit (proposed xglCdInitial); called by InitializeSystem. */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_cd", xglCdInitial);

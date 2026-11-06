@@ -15,7 +15,7 @@ extern int printf(const char *format, ...);
 extern int vsprintf(char *buffer, const char *format, va_list args);
 extern const char tracePrintFormat[8];
 
-INCLUDE_ASM("asm/main/nonmatchings/sef_print", func_00251E30);
+INCLUDE_ASM("asm/main/nonmatchings/sef_print", resetWaitForPad);
 
 void tracePrint(const char *format, ...) {
     va_list args;
@@ -27,4 +27,5 @@ void tracePrint(const char *format, ...) {
     va_end(args);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sef_print", func_00251F30);
+/* Log call sites use this variadic no-op: it spills its arguments and returns. */
+INCLUDE_ASM("asm/main/nonmatchings/sef_print", logNoOp);

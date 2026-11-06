@@ -1,14 +1,15 @@
 #include "common.h"
 #include "shared.h"
+#include "main/control_entry.h"
+#include "main/xenoActor.h"
+#include "main/xgl_render.h"
 
 typedef struct XglPacket XglPacket;
 
 extern void sceVif1PkRef(XglPacket *packet, const void *environment,
                          int count, int mode, int offset, int flags);
-
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
-extern void xglSleep(void);
 
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
@@ -40,7 +41,6 @@ typedef union GameOverDmaPacket20 {
 void DrawImage(void *framebuffer);
 void DrawBack(int alpha);
 void redraw_frame(void *framebuffer);
-
 extern void FlushCache(int mode);
 
 /*
@@ -105,12 +105,25 @@ extern u64 TestEnv_0_00369CC0[12];
 extern GameOverDmaPacket4 TransEnv_1_00369D20;
 extern GameOverDmaPacket6 FlushEnv_2_00369D40;
 extern GameOverDmaPacket20 TestEnv_3_002BCED0;
+int *xglStudioGetCamera2(int);
+void uwamonoResetRecords(int, int);
+void func_0023AD18(int);
+void fadeReset(void);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E8430);
+void GameSceneReset(void *framebuffer) {
+    xglStudioGetCamera2(0)[1] = 1;
+    xglRenderClearDepth();
+    fadeReset();
+    xglRenderGlobalFadeReset();
+    XenoActorPoolInitDefault();
+    uwamonoResetRecords(-1, 1);
+    redraw_frame(framebuffer);
+    func_0023AD18(0);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/game_over_059", DrawImage);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E85D0);
+INCLUDE_ASM("asm/main/nonmatchings/game_over_059", GameSynopsisDrawPanel);
 
 void DrawBack(int alpha)
 {
@@ -127,7 +140,7 @@ void DrawBack(int alpha)
     sceVif1PkRef(xglPacketGetCurrent(), TestEnv_3_002BCED0.words, 10, 0, 0, 0);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E87E0);
+INCLUDE_ASM("asm/main/nonmatchings/game_over_059", GameCopyFrame);
 
 void redraw_frame(void *framebuffer) {
     xglSleep();
@@ -139,14 +152,30 @@ void redraw_frame(void *framebuffer) {
 
 INCLUDE_ASM("asm/main/nonmatchings/game_over_059", GameEnd);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E8BB0);
+INCLUDE_ASM("asm/main/nonmatchings/game_over_059", GameOver);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E8DA0);
+INCLUDE_ASM("asm/main/nonmatchings/game_over_059", Intermission);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E9008);
+/* Rewrites each '1' or '2' in the disc message text to the disc number digit. */
+void GameDiskSetDiscDigit(u8 *text, int digit) {
+    u8 *cursor;
+    u8 ch;
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E9050);
+    cursor = text;
+    ch = *cursor;
+    if (ch != 0) {
+        do {
+            if (ch == '1' || ch == '2') {
+                *cursor = digit + '0';
+            }
+            cursor += 1;
+            ch = *cursor;
+        } while (ch != 0);
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E92B8);
+INCLUDE_ASM("asm/main/nonmatchings/game_over_059", GameDiskChange);
+
+INCLUDE_ASM("asm/main/nonmatchings/game_over_059", GameSynopsis);
 
 INCLUDE_ASM("asm/main/nonmatchings/game_over_059", func_001E95C8);

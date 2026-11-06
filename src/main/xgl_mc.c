@@ -1,11 +1,11 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu012.h"
 
 extern u8 *buffer;
 
 /* sceMcOpen modes (SCE_RDONLY, SCE_WRONLY | SCE_CREAT). */
 #define MC_OPEN_READ 1
-
 #define MC_OPEN_WRITE_CREATE 0x202
 
 int sceMcOpen(int port, int slot, const char *name, int mode);
@@ -93,4 +93,14 @@ int xglMcEasySave(const char *path, const void *buffer, int size)
     return result >= 0 ? 0 : -1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_mc", func_0019F228);
+extern void *memset(void *destination, int value, unsigned int count);
+extern u8 SaveData[0x5160];
+void func_0012F868(void);
+
+/* Memory-card init: the SDK init, the request reset (xglMcReset), then the save buffer clear. Called from InitializeSystem. */
+void xglMcInitial(void)
+{
+    func_0012F868();
+    xglMcReset();
+    memset(SaveData, 0, sizeof(SaveData));
+}

@@ -19,6 +19,7 @@
 extern int DIntr(void);
 extern int EIntr(void);
 
+/* Starts a DMA from the IPU output (DMAC channel 3) into memory; count is in quadwords. */
 int myDmaDirectFromIPU(u32 address, u32 count)
 {
     if ((address >> 16) != DMA_SPR_ADDRESS_HIGH)

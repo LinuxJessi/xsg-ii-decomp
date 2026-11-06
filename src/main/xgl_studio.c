@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_studio.h"
 
 typedef float Matrix4[4][4];
 
@@ -62,7 +63,6 @@ typedef struct StudioLight {
 
 extern StudioCamera *xglStudioSelectGetActiveCamera(int studio_index);
 extern void xglStudioFlushActiveCamera(void);
-
 void xglCameraMove(StudioCamera *camera);
 
 /*
@@ -78,28 +78,51 @@ void xglCameraMove(StudioCamera *camera);
  * type and offset, so src/main/game.c's `camera->state == 4` reads the
  * same byte either way.
  */
+/*
+ * Layout the asm readers use: a studio record is 0x3180 bytes, its cameras
+ * start at +0x180 and are 0x600 apart (xglStudioGetCamera2, xglStudioGetActiveCamera,
+ * xglStudioSelectGetActiveCamera and xglStudioGetCamera all compute
+ * 3*i << 9). The StudioLight and StudioCamera sizes below put cameras at +0xF0
+ * with a 0x5F0 stride, so reconcile this typedef before publication.
+ */
 typedef struct Studio {
     StudioLight light;
     StudioCamera cameras[8];
 } Studio;
 
 extern StudioLight *xglStudioGetLight2(void);
-extern Studio asStudioSource[4];
 extern Studio *pCurrentStudio;
-
 StudioCamera *xglStudioSelectGetActiveCamera(int studio_index);
+int D_0069E078 = 0;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2724);
+void func_001B2724(void) {
+    D_0069E078 = 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B274C);
+void func_001B274C(void) {
+    D_0069E078 = 0;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2770);
+/* The studio records (proposed name asStudioSource, declared above). */
+extern unsigned char asStudioSource[];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B27C0);
+/* Makes studio_index the current studio: pCurrentStudio points at its record. */
+void xglStudioChange(int studio_index)
+{
+    pCurrentStudio = (Studio *) (asStudioSource + studio_index * 0x3180);
+}
+
+/* The studio index that xglStudioChangeActive selects and xglStudioMove compares with. */
+extern int activeStudioIndex;
+
+void xglStudioSetActiveIndex(int studio_index)
+{
+    activeStudioIndex = studio_index;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", xglStudioGetCamera);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B283C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", xglStudioGetActiveCamera);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", xglStudioSelectGetActiveCamera);
 
@@ -115,25 +138,53 @@ void xglStudioFlushActiveCamera(void)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2A04);
+extern int studioCameraUpdateEnabled;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2A28);
+void xglStudioDisableCameraUpdate(void) {
+    studioCameraUpdateEnabled = 0;
+}
+
+void xglStudioEnableCameraUpdate(void) {
+    studioCameraUpdateEnabled = 1;
+}
 
 StudioLight *xglStudioGetLight2(void)
 {
     return &pCurrentStudio->light;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2A74);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", xglStudioGetCamera2);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", xglStudioMainCameraInit);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2B54);
+int xglStudioGetCamera2();
+
+void xglStudioChangeActive(void) {
+    int result;
+
+    xglStudioChange(activeStudioIndex);
+    /* xglStudioGetCamera2(0) is the active studio's first camera; the value is not used here. */
+    result = xglStudioGetCamera2(0);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", xglStudioInit);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2C74);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", xglStudioMove);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2D68);
+void xglStudioInit(void);
+void xglStudioMainCameraInit(void);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_studio", func_001B2DA0);
+void xglStudioSetup(void) {
+    xglStudioInit();
+    xglStudioMainCameraInit();
+}
+
+void xglStudioMove(void);
+extern int StudioEntrySkip;
+
+void xglStudioUpdate(void) {
+    if (StudioEntrySkip == 0) {
+        xglStudioChangeActive();
+        xglStudioMove();
+    }
+}

@@ -1,7 +1,11 @@
 #include "common.h"
 #include "shared.h"
+#include "main/nml_model_set.h"
+#include "main/tu045.h"
+#include "main/xgl_2_031.h"
 
 typedef float Matrix4[4][4];
+
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
 typedef union Matrix {
@@ -281,7 +285,6 @@ union LayoutStore {
 typedef union LayoutStore LayoutStore;
 
 void nmlModelSetZwrite(int enabled);
-
 /* canon: config/header-canon.json chose src/math/main/spark-cont01-00231d50/nmlModelCalcDropShadow.c over 0 other accepted spellings */
 extern LayoutStore D_00969DB0;
 
@@ -323,109 +326,406 @@ struct NmlStealthGeometry {
     union NmlStealthUV uv[14];
 };
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B95F0);
+INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", pxyResetSlots);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B9728);
+void pxyResetSlots(void);
+
+void func_001B9728(void) {
+    pxyResetSlots();
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B9758);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B97CC);
+void func_001B9758(void);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B97FC);
+void func_001B97CC(void) {
+    func_001B9758();
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B9ADC);
+void xglMatrixUnit(void *);
+void xglVectorClear(void *);
+void *memset(void *, int, unsigned int);
+extern unsigned char pxyState[];
+extern int nmlRenderStatus;
+extern int D_0096A004;
+extern int D_0096A008;
+extern void *D_0096A00C;
+extern int D_0096A010;
+extern int D_0096A014;
+extern int D_0096A018;
+extern int D_0096A01C;
+extern int D_0096A020;
+extern int D_0096A024;
+extern int D_0096A028;
+extern int D_0096A02C;
+extern int D_0096A030;
+extern int D_0096A034;
+extern int D_0096A038;
+extern int D_0096A03C;
+extern void *D_0096A040;
+extern f32 D_0096A044;
+extern f32 D_0096A048;
+extern f32 D_0096A04C;
+extern int D_0096A050;
+extern int D_0096A054;
+extern int D_0096A05C;
+extern f32 D_0096A060;
+extern f32 D_0096A064;
+extern int D_0096A068;
+extern void *D_0096A06C;
+extern int D_0096A080;
+extern int D_0096A084;
+extern f32 D_0096A088;
+extern int D_0096A090;
+extern int D_0096A098;
+extern int D_0096A09C;
+extern int D_0096A0A0;
+extern s16 D_0096A0A4;
+extern int D_0096A0A8;
+extern int D_0096A0AC;
+extern int D_0096A0B4;
+extern f32 D_0096A0C0;
+extern void *D_0096A0C4;
+extern f32 D_0096A0C8;
+extern int D_0096A0D0;
+extern int D_0096A0D4;
+extern f32 D_0096A0D8;
+extern unsigned char nmlModelDrawMatrix[];
+extern unsigned char D_0096A120[];
+extern f32 D_0096A160;
+extern f32 D_0096A164;
+extern f32 D_0096A168;
+extern f32 D_0096A16C;
+extern int D_0096A180;
+extern int D_0096A184;
+extern int D_0096A188;
+extern int D_0096A18C;
+extern unsigned char D_0096A1B0[];
+extern int D_0096A1C0;
+extern int D_0096A1D0;
+extern f32 D_0096A2B8;
+extern int D_0096A2D8;
+extern f32 D_0096A318;
+extern unsigned char D_00987980[];
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B9B44);
+void pxyResetGlobals(void) {
+    xglMatrixUnit(&nmlModelDrawMatrix);
+    xglMatrixUnit(&D_0096A120);
+    nmlRenderStatus = 0;
+    D_0096A0D4 = 0;
+    D_0096A008 = 0;
+    D_0096A004 = 0;
+    D_0096A044 = 1.0f;
+    D_0096A048 = 1.0f;
+    D_0096A04C = 1.0f;
+    D_0096A088 = 1.0f;
+    D_0096A160 = 1.0f;
+    D_0096A164 = 1.0f;
+    D_0096A168 = 1.0f;
+    D_0096A16C = 1.0f;
+    D_0096A180 = 0xFF0;
+    D_0096A184 = 0xFF0;
+    D_0096A188 = 0xFF0;
+    D_0096A18C = 0xFF0;
+    D_0096A060 = 0;
+    D_0096A064 = 0;
+    D_0096A084 = 0;
+    D_0096A09C = 0;
+    D_0096A0A4 = 0;
+    D_0096A0C8 = 0.5f;
+    D_0096A0C0 = -1.0f;
+    xglVectorClear(&D_0096A1B0);
+    D_0096A0D8 = 1.0f;
+    D_0096A00C = 0;
+    D_0096A010 = 0;
+    D_0096A014 = 0;
+    D_0096A018 = 0;
+    D_0096A01C = 0;
+    D_0096A020 = 0;
+    D_0096A024 = 0;
+    D_0096A028 = 0;
+    D_0096A02C = 0;
+    D_0096A030 = 0;
+    D_0096A034 = 0;
+    D_0096A038 = 0;
+    D_0096A03C = 0;
+    D_0096A040 = 0;
+    D_0096A050 = 0;
+    D_0096A054 = 0;
+    D_0096A05C = 0;
+    D_0096A068 = 0;
+    D_0096A06C = &pxyState;
+    D_0096A080 = 0;
+    D_0096A090 = 0;
+    D_0096A098 = 0;
+    D_0096A0A0 = 0;
+    D_0096A0A8 = 0;
+    D_0096A0AC = 0;
+    D_0096A0C4 = 0;
+    D_0096A0B4 = 0;
+    D_0096A0D0 = 0;
+    D_0096A1C0 = 0;
+    D_0096A1D0 = 0;
+    D_0096A2B8 = 0;
+    D_0096A2D8 = 0;
+    D_0096A318 = 1.0f;
+    memset(&D_00987980, 0, 0x30);
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B9B74);
+void pxyResetGlobals(void);
+extern int D_0096A2BC;
+extern int D_0096A2C0;
+extern int D_0096A2DC;
+extern int D_0096A308;
+extern int D_0096A30C;
+extern int D_0096A324;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B9C60);
+void pxyResetCounters(void)
+{
+    pxyResetGlobals();
+    D_0096A2BC = 0;
+    D_0096A2C0 = 0;
+    D_0096A2DC = 1;
+    D_0096A308 = 0;
+    D_0096A30C = 0x1000;
+    D_0096A324 = 0;
+}
+
+void pxyResetCounters(void);
+
+void func_001B9B44(void) {
+    pxyResetCounters();
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", pxyClearEntryTable);
+
+void func_001AB3F8(void *);
+void pxyClearEntryTable();
+extern int D_00645F90;
+extern int D_00645F94;
+extern int D_00645F98;
+extern int D_00645F9C;
+extern float D_00969E80;
+extern float D_00969E90;
+extern float D_00969EA0;
+extern float D_00969EB0;
+extern float D_00969EC0;
+extern float D_00969ED0;
+extern float D_00969EE0;
+extern f32 D_0096A310;
+extern f32 D_0096A314;
+
+void pxyInitTables(void)
+{
+    D_00645F90 = 1;
+    D_00645F94 = 0;
+    D_00645F98 = 0;
+    D_00645F9C = 0;
+    func_001AB3F8(&pxyState);
+    memset(&D_00969E80, 0, 0x180);
+    D_00969E80 = 1.0f;
+    D_00969E90 = 1.0f;
+    D_00969EA0 = 1.0f;
+    D_00969EB0 = 1.0f;
+    D_00969EC0 = 1.0f;
+    D_00969ED0 = 1.0f;
+    D_00969EE0 = 1.0f;
+    D_0096A310 = 0;
+    D_0096A314 = 0;
+    pxyClearEntryTable();
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B9D78);
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001B9EC4);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA214);
+typedef int s32;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA248);
+void func_001BA214(void) {
+    D_0096A0D4 |= 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA278);
+void func_001BA248(int value)
+{
+  D_0096A0D0 = value;
+}
+
+void func_001BA278(void) {
+    D_00969DB0.fields.render_status |= 0x400;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA2AC);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA2F8);
+/* Address of the pxy state block: the 16-slot entry table at +0x630 and the slot records. */
+void *pxyGetState(void) {
+    return &pxyState;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA320);
+void func_001BA320(void) {
+    func_001AB3F8(&pxyState);
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA358);
+void func_001BA358(int value)
+{
+  D_0096A2DC = value;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA388);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA438);
+INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", pxyFindEntryIndex);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA548);
+INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", pxyGetEntry);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA618);
+void func_001BA618(f32 first, f32 second) {
+    D_0096A060 = first;
+    D_0096A064 = second;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA658);
+extern s32 pxyFlags;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA68C);
+void func_001BA658(void) {
+    pxyFlags |= 2;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA6C0);
+void func_001BA68C(void) {
+    pxyFlags |= 8;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA6F4);
+void func_001BA6C0(void) {
+    pxyFlags |= 0x2000;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA728);
+void func_001BA6F4(void) {
+    pxyFlags |= 0x200;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA75C);
+void func_001BA728(void) {
+    pxyFlags |= 0x4000;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA794);
+void func_001BA75C(void) {
+    pxyFlags |= 0x20000;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA7D4);
+void func_001BA794(void) {
+    D_00969DB0.fields.render_status |= NML_RENDER_FOG;
+    D_0096A2D8 = 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA818);
+/* Requests packet mode 3 (bit 0x10 of pxyFlags); pxyFlush passes that bit to xglPacketSetMode3Flag. */
+void pxySetMode3Flag(int enabled)
+{
+    if (enabled) {
+        pxyFlags |= 0x10;
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA850);
+/* Requests packet mode 4 (bit 0x80000 of pxyFlags); pxyFlush passes that bit to xglPacketSetMode4Flag. */
+void pxySetMode4Flag(void) {
+    pxyFlags |= 0x80000;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA888);
+void func_001BA850(void) {
+    pxyFlags |= 0x40000;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA8BC);
+void func_001BA888(void) {
+    pxyFlags |= 0x40;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA8F0);
+void func_001BA8BC(void) {
+    pxyFlags |= 0x80;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA924);
+void func_001BA8F0(void) {
+    D_00969DB0.fields.render_status |= NML_RENDER_PROREAL;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA970);
+void func_001BA924(void)
+{
+    nmlRenderStatus |= 0x20000;
+    pxyFlags |= 0x8000;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA9A0);
+void func_001BA970(int value)
+{
+  D_0096A090 = value;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BA9E4);
+extern float D_0096A08C;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAA34);
+void func_001BA9A0(float value)
+{
+    D_0096A08C = value;
+    nmlRenderStatus |= 0x100;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAA6C);
+void func_001BA9E4(void)
+{
+    nmlRenderStatus |= 0x40000;
+    pxyFlags |= 0x100000;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAA98);
+void func_001BAA34(void) {
+    D_00969DB0.fields.render_status |= NML_RENDER_MAP_ENTRY;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAAD8);
+extern int D_0096A2C4;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAB18);
+void func_001BAA6C(void) {
+    D_0096A2C4 = 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BABFC);
+void func_001BAA98(s32 value) {
+    if (D_0096A1C0 == 0) {
+        D_0096A1C0 = value;
+    }
+}
+
+void func_001BAAD8(s32 value) {
+    if (D_0096A1D0 == 0) {
+        D_0096A1D0 = value;
+    }
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", pxyRegisterEntry);
+
+extern void (*pxyDrawCallback)(void);
+
+/* Installs the callback that func_001CBCE4 calls through pxyDrawCallback (TiWater passes its draw function). */
+void pxySetDrawCallback(void (*callback)(void))
+{
+  pxyDrawCallback = callback;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAC2C);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAC70);
+void func_001BAC70(int flags)
+{
+    D_0096A084 |= flags;
+    if (D_0096A084 & 0x40) {
+        pxyFlags |= 0x100;
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BACD4);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BADA8);
+void func_001BADA8(f32 first, f32 second) {
+    D_0096A0C8 = first;
+    D_0096A0C0 = second;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BADE8);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAE28);
+void func_001BAE28(int value)
+{
+  D_0096A0A0 = value;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAE58);
+void func_001BAE58(int value)
+{
+  D_0096A05C = value;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BAE88);
 
@@ -439,21 +739,37 @@ INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB2FC);
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB368);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB3CC);
+void func_001BB3CC(float value)
+{
+  D_0096A2B8 = value;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB3FC);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB44C);
+void func_001BB44C(void *value)
+{
+  D_0096A00C = value;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB47C);
+void func_001BB47C(void *value)
+{
+  D_0096A0C4 = value;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB4AC);
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB628);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB678);
+void func_001BB678(void *value)
+{
+  D_0096A040 = value;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB6A8);
+void xglMatrixCopy_001CC9C4(void *, s32);
+
+void nmlModelSetDrawMatrix(s32 value) {
+    xglMatrixCopy_001CC9C4(&nmlModelDrawMatrix, value);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB6E8);
 
@@ -468,39 +784,99 @@ INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", nmlModelSetTransparency);
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", nmlModelSetReflTransparency);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", nmlModelSetStencil);
+void nmlModelSetStencil(int enabled) {
+    if (enabled) {
+        D_00969DB0.fields.render_status |= NML_RENDER_STENCIL;
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB96C);
+void func_001BB96C(int value)
+{
+  D_0096A06C = value;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB99C);
+int func_001D2B20(int);
+void func_002A9E04(int, int, int);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BB9F4);
+void func_001BB99C(int value)
+{
+    D_0096A06C = func_001D2B20(0x19);
+    func_002A9E04(D_0096A06C, value, 0x180);
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBA28);
+void func_001BB9F4(void) {
+    D_00969DB0.fields.render_status |= NML_RENDER_HUMAN_MODEL;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBA78);
+extern long long nmlStencilAlphaData;
+extern long long nmlStencilAlphaRegister;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBAB0);
+/* Stencil passes: stores the GS ALPHA_1 (register 0x42) data word gsAlphaData in nmlStencilAlphaData and the register address in nmlStencilAlphaRegister. */
+void nmlModelSetStencilAlpha(long long gsAlphaData)
+{
+    nmlStencilAlphaData = gsAlphaData;
+    nmlStencilAlphaRegister = 0x42;
+    nmlRenderStatus |= 0x80;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBAE8);
+void func_001BBA78(void) {
+    D_00969DB0.fields.render_status |= 0x80000;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBB18);
+void func_001BBAB0(void) {
+    D_00969DB0.fields.render_status |= NML_RENDER_TEXMAP_CIRCLE;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBB48);
+void nmlModelSetModel(NmlModel *model)
+{
+  D_00969DB0.fields.model = model;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBB70);
+void func_001BBB18(void) {
+    pxyResetGlobals();
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBB98);
+extern int D_0096A370;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBBD8);
+void *func_001BBB48(void) {
+    return &D_0096A370;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBC0C);
+extern int D_0096A31C;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBC40);
+int func_001BBB70(void) {
+    return D_0096A31C;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBC74);
+void pxyResetState(void);
+extern s32 D_0096A304;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBCA0);
+/* Frame start for the pxy module: reset the state, clear D_0096A304 (pxyFlush sets it at its end). */
+void pxyBeginFrame(void) {
+    pxyResetState();
+    D_0096A304 = 0;
+    pxyClearFlushDone();
+}
+
+void func_001BBBD8(void) {
+    pxyFlags |= 0x400;
+}
+
+void func_001BBC0C(void) {
+    pxyFlags |= 0x800;
+}
+
+void func_001BBC40(void) {
+    pxyFlags |= 0x1000;
+}
+
+int func_001BBC74(void) {
+    return pxyFlags & 4;
+}
+
+int func_001BBCA0(void) {
+    return pxyFlags & 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001BBCCC);
 
@@ -572,28 +948,131 @@ INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CB700);
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CBCE4);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", pxyFlush);
+void pxyClearEntries(void);
+void pxyBegin(void *);
+void pxyEnd(void *);
+void pxyDrawEntries(void);
+void func_001C3554(int);
+void func_001CBCE4(void);
+void func_001CCF84(void *);
+void func_001CCFD4(int);
+void func_001CF468(void);
+void func_001D0234(void);
+f32 func_001D34C4(void);
+f32 func_001D35FC(void);
+void func_001D4498(int);
+extern unsigned char D_00645FA0[];
+extern unsigned char D_0068F0B8[];
+s32 D_0069E0C0 = 0;
+extern int D_0096A2CC;
+extern int D_0096A2E0;
+extern int D_0096A2F0;
+extern int D_0096A2F8;
+extern f32 D_0096A2FC;
+extern f32 D_0096A300;
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC4A4);
+void pxyFlush(void) {
+    pxyBegin(&D_0068F0B8);
+    pxyResetSubmitCount();
+    func_001CF468();
+    func_001CCF84(&D_00645FA0);
+    func_001D4498(pxyFlags & 0x80);
+    func_001CCFD4(pxyFlags & 0x40);
+    xglPacketSetMode3Flag(pxyFlags & 0x10);
+    xglPacketSetMode4Flag(pxyFlags & 0x80000);
+    pxySetRotateFreeze(D_0096A2C4);
+    func_001D0234();
+    func_001C3554(3);
+    if ((D_0096A2BC != 0) || (D_0096A2F0 != 0) || (D_0096A2CC != 0)) {
+        for (D_0096A2E0 = 0; D_0096A2E0 < 4; D_0096A2E0 += 1) {
+            func_001CBCE4();
+        }
+    }
+    func_001C3554(2);
+    xglMotionCacheInvalidate();
+    pxyEnd(&D_0068F0B8);
+    if (D_0069E0C0 != 0) {
+        pxyDrawEntries();
+    }
+    pxyClearEntries();
+    D_0096A2F8 = pxyGetSubmitCount();
+    D_0096A2FC = func_001D34C4();
+    D_0096A300 = func_001D35FC();
+    D_0096A304 = 1;
+    D_0096A310 = ((f32) D_0096A308 / 4096.0f) * 100.0f;
+    D_0096A314 = ((f32) (D_0096A30C - 0x1000) / 2560.0f) * 100.0f;
+    pxySetFlushDone();
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC4EC);
+void func_001B9728(void);
+void func_001B97CC(void);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC51C);
+/* Reset the pxy state: records, counters and globals, entry table and slots. */
+void pxyResetState(void)
+{
+    func_001B97CC();
+    pxyResetCounters();
+    pxyClearEntryTable();
+    func_001B9728();
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC54C);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC574);
+void func_001CC4EC(void) {
+    xglPacketAddFlushEIrq();
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC59C);
+void func_001CC51C(void) {
+    xglPacketAddFlushEIrq();
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC5C4);
+int func_001CC54C(void) {
+    return D_0096A2F8;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC5EC);
+f32 func_001CC574(void) {
+    return D_0096A2FC;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC614);
+f32 func_001CC59C(void) {
+    return D_0096A300;
+}
+
+f32 func_001CC5C4(void) {
+    return D_0096A310;
+}
+
+f32 func_001CC5EC(void) {
+    return D_0096A314;
+}
+
+extern int D_0096A2F4;
+
+void func_001CC614(void) {
+    D_0096A2F4 = 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC640);
 
 INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC8E4);
 
-INCLUDE_ASM("asm/main/nonmatchings/nml_model_set", func_001CC91C);
+void func_001B9B44(void);
+void pxyInitTables(void);
+void func_001B9EC4(void);
+extern void (*D_00645874)(void);
+extern void (*D_00645878)(void);
+extern void func_001CC640(void);
+extern void func_001CC8E4(void);
+
+/* Init the pxy module: the reset helpers, then the two callbacks it installs in D_00645878 and D_00645874. */
+void pxyInit(void)
+{
+    D_0069E0C0 = 0;
+    func_001B9758();
+    func_001B9B44();
+    pxyInitTables();
+    pxyResetSlots();
+    func_001B9EC4();
+    D_0096A2F4 = 0;
+    D_00645878 = &func_001CC640;
+    D_00645874 = &func_001CC8E4;
+}

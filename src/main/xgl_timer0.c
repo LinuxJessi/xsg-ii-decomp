@@ -1,9 +1,9 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_timer0.h"
 
 extern u8 *WorkEnd;
 
-int xglArxExtract(u32 *dest, u32 *src);
 
 /*
  * EE Timer 0.  T0_COUNT is the free-running counter and T0_MODE its control
@@ -35,21 +35,22 @@ int xglArxExtract(u32 *dest, u32 *src);
 /*
  * One output word: a clear flag bit takes the next stream word as is; a set
  * flag bit is followed by a unary length prefix that selects a table entry
- * together with `length` further bits.
+ * together with `offsetBits` further bits.  `unitStep` is always 1; each prefix
+ * bit adds it shifted by the current `offsetBits`.
  */
-#define ARX_DECODE_WORD(value) \
+#define ARX_DECODE_WORD(word) \
     do { \
         if (getbit1(&reader) == 0) { \
-            value = *reader.data++; \
+            word = *reader.data++; \
         } else { \
-            length = 1; \
-            index = 0; \
-            unit = 1; \
+            offsetBits = 1; \
+            tableIndex = 0; \
+            unitStep = 1; \
             while (getbit1(&reader) != 0) { \
-                index += unit << length; \
-                length++; \
+                tableIndex += unitStep << offsetBits; \
+                offsetBits++; \
             } \
-            value = table[index + getbits(&reader, length)]; \
+            word = table[tableIndex + getbits(&reader, offsetBits)]; \
         } \
     } while (0)
 
@@ -64,7 +65,12 @@ int xglTimer0Get(void)
     return *T0_COUNT & T0_COUNT_MASK;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_timer0", func_001948E8);
+/*
+ * Copies the nine two-letter language codes in xglLanguageCodeTable to the stack and
+ * returns the one selected by xglLanguageIndex; a non-null buffer receives its two
+ * bytes.
+ */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_timer0", xglGetLanguageCode);
 
 static u32 getbit1(ArxBitReader *reader)
 {
@@ -81,19 +87,19 @@ static u32 getbit1(ArxBitReader *reader)
 
 static u32 getbits(ArxBitReader *reader, u32 count)
 {
-    u32 high = 0;
-    u32 bits = reader->bit_count;
+    u32 highBits = 0;
+    u32 bitsLeft = reader->bit_count;
     u32 result;
 
-    if (bits < count) {
-        high = reader->value >> (32 - bits);
+    if (bitsLeft < count) {
+        highBits = reader->value >> (32 - bitsLeft);
         reader->value = *reader->data++;
-        count -= bits;
+        count -= bitsLeft;
         reader->bit_count = 32;
-        bits = 32;
+        bitsLeft = 32;
     }
-    result = high << count | reader->value >> -count;
-    reader->bit_count = bits - count;
+    result = highBits << count | reader->value >> -count;
+    reader->bit_count = bitsLeft - count;
     reader->value <<= count;
     return result;
 }
@@ -106,10 +112,10 @@ int xglArxExtract(u32 *dest, u32 *src)
     int size;
     int payloadSize;
     int i;
-    u32 length;
-    u32 index;
-    u32 value;
-    u32 unit;
+    u32 offsetBits;
+    u32 tableIndex;
+    u32 word;
+    u32 unitStep;
 
     if (src[ARX_MAGIC_WORD] != ARX_MAGIC || src[ARX_FLAGS_WORD] != 0) {
         return -1;
@@ -130,16 +136,16 @@ int xglArxExtract(u32 *dest, u32 *src)
             u32 *payloadEnd = src + payloadSize / 4;
 
             while (1) {
-                ARX_DECODE_WORD(value);
-                *cursor++ = value;
+                ARX_DECODE_WORD(word);
+                *cursor++ = word;
                 if (cursor >= reader.data) {
-                    u32 *from = reader.data;
-                    u32 *to = table + ARX_TABLE_SLOTS;
-                    u32 *limit = payloadEnd + ARX_DATA_WORD;
+                    u32 *tailSrc = reader.data;
+                    u32 *tailDst = table + ARX_TABLE_SLOTS;
+                    u32 *tailEnd = payloadEnd + ARX_DATA_WORD;
 
-                    reader.data = to;
-                    while (from <= limit) {
-                        *to++ = *from++;
+                    reader.data = tailDst;
+                    while (tailSrc <= tailEnd) {
+                        *tailDst++ = *tailSrc++;
                     }
                     break;
                 }
@@ -150,8 +156,8 @@ int xglArxExtract(u32 *dest, u32 *src)
         }
     }
     while (cursor < (u32 *)((u8 *)dest + size)) {
-        ARX_DECODE_WORD(value);
-        *cursor++ = value;
+        ARX_DECODE_WORD(word);
+        *cursor++ = word;
     }
     return size;
 }

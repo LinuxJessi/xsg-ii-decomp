@@ -31,7 +31,7 @@ extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
 int xglTaskWaitRemove(XglTaskPrefix *task);
 
 void xglTaskExecute(XglTaskScheduler *scheduler);
-void *xglTaskInitial(void *manager, int capacity, int flags);
+void *xglTaskInitial(void *manager, int capacity, int reset_gs);
 
 int xglTaskRemove(XglTaskPrefix *task);
 
@@ -39,7 +39,7 @@ extern XglTaskPrefix *xglTaskEntryPrev(XglTaskScheduler *scheduler,
                                 int (*callback)(XglTaskPrefix *task),
                                 XglTaskPrefix *entry);
 
-extern void *xglTaskInitial(void *manager, int capacity, int flags);
+extern void *xglTaskInitial(void *manager, int capacity, int reset_gs);
 
 /* Every task slot of the pool reserves this many bytes. */
 #define XGL_TASK_SLOT_SIZE 0x80
@@ -51,9 +51,10 @@ extern int sceGsResetGraph(int interlace, int omode, int ffmode, int errorjump);
  * immediately by a capacity-element task pool, each element reserving
  * 0x80 bytes although only the leading XglTaskPrefix of it is modeled
  * (include/shared.h). This links every element into the scheduler's free
- * list and returns the address right after the pool.
+ * list and returns the address right after the pool. A nonzero reset_gs
+ * resets the GS graph first (sceGsResetGraph, interlaced).
  */
-void *xglTaskInitial(void *manager, int capacity, int flags)
+void *xglTaskInitial(void *manager, int capacity, int reset_gs)
 {
     XglTaskScheduler *scheduler;
     XglTaskPrefix *task;
@@ -66,7 +67,7 @@ void *xglTaskInitial(void *manager, int capacity, int flags)
     task = (XglTaskPrefix *)((char *) manager + sizeof(XglTaskScheduler));
     if (capacity != 0)
     {
-        if (flags != 0)
+        if (reset_gs != 0)
         {
             sceGsResetGraph(1, 0, 0, 0);
         }

@@ -50,19 +50,22 @@ void CalcCrossPoint(const Vector4 *first, const Vector4 *second,
                     Vector4 *cross_point)
 {
     Vector4 normal;
-    float intersection_values[2];
+    /* Reused pair: [1] holds the plane length first, then the length of cross_point;
+       [0] holds the dot product of the edge with the normal, then the scale ratio. */
+    float intersection_scale[2];
 
-    intersection_values[1] = CalcLength(first, second, third);
+    intersection_scale[1] = CalcLength(first, second, third);
     CalcVerticalVector(first, second, third, &normal);
     xglVectorNormal_001A9200(&normal, &normal);
     Vu0SubVectorXYZ(cross_point, fourth, third);
-    xglVectorInner(&intersection_values[0], cross_point, &normal);
-    intersection_values[0] = intersection_values[1] / intersection_values[0];
-    xglVectorLength(&intersection_values[1], cross_point);
+    xglVectorInner(&intersection_scale[0], cross_point, &normal);
+    intersection_scale[0] = intersection_scale[1] / intersection_scale[0];
+    xglVectorLength(&intersection_scale[1], cross_point);
     xglVectorNormal_001A9200(cross_point, cross_point);
-    cross_point->x *= intersection_values[0] * intersection_values[1];
-    cross_point->y *= intersection_values[0] * intersection_values[1];
-    cross_point->z *= intersection_values[0] * intersection_values[1];
+    cross_point->x *= intersection_scale[0] * intersection_scale[1];
+    cross_point->y *= intersection_scale[0] * intersection_scale[1];
+    cross_point->z *= intersection_scale[0] * intersection_scale[1];
+    /* VU0 add: the third point's position is added to the scaled offset in place. */
     __asm__ __volatile__(
         "lqc2 vf20, 0(%0)\n\t"
         "lqc2 vf21, 0(%1)\n\t"
@@ -73,6 +76,7 @@ void CalcCrossPoint(const Vector4 *first, const Vector4 *second,
         : "memory");
 }
 
+/* Side of the XZ directed line first->second that point lies on: 1 left (cross > 0), 2 right (cross < 0), 0 on the line. */
 int CheckPointLine(const Vector4 *first, const Vector4 *second,
                    const Vector4 *point)
 {
@@ -80,7 +84,7 @@ int CheckPointLine(const Vector4 *first, const Vector4 *second,
     Vector4 second_delta;
     float cross;
     float first_x = first->x;
-    int result = 1;
+    int side = 1;
 
     first_delta.x = second->x - first_x;
     second_delta.x = point->x - first_x;
@@ -91,14 +95,15 @@ int CheckPointLine(const Vector4 *first, const Vector4 *second,
 
     if (!(0.0f < cross)) {
         if (cross < 0.0f) {
-            result = 2;
+            side = 2;
         } else {
-            result = 0;
+            side = 0;
         }
     }
-    return result;
+    return side;
 }
 
+/* Same body as Check_CrossingOver in get.c: two segments cross when each has its ends on opposite sides of the other. */
 int CheckCrossLine(const Vector4 *first_start, const Vector4 *first_end,
                    const Vector4 *second_start, const Vector4 *second_end)
 {

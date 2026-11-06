@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_dma.h"
 
 extern u8 *buffer;
 
@@ -92,7 +93,6 @@ struct MfifoDrainStorage {
 extern void FlushCache(int mode);
 extern int sceGsSyncPath(int mode, int timeout);
 
-void xglDmaDirectSrcChain(u32 channel, u32 address);
 
 extern XglDmaChannel *tbl[DMA_CHANNEL_COUNT];
 extern struct MfifoDrainStorage mfifo_drain;
@@ -145,14 +145,15 @@ void xglDmaBufferReset(XglDmaBuffer *buffer, u32 *address)
 u32 *xglDmaBufferCnt(XglDmaBuffer *buffer, const u32 *source, u32 count)
 {
     u32 *current = buffer->current;
-    u32 index;
+    u32 word_index;
 
     current[0] = DMA_TAG_ID_CNT + count;
     current[1] = 0;
     current[2] = 0;
     current[3] = 0;
     current += 4;
-    for (index = 0; index < count * 4; index++)
+    /* Copies count quadwords (count * 4 words) of the caller's data. */
+    for (word_index = 0; word_index < count * 4; word_index++)
         *current++ = *source++;
     buffer->current = current;
     return current;
@@ -198,21 +199,21 @@ void xglDmaBufferRequest(XglDmaBuffer *buffer, u32 channel)
 void xglDmaMFIFOSetup(u32 address, u32 size, int channel)
 {
     XglDmaChannel *drain;
-    volatile u32 *rbor;
-    volatile u32 *rbsr;
-    volatile u32 *madr;
+    volatile u32 *ring_base_reg;
+    volatile u32 *ring_size_reg;
+    volatile u32 *spr_madr;
 
     if (channel >= XGL_DMA_DIRECT_CHANNELS)
         return;
-    rbor = DMAC_RBOR;
-    rbsr = DMAC_RBSR;
+    ring_base_reg = DMAC_RBOR;
+    ring_size_reg = DMAC_RBSR;
     DMAC_CTRL->drain_mode = DMAC_CTRL_MFD_GIF;
-    *rbor = address;
-    *rbsr = size - MFIFO_QUADWORD;
+    *ring_base_reg = address;
+    *ring_size_reg = size - MFIFO_QUADWORD;
     drain = tbl[channel];
     mfifo_drain = drain;
-    madr = D8_MADR;
-    *madr = address;
+    spr_madr = D8_MADR;
+    *spr_madr = address;
     drain->tag_address = address;
     drain->quadword_count = 0U;
     drain->control = DMA_CHCR_STR | DMA_CHCR_MOD_CHAIN;

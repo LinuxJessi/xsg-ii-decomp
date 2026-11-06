@@ -1272,6 +1272,14 @@ def attribute_data(unit, tus):
     return section_order
 
 
+# Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).
+MOVED_CUTS = [
+    (0x0020CE30, 0x0020CE40,
+     'func_0020CE30 as C earlier in the file turns bnel into bne in func_0020DDC8; defined after the caller '
+     'it matches, so the original did not see that definition first (docs/bulk-match.md, user 2026-11-05)'),
+]
+
+
 def build_units(mean_functions, model_file, homologs, unit, zones, o0_homologs=None):
     """TU list of one image: inferred cuts inside game zones, one coarse record per other zone."""
     model = model_file['model']
@@ -1324,6 +1332,10 @@ def build_units(mean_functions, model_file, homologs, unit, zones, o0_homologs=N
         forced += homolog_cuts + o0_cuts
         target = max(1, round(len(indices) / mean_functions))
         cuts = segment(log_odds, blocked, forced, target)
+        for start, moved_to, note in MOVED_CUTS:
+            if start in unit.index and moved_to in unit.index and unit.index[start] - 1 in cuts:
+                del cuts[unit.index[start] - 1]
+                cuts[unit.index[moved_to] - 1] = [('compiler', note)]
         for low, high, kind, note in file_cuts:
             if low in in_scope:
                 holds = any(not blocked[g] for g in range(low, high + 1))

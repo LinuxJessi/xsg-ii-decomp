@@ -1,5 +1,7 @@
 #include "common.h"
 #include "shared.h"
+#include "main/control_entry.h"
+#include "main/xgl_font.h"
 
 typedef struct XglPacket XglPacket;
 
@@ -8,7 +10,6 @@ extern void sceVif1PkRef(XglPacket *packet, const void *environment,
 
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
-extern void xglSleep(void);
 
 /*
  * The VIF1 direct-mode packet builder object. xglPacketInit constructs two
@@ -66,7 +67,6 @@ struct XglPacket {
     u8 *cursor;
 };
 
-extern void xglFontPrintDirectOT(int ot, const char *text);
 
 void sceVif1PkCnt(XglPacket *packet, int count);
 void sceVif1PkAddDataN(XglPacket *packet, const void *data, int count);
@@ -121,10 +121,14 @@ void HddInstallSync(void)
     xglFontPrintDirectOT(-1, installScreenFontText);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu002", func_00A81DB0);
+/* Installer status callback (proposed HddInstallCB). */
+INCLUDE_ASM("asm/nonmatchings/ov02/tu002", HddInstallCB);
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu002", func_00A82208);
+/* TitleHddInstall install arm (proposed TitleHddInstallSubInstall). */
+INCLUDE_ASM("asm/nonmatchings/ov02/tu002", TitleHddInstallSubInstall);
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu002", func_00A82418);
+/* TitleHddInstall uninstall arm (proposed TitleHddInstallSubUninstall). */
+INCLUDE_ASM("asm/nonmatchings/ov02/tu002", TitleHddInstallSubUninstall);
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu002", func_00A825E8);
+/* HDD install dispatcher called from Title (proposed TitleHddInstall). */
+INCLUDE_ASM("asm/nonmatchings/ov02/tu002", TitleHddInstall);

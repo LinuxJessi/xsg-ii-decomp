@@ -1,8 +1,12 @@
 #include "common.h"
 #include "shared.h"
+#include "ov01/tu025.h"
+#include "ov01/tu031.h"
 
 typedef struct ObjectTask ObjectTask;
+
 typedef struct XglTaskPrefix XglTaskPrefix;
+
 typedef struct XglTaskScheduler XglTaskScheduler;
 
 /*
@@ -33,7 +37,6 @@ struct ObjectTask {
 extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
                                 int (*callback)(XglTaskPrefix *task),
                                 XglTaskPrefix *entry);
-
 /*
  * tgtFindFirst's own candidate table (this TU, still asm): tgtNum entries
  * of tgtTbl are filled in target-search order, tgtIdx walks them out one at
@@ -41,7 +44,6 @@ extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
  * bytes) is this array's only size evidence.
  */
 extern ObjectTask *tgtTbl[8];
-
 extern int tgtIdx;
 extern int tgtNum;
 
@@ -49,7 +51,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A912D0);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A913C8);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A91418);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu031", tgtFindFirst);
 
 ObjectTask *tgtFindNext(void)
 {
@@ -59,7 +61,25 @@ ObjectTask *tgtFindNext(void)
     return tgtTbl[tgtIdx++];
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A916E0);
+int func_00A90660(int first, int second, int value);
+
+/*
+ * Words of one task record. tgtCmdAccepts reads the words at 0x00 and 0x08
+ * and passes them to func_00A90660; calcActStockSet sets bits in the word at
+ * 0x0C. The gap at 0x04 is not evidenced.
+ */
+struct TaskRecord {
+    int target; /* word 0x00: the target the command aims at (tgtFindFirst compares it). */
+    u8 unmodeled_04[4];
+    int tec_id; /* word 0x08: the technique id whose flags byte func_00A9B3B8 returns. */
+    int flags;
+};
+
+/* Whether the candidate unit value is an acceptable target for the command record. */
+int tgtCmdAccepts(struct TaskRecord *record, int value)
+{
+    return func_00A90660(record->target, record->tec_id, value) != 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A91708);
 
@@ -67,6 +87,23 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A91730);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A91750);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A91790);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu031", calcBoostOk);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu031", func_00A918B0);
+void *actStockGet(void);
+
+/*
+ * Marks a task record with 0x200 and stores it in the slot table returned by
+ * actStockGet. The slots begin 0x10 bytes into the table; slot 1 first
+ * gets boostAddStock with -1.
+ */
+void calcActStockSet(struct TaskRecord *task, int slot)
+{
+    void **slots;
+
+    if (slot == 1) {
+        boostAddStock(task, -1);
+    }
+    task->flags |= 0x200;
+    slots = actStockGet();
+    slots[slot + 4] = task;
+}

@@ -172,7 +172,7 @@ typedef struct GrVramCopyParams {
 
 extern void grVramCopy(GrVramCopyParams *params);
 extern void grGpInit(GrPacket *packet);
-extern void grPacketSend(GrPacket *packet);
+void grPacketSend(GrPacket *packet);
 
 typedef struct GrRenderState {
     unsigned char unmodeled_00[0x20];
@@ -181,7 +181,6 @@ typedef struct GrRenderState {
 } GrRenderState;
 
 extern GrRenderState sRender;
-
 /* Framebuffer base addresses; grFBAdrGet indexes this table. */
 extern int fb[4];
 
@@ -190,9 +189,7 @@ extern int fb[4];
 
 extern void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data,
                                     int count);
-
 extern void sceVif1PkTerminate(XglPacket *packet);
-
 void grPacketSend(GrPacket *packet);
 
 /* One GS register write of grGsRegListSet's list; register_id -1 ends it. */
@@ -207,25 +204,56 @@ void grGpInit(GrPacket *packet)
     packet->data = (void *)SCRATCHPAD_BASE;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1BF0);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutF2Open);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1C58);
+/* One record per primitive kind (F2, F4, FT4, FT4STQ, Spr). Each Open function
+ * below appends a GIF packed-mode tag to the packet, stores the address of the
+ * tag's control doubleword in `control` and clears `count`. The grPutXxx vertex
+ * writers reference the same record (their data refs; their count update is not
+ * yet read). The matching Close function ORs `count` into the tag's control
+ * doubleword, the GIF NLOOP field, after the draw of those vertices. */
+typedef struct GrPutTag {
+    unsigned long long *control; /* +0x00 */
+    int count;                   /* +0x04 */
+} GrPutTag;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1C78);
+extern GrPutTag grPutF2Tag;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1CE0);
+void grPutF2Close(void) {
+    *grPutF2Tag.control |= grPutF2Tag.count;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1D00);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutF4Open);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1D68);
+extern GrPutTag grPutF4Tag;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1D88);
+void grPutF4Close(void) {
+    *grPutF4Tag.control |= grPutF4Tag.count;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1DF0);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutFT4Open);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1E10);
+extern GrPutTag grPutFT4Tag;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA1E78);
+void grPutFT4Close(void) {
+    *grPutFT4Tag.control |= grPutFT4Tag.count;
+}
+
+INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutFT4STQOpen);
+
+extern GrPutTag grPutFT4STQTag;
+
+void grPutFT4STQClose(void) {
+    *grPutFT4STQTag.control |= grPutFT4STQTag.count;
+}
+
+INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutSprOpen);
+
+extern GrPutTag grPutSprTag;
+
+void grPutSprClose(void) {
+    *grPutSprTag.control |= grPutSprTag.count;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutF2);
 
@@ -237,7 +265,24 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutFT4STQ);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutSpr);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPacketSend);
+void func_0012B4B8(XglPacket *packet);
+void func_0012B9A0(XglPacket *packet, unsigned int code);
+
+void grPacketSend(GrPacket *packet)
+{
+    XglPacket *current_packet;
+
+    if (packet->count == 0) {
+        return;
+    }
+    current_packet = xglPacketGetCurrent();
+    sceVif1PkCnt(current_packet, 0);
+    func_0012B9A0(current_packet, VIF_CODE_FLUSH);
+    sceVif1PkOpenDirectHLCode(current_packet, 0);
+    sceVif1PkAddDirectDataN(current_packet, packet->data, packet->count);
+    sceVif1PkCloseDirectHLCode(current_packet);
+    func_0012B4B8(current_packet);
+}
 
 void grGsRegSet(GrPacket *packet, unsigned long long register_id,
                 unsigned long long value)
@@ -307,7 +352,7 @@ int grDBIdxGet(int *drawing_index, int *current_index)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu048", func_00AA2AA0);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grVramCopyBuffers);
 
 /* Local-to-local GS transfer: BITBLTBUF (0x50), TRXPOS (0x51), TRXREG
  * (0x52), then TRXDIR (0x53) = 2 starts it. */

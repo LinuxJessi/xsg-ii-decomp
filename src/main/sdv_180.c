@@ -1,36 +1,36 @@
 #include "common.h"
 #include "shared.h"
+#include "main/sdv_180.h"
 
 void sdvSetAmbState2(int state, int effect_no);
-
 char *srsAnalyzeEftNo(int effectNo, int *charNo, int *effectType);
-
 extern int _sdvAmbFrame;
 extern int _sdvAmbState;
 extern int charID_0;
 extern int eftCate_1;
-
 void sdvSetAmbStateSub(int state, int effect_no, int force);
-
 extern void *xglStudioGetLight2(void);
 extern void xglLightIntensityAmbient(void *light, void *ambient);
 extern void func_A2C3D8(void *map_rgb);
-
 extern Vector4 *MMathVectorInterpolation(Vector4 *destination,
                                          const Vector4 *first,
                                          const Vector4 *second,
                                          float parameter);
-
 extern float _sdvMapRgb[4];
 extern float _sdvAmbient[4];
-
 void sdvSetAmbient(void *map_rgb, void *ambient);
-
 int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
 
 #define SCRIPT_ADDRESS_NONE 0xFFFF    /* absent table entry or address */
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_180", func_00266B50);
+void func_0025EBE0(int);
+extern u16 sefGroupKey;
+
+void sefAdvanceGroupKey(void)
+{
+    sefGroupKey += 1;
+    func_0025EBE0(0);
+}
 
 int scGetImmAdrImmIdx2(int base, unsigned short *table, int index)
 {
@@ -55,7 +55,12 @@ short scGetImmNumIdx(short *table, int index)
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_180", func_00266BC8);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_180", func_00266D40);
+int func_00266BC8(int, int, int);
+
+int func_00266D40(int first, int second)
+{
+    return func_00266BC8(first, second, 0);
+}
 
 int scOfsToAdr(int offset)
 {
@@ -71,18 +76,39 @@ void sdvInitAmbient(void)
     _sdvAmbState = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_180", func_00266D88);
+void func_00266D88(void)
+{
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_180", sdvSetAmbStateSub);
+char *srsAnalyzeEftNo(int effect_no, int *char_no, int *effect_type);
+extern int D_0069E324;
+extern int D_0069E328;
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_180", func_00266DE8);
+void sdvSetAmbStateSub(int state, int effect_no, int force)
+{
+    if (force != 0) {
+        _sdvAmbState = state;
+        return;
+    }
+    srsAnalyzeEftNo(effect_no, &D_0069E324, &D_0069E328);
+    if (D_0069E328 == 9) {
+        _sdvAmbState = state;
+    }
+}
+
+void sdvSetAmbState(int state, int effect_no)
+{
+    sdvSetAmbStateSub(state, effect_no, 0);
+}
 
 void sdvSetAmbState2(int state, int effect_no)
 {
     sdvSetAmbStateSub(state, effect_no, 1);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_180", sdvSetAmbient);
+void sdvSetAmbient(void *map_rgb, void *ambient)
+{
+}
 
 void sdvRestoreAmbient(void)
 {

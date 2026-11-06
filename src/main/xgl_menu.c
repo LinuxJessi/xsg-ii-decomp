@@ -65,7 +65,7 @@ typedef struct XglMenuSpriteData {
 /*
  * Partial view of one entry of the menutbl array (main 0x0021ce18/0x0021ce7c,
  * a 0x80-byte stride): xglMenuDrawType0 only touches the active flag at
- * offset 7, which xglMenuDraw (main 0x0021ce30) reads first and skips the
+ * offset 7, which xglMenuDraw (main 0x0019a7c8) reads first and skips the
  * entry when it is zero.
  */
 typedef struct {
@@ -75,7 +75,7 @@ typedef struct {
     unsigned char unmodeled_06;
     unsigned char active;               /* +0x07 */
     /*
-     * xglMenuInitial (main 0x0021ce98) indexes menutbl by this stride to
+     * xglMenuInitial (main 0x0019a858) indexes menutbl by this stride to
      * clear the active flag of every record; the rest of the record is not
      * recovered.
      */
@@ -124,7 +124,12 @@ extern XglMenuEntry menutbl[MENU_TABLE_COUNT];
 #define XGL_MENU_SELECT_WRITE_BACK 1   /* entry->select_flags: write result at once */
 #define XGL_MENU_RESULT_LIMIT 0x100000 /* below: a result value; above: a node pointer */
 
-/* Port records retain the original 0x68-byte stride. */
+/*
+ * Port records. The X2 code steps 0x80 bytes per port (xglPadInitial clears
+ * 0x80 bytes per port and xglPadRead scales the port index by 128), so this
+ * 0x68-byte view, copied from X1, is wrong for port 1. PadData belongs to
+ * xgl_pad.c; the integrator reconciles the declaration.
+ */
 typedef struct MenuPadRecord {
     unsigned char unmodeled_00[0x32];
     unsigned short direction_pressed;
@@ -197,7 +202,7 @@ static void xglMenuDrawType1(XglMenuEntry *entry,
     short *row_offset;
     int level;
     int selected_item;
-    int value;
+    int out_result;
     int i;
     int has_offset;
 
@@ -262,16 +267,16 @@ static void xglMenuDrawType1(XglMenuEntry *entry,
                     next->selected_item = next->initial.initial_selected_item;
                 }
                 if (entry->result_out != 0) {
-                    value = next->enter_result;
-                    *entry->result_out = value;
+                    out_result = next->enter_result;
+                    *entry->result_out = out_result;
                 }
                 entry->active = XGL_MENU_ACTIVE_OPEN;
             }
         }
         if ((PadData[0].direction_pressed & PAD_CROSS) != 0) {
             if (entry->result_out != 0) {
-                value = node->cancel_result;
-                *entry->result_out = value;
+                out_result = node->cancel_result;
+                *entry->result_out = out_result;
             }
             if (list->current_index == 0) {
                 entry->active = XGL_MENU_ACTIVE_CLOSE_ALL;

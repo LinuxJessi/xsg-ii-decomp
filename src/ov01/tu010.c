@@ -174,8 +174,23 @@ void unitInit(void)
     unitEnNum = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu010", func_00A84128);
+/*
+ * Player unit creation: unitCreateSide with side 0, then the unit goes into
+ * player slot 0 of the table (unitTblSet(0, unit)). Returns the unit or 0.
+ */
+INCLUDE_ASM("asm/nonmatchings/ov01/tu010", unitPlCreate);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu010", func_00A84168);
+/*
+ * Enemy unit creation: unitCreateSide with side 1, a 0x60 flag set in the
+ * unit's word at +0xC, then unitTblSet(1, unit). Script-facing unitCreate
+ * (ov01/tu047) reaches it. Returns the unit or 0.
+ */
+INCLUDE_ASM("asm/nonmatchings/ov01/tu010", unitEnCreate);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu010", func_00A841B8);
+/*
+ * Unit creation core for one side (0 player, 1 enemy): clears the word at
+ * +0xC, runs two init helpers on +0x10 and +0x150, stores the fixed callbacks
+ * unitUpdate and func_00A84880 at +4 and +8, and creates the XenoActor root
+ * kept at +0x1D0. Returns the unit or 0.
+ */
+INCLUDE_ASM("asm/nonmatchings/ov01/tu010", unitCreateSide);

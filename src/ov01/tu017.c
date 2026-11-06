@@ -2,7 +2,9 @@
 #include "shared.h"
 
 typedef struct ObjectTask ObjectTask;
+
 typedef struct XglTaskPrefix XglTaskPrefix;
+
 typedef struct XglTaskScheduler XglTaskScheduler;
 
 /*
@@ -215,16 +217,127 @@ int unitNumGet(int side)
     return count;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A88000);
+/* Counts the non-null units of side whose callback word has bit 0x4 clear. */
+int unitNumFlag4ClearGet(int side)
+{
+    UnitRecord **records;
+    UnitRecord **cursor;
+    int count;
+    int remaining;
+    int flagClearCount;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A88060);
+    count = unitTblGet(side, &records);
+    flagClearCount = 0;
+    if (count > 0) {
+        cursor = records;
+        remaining = count;
+        do {
+            UnitRecord *record = *cursor;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A880F8);
+            cursor++;
+            if (record != 0 && !((int) record->task.task.callback & 4)) {
+                flagClearCount++;
+            }
+            remaining--;
+        } while (remaining != 0);
+    }
+    return flagClearCount;
+}
+
+int calcStatGet(UnitRecord *record, int, int);
+
+/* Counts the units of side with bit 0x4 clear that calcStatGet accepts (returns 0) for (2, 1). */
+int unitNumFlag4ClearStatZeroGet(int side)
+{
+    UnitRecord **records;
+    int count;
+    int i;
+    int acceptedCount;
+
+    acceptedCount = 0;
+    i = 0;
+    count = unitTblGet(side, &records);
+    if (count > 0) {
+        do {
+            UnitRecord *record = records[i];
+
+            i++;
+            if (record != 0 && !((int) record->task.task.callback & 4)) {
+                if (calcStatGet(record, 2, 1) == 0) {
+                    acceptedCount++;
+                }
+            }
+        } while (i < count);
+    }
+    return acceptedCount;
+}
+
+/* Counts the non-null units of side whose callback word has bit 0x4 set. */
+int unitNumFlag4SetGet(int side)
+{
+    UnitRecord **records;
+    UnitRecord **cursor;
+    int count;
+    int remaining;
+    int flagSetCount;
+
+    count = unitTblGet(side, &records);
+    flagSetCount = 0;
+    if (count > 0) {
+        cursor = records;
+        remaining = count;
+        do {
+            UnitRecord *record = *cursor;
+
+            cursor++;
+            if (record != 0 && ((int) record->task.task.callback & 4)) {
+                flagSetCount++;
+            }
+            remaining--;
+        } while (remaining != 0);
+    }
+    return flagSetCount;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A88158);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A881C8);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A88288);
+/* Index of target in the combined unit table (side 2), or -1 when absent. */
+int unitTblIndexOf(UnitRecord *target)
+{
+    UnitRecord **records;
+    UnitRecord **cursor;
+    int count;
+    int i;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A882F8);
+    count = unitTblGet(2, &records);
+    i = 0;
+    if (count > 0) {
+        cursor = records;
+        do {
+            UnitRecord *record = *cursor;
+
+            cursor++;
+            if (record != 0 && record == target) {
+                return i;
+            }
+            i++;
+        } while (i < count);
+    }
+    return -1;
+}
+
+/* Entry index of the combined unit table (side 2). The check is index > count,
+ * so index == count is not rejected by it. */
+UnitRecord *unitTblEntryGet(int index)
+{
+    UnitRecord **records;
+    int count;
+
+    count = unitTblGet(2, &records);
+    if (count < index || index < 0) {
+        return 0;
+    }
+    return records[index];
+}

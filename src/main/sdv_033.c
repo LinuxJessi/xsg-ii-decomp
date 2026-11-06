@@ -1,5 +1,7 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_2_031.h"
+#include "main/xgl_dma.h"
 
 typedef struct XglPacket XglPacket;
 
@@ -64,8 +66,6 @@ struct XglPacket {
 /* EE DMAC channel numbers: the index into the channel table (VIF1 = 1, GIF = 2). */
 #define XGL_DMA_CHANNEL_VIF1 1
 
-void xglDmaDirectSrcChain(u32 channel, u32 address);
-
 extern XglPacket *pCurrentPacket;
 extern XglPacket *pSendPacket;
 
@@ -99,27 +99,22 @@ typedef struct StudioCamera {
     u8 unmodeled_570[0x80];
 } StudioCamera;
 
-extern void xglMatrixStackUnit(void);
-
 void xglMatrixStackInverse(void);
 void xglMatrixStackTrans(const float translation[4]);
-
 extern void xglMatrixStackRotX(float angle);
 extern void xglMatrixStackRotY(float angle);
 extern void xglMatrixStackRotZ(float angle);
 extern void xglMatrixStackSave(float matrix[4][4]);
-
 void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 
 #include "quadword.h"
 #include "vu0_macro.h"
-
 /* The camera draws into the GS 4096x4096 primitive space centred on 2048. */
 #define CAMERA_GS_COORD_SIZE 4096.0f
-
 #define CAMERA_GS_COORD_CENTER 2048.0f
 
 typedef struct XglCamera XglCamera;
+
 typedef struct XglCameraScreen XglCameraScreen;
 
 /* DISPLAY register of the GS display environment at +0x18. */
@@ -130,27 +125,20 @@ typedef struct CameraDisplayEnv {
 } CameraDisplayEnv;
 
 extern CameraDisplayEnv DispEnv;
-
-void xglCameraViewScreen(StudioCamera *studio, const Vector4 *offset);
-void xglCameraViewTravel(StudioCamera *studio, Vector4 *offset);
-void xglCameraViewVolume(StudioCamera *studio, Vector4 *offset);
-
+void xglCameraViewScreen(StudioCamera *camera, const Vector4 *offset);
+void xglCameraViewTravel(StudioCamera *camera, Vector4 *offset);
+void xglCameraViewVolume(StudioCamera *camera, Vector4 *offset);
 extern float tanf(float angle);
 extern void xglMatrixStackInverse(void);
 extern void xglMatrixStackMul(Matrix4 matrix);
-
 extern void xglMatrixStackFrustum(float left, float right, float bottom,
                                   float top, float near, float far);
-
 extern void xglVectorMulMat(Vector4 *destination, Matrix4 matrix,
                             const Vector4 *vector);
-
 extern void xglPlaneParameter(Vector4 *destination, const Vector4 *p0,
                               const Vector4 *p1, const Vector4 *p2);
-
 extern void xglVectorScale(Vector4 *destination, const Vector4 *source,
                            float scale);
-
 extern signed char aaiVertexIndex[6][3];
 
 typedef union CameraVector {
@@ -211,37 +199,56 @@ struct XglCamera {
     CameraVolume volume[1];
 };
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AF494);
+void *memset(void *, int, unsigned int);
+extern unsigned char cameraPadOverride[0x10];
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AF4D4);
+/* Clears the per-frame pad override record (cameraPadOverride, flag at +0xC). Proposed name: xglCameraClearPadOverride. */
+void xglCameraClearPadOverride(void) {
+    memset(cameraPadOverride, 0, sizeof(cameraPadOverride));
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AF58C);
+/* Stores eight arguments into the pad override record and raises its flag. Proposed: xglCameraSetPadOverride. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraSetPadOverride);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AF5D4);
+/* Resets the camera's active flag, state and pad port (+0, +4, +8). Proposed: xglCameraReset. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraReset);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AF714);
+/* Fills the XglCameraScreen block at camera+0x10 with the default screen. Proposed: xglCameraScreenInit. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraScreenInit);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AF884);
+/* Fills the CameraTravel block at camera+0x90 with the defaults (focus 5.0). Proposed: xglCameraTravelInit. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraTravelInit);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AF8FC);
+/* Zeroes the travel scale and loads the default angle and place deltas. Proposed: xglCameraResetDeltas. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraResetDeltas);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AFAC8);
+/* Zoom step from the pad: focus +-1 within 1..9, scale from two constants. Proposed: xglCameraApplyPadZoom. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraApplyPadZoom);
 
+/* Scales travel scale and deltas by focus-dependent factors, x4 while button 0x40 is held. Proposed: xglCameraScaleDeltas. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraScaleDeltas);
+
+/* Pad update, mode A (state dispatch in xglCameraUpdate). Name is a guess: xglCameraUpdateOrbit. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AFCF0);
 
+/* Pad update, mode B: yaw and pitch from atan2f, xglSin and xglCos. Name is a guess: xglCameraUpdateLookAt. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B03D4);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B0EEC);
+/* Stores the pad port index at camera+8 (values of 2 or more become 1). Proposed: xglCameraSetPadPort. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraSetPadPort);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B0F40);
+/* Per-frame camera update: pad read, override, state dispatch, then clears the override. Proposed: xglCameraUpdate. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraUpdate);
 
+/* The camera view functions; xglCameraMove is their caller. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraViewScreen);
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraViewTravel);
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraViewVolume);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B1CD0);
+/* Per-camera init, called by xglStudioInit: reset, screen, travel, then camera+0x5F4 = 1.0f. Proposed: xglCameraInit. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraInit);
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraMove);
 
@@ -252,22 +259,30 @@ void xglCameraMoveOffset(StudioCamera *camera, Vector4 *offset)
     xglCameraViewVolume(camera, offset);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B1E18);
+/* Sets camera->screen.window (x0, y0, x1, y1), sorting each pair and clamping to the screen size. Proposed: xglCameraSetWindow. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraSetWindow);
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraClipRangeDefault);
 
+/* Copies a Vector4 (quadword). Byte-identical to xglVectorCopy in tu032 (proposed xglVectorCopy); named once there. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B2008);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B2034);
+/* Copies a 4x4 float matrix. Proposed: xglMatrixCopy. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglMatrixCopy_001B2034);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B2078);
+/* vmul.xyzw: destination = a * b. Proposed: xglVectorMul. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglVectorMul);
 
+/* Byte-identical to xglVectorAddXYZ in tu032 (xglVectorAddXYZ); named once there. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B20B0);
 
+/* Byte-identical to xglVectorSubXYZ_001AF3F0 in tu032 (xglVectorSubXYZ); named once there. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B20E8);
 
+/* VIF1 packet writer: GS state words from D_0064583A, then sceVif1PkAddDataN and sceVif1PkRef. No name yet. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B2120);
 
+/* Direct-mode VIF1 block with a GS tag word; only caller xglRenderMove. Name is a guess: xglPacketAddDirectState. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B22C4);
 
 XglPacket *xglPacketGetCurrent(void)
@@ -275,9 +290,30 @@ XglPacket *xglPacketGetCurrent(void)
     return pCurrentPacket;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B23DC);
+/* Packet system init: both buffers through func_0012B498, pCurrentPacket = D_0095A6B0, pSendPacket = 0. Proposed: xglPacketSystemInit. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglPacketSystemInit);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B2634);
+void FlushCache(int cacheOp);
+void func_0012B4A8(XglPacket *packet);
+u32 *func_0012B4B8(XglPacket *packet);
+void func_0012B688(XglPacket *packet, unsigned int tagFlags);
+extern XglPacket D_0095A6B0;
+extern XglPacket D_0095A6E0;
+
+/* Ends the current packet, makes it the send packet and switches to the other buffer. Proposed: xglPacketSwapBuffers. */
+void xglPacketSwapBuffers(void) {
+    func_0012B688(pCurrentPacket, 0);
+    func_0012B4B8(pCurrentPacket);
+    FlushCache(0);
+    pCurrentPacket->cursor = pCurrentPacket->limit;
+    pSendPacket = pCurrentPacket;
+    if (pCurrentPacket == &D_0095A6E0) {
+        pCurrentPacket = &D_0095A6B0;
+    } else {
+        pCurrentPacket = &D_0095A6E0;
+    }
+    func_0012B4A8(pCurrentPacket);
+}
 
 void xglPacketSend(void)
 {

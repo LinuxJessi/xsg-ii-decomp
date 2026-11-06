@@ -1,7 +1,12 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu017.h"
+#include "main/tu022.h"
+#include "main/xgl_dma.h"
+#include "main/xgl_render.h"
 
 typedef struct XglPacket XglPacket;
+
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
 /*
@@ -62,7 +67,6 @@ struct XglPacket {
 
 /* GIF tag fields. */
 #define GIF_TAG_EOP 0x8000
-
 #define GIF_TAG_PRE 0x4000
 #define GIF_TAG_PRIM_SHIFT 15
 #define GIF_TAG_NREG_SHIFT 28
@@ -85,44 +89,33 @@ struct XglPacket {
 #define SCE_GS_FRAME_2 0x4D
 #define SCE_GS_ZBUF_1 0x4E
 #define SCE_GS_ZBUF_2 0x4F
-
 /* GS alpha 0x80 is fully opaque. */
 #define GS_ALPHA_OPAQUE 0x80
-
 #define XGL_DMA_CHANNEL_GIF 2
-
-void xglDmaDirectNormal(u32 channel, u32 address, u32 count);
 
 extern void xglStudioInit(void);
 extern void xglStudioMainCameraInit(void);
 
 /* GIF_STAT and VIF1_STAT, polled by the VSync callback. */
 #define GIF_STAT_ADDRESS 0x10003020
-
 #define VIF1_STAT_ADDRESS 0x10003C00
 #define GIF_STAT_APATH_MASK 0xC00 /* a GIF transfer path is active */
 #define VIF1_STAT_VPS_MASK 3 /* the VIF1 pipeline is not idle */
 #define RENDER_COUNT_RESO 6
 #define GS_COORD_CENTER 2048 /* primitive coordinate system origin */
-
 /* ScanLineInterpolate modes. */
 #define GS_PMODE_EN2 2 /* PMODE.EN2: xglRenderDispOn/Off toggle the display output */
-
 /* Vsyncs per frame: the render thread waits for two, and a third means the frame ran late. */
 #define RENDER_VSYNC_PER_FRAME 2
-
 #define GS_ZTST_GEQUAL 2
 #define GS_TEST_ZTE_GEQUAL 0x50000
 #define GS_TEST_CLEAR_DEPTH 0x00032001 /* alpha test never passes but writes Z only */
 #define GS_TEST_CLEAR_FRAME 0x00030003
-
 /* Default clear colour: black with GS alpha 0x80. */
 #define RENDER_CLEAR_COLOR_DEFAULT 0x80000000
-
 /* Clear sprite GIF tag: PRE with a sprite PRIM, and the register list
  * A+D (state), RGBAQ, XYZ2, XYZ2 (two corners), plus a closing A+D for the clear packet. */
 #define RENDER_CLEAR_GIF_REGS (GIF_REG_AD | (GIF_REG_RGBAQ << 4) | (GIF_REG_XYZ2 << 8) | (GIF_REG_XYZ2 << 12))
-
 #define RENDER_CLEAR_QWORDS 6
 
 /*
@@ -449,32 +442,34 @@ extern void SyncDCache(void *start, void *end);
 extern int xglRenderVSyncCallback(void);
 extern void sceGsSetDefDispEnv(GsDispEnv *env, int psm, int width, int height, int dx, int dy);
 extern void sceGsPutDrawEnv(GsDrawEnv *env);
-
 /* The GS VSync interrupt callback increments this counter while
  * xglRenderSyncMove polls it on the render thread. */
 extern volatile u32 VSyncCount;
-
 extern XglRenderReso asDispReso[RENDER_COUNT_RESO];
 extern XglRenderVram asVramBase[RENDER_COUNT_RESO];
-
 int xglRenderVSyncCallback(void);
-
 void xglRenderDispEnvInit(void);
 void xglRenderClearEnvInit(void);
+/* Written 0 by xglRenderCpUDispOff and 1 by xglRenderCpUDispOn; the readers are not identified yet. */
+int xglRenderCpUDispFlag = 0;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B2DE4);
+void xglRenderCpUDispOff(void) {
+    xglRenderCpUDispFlag = 0;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B2E08);
+void xglRenderCpUDispOn(void) {
+    xglRenderCpUDispFlag = 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B2E30);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderDrawFlip);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B2FD0);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderCopyDisp2Draw);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B3228);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderCopyDisp2Flip);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B3480);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderCopyDraw2Flip);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B36D8);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderDrawFlipPk);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderVSyncCallback);
 
@@ -586,9 +581,45 @@ void xglRenderDrawEnvMove(void)
     sceGsPutDrawEnv(&DrawEnv.value);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderDispEnvInit);
+void func_00129D40(GsDispEnv *env, s16 psm, s16 width, s16 height, int dx, int dy);
+/*
+ * D_00645750..D_00645788 are fields of DispEnv (0x00645740, GsDispEnv above):
+ * dispfb1 (+0x10), display1 (+0x18), dispfb2 (+0x28), display2 (+0x30),
+ * extbuf (+0x38), extdata (+0x40), extwrite (+0x48). D_00645790 lies just past
+ * the 0x50 bytes of GsDispEnv.
+ */
+extern u64 D_00645750;
+extern u64 D_00645758;
+extern u64 D_00645768;
+extern u64 D_00645770;
+extern u64 D_00645778;
+extern u64 D_00645780;
+extern u64 D_00645788;
+extern u64 D_00645790;
+/*
+ * sRenderPsm..D_00645842 are fields of sRender (0x00645820, XglRenderState
+ * above): reso.row.frame_psm (+0x02), frame_width (+0x04), frame_height
+ * (+0x06), vram.row.width (+0x10), vram.row.height (+0x12), vram.row.flip_base
+ * (+0x14), display_buffer_base (+0x20) and draw_buffer_base (+0x22). The TU
+ * declares them as separate globals; a later pass should use the sRender fields.
+ */
+extern s16 sRenderPsm;
+extern s16 cameraScreenWidth;
+extern s16 cameraScreenHeight;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B4A38);
+void xglRenderDispEnvInit(void) {
+    func_00129D40(&DispEnv, sRenderPsm, cameraScreenWidth, cameraScreenHeight, 0, 0);
+    DispEnv.flags &= ~2;
+    DispEnv.flags &= ~0x40;
+    D_00645790 = D_00645758;
+    D_00645768 = D_00645750;
+    D_00645770 = D_00645758;
+    D_00645778 = 0;
+    D_00645780 = 0;
+    D_00645788 = 0;
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderDispEnvMove);
 
 void xglRenderClearDepth(void)
 {
@@ -629,7 +660,26 @@ void xglRenderSetReso(int resolution)
     xglStudioMainCameraInit();
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B5018);
+extern u16 D_00645830;
+extern s16 D_00645832;
+extern u16 D_00645840;
+extern u16 D_00645842;
+extern int xglRenderStatus;
+extern int xglRenderFrameDelta;
+extern int xglRenderFrameCount;
+
+void xglRenderSwapBase(void)
+{
+    u16 previous_display_base;
+
+    previous_display_base = D_00645840;
+    D_00645832 = D_00645830;
+    D_00645830 = D_00645842;
+    D_00645840 = D_00645842;
+    D_00645842 = previous_display_base;
+    xglRenderStatus = 0;
+    xglRenderFrameCount += xglRenderFrameDelta;
+}
 
 void xglRenderDispOff(void)
 {
@@ -641,26 +691,58 @@ void xglRenderDispOn(void)
     DispEnv.flags |= GS_PMODE_EN2;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B5114);
+/* xglRenderClearSkip: written 1 by xglRenderClearSkipOn and 0 by xglRenderClearSkipOff; referenced by xglRenderInit and xglRenderMove. */
+extern int xglRenderClearSkip;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B513C);
+void xglRenderClearSkipOn(void) {
+    xglRenderClearSkip = 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B5160);
+void xglRenderClearSkipOff(void) {
+    xglRenderClearSkip = 0;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B529C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderInit);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B534C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderFinalPacket);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B5378);
+/* xglRenderGlobalFadeCallback: cleared by xglRenderGlobalFadeReset; referenced by xglRenderGlobalFade (the fade draw). */
+extern int xglRenderGlobalFadeCallback;
+/* xglRenderGlobalFadeColor: packed fade colour, one byte per channel as 0xAABBGGRR; written by xglRenderGlobalFadeSet. */
+extern int xglRenderGlobalFadeColor;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B539C);
+void xglRenderGlobalFadeReset(void) {
+    xglRenderGlobalFadeColor = 0;
+    xglRenderGlobalFadeCallback = 0;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B53C8);
+int xglRenderGlobalFadeGet(void) {
+    return xglRenderGlobalFadeColor;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B5624);
+void xglRenderGlobalFadeSetPacked(int value)
+{
+    xglRenderGlobalFadeColor = value;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B5C68);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderGlobalFadeSet);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B5E08);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderGlobalFade);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_render", func_001B5E40);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_render", xglRenderMove);
+
+void xglRenderInit(void);
+
+void xglRenderAndMovieInit(void) {
+    xglRenderInit();
+    moviePlayerInit();
+}
+
+void xglRenderMove(void);
+void xglPadRead(void);
+
+void xglRenderFrame(void) {
+    xglRenderMove();
+    soundApplySettings();
+    xglPadRead();
+}

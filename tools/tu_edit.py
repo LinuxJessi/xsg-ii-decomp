@@ -380,8 +380,13 @@ def _depth0_has(head, char):
     return False
 
 
+_KR_PARAMETERS = re.compile(r'\)(?:\s*[^;{}()]+;)+\s*$')     # `int f(a) int a;`: an old-style parameter list
+_KR_BODY_AHEAD = re.compile(r'(?:\s*[^;{}()]+;)*\s*\{')
+
+
 def _is_function_head(head):
     head = _strip_attributes(lexical(head)).strip()
+    head = _KR_PARAMETERS.sub(')', head)
     if not head.endswith(')') or '(' not in head:
         return False
     if re.match(r'typedef\b', head) or _depth0_has(head, '='):
@@ -478,6 +483,9 @@ def scan(text):
                 items.append(Item('func', cur, i + 1, name=name, conditional=cond > 0))
                 cur, func_open = None, False
         elif c == ';' and depth == 0 and paren == 0:
+            if _KR_BODY_AHEAD.match(text, i + 1) and ')' in text[cur:i]:
+                i += 1
+                continue
             items.append(_classify_decl(text, Item('decl', cur, i + 1, conditional=cond > 0)))
             cur = None
         i += 1

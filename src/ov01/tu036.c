@@ -1,8 +1,18 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu124.h"
+#include "ov01/tu005.h"
+#include "ov01/tu008.h"
+#include "ov01/tu026.h"
+#include "ov01/tu032.h"
+#include "ov01/tu036.h"
+#include "ov01/tu042.h"
+#include "ov01/tu043.h"
 
 typedef struct ObjectTask ObjectTask;
+
 typedef struct XglTaskPrefix XglTaskPrefix;
+
 typedef struct XglTaskScheduler XglTaskScheduler;
 
 /*
@@ -81,64 +91,265 @@ struct BattleUnit {
 
 BattleUnit **tgtUnitAdrGet(void);
 BattleUnit *tgtUnitGet(void);
-
 /*
  * Private battle state, in original BSS address order. Keeping these local
  * definitions together lets the guarded overlay linker map each exact object
  * to its original storage span.
  */
+/* The enemy-cursor task: enemyCursorOpen opens it, enemyCursorClose and objCurRemove
+ * remove it. X1 names the same global the enemy-cursor task (battle_init.c). */
 extern ObjectTask *pTaskEnCur;
-
 /*
  * objEntry2 and objStdInit are defined by ov01/tu001 obj.c (src/ov01/obj.h
  * is that TU-local header and is not includable here);
  * src/ov01/entry_first_init.c already redeclares them the same way.
  */
 extern ObjectTask *objEntry2(void *argument, void (*callback)(ObjectTask *task));
-
 extern void objRemove(ObjectTask *task);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A97D68);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A97F08);
+/* Text task that the choice-menu openers allocate (the textEntryAlloc result) and the close functions remove. */
+extern ObjectTask *choiceMenuTextTask;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A97F40);
+/* Closes choice slot 0 and removes the text task choiceMenuTextTask (the five identical close bodies of this TU). */
+void choiceMenuTextClose(void) {
+    choiceMenuClose(0);
+    objRemove(choiceMenuTextTask);
+    choiceMenuTextTask = 0;
+}
+
+int choiceMenuIsOpen(int);
+int func_00235D78(int);
+int func_00A9B8D8(s16, int);
+extern int D_00AC3C04;
+extern s16 choiceMenuEntryIds[];
+extern u8 choiceMenuEntryFlags[];
+extern int D_00AC4160;
+
+/* Cursor entry of choice slot 0 (func_00235D78): caches its id in D_00AC3C04, 0 when choiceMenuEntryFlags flags it. */
+int func_00A97F40(void) {
+    int cursor_index;
+    s16 entry_id;
+    int result;
+
+    if (choiceMenuIsOpen(0) == 1) {
+        cursor_index = func_00235D78(0);
+        if (cursor_index > 0) {
+            entry_id = choiceMenuEntryIds[cursor_index];
+            D_00AC3C04 = entry_id;
+            result = func_00A9B8D8(entry_id, 1);
+            D_00AC4160 = result;
+            if (choiceMenuEntryFlags[cursor_index] != 0) {
+                D_00AC3C04 = 0;
+            }
+        }
+    }
+    return D_00AC3C04;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A97FE0);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98180);
+void func_00A98180(void) {
+    choiceMenuClose(0);
+    objRemove(choiceMenuTextTask);
+    choiceMenuTextTask = 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A981B8);
+int func_00A9B750(s16, int);
+extern int D_00AC3C08;
+
+/* Cursor entry of choice slot 0 (func_00235D78): caches its id in D_00AC3C08, 0 when choiceMenuEntryFlags flags it. */
+int func_00A981B8(void) {
+    int cursor_index;
+    s16 entry_id;
+    int result;
+
+    if (choiceMenuIsOpen(0) == 1) {
+        cursor_index = func_00235D78(0);
+        if (cursor_index > 0) {
+            entry_id = choiceMenuEntryIds[cursor_index];
+            D_00AC3C08 = entry_id;
+            result = func_00A9B750(entry_id, 1);
+            D_00AC4160 = result;
+            if (choiceMenuEntryFlags[cursor_index] != 0) {
+                D_00AC3C08 = 0;
+            }
+        }
+    }
+    return D_00AC3C08;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98258);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98408);
+void func_00A98408(void) {
+    choiceMenuClose(0);
+    objRemove(choiceMenuTextTask);
+    choiceMenuTextTask = 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98440);
+int func_00A9BAB8(s16, int);
+extern int D_00AC3C0C;
+
+/* Cursor entry of choice slot 0 (func_00235D78): caches its id in D_00AC3C0C, 0 when choiceMenuEntryFlags flags it. */
+int func_00A98440(void) {
+    int cursor_index;
+    s16 entry_id;
+    int result;
+
+    if (choiceMenuIsOpen(0) == 1) {
+        cursor_index = func_00235D78(0);
+        if (cursor_index > 0) {
+            entry_id = choiceMenuEntryIds[cursor_index];
+            D_00AC3C0C = entry_id;
+            result = func_00A9BAB8(entry_id, 1);
+            D_00AC4160 = result;
+            if (choiceMenuEntryFlags[cursor_index] != 0) {
+                D_00AC3C0C = 0;
+            }
+        }
+    }
+    return D_00AC3C0C;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A984E0);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98690);
+void func_00A98690(void) {
+    choiceMenuClose(0);
+    objRemove(choiceMenuTextTask);
+    choiceMenuTextTask = 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A986C8);
+int func_00A9BA40(s16, int);
+extern int D_00AC3C30;
+
+/* Cursor entry of choice slot 0 (func_00235D78): caches its id in D_00AC3C30, 0 when choiceMenuEntryFlags flags it. */
+int func_00A986C8(void) {
+    int cursor_index;
+    s16 entry_id;
+    int result;
+
+    if (choiceMenuIsOpen(0) == 1) {
+        cursor_index = func_00235D78(0);
+        if (cursor_index > 0) {
+            entry_id = choiceMenuEntryIds[cursor_index];
+            D_00AC3C30 = entry_id;
+            result = func_00A9BA40(entry_id, 1);
+            D_00AC4160 = result;
+            if (choiceMenuEntryFlags[cursor_index] != 0) {
+                D_00AC3C30 = 0;
+            }
+        }
+    }
+    return D_00AC3C30;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98768);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98928);
+void enemyCursorClose(void) {
+    choiceMenuClose(0);
+    objRemove(pTaskEnCur);
+    pTaskEnCur = 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98960);
+extern int D_00AC3C80;
+extern int D_00AC4170;
+
+/* Cursor entry of choice slot 0 (func_00235D78): caches its id in D_00AC3C80, 0 when choiceMenuEntryFlags flags it;
+ * the helper result goes to D_00AC4170 instead of D_00AC4160, the word the other pickers use. */
+int func_00A98960(void) {
+    int cursor_index;
+    s16 entry_id;
+    int result;
+
+    if (choiceMenuIsOpen(0) == 1) {
+        cursor_index = func_00235D78(0);
+        if (cursor_index > 0) {
+            entry_id = choiceMenuEntryIds[cursor_index];
+            D_00AC3C80 = entry_id;
+            result = func_00A9B750(entry_id, 1);
+            D_00AC4170 = result;
+            if (choiceMenuEntryFlags[cursor_index] != 0) {
+                D_00AC3C80 = 0;
+            }
+        }
+    }
+    return D_00AC3C80;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98A00);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98BB0);
+void func_00A98BB0(void) {
+    choiceMenuClose(0);
+    objRemove(choiceMenuTextTask);
+    choiceMenuTextTask = 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98BE8);
+int func_00A9BB30(s16, int);
+extern int D_00AC3CAC;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98C88);
+/* Cursor entry of choice slot 0 (func_00235D78): caches its id in D_00AC3CAC, 0 when choiceMenuEntryFlags flags it. */
+int func_00A98BE8(void) {
+    int cursor_index;
+    s16 entry_id;
+    int result;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98CF8);
+    if (choiceMenuIsOpen(0) == 1) {
+        cursor_index = func_00235D78(0);
+        if (cursor_index > 0) {
+            entry_id = choiceMenuEntryIds[cursor_index];
+            D_00AC3CAC = entry_id;
+            result = func_00A9BB30(entry_id, 1);
+            D_00AC4160 = result;
+            if (choiceMenuEntryFlags[cursor_index] != 0) {
+                D_00AC3CAC = 0;
+            }
+        }
+    }
+    return D_00AC3CAC;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98DA8);
+extern int statBitValues[];
+
+/*
+ * The owner's +0x144 pointer names a table whose halfword at +0x92 is
+ * indexed by the row argument. bits[1] models only the element this
+ * function reads.
+ */
+typedef struct StatBitTable StatBitTable;
+
+typedef struct StatBitOwner StatBitOwner;
+
+struct StatBitTable {
+    unsigned char unmodeled_00[0x92];
+    u16 bits[1];
+};
+
+struct StatBitOwner {
+    unsigned char unmodeled_00[0x144];
+    StatBitTable *table; /* +0x144 */
+};
+
+int statBitValueGet(StatBitOwner *owner, int row, int mask) {
+    int *values;
+    int index;
+    int value;
+
+    if ((owner->table->bits[row] & mask) == 0) {
+        return -1;
+    }
+    values = statBitValues;
+    index = calcStatBit2Idx(mask);
+    value = values[row * 16 + index];
+    if (value != 0) {
+        return value;
+    }
+    return -1;
+}
+
+INCLUDE_ASM("asm/nonmatchings/ov01/tu036", enemyCursorOpen);
+
+INCLUDE_ASM("asm/nonmatchings/ov01/tu036", enemyCursorStep);
 
 void objCurRemove(void)
 {
@@ -148,11 +359,35 @@ void objCurRemove(void)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98F70);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectStep);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99A98);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectionGet);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99CA0);
+/* Only the members tableKeyEntryGet reads are modeled; the rest of the block is
+ * left unmodeled. */
+typedef struct TableKey TableKey;
+
+struct TableKey {
+    unsigned char unmodeled_00[0x62];
+    s16 table_id; /* +0x62: the id tableKeyRowGet maps to a table */
+};
+
+typedef struct TableKeyOwner TableKeyOwner;
+
+struct TableKeyOwner {
+    unsigned char unmodeled_00[0x144];
+    TableKey *key; /* +0x144 */
+};
+
+/* Returns the record table for the key: the caller adds the byte offset itself. */
+
+s16 tableKeyEntryGet(TableKeyOwner *owner, int index) {
+    unsigned char *record_table = tableKeyRowGet(owner->key->table_id);
+
+    s16 *entry = (s16 *)(record_table + (index - 1) * sizeof(s16));
+
+    return *entry;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", tgtUnitAdrGet);
 
@@ -166,24 +401,58 @@ void tgtUnitSet(BattleUnit *unit)
     *tgtUnitAdrGet() = unit;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99D98);
+extern unsigned char tgtSelectState[];
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DA8);
+void *battleStateGet(void) {
+    return &tgtSelectState;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DB8);
+extern int thinkNo;
+
+int thinkNoGet(void) {
+    return thinkNo;
+}
+
+void thinkNoSet(int value) {
+    thinkNo = value;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DC8);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DD8);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DE8);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu036", cfEventGet);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DF8);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu036", cfEventSet);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99E08);
+extern unsigned char ov01PartyTable[];
+
+/* Returns the party table ov01PartyTable (0x14-byte records, one per party slot). */
+void *ov01PartyListGet(void) {
+    return &ov01PartyTable;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99E18);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99E58);
+/* Gattai code word: 0x16000 plus the gattai id. func_00A99E18 reads it back. */
+extern int gattaiCode;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99E68);
+void gattaiCodeSet(int code) {
+    gattaiCode = code;
+}
+
+void battleSlotsInit(void);
+void sbInit(void);
+void configInit(void);
+
+/* Resets every ov01 table and initializes the subsystems, then defaults the gattai code to 0x16001. */
+void ov01InitAll(void) {
+    ov01ResetAll();
+    sbInit();
+    configInit();
+    dataBatDatLoad();
+    battleSlotsInit();
+    dataBoxClearAll();
+    sdvInitSpecialWork();
+    gattaiCodeSet(0x16001);
+}

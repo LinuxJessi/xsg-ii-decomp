@@ -29,6 +29,136 @@
     }
    ]
   },
+  "main/tu034": {
+   ".sdata": [
+    {
+     "range": [
+      "0x0069e078",
+      "0x0069e07c"
+     ],
+     "generated": [
+      "0x0069e078",
+      "0x0069e07c"
+     ],
+     "generated_by": [
+      "func_001B2724",
+      "func_001B274C"
+     ],
+     "c_owned_symbols": [
+      "D_0069E078"
+     ],
+     "also_referenced_by_c": [
+      "studioCameraUpdateEnabled",
+      "StudioEntrySkip"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_studio.o"
+     }
+    }
+   ]
+  },
+  "main/tu035": {
+   ".sdata": [
+    {
+     "range": [
+      "0x0069e08c",
+      "0x0069e090"
+     ],
+     "generated": [
+      "0x0069e08c",
+      "0x0069e090"
+     ],
+     "generated_by": [
+      "xglRenderCpUDispOff",
+      "xglRenderCpUDispOn"
+     ],
+     "c_owned_symbols": [
+      "xglRenderCpUDispFlag"
+     ],
+     "also_referenced_by_c": [
+      "xglRenderGlobalFadeColor",
+      "xglRenderClearSkip",
+      "VSyncCount"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_render.o"
+     }
+    }
+   ]
+  },
+  "main/tu043": {
+   ".sdata": [
+    {
+     "range": [
+      "0x0069e0c0",
+      "0x0069e0c4"
+     ],
+     "generated": [
+      "0x0069e0c0",
+      "0x0069e0c4"
+     ],
+     "generated_by": [
+      "pxyInit",
+      "pxyFlush"
+     ],
+     "c_owned_symbols": [
+      "D_0069E0C0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/nml_model_set.o"
+     }
+    }
+   ]
+  },
+  "main/tu045": {
+   ".sdata": [
+    {
+     "range": [
+      "0x0069e110",
+      "0x0069e114"
+     ],
+     "generated": [
+      "0x0069e110",
+      "0x0069e114"
+     ],
+     "generated_by": [
+      "pxySetFlushDone",
+      "pxyClearFlushDone"
+     ],
+     "c_owned_symbols": [
+      "pxyFlushDone"
+     ],
+     "also_referenced_by_c": [
+      "xglStudioSelectedIndex",
+      "D_0069E0DC",
+      "xglStudioSelectedCamera",
+      "xglPacketMode",
+      "D_0069E0E8",
+      "D_0069E0EC",
+      "D_0069E0F0",
+      "D_0069E0F4",
+      "pxySubmitCount",
+      "xglDirectQueueRefOffset",
+      "xglPacketMode3Flag",
+      "xglPacketMode4Flag",
+      "D_0069E11C",
+      "pxyRotateFreeze"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu045.o"
+     }
+    }
+   ]
+  },
   "main/tu057": {
    ".lit4": [
     {
@@ -55,7 +185,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/game_defocus.o"
+      "object": ".work/x2-readable-integration-20261105-main/out/game_defocus/b.o"
      }
     }
    ]
@@ -84,7 +214,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/get.o"
+      "object": ".work/x2-readable-integration-20261105-main/out/get/b.o"
      }
     },
     {
@@ -109,7 +239,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/get.o"
+      "object": ".work/x2-readable-integration-20261105-main/out/get/b.o"
      }
     }
    ]
@@ -139,11 +269,13 @@
       "D_0069B2D4",
       "D_0069B2D8"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "D_0069B304"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/sef_164.o"
+      "object": ".work/x2-readable-integration-20261105-main/out/sef_164/b.o"
      }
     }
    ]

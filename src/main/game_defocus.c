@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_2_028.h"
 
 typedef struct XglPacket XglPacket;
 
@@ -7,6 +8,7 @@ typedef struct XglPacket XglPacket;
 #define SCRATCHPAD_BASE 0x70000000
 
 typedef struct XglTaskPrefix XglTaskPrefix;
+
 typedef struct XglTaskScheduler XglTaskScheduler;
 
 /*
@@ -30,20 +32,13 @@ struct XglTaskScheduler {
 };
 
 extern void sceVif1PkCnt(XglPacket *packet, int count);
-
-unsigned short xglSRand(void);
-
 float xglSin(float angle);
 float xglCos(float angle);
-
 extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
                                 int (*callback)(XglTaskPrefix *task),
                                 XglTaskPrefix *entry);
-
 float I2F(int value);
-
 int F2I(float value);
-
 float xglFRand(void);
 
 #define NULL ((void *)0)
@@ -52,11 +47,9 @@ float xglFRand(void);
 #define DEFOCUS_PACKET_VIF_COMMAND 0x8001
 #define DEFOCUS_SOLID_GS_MODE 0x30234000
 #define DEFOCUS_SOLID_GS_REGISTERS 0x551
-
 /* GS XY offsets (12.4 fixed point) of the 512x448 screen: the left / top edge
  * biased half a pixel, and the right / bottom edge one width / height later. */
 #define DEFOCUS_SCREEN_X_BIAS 28664
-
 #define DEFOCUS_SCREEN_Y_BIAS 29175
 #define DEFOCUS_SCREEN_WIDTH_FIXED 8192
 #define DEFOCUS_SCREEN_HEIGHT_FIXED 7168
@@ -349,14 +342,10 @@ extern DefocusLayer GameDefocusParam[DEFOCUS_LAYER_COUNT];
 extern DefocusDispEnv DispEnv;
 extern int ScanLineInterpolate;
 extern void (*func_14[11])(DefocusLayer *layer, XglPacket *packet);
-
 void DefocusMain(XglPacket *packet);
-
 static void DefocusMainType09Final(DefocusLayer *layer);
-
 extern void sceVif1PkAddDataN(XglPacket *packet, const void *data, int count);
 extern int printf(const char *format, ...);
-
 void DefocusMainType01(DefocusLayer *layer, XglPacket *packet);
 void DefocusMainType06(DefocusLayer *layer, XglPacket *packet);
 void DefocusMainType02(DefocusLayer *layer, XglPacket *packet);
@@ -367,7 +356,6 @@ void DefocusMainType03(DefocusLayer *layer, XglPacket *packet);
 void DefocusMainType05(DefocusLayer *layer, XglPacket *packet);
 void DefocusMainType08(DefocusLayer *layer, XglPacket *packet);
 void DefocusMainType10(DefocusLayer *layer, XglPacket *packet);
-
 extern DefocusSolidPacketHeader Head_6_002BC5C0;
 extern DefocusCopyPacket TestPrim_1;
 extern DefocusTintPacket TestPrim_2;
@@ -383,7 +371,6 @@ extern DefocusTexturedHeader Head_12;
 extern DefocusTexturedHeader Head_7;
 extern DefocusSolidPacketHeader Head_8;
 extern u8 rate_9[37];
-
 void GameDefocusCheck(void);
 void GameDefocusSet(int index, int type, const int *settings);
 
@@ -746,17 +733,17 @@ void DefocusMainType08(DefocusLayer *layer, XglPacket *packet)
     u32 spawn_y;
     u32 lifetime;
     u32 *slot;
-    int *shared;
+    int *parameters;
     DefocusStarVertex *strip;
     u32 phase;
-    int shade0;
-    int shade1;
-    int shade2;
-    int shade3;
-    int shade4;
-    int shade5;
-    int level2;
-    int level3;
+    int inner_brightness;
+    int inner_next_brightness;
+    int middle_brightness;
+    int middle_next_brightness;
+    int outer_brightness;
+    int outer_next_brightness;
+    int middle_rate;
+    int middle_next_rate;
 
     sceVif1PkCnt(packet, 0);
     sceVif1PkAddDataN(packet, &Head_8, 16);
@@ -849,79 +836,81 @@ void DefocusMainType08(DefocusLayer *layer, XglPacket *packet)
         *slot -= 0x1000000;
         x = (*slot >> 8) & 0xfff0;
         y = (*slot << 4) & 0xfff0;
-        shared = layer->parameters;
-        depth = *shared;
+        parameters = layer->parameters;
+        depth = *parameters;
         phase = xglSRand() & 3;
+        /* Each of the six strip vertices per segment takes brightness 255 when its rate_9 entry
+         * has bit 0 clear, else 0. */
         for (segment = 0; segment < 32; segment++) {
-            shade0 = 0;
+            inner_brightness = 0;
             if (!(rate_9[phase + segment] & 1)) {
-                shade0 = 255;
+                inner_brightness = 255;
             }
-            strip[0].red = shade0;
-            strip[0].green = shade0;
-            strip[0].blue = shade0;
+            strip[0].red = inner_brightness;
+            strip[0].green = inner_brightness;
+            strip[0].blue = inner_brightness;
             strip[0].alpha = 0;
             strip[0].x = x + DEFOCUS_RING_TABLE->inner[segment].x;
             strip[0].y = y + DEFOCUS_RING_TABLE->inner[segment].y;
             strip[0].z = depth;
             strip[0].flags = 0x8000;
-            shade1 = 0;
+            inner_next_brightness = 0;
             if (!(rate_9[phase + segment + 1] & 1)) {
-                shade1 = 255;
+                inner_next_brightness = 255;
             }
             strip[1].alpha = 0;
-            strip[1].red = shade1;
-            strip[1].green = shade1;
-            strip[1].blue = shade1;
+            strip[1].red = inner_next_brightness;
+            strip[1].green = inner_next_brightness;
+            strip[1].blue = inner_next_brightness;
             strip[1].x = x + DEFOCUS_RING_TABLE->inner[segment + 1].x;
             strip[1].y = y + DEFOCUS_RING_TABLE->inner[segment + 1].y;
             strip[1].z = depth;
             strip[1].flags = 0x8000;
-            level2 = rate_9[phase + segment];
-            shade2 = 0;
-            if (!(level2 & 1)) {
-                shade2 = 255;
+            middle_rate = rate_9[phase + segment];
+            middle_brightness = 0;
+            if (!(middle_rate & 1)) {
+                middle_brightness = 255;
             }
-            strip[2].alpha = level2;
-            strip[2].red = shade2;
-            strip[2].green = shade2;
-            strip[2].blue = shade2;
+            strip[2].alpha = middle_rate;
+            strip[2].red = middle_brightness;
+            strip[2].green = middle_brightness;
+            strip[2].blue = middle_brightness;
             strip[2].x = x + DEFOCUS_RING_TABLE->middle[segment].x;
             strip[2].y = y + DEFOCUS_RING_TABLE->middle[segment].y;
             strip[2].z = depth;
             strip[2].flags = 0;
-            level3 = rate_9[phase + segment + 1];
-            shade3 = 0;
-            if (!(level3 & 1)) {
-                shade3 = 255;
+            middle_next_rate = rate_9[phase + segment + 1];
+            middle_next_brightness = 0;
+            if (!(middle_next_rate & 1)) {
+                middle_next_brightness = 255;
             }
-            strip[3].red = shade3;
-            strip[3].green = shade3;
-            strip[3].blue = shade3;
-            strip[3].alpha = level3;
+            strip[3].red = middle_next_brightness;
+            strip[3].green = middle_next_brightness;
+            strip[3].blue = middle_next_brightness;
+            strip[3].alpha = middle_next_rate;
             strip[3].x = x + DEFOCUS_RING_TABLE->middle[segment + 1].x;
             strip[3].y = y + DEFOCUS_RING_TABLE->middle[segment + 1].y;
             strip[3].z = depth;
             strip[3].flags = 0;
-            shade4 = 0;
+            outer_brightness = 0;
             if (!(rate_9[phase + segment] & 1)) {
-                shade4 = 255;
+                outer_brightness = 255;
             }
-            strip[4].red = shade4;
-            strip[4].green = shade4;
-            strip[4].blue = shade4;
+            strip[4].red = outer_brightness;
+            strip[4].green = outer_brightness;
+            strip[4].blue = outer_brightness;
             strip[4].alpha = 0;
             strip[4].x = x + DEFOCUS_RING_TABLE->outer[segment].x;
             strip[4].y = y + DEFOCUS_RING_TABLE->outer[segment].y;
             strip[4].z = depth;
             strip[4].flags = 0;
-            shade5 = 0;
+            outer_next_brightness = 0;
             if (!(rate_9[phase + segment + 1] & 1)) {
-                shade5 = 255;
+                outer_next_brightness = 255;
             }
-            strip[5].red = shade5;
-            strip[5].green = shade5;
-            strip[5].blue = shade5;
+            strip[5].red = outer_next_brightness;
+            strip[5].green = outer_next_brightness;
+            strip[5].blue = outer_next_brightness;
             strip[5].alpha = 0;
             strip[5].x = x + DEFOCUS_RING_TABLE->outer[segment + 1].x;
             strip[5].y = y + DEFOCUS_RING_TABLE->outer[segment + 1].y;
@@ -1142,7 +1131,34 @@ void DefocusMainType11(DefocusLayer *layer, XglPacket *packet)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_defocus", DefocusMain);
+extern unsigned char defocusMainHeader[];
+extern void (*defocusTypeHandlers[])(DefocusLayer *layer, XglPacket *packet);
+extern unsigned char defocusMainFooter[];
+
+void DefocusMain(XglPacket *packet)
+{
+    DefocusLayer *layer;
+    int index;
+    int type;
+
+    layer = GameDefocusParam;
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkAddDataN(packet, defocusMainHeader, 0x14);
+    for (index = 0; index < DEFOCUS_LAYER_COUNT; index++) {
+        type = layer->type;
+        if (type != 0) {
+            if (type >= 0) {
+                if (type < 0xD) {
+                    defocusTypeHandlers[type - 1](layer, packet);
+                }
+            }
+        }
+        layer++;
+    }
+
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkAddDataN(packet, defocusMainFooter, 0x10);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/game_defocus", GameDefocusCheck);
 

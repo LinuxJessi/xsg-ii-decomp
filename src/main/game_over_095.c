@@ -1,11 +1,11 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_cd.h"
 
 typedef struct XglPacket XglPacket;
 
 extern void sceVif1PkRef(XglPacket *packet, const void *environment,
                          int count, int mode, int offset, int flags);
-
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
 
@@ -95,11 +95,37 @@ extern u64 TestEnv_0_003E7E30[12];
 extern GameOverDmaPacket4 TransEnv_1_003E7E90;
 extern GameOverDmaPacket6 FlushEnv_2_003E7EB0;
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_095", func_0020C9A0);
+INCLUDE_ASM("asm/main/nonmatchings/game_over_095", bgLayerReady);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_095", func_0020C9B8);
+INCLUDE_ASM("asm/main/nonmatchings/game_over_095", gameOverDrawOverlay);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_095", func_0020CA48);
+void *memset(void *dest, int value, unsigned int count);
+void xglJpegDecode(void *request[]);
+extern u8 *WorkEnd;
+
+/*
+ * Reads the file at `path` into the scratch area 0xE0000 bytes past the
+ * destination (the buffer, or WorkEnd when none is given), hands the read
+ * target and the destination to xglJpegDecode and returns the destination.
+ */
+u8 *gameOverLoadFile(const char *path, u8 *buffer)
+{
+    u8 *base;
+    u8 *read_target;
+    void *request[8];
+
+    base = WorkEnd;
+    if (buffer != 0) {
+        base = buffer;
+    }
+    read_target = base + 0xE0000;
+    xglCdReadFile(path, read_target, 0, 1);
+    memset(request, 0, sizeof(request));
+    request[0] = read_target;
+    request[1] = base;
+    xglJpegDecode(request);
+    return base;
+}
 
 void DrawImage_0020CAB0(void *framebuffer)
 {
@@ -116,4 +142,4 @@ void DrawImage_0020CAB0(void *framebuffer)
     sceVif1PkRef(packet, FlushEnv_2_003E7EB0.words, 3, 0, 0, 0);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_095", func_0020CBC8);
+INCLUDE_ASM("asm/main/nonmatchings/game_over_095", gameOverDrawSprite);

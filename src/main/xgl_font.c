@@ -1,21 +1,13 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_font.h"
 
-extern void xglFontPrintDirectOT(int ot, const char *text);
 extern void xglFontPrintf(int x, int y, unsigned int color, void *arg);
-
 unsigned int xglFontAscii2Euc(signed char character, signed char **text);
-
-int xglFontGetStringWidth(const char *text);
 int xglFontGetSPcodeSize(int code, const unsigned char *text);
-
 unsigned short xglFontGetFlags(void);
-
 void xglFontPrintDirect(const char *text);
 void xglFontSetFlags(int flags);
-
-unsigned int xglFontGetProportionalSize(int code);
-
 extern int xglFontGetStringWidth2(const char *text, int);
 
 #define FONT_STATE_FLAGS (FS.state.flags)
@@ -54,23 +46,16 @@ typedef enum FontOpcode {
 
 /* FS.state.flags. */
 #define FONT_STATE_ENABLED 1
-
 #define FONT_STATE_DEBUG_PRINT 2
-
 /* Size of the print queue buckets and of the draw cursor's scratchpad packet. */
 #define FONT_QUEUE_BUCKETS 16
-
 /* Coordinates above these use the extended position command. */
 #define FONT_COMPACT_X_LIMIT 768
-
 #define FONT_COMPACT_Y_LIMIT 512
-
 /* FontNumericCommand.radix value that selects a float. */
 #define FONT_NUMERIC_FLOAT 0xff
-
 /* EUC-JP code points and rows. */
 #define FONT_JIS_ROW_SIZE 94
-
 #define EUC_FIRST 0xa1
 #define EUC_ROW_SYMBOLS 0xa1
 #define EUC_ROW_ALNUM 0xa3
@@ -96,7 +81,8 @@ struct FontState {
     unsigned char queue_reset_flag;
     unsigned char proportional_mode;
     unsigned char horizontal_shift;
-    unsigned char unmodeled_14[8];
+    int stored_value;
+    unsigned char unmodeled_18[4];
     unsigned char *queue_cursor;
 };
 
@@ -171,13 +157,10 @@ struct KanjiClutEnvironment {
 
 extern unsigned char spCodeParameterSizeTable[];
 extern signed char tbl_7[] ;
-
 void set_xyz(int x, int y, int color);
 void xglFontPrintSub(void *args);
 void xglFontPrintDirectCore(const char *text);
-void xglFontPrintDirectOT(int ot, const char *text);
 void set_ot(int ot);
-
 extern int xglFontCheckProportional(unsigned char high, int low);
 extern float dptofp(unsigned long long value);
 extern unsigned short ascii2euc[96];
@@ -187,13 +170,9 @@ extern signed char tbl_7[];
 extern FontStateStorage FS;
 extern FontPrintQueueStorage fontPrintQueueBuffer;
 extern FontImageStorage FontImage;
-
 int xglFontCheckProportional(unsigned char row, int column);
-
 unsigned int hex2val(signed char digit);
-
 int xglFontGetStringWidth2(const char *text, int delimiter);
-
 /* Defined here, not with the data above: moving it before the functions that use it changes the original code or data order. */
 extern unsigned char spCodeParameterSizeTable[8];
 
@@ -201,7 +180,22 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontDebugMode);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00194DD0);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00194EA0);
+void *func_0012B908(int, int);
+
+/*
+ * Allocates a packet and writes a GIF tag: NLOOP = count with the EOP bit 0x8000, one register
+ * (NREG = 1 in the upper word) and the register list 0xE (A+D). Returns the address 16 bytes in.
+ */
+void *xglFontAllocGifPacket(int *heap, int count)
+{
+    unsigned int *packet;
+
+    packet = func_0012B908(*heap, count * 4 + 4);
+    packet[0] = count + 0x8000;
+    packet[1] = 0x10000000;
+    packet[2] = 0xE;
+    return packet + 4;
+}
 
 int xglFontGetKanjiClutUV(int code, int *clut)
 {
@@ -283,7 +277,13 @@ void xglFontPrintf(int x, int y, unsigned int color, void *arg)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001955F0);
+void xglFontPrint(int x, int y, unsigned int color, const char *text)
+{
+    if (FONT_STATE_FLAGS & FONT_STATE_ENABLED & 0xFFFF) {
+        set_xyz(x, y, color);
+        xglFontPrintDirectCore(text);
+    }
+}
 
 void xglFontPrintDirect(const char *text)
 {
@@ -300,7 +300,10 @@ void xglFontPrintDirectOT(int ot, const char *text)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontPrintExtFunc);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00195750);
+/* Stores a value in the font state's stored_value field. */
+void xglFontSetStoredValue(int stored_value) {
+    FS.state.stored_value = stored_value;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontDebugPrintf);
 
@@ -347,33 +350,116 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", mark);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001970E0);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001971B8);
+extern FontPrintQueueStorage fontPrintQueueBuffer;
+
+/*
+ * The FontState fields from offset 4 on, read through the scaffold symbol D_008DAD00 (FS + 4),
+ * up to the queue end word that sits just below the print-queue slot array.
+ */
+struct FontStateFromWindow {
+    void *window_image;
+    unsigned char unmodeled_04[8];
+    unsigned char default_width;
+    unsigned char queue_reset_flag;
+    unsigned char proportional_mode;
+    unsigned char unmodeled_0f[1];
+    int stored_value;
+    unsigned char unmodeled_14[0x110];
+    FontQueueSlot *queue_end;
+};
+
+extern struct FontStateFromWindow D_008DAD00;
+
+void xglFontResetPrintQueue(void)
+{
+    struct FontStateFromWindow *block;
+    FontQueueSlot *slot;
+    int index;
+
+    slot = fontPrintQueueBuffer.slots;
+    for (index = 0; index < FONT_QUEUE_BUCKETS; index++) {
+        slot->selfOffset = (unsigned short) ((unsigned char *) slot - (unsigned char *) fontPrintQueueBuffer.slots);
+        slot->link = 0;
+        slot++;
+    }
+    /* The block starts 0x128 bytes before the slot array, at D_008DAD00. */
+    block = (struct FontStateFromWindow *) ((unsigned char *) &fontPrintQueueBuffer - 0x128);
+    block->stored_value = 0;
+    block->queue_reset_flag = 0;
+    block->queue_end = slot;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197200);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197938);
+int func_00197200(int, int, int, int);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197960);
+/* Draws one hex digit (0..15) through func_00197200, at the glyph offset digit << 7. */
+void xglFontDrawHexDigit(int digit)
+{
+    func_00197200(digit << 7, 0x2F00, 0x608, 0x10);
+}
+
+/*
+ * EE scratchpad at 0x70000000: halfword slot 2 keeps the start x of the line, slot 4 is set back
+ * to it and slot 5 (y) moves down by one line height.
+ */
+void xglFontNewLine(void)
+{
+    unsigned short *scratchpad = (unsigned short *) 0x70000000;
+
+    scratchpad[4] = scratchpad[2];
+    scratchpad[5] += FS.state.line_height;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197988);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001979E0);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197BB8);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontFlushCore);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198928);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198AE0);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198B38);
+/* Advance of character code in the window's proportional widths; the default width when the low byte is 0xFF. */
+int xglFontGetProportionalSize(int code)
+{
+    struct FontStateFromWindow *state;
+    struct FontImage *image;
+    int width;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198B90);
+    state = &D_008DAD00;
+    width = 0xF06;
+    if (state->proportional_mode == 0) {
+        width = 0xFFFF;
+        image = (struct FontImage *) state->window_image;
+        width = (image->proportional_widths[code] + 0xFF) & width;
+        if ((width & 0xFF) == 0xFF) {
+            width = state->default_width << 8;
+        }
+    }
+    return width;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198BC0);
+/* ASCII character to EUC-JP code, indexed by the raw character; a control character becomes a full-width space. */
+extern unsigned short asciiEucTable[];
+
+unsigned short xglFontCharToEuc(signed char character)
+{
+    if (character < 0x20) {
+        return EUC_SPACE;
+    }
+    return asciiEucTable[character];
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontReloadTexture);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontFlush);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontGetLoadAddress);
+int xglFontGetLoadAddress(void)
+{
+    return (int) FS.state.window_image;
+}
 
 unsigned short xglFontGetFlags(void)
 {
@@ -387,4 +473,4 @@ void xglFontSetFlags(int flags)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontLoad);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198FF0);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontInitial);

@@ -1,5 +1,9 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu100.h"
+#include "main/tu119.h"
+#include "main/tu147.h"
+#include "main/xgl_flags.h"
 
 typedef struct XglPacket XglPacket;
 
@@ -85,7 +89,9 @@ struct XglPacket {
 extern DrawImageRenderState sRender;
 extern void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int count);
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A80798);
+int func_00A80798(void) {
+    return 0;
+}
 
 int copyframe(void)
 {
@@ -122,18 +128,34 @@ int copyframe(void)
     sceVif1PkCloseDirectHLCode(packet);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A808C8);
+void func_00A808C8(void) {
 
+}
+
+/* Starts the title music (proposed titleStartBgm, low confidence): opens the M-01.adx file. */
 INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A808D0);
 
 INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A80930);
 
+/* Title scene step (proposed titleRunScene, low confidence). */
 INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A80A28);
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A810A8);
+/* Title per-frame draw callback (proposed titleDrawFrame). */
+INCLUDE_ASM("asm/nonmatchings/ov02/tu001", titleDrawFrame);
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A81430);
+/* Title fade transition (proposed titleFadeTransition). */
+INCLUDE_ASM("asm/nonmatchings/ov02/tu001", titleFadeTransition);
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A815F0);
+/* The title screen (proposed Title). */
+INCLUDE_ASM("asm/nonmatchings/ov02/tu001", Title);
 
-INCLUDE_ASM("asm/nonmatchings/ov02/tu001", func_00A81C38);
+void *memset(void *, int, unsigned int);
+extern u8 D_2B5D90[0x1B30];
+
+void titleResetState(void) {
+    memset(D_2B5D90, 0, 0x1B30);
+    xglFlagsClear();
+    menuSceneReset();
+    yg2PathResetAll();
+    msgBalanceReset();
+}

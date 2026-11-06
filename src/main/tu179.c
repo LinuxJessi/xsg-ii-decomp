@@ -1,9 +1,11 @@
 #include "common.h"
 #include "shared.h"
+#include "main/srs.h"
+#include "main/sv_get_image_item_159.h"
+#include "main/xgl_cd.h"
 
 extern char *strcat(char *destination, const char *source);
 extern u8 *buffer;
-extern int xglCdReadFile(const char *name, void *buffer, int mode, int flags);
 extern int xglCdGetFileSize(const char *name);
 
 /* Battle slots of the resource state. */
@@ -79,7 +81,6 @@ extern int _nRead;
 #define SRS_MAPPER_HEIGHT_EFFECT 3600
 
 extern void sresDataMapping(void);
-extern void svAddImageMapper(int type, int width, void *chunk, int height);
 extern int sceOpen(const char *path, int flags, ...);
 extern int sceLseek(int descriptor, int offset, int whence);
 extern int sceRead(int descriptor, void *buffer, int bytes);
@@ -90,15 +91,20 @@ extern char srsViewPath[SRS_PATH_LENGTH];
 
 int srsMakeFileName(char *buffer, const char *fileName);
 
-void srsChangeSeparator(char *path);
 void srsCdReadCallback(int code);
 void sresDataMapping(void);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu179", func_002669F0);
+/* Returns 1 when the effect key is of kind 1 (effect image) with an index in
+ * 300..449, else 0. */
+INCLUDE_ASM("asm/main/nonmatchings/tu179", srsIsEffectImageKey);
 
 int srsFileLoad(void *buffer, const char *name, int mode)
 {
     return fileLoad(buffer, name, mode);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu179", func_00266A40);
+/* Parses a nine-character effect name into an effect key: a two-letter prefix
+ * gives the kind (ce is 1, ee is 2, anything else 0), three decimal digits the
+ * index and three the sub-number. Returns 0 when the index field comes out
+ * negative. */
+INCLUDE_ASM("asm/main/nonmatchings/tu179", srsEffectKeyFromName);

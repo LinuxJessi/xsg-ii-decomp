@@ -2644,7 +2644,7 @@
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/6",
+   "accepted_functions": "0/7",
    "assembler_options": [
     "-g"
    ]
@@ -2672,7 +2672,7 @@
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/64",
+   "accepted_functions": "0/63",
    "assembler_options": [
     "-g"
    ]

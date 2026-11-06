@@ -1,5 +1,7 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu187.h"
+#include "main/tu197.h"
 
 /* A VM object reference (the JNI jobject): a pointer to an object header
  * whose first word is its class. The original type aliased `void *`: the
@@ -10,8 +12,11 @@
 typedef void *SceneObject;
 
 typedef float Matrix4[4][4];
+
 typedef struct SchedulerState SchedulerState;
+
 typedef float RgVector[4];
+
 typedef struct JntMatrix JntMatrix;
 
 /*
@@ -33,6 +38,7 @@ struct JntMatrix {
 };
 
 typedef JntMatrix *JntMatrixBuffer;
+
 typedef unsigned int JntMatrixSelect;
 
 typedef struct JntHairIdSource {
@@ -62,6 +68,7 @@ typedef struct JntTransformRecord {
 } JntTransformRecord;
 
 typedef struct JntProducer JntProducer;
+
 typedef struct JntInterruptElement JntInterruptElement;
 
 struct JntInterruptElement {
@@ -152,6 +159,7 @@ struct JntWork {
 };
 
 typedef struct JntWork JntWork;
+
 typedef struct JntStaticChannel JntStaticChannel;
 
 typedef void *(*JntProductionConsumer)(JntWork *work,
@@ -547,17 +555,14 @@ typedef enum MEfActorPoint {
 } MEfActorPoint;
 
 extern Matrix4 *MSeGetActorMatrix(Matrix4 *destination, Actor *actor, u32 coordinate);
-extern void MOutputDebugStringWarn(const char *format, ...);
 
 typedef struct Actor Actor;
 
 int ACT_jointGetAccessories(Actor *actor, unsigned int accessoryId);
-
 extern Matrix4 *MMathRotateMatrixY(Matrix4 *out, Matrix4 *matrix, float angle);
 extern const char D_00A512F0[40];
 extern const char D_00A51318[40];
 extern const char D_00A51340[48];
-
 Matrix4 *MSeGetActorMatrix(Matrix4 *destination, Actor *actor, u32 coordinate);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu077", MSeGetActorMatrix);
@@ -581,35 +586,135 @@ Vector4 *MEfGetActorCoord(Vector4 *destination, Actor *actor, u32 coordinate)
     return destination;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AAB9E8);
+float MMathMakeRandomPI(void);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABA30);
+Vector4 *MEfMakeRandomVector(Vector4 *destination)
+{
+    destination->x = MMathMakeRandomPI();
+    destination->y = MMathMakeRandomPI();
+    destination->z = MMathMakeRandomPI();
+    destination->w = 1.0f;
+    return destination;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABB20);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu077", MEfScatterXY);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABC30);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu077", MEfMake4Vertex);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABDC0);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu077", MEfMake4Vertex2);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABDF0);
+/*
+ * The object the step functions below receive. Offsets follow their loads and
+ * stores: the phase-flags, update and advance callbacks at +0x08, +0x10 and
+ * +0x14, and the step record at +0x20.
+ */
+typedef struct MEfStepRecord {
+    unsigned char unmodeled_00[0x54];
+    short step;                              /* +0x54 (object +0x74) */
+    unsigned char unmodeled_56[0x70 - 0x56];
+    int counter;                             /* +0x70 (object +0x90) */
+    unsigned char unmodeled_74[0xb4 - 0x74];
+    unsigned short flags_history[25];        /* +0xb4 (object +0xd4): [0] is the flags halfword, [1..24] its history */
+} MEfStepRecord;
+
+typedef struct MEfStepObject {
+    unsigned char unmodeled_00[0x08];
+    void (*flags_callback)(void);
+    unsigned char unmodeled_0c[0x04];
+    void (*update_callback)(void);
+    void (*advance_callback)(void);
+    unsigned char unmodeled_18[0x20 - 0x18];
+    MEfStepRecord record;                    /* +0x20 */
+} MEfStepObject;
+
+void func_00AABDF0(void);
+void func_00AABE50(void);
+void MEfWaitStep(MEfStepObject *object);
+
+int MEfCreateWait(MEfStepObject *object)
+{
+    object->flags_callback = func_00AABDF0;
+    object->update_callback = func_00AABE50;
+    object->record.counter = 0;
+    object->advance_callback = MEfWaitStep;
+    return 1;
+}
+
+void func_00AABDF0(void)
+{
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABDF8);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABE50);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABEB0);
+
+void MEfWaitStep(MEfStepObject *object)
+{
+    MEfStepRecord *record;
+
+    record = &object->record;
+    record->counter = record->counter + 1;
+    if (record->counter >= 0x1F) {
+        MSeObjRequestFree(object);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABEF0);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AABFB0);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu077", MEfStartFromActor);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AAC1B8);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu077", MEfSampleHermitePath);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AAC4A8);
+int ov01LastValueGet(void);
+
+void MEfSetPhaseFlags(MEfStepObject *object)
+{
+    MEfStepRecord *record;
+    short step;
+
+    record = &object->record;
+    if (ov01LastValueGet() == 0) {
+        step = record->step;
+        record->flags_history[0] = 0U;
+        if (step < 0x1E) {
+            record->flags_history[0] = 1U;
+            if (step == 0) {
+                record->flags_history[0] = 0x11U;
+            }
+            if (step == 0x1D) {
+                record->flags_history[0] |= 0x20;
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AAC510);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AACD18);
+void MEfAdvanceStep(MEfStepObject *object)
+{
+    MEfStepRecord *record;
+    unsigned short *slot;
+    int remaining;
+    int next_step;
+
+    record = &object->record;
+    if (ov01LastValueGet() != 0) {
+        return;
+    }
+    remaining = 24;
+    slot = &record->flags_history[24];
+    do {
+        remaining -= 1;
+        *slot = slot[-1];
+        slot -= 1;
+    } while (remaining > 0);
+    next_step = (unsigned short) record->step + 1;
+    record->step = next_step;
+    if ((short) next_step >= 0x37) {
+        MSeObjRequestFree(object);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AACDA0);
 
@@ -617,6 +722,25 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AACE60);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AAD030);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AAD2E8);
+void func_00AAD2E8(MEfStepObject *object)
+{
+    MEfStepRecord *record;
+    short step;
+
+    record = &object->record;
+    if (ov01LastValueGet() == 0) {
+        step = record->step;
+        record->flags_history[0] = 0U;
+        if (step < 0x1E) {
+            record->flags_history[0] = 1U;
+            if (step == 0) {
+                record->flags_history[0] = 0x11U;
+            }
+            if (step == 0x1D) {
+                record->flags_history[0] |= 0x20;
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu077", func_00AAD350);

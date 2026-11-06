@@ -31,9 +31,52 @@ typedef struct StudioCamera {
     u8 unmodeled_570[0x80];
 } StudioCamera;
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", func_00272A20);
+Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
+Matrix4 *MMathRotateMatrixYX(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
+void MMathCalcAngle(Vector4 *out, const Vector4 *source, const Vector4 *target);
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", func_00272A60);
+/* out = matrix with rows 0..2 scaled by scale; row 3, the translation row, is copied unchanged. */
+Matrix4 *MMathScaleMatrixRotS(Matrix4 *out, const Matrix4 *matrix, float scale)
+{
+    __asm__ __volatile__(
+        "mfc1 $8, %2\n\t"
+        "qmtc2.ni $8, vf5\n\t"
+        "lqc2 vf1, 0(%1)\n\t"
+        "lqc2 vf2, 16(%1)\n\t"
+        "lqc2 vf3, 32(%1)\n\t"
+        "lqc2 vf4, 48(%1)\n\t"
+        "vmulx.xyzw vf1, vf1, vf5x\n\t"
+        "vmulx.xyzw vf2, vf2, vf5x\n\t"
+        "vmulx.xyzw vf3, vf3, vf5x\n\t"
+        "sqc2 vf1, 0(%0)\n\t"
+        "sqc2 vf2, 16(%0)\n\t"
+        "sqc2 vf3, 32(%0)\n\t"
+        "sqc2 vf4, 48(%0)"
+        : : "r"(out), "r"(matrix), "f"(scale) : "$8", "memory");
+    return out;
+}
+
+/* out = matrix scaled by scale in every row; the w of row 3 is kept. */
+Matrix4 *MMathScaleMatrixS(Matrix4 *out, const Matrix4 *matrix, float scale)
+{
+    __asm__ __volatile__(
+        "mfc1 $8, %2\n\t"
+        "qmtc2.ni $8, vf5\n\t"
+        "lqc2 vf1, 0(%1)\n\t"
+        "lqc2 vf2, 16(%1)\n\t"
+        "lqc2 vf3, 32(%1)\n\t"
+        "lqc2 vf4, 48(%1)\n\t"
+        "vmulx.xyzw vf1, vf1, vf5x\n\t"
+        "vmulx.xyzw vf2, vf2, vf5x\n\t"
+        "vmulx.xyzw vf3, vf3, vf5x\n\t"
+        "vmulx.xyz vf4, vf4, vf5x\n\t"
+        "sqc2 vf1, 0(%0)\n\t"
+        "sqc2 vf2, 16(%0)\n\t"
+        "sqc2 vf3, 32(%0)\n\t"
+        "sqc2 vf4, 48(%0)"
+        : : "r"(out), "r"(matrix), "f"(scale) : "$8", "memory");
+    return out;
+}
 
 Matrix4 *MMathTranslateMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *translation)
 {
@@ -55,17 +98,99 @@ Matrix4 *MMathTranslateMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *tran
     return out;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", func_00272AE8);
+/* MMathCalcLookAtMatrix (MMathCalcLookAtMatrix): pitch and yaw from source to target, the float argument as roll
+ * (z of the angles), YXZ rotation over the identity; a non-null position argument goes to row 3. */
+INCLUDE_ASM("asm/main/nonmatchings/m_math_195", MMathCalcLookAtMatrix);
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", func_00272B58);
+/* out = matrix with its 3x3 block transposed; the fourth column is kept. */
+Matrix4 *MMathTransposeMatrix3(Matrix4 *out, const Matrix4 *matrix)
+{
+    __asm__ __volatile__(
+        "lqc2 vf6, 0(%1)\n\t"
+        "lqc2 vf7, 16(%1)\n\t"
+        "lqc2 vf8, 32(%1)\n\t"
+        "lqc2 vf4, 48(%1)\n\t"
+        "vmove.xw vf1, vf6\n\t"
+        "vaddy.x vf2, vf0, vf6y\n\t"
+        "vaddz.x vf3, vf0, vf6z\n\t"
+        "vaddx.y vf1, vf0, vf7x\n\t"
+        "vmove.yw vf2, vf7\n\t"
+        "vaddz.y vf3, vf0, vf7z\n\t"
+        "vaddx.z vf1, vf0, vf8x\n\t"
+        "vaddy.z vf2, vf0, vf8y\n\t"
+        "vmove.zw vf3, vf8\n\t"
+        "sqc2 vf1, 0(%0)\n\t"
+        "sqc2 vf2, 16(%0)\n\t"
+        "sqc2 vf3, 32(%0)\n\t"
+        "sqc2 vf4, 48(%0)"
+        : : "r"(out), "r"(matrix) : "memory");
+    return out;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", func_00272BA8);
+/* out = the full 4x4 transpose of matrix. */
+Matrix4 *MMathTransposeMatrix(Matrix4 *out, const Matrix4 *matrix)
+{
+    __asm__ __volatile__(
+        "lqc2 vf1, 0(%1)\n\t"
+        "lqc2 vf2, 16(%1)\n\t"
+        "lqc2 vf3, 32(%1)\n\t"
+        "lqc2 vf4, 48(%1)\n\t"
+        "vsub.xyzw vf5, vf0, vf0\n\t"
+        "vaddx.x vf6, vf0, vf1x\n\t"
+        "vaddy.x vf7, vf0, vf1y\n\t"
+        "vaddz.x vf8, vf0, vf1z\n\t"
+        "vaddw.x vf9, vf0, vf1w\n\t"
+        "vaddx.y vf6, vf0, vf2x\n\t"
+        "vaddy.y vf7, vf0, vf2y\n\t"
+        "vaddz.y vf8, vf0, vf2z\n\t"
+        "vaddw.y vf9, vf0, vf2w\n\t"
+        "vaddx.z vf6, vf0, vf3x\n\t"
+        "vaddy.z vf7, vf0, vf3y\n\t"
+        "vaddz.z vf8, vf0, vf3z\n\t"
+        "vaddw.z vf9, vf0, vf3w\n\t"
+        "vaddx.w vf6, vf5, vf4x\n\t"
+        "vaddy.w vf7, vf5, vf4y\n\t"
+        "vaddz.w vf8, vf5, vf4z\n\t"
+        "vaddw.w vf9, vf5, vf4w\n\t"
+        "sqc2 vf6, 0(%0)\n\t"
+        "sqc2 vf7, 16(%0)\n\t"
+        "sqc2 vf8, 32(%0)\n\t"
+        "sqc2 vf9, 48(%0)"
+        : : "r"(out), "r"(matrix) : "memory");
+    return out;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", func_00272C18);
+/* out = rotation (YX order) that turns the default direction toward target. */
+Matrix4 *MMathCalcMatrixVector(Matrix4 *out, const Vector4 *target)
+{
+    Vector4 angles;
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", func_00272C60);
+    MMathCalcAngle(&angles, 0, target);
+    MMathRotateMatrixYX(out, 0, &angles);
+    return out;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", func_00272C98);
+/* out = (0, 0, 1, 1) times matrix: row 2 plus row 3, the transformed +Z point. */
+Vector4 *MMathCalcVectorMatrixZ(Vector4 *out, Matrix4 *matrix)
+{
+    __asm__ __volatile__(
+        "vmove.xyw vf1, vf0\n\t"
+        "vaddw.z vf1, vf0, vf0w\n\t"
+        "sqc2 vf1, 0(%0)"
+        : : "r"(out) : "memory");
+    MMathApplyMatrix(out, matrix, out);
+    return out;
+}
+
+/* out = angles from the default direction to the transformed +Z point of matrix. */
+Vector4 *MMathCalcAngleMatrixZ(Vector4 *out, Matrix4 *matrix)
+{
+    Vector4 point;
+
+    MMathCalcVectorMatrixZ(&point, matrix);
+    MMathCalcAngle(out, 0, &point);
+    return out;
+}
 
 void MMathRotTransPers(Vector4 *destination, const StudioCamera *camera, const Matrix4 *matrix, const Vector4 *point)
 {

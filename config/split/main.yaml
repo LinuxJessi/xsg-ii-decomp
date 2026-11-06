@@ -157,7 +157,7 @@ segments:
       - [0xED0E0, c, tu094]
       - [0xED9A0, c, game_over_095]
       - [0xEDCC0, c, tu096]
-      - [0xEDE30, c, tu097]
+      - [0xEDE40, c, tu097]
       - [0xEFD90, c, tu098]
       - [0xF0230, c, tu099]
       - [0xF1268, c, tu100]

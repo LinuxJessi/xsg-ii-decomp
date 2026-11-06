@@ -1,7 +1,7 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_2_028.h"
 
-unsigned short xglSRand(void);
 
 extern unsigned long long iRandSeed;
 
@@ -11,6 +11,7 @@ unsigned short xglSRand(void)
     return (iRandSeed >> 16) & 0x7fff;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_028", func_001A7604);
+/* Two steps of the iRandSeed generator; returns the first step shifted left 16 plus the second state shifted right 16. */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_028", xglLRand);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_028", xglFRand);

@@ -122,14 +122,14 @@ typedef struct JpegWork {
     JpegHuffDcTable chrominanceDcCodes; /* +0x3f0 */
     JpegHuffAcTable luminanceAcCodes; /* +0x470 */
     JpegHuffAcTable chrominanceAcCodes; /* +0xc70 */
-    float idct_block[JPEG_BLOCK_DIM][JPEG_BLOCK_DIM];
-    float idct_stage[JPEG_BLOCK_DIM];
+    float idctBlock[JPEG_BLOCK_DIM][JPEG_BLOCK_DIM];
+    float idctStage[JPEG_BLOCK_DIM];
     int dcPredictors[3]; /* +0x1590 */
     unsigned char unmodeled_159c[0x15a0 - 0x159c];
     JpegDecodedYuv decodedYuvPixels; /* +0x15a0 */
     JpegMcuPlanes decodedMcuPlanes; /* +0x25a0 */
-    u32 restart_interval;
-    u32 restart_interval_plus_one;
+    u32 restartInterval;
+    u32 restartIntervalPlusOne;
     int colorScaleMode; /* +0x2ba8 */
     float luminanceScale; /* +0x2bac */
     float firstChromaScale; /* +0x2bb0 */
@@ -443,8 +443,8 @@ void *DefineRestartInterval(void *marker)
     u32 interval;
 
     interval = (segment[2] << 8) + segment[3];
-    work->restart_interval = interval;
-    work->restart_interval_plus_one = interval + 1;
+    work->restartInterval = interval;
+    work->restartIntervalPlusOne = interval + 1;
     return segment + 4;
 }
 
@@ -553,18 +553,19 @@ u8 *DefineHuffmanTable(u8 *segment)
     return cursor;
 }
 
+/* Returns the next bit of the entropy-coded segment, MSB first. */
 int GetBit(void)
 {
-    u8 *buffer;
+    u8 *inputCursor;
     JpegWork *work;
     u8 value;
 
     if (sw->bitsRemaining == 0) {
         work = sw;
-        buffer = work->buffer;
-        value = *buffer;
+        inputCursor = work->buffer;
+        value = *inputCursor;
         if (value == JPEG_MARKER_PREFIX) {
-            work->buffer = buffer + 1;
+            work->buffer = inputCursor + 1;
         }
         work->bufferedByte = value;
         work->buffer++;
@@ -596,7 +597,11 @@ s16 decode_sub(s16 *codes)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", HuffmanDecode);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", func_001A25E8);
+/* Two-dimensional inverse DCT of one 8x8 float block, in place (the decoder's
+   counterpart of FFDCT). Pass one reads the block's columns and writes the rows
+   of sw->idctBlock; pass two reads the columns of sw->idctBlock and writes the
+   rows of the block. */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", FFIDCT);
 
 void ConvertMCU2YUV(void)
 {
@@ -699,4 +704,7 @@ void ConvertYUV2RGB(int width, int height)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", StartOfScan);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", func_001A2EE8);
+/* JPEG decode driver: walks the marker segments of the request's buffer,
+   dispatching DRI/DQT/SOF/DHT/SOS to their parsers, stops at EOI (0xD9) and
+   writes the decoded width and height back into the request. */
+INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", xglJpegDecode);

@@ -1,11 +1,9 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_flags.h"
 
 extern unsigned char SaveData[];
-
 int xglFlagsGet1(int bit_offset);
-int xglFlagsSet1(int bit_offset, int value);
-int xglFlagsSet(int bit_offset, int bit_count, int value);
 
 /*
  * Target-specific bug-preserving storage view.  The original loads this
@@ -24,7 +22,6 @@ int xglFlagsGet4(int bit_offset);
 int xglFlagsGet8(int bit_offset);
 int xglFlagsGet16(int bit_offset);
 int xglFlagsGet32(int bit_offset);
-
 unsigned long long xglFlagsGet64(int bit_offset);
 
 /* The packed script flags are the byte range of SaveData starting at +0x74. */
@@ -121,13 +118,13 @@ long long xglFlagsSet64(int bit_offset, long long value)
 
 int xglFlagsGet(int bit_offset, int bit_count)
 {
-    union XglPackedFlagWindow value;
+    union XglPackedFlagWindow flag_window;
     int byte_index;
 
     for (byte_index = 0;
          byte_index < ((bit_count + (bit_offset & 7) + 7) >> 3);
          byte_index++) {
-        value.bytes[byte_index] =
+        flag_window.bytes[byte_index] =
             SaveData[XGL_FLAGS_OFFSET + (bit_offset >> 3) + byte_index];
     }
     /*
@@ -139,7 +136,7 @@ int xglFlagsGet(int bit_offset, int bit_count)
      * offsets and widths unchecked; sufficient access bounds are not enforced
      * by this function.
      */
-    return (value.signed_value >> (bit_offset & 7)) & ((1u << bit_count) - 1u);
+    return (flag_window.signed_value >> (bit_offset & 7)) & ((1u << bit_count) - 1u);
 }
 
 int xglFlagsGet1(int bit_offset)
@@ -188,4 +185,17 @@ unsigned long long xglFlagsGet64(int bit_offset)
     return (high << 32) + low;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_flags", func_001A0CD8);
+/* Clears the 256-byte packed flag window at SaveData +0x74, the window that
+   xglFlagsGet and xglFlagsSet address. */
+void xglFlagsClear(void)
+{
+    u32 index;
+
+    index = 0;
+    do
+    {
+        SaveData[XGL_FLAGS_OFFSET + index] = 0;
+        index += 1;
+    }
+    while (index < 0x100U);
+}

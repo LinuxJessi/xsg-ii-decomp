@@ -1,11 +1,11 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_2_031.h"
 
 typedef float Matrix4[4][4];
 
 extern void xglVectorLength(float *destination, const Vector4 *vector);
 extern void xglMatrixStackSave(float matrix[4][4]);
-
 void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
@@ -18,60 +18,46 @@ typedef union Matrix {
 
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix,
                      const Vector4 *vector);
-
 void xglVectorScaleXYZ(Vector4 *destination, const Vector4 *source, float scale);
 void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source);
 void xglMatrixStackLoad(float matrix[4][4]);
-
 void xglVectorMulAdd(Vector4 *destination, const Vector4 *left,
                      const Vector4 *right, const Vector4 *addend);
-
 extern unsigned long long iRandSeed;
-
 void xglRandSeedInit(void);
-
 void xglVectorDiv(Vector4 *destination, const Vector4 *numerator,
                   const Vector4 *divisor);
-
 void xglVectorDivXYZ(Vector4 *destination, const Vector4 *numerator,
                      const Vector4 *divisor);
-
 void xglVectorMulAddXYZ(Vector4 *destination, const Vector4 *left,
                         const Vector4 *right, const Vector4 *addend);
-
 void xglVectorMulSub(Vector4 *destination, const Vector4 *left,
                      const Vector4 *right, const Vector4 *subtrahend);
-
 void xglVectorMulSubXYZ(Vector4 *destination, const Vector4 *left,
                         const Vector4 *right, const Vector4 *subtrahend);
-
 void xglVectorDivAdd(Vector4 *destination, const Vector4 *numerator,
                      const Vector4 *divisor, const Vector4 *addend);
-
 void xglVectorDivAddXYZ(Vector4 *destination, const Vector4 *numerator,
                         const Vector4 *divisor, const Vector4 *addend);
-
 void xglVectorDivSub(Vector4 *destination, const Vector4 *numerator,
                      const Vector4 *divisor, const Vector4 *subtrahend);
-
 void xglVectorDivSubXYZ(Vector4 *destination, const Vector4 *numerator,
                         const Vector4 *divisor, const Vector4 *subtrahend);
-
 extern void xglMatrixMul(Matrix *destination, Matrix *left, Matrix *right);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A7DC8);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMemCopy16b);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A7E1C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMemCopy8);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A7E70);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMemCopy8b);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A7EC4);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMemCopy4);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A7F18);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMemCopy4b);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A7F6C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMemCopy2);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A7FC0);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMemCopy2b);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglSin);
 
@@ -183,29 +169,29 @@ void xglVectorScaleXYZ(Vector4 *destination, const Vector4 *source, float scale)
     destination->w = source->w;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A89B0);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorScaleAdd);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A8A70);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorScaleAddXYZ);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A8B1C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorScaleSub);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A8BDC);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorScaleSubXYZ);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A8C88);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorInter);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A8D78);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorInterXYZ);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorInner);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A8EE0);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorInner4);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorOuter);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A8FBC);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorOuterNormal);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A9020);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglPlaneOuter);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A9080);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglPlaneNormal);
 
 void xglVectorLength(float *destination, const Vector4 *vector)
 {
@@ -224,9 +210,9 @@ void xglVectorLength(float *destination, const Vector4 *vector)
         : "$2", "memory");
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A914C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglPointLength);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A91A8);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglPointLengthXZ);
 
 void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source)
 {
@@ -245,11 +231,11 @@ void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source)
     );
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A9250);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorClamp);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A94A0);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorClampXYZ);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A9678);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglPlaneParameter);
 
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix,
                      const Vector4 *vector)
@@ -275,9 +261,9 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A979C);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A9858);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A994C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixUnit);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A998C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixUnit4s);
 
 void xglMatrixMul(Matrix *destination, Matrix *left, Matrix *right)
 {
@@ -316,7 +302,7 @@ void xglMatrixMul(Matrix *destination, Matrix *left, Matrix *right)
     );
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A9A74);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixReverse);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A9B50);
 
@@ -324,13 +310,13 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001A9F88);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA0CC);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA260);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixRotV);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA454);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixRotX);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA4F0);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixRotY);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA58C);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixRotZ);
 
 void xglMatrixFrustum(Matrix *destination, Matrix *source,
                       float left, float right, float bottom, float top,
@@ -357,19 +343,36 @@ void xglMatrixFrustum(Matrix *destination, Matrix *source,
     xglMatrixMul(destination, source, &projection);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA7B0);
+#include "vu0_macro.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA7EC);
+extern char D_108[];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA838);
+void xglMatrixStackUnit(void)
+{
+    Vu0CallMicro((u32)&D_108 >> 3);
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA874);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixStackMul);
+
+extern char D_1B8[];
+
+void xglMatrixStackReverse(void)
+{
+    Vu0CallMicro((u32)&D_1B8 >> 3);
+}
+
+extern char D_218[];
+
+void xglMatrixStackInverse(void)
+{
+    Vu0CallMicro((u32)&D_218 >> 3);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA8B0);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA8F4);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AA938);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixStackRotV);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixStackRotX);
 
@@ -407,15 +410,25 @@ void xglMatrixStackLoad(float matrix[4][4])
     );
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AABA8);
+extern char D_538[];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AABE4);
+void xglMatrixStackPushUnit(void)
+{
+    Vu0CallMicro((u32)&D_538 >> 3);
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AAC20);
+extern char D_580[];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AAC64);
+void xglMatrixStackPush(void)
+{
+    Vu0CallMicro((u32)&D_580 >> 3);
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AACB8);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixStackPop);
+
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixStackMulVector);
+
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixStackRTPS);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AAD20);
 
@@ -458,7 +471,7 @@ void xglQuaternion2Matrix(Matrix4 destination, const Vector4 *quaternion)
     );
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AB1DC);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglQuaternionInterpolateLinear);
 
 void xglRandSeedInit(void)
 {
@@ -467,9 +480,9 @@ void xglRandSeedInit(void)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AB2F0);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AB344);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglMatrixCopy);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AB388);
+INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", xglVectorSubXYZ);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AB3C0);
 
@@ -495,9 +508,21 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AC4DC);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AC95C);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001ACF5C);
+extern int xglMotionCacheValid;
+extern char xglMotionCache[];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001ACF9C);
+void *xglMotionCacheGet(void)
+{
+    if (xglMotionCacheValid != 0) {
+        return xglMotionCache;
+    }
+    return 0;
+}
+
+void xglMotionCacheInvalidate(void)
+{
+    xglMotionCacheValid = 0;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001ACFC0);
 

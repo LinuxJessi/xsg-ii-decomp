@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "ov01/tu049.h"
 
 /* grGpInit's argument: the VIF1 DIRECT packet grPacketSend transmits, a
  * data buffer and its length. grGpInit points data at the scratchpad
@@ -41,20 +42,81 @@ void GS_REG_SET(GrPacket *packet, long long register_id, long long control)
     *count = tag_index + 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA2D18);
+/* Ten row slots of 4 bytes: a slot holds the row's y (100 + 20 * index) while
+ * the row is taken, 0 when free. menuPanelRowAlloc takes one, menuPanelRowFree frees it. */
+extern unsigned char menuPanelRows[0x28];
+extern int screenFadeTask;
+extern int screenFillTask;
+void *memset(void *, int, unsigned int);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA2D50);
+void menuPanelRowsReset(void)
+{
+    memset(menuPanelRows, 0, sizeof(menuPanelRows));
+    screenFadeTask = 0;
+    screenFillTask = 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA2D90);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuPanelRowAlloc);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA2DD0);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuPanelRowFree);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA2E10);
+/* A menu object from objSlotAlloc: +0x04 a state word, +0x08 the draw callback
+ * (the draw slot of the other objects, see arrowCreate). */
+struct MenuTexFlushTask {
+    char unmodeled_000[4];
+    int state;                  /* +0x04 */
+    void (*draw)(void);         /* +0x08 */
+};
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA2E28);
+void *objSlotAlloc(void);
+void menuTexFlush(void);
+void menuTexFlushDraw(void);
+extern struct MenuTexFlushTask *menuTexFlushTask;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA2F60);
+/* Starts the texture-flush task: the object's draw is menuTexFlushDraw, and the
+ * object is kept in menuTexFlushTask (nothing else in the overlay reads it). */
+void menuTexFlushTaskStart(void)
+{
+    struct MenuTexFlushTask *task;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA32F0);
+    task = objSlotAlloc();
+    if (task != 0) {
+        menuTexFlushTask = task;
+        task->draw = menuTexFlushDraw;
+        task->state = 0;
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", func_00AA3330);
+/* Draw callback of the texture-flush task: flushes the menu texture. */
+void menuTexFlushDraw(void)
+{
+    menuTexFlush();
+}
+
+/* Creates one stat record per unit of the unit table (record pointers in menuStatRecords):
+ * origin x = 16 + 167 * created index, y = 12.0, +0x04 the step, +0x08 the draw. */
+INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatRecordsCreate);
+
+/* Step of a stat record: eases three displayed floats (+0x98, +0x9C, +0xA0) toward
+ * the unit's stat fields (at +0x94 -> +0x144), snapping within 0.5 and clamped. */
+INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatGaugeStep);
+
+void menuStatRecordDraw(int, GrPacket *);
+void grGpInit(GrPacket *);
+void grPacketSend(GrPacket *);
+
+/* Draw callback of a stat record (record + 0x08). `first` is the record pointer
+ * passed through an int parameter: menuStatRecordDraw reads its origin at +0x10 and
+ * its unit at +0x94. Retyping it needs its owner. */
+void menuStatRecordSubmit(int first)
+{
+    GrPacket packet;
+
+    grGpInit(&packet);
+    menuStatRecordDraw(first, &packet);
+    grPacketSend(&packet);
+}
+
+/* Draws one stat record at its origin: sprite groups through grPutSprOpen/grPutSprClose
+ * and the menu stat sprites and numbers. */
+INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatRecordDraw);

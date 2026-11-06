@@ -1,9 +1,10 @@
 #include "common.h"
 #include "shared.h"
+#include "main/game_snap_shot.h"
+#include "main/xgl_dma.h"
 
 extern void *memset(void *destination, int value, unsigned int count);
 
-void GameSnapShotCheck(void);
 
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
@@ -16,7 +17,6 @@ typedef union SnapshotDmaPacket {
     XglQuadword quadwords[12];
 } SnapshotDmaPacket;
 
-void xglDmaDirectNormal(u32 channel, u32 address, u32 count);
 
 enum {
     SNAPSHOT_OPEN_FLAGS = 0x602,
@@ -95,9 +95,13 @@ int GameSnapShotNumber(int number) {
 void GameSnapShotCheck(void) {
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_snap_shot", func_001E4D20);
+/* Proposed GameSnapShotWriteJpeg(const char *path, int quality): the first half of X1's GameSnapShotExecute.
+ * Encodes the 512x448 display frame (DrawEnv display origin) into the WorkEnd buffer and writes the JPEG to path. */
+INCLUDE_ASM("asm/main/nonmatchings/game_snap_shot", GameSnapShotWriteJpeg);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_snap_shot", func_001E4E60);
+/* Proposed GameSnapShotExecute(int quality, int flags): calls the encoder above; with flags & 1 writes the
+ * 160-byte metadata to the .bin name first, then advances the four-digit counter in snapnameno. */
+INCLUDE_ASM("asm/main/nonmatchings/game_snap_shot", GameSnapShotExecute);
 
 unsigned int GameSnapShotSaveThumbnail(int quality, unsigned int output_buffer) {
     GameSnapShotJpegParams params;
@@ -134,4 +138,6 @@ unsigned int GameSnapShotSaveThumbnail(int quality, unsigned int output_buffer) 
 
 INCLUDE_ASM("asm/main/nonmatchings/game_snap_shot", GameSnapShotSave);
 
-INCLUDE_ASM("asm/main/nonmatchings/game_snap_shot", func_001E5330);
+/* Proposed GameSnapShotSaveFile(int number, const void *data, int size): sets the counter digits when number >= 0,
+ * writes data to the snapshot name and advances the counter. */
+INCLUDE_ASM("asm/main/nonmatchings/game_snap_shot", GameSnapShotSaveFile);

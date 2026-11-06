@@ -22,7 +22,41 @@ Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector)
     return out;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu194", func_00272960);
+/*
+ * MMathMulMatrix (X1 computes the same 4x4 product): out receives the product lhs x rhs in the
+ * row-vector convention of MMathApplyMatrix (each row of lhs times rhs). Returns out.
+ */
+Matrix4 *MMathMulMatrix(Matrix4 *out, const Matrix4 *rhs, const Matrix4 *lhs) {
+    __asm__ __volatile__("lqc2 vf1, 0(%0)" : : "r"(rhs) : "memory");
+    __asm__ __volatile__("lqc2 vf2, 16(%0)" : : "r"(rhs) : "memory");
+    __asm__ __volatile__("lqc2 vf3, 32(%0)" : : "r"(rhs) : "memory");
+    __asm__ __volatile__("lqc2 vf4, 48(%0)" : : "r"(rhs) : "memory");
+    __asm__ __volatile__("lqc2 vf5, 0(%0)" : : "r"(lhs) : "memory");
+    __asm__ __volatile__("lqc2 vf6, 16(%0)" : : "r"(lhs) : "memory");
+    __asm__ __volatile__("lqc2 vf7, 32(%0)" : : "r"(lhs) : "memory");
+    __asm__ __volatile__("lqc2 vf8, 48(%0)" : : "r"(lhs) : "memory");
+    __asm__ __volatile__("vmulax.xyzw ACC, vf1, vf5x" : : : "memory");
+    __asm__ __volatile__("vmadday.xyzw ACC, vf2, vf5y" : : : "memory");
+    __asm__ __volatile__("vmaddaz.xyzw ACC, vf3, vf5z" : : : "memory");
+    __asm__ __volatile__("vmaddw.xyzw vf5, vf4, vf5w" : : : "memory");
+    __asm__ __volatile__("vmulax.xyzw ACC, vf1, vf6x" : : : "memory");
+    __asm__ __volatile__("vmadday.xyzw ACC, vf2, vf6y" : : : "memory");
+    __asm__ __volatile__("vmaddaz.xyzw ACC, vf3, vf6z" : : : "memory");
+    __asm__ __volatile__("vmaddw.xyzw vf6, vf4, vf6w" : : : "memory");
+    __asm__ __volatile__("vmulax.xyzw ACC, vf1, vf7x" : : : "memory");
+    __asm__ __volatile__("vmadday.xyzw ACC, vf2, vf7y" : : : "memory");
+    __asm__ __volatile__("vmaddaz.xyzw ACC, vf3, vf7z" : : : "memory");
+    __asm__ __volatile__("vmaddw.xyzw vf7, vf4, vf7w" : : : "memory");
+    __asm__ __volatile__("vmulax.xyzw ACC, vf1, vf8x" : : : "memory");
+    __asm__ __volatile__("vmadday.xyzw ACC, vf2, vf8y" : : : "memory");
+    __asm__ __volatile__("vmaddaz.xyzw ACC, vf3, vf8z" : : : "memory");
+    __asm__ __volatile__("vmaddw.xyzw vf8, vf4, vf8w" : : : "memory");
+    __asm__ __volatile__("sqc2 vf5, 0(%0)" : : "r"(out) : "memory");
+    __asm__ __volatile__("sqc2 vf6, 16(%0)" : : "r"(out) : "memory");
+    __asm__ __volatile__("sqc2 vf7, 32(%0)" : : "r"(out) : "memory");
+    __asm__ __volatile__("sqc2 vf8, 48(%0)" : : "r"(out) : "memory");
+    return out;
+}
 
 Matrix4 *MMathScaleMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *scale)
 {

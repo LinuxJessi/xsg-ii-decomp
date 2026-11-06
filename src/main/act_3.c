@@ -110,7 +110,7 @@ INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawCircleShadow);
 
 INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawZeldaShadowSub);
 
-INCLUDE_ASM("asm/main/nonmatchings/act_3", func_0028BD38);
+INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawZeldaShadow);
 
 int DrawDropShadowSubChk(ActDropShadowWorkspace *shadow, u8 *quad_indices,
                                int source_index, int quad_count)
@@ -172,14 +172,23 @@ INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawDropShadowSubBack);
 
 INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawDropShadowSubFront);
 
-INCLUDE_ASM("asm/main/nonmatchings/act_3", func_0028C3E8);
+INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawDropShadowSub);
 
-INCLUDE_ASM("asm/main/nonmatchings/act_3", func_0028CA88);
+INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawDropShadow);
 
-INCLUDE_ASM("asm/main/nonmatchings/act_3", func_0028CCE0);
+INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawDropCircle);
 
-INCLUDE_ASM("asm/main/nonmatchings/act_3", func_0028D3C8);
+/* Named in the proposals: ACT_DrawShadowBegin (X1 ACT_DrawShadowBegin: sRender shadow state, 10 quadwords). */
+INCLUDE_ASM("asm/main/nonmatchings/act_3", ACT_DrawShadowBegin);
 
-INCLUDE_ASM("asm/main/nonmatchings/act_3", func_0028D420);
+void func_001C374C(int, void *, int);
+extern unsigned char D_0063E4B0[];
 
-INCLUDE_ASM("asm/main/nonmatchings/act_3", func_0028D448);
+/* Named in the proposals: ACT_DrawShadowEnd (X1 ACT_DrawShadowEnd: Tail_10, 3 quadwords). */
+void ACT_DrawShadowEnd(void) {
+    func_001C374C(8, D_0063E4B0, 3);
+}
+
+/* Named in the proposals: ACT_DrawShadow. Dispatches on shadow_type: 1 DrawCircleShadow (default),
+ * 2 DrawZeldaShadow, 3 DrawDropCircle, 4 DrawDropShadow; the same switch as X1 ACT_DrawShadow. */
+INCLUDE_ASM("asm/main/nonmatchings/act_3", ACT_DrawShadow);
