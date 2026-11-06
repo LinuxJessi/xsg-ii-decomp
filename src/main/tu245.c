@@ -36,9 +36,9 @@ void textTagTableClear(void)
     memset(textTagTable, 0, 0x78);
 }
 
-void func_001E0768(void *, int *, int, int);
-extern unsigned char msgBotanPath[];
-extern int msgBotanHandle;
+int func_001E0768(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
+extern char msgBotanPath[];
+extern void *msgBotanHandle;
 
 /* Loads omiya\botan.xtx (the path string msgBotanPath) into the handle msgBotanHandle and waits for the load. */
 void msgWindowLoadBotanXtx(void)
@@ -48,7 +48,7 @@ void msgWindowLoadBotanXtx(void)
     }
 }
 
-void func_001DF818(int);
+int func_001DF818(void *buffer);
 
 /* Releases the botan.xtx handle. */
 void msgWindowUnloadBotanXtx(void)

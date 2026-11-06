@@ -28,9 +28,9 @@ void talkEndScript(void) {
     talkActive = 0;
 }
 
-int func_001E0768(unsigned char *path, int *status, int option, int reserved);
-extern int talkScriptHandle;
-extern unsigned char talkOmiyaScriptPath[];
+int func_001E0768(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
+extern void *talkScriptHandle;
+extern char talkOmiyaScriptPath[];
 
 /*
  * Starts loading "omiya\talk01.xtx" (talkOmiyaScriptPath) into the script handle
@@ -43,7 +43,7 @@ void talkLoadOmiyaScript(void) {
     }
 }
 
-int func_001DF818(int value);
+int func_001DF818(void *buffer);
 
 /* Releases the script handle talkScriptHandle and clears it. */
 void talkCloseScript(void) {

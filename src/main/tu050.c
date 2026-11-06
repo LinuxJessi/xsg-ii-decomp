@@ -31,13 +31,13 @@ typedef struct MainObject {
     int flags;
 } MainObject;
 
-void func_001D74E0(void);
-int GameResLoadID(int id, const void *path, int option, void (*callback)(void));
+void func_001D74E0(int index, void *buffer, unsigned int size, int value);
+int GameResLoadID(int id, void **buffer, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
 void func_001DF858(int id);
 void uwamonoResetRecords(int, int);
 void sefResetHandleSlots(void);
 extern MainWork gameWork;
-extern unsigned char D_002B5DB8[];
+extern void *D_002B5DB8[];
 
 /* Makes id the current resource. With mode 1, a reload of the current id releases it first and then
  * uwamonoResetRecords(-1, 1) and sefResetHandleSlots() run. id is loaded (retried until GameResLoadID stops

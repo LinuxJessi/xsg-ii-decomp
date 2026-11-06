@@ -69,7 +69,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configMenuFrame);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configMainPageDraw);
 
-void *func_001DF678(int);
+char *func_001DF678(unsigned int file_id);
 int *ptGetStatusBlock(void);
 extern char D_00ABAF10[];
 
