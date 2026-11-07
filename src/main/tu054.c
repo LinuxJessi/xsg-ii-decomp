@@ -459,13 +459,18 @@ int xglCdCheckXapFile(const char *path, char *extension)
     return xglCdCheckFile(path, record);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu054", func_001DFCA8);
+INCLUDE_ASM("asm/main/nonmatchings/tu054", xglCdFindXapName);
 
 /* File type of a file id (bits 16-23), as the loader dispatcher func_001E0610 selects on it. */
 #define CD_FILE_TYPE_MASK 0xFF0000
 #define CD_FILE_TYPE(type) ((type) << 16)
 
-/* Header of a file-set block (func_001DFD20): the data address of each file of the set,
+/* Appends the string src at dst and leaves dst on the copied NUL, so the next append continues
+ * the string. Its do/while(0) block boundary keeps the dst-- ahead of the next call's argument
+ * setup, as in the original. */
+#define STRING_APPEND(dst, src) do { while ((*(dst)++ = *(src)++) != 0) {} (dst)--; } while (0)
+
+/* Header of a file-set block (xglCdLoadFileSet): the data address of each file of the set,
  * 0 for a file that is missing. It takes the first 0x14 of GAME_RES_NAME_HEADER_SIZE bytes. */
 typedef struct CdFileSetHeader {
     char *pxy;
@@ -477,7 +482,7 @@ typedef struct CdFileSetHeader {
 
 /* Still asm: D_002BB350 holds groups { name, file id, file id, ..., -1 } closed by a lone -1;
  * returns the name of the group that lists file_id, or 0. */
-char *func_001DFCA8(int file_id);
+char *xglCdFindXapName(int file_id);
 
 /* Default .xap name "man.xap" for ids whose own and fallback names are all missing
  * (tu054's own .sdata, still asm-owned data). */
@@ -485,12 +490,12 @@ extern char D_0069CEE0[8];
 
 /* Loads the file set of file_id into slot's block: a CdFileSetHeader, then the .xap file and
  * the name's .epf, .xhr, .txy and .pxy files, each rounded up to GAME_RES_BLOCK_ALIGN and the
- * last to CD_SECTOR_SIZE. The .xap name is the group's override (func_001DFCA8) or the file's
+ * last to CD_SECTOR_SIZE. The .xap name is the group's override (xglCdFindXapName) or the file's
  * own name; when that file is missing, its trailing digits, then an 'H' before them, are
  * replaced by "00", and as the last resort (not for type 7) the default name "man.xap" is
  * appended to the group directory.
  * Returns the bytes the set takes. */
-int func_001DFD20(unsigned int file_id, unsigned int slot, int tag)
+int xglCdLoadFileSet(unsigned int file_id, unsigned int slot, int tag)
 {
     char name[256];
     char path[256];
@@ -528,14 +533,8 @@ int func_001DFD20(unsigned int file_id, unsigned int slot, int tag)
     group = xglCdFindFileGroup(file_id);
     names = group->names;
     source = names[file_id - group->base];
-    /* A string append in the original's do/while(0) macro form: its block boundary keeps end--
-     * ahead of the argument setup of the next call. end is left on the NUL. */
-    do {
-        while ((*end++ = *source++) != 0) {
-        }
-        end--;
-    } while (0);
-    source = func_001DFCA8(file_id);
+    STRING_APPEND(end, source);
+    source = xglCdFindXapName(file_id);
     if (source != 0) {
         while ((*base++ = *source++) != 0) {
         }

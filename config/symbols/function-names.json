@@ -264,6 +264,8 @@
    "0x001e0548": "xglCdLoadEneFile",
    "0x001e0768": "GameResLoadName",
    "0x001e0aa8": "GameResFindName",
+   "0x001dfca8": "xglCdFindXapName",
+   "0x001dfd20": "xglCdLoadFileSet",
    "0x001fd348": "uwamonoCountLeadingInUse",
    "0x001fd398": "uwamonoReleaseRecord",
    "0x001fd5f8": "uwamonoFindRecord",

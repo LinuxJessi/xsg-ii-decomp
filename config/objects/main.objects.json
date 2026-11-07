@@ -51864,18 +51864,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DFCA8",
+     "name": "xglCdFindXapName",
      "size": 116,
-     "splat_name": "func_001DFCA8",
+     "splat_name": "xglCdFindXapName",
      "va": "0x001dfca8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DFD20",
+     "name": "xglCdLoadFileSet",
      "size": 972,
-     "splat_name": "func_001DFD20",
+     "splat_name": "xglCdLoadFileSet",
      "va": "0x001dfd20",
      "name_basis": "address",
      "provenance": "estimated"
