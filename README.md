@@ -108,6 +108,10 @@ ninja gate          # + per-unit status and the whole-file SHA-256 gate
 `ninja gate` writes `build/gate.json`. `"result": "pass"` means every one of the
 three files came out byte for byte identical to your original.
 
+## Collaborating
+We have a private Trello board where we divide up the work so we don't step on each other's toes.
+If you're interested, contact me on Discord. I'm opok (opok#2874).
+
 ## Acknowledgments
 
 Thanks to the developers and contributors of the projects on which this work relies:
