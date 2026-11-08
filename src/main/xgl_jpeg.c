@@ -49,6 +49,10 @@ typedef enum JpegSamplingMode {
 #define JPEG_DHT_AC_LUMA 0x10
 #define JPEG_AC_ZRL 0xF0 /* 16 zeros in a row */
 #define JPEG_ZRL_RUN 16
+/* The component an 8x8 block belongs to (selects the Huffman and quantization tables). */
+#define JPEG_COMPONENT_Y 0
+#define JPEG_COMPONENT_CB 1
+#define JPEG_COMPONENT_CR 2
 #define JPEG_STAGING_ADDRESS (SCRATCHPAD_BASE + 0x3000)
 
 /* IJG-style quality to quantizer scaling. */
@@ -595,7 +599,90 @@ s16 decode_sub(s16 *codes)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", HuffmanDecode);
+void HuffmanDecode(float *coefficients, int component)
+{
+    JpegWork *work;
+    s16 *dcCodes;
+    s16 *acCodes;
+    float *quantization;
+    int *predictor;
+    int value;
+    int bits;
+    int dcBias;
+    int acBias;
+    int position;
+
+    switch (component) {
+    case JPEG_COMPONENT_Y:
+    default:
+        work = sw;
+        dcCodes = work->luminanceDcCodes.decode;
+        acCodes = work->luminanceAcCodes.decode;
+        quantization = work->luminanceQuantization;
+        break;
+    case JPEG_COMPONENT_CB:
+    case JPEG_COMPONENT_CR:
+        work = sw;
+        dcCodes = work->chrominanceDcCodes.decode;
+        acCodes = work->chrominanceAcCodes.decode;
+        quantization = work->chrominanceQuantization;
+        break;
+    }
+
+    value = 0;
+    predictor = &work->dcPredictors[component];
+    bits = decode_sub(dcCodes);
+    if (bits != 0) {
+        if (GetBit() == 0) {
+            dcBias = (1 << bits) - 1;
+        } else {
+            dcBias = 0;
+            value = 1;
+        }
+        bits--;
+        while (bits > 0) {
+            bits--;
+            value = value * 2 + GetBit();
+        }
+        value -= dcBias;
+    }
+    position = 1;
+    value += *predictor;
+    *predictor = value;
+    coefficients[0] = I2F(value) * quantization[0];
+
+    do {
+        value = 0;
+        bits = decode_sub(acCodes);
+        if (bits != 0) {
+            while (bits >= JPEG_ZRL_RUN) {
+                coefficients[ZigZag[position++]] = 0.0f;
+                bits -= JPEG_ZRL_RUN;
+            }
+            if (bits != 0) {
+                if (GetBit() == 0) {
+                    value = 0;
+                    acBias = (1 << bits) - 1;
+                } else {
+                    acBias = 0;
+                    value = 1;
+                }
+                bits--;
+                while (bits > 0) {
+                    bits--;
+                    value = value * 2 + GetBit();
+                }
+                value -= acBias;
+            }
+            coefficients[ZigZag[position]] = I2F(value) * quantization[position];
+        } else {
+            while (position < JPEG_BLOCK_COEFFS) {
+                coefficients[ZigZag[position++]] = 0.0f;
+            }
+        }
+        position++;
+    } while (position < JPEG_BLOCK_COEFFS);
+}
 
 /* Two-dimensional inverse DCT of one 8x8 float block, in place (the decoder's
    counterpart of FFDCT). Pass one reads the block's columns and writes the rows
