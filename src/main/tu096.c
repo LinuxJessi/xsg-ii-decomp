@@ -17,7 +17,7 @@ void xglTickReset(void) {
     xglTickCounter = 0;
 }
 
-/* Returns the tick counter; six callers, among them menuDrawSelectArrows (main/tu104). */
+/* Returns the tick counter; six callers, among them menuDrawSelectArrows (main/tu101). */
 int xglTickGet(void) {
     return xglTickCounter;
 }

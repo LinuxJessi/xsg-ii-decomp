@@ -3,8 +3,6 @@
 /* Number of MapUnit[] slots (map_2.h's MapUnit table). */
 #define MAP_UNIT_COUNT 64
 
-typedef float Matrix4[4][4];
-
 int HitCheckMapUnitPos(const Vector4 *position);
 extern void xglVectorLength(float *destination, const Vector4 *vector);
 

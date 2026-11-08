@@ -2,8 +2,6 @@
 #include "shared.h"
 #include "main/tu256.h"
 
-typedef float Matrix4[4][4];
-
 f32 cosf(f32);
 f32 sinf(f32);
 void xglCurMatrixMul(Matrix4 *matrix);

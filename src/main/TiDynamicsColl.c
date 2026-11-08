@@ -6,8 +6,6 @@ INCLUDE_ASM("asm/main/nonmatchings/TiDynamicsColl", func_0029A980);
 
 #include "shared.h"
 
-typedef float Matrix4[4][4];
-
 /* 48-byte entry: a vector transformed by a global matrix. A matrix index of -1
  * marks an entry that the transform loop skips. The sphere code in the
  * neighbouring unit (asm) reads dst as the centre, +0x4 as the radius and

@@ -327,26 +327,81 @@ IALU_DEST_RT = {0x08, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x18}
 CALLER_SAVED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 31}
 
 
+def written_gprs(word):
+    """GPRs an EE instruction may write (an over-approximation: unknown forms count as none only
+    when they cannot name a GPR destination)."""
+    op = word >> 26
+    rs = (word >> 21) & 31
+    rt = (word >> 16) & 31
+    rd = (word >> 11) & 31
+    if op in (0x00, 0x1c):
+        return {rd} - {0}
+    if op == 0x01:
+        return {31} if rt in (0x10, 0x11, 0x12, 0x13) else set()
+    if op == 0x03:
+        return {31}
+    if 0x08 <= op <= 0x0f or op in (0x18, 0x19) or op in LOAD_GPR:
+        return {rt} - {0}
+    if op in (0x10, 0x11, 0x12) and rs in (0, 1, 2):
+        return {rt} - {0}
+    return set()
+
+
+def single_his(image, function):
+    """Registers whose only write in the function is one `lui`: {register: (lui_va, value)}.
+
+    The epilogue's restore of a callee-saved register from its prologue slot does not count.
+
+    Such a register holds that %hi wherever it is read, across loop heads and other joins
+    (a long-lived callee-saved %hi base, e.g. `lui $30,%hi(table)` before a loop whose
+    `%lo(table)($30)` sits behind the loop label)."""
+    callee_saved = set(range(16, 24)) | {30, 31}
+    saves = set()
+    for va in range(function['va'], function['end'], 4):
+        word = image.word(va)
+        if word >> 26 in STORES and (word >> 21) & 31 == 29 and (word >> 16) & 31 in callee_saved:
+            saves.add(((word >> 16) & 31, word & 0xffff))
+    writes = collections.Counter()
+    his = {}
+    for va in range(function['va'], function['end'], 4):
+        word = image.word(va)
+        if (word >> 26 in LOAD_GPR and (word >> 21) & 31 == 29
+                and ((word >> 16) & 31, word & 0xffff) in saves):
+            continue  # the epilogue restoring the caller's value from its prologue slot
+        for register in written_gprs(word):
+            writes[register] += 1
+        if word >> 26 == 0x0f:
+            his[(word >> 16) & 31] = (va, ((word & 0xffff) << 16) & 0xffffffff)
+    return {r: his[r] for r in his if writes[r] == 1}
+
+
 def scan_refs(image, function):
     """%hi/%lo and $gp references of one function: (insn_va, target, kind, access).
 
     A forward sweep that keeps the %hi value of each register and forgets it at
     branch targets, delay slots of calls and overwrites. It sees less than a full
-    dataflow, and everything it reports is a pair the code really forms.
+    dataflow, and everything it reports is a pair the code really forms. A register
+    written only by one `lui` keeps its %hi across joins; those pairs are reported as
+    'hi_lo_join' (data attribution only, like 'hi_lo_indexed').
     """
     first, end = function['va'], function['end']
+    singles = single_his(image, function)
+    joined = {}
     join = set()
     for va in range(first, end, 4):
         kind, target = branch_kind(image.word(va), va)
         if kind in ('cond', 'likely', 'always', 'j') and first <= target < end:
             join.add(target)
     state = {}
+    indexed = {}
     out = []
     pending_clobber = False
     for va in range(first, end, 4):
         word = image.word(va)
         if va in join:
             state = {}
+            indexed = {}
+            joined = {r: value for r, (lui_va, value) in singles.items() if lui_va < va}
         op = word >> 26
         rs = (word >> 21) & 31
         rt = (word >> 16) & 31
@@ -359,29 +414,51 @@ def scan_refs(image, function):
                     out.append((va, (image.gp + simm) & 0xffffffff, 'gp', 'addr'))
                 elif rs in state:
                     out.append((va, (state[rs] + simm) & 0xffffffff, 'hi_lo', 'addr'))
+                elif rs in joined:
+                    out.append((va, (joined[rs] + simm) & 0xffffffff, 'hi_lo_join', 'addr'))
             state.pop(rt, None)
+            indexed.pop(rt, None)
         elif op == 0x0f:
             state[rt] = (imm << 16) & 0xffffffff
+            indexed.pop(rt, None)
         elif op in LOAD_GPR or op in LOAD_FPR or op in STORES:
             access = 'float' if op in LOAD_FPR else 'mem'
             if rs == GP and image.gp is not None:
                 out.append((va, (image.gp + simm) & 0xffffffff, 'gp', access))
             elif rs in state:
                 out.append((va, (state[rs] + simm) & 0xffffffff, 'hi_lo', access))
+            elif rs in indexed:
+                out.append((va, (indexed[rs] + simm) & 0xffffffff, 'hi_lo_indexed', access))
+            elif rs in joined:
+                out.append((va, (joined[rs] + simm) & 0xffffffff, 'hi_lo_join', access))
             if op in LOAD_GPR:
                 state.pop(rt, None)
+                indexed.pop(rt, None)
         elif op in IALU_DEST_RT:
             state.pop(rt, None)
+            indexed.pop(rt, None)
         elif op == 0:
             if rd:
+                # `lui r,%hi(table); addu r,r,index; lw x,%lo(table)(r)`: the indexed access of a
+                # jump table or array keeps the %hi of the one operand that holds it.
+                funct = word & 0x3f
+                based = [state[r] for r in (rs, rt) if r in state]
+                if funct in (0x21, 0x2d) and len(based) == 1 and rs != rt:
+                    indexed[rd] = based[0]
+                else:
+                    indexed.pop(rd, None)
                 state.pop(rd, None)
         elif op == 0x1c:
             state.pop(rd, None)
+            indexed.pop(rd, None)
         elif op in (0x10, 0x11, 0x12) and rs in (0, 1, 2):
             state.pop(rt, None)
+            indexed.pop(rt, None)
         if pending_clobber:
             for register in CALLER_SAVED:
                 state.pop(register, None)
+                indexed.pop(register, None)
+                joined.pop(register, None)
             pending_clobber = False
         kind, _ = branch_kind(word, va)
         if kind in ('jal', 'jalr'):
@@ -431,6 +508,34 @@ def is_source_file(text):
     return text.endswith(b'.c') and (b'/' in text or b'\\' in text or text.count(b'.') >= 1) and b' ' not in text
 
 
+def text_at(image, va):
+    """Real text at va, or None: NUL-preceded printable ASCII/EUC with four or more
+    characters, an EUC character, or a % format. Shorter runs are mostly pointers and
+    small integers (0x00746C40 reads "@lt")."""
+    offset = image.offset_of(va)
+    if offset is None or offset == 0 or image.data[offset - 1] != 0:
+        return None
+    position = offset
+    count = wide = 0
+    size = len(image.data)
+    while position < size and image.data[position] != 0:
+        byte = image.data[position]
+        if 0x20 <= byte < 0x7f or byte in (9, 10, 11, 12, 13):
+            position += 1
+        elif 0xa1 <= byte <= 0xfe and position + 1 < size and 0xa1 <= image.data[position + 1] <= 0xfe:
+            position += 2
+            wide += 1
+        else:
+            return None
+        count += 1
+        if position - offset > 4096:
+            return None
+    text = image.data[offset:position]
+    if count >= 4 or wide or (b'%' in text and count >= 2):
+        return text
+    return None
+
+
 # ------------------------------------------------------------- gap features
 
 SPAN_BUCKETS = (2, 4, 8, 16, 32, 64)
@@ -472,11 +577,17 @@ class Unit:
     def _link(self):
         count = len(self.functions)
         self.users = collections.defaultdict(set)
+        # Indexed references (jump tables, arrays) feed data attribution only; the boundary
+        # model was calibrated without them, so the text cuts stay where they were.
+        self.indexed_users = collections.defaultdict(set)
         self.tokens = [collections.Counter() for _ in range(count)]
         self.points = collections.defaultdict(lambda: [[] for _ in range(count)])
         for i in range(count):
-            for _, target, _, _ in self.refs[i]:
+            for _, target, kind, _ in self.refs[i]:
                 if not self.is_data(target):
+                    continue
+                if kind in ('hi_lo_indexed', 'hi_lo_join'):
+                    self.indexed_users[target].add(i)
                     continue
                 self.users[target].add(i)
                 self.tokens[i]['d', target] += 1
@@ -509,6 +620,17 @@ class Unit:
             low, high = min(who), max(who)
             if is_source_file(value) or (len(value) >= 8 and high - low <= 32):
                 self.string_spans.append((low, high))
+        # A literal is emitted once per object and never shared across objects (GCC 2.96 and
+        # ld merge nothing), so every user of one real text in .rodata or .sdata, at any
+        # distance, sits in one object. X1 main: 0 of 83 such texts cross an object edge
+        # (.sdata globals do cross, 52 times, which is why the text test is strict).
+        self.text_spans = []
+        for target, who in self.users.items():
+            if len(who) < 2 or self.image.section_of(target) not in ('.rodata', '.sdata'):
+                continue
+            value = text_at(self.image, target)
+            if value is not None:
+                self.text_spans.append((min(who), max(who), target, value))
 
     def hard_no_cut(self):
         """Gaps a string crosses (X1: no string used by two objects, 0 of 691) or an inversion forbids."""
@@ -953,8 +1075,8 @@ def find_text_end(image):
         function = next_function(image, pc, lowest)
         if not all(plausible_instruction(image.word(va), va, image) for va in range(function['va'], function['end'], 4)):
             break
-        for _, target, _, access in scan_refs(image, function):
-            if access != 'addr' and function['end'] <= target < lowest:
+        for _, target, kind, access in scan_refs(image, function):
+            if kind not in ('hi_lo_indexed', 'hi_lo_join') and access != 'addr' and function['end'] <= target < lowest:
                 lowest = target
         last_end = min(function['end'], lowest)
         pc = function['end']
@@ -1236,11 +1358,16 @@ def attribute_data(unit, tus):
     """Per TU and section: span of the data only that TU references, and neighbours in address order."""
     image = unit.image
     owner = {}
+    by_ordinal = {tu['ordinal']: tu for tu in tus}
     for tu in tus:
         for i in tu['_indices']:
             owner[i] = tu['ordinal']
     claims = collections.defaultdict(lambda: collections.defaultdict(list))
-    for target, who in unit.users.items():
+    users = collections.defaultdict(set)
+    for table in (unit.users, unit.indexed_users):
+        for target, who in table.items():
+            users[target] |= who
+    for target, who in users.items():
         ordinals = {owner[i] for i in who if i in owner}
         if len(ordinals) == 1 and all(i in owner for i in who):
             section = image.section_of(target)
@@ -1262,7 +1389,7 @@ def attribute_data(unit, tus):
             lower = max(per_tu[previous]) + 1 if previous is not None else sec['va']
             upper = min(per_tu[following]) if following is not None else sec['va'] + sec['size']
             offset = image.offset_of(low) if sec['type'] != 8 else None
-            tus[ordinal]['data'][section] = dict(
+            by_ordinal[ordinal]['data'][section] = dict(
                 anchored_start=hex32(low), anchored_end=hex32(high + 1), lower_bound_start=hex32(lower),
                 upper_bound_end=hex32(upper), anchors=dict(code_ref_single_tu=len(per_tu[ordinal])),
                 file_offset=offset, prev_object_in_section=previous, next_object_in_section=following,
@@ -1272,8 +1399,27 @@ def attribute_data(unit, tus):
     return section_order
 
 
+# Inferred TU starts that are no object edge: (start, why). The TU joins the one before.
+JOINED_CUTS = [
+    (0x001EAB08,
+     'SoundTest (0x1EA2C8) and MemcardTest (0x1EAF88) both print the static menu cursor ">" at '
+     '0x69D028, a static char[8] (X1 yajima_test.c menu_cursor), and X1 defines both in yajima_test.c; '
+     'found matching MemcardTest, user 2026-11-08'),
+    (0x00268BF8,
+     'sdvTransOffset (tu183) and sdvExecSpecial (sdv_184) load the same .rodata constant D_0068C590, and the '
+     'jump table of sdvDrawSpecial (0x68C5A0) lies inside the .rodata run of the camera functions; X1 sdv.c '
+     'defines the camera code, sdvTransOffset and the special/alter code in one file. Found matching '
+     'sdvDrawSpecial, user 2026-11-08'),
+]
+
 # Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).
 MOVED_CUTS = [
+    (0x00249248, 0x0024B0E8,
+     'func_00249518 and func_00249ED0 initialize vectors at 0x68D220-0x68D26F, right after the jump table '
+     'of cfeCommandEvaluate (0x68D200) in one increasing .rodata run, while the next file starts its '
+     '.rodata (0x68CD10, below) with func_0024B0E8; the functions between use no .rodata, so they stay '
+     'with cfeEvaluate. Found matching func_00249ED0; a string-free extension of rodata_order_breaks '
+     'held on X1 (13/13) but gave false cuts on X2 at file-scope tables (0x68F0D0), user 2026-11-08'),
     (0x0020CE30, 0x0020CE40,
      'func_0020CE30 as C earlier in the file turns bnel into bne in func_0020DDC8; defined after the caller '
      'it matches, so the original did not see that definition first (docs/bulk-match.md, user 2026-11-05)'),
@@ -1343,17 +1489,42 @@ def build_units(mean_functions, model_file, homologs, unit, zones, o0_homologs=N
         stats['forced_intervals'] += len(forced)
         for kind_list in cuts.values():
             stats['cuts_' + (kind_list[0][0] if kind_list else 'model')] += 1
+        # Merge only: a cut a shared literal or a joined start rules out is dropped after
+        # segmentation, so no other cut moves and every other TU keeps its ordinal.
+        zone_set = set(indices)
+        joined = {unit.index[va] - 1: why for va, why in JOINED_CUTS if va in unit.index}
+        merges = {}
+        for gap in cuts:
+            if gap in joined:
+                merges[gap] = 'joined: ' + joined[gap]
+                continue
+            for low, high, target_va, value in unit.text_spans:
+                if low <= gap < high and low in zone_set and high in zone_set:
+                    merges[gap] = (f'literal {value[:40].decode("latin-1")!r} at {hex32(target_va)} is used by '
+                                   f'{hex32(unit.vas[low])} and {hex32(unit.vas[high])}')
+                    break
+        stats['cuts_merged'] += len(merges)
         ordered = sorted(cuts)
         edges = [indices[0]] + [gap + 1 for gap in ordered] + [indices[-1] + 1]
         for position in range(len(edges) - 1):
             tu_indices = list(range(edges[position], edges[position + 1]))
             gap = ordered[position - 1] if position else None
-            tus.append(dict(_indices=tu_indices, _zone=zone, _cut=gap, _cuts=cuts, _odds=log_odds))
+            tus.append(dict(_indices=tu_indices, _zone=zone, _cut=gap, _cuts=cuts, _odds=log_odds,
+                            _merge=merges.get(gap) if gap is not None else None))
     for tu in tus:
         tu['ordinal'] = ordinal
         tu['data'] = {}
         ordinal += 1
-    return tus, stats
+    merged = []
+    for tu in tus:
+        if tu.get('_merge') and merged:
+            head = merged[-1]
+            head['_indices'] = head['_indices'] + tu['_indices']
+            head.setdefault('_merged', []).append(dict(ordinal=tu['ordinal'], start=hex32(unit.vas[tu['_indices'][0]]),
+                                                       reason=tu['_merge']))
+            continue
+        merged.append(tu)
+    return merged, stats
 
 
 def render_main_tu(unit, tu, names, homologs, model_file):
@@ -1386,7 +1557,8 @@ def render_main_tu(unit, tu, names, homologs, model_file):
         x1_homologs=sorted({homologs[unit.vas[i]][1] for i in indices if unit.vas[i] in homologs}),
         accepted=dict(count=0, functions=[], unit_records=[]), data=tu['data'],
         legacy_group_hint={}, static_symbols_by_section={},
-        provisional=dict(reason='inferred without symbols; see boundary_evidence and reports/x2-tu-map.md'))
+        provisional=dict(reason='inferred without symbols; see boundary_evidence and reports/x2-tu-map.md'),
+        **(dict(merged_from=tu['_merged']) if tu.get('_merged') else {}))
 
 
 def render_overlay_tu(unit, unit_name, tu, names, homologs, model_file):

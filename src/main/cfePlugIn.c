@@ -7,34 +7,6 @@
 #include "main/tu175.h"
 #include "main/xgl_cd.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_00249248);
-
-/* Updates one 0x50-byte sound record: the value at +0x40 moves toward the
-   target, and +0x44 holds the duration. */
-void func_00249248(unsigned char *record, int target);
-/* Sound records, 0x50 bytes each: the name is copied to offset 0 and the
-   tween fields sit at +0x40..+0x4C (see cfe_0024C278). */
-extern unsigned char cfeSndRecords[];
-
-/* Sets the target of record 0. The argument's address is taken: the original
-   keeps a frame for the call and does not tail-call func_00249248. */
-void cfeSndSetTarget(int target)
-{
-  int *target_ref;
-  target_ref = &target;
-  func_00249248(cfeSndRecords, *target_ref);
-}
-
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_00249340);
-
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_00249518);
-
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_00249ED0);
-
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024A8C0);
-
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeUpdateEntries);
-
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B0E8);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B230);
@@ -145,22 +117,20 @@ int ldDev(void)
 }
 
 void func_001E1218(void *);
-/* Number of sound records in use; the next record is at count * 0x50. */
-extern int cfeSndRecordCount;
 
 int cfe_0024C278(int handle)
 {
     int count;
-    int slot;
+    CfeSndRecord *record;
     char *text;
 
     text = func_A9F238(handle, func_A9F0C0(handle, 1));
-    strcpy(&cfeSndRecords[cfeSndRecordCount * 0x50], text);
+    strcpy(cfeSndRecords[cfeSndRecordCount].name, text);
     count = cfeSndRecordCount;
-    slot = count * 5;
+    record = &cfeSndRecords[count];
     count = count + 1;
     cfeSndRecordCount = count;
-    func_001E1218(&cfeSndRecords[slot * 0x10]);
+    func_001E1218(record);
     return 1;
 }
 

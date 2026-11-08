@@ -6,8 +6,6 @@
 #include "main/tu094.h"
 #include "main/tu097.h"
 #include "main/tu101.h"
-#include "main/tu102.h"
-#include "main/tu104.h"
 #include "main/xenoActor.h"
 #include "main/xgl_cd.h"
 #include "main/yg2path.h"

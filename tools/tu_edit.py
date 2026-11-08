@@ -381,7 +381,9 @@ def _depth0_has(head, char):
 
 
 _KR_PARAMETERS = re.compile(r'\)(?:\s*[^;{}()]+;)+\s*$')     # `int f(a) int a;`: an old-style parameter list
-_KR_BODY_AHEAD = re.compile(r'(?:\s*[^;{}()]+;)*\s*\{')
+# No leading \s* inside the group: [^;{}()] already takes whitespace, and the overlap made the
+# match backtrack exponentially over long runs of declarations (minutes per TU).
+_KR_BODY_AHEAD = re.compile(r'(?:[^;{}()]+;)*\s*\{')
 
 
 def _is_function_head(head):
@@ -813,7 +815,12 @@ class TU:
                              + ('' if self.unit_dir else ' (pass unit_dir/--unit-dir to resolve functions '
                                                          'defined by a shared included .s)'))
         order = [b.key for b in self.blocks if b.role == 'function']
-        if [n for n in functions if n not in self.covered] != order:
+        # GCC 2.96 defers a non-static `inline` definition and emits it at the end of the TU, so
+        # its block may sit anywhere in the source; only the other blocks must keep original order.
+        deferred_inline = {b.key for b in self.blocks if b.role == 'function'
+                           and re.search(r'\binline\b', lexical(self.text[b.start:b.end].split('{', 1)[0]))}
+        expected = [n for n in functions if n not in self.covered and n not in deferred_inline]
+        if expected != [n for n in order if n not in deferred_inline]:
             raise ParseError(f'function blocks are not in original order: {order}')
 
     # -- views ---------------------------------------------------------------

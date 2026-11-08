@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/pad.h"
 #include "shared.h"
 #include "main/xgl_2_031.h"
 #include "main/xgl_dma.h"
@@ -69,8 +70,6 @@ struct XglPacket {
 extern XglPacket *pCurrentPacket;
 extern XglPacket *pSendPacket;
 
-typedef float Matrix4[4][4];
-
 typedef struct StudioCamera {
     u32 active;
     u32 state;
@@ -129,7 +128,6 @@ void xglCameraViewScreen(StudioCamera *camera, const Vector4 *offset);
 void xglCameraViewTravel(StudioCamera *camera, Vector4 *offset);
 void xglCameraViewVolume(StudioCamera *camera, Vector4 *offset);
 extern float tanf(float angle);
-extern void xglMatrixStackInverse(void);
 extern void xglMatrixStackMul(Matrix4 matrix);
 extern void xglMatrixStackFrustum(float left, float right, float bottom,
                                   float top, float near, float far);
@@ -137,8 +135,6 @@ extern void xglVectorMulMat(Vector4 *destination, Matrix4 matrix,
                             const Vector4 *vector);
 extern void xglPlaneParameter(Vector4 *destination, const Vector4 *p0,
                               const Vector4 *p1, const Vector4 *p2);
-extern void xglVectorScale(Vector4 *destination, const Vector4 *source,
-                           float scale);
 extern signed char aaiVertexIndex[6][3];
 
 typedef union CameraVector {
@@ -190,21 +186,35 @@ typedef struct CameraVolume {
 struct XglCamera {
     unsigned int active;
     unsigned int state;
-    unsigned char unmodeled_08[8];
+    int padPort;                     /* +0x8: PadData port read by the pad updates */
+    unsigned char unmodeled_0c[4];
     XglCameraScreen screen;
     CameraTravel travel;
     Matrix4 transform;
     Matrix4 inverseTransform;
     unsigned char unmodeled_1f0[0x80];
     CameraVolume volume[1];
+    int lookAtLocked;                /* +0x5F0: toggled by button 0x800 */
 };
 
 void *memset(void *, int, unsigned int);
-extern unsigned char cameraPadOverride[0x10];
+/* Pad state forced by xglCameraSetPadOverride for one frame. */
+typedef struct CameraPadOverride {
+    unsigned short held;
+    unsigned short pressed;
+    unsigned char unmodeled_04[4];
+    signed char rightX;
+    signed char rightY;
+    signed char leftX;
+    signed char leftY;
+    int active;                  /* +0xC (cameraPadOverrideActive) */
+} CameraPadOverride;
+
+extern CameraPadOverride cameraPadOverride;
 
 /* Clears the per-frame pad override record (cameraPadOverride, flag at +0xC). Proposed name: xglCameraClearPadOverride. */
 void xglCameraClearPadOverride(void) {
-    memset(cameraPadOverride, 0, sizeof(cameraPadOverride));
+    memset(&cameraPadOverride, 0, sizeof(cameraPadOverride));
 }
 
 /* Stores eight arguments into the pad override record and raises its flag. Proposed: xglCameraSetPadOverride. */
@@ -232,7 +242,180 @@ INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraScaleDeltas);
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001AFCF0);
 
 /* Pad update, mode B: yaw and pitch from atan2f, xglSin and xglCos. Name is a guess: xglCameraUpdateLookAt. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_033", func_001B03D4);
+/* One 0x20-byte block of a pad port record (PadData, 0x80 bytes per port). */
+typedef struct PadBlock {
+    unsigned char deadZone[4];   /* +0x0 in the analog block */
+    signed char rightX;          /* +0x4 in the analog block */
+    signed char rightY;
+    signed char leftX;
+    signed char leftY;
+    unsigned short held;         /* +0x8 in the button block */
+    unsigned short pressed;      /* +0xA in the button block */
+    int unmodeled_0c[5];
+} PadBlock;
+
+typedef struct PadPort {
+    PadBlock block[4];           /* [1] buttons, [3] analog sticks */
+} PadPort;
+
+#define PAD_BUTTONS 1
+#define PAD_ANALOG 3
+
+extern PadPort PadData[2];
+
+extern void xglCameraResetDeltas(XglCamera *camera);
+extern void xglCameraApplyPadZoom(XglCamera *camera);
+extern void func_001B20E8(Vector4 *destination, Vector4 *from, Vector4 *to);
+extern void xglVectorLength(float *length, Vector4 *vector);
+extern void xglVectorNormal_001A9200(Vector4 *destination, Vector4 *source);
+extern float xglPointLengthXZ(Vector4 *from, Vector4 *to);
+extern float atan2f(float y, float x);
+extern float xglSin(float angle);
+extern float xglCos(float angle);
+
+/* Pad button bits (PadBlock.held / pressed) that the free camera reads. */
+#define CAMERA_BTN_DOWN PAD_L2
+#define CAMERA_BTN_UP PAD_L1
+#define CAMERA_BTN_ORBIT PAD_CROSS
+#define CAMERA_BTN_MOVE_FOCUS PAD_SQUARE
+#define CAMERA_BTN_LOCK PAD_START
+#define HALF_PI 1.570796f
+#define STICK_SCALE 0.0002f /* stick units past the dead zone to camera units */
+#define PAN_STEP 0.032f     /* height step per frame, as a fraction of the distance to the focus */
+#define ANALOG(port) (PadData[port].block[PAD_ANALOG])
+#define BUTTONS(port) (PadData[port].block[PAD_BUTTONS])
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+
+void xglCameraUpdateLookAt(XglCamera *camera) {
+    CameraTravel *travel = &camera->travel;
+    Vector4 lookDirection;
+    Vector4 forward;
+    float forwardLength; /* unused by the original after xglVectorLength */
+    float distance;
+    float pitchScale = 1.0f;
+    short rightX = ANALOG(camera->padPort).rightX;
+    short leftX = ANALOG(camera->padPort).leftX;
+    short rightY = ANALOG(camera->padPort).rightY;
+    short leftY = ANALOG(camera->padPort).leftY;
+    unsigned char deadZone[4];
+    unsigned short held;
+    unsigned short pressed;
+    float yaw;
+    float angle;
+
+    held = BUTTONS(camera->padPort).held | BUTTONS(1).held;
+    pressed = BUTTONS(camera->padPort).pressed | BUTTONS(1).pressed;
+    deadZone[0] = ANALOG(camera->padPort).deadZone[0];
+    deadZone[1] = ANALOG(camera->padPort).deadZone[1];
+    deadZone[2] = ANALOG(camera->padPort).deadZone[2];
+    deadZone[3] = ANALOG(camera->padPort).deadZone[3];
+    if (cameraPadOverride.active) {
+        held = cameraPadOverride.held;
+        pressed = cameraPadOverride.pressed;
+        rightX = cameraPadOverride.rightX;
+        leftX = cameraPadOverride.leftX;
+        rightY = cameraPadOverride.rightY;
+        leftY = cameraPadOverride.leftY;
+        deadZone[0] = ANALOG(0).deadZone[0];
+        deadZone[1] = ANALOG(0).deadZone[1];
+        deadZone[2] = ANALOG(0).deadZone[2];
+        deadZone[3] = ANALOG(0).deadZone[3];
+    }
+    /* The second pad takes over when its sticks are deflected more than the first pad's (or the override's). */
+    if (ABS(rightX) + ABS(leftX) + ABS(rightY) + ABS(leftY)
+        < ABS(ANALOG(1).rightX) + ABS(ANALOG(1).leftX) + ABS(ANALOG(1).rightY) + ABS(ANALOG(1).leftY)) {
+        rightX = ANALOG(1).rightX;
+        leftX = ANALOG(1).leftX;
+        rightY = ANALOG(1).rightY;
+        leftY = ANALOG(1).leftY;
+        deadZone[0] = ANALOG(1).deadZone[0];
+        deadZone[1] = ANALOG(1).deadZone[1];
+        deadZone[2] = ANALOG(1).deadZone[2];
+        deadZone[3] = ANALOG(1).deadZone[3];
+    }
+
+    xglCameraResetDeltas(camera);
+    xglCameraApplyPadZoom(camera);
+    func_001B20E8(&forward, &travel->chase_position, &travel->position);
+    xglVectorLength(&forwardLength, &forward);
+    xglVectorNormal_001A9200(&forward, &forward);
+    distance = xglPointLengthXZ(&travel->chase_position, &travel->position);
+
+    if (pressed & CAMERA_BTN_LOCK) {
+        if (camera->lookAtLocked) {
+            camera->lookAtLocked = 0;
+        } else {
+            camera->lookAtLocked = 1;
+        }
+    }
+    if ((held & CAMERA_BTN_MOVE_FOCUS) || (held & CAMERA_BTN_ORBIT)) {
+        if (held & CAMERA_BTN_DOWN) {
+            travel->chase_position.y += distance * -PAN_STEP;
+        }
+        if (held & CAMERA_BTN_UP) {
+            travel->chase_position.y += distance * PAN_STEP;
+        }
+    }
+    if (!(held & CAMERA_BTN_ORBIT)) {
+        if (held & CAMERA_BTN_DOWN) {
+            travel->position.y += distance * -PAN_STEP;
+        }
+        if (held & CAMERA_BTN_UP) {
+            travel->position.y += distance * PAN_STEP;
+        }
+    }
+    if (leftX < 0) {
+        travel->place_delta.x = (leftX + deadZone[2]) * STICK_SCALE;
+    }
+    if (leftX > 0) {
+        travel->place_delta.x = (leftX - deadZone[2]) * STICK_SCALE;
+    }
+    if (travel->place_delta.x != 0.0f) {
+        if ((held & CAMERA_BTN_MOVE_FOCUS) && !(held & CAMERA_BTN_ORBIT)) {
+            yaw = atan2f(forward.x, forward.z);
+            angle = HALF_PI;
+            travel->position.x += xglSin(yaw - angle) * travel->place_delta.x * distance;
+            travel->position.z += xglCos(yaw - angle) * travel->place_delta.x * distance;
+            travel->chase_position.x += xglSin(yaw - angle) * travel->place_delta.x * distance;
+            travel->chase_position.z += xglCos(yaw - angle) * travel->place_delta.x * distance;
+        }
+        if (!(held & CAMERA_BTN_ORBIT) && !(held & CAMERA_BTN_MOVE_FOCUS)) {
+            angle = atan2f(forward.x, forward.z);
+            angle = angle + travel->place_delta.x;
+            travel->position.x = travel->chase_position.x - xglSin(angle) * distance;
+            travel->position.z = travel->chase_position.z - xglCos(angle) * distance;
+        }
+        if ((held & CAMERA_BTN_ORBIT) && !(held & CAMERA_BTN_MOVE_FOCUS)) {
+            angle = atan2f(forward.x, forward.z);
+            angle = angle - travel->place_delta.x;
+            travel->chase_position.x = travel->position.x + xglSin(angle) * distance;
+            travel->chase_position.z = travel->position.z + xglCos(angle) * distance;
+        }
+    }
+    if (leftY < 0) {
+        travel->place_delta.z = (leftY + deadZone[3]) * STICK_SCALE;
+    }
+    if (leftY > 0) {
+        travel->place_delta.z = (leftY - deadZone[3]) * STICK_SCALE;
+    }
+    if ((held & CAMERA_BTN_MOVE_FOCUS) || (held & CAMERA_BTN_ORBIT)) {
+        travel->chase_position.x -= forward.x * travel->place_delta.z * distance * pitchScale;
+        travel->chase_position.y -= forward.y * travel->place_delta.z * distance * pitchScale;
+        travel->chase_position.z -= forward.z * travel->place_delta.z * distance * pitchScale;
+    }
+    if (!(held & CAMERA_BTN_ORBIT)) {
+        travel->position.x -= forward.x * travel->place_delta.z * distance * pitchScale;
+        travel->position.y -= forward.y * travel->place_delta.z * distance * pitchScale;
+        travel->position.z -= forward.z * travel->place_delta.z * distance * pitchScale;
+    }
+
+    func_001B20E8(&lookDirection, &travel->chase_position, &travel->position);
+    xglVectorNormal_001A9200(&lookDirection, &lookDirection);
+    lookDirection.z = -lookDirection.z;
+    travel->rotation.y = atan2f(lookDirection.x, lookDirection.z);
+    travel->rotation.x = atan2f(lookDirection.y, xglSin(travel->rotation.y) * lookDirection.x + xglCos(travel->rotation.y) * lookDirection.z);
+    travel->rotation.y = -travel->rotation.y;
+}
 
 /* Stores the pad port index at camera+8 (values of 2 or more become 1). Proposed: xglCameraSetPadPort. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_033", xglCameraSetPadPort);

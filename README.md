@@ -13,17 +13,17 @@ The Sony SDK and public libraries do not need to be recovered.
 
 ## Progress
 
-Recovered 2,298 of 5,055 in-scope game function(s) (45.460%).
+Recovered 2,352 of 5,055 in-scope game function(s) (46.528%).
 
 | Version | Target | Functions | Progress |
 | --- | --- | ---: | ---: |
-| NTSC-U | `SLUS_208.92` | 1,635 / 3,774 | 43.323% |
+| NTSC-U | `SLUS_208.92` | 1,689 / 3,774 | 44.754% |
 | NTSC-U | `OV01.OVL` | 655 / 1,259 | 52.025% |
 | NTSC-U | `OV02.OVL` | 8 / 22 | 36.364% |
 
 ## Building
 
-The historical compilers are 32-bit Linux executables. On 64-bit Ubuntu,
+The historical compilers are 32-bit Linux executables. On 64-bit Linux,
 install `libc6-i386` and `python3-venv`. On Windows, use WSL and keep the
 checkout and build on a Linux filesystem: the old compilers cannot read some
 Windows filesystem metadata and report `Value too large for defined data type`.

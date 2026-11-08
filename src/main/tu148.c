@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/pad.h"
 #include "main/tu114.h"
 #include "main/tu147.h"
 #include "main/tu148.h"
@@ -18,7 +19,7 @@ extern int msgSlotFlags[5]; /* five per-slot flag words */
 extern unsigned char msgChoice[];
 extern unsigned char msgWindow[];
 extern unsigned char msgPanel[];
-extern unsigned char PadData[];
+extern PadRecord PadData[];
 void *memset(void *, int, unsigned int);
 void msgWindowReset(void *);
 void msgWindowRunAll(void *);
@@ -188,15 +189,6 @@ void msgWindowSetValue(int value) {
 void *msgWindowPollCurrent(void *);
 void msgWindowMoveSelection(void *, int);
 
-/* One pad record (PadData, stride 0x68). Layout as main/tu107's PadRecord:
- * direction_repeated 0x1000 is PAD_UP and 0x4000 PAD_DOWN (xgl_menu.c). */
-typedef struct PadRecord {
-    unsigned char unmodeled_00[0x2A];
-    unsigned short buttons_2a;
-    unsigned char unmodeled_2c[0x34 - 0x2C];
-    unsigned short direction_repeated;
-} PadRecord;
-
 /* Poll the window: when it has finished and is ready, return the selected
  * index (as a pointer); CIRCLE (0x20) resets the window, UP and DOWN move the
  * selection by -1 and +1. Returns -1 otherwise. */
@@ -210,14 +202,14 @@ void *msgPollSelect(void) {
             func_002512B0();
             return selected;
         }
-        pad = (PadRecord *) PadData;
-        if (pad->buttons_2a & 0x20) {
+        pad = PadData;
+        if (pad->pressed & PAD_CIRCLE) {
             msgWindowRunAll(msgWindow);
         }
-        if (pad->direction_repeated & 0x1000) {
+        if (pad->directionRepeated & PAD_UP) {
             msgWindowMoveSelection(msgWindow, -1);
         }
-        if (pad->direction_repeated & 0x4000) {
+        if (pad->directionRepeated & PAD_DOWN) {
             msgWindowMoveSelection(msgWindow, 1);
         }
     }

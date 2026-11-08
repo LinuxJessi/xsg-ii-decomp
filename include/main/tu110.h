@@ -3,7 +3,8 @@
 
 /* Functions of src/main/tu110.c that other files call. */
 
-int menuMainTxdEntry(int index);
+void *menuMainTxdEntry(int index);
+void *menuTutorialTxdEntry(int index);
 void ptRefreshCurrent(void);
 
 #endif /* INCLUDE_MAIN_TU110_H */

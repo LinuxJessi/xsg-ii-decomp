@@ -1,10 +1,6 @@
 #include "common.h"
 #include "shared.h"
-
-#define PAD_CIRCLE   0x0020
-#define PAD_CROSS    0x0040
-#define PAD_UP       0x1000
-#define PAD_DOWN     0x4000
+#include "main/pad.h"
 
 typedef struct XglMenuNode XglMenuNode;
 
@@ -124,20 +120,7 @@ extern XglMenuEntry menutbl[MENU_TABLE_COUNT];
 #define XGL_MENU_SELECT_WRITE_BACK 1   /* entry->select_flags: write result at once */
 #define XGL_MENU_RESULT_LIMIT 0x100000 /* below: a result value; above: a node pointer */
 
-/*
- * Port records. The X2 code steps 0x80 bytes per port (xglPadInitial clears
- * 0x80 bytes per port and xglPadRead scales the port index by 128), so this
- * 0x68-byte view, copied from X1, is wrong for port 1. PadData belongs to
- * xgl_pad.c; the integrator reconciles the declaration.
- */
-typedef struct MenuPadRecord {
-    unsigned char unmodeled_00[0x32];
-    unsigned short direction_pressed;
-    unsigned short direction_repeated;
-    unsigned char unmodeled_36[0x32];
-} MenuPadRecord;
-
-extern MenuPadRecord PadData[2];
+extern PadRecord PadData[2];
 
 static void xglMenuDrawType1(XglMenuEntry *entry,
                              XglMenuDrawContext *context);
@@ -219,7 +202,7 @@ static void xglMenuDrawType1(XglMenuEntry *entry,
         }
         break;
     case XGL_MENU_ACTIVE_RUNNING:
-        if ((PadData[0].direction_repeated & PAD_UP) != 0) {
+        if ((PadData[0].directionRepeated & PAD_UP) != 0) {
             selected_item = node->selected_item;
             do {
                 selected_item--;
@@ -234,7 +217,7 @@ static void xglMenuDrawType1(XglMenuEntry *entry,
             } while (node->rows[selected_item].next.result == -1);
             node->selected_item = selected_item;
         }
-        if ((PadData[0].direction_repeated & PAD_DOWN) != 0) {
+        if ((PadData[0].directionRepeated & PAD_DOWN) != 0) {
             selected_item = node->selected_item;
             do {
                 selected_item++;
@@ -248,7 +231,7 @@ static void xglMenuDrawType1(XglMenuEntry *entry,
             } while (node->rows[selected_item].next.result == -1);
             node->selected_item = selected_item;
         }
-        if ((PadData[0].direction_pressed & PAD_CIRCLE) != 0) {
+        if ((PadData[0].directionPressed & PAD_CIRCLE) != 0) {
             if (node->rows[node->selected_item].next.result < XGL_MENU_RESULT_LIMIT) {
                 entry->result_value =
                     node->rows[node->selected_item].next.result;
@@ -273,7 +256,7 @@ static void xglMenuDrawType1(XglMenuEntry *entry,
                 entry->active = XGL_MENU_ACTIVE_OPEN;
             }
         }
-        if ((PadData[0].direction_pressed & PAD_CROSS) != 0) {
+        if ((PadData[0].directionPressed & PAD_CROSS) != 0) {
             if (entry->result_out != 0) {
                 out_result = node->cancel_result;
                 *entry->result_out = out_result;

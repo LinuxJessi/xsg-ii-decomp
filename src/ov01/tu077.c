@@ -11,8 +11,6 @@
  * (field->location.offset), so SceneByte views remain for that. */
 typedef void *SceneObject;
 
-typedef float Matrix4[4][4];
-
 typedef struct SchedulerState SchedulerState;
 
 typedef float RgVector[4];

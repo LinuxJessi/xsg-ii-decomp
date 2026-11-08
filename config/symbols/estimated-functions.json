@@ -29136,7 +29136,7 @@
      2
     ],
     [
-     "func_00194DD0",
+     "xglFontIsTextureGlyphCode",
      1658320,
      208,
      2
@@ -31680,7 +31680,7 @@
      2
     ],
     [
-     "func_001ACFC0",
+     "xglMotionBuildPose",
      1757120,
      3076,
      2
@@ -31848,7 +31848,7 @@
      2
     ],
     [
-     "func_001B03D4",
+     "xglCameraUpdateLookAt",
      1770452,
      2840,
      2
@@ -33156,7 +33156,7 @@
      2
     ],
     [
-     "func_001BC3E4",
+     "pxySetupShadowProjector",
      1819620,
      6244,
      2
@@ -33222,13 +33222,13 @@
      2
     ],
     [
-     "func_001BFD48",
+     "pxySubmitModel",
      1834312,
      11204,
      2
     ],
     [
-     "func_001C290C",
+     "pxySubmitModelBasic",
      1845516,
      3144,
      2
@@ -33276,7 +33276,7 @@
      2
     ],
     [
-     "func_001C3A80",
+     "pxyDrawShadowCaster",
      1849984,
      6132,
      2
@@ -33318,13 +33318,13 @@
      2
     ],
     [
-     "func_001C7ADC",
+     "pxyDrawBatch",
      1866460,
      4744,
      2
     ],
     [
-     "func_001C8D64",
+     "pxyDrawBatches",
      1871204,
      10652,
      2
@@ -33558,7 +33558,7 @@
      2
     ],
     [
-     "func_001CD254",
+     "pxyUploadPacketState",
      1888852,
      2540,
      2
@@ -33726,7 +33726,7 @@
      2
     ],
     [
-     "func_001D19A0",
+     "pxyDrawGlow",
      1907104,
      3288,
      2
@@ -34278,13 +34278,13 @@
      2
     ],
     [
-     "func_001DCE68",
+     "uwamonoPickTarget",
      1953384,
      880,
      2
     ],
     [
-     "func_001DD1D8",
+     "uwamonoPlayerUpdate",
      1954264,
      5472,
      2
@@ -39636,7 +39636,7 @@
      2
     ],
     [
-     "func_00225460",
+     "menuDrawPartyPanel",
      2249824,
      2940,
      2
@@ -42102,13 +42102,13 @@
      2
     ],
     [
-     "gifStateDrawFrame",
+     "gifStateDrawBlurFrame",
      2374992,
      3048,
      2
     ],
     [
-     "func_00244938",
+     "gifStateBuildBreakShards",
      2378040,
      3564,
      2
@@ -42522,7 +42522,7 @@
      2
     ],
     [
-     "func_00249ED0",
+     "cfeDrawDirectionGrid",
      2399952,
      2540,
      2
@@ -48588,7 +48588,7 @@
      2
     ],
     [
-     "func_0027EE70",
+     "talkWindowDrawFrame",
      2616944,
      5480,
      2
@@ -50340,13 +50340,13 @@
      2
     ],
     [
-     "func_0028DEC0",
+     "tiMotionSolveLocalMatricesOld",
      2678464,
      4892,
      2
     ],
     [
-     "func_0028F1E0",
+     "tiMotionSolveLocalMatrices",
      2683360,
      3860,
      2

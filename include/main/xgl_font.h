@@ -6,5 +6,6 @@
 int xglFontGetStringWidth(const char *text);
 void xglFontPrint(int x, int y, unsigned int color, const char *text);
 void xglFontPrintDirectOT(int ot, const char *text);
+void xglFontDebugPrintf(int x, int y, const char *format, ...);
 
 #endif /* INCLUDE_MAIN_XGL_FONT_H */

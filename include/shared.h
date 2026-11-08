@@ -32,4 +32,7 @@ typedef union DoublewordVector4 {
     u64 words[2];
 } DoublewordVector4;
 
+/* Row-major 4x4 float matrix. */
+typedef float Matrix4[4][4];
+
 #endif /* INCLUDE_SHARED_H */

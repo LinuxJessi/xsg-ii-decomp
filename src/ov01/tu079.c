@@ -27,7 +27,7 @@ typedef struct MEfEffectObject {
 } MEfEffectObject;
 
 void func_001BB4AC(s32 value);
-void func_001BFD48(s32 value);
+void pxySubmitModel(s32 value);
 void svGetPrmFromName(void *table, s32 slot, s32 *params);
 void nmlModelSetTransparency(f32 transparency);
 extern s64 D_00AB8C40;
@@ -39,12 +39,12 @@ void MEfDrawStencilA(MEfEffectObject *obj)
 {
     MEfEffectSub *sub;
     s32 params[8];
-    s32 cursor;
+    unsigned char *cursor;
     s32 remaining;
 
     sub = &obj->sub;
     svGetPrmFromName(D_00ABB450, obj->slot, params);
-    cursor = (s32) obj + 0xD0;
+    cursor = (unsigned char *)obj + 0xD0;
     remaining = 4;
     do {
         remaining -= 1;
@@ -54,7 +54,7 @@ void MEfDrawStencilA(MEfEffectObject *obj)
         func_001BB4AC(params[5]);
         nmlModelSetDrawMatrix(cursor);
         cursor += 0x40;
-        func_001BFD48(params[4]);
+        pxySubmitModel(params[4]);
     } while (remaining >= 0);
 }
 
@@ -75,12 +75,12 @@ void MEfDrawStencilB(MEfEffectObject *obj)
 {
     MEfEffectSub *sub;
     s32 params[8];
-    s32 cursor;
+    unsigned char *cursor;
     s32 remaining;
 
     sub = &obj->sub;
     svGetPrmFromName(D_00ABB4D0, obj->slot, params);
-    cursor = (s32) obj + 0xC0;
+    cursor = (unsigned char *)obj + 0xC0;
     remaining = 4;
     do {
         remaining -= 1;
@@ -90,7 +90,7 @@ void MEfDrawStencilB(MEfEffectObject *obj)
         func_001BB4AC(params[5]);
         nmlModelSetDrawMatrix(cursor);
         cursor += 0x40;
-        func_001BFD48(params[4]);
+        pxySubmitModel(params[4]);
     } while (remaining >= 0);
 }
 

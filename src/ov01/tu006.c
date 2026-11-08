@@ -1,8 +1,6 @@
 #include "common.h"
 #include "shared.h"
 
-typedef float Matrix4[4][4];
-
 typedef struct StudioCamera {
     u32 active;
     u32 state;

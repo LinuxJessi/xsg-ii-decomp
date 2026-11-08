@@ -1,8 +1,6 @@
 #include "common.h"
 #include "shared.h"
 
-typedef float Matrix4[4][4];
-
 Matrix4 *MMathScaleMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *scale);
 
 Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector)

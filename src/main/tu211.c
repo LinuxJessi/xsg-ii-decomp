@@ -35,8 +35,6 @@ void recordSetAlphaFlags(int *record)
 
 INCLUDE_ASM("asm/main/nonmatchings/tu211", quadDrawRotating);
 
-typedef float Matrix4[4][4];
-
 extern f32 degToRad;
 void xglMatrixUnit(Matrix4 matrix);
 void xglMatrixRotZ(Matrix4 destination, Matrix4 source, f32 angle);

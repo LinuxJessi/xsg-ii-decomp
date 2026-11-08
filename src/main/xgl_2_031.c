@@ -2,8 +2,6 @@
 #include "shared.h"
 #include "main/xgl_2_031.h"
 
-typedef float Matrix4[4][4];
-
 extern void xglVectorLength(float *destination, const Vector4 *vector);
 extern void xglMatrixStackSave(float matrix[4][4]);
 void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
@@ -509,7 +507,7 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AC4DC);
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001AC95C);
 
 extern int xglMotionCacheValid;
-extern char xglMotionCache[];
+extern Vector4 xglMotionCache[];
 
 void *xglMotionCacheGet(void)
 {
@@ -524,7 +522,249 @@ void xglMotionCacheInvalidate(void)
     xglMotionCacheValid = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001ACFC0);
+/* One animated element of a motion pose (0x50 bytes per element). */
+typedef struct XglMotionKey {
+    Vector4 position;       /* 0x00 */
+    Vector4 rotation;       /* 0x10: x, y, z angles */
+    Vector4 target;         /* 0x20 */
+    Vector4 direction;      /* 0x30 */
+    float unk40;
+    float unk44;
+    float scale;            /* 0x48 */
+    float unk4C;
+} XglMotionKey;
+
+typedef struct XglMotionEntry {
+    int unk00;
+    int type;               /* 0x04 */
+} XglMotionEntry;
+
+typedef struct XglMotion {
+    u8 unk00[0x30];
+    int entryCount;         /* 0x30 */
+    u8 unk34[8];
+    int keyOffset;          /* 0x3C */
+    u8 unk40[0xB0];
+    int entryOffsets[1];    /* 0xF0 */
+} XglMotion;
+
+/* A vector kept as a plain float[4] (like sceVu0FVECTOR); its w is element 3. Vector4 here changes the
+ * address arithmetic of the w stores, so the casts to Vector4 * at the calls stay. */
+typedef float XglFVector[4];
+
+/* Result of xglMotionBuildPose, cleared with xglZeroQuadwords18 (0x18 quadwords). */
+typedef struct XglMotionPose {
+    XglFVector rows[6];     /* 0x000 */
+    Vector4 viewDirection;  /* 0x060 */
+    XglFVector axes[6];     /* 0x070 */
+    Vector4 velocity;       /* 0x0D0 */
+    Vector4 acceleration;   /* 0x0E0 */
+    Vector4 forward;        /* 0x0F0 */
+    Vector4 unk100[2];
+    XglFVector points[3];   /* 0x120 */
+    XglFVector pointDirections[3]; /* 0x150 */
+} XglMotionPose;
+
+void xglZeroQuadwords18(void *destination);
+void xglVectorCopy(Vector4 *destination, const Vector4 *source);
+void xglVectorAddXYZ(Vector4 *destination, const Vector4 *left, const Vector4 *right);
+void xglVectorSubXYZ_001AF3F0(Vector4 *destination, const Vector4 *left, const Vector4 *right);
+void xglMatrixStackRotX(float angle);
+void xglMatrixStackRotY(float angle);
+void xglMatrixStackRotZ(float angle);
+void xglMatrixStackMulVector(Vector4 *destination, const Vector4 *source);
+void func_001BB3FC(void *cache);
+void func_001ABEF8(Vector4 *work, Vector4 *vector, Vector4 *direction);
+int func_001AC1A8(Vector4 *result, XglMotionKey *key, Vector4 *origin);
+int func_001AC304(Vector4 *result, Vector4 *direction, XglMotionKey *key, Vector4 *origin);
+int func_001AC4DC(Vector4 *result, Vector4 *direction, XglMotionKey *key, Vector4 *origin);
+int func_001AC95C(Vector4 *result, Vector4 *direction, XglMotionKey *key, Vector4 *origin);
+
+/* Loads the key's Z, Y, X rotation into the matrix stack (identity first, zero angles skipped).
+ * A plain block, not do/while (0): the loop's labels would renumber the output. */
+#define LOAD_KEY_ROTATION(key) \
+    { \
+        xglMatrixStackUnit(); \
+        if ((key)->rotation.z != 0.0f) { \
+            xglMatrixStackRotZ((key)->rotation.z); \
+        } \
+        if ((key)->rotation.y != 0.0f) { \
+            xglMatrixStackRotY((key)->rotation.y); \
+        } \
+        if ((key)->rotation.x != 0.0f) { \
+            xglMatrixStackRotX((key)->rotation.x); \
+        } \
+    }
+
+#define XGL_MOTION_TYPE_COUNT 19
+
+void xglMotionBuildPose(XglMotion *motion, XglMotionPose *pose, Vector4 *origin)
+{
+    int i;
+    int *offsets;
+    Vector4 poseRows[12];
+
+    offsets = motion->entryOffsets;
+    memset(poseRows, 0, sizeof(poseRows));
+    xglZeroQuadwords18(pose);
+    for (i = 0; i < motion->entryCount; i++) {
+        XglMotionEntry *entry = (XglMotionEntry *)((char *)motion + offsets[i]);
+
+        if (entry->type < XGL_MOTION_TYPE_COUNT) {
+            XglMotionKey *key = &((XglMotionKey *)((char *)motion + motion->keyOffset))[i];
+            DoublewordAlignedVector4 dir = { 0.0f, 0.0f, -1.0f, 1.0f };
+            Vector4 forceA;
+            Vector4 forceB;
+            Vector4 originB;
+            Vector4 forceC;
+            Vector4 originC;
+            Vector4 forceD;
+            Vector4 originD;
+            Vector4 scaled;
+
+            switch (entry->type) {
+            case 9:
+                xglVectorScale(xglMotionCache, &key->direction, key->scale);
+                func_001BB3FC(xglMotionCache);
+                xglMotionCacheValid = 1;
+                break;
+            case 1:
+                xglVectorScale(&pose->velocity, &key->direction, key->scale);
+                xglVectorScale(&pose->acceleration, &key->direction, key->scale);
+                break;
+            case 2:
+                xglVectorScale(&pose->velocity, &key->direction, key->scale);
+                xglVectorScale(&pose->acceleration, &key->target, key->scale);
+                LOAD_KEY_ROTATION(key)
+                                xglMatrixStackMulVector(&dir, &dir);
+                xglVectorCopy(&pose->viewDirection, &dir);
+                break;
+            case 3:
+                if (!func_001AC1A8(&forceA, key, origin)) {
+                    break;
+                }
+                xglVectorScale(&forceA, &forceA, key->scale);
+                xglVectorAddXYZ(&pose->velocity, &pose->velocity, &forceA);
+                xglVectorAddXYZ(&pose->acceleration, &pose->acceleration, &forceA);
+                break;
+            case 7:
+                if (!func_001AC95C(&forceB, &originB, key, origin)) {
+                    break;
+                }
+                xglVectorScale(&forceB, &forceB, key->scale);
+                xglVectorAddXYZ(&pose->velocity, &pose->velocity, &forceB);
+                xglVectorAddXYZ(&pose->acceleration, &pose->acceleration, &forceB);
+                break;
+            case 6:
+                if (!func_001AC304(&forceC, &originC, key, origin)) {
+                    break;
+                }
+                xglVectorScale(&forceC, &forceC, key->scale);
+                xglVectorAddXYZ(&pose->velocity, &pose->velocity, &forceC);
+                xglVectorAddXYZ(&pose->acceleration, &pose->acceleration, &forceC);
+                break;
+            case 4:
+                if (!func_001AC4DC(&forceD, &originD, key, origin)) {
+                    break;
+                }
+                xglVectorScale(&forceD, &forceD, key->scale);
+                xglVectorAddXYZ(&pose->velocity, &pose->velocity, &forceD);
+                xglVectorAddXYZ(&pose->acceleration, &pose->acceleration, &forceD);
+                break;
+            case 8:
+                dir.z = 1.0f;
+                LOAD_KEY_ROTATION(key)
+                                xglMatrixStackMulVector(&dir, &dir);
+                xglVectorScale(&scaled, &key->direction, key->scale);
+                func_001ABEF8(poseRows, &scaled, &dir);
+                break;
+            case 10:
+                dir.z = 1.0f;
+                LOAD_KEY_ROTATION(key)
+                                xglMatrixStackMulVector(&pose->forward, &dir);
+                pose->forward.w = 1.0f;
+                break;
+            case 11:
+                xglVectorSubXYZ_001AF3F0(&pose->forward, &key->position, origin);
+                xglVectorNormal_001A9200(&pose->forward, &pose->forward);
+                pose->forward.w = 1.0f;
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+    {
+        int count;
+
+        count = 0;
+        for (i = 0; i < motion->entryCount; i++) {
+            XglMotionEntry *entry = (XglMotionEntry *)((char *)motion + offsets[i]);
+
+            if (entry->type >= XGL_MOTION_TYPE_COUNT) {
+                XglMotionKey *key = &((XglMotionKey *)((char *)motion + motion->keyOffset))[i];
+                Vector4 forceA;
+                Vector4 originA;
+                Vector4 forceB;
+                Vector4 originB;
+                Vector4 forceC;
+                Vector4 originC;
+                Vector4 forceD;
+                Vector4 originD;
+
+                switch (entry->type) {
+                case 19:
+                    if (count < 3) {
+                        xglVectorCopy((Vector4 *)pose->points[count], &key->position);
+                        xglVectorScale((Vector4 *)pose->pointDirections[count], &key->direction, key->scale * 128.0f);
+                        pose->points[count][3] = 1.0f;
+                        count++;
+                    }
+                    break;
+                case 20:
+                case 35:
+                    if (!func_001AC1A8(&forceA, key, origin)) {
+                        break;
+                    }
+                    xglVectorSubXYZ_001AF3F0(&originA, &key->position, origin);
+                    xglVectorScale(&forceA, &forceA, key->scale);
+                    func_001ABEF8(poseRows, &forceA, &originA);
+                    break;
+                case 24:
+                    if (!func_001AC95C(&forceB, &originB, key, origin)) {
+                        break;
+                    }
+                    xglVectorScale(&forceB, &forceB, key->scale);
+                    func_001ABEF8(poseRows, &forceB, &originB);
+                    break;
+                case 21:
+                    if (!func_001AC4DC(&forceC, &originC, key, origin)) {
+                        break;
+                    }
+                    xglVectorScale(&forceC, &forceC, key->scale);
+                    func_001ABEF8(poseRows, &forceC, &originC);
+                    break;
+                case 23:
+                    if (!func_001AC304(&forceD, &originD, key, origin)) {
+                        break;
+                    }
+                    xglVectorScale(&forceD, &forceD, key->scale);
+                    func_001ABEF8(poseRows, &forceD, &originD);
+                    break;
+                }
+            }
+        }
+    }
+    {
+        int k;
+
+        for (k = 0; k < 6; k++) {
+            xglVectorCopy((Vector4 *)pose->axes[k], &poseRows[k]);
+            xglVectorCopy((Vector4 *)pose->rows[k], &poseRows[k + 6]);
+            pose->axes[k][3] = 0;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_2_031", func_001ADBC4);
 

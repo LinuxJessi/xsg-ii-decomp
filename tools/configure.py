@@ -233,7 +233,8 @@ def stage_headers(root, unit_dir):
 
 
 def stage_shared_headers(root, unit_dir):
-    """`include/shared.h`, `include/debug_break.h`, `include/quadword.h` and the per-TU public headers
+    """`include/shared.h`, `include/debug_break.h`, `include/quadword.h`, `include/vu0_macro.h`,
+    `include/gs.h` and the per-TU public headers
     `include/<unit>/<tu>.h`.
 
     Only main needs them here: its compile line is `-Iinclude -I.` relative to
@@ -245,8 +246,9 @@ def stage_shared_headers(root, unit_dir):
     dst_root = unit_dir / "include"
     dst_root.mkdir(parents=True, exist_ok=True)
     # debug_break.h: the ee-assert-break DEBUG_BREAK() macro (docs/ee-hand-asm.md);
-    # quadword.h: the original's lq/sq quadword transfer macros (docs/ee-mmi.md).
-    for name in ("shared.h", "debug_break.h", "quadword.h", "vu0_macro.h"):
+    # quadword.h: the original's lq/sq quadword transfer macros (docs/ee-mmi.md);
+    # gs.h: GS register numbers and register-value macros for A+D packets.
+    for name in ("shared.h", "debug_break.h", "quadword.h", "vu0_macro.h", "gs.h"):
         shared = root / "include" / name
         if shared.is_file():
             shutil.copyfile(shared, dst_root / name)

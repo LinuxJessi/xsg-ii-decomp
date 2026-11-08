@@ -36,8 +36,6 @@ INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterUpdateSource);
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterStepSub);
 
-void gifStateSetMode(int);
-
 void tiWaterSetEffectMode(void) {
     func_00246AF8();
     func_00246DD8(0xFFFFFF);

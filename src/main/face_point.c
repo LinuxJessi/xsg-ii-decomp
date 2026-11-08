@@ -2,8 +2,6 @@
 #include "shared.h"
 #include "main/face_point.h"
 
-typedef float Matrix4[4][4];
-
 extern int strcmp(const char *left, const char *right);
 void xglVectorOuter(Vector4 *destination, const Vector4 *left,
                     const Vector4 *right);

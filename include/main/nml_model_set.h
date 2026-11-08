@@ -10,7 +10,7 @@ void func_001BB47C(void *value);
 void func_001BB678(void *value);
 void nmlModelSetStencilAlpha(long long value);
 int func_001BBC74(void);
-void nmlModelSetDrawMatrix(int value);
+void nmlModelSetDrawMatrix(void *matrix);
 void nmlModelSetStencil(int enabled);
 
 #endif /* INCLUDE_MAIN_NML_MODEL_SET_H */

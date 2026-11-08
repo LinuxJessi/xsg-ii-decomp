@@ -1,8 +1,6 @@
 #include "common.h"
 #include "shared.h"
 
-typedef float Matrix4[4][4];
-
 #include "vu0_macro.h"
 
 void _CurApplyMatrix(Vector4 *destination, const Vector4 *vector) {

@@ -58,8 +58,6 @@ void xglPacketFlush(void) {
     func_0012B9A0(xglCurrentPacket, 0x11000000);
 }
 
-typedef float Matrix4[4][4];
-
 /*
  * The block the frame sender passes to its helpers: two quadword rows at
  * +0x70 and +0x80 that are sent to the packet, and the matrix at +0x470 that

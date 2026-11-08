@@ -3,7 +3,6 @@
 #include "main/tu092.h"
 #include "main/tu097.h"
 #include "main/tu101.h"
-#include "main/tu102.h"
 #include "main/xgl_cd.h"
 
 int xglCdGetFileSize();

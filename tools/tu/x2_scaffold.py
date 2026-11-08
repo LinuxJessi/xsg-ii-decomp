@@ -58,6 +58,15 @@ COMPILER_ID = "ee-gcc2_96-realconv-lp7"
 COMPILER_DIR = "tool:ee-gcc2.96-realconv-lp7"
 AS_SWAP_NAME = "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)"
 AS_PLAIN_NAME = "LA29-vsqrt-nolabel-laimm (runtime and hand-written objects)"
+# Soft-float entry points of libgcc's fp-bit.c (US_SOFTWARE_GOFAST spellings, see
+# config/library-references.json "gnu-fp-bit-gofast"). The pinned cc1 calls them by these names;
+# each address is witnessed by a matched call site in main (func_00244938: int->double, multiply,
+# divide, double->float in that order). Main's table keeps the func_ names; C reaches them here.
+# The 64-bit integer division helpers of libgcc2.c follow the same rule (xglFontFlushCore:
+# long long % 10, then / 10). dpcmp: the double compare of gifStateEffectFrame.
+SOFT_FLOAT_LIBCALLS = {0x002A7560: "litodp", 0x002A70E8: "dpmul", 0x002A7398: "dpdiv",
+                       0x002A76E8: "dptofp", 0x002A6D88: "fptodp", 0x002A4F60: "__divdi3",
+                       0x002A55F8: "__moddi3", 0x002A7510: "dpcmp"}
 CONTRACT_BASIS = ("X1's last patched cc1 and corrected assembler with -g; "
                   "see reports/x2-compiler-calibration.md")
 
@@ -606,6 +615,17 @@ def generate():
     symbols, _ = build_main(images["main"], main_map, overlay_units["ov02"]["tus"], stems["ov02"],
                             names_of["ov02"], ov02_sizes, out)
     table_units["main"] = dict(file=FILES["main"], sha256=images["main"].sha256, functions=symbols)
+    # Main code calls into OV01 at its load address (battleSlotsRefresh from DispMapObject). Named
+    # OV01 functions are offered to main's C as PROVIDE()s; a main or OV02 name always wins.
+    # Address labels (func_00A9B7D8, called by textDrawAll) are offered too: a hand edit of the
+    # output was lost at the next regeneration (2026-11-08).
+    taken = set(main_names.values()) | set(names_of["ov02"].values())
+    out["config/symbols/main.externals.ld"] += "".join(
+        f"PROVIDE({name} = 0x{va:08X}); /* ov01 */\n" for va, name in sorted(names_of["ov01"].items())
+        if name not in taken)
+    out["config/symbols/main.externals.ld"] += "".join(
+        f"PROVIDE({name} = 0x{va:08X}); /* libgcc */\n"
+        for va, name in sorted(SOFT_FLOAT_LIBCALLS.items()))
     out["config/symbols/estimated-functions.json"] = json_text(dict(
         schema="x2-estimated-functions/1", provenance="estimated",
         note=["Function starts and sizes inferred by tools/tu/map_infer.py, names from annotations",

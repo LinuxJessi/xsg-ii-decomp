@@ -2,6 +2,7 @@
 #include "main/TiDrawCollision.h"
 #include "main/TiMRPackage.h"
 #include "main/TiMtnBlend.h"
+#include "main/nml_model_set.h"
 #include "main/test_128.h"
 #include "main/tu026.h"
 #include "main/xenoActor.h"
@@ -14,21 +15,121 @@ INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorPoolInit);
 
 #include "shared.h"
 
+typedef struct XenoMatrix {
+    float m[4][4];
+} XenoMatrix;
+
+/* Header of a PXY motion pack (actor->pack). */
+typedef struct PxyHeader {
+    char magic[4];
+    float version;
+    u32 flags;                              /* 0x08: bit 0x2000 = per-geometry shadow mask */
+    unsigned char unmodeled_0c[0x54 - 0xC];
+    int rangeOffset;                        /* 0x54: bytes from the pack to its PxyRange */
+    unsigned char unmodeled_58[4];
+    int jointMatrixCount;                   /* 0x5C */
+    int geometryCount;                      /* 0x60 */
+    int jointMatrixOffset;                  /* 0x64: bytes from the pack to its joint matrices */
+    unsigned char unmodeled_68[4];
+    int geometryOffset;                     /* 0x6C: bytes from the pack to its PxyGeometry array */
+    unsigned char unmodeled_70[0x8C - 0x70];
+    float radius;                           /* 0x8C */
+    unsigned char unmodeled_90[0xD0 - 0x90];
+    int subPackOffset;                      /* 0xD0: bytes from the pack to a second pack, 0 if none */
+} PxyHeader;
+
+typedef struct PxyRange {
+    unsigned char unmodeled_00[0x18];
+    int zwrite;                             /* 0x18 */
+} PxyRange;
+
+typedef struct PxyGeometry {
+    unsigned char unmodeled_00[0x20];
+    u32 flags;                              /* 0x20: bit 0x100000 = casts a shadow */
+    unsigned char unmodeled_24[0x70 - 0x24];
+} PxyGeometry;
+
+/* Motion hierarchy (HRC) of an actor (actor->table). */
+typedef struct XenoHrc {
+    unsigned char unmodeled_00[0xC];
+    u32 numTransform;                       /* 0x0C */
+    int index10;                            /* 0x10: the three indices sum to the focus joint */
+    int index14;                            /* 0x14 */
+    int index18;                            /* 0x18 */
+    int focus;                              /* 0x1C */
+    unsigned char unmodeled_20[0x3C - 0x20];
+    u32 count;                              /* 0x3C: item count */
+    unsigned char unmodeled_40[0x4C - 0x40];
+    int dataOffset;                         /* 0x4C: bytes from the table to its items */
+    unsigned char unmodeled_50[0x5C - 0x50];
+    u32 flags;                              /* 0x5C: bit 4 = has a focus joint */
+} XenoHrc;
+
+typedef struct XenoLight {
+    unsigned char unmodeled_000[0x12C];
+    float intensity;                        /* 0x12C */
+    unsigned char unmodeled_130[0x180 - 0x130];
+} XenoLight;
+
 typedef struct XenoActor {
-    unsigned char unmodeled_000[0x10];
+    unsigned short attr;                    /* 0x000: bit 2 = has global matrices */
+    unsigned char unmodeled_002[0x10 - 0x2];
     float rowA[3];                          /* 0x010 */
     unsigned char unmodeled_01c[0x50 - 0x1C];
     float rowB[3];                          /* 0x050 */
     unsigned char unmodeled_05c[0x80 - 0x5C];
-    unsigned char block80[0x10];            /* 0x080 */
+    DoublewordAlignedVector4 position;      /* 0x080 */
     float rowC[3];                          /* 0x090 */
-    unsigned char unmodeled_09c[0x100 - 0x9C];
-    float localMatrix[4][4];                /* 0x100 */
-    unsigned char unmodeled_140[0x5A0 - 0x140];
+    unsigned char unmodeled_09c[0xBC - 0x9C];
+    u32 drawFlags;                          /* 0x0BC */
+    float alpha;                            /* 0x0C0 */
+    int drawMode;                           /* 0x0C4 */
+    unsigned char unmodeled_0c8[4];
+    float modeValue;                        /* 0x0CC */
+    int renderFlags;                        /* 0x0D0 */
+    float renderValue;                      /* 0x0D4 */
+    unsigned char unmodeled_0d8[4];
+    unsigned char lightSource[0x100 - 0xDC]; /* 0x0DC */
+    XenoMatrix localMatrix;                 /* 0x100 */
+    float focusX;                           /* 0x140 */
+    float focusY;                           /* 0x144 */
+    float modeValue2;                       /* 0x148 */
+    float modeValue3;                       /* 0x14C */
+    unsigned char unmodeled_150[0x158 - 0x150];
+    float shadowValue;                      /* 0x158 */
+    int shadowCount;                        /* 0x15C */
+    unsigned char unmodeled_160[4];
+    float shadowValue2;                     /* 0x164 */
+    float shadowValue3;                     /* 0x168 */
+    float heightOffset;                     /* 0x16C */
+    float fogA;                             /* 0x170 */
+    float fogB;                             /* 0x174 */
+    float fogC;                             /* 0x178 */
+    float fogD;                             /* 0x17C */
+    float modeValue4;                       /* 0x180 */
+    unsigned char unmodeled_184[4];
+    float alphaScale;                       /* 0x188 */
+    unsigned char unmodeled_18c[4];
+    XenoLight light;                        /* 0x190 */
+    XenoLight sourceLight;                  /* 0x310 */
+    float color[4];                         /* 0x490 */
+    unsigned char colorBlock[0x10];         /* 0x4A0 */
+    unsigned char sourceBlock[0x10];        /* 0x4B0 */
+    unsigned char visibility[0x20];         /* 0x4C0 */
+    unsigned char block4E0[0x20];           /* 0x4E0 */
+    u32 geometryMask[8];                    /* 0x500: one bit per shadow-casting geometry */
+    unsigned char block520[0x20];           /* 0x520 */
+    unsigned char shadowA[0x10];            /* 0x540 */
+    unsigned char shadowA2[0x10];           /* 0x550 */
+    unsigned char shadowB[0x10];            /* 0x560 */
+    unsigned char shadowB2[0x10];           /* 0x570 */
+    unsigned char shadowC[0x10];            /* 0x580 */
+    unsigned char colorIndex;               /* 0x590 */
+    unsigned char unmodeled_591[0x5A0 - 0x591];
     void *overrideMatrix;                   /* 0x5A0 */
-    unsigned char unmodeled_5a4[0x5A8 - 0x5A4];
+    struct XenoActor *parent;               /* 0x5A4 */
     int slotIndex;                          /* 0x5A8 */
-    unsigned char unmodeled_5ac[0x5CC - 0x5AC];
+    struct XenoActor *children[8];          /* 0x5AC */
     u32 flags;                              /* 0x5CC: func_0028AF28 sets bit 0x400; XenoActorSetSelector sets 0x10 */
     float transformScale;                   /* 0x5D0: XenoActorUpdateLinkMatrix passes it as the scale; XenoActorApplySourceValue stores source_value here */
     int mode;                               /* 0x5D4: XenoActorCheckMode compares it with its argument */
@@ -36,20 +137,32 @@ typedef struct XenoActor {
     int requested_mode;                     /* 0x5DC: XenoActorRequestMode stores its argument here */
     float cachedValue;                      /* 0x5E0 */
     int cachedSelector;                     /* 0x5E4 */
-    unsigned char unmodeled_5e8[0x620 - 0x5E8];
+    unsigned char unmodeled_5e8[0x5EC - 0x5E8];
+    PxyHeader *pack;                        /* 0x5EC */
+    int effect;                             /* 0x5F0 */
+    unsigned char unmodeled_5f4[0x614 - 0x5F4];
+    int pamActive;                          /* 0x614 */
+    unsigned char unmodeled_618[0x620 - 0x618];
     int link;                               /* 0x620 */
-    unsigned char unmodeled_624[0x640 - 0x624];
+    unsigned char unmodeled_624[0x634 - 0x624];
+    int pamFrame;                           /* 0x634 */
+    unsigned char unmodeled_638[0x640 - 0x638];
     int handle640[4];                       /* 0x640: its address is passed to callees (the 0x60-byte channel of XenoActorSetSelector); element 1 is stored by func_0028B2F0 */
     int flags650;                           /* 0x650 */
     unsigned char unmodeled_654[0x660 - 0x654];
     int source_value;                       /* 0x660 */
     unsigned char unmodeled_664[0x6A0 - 0x664];
     int flags6A0;                           /* 0x6A0: the channel flags; XenoActorSetSelector gates its setup on bit 0x2 */
-    unsigned char unmodeled_6A4[0x708 - 0x6A4];
-    struct XenoActorEntry *entry;           /* 0x708 */
-    unsigned char unmodeled_70C[0x710 - 0x70C];
-    struct XenoActorTable *table;           /* 0x710 */
-    unsigned char unmodeled_714[0x7A4 - 0x714];
+    unsigned char unmodeled_6A4[0x700 - 0x6A4];
+    struct XenoActorEntry *motionKeys[4];   /* 0x700: one per mode slot; XenoActorSetSelector reads slot 2 */
+    XenoHrc *table;                         /* 0x710 */
+    void *pamData;                          /* 0x714 */
+    unsigned char unmodeled_718[4];
+    XenoMatrix *matrices;                   /* 0x71C */
+    XenoMatrix *globalMatrices;             /* 0x720 */
+    unsigned char unmodeled_724[0x79C - 0x724];
+    int state;                              /* 0x79C: tu248 writes it; XenoActorDrawMotion reads and clears it */
+    unsigned char unmodeled_7a0[0x7A4 - 0x7A0];
     short activeItem;                       /* 0x7A4: item index XenoActorRefreshItems compares against its loop counter */
 } XenoActor;
 
@@ -70,7 +183,7 @@ void tiMRStateSetValue(void *, float);
 void XenoActorRelease(int);
 int func_0029A6D0(int);
 int func_0029A980(int);
-void XenoActorPushMatrix(void);
+void XenoActorPushMatrix(XenoActor *actor);
 void xglCurMatrixSet(f32 *);
 void xglCurApplyVector(Vector4 *, const Vector4 *);
 void xacEvalTransform(float *, int *, float);
@@ -210,13 +323,6 @@ typedef struct XenoActorEntry {
     f32 value;                      /* +0x08 */
 } XenoActorEntry;
 
-typedef struct XenoActorTable {
-    unsigned char unmodeled_00[0x3C];
-    u32 count;                      /* +0x3C */
-    unsigned char unmodeled_40[0x4C - 0x40];
-    int dataOffset;                 /* +0x4C: bytes from the table to its items */
-} XenoActorTable;
-
 typedef struct XenoActorItem {
     unsigned char unmodeled_00[0x04];
     f32 weight;                     /* +0x04 */
@@ -239,7 +345,7 @@ f32 XenoActorSetSelector(XenoActor *actor, int selector)
     }
     actor->cachedSelector = selector;
     result = tiMRPackageSelectEntryB(actor->handle640, selector);
-    entry = actor->entry;
+    entry = actor->motionKeys[2];
     if (entry != 0) {
         f32 entryValue = entry->value;
 
@@ -328,7 +434,7 @@ extern unsigned char XenoActorItemTextActive[];
 /* XenoActorRefreshItems: draws each table item; the active item uses its own text. */
 void XenoActorRefreshItems(XenoActor *actor)
 {
-    XenoActorTable *table;
+    XenoHrc *table;
     XenoActorItem *item;
     u32 itemIndex;
 
@@ -365,7 +471,7 @@ int XenoActorMulMatrix(struct XenoActor *actor, int unusedArg, void *matrix) {
         if (actor->overrideMatrix != 0) {
             xglMatrixMul(matrix, matrix, actor->overrideMatrix);
         } else {
-            xglMatrixMul(matrix, matrix, actor->localMatrix);
+            xglMatrixMul(matrix, matrix, &actor->localMatrix);
         }
         result = 1;
     }
@@ -381,7 +487,7 @@ int XenoActorMulVector(struct XenoActor *actor, int unusedArg, Vector4 *vector) 
         if (actor->overrideMatrix != 0) {
             xglVectorMulMat(vector, actor->overrideMatrix, vector);
         } else {
-            xglVectorMulMat(vector, actor->localMatrix, vector);
+            xglVectorMulMat(vector, actor->localMatrix.m, vector);
         }
         result = 1;
     }
@@ -409,8 +515,352 @@ void XenoActorSetVector(XenoActor *actor, float x, float y, float z) {
     tiMRPackageSetVector(actor->handle640, x, y, z);
 }
 
+extern char D_0068D7A0[], D_0068D7C0[], D_0068D7E0[], D_0068D828[];
+void func_00295EE8(XenoActor *actor, XenoMatrix *global, XenoMatrix *local);
+void func_001BAA98(int state);
+void func_001BB6E8(float *row);
+void func_001BA248(unsigned char *color);
+void nmlModelSetZwrite(int enabled);
+void nmlModelSetTransparency(float alpha);
+void func_001BBB18(void);
+void func_001ADBC4(XenoLight *light, void *source, void *block);
+void func_001BB96C(XenoLight *light);
+void func_001BB9F4(void);
+void func_001BBA78(void);
+void func_001BAE88(void *block);
+void func_001BB0D8(float r, float g, float b, float a);
+void func_001BAA34(void);
+void func_001BA924(void);
+void func_001BB3CC(float value);
+void func_001BB628(Vector4 *position);
+void func_001BBAB0(void);
+void func_001BA794(void);
+void func_001BACD4(int mode, float a, float b, float c);
+void func_001BADA8(float a, float b);
+XenoMatrix *func_001D2B20(int size);
+void func_001BADE8(XenoMatrix *joints, XenoMatrix *global);
+void func_001BAE28(XenoMatrix *global);
+void tiMotionUpdateVisibility(int *handle, void *visibility);
+void func_001BAE58(int frame);
+void func_001BB4AC(int effect);
+void func_001BA9E4(void);
+void func_001BA618(float a, float b);
+void func_001BBCCC(void *a, void *b, void *c);
+void func_001BBE3C(void *a, void *b);
+void *memset(void *dst, int value, unsigned int size);
+void func_001BC038(void *a, void *b, int count, u32 *mask, float x, float y, float z);
+void func_001BA278(void);
+void func_001BA9A0(float value);
+void func_001BAC70(int flags);
+int pxySubmitModel(PxyHeader *pack);
+int func_001BBB70(void);
+
+/* actor->drawFlags bits tested by XenoActorDrawMotion; names with a number are set elsewhere and not recovered yet. */
+#define XENO_DRAW_COLOR 0x1               /* apply the color block and tint */
+#define XENO_DRAW_SKIP_ONCE 0x2           /* cleared on the draw that is skipped */
+#define XENO_DRAW_HIDDEN 0x4
+#define XENO_DRAW_LIGHT 0x8
+#define XENO_DRAW_LIGHT_SOURCE 0x10       /* use sourceLight, refreshed from lightSource */
+#define XENO_DRAW_LIGHT_ACTIVE 0x20       /* the light has positive intensity */
+#define XENO_DRAW_FOCUS_PENDING 0x40
+#define XENO_DRAW_OFFSET_B 0x80
+#define XENO_DRAW_FOCUS_LOCKED 0x100
+#define XENO_DRAW_FLAG_200 0x200
+#define XENO_DRAW_ALPHA 0x10000
+#define XENO_DRAW_RENDER_2 0x20000        /* adds render flag 2 */
+#define XENO_DRAW_SHADOW_PROJECT 0x40000
+#define XENO_DRAW_SHADOW_STENCIL 0x80000
+#define XENO_DRAW_FLAG_100000 0x100000
+#define XENO_DRAW_FLAG_200000 0x200000
+#define XENO_DRAW_FLAG_800000 0x800000
+#define XENO_DRAW_FLAG_2000000 0x2000000
+#define XENO_DRAW_PARENT_FADE 0x4000000   /* fade by alphaScale */
+#define XENO_DRAW_FLAG_8000000 0x8000000
+#define XENO_DRAW_DREW 0x10000000         /* set when the pack drew something */
+/* Any of these (or a shadow count) enters the shadow/focus block. */
+#define XENO_DRAW_POST_MASK 0xA0C01C0
+#define XENO_RENDER_FLAG_2 2
+/* First three bytes of PxyHeader.magic, "pxy" read little-endian. */
+#define PXY_MAGIC 0x797870
+
 /* XenoActorDrawMotion: draws the motion pack (HRC, global matrices and PAM data) of the actor. */
-INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorDrawMotion);
+void XenoActorDrawMotion(XenoActor *actor)
+{
+    PxyHeader *pack;
+    XenoMatrix *localMatrix;
+    void *visibility;
+    PxyHeader *jointPack;
+    XenoMatrix *joints;
+    XenoMatrix *jointBase;
+    PxyHeader *subPack;
+    PxyRange *range;
+    PxyGeometry *geometry;
+    XenoLight *light;
+    XenoHrc *hrc;
+    XenoMatrix *focus;
+    DoublewordAlignedVector4 position;
+    int renderFlags;
+    u32 flags;
+    float scale;
+    int joint;
+    int part;
+    int child;
+
+    if (actor == 0) {
+        assertFailed(xenoActorAssertExpr, xenoActorAssertFile, 0x5BB);
+    }
+    /* original keeps this redundant actor != 0 test below; removing it moves code */
+    actor->drawFlags &= ~XENO_DRAW_DREW;
+    if (actor->drawFlags & (XENO_DRAW_SKIP_ONCE | XENO_DRAW_HIDDEN)) {
+        actor->drawFlags &= ~2;
+        return;
+    }
+    XenoActorPushMatrix(actor);
+    if (actor->globalMatrices != 0 && (actor->attr & 2)) {
+        if (actor->table == 0) {
+            assertFailed(D_0068D7A0, xenoActorAssertFile, 0x5CE);
+        }
+        if (actor->globalMatrices == 0) {
+            assertFailed(D_0068D7C0, xenoActorAssertFile, 0x5CF);
+        }
+        func_00295EE8(actor, actor->globalMatrices, &actor->localMatrix);
+        if (actor->attr & 4) {
+            XenoActorRefreshItems(actor);
+        }
+    }
+    if (actor != 0 && (pack = actor->pack) != 0 && (*(long long *) pack->magic & 0xFFFFFF) == PXY_MAGIC) {
+        localMatrix = &actor->localMatrix;
+        if (actor->state != 0) {
+            func_001BAA98(actor->state);
+            actor->state = 0;
+        }
+        nmlModelSetDrawMatrix(localMatrix);
+        func_001BB6E8(actor->rowC);
+        if (actor->colorIndex != 0xFF) {
+            func_001BA248(&actor->colorIndex);
+        }
+        if (actor->parent != 0) {
+            func_001BB678(actor->parent->pack);
+            if ((actor->parent->drawFlags & XENO_DRAW_PARENT_FADE) && actor->parent->alphaScale < 1.0f) {
+                nmlModelSetStencil(1);
+                nmlModelSetZwrite(1);
+                nmlModelSetTransparency(actor->parent->alpha * actor->parent->alphaScale);
+                if (actor->parent->alpha * actor->parent->alphaScale <= 0.0f) {
+                    func_001BBB18();
+                    return;
+                }
+            }
+        } else {
+            if (actor->drawFlags & 8) {
+                light = &actor->light;
+                if (actor->drawFlags & XENO_DRAW_LIGHT_SOURCE) {
+                    light = &actor->sourceLight;
+                    func_001ADBC4(light, actor->lightSource, actor->sourceBlock);
+                }
+                func_001BB96C(light);
+                if (light->intensity > 0.0f) {
+                    actor->drawFlags |= XENO_DRAW_LIGHT_ACTIVE;
+                } else {
+                    actor->drawFlags &= ~XENO_DRAW_LIGHT_ACTIVE;
+                }
+                if (actor->drawFlags & XENO_DRAW_LIGHT_ACTIVE) {
+                    func_001BB9F4();
+                }
+            }
+            if (actor->drawFlags & XENO_DRAW_FLAG_100000) {
+                func_001BBA78();
+            }
+            if ((actor->drawFlags & XENO_DRAW_PARENT_FADE) && actor->alphaScale < 1.0f) {
+                nmlModelSetStencil(1);
+                nmlModelSetZwrite(1);
+                nmlModelSetTransparency(actor->alpha * actor->alphaScale);
+                if (actor->alpha * actor->alphaScale <= 0.0f) {
+                    func_001BBB18();
+                    return;
+                }
+            }
+        }
+        if (actor->drawFlags & 1) {
+            func_001BAE88(actor->colorBlock);
+            func_001BB0D8(actor->color[0], actor->color[1], actor->color[2], actor->color[3]);
+        }
+        if (actor->drawFlags & XENO_DRAW_ALPHA) {
+            range = (PxyRange *) ((char *) pack + pack->rangeOffset);
+            nmlModelSetStencil(1);
+            if (range->zwrite != 0) {
+                nmlModelSetZwrite(1);
+            }
+            nmlModelSetTransparency(actor->alpha);
+            if (actor->alpha <= 0.0f) {
+                func_001BBB18();
+                return;
+            }
+        }
+        if (actor->drawFlags & XENO_DRAW_FLAG_200000) {
+            func_001BAA34();
+        }
+        visibility = actor->visibility;
+        if (actor->drawFlags & XENO_DRAW_FLAG_800000) {
+            func_001BA924();
+        }
+        func_001BB44C(visibility);
+        func_001BB3CC(actor->modeValue3);
+        position = actor->position;
+        position.y += actor->heightOffset;
+        func_001BB628(&position);
+        if (actor->flags & 0x80) {
+            func_001BBAB0();
+        }
+        if (actor->drawFlags & XENO_DRAW_FLAG_200) {
+            func_001BA794();
+        }
+        switch (actor->drawMode) {
+        case 1:
+            func_001BACD4(1, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            if (actor->fogA != 0.0f || actor->fogB != 0.0f) {
+                func_001BADA8(actor->fogA, actor->fogB);
+            } else {
+                scale = 1.0f;
+                if (pack->radius >= 3.0f) {
+                    scale = 5.0f;
+                }
+                func_001BADA8(actor->fogC * scale, actor->fogD * scale);
+            }
+            break;
+        case 9:
+            func_001BACD4(5, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            break;
+        case 8:
+            func_001BACD4(4, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            func_001BADA8(actor->fogA, actor->fogB);
+            break;
+        case 2:
+            func_001BACD4(2, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            break;
+        case 3:
+            func_001BACD4(3, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            break;
+        }
+        if (actor->table != 0
+            && (actor->motionKeys[0] != 0 || actor->motionKeys[1] != 0 || actor->motionKeys[2] != 0
+                || actor->motionKeys[3] != 0)) {
+            jointPack = actor->pack;
+            if (actor->table->numTransform - 2 < jointPack->jointMatrixCount) {
+                assertFailed(D_0068D7E0, xenoActorAssertFile, 0x684);
+            }
+            if (jointPack->jointMatrixCount != 0) {
+                joints = func_001D2B20(jointPack->jointMatrixCount * 4);
+                jointBase = (XenoMatrix *) ((char *) jointPack + jointPack->jointMatrixOffset);
+                for (joint = 0; joint < jointPack->jointMatrixCount; joint++) {
+                    xglMatrixMul(&joints[joint], &actor->globalMatrices[joint + 2], &jointBase[joint]);
+                }
+                func_001BADE8(joints, &actor->globalMatrices[2]);
+                func_001BAE28(&actor->globalMatrices[2]);
+            }
+            if (actor->attr & 4) {
+                XenoActorRefreshItems(actor);
+            }
+            tiMotionUpdateVisibility(actor->handle640, visibility);
+            flags = actor->drawFlags;
+            if (!(flags & XENO_DRAW_FOCUS_LOCKED)) {
+                hrc = actor->table;
+                if (hrc->focus != 0 && (hrc->flags & 4)) {
+                    focus = &actor->matrices[hrc->index10 + hrc->index14 + hrc->index18];
+                    actor->drawFlags = flags | XENO_DRAW_FOCUS_PENDING;
+                    actor->focusX = focus->m[3][2];
+                    actor->focusY = focus->m[3][1];
+                } else {
+                    actor->focusX = 0.0f;
+                    actor->focusY = 0.0f;
+                }
+            }
+        } else if (actor->pamActive != 0) {
+            if (actor->pamData == 0) {
+                assertFailed(D_0068D828, xenoActorAssertFile, 0x6AE);
+            }
+            func_001BAE58(actor->pamFrame);
+        }
+        if (actor->effect != 0) {
+            func_001BB4AC(actor->effect);
+        }
+        if ((actor->drawFlags & XENO_DRAW_POST_MASK) || actor->shadowCount != 0) {
+            if (actor->drawFlags & XENO_DRAW_FLAG_2000000) {
+                func_001BA9E4();
+            }
+            if (actor->drawFlags & (XENO_DRAW_FOCUS_PENDING | XENO_DRAW_FOCUS_LOCKED)) {
+                func_001BA618(actor->focusX, actor->focusY);
+                actor->drawFlags &= ~XENO_DRAW_FOCUS_PENDING;
+                actor->drawFlags &= ~XENO_DRAW_FOCUS_LOCKED;
+            }
+            if (actor->drawFlags & XENO_DRAW_OFFSET_B) {
+                func_001BA618(actor->modeValue2, actor->modeValue3);
+            }
+            if (actor->drawFlags & XENO_DRAW_SHADOW_PROJECT) {
+                nmlModelSetStencil(1);
+                nmlModelSetZwrite(1);
+                nmlModelSetTransparency(actor->alpha);
+                func_001BBCCC(actor->shadowA, actor->shadowB, actor->shadowC);
+            } else if (actor->drawFlags & XENO_DRAW_SHADOW_STENCIL) {
+                func_001BBE3C(actor->shadowA, actor->shadowB);
+                func_001BBE3C(actor->shadowA2, actor->shadowB2);
+                actor->drawFlags &= ~XENO_DRAW_SHADOW_STENCIL;
+            }
+            if (actor->shadowCount != 0) {
+                if (pack->flags & 0x2000) {
+                    geometry = (PxyGeometry *) ((char *) pack + pack->geometryOffset);
+                    memset(actor->geometryMask, 0, 0x20);
+                    for (part = 0; part < pack->geometryCount; part++) {
+                        if (geometry->flags & 0x100000) {
+                            actor->geometryMask[part >> 5] |= 1 << (part & 0x1F);
+                        }
+                        geometry++;
+                    }
+                }
+                func_001BC038(actor->shadowA, actor->shadowB, actor->shadowCount, actor->geometryMask, actor->shadowValue,
+                              actor->shadowValue2, actor->shadowValue3);
+            }
+            if (actor->drawFlags & XENO_DRAW_FLAG_8000000) {
+                func_001BA278();
+            }
+        }
+        renderFlags = actor->renderFlags;
+        if (actor->drawFlags & XENO_DRAW_RENDER_2) {
+            renderFlags |= XENO_RENDER_FLAG_2;
+        }
+        subPack = actor->pack;
+        func_001BA9A0(actor->renderValue);
+        func_001BAC70(renderFlags);
+        pxySubmitModel(subPack);
+        if (func_001BBB70() != 0) {
+            actor->drawFlags |= XENO_DRAW_DREW;
+        }
+        if (subPack->subPackOffset != 0) {
+            func_001BB678(subPack);
+            nmlModelSetDrawMatrix(localMatrix);
+            if (actor->drawFlags & 1) {
+                func_001BAE88(actor->colorBlock);
+                func_001BB0D8(actor->color[0], actor->color[1], actor->color[2], actor->color[3]);
+            }
+            if (actor->drawFlags & 8) {
+                func_001BB96C(&actor->light);
+            }
+            if (actor->effect != 0) {
+                func_001BB4AC(actor->effect);
+            }
+            func_001BB44C(actor->block4E0);
+            func_001BB47C(actor->block520);
+            func_001BA9A0(actor->renderValue);
+            func_001BAC70(renderFlags);
+            pxySubmitModel((PxyHeader *) ((char *) subPack + subPack->subPackOffset));
+        }
+    }
+    for (child = 0; child < 8; child++) {
+        if (actor->children[child] != 0) {
+            XenoActorDrawMotion(actor->children[child]);
+        }
+    }
+}
+
 
 /* XenoActorReleaseAll: releases every record in the active table. */
 void XenoActorReleaseAll(void) {
@@ -468,7 +918,7 @@ int XenoActorGetPoolCount(void) {
 }
 
 void XenoActorTransformOffset(struct XenoActor *actor, int id) {
-    XenoActorPushMatrix();
-    xglCurMatrixSet(actor->localMatrix);
-    xglCurApplyVector(id, actor->block80);
+    XenoActorPushMatrix(actor);
+    xglCurMatrixSet(actor->localMatrix.m[0]);
+    xglCurApplyVector(id, &actor->position);
 }

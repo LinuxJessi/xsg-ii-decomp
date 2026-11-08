@@ -1,8 +1,6 @@
 #include "common.h"
 #include "shared.h"
 
-typedef float Matrix4[4][4];
-
 typedef union {
     u64 value;
     struct {

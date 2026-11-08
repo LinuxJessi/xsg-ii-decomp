@@ -4,8 +4,6 @@
 #include "main/tu170.h"
 #include "main/tu187.h"
 
-typedef float Matrix4[4][4];
-
 #include "quadword.h"
 #include "vu0_macro.h"
 /* Constants of the 32-bit LCG in the X1 port; the X2 code (sefRandf and its callers) steps the seed with 0xF82D and

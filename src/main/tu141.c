@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/TiGlobalColl.h"
+#include "main/cfePlugIn.h"
 #include "main/tu022.h"
 #include "main/tu146.h"
 #include "main/xgl_studio.h"
@@ -88,8 +89,6 @@ void cfeEvalSlotsInit(void) {
     }
 }
 
-extern int cfeSndRecordCount;
-extern unsigned char cfeSndRecords[];
 
 /* Empties the text table: count cfeSndRecordCount = 0 and the first 0x50-byte text record of cfeSndRecords
    (cfePlugIn appends records of that size and bumps the count). */
@@ -97,8 +96,8 @@ void cfePlugInTextReset(void) {
     int *field;
 
     cfeSndRecordCount = 0;
-    memset(cfeSndRecords, 0, 0x50);
-    field = (int *)(cfeSndRecords + 0x44);
+    memset(cfeSndRecords, 0, sizeof(CfeSndRecord));
+    field = &cfeSndRecords[0].duration;
     field[-1] = 0x7F;
     field[0] = 0;
 }
