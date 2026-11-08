@@ -3,6 +3,9 @@
 #include "main/tu012.h"
 #include "main/xgl_cd.h"
 #include "main/xgl_hdd.h"
+#include "main/control_entry.h"
+#include "main/xgl_dma.h"
+#include "main/xgl_font.h"
 
 struct request {
     u8 mode;
@@ -130,7 +133,7 @@ struct HddDirectoryEntry {
 extern u8 system_cnf[];
 int sceRead(int descriptor, void *buffer, int bytes);
 int xglHddCheck2(void);
-int xglHddCheckCore(void);
+static int xglHddCheckCore(void);
 extern int sceUmount(const char *path);
 int xglHddMcLoad(void *save);
 int xglHddUninstall(void);
@@ -183,6 +186,36 @@ int create_file(int card, int slot, const void *data, int size);
 #define HDD_LOAD_ERR_OPEN (-6)
 #define HDD_LOAD_ERR_READ (-7)
 #define HDD_LOAD_ERR_CLOSE (-8)
+/* The other sceOpen flag, and the 0555 and 0777 modes named above. */
+#define HDD_OPEN_READ_WRITE 3
+#define HDD_MODE_READ_ONLY 0x16d
+#define HDD_MODE_DIRECTORY 0x1ff
+#define HDD_SECTOR_SIZE 512
+/* sceDevctl: the largest free block; sceIoctl2: add a sub-partition. */
+#define HDD_DEVCTL_MAX_SECTORS 0x4801
+#define HDD_IOCTL2_ADD_SUBPARTITION 0x6801
+#define HDD_INSTALL_MIN_SECTORS 0x37ffff
+#define HDD_INSTALL_MIN_FREE_SECTORS 0x7ffff
+/* The leading directory record (lsn, size, name, date) xglHddMount compares. */
+#define HDD_CD_RECORD_SIZE 36
+/* xglHddErrorScreen: frames before the circle button is accepted, and the
+ * decide sound it plays (seVoiceStartDefault tag 1, id 2). */
+#define HDD_ERROR_WAIT_FRAMES 30
+#define HDD_ERROR_SE_DECIDE 0x01000002
+#define PAD_CIRCLE 0x0020
+/* xglHddMcCreate() */
+#define HDD_CREATE_ERR_MKDIR_ROOT (-10)
+#define HDD_CREATE_ERR_CLOSE_ROOT (-0x0c)
+#define HDD_CREATE_ERR_OPEN_DEVICE (-0x10)
+#define HDD_CREATE_ERR_ADD_PARTITION (-0x11)
+#define HDD_CREATE_ERR_CLOSE_DEVICE (-0x12)
+#define HDD_CREATE_ERR_OPEN_SAVE_DIR (-0x13)
+#define HDD_CREATE_ERR_MKDIR_SAVE (-0x14)
+#define HDD_CREATE_ERR_SAVE_DIR_CLOSE (-0x15)
+#define HDD_CREATE_ERR_WRITE_ICON (-0x16)
+#define HDD_CREATE_ERR_WRITE_PAYLOAD (-0x17)
+#define HDD_CREATE_ERR_CHSTAT_SAVE (-0x18)
+#define HDD_CREATE_ERR_UNMOUNT (-0x19)
 
 /* The saved image begins with the transfer header. icon.sys occupies +0x40
  * through +0x403; the game payload starts at +0x440. The gaps remain unknown. */
@@ -211,17 +244,105 @@ extern char parentDirEntryName[8];
 extern u8 HddActive;
 extern char mount_device[6];
 
+/* xglHddErrorScreen's view of the port 0 pad record (owned by xgl_pad.c):
+ * only the newly-pressed button mask at +0x2a. */
+typedef struct HddPadRecord {
+    unsigned char unmodeled_00[0x2a];
+    unsigned short pressed;
+    unsigned char unmodeled_2c[0x80 - 0x2c];
+} HddPadRecord;
+
+extern HddPadRecord PadData[2];
+
+/* The render state's error-screen flag at +0x84, set while
+ * xglHddErrorScreen owns the display. */
+typedef struct HddRenderState {
+    unsigned char unmodeled_00[0x84];
+    unsigned char errorScreenActive;
+} HddRenderState;
+
+extern HddRenderState sRender;
+/* The GIF packet xglHddErrorScreen sends before each frame (6 quadwords on
+ * DMA channel 2), and the error message it prints. */
+extern u8 D_00645190[];
+extern char hddLoadErrorText[];
+/* "pfs0:/xenosaga.hdd", the installed copy of the disc file record, and
+ * "xenosaga.00", the disc file whose record it must equal. */
+extern char hddcheck[];
+extern char cd_filename[];
+/* The error codes xglHddMcCreate returns (negated) for the xglHddMcCheckCore
+ * results -1 to -4, and the "1G" size argument of the save partition. */
+extern unsigned char D_006451F0[];
+extern unsigned char mcPartitionSize1G[];
+extern u8 *WorkEnd;
+
+void seVoiceStartDefault(int id);
+/* Fills the caller's 0x2c-byte disc file record, the directory record first
+ * (tu022.c reads its lsn and size). */
+int xglCdCheckFile(const char *path, void *record);
+extern int sceIoctl2(int descriptor, int command, const void *input,
+                     unsigned int input_size, void *output, unsigned int output_size);
+extern int sceMkdir(const char *path, int mode);
+int xglHddCheck(void);
+void xglHddErrorScreen(void);
+int xglHddMountPartition(int mountFlags);
+void decrypt(void);
+
 /* Core HDD status probe. In this build it always reports -1; xglHddCheck2 and xglHddCheck
  * compare the result with HDD_RESET_REQUIRED (-6). */
-int xglHddCheckCore(void) {
+static int xglHddCheckCore(void) {
     return -1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddCheck2);
+int xglHddCheck2(void)
+{
+    int result = xglHddCheckCore();
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddCheck);
+    if (result == HDD_RESET_REQUIRED) {
+        xglHddActivate(0x103);
+        return HDD_NOT_READY;
+    }
+    return result;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddErrorScreen);
+int xglHddCheck(void)
+{
+    int result;
+
+    if (HddActive == 3) {
+        xglHddErrorScreen();
+        xglHddActivate(0);
+        xglHddActivate(0x102);
+    }
+
+    result = xglHddCheckCore();
+    if (result == HDD_RESET_REQUIRED) {
+        xglHddErrorScreen();
+        xglHddActivate(0);
+        xglHddActivate(0x102);
+        return HDD_NOT_READY;
+    }
+    return result;
+}
+
+void xglHddErrorScreen(void)
+{
+    int waitFrames = HDD_ERROR_WAIT_FRAMES;
+
+    sRender.errorScreenActive = 1;
+    for (;;) {
+        xglDmaDirectNormal(2, (u32)D_00645190, 6);
+        xglFontPrint(48, 64, 0xffffff, hddLoadErrorText);
+        if (waitFrames > 0) {
+            waitFrames--;
+        } else if (PadData[0].pressed & PAD_CIRCLE) {
+            break;
+        }
+        xglSleep();
+    }
+    seVoiceStartDefault(HDD_ERROR_SE_DECIDE);
+    sRender.errorScreenActive = 0;
+}
 
 int xglHddMcLoadMount(void)
 {
@@ -383,7 +504,52 @@ int xglHddMcLoad(void *save)
     return xglHddMcUmount();
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", Judge_MakeNewFolder);
+int Judge_MakeNewFolder(void)
+{
+    struct HddDirectoryEntry entry;
+    int directoryCount;
+    int entriesRead;
+    int result;
+    int descriptor;
+    int closeResult;
+    char *entryName;
+
+    directoryCount = 0;
+    result = sceDopen(pfs1RootPath);
+    if (result < 0) {
+        return result;
+    }
+    descriptor = result;
+
+    for (entriesRead = 0; entriesRead < HDD_DIR_SCAN_LIMIT; entriesRead++) {
+        result = sceDread(descriptor, &entry);
+        if (result <= 0) {
+            break;
+        }
+
+        entryName = entry.name;
+        if (strcmp(entryName, currentDirEntryName) != 0 &&
+            strcmp(entryName, parentDirEntryName) != 0 &&
+            (entry.stat.mode & 0xF000) == 0x1000 &&
+            entry.stat.privateData[0] == 0xFFFF &&
+            entry.stat.privateData[1] == 0xFFFF) {
+            directoryCount++;
+            if (directoryCount >= HDD_MAX_FOLDERS) {
+                break;
+            }
+        }
+    }
+
+    closeResult = sceDclose(descriptor);
+    if (result >= 0) {
+        result = closeResult;
+    }
+
+    if (result < 0) {
+        return result;
+    }
+    return directoryCount < HDD_MAX_FOLDERS;
+}
 
 int Judge_MakeNewSavedata(int descriptor, int card)
 {
@@ -555,7 +721,117 @@ int create_file(int card, int slot, const void *data, int size)
     return result;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddMcCreate_001A5B80);
+int xglHddMcCreate(struct HddCheckState *state)
+{
+    char *deviceName;
+    char path[HDD_PATH_MAX];
+    struct HddIoStat stat;
+    int result;
+    int descriptor;
+    int remountFailure;
+    struct HddSaveImage *transfer;
+    int checkResult;
+
+    result = -1;
+    xglHddMcUmount();
+    if (sceMount(hdd_mc_path, commonname, HDD_MOUNT_READ_WRITE, 0, 0) < 0) {
+        return -1;
+    }
+
+    make_fullpath(path, state->status, -1);
+    if (state->status >= 0 && (descriptor = sceDopen(path)) >= 0) {
+        if (sceDclose(descriptor) < 0) {
+            result = HDD_CREATE_ERR_SAVE_DIR_CLOSE;
+            goto unmount_card;
+        }
+    } else {
+        checkResult = xglHddMcCheckCore(state);
+        if (checkResult < 0) {
+            result = -(int)D_006451F0[~checkResult];
+            xglHddMcUmount();
+            return result;
+        }
+        if (checkResult == 1) {
+            if (xglHddMcUmount() < 0) {
+                return HDD_CREATE_ERR_UNMOUNT;
+            }
+            remountFailure = -1;
+            deviceName = commonname;
+            descriptor = sceOpen(deviceName, HDD_OPEN_READ_WRITE);
+            if (descriptor < 0) {
+                return HDD_CREATE_ERR_OPEN_DEVICE;
+            }
+
+            result = 0;
+            if (sceIoctl2(descriptor, HDD_IOCTL2_ADD_SUBPARTITION, mcPartitionSize1G, 3, 0, 0) < 0) {
+                result = HDD_CREATE_ERR_ADD_PARTITION;
+            }
+            if (sceClose(descriptor) < 0) {
+                result = HDD_CREATE_ERR_CLOSE_DEVICE;
+            }
+            if (result != 0) {
+                return result;
+            }
+            if (sceMount(hdd_mc_path, commonname, HDD_MOUNT_READ_WRITE, 0, 0) < 0) {
+                return remountFailure;
+            }
+            result = 0;
+        }
+
+        descriptor = sceDopen(yoursaves);
+        if (descriptor < 0) {
+            if (sceMkdir(yoursaves, HDD_MODE_DIRECTORY) < 0) {
+                result = HDD_CREATE_ERR_MKDIR_ROOT;
+                goto unmount_card;
+            }
+        } else if (sceDclose(descriptor) < 0) {
+            result = HDD_CREATE_ERR_CLOSE_ROOT;
+            goto unmount_card;
+        }
+
+        if (state->status < 0) {
+            xglHddMcUmount();
+            return result;
+        }
+
+        descriptor = sceDopen(path);
+        if (descriptor < 0 && descriptor != HDD_ERR_NOENT) {
+            result = HDD_CREATE_ERR_OPEN_SAVE_DIR;
+            goto unmount_card;
+        }
+
+        if (descriptor == HDD_ERR_NOENT) {
+            if (sceMkdir(path, HDD_MODE_DIRECTORY) < 0) {
+                result = HDD_CREATE_ERR_MKDIR_SAVE;
+                goto unmount_card;
+            }
+            stat.attributes = 0xc4a7;
+            if (sceChstat(path, &stat, 2) < 0) {
+                result = HDD_CREATE_ERR_CHSTAT_SAVE;
+                goto unmount_card;
+            }
+        } else {
+            result = HDD_CREATE_ERR_SAVE_DIR_CLOSE;
+            if (sceDclose(descriptor) < 0) {
+                goto unmount_card;
+            }
+        }
+    }
+
+    result = HDD_CREATE_ERR_WRITE_ICON;
+    transfer = state->transfer.image;
+    if (create_file(state->status, 1, transfer->iconSystem, MC_ICON_SYS_SIZE) >= 0) {
+        result = HDD_CREATE_ERR_WRITE_PAYLOAD;
+        if (create_file(state->status, 2, &transfer->payloadStart,
+                        transfer->header.end - transfer->header.begin) >= 0) {
+            result = 0;
+        }
+    }
+
+unmount_card:
+    xglHddMcUmount();
+    return result;
+}
 
 int xglHddMcSave(const struct HddSaveRequest *save)
 {
@@ -572,8 +848,8 @@ int xglHddMcSave(const struct HddSaveRequest *save)
 }
 
 /* Mounts the game partition (mount_device, "pfs0:") with the given sceMount flags. */
-void xglHddMountPartition(int mountFlags) {
-    sceMount(mount_device, partitionname, mountFlags, 0, 0U);
+int xglHddMountPartition(int mountFlags) {
+    return sceMount(mount_device, partitionname, mountFlags, 0, 0U);
 }
 
 int xglHddUninstall(void)
@@ -658,4 +934,78 @@ void decrypt(void)
     partitionname[17] = system_cnf[0x1a];
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddMount);
+int xglHddMount(void)
+{
+    int mount_result;
+    int readiness;
+    int device_result;
+    int close_result;
+    int capacity;
+    int descriptor;
+    int mismatch;
+    int index;
+    u8 *buffer;
+    u8 *reference;
+
+    decrypt();
+    if (HddActive >= 2) {
+        return -1;
+    }
+
+    HddActive = 0;
+    readiness = xglHddCheck();
+    if (readiness != 0) {
+        return readiness == HDD_NOT_READY ? -1 : readiness;
+    }
+
+    mount_result = xglHddMountPartition(HDD_MOUNT_READ_ONLY);
+    if (mount_result == -5) {
+        return mount_result;
+    }
+    if (mount_result < 0 && mount_result != HDD_ERR_BUSY) {
+        if (mount_result == HDD_ERR_NOENT) {
+            device_result = sceDevctl(xgl_hdd_device, HDD_DEVCTL_FREE_SECTORS_TOTAL, 0, 0,
+                                      &capacity, 4);
+            if (device_result < 0) {
+                return -2;
+            }
+            if (capacity <= HDD_INSTALL_MIN_SECTORS) {
+                return -4;
+            }
+            device_result = sceDevctl(xgl_hdd_device, HDD_DEVCTL_MAX_SECTORS, 0, 0, 0, 0);
+            if (device_result <= HDD_INSTALL_MIN_FREE_SECTORS) {
+                return -4;
+            }
+            return 0;
+        }
+        return -2;
+    }
+
+    descriptor = sceOpen(hddcheck, HDD_OPEN_READ, HDD_MODE_READ_ONLY);
+    if (descriptor < 0) {
+        return -5;
+    }
+
+    buffer = (u8 *)(((u32)WorkEnd + 63) & (u32)-64);
+    reference = buffer + HDD_SECTOR_SIZE;
+    buffer[0] = 1;
+    reference[0] = 2;
+    mismatch = 0;
+    if (sceRead(descriptor, buffer, HDD_SECTOR_SIZE) < 0) {
+        mismatch = 1;
+    } else {
+        xglCdCheckFile(cd_filename, reference);
+        for (index = 0; index < HDD_CD_RECORD_SIZE; index++) {
+            if (buffer[index] != reference[index]) {
+                mismatch = 1;
+                break;
+            }
+        }
+    }
+    close_result = sceClose(descriptor);
+    if (close_result < 0 || mismatch == 1) {
+        return -5;
+    }
+    HddActive = 1;
+    return 1;
+}

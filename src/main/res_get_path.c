@@ -504,7 +504,7 @@ void xglCdReadFileSlot(const char *name, void *buffer, int tag, u32 slot) {
 }
 
 /* Probes path and fills a file record (lsn at +0, size at +4, see tu022.c); -1 when missing, 0 otherwise. */
-int xglCdCheckFile(const char *path, unsigned int *record);
+int xglCdCheckFile(const char *path, void *record);
 
 /* Writes the extension ".xap" with its NUL at extension, the end of path, then probes path
  * (xglCdCheckFile): -1 when the .xap file is missing, 0 otherwise. */
