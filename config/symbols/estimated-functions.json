@@ -10326,7 +10326,7 @@
      2
     ],
     [
-     "func_0012BEF0",
+     "scePadInit",
      1228528,
      320,
      2
@@ -10344,7 +10344,7 @@
      2
     ],
     [
-     "func_0012C150",
+     "scePadPortOpen",
      1229136,
      484,
      2
@@ -10368,13 +10368,13 @@
      2
     ],
     [
-     "func_0012C4A0",
+     "scePadRead",
      1229984,
      356,
      2
     ],
     [
-     "func_0012C608",
+     "scePadGetState",
      1230344,
      120,
      2
@@ -10392,7 +10392,7 @@
      2
     ],
     [
-     "func_0012C720",
+     "scePadGetReqState",
      1230624,
      80,
      2
@@ -10404,7 +10404,7 @@
      2
     ],
     [
-     "func_0012C7A8",
+     "scePadInfoAct",
      1230760,
      288,
      2
@@ -10416,25 +10416,25 @@
      2
     ],
     [
-     "func_0012C9E8",
+     "scePadInfoMode",
      1231336,
      312,
      2
     ],
     [
-     "func_0012CB20",
+     "scePadSetMainMode",
      1231648,
      180,
      2
     ],
     [
-     "func_0012CBD8",
+     "scePadSetActDirect",
      1231832,
      192,
      2
     ],
     [
-     "func_0012CC98",
+     "scePadSetActAlign",
      1232024,
      216,
      2
@@ -10452,13 +10452,13 @@
      2
     ],
     [
-     "func_0012CED8",
+     "scePadInfoPressMode",
      1232600,
      92,
      2
     ],
     [
-     "func_0012CF38",
+     "scePadEnterPressMode",
      1232696,
      84,
      2
