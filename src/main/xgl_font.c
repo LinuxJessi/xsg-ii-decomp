@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/xgl_font.h"
+#include "main/xgl_cd.h"
 #include "gs.h"
 #include "main/xgl_2.h"
 
@@ -103,8 +104,9 @@ struct FontState {
     unsigned char proportional_mode;
     unsigned char horizontal_shift;
     int stored_value;
-    unsigned char unmodeled_18[4];
-    unsigned char *queue_cursor;
+    /* XS1 keeps the queue write cursor at +0x1c; XS2 moved it to the end of
+     * the block (FontStateFromWindow.queue_cursor, FS + 0x128). */
+    unsigned char unmodeled_18[8];
 };
 
 /* The partial state view shares the complete 0x20-byte retail allocation. */
@@ -197,7 +199,106 @@ int xglFontGetStringWidth2(const char *text, int delimiter);
 /* Defined here, not with the data above: moving it before the functions that use it changes the original code or data order. */
 extern unsigned char spCodeParameterSizeTable[8];
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontDebugMode);
+/*
+ * The FontState fields from offset 4 on, read through the scaffold symbol D_008DAD00 (FS + 4),
+ * up to the queue write cursor that sits just below the print-queue slot array. The queue
+ * functions write their command bytes through queue_cursor; xglFontResetPrintQueue points it
+ * at the end of the slot array, where the first record goes.
+ */
+struct FontStateFromWindow {
+    void *window_image;
+    unsigned short flags;
+    unsigned char font_selection;
+    unsigned char debug_mode;
+    unsigned short line_height;
+    unsigned short character_spacing;
+    unsigned char default_width;
+    unsigned char text_mode;
+    unsigned char proportional_mode;
+    unsigned char unmodeled_0f[1];
+    int stored_value;
+    unsigned char unmodeled_14[8];
+    signed char compact_width;
+    unsigned char unmodeled_1d[0x107];
+    unsigned char *queue_cursor;
+};
+
+extern struct FontStateFromWindow D_008DAD00;
+
+/* The state block ends where the print-queue slot array begins. */
+#define FONT_STATE_BLOCK() ((struct FontStateFromWindow *) &fontPrintQueueBuffer - 1)
+
+typedef struct XglPacket XglPacket;
+typedef struct FontDrawCursor FontDrawCursor;
+/* A queued draw callback: called with the draw cursor and the argument
+ * registered with it. */
+typedef void (*FontExtFunc)(FontDrawCursor *cursor, void *argument);
+
+struct FontExtCommand {
+    unsigned char opcode;
+    unsigned char function_high;
+    unsigned char function_middle;
+    unsigned char function_low;
+    unsigned char argument_high;
+    unsigned char argument_mid_high;
+    unsigned char argument_mid_low;
+    unsigned char argument_low;
+};
+
+
+/* xglFontPrintExtFunc's queue record: the callback command, then the byte
+ * that ends the record. */
+struct FontExtRecord {
+    struct FontExtCommand command;
+    unsigned char terminator;
+};
+
+struct FontHexCommand {
+    unsigned char opcode;
+    unsigned char radix;
+    unsigned char digits_minus_one;
+    unsigned char value_high;
+    unsigned char value_mid_high;
+    unsigned char value_mid_low;
+    unsigned char value_low;
+    unsigned char terminator;
+};
+
+struct FontGsRegisterWrite {
+    unsigned long long value;
+    unsigned long long register_address;
+};
+
+/* The two debug-mode GS packets; xglFontDebugMode patches their FRAME value. */
+struct FontModePacket {
+    unsigned int vif_commands[4];
+    unsigned long long gif_tag[2];
+    struct FontGsRegisterWrite frame;
+    struct FontGsRegisterWrite state_registers[5];
+};
+
+extern struct FontModePacket ModeEnv[2];
+/* "font0.us" and "font1.us". */
+extern char fontTexture0Path[];
+extern char fontTexture1Path[];
+void xglFontPrintExtFunc(int ot, FontExtFunc function, void *argument);
+
+void xglFontDebugMode(int mode)
+{
+    if (mode >= 0) {
+        struct FontModePacket *packets = ModeEnv;
+        int value0;
+        unsigned long long value1;
+
+        D_008DAD00.debug_mode = mode;
+        value1 = D_008DAD00.debug_mode | 0x50000ULL;
+        value0 = 0x50000;
+        value0 |= ((unsigned int)D_008DAD00.debug_mode & 0xff) + 0x23;
+
+        packets[0].frame.value = value0;
+        packets[1].frame.value = value1;
+    }
+}
 
 /* Nonzero for the EUC-JP codes drawn from the font texture's own glyph rows: the whole hiragana,
  * Greek and NEC special rows, and a few symbols of rows 1 and 2. */
@@ -266,9 +367,52 @@ int xglFontGetKanjiClutUV(int code, int *clut)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00194FA8);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", set_ot);
+void set_ot(int ot)
+{
+    struct FontStateFromWindow *state = FONT_STATE_BLOCK();
+    FontQueueSlot *slot = &fontPrintQueueBuffer.slots[((ot >> 22) & 0x3c) / 4];
+    unsigned char *queue_bytes = (unsigned char *)&fontPrintQueueBuffer;
+    unsigned short offset = state->queue_cursor - queue_bytes;
+    unsigned char *previous = queue_bytes + slot->selfOffset;
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", set_xyz);
+    previous[0] = offset;
+    previous[1] = offset >> 8;
+    slot->selfOffset = offset;
+    state->queue_cursor[0] = 0;
+    state->queue_cursor[1] = 0;
+    state->queue_cursor += 2;
+}
+
+void set_xyz(int x, int y, int color)
+{
+    set_ot(color);
+    if ((unsigned int)x >= FONT_COMPACT_X_LIMIT || y < 0 || y >= FONT_COMPACT_Y_LIMIT) {
+        struct FontPositionCommand *command = (struct FontPositionCommand *)D_008DAD00.queue_cursor;
+
+        command->opcode = FONT_OP_POSITION;
+        command->flags = 7;
+        command->x_high = x >> 8;
+        command->x_low = x;
+        command->y_high = y >> 8;
+        command->y_low = y;
+        command->color_high = color >> 16;
+        command->color_middle = color >> 8;
+        command->color_low = color;
+        D_008DAD00.queue_cursor += sizeof(*command);
+    } else {
+        struct FontCompactPositionCommand *command = (struct FontCompactPositionCommand *)D_008DAD00.queue_cursor;
+
+        command->x_high = (x >> 8) + FONT_OP_POS_X_0;
+        command->x_low = x;
+        command->y_high = (y >> 8) + FONT_OP_POS_Y_0;
+        command->y_low = y;
+        command->opcode = FONT_OP_DEPTH;
+        command->color_high = color >> 16;
+        command->color_middle = color >> 8;
+        command->color_low = color;
+        D_008DAD00.queue_cursor += sizeof(*command);
+    }
+}
 
 int xglFontGetSPcodeSize(int code, const unsigned char *text)
 {
@@ -306,7 +450,23 @@ int xglFontGetSPcodeSize(int code, const unsigned char *text)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontPrintSub);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontPrintDirectCore);
+void xglFontPrintDirectCore(const char *text)
+{
+    while (*text != 0) {
+        unsigned char code = *text;
+
+        if (code < 32) {
+            int remaining = xglFontGetSPcodeSize(code, (const unsigned char *)text);
+
+            while (remaining > 0) {
+                *D_008DAD00.queue_cursor++ = *text++;
+                remaining--;
+            }
+        }
+        *D_008DAD00.queue_cursor++ = *text++;
+    }
+    *D_008DAD00.queue_cursor++ = 0;
+}
 
 void xglFontPrintf(int x, int y, unsigned int color, void *arg)
 {
@@ -337,7 +497,28 @@ void xglFontPrintDirectOT(int ot, const char *text)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontPrintExtFunc);
+void xglFontPrintExtFunc(int ot, FontExtFunc function, void *argument)
+{
+    struct FontStateFromWindow *state = &D_008DAD00;
+    struct FontExtRecord *record;
+    unsigned int function_address = (unsigned int)function;
+    unsigned int argument_word = (unsigned int)argument;
+
+    if (state->flags & FONT_STATE_ENABLED & 0xffff) {
+        set_ot(ot);
+        record = (struct FontExtRecord *)D_008DAD00.queue_cursor;
+        record->command.opcode = FONT_OP_CALLBACK;
+        record->command.function_high = function_address >> 16;
+        record->command.function_middle = function_address >> 8;
+        record->command.function_low = function_address;
+        record->command.argument_high = argument_word >> 24;
+        record->command.argument_mid_high = argument_word >> 16;
+        record->command.argument_mid_low = argument_word >> 8;
+        record->command.argument_low = argument_word;
+        record->terminator = 0;
+        D_008DAD00.queue_cursor += sizeof(*record);
+    }
+}
 
 /* Stores a value in the font state's stored_value field. */
 void xglFontSetStoredValue(int stored_value) {
@@ -346,31 +527,32 @@ void xglFontSetStoredValue(int stored_value) {
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontDebugPrintf);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontDebugHex);
+void xglFontDebugHex(int x, int y, unsigned int value, int digits)
+{
+    struct FontStateFromWindow *state = &D_008DAD00;
+    struct FontHexCommand *command;
 
-/*
- * The FontState fields from offset 4 on, read through the scaffold symbol D_008DAD00 (FS + 4),
- * up to the queue end word that sits just below the print-queue slot array.
- */
-struct FontStateFromWindow {
-    void *window_image;
-    unsigned short flags;
-    unsigned char font_selection;
-    unsigned char debug_mode;
-    unsigned short line_height;
-    unsigned short character_spacing;
-    unsigned char default_width;
-    unsigned char text_mode;
-    unsigned char proportional_mode;
-    unsigned char unmodeled_0f[1];
-    int stored_value;
-    unsigned char unmodeled_14[8];
-    signed char compact_width;
-    unsigned char unmodeled_1d[0x107];
-    FontQueueSlot *queue_end;
-};
+    if ((state->flags & (FONT_STATE_ENABLED | FONT_STATE_DEBUG_PRINT))
+            == (FONT_STATE_ENABLED | FONT_STATE_DEBUG_PRINT)
+        && digits != 0) {
+        if (state->debug_mode == 0) {
+            x <<= 1;
+            y <<= 1;
+        }
+        set_xyz(x, y, -1);
+        command = (struct FontHexCommand *)D_008DAD00.queue_cursor;
+        command->opcode = FONT_OP_RESET;
+        command->radix = FONT_OP_HEX_DIGITS;
+        command->digits_minus_one = digits - 1;
+        command->value_high = value >> 24;
+        command->value_mid_high = value >> 16;
+        command->value_mid_low = value >> 8;
+        command->value_low = value;
+        command->terminator = 0;
+        D_008DAD00.queue_cursor += sizeof(*command);
+    }
+}
 
-extern struct FontStateFromWindow D_008DAD00;
 
 /* Advance of each printable ASCII character (32..127) in the debug font. */
 extern int D_0063E878[];
@@ -555,7 +737,7 @@ void xglFontResetPrintQueue(void)
     block = (struct FontStateFromWindow *) &fontPrintQueueBuffer - 1;
     block->stored_value = 0;
     block->text_mode = 0;
-    block->queue_end = slot;
+    block->queue_cursor = (unsigned char *) slot;
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197200);
@@ -593,10 +775,8 @@ struct FontEffectScratchPacket {
     u64 payload_count;
 };
 
-typedef struct XglPacket XglPacket;
-
 /* The font renderer's draw cursor, built by xglFontFlush at the scratchpad base. */
-typedef struct FontDrawCursor {
+struct FontDrawCursor {
     XglPacket *packet;
     short origin_x;
     unsigned char unmodeled_06[2];
@@ -631,9 +811,7 @@ typedef struct FontDrawCursor {
         struct FontEffectScratchPacket effect_packet;
         u64 qwords[(0x4000 - 0x30) / sizeof(u64)];
     } work;
-} FontDrawCursor;
-
-typedef void (*FontExtFunc)(FontDrawCursor *cursor, void *argument);
+};
 
 /* FONT_OP_EFFECT_MODE: how a glyph is drawn (cursor->effect). */
 #define FONT_EFFECT_PLAIN 1
@@ -683,17 +861,6 @@ struct FontLiteralHexCommand {
     unsigned char value_mid_high;
     unsigned char value_mid_low;
     unsigned char value_low;
-};
-
-struct FontExtCommand {
-    unsigned char opcode;
-    unsigned char function_high;
-    unsigned char function_middle;
-    unsigned char function_low;
-    unsigned char argument_high;
-    unsigned char argument_mid_high;
-    unsigned char argument_mid_low;
-    unsigned char argument_low;
 };
 
 struct FontIncludeCommand {
@@ -1166,7 +1333,85 @@ unsigned short xglFontCharToEuc(signed char character, unsigned char **text)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontReloadTexture);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontFlush);
+/* EE scratchpad RAM, where xglFontFlush builds the draw cursor. */
+#define SCRATCHPAD_BASE 0x70000000
+/* xglFontFlush's cursor defaults: screen origin, colour and alpha. */
+#define FONT_SCREEN_ORIGIN_X 0x700
+#define FONT_SCREEN_ORIGIN_Y 0x720
+#define FONT_COLOR_INITIAL 127
+#define FONT_ALPHA_SOURCE_BLEND 0x44
+#define GS_ALPHA_OPAQUE 0x80
+
+/* A queued record: the byte offset of the next record of its bucket, then
+ * the text. */
+struct FontQueueRecord {
+    unsigned char next_low;
+    unsigned char next_high;
+};
+
+extern XglPacket *xglPacketGetCurrent(void);
+extern void sceVif1PkCloseDirectHLCode(XglPacket *packet);
+void xglFontReloadTexture(FontDrawCursor *cursor, unsigned int request);
+void xglFontResetPrintQueue(void);
+/* The GS packets xglFontFlush closes with (6 quadwords in debug mode, then 2). */
+extern unsigned int D_0063ECD0[24];
+extern unsigned int D_0063ED30[8];
+
+void xglFontFlush(void)
+{
+    /* The font drawing cursor resides at the base of EE scratchpad RAM. */
+    struct FontDrawCursor *cursor = (struct FontDrawCursor *)SCRATCHPAD_BASE;
+    FontQueueSlot *slot;
+    int remaining;
+
+    *D_008DAD00.queue_cursor = 0;
+    cursor->depth = -1;
+    cursor->blue = FONT_COLOR_INITIAL;
+    cursor->green = FONT_COLOR_INITIAL;
+    cursor->red = FONT_COLOR_INITIAL;
+    if (D_008DAD00.debug_mode) {
+        cursor->offset_x = 0;
+        cursor->offset_y = 0;
+    } else {
+        cursor->offset_x = FONT_SCREEN_ORIGIN_X;
+        cursor->offset_y = FONT_SCREEN_ORIGIN_Y;
+    }
+    cursor->flags = 0;
+    cursor->effect_y = cursor->effect_x = cursor->effect = 1;
+    cursor->effect_red = 0;
+    cursor->scale_x = FONT_SCALE_ONE;
+    cursor->effect_green = 0;
+    cursor->primitive_flags = FONT_ALPHA_SOURCE_BLEND;
+    cursor->alpha = GS_ALPHA_OPAQUE;
+    cursor->effect_blue = 0;
+    cursor->primitive_mode = 0;
+    cursor->scale_y = FONT_SCALE_ONE;
+    remaining = FONT_QUEUE_BUCKETS - 1;
+    cursor->packet = xglPacketGetCurrent();
+    xglFontReloadTexture(cursor, 0x80000001);
+
+    slot = fontPrintQueueBuffer.slots;
+    do {
+        unsigned short offset = slot->link;
+        if (offset) {
+            do {
+                struct FontQueueRecord *record =
+                    (struct FontQueueRecord *)&fontPrintQueueBuffer.bytes[offset];
+                unsigned char *text = (unsigned char *)(record + 1);
+                offset = record->next_low + (record->next_high << 8);
+                xglFontFlushCore(cursor, text);
+            } while (offset);
+        }
+        remaining--;
+        slot++;
+    } while (remaining >= 0);
+    if (D_008DAD00.debug_mode) {
+        sceVif1PkAddDirectDataN(cursor->packet, D_0063ECD0, 6);
+    }
+    sceVif1PkAddDirectDataN(cursor->packet, D_0063ED30, 2);
+    sceVif1PkCloseDirectHLCode(cursor->packet);
+    xglFontResetPrintQueue();
+}
 
 int xglFontGetLoadAddress(void)
 {
@@ -1183,6 +1428,29 @@ void xglFontSetFlags(int flags)
     FONT_STATE_FLAGS = flags & (0xFFFF & ~FONT_STATE_DEBUG_PRINT);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontLoad);
+unsigned char xglFontLoad(int font_index, int load_flags)
+{
+    unsigned char previous_font;
+    int read_mode;
+
+    previous_font = D_008DAD00.font_selection;
+    D_008DAD00.font_selection = (unsigned char)font_index;
+    read_mode = 1;
+    if (load_flags == 0) {
+        if (font_index != 0) {
+            read_mode = 0;
+            load_flags = 1;
+        } else {
+            read_mode = 0;
+            load_flags = 1;
+        }
+    }
+    if (font_index == 0) {
+        xglCdReadFile(fontTexture0Path, D_008DAD00.window_image, read_mode, load_flags);
+    } else {
+        xglCdReadFile(fontTexture1Path, D_008DAD00.window_image, read_mode, load_flags);
+    }
+    return previous_font;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontInitial);
