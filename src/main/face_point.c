@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/sdv_033.h"
 #include "shared.h"
 #include "main/face_point.h"
 
@@ -8,7 +9,6 @@ void xglVectorOuter(Vector4 *destination, const Vector4 *left,
 void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source);
 
 typedef int s32;
-
 
 /*
  * One registered culling volume: the three vectors xglCullingMapSet and
@@ -48,20 +48,113 @@ typedef struct CullingMapEntry {
  */
 extern s32 cullingExistFlag[];
 int strcmp(const char *, const char *);
-extern int s_nIgnoreCulling;
+static int s_nIgnoreCulling = 0;
 extern const CullingMapEntry s_aCullingMap[70];
 
 /* _ApplyMatrix33: _ApplyMatrix33, verbatim X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", _ApplyMatrix33);
+void _ApplyMatrix33(register Vector4 *destination, register const Matrix4 *matrix, register const Vector4 *vector)
+{
+    __asm__ __volatile__(
+        "lqc2 $vf31,0(%2)\n\t"
+        "lqc2 $vf27,0(%1)\n\t"
+        "lqc2 $vf28,16(%1)\n\t"
+        "lqc2 $vf29,32(%1)\n\t"
+        "lqc2 $vf30,48(%1)\n\t"
+        "vmulax.xyz ACCxyz,$vf27xyz,$vf31x\n\t"
+        "vmadday.xyz ACCxyz,$vf28xyz,$vf31y\n\t"
+        "vmaddz.xyz $vf31xyz,$vf29xyz,$vf31z\n\t"
+        "sqc2 $vf31,0(%0)"
+        : : "r"(destination), "r"(matrix), "r"(vector) : "memory");
+}
 
 /* _ApplyMatrix: _ApplyMatrix, verbatim X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", _ApplyMatrix);
+void _ApplyMatrix(register Vector4 *destination, register const Matrix4 *matrix, register const Vector4 *vector)
+{
+    __asm__ __volatile__(
+        "lqc2 $vf31,0(%2)\n\t"
+        "lqc2 $vf27,0(%1)\n\t"
+        "lqc2 $vf28,16(%1)\n\t"
+        "lqc2 $vf29,32(%1)\n\t"
+        "lqc2 $vf30,48(%1)\n\t"
+        "vmulax.xyz ACCxyz,$vf27xyz,$vf31x\n\t"
+        "vmadday.xyz ACCxyz,$vf28xyz,$vf31y\n\t"
+        "vmaddaz.xyz ACCxyz,$vf29xyz,$vf31z\n\t"
+        "vmaddw.xyz $vf31xyz,$vf30xyz,$vf0w\n\t"
+        "sqc2 $vf31,0(%0)"
+        : : "r"(destination), "r"(matrix), "r"(vector) : "memory");
+}
 
 /* _ApplyMatrix2Mat: _ApplyMatrix2Mat, verbatim X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", _ApplyMatrix2Mat);
+void _ApplyMatrix2Mat(register Vector4 *destination, register const Matrix4 *matrix1, register const Matrix4 *matrix2, register const Vector4 *vector)
+{
+    __asm__ __volatile__(
+        "lqc2 $vf31,0(%3)\n\t"
+        "lqc2 $vf27,0(%1)\n\t"
+        "lqc2 $vf28,16(%1)\n\t"
+        "lqc2 $vf29,32(%1)\n\t"
+        "lqc2 $vf30,48(%1)\n\t"
+        "vmulax.xyz ACCxyz,$vf27xyz,$vf31x\n\t"
+        "vmadday.xyz ACCxyz,$vf28xyz,$vf31y\n\t"
+        "vmaddaz.xyz ACCxyz,$vf29xyz,$vf31z\n\t"
+        "vmaddw.xyz $vf31xyz,$vf30xyz,$vf0w\n\t"
+        "lqc2 $vf27,0(%2)\n\t"
+        "lqc2 $vf28,16(%2)\n\t"
+        "lqc2 $vf29,32(%2)\n\t"
+        "lqc2 $vf30,48(%2)\n\t"
+        "vmulax.xyz ACCxyz,$vf27xyz,$vf31x\n\t"
+        "vmadday.xyz ACCxyz,$vf28xyz,$vf31y\n\t"
+        "vmaddaz.xyz ACCxyz,$vf29xyz,$vf31z\n\t"
+        "vmaddw.xyz $vf31xyz,$vf30xyz,$vf0w\n\t"
+        "sqc2 $vf31,0(%0)"
+        : : "r"(destination), "r"(matrix1), "r"(matrix2), "r"(vector) : "memory");
+}
+
+void xglMatrixStackUnit(void);
+void xglMatrixStackTrans(CullingVolume *volume);
+void xglMatrixStackScale(Vector4 *destination);
+void xglMatrixStackRotX(float angle);
+void xglMatrixStackRotY(float angle);
+void xglMatrixStackRotZ(float angle);
+void xglMatrixStackSave(Matrix4 *matrix);
+void xglMatrixStackInverse(void);
+/* _ApplyMatrix33: _ApplyMatrix33, verbatim X1 twin (high). */ void _ApplyMatrix33(register Vector4 *destination, register const Matrix4 *matrix, register const Vector4 *vector);
+/* _ApplyMatrix: _ApplyMatrix, verbatim X1 twin (high). */ void _ApplyMatrix(register Vector4 *destination, register const Matrix4 *matrix, register const Vector4 *vector);
+extern const AlignedVector4 cullingForwardAxisVector;
+extern const AlignedVector4 cullingCornerLowerLeftVector;
+extern const AlignedVector4 cullingCornerLowerRightVector;
+extern const AlignedVector4 cullingCornerUpperRightVector;
+extern const AlignedVector4 cullingCornerUpperLeftVector;
 
 /* culling_matrix: culling_matrix (medium); builds the volume transform from the corner constants. */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", culling_matrix);
+void culling_matrix(CullingVolume *volume)
+{
+    AlignedVector4 forwardAxis;
+    AlignedVector4 lowerLeft;
+    AlignedVector4 lowerRight;
+    AlignedVector4 upperRight;
+    AlignedVector4 upperLeft;
+
+    xglMatrixStackUnit();
+    xglMatrixStackTrans(volume);
+    xglMatrixStackRotY(volume->rotation.y);
+    xglMatrixStackRotX(volume->rotation.x);
+    xglMatrixStackRotZ(volume->rotation.z);
+    xglMatrixStackScale(&volume->scale);
+    xglMatrixStackSave(&volume->transform);
+    xglMatrixStackInverse();
+    xglMatrixStackSave(&volume->inverseTransform);
+    forwardAxis = cullingForwardAxisVector;
+    _ApplyMatrix33(&volume->normalizedDirection, &volume->transform, &forwardAxis);
+    xglVectorNormal_001A9200(&volume->normalizedDirection, &volume->normalizedDirection);
+    lowerLeft = cullingCornerLowerLeftVector;
+    lowerRight = cullingCornerLowerRightVector;
+    upperRight = cullingCornerUpperRightVector;
+    upperLeft = cullingCornerUpperLeftVector;
+    _ApplyMatrix(&volume->cullingCorners[0], &volume->transform, &lowerLeft);
+    _ApplyMatrix(&volume->cullingCorners[1], &volume->transform, &lowerRight);
+    _ApplyMatrix(&volume->cullingCorners[2], &volume->transform, &upperRight);
+    _ApplyMatrix(&volume->cullingCorners[3], &volume->transform, &upperLeft);
+}
 
 /* An empty per-volume debug display hook; the caller still passes the volume. */
 void culling_cell_disp(CullingVolume *volume)
@@ -69,10 +162,67 @@ void culling_cell_disp(CullingVolume *volume)
 }
 
 /* _FacePoint: _FacePoint, verbatim X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", _FacePoint);
+void _FacePoint(Vector4 *destination, const Vector4 *lineStart, const Vector4 *lineEnd, const Vector4 *normal, const Vector4 *planePoint)
+{
+    __asm__ __volatile__(
+        "lqc2 $vf22,0(%3)\n\t"
+        "lqc2 $vf20,0(%1)\n\t"
+        "lqc2 $vf21,0(%2)\n\t"
+        "lqc2 $vf23,0(%4)\n\t"
+        "vmulw.xyz vf14xyz,vf22xyz,vf22w\n\t"
+        "vmulw.xyz vf14xyz,vf14xyz,vf20w\n\t"
+        "vadd.xyz vf23xyz,vf23xyz,vf14xyz\n\t"
+        "vaddx.x vf10x,vf0x,vf22x\n\t"
+        "vaddy.x vf11x,vf0x,vf22y\n\t"
+        "vaddz.x vf12x,vf0x,vf22z\n\t"
+        "vsub.xyz vf19xyz,vf21xyz,vf20xyz\n\t"
+        "vmulax.x ACCx,vf10x,vf21x\n\t"
+        "vmadday.x ACCx,vf11x,vf21y\n\t"
+        "vmaddz.x vf17x,vf12x,vf21z\n\t"
+        "vmulax.x ACCx,vf10x,vf19x\n\t"
+        "vmadday.x ACCx,vf11x,vf19y\n\t"
+        "vmaddz.x vf18x,vf12x,vf19z\n\t"
+        "vmulax.x ACCx,vf10x,vf23x\n\t"
+        "vmadday.x ACCx,vf11x,vf23y\n\t"
+        "vmaddz.x vf16x,vf12x,vf23z\n\t"
+        "vdiv Q,vf0w,vf18x\n\t"
+        "vsub.x vf16x,vf17x,vf16x\n\t"
+        "vwaitq\n\t"
+        "vmulq.x vf16x,vf16x,Q\n\t"
+        "vmulx.xyz vf15xyz,vf19xyz,vf16x\n\t"
+        "vsub.xyz vf15xyz,vf21xyz,vf15xyz\n\t"
+        "sqc2 vf15,0(%0)"
+        : : "r"(destination), "r"(lineStart), "r"(lineEnd), "r"(normal), "r"(planePoint) : "memory");
+}
 
-/* _CheckLine: _CheckLine, verbatim X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", _CheckLine);
+void xglVectorScaleXYZ(Vector4 *destination, const Vector4 *source, float scale);
+void xglVectorSubXYZ_001B7468(Vector4 *destination, const Vector4 *left, const Vector4 *right);
+void xglVectorAddXYZ_001B7430(Vector4 *destination, const Vector4 *left, const Vector4 *right);
+
+float _CheckLine(const Vector4 *offsetStart, const Vector4 *offsetEnd,
+                 const Vector4 *endpointStart, const Vector4 *endpointEnd,
+                 const Vector4 *planePoint, const Vector4 *planeNormal)
+{
+    Vector4 adjustedStart;
+    Vector4 adjustedEnd;
+    Vector4 endpointDelta;
+    Vector4 pointFromStart;
+    Vector4 normalOffset;
+
+    xglVectorScaleXYZ(&normalOffset, planeNormal,
+                      planeNormal->w * planePoint->w * 0.5f);
+    xglVectorScaleXYZ(&adjustedStart, offsetStart, planePoint->w * 0.5f);
+    xglVectorScaleXYZ(&adjustedEnd, offsetEnd, planePoint->w * 0.5f);
+    xglVectorSubXYZ_001B7468(&adjustedStart, endpointStart, &adjustedStart);
+    xglVectorSubXYZ_001B7468(&adjustedEnd, endpointEnd, &adjustedEnd);
+    xglVectorAddXYZ_001B7430(&adjustedStart, &adjustedStart, &normalOffset);
+    xglVectorAddXYZ_001B7430(&adjustedEnd, &adjustedEnd, &normalOffset);
+    xglVectorSubXYZ_001B7468(&endpointDelta, &adjustedEnd, &adjustedStart);
+    xglVectorSubXYZ_001B7468(&pointFromStart, planePoint, &adjustedStart);
+    return endpointDelta.x * pointFromStart.x +
+           endpointDelta.y * pointFromStart.y +
+           endpointDelta.z * pointFromStart.z;
+}
 
 void plane_from_points(const Vector4 *point0, const Vector4 *point1,
                               const Vector4 *point2, Vector4 *plane)
@@ -95,30 +245,140 @@ void plane_from_points(const Vector4 *point0, const Vector4 *point1,
     plane->w = -(normal.x * point0->x + normal.y * point0->y + normal.z * point0->z);
 }
 
-/* setup_occlusion: setup_occlusion, X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", setup_occlusion);
 
-/* check_occlusion: check_occlusion (medium). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", check_occlusion);
+void xglVectorZero_001B7408(Vector4 *destination);
+
+void setup_occlusion(CullingVolume *volume, XglCamera *camera)
+{
+    AlignedVector4 corner0;
+    AlignedVector4 corner1;
+    AlignedVector4 corner2;
+    AlignedVector4 corner3;
+    AlignedVector4 zero;
+
+    _ApplyMatrix(&corner0, &camera->travel.inverseTransform, &volume->cullingCorners[0]);
+    _ApplyMatrix(&corner1, &camera->travel.inverseTransform, &volume->cullingCorners[1]);
+    _ApplyMatrix(&corner2, &camera->travel.inverseTransform, &volume->cullingCorners[2]);
+    _ApplyMatrix(&corner3, &camera->travel.inverseTransform, &volume->cullingCorners[3]);
+
+    corner0.z = corner0.z * -1.0f;
+    corner1.z = corner1.z * -1.0f;
+    corner2.z = corner2.z * -1.0f;
+    corner3.z = corner3.z * -1.0f;
+
+    volume->occlusionDepth = corner0.z;
+    if (corner1.z < volume->occlusionDepth) {
+        volume->occlusionDepth = corner1.z;
+    }
+    if (corner2.z < volume->occlusionDepth) {
+        volume->occlusionDepth = corner2.z;
+    }
+    if (corner3.z < volume->occlusionDepth) {
+        volume->occlusionDepth = corner3.z;
+    }
+
+    xglVectorZero_001B7408(&zero);
+    plane_from_points(&corner0, &corner1, &corner2, &volume->occlusionPlanes[0]);
+    if (0.0f < volume->occlusionPlanes[0].w) {
+        plane_from_points(&zero, &corner0, &corner1, &volume->occlusionPlanes[1]);
+        plane_from_points(&zero, &corner1, &corner2, &volume->occlusionPlanes[2]);
+        plane_from_points(&zero, &corner2, &corner3, &volume->occlusionPlanes[3]);
+        plane_from_points(&zero, &corner3, &corner0, &volume->occlusionPlanes[4]);
+    } else {
+        plane_from_points(&corner2, &corner1, &corner0, &volume->occlusionPlanes[0]);
+        plane_from_points(&zero, &corner1, &corner0, &volume->occlusionPlanes[1]);
+        plane_from_points(&zero, &corner2, &corner1, &volume->occlusionPlanes[2]);
+        plane_from_points(&zero, &corner3, &corner2, &volume->occlusionPlanes[3]);
+        plane_from_points(&zero, &corner0, &corner3, &volume->occlusionPlanes[4]);
+    }
+}
+
+/* check_occlusion: tests a point against the volume's depth bound and its five occlusion planes. */
+s32 check_occlusion(CullingVolume *volume, XglCamera *camera, const Vector4 *point)
+{
+    float distance;
+    AlignedVector4 cameraPoint;
+
+    _ApplyMatrix(&cameraPoint, &camera->travel.inverseTransform, point);
+    cameraPoint.z = cameraPoint.z * -1.0f;
+    distance = cameraPoint.z - cameraPoint.w;
+    if (volume->occlusionDepth > distance) {
+        return 0;
+    }
+    if (cameraPoint.x * volume->occlusionPlanes[0].x + cameraPoint.y * volume->occlusionPlanes[0].y
+                   + cameraPoint.z * volume->occlusionPlanes[0].z + volume->occlusionPlanes[0].w > -cameraPoint.w) {
+        return 0;
+    }
+    if (cameraPoint.x * volume->occlusionPlanes[1].x + cameraPoint.y * volume->occlusionPlanes[1].y
+                   + cameraPoint.z * volume->occlusionPlanes[1].z + volume->occlusionPlanes[1].w > -cameraPoint.w) {
+        return 0;
+    }
+    if (cameraPoint.x * volume->occlusionPlanes[2].x + cameraPoint.y * volume->occlusionPlanes[2].y
+                   + cameraPoint.z * volume->occlusionPlanes[2].z + volume->occlusionPlanes[2].w > -cameraPoint.w) {
+        return 0;
+    }
+    if (cameraPoint.x * volume->occlusionPlanes[3].x + cameraPoint.y * volume->occlusionPlanes[3].y
+                   + cameraPoint.z * volume->occlusionPlanes[3].z + volume->occlusionPlanes[3].w > -cameraPoint.w) {
+        return 0;
+    }
+    if (cameraPoint.x * volume->occlusionPlanes[4].x + cameraPoint.y * volume->occlusionPlanes[4].y
+                   + cameraPoint.z * volume->occlusionPlanes[4].z + volume->occlusionPlanes[4].w > -cameraPoint.w) {
+        return 0;
+    }
+    return 1;
+}
 
 /* xglCullingCheck: xglCullingCheck, X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", xglCullingCheck);
+extern CullingVolume cullingVolumes[];
+
+s32 xglCullingCheck(XglCamera *camera, const Vector4 *point)
+{
+    s32 index = 0;
+    s32 result = 0;
+
+    if (s_nIgnoreCulling == 0) {
+        index = 0;
+        while (index < cullingExistFlag[0]) {
+            setup_occlusion(&cullingVolumes[index], camera);
+            result = check_occlusion(&cullingVolumes[index], camera, point);
+            if (result != 0) {
+                break;
+            }
+            index++;
+        }
+    }
+    return result;
+}
 
 s32 xglCullingExist(void) {
     return cullingExistFlag[0];
 }
 
-/* func_001B6CF8: no name proposed; no X1 twin with the same map-last-entry call. */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", func_001B6CF8);
+/* xglCullingMapLastCheck: no name proposed; no X1 twin with the same map-last-entry call. */
+/* Source table of the culling map selected by xglCullingMapSet (0 when none). */
+extern const s32 *cullingMapSource;
 
-extern signed char D_00966D10;
-extern int D_00967AF4;
+void xglCullingMapLastCheck(void)
+{
+    int i;
+
+    if (cullingMapSource != 0) {
+        for (i = 0; i < 12; i++) {
+            if (cullingMapSource[i] >= 0) {
+                continue;
+            }
+            break;
+        }
+    }
+}
+
+extern signed char cullingMapName;
 
 /* xglCullingMapInit: xglCullingMapInit (high); clears the culling state. */
 void xglCullingMapInit(void) {
     cullingExistFlag[0] = 0;
-    D_00966D10 = 0;
-    D_00967AF4 = 0;
+    cullingMapName = 0;
+    cullingMapSource = 0;
     s_nIgnoreCulling = 0;
 }
 
@@ -140,13 +400,92 @@ s32 check_culling_map(const char *name) {
     return result;
 }
 
-/* xglCullingMapSet: xglCullingMapSet, X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", xglCullingMapSet);
+typedef struct CullingMapNameSource {
+    u8 unmodeled_000[0x10];
+    char name_with_prefix[32];
+} CullingMapNameSource;
+
+extern const CullingMapNameSource *D_00967AF8;
+unsigned int strlen(const char *string);
+char *strcpy(char *destination, const char *source);
+
+void xglCullingMapSet(const CullingMapNameSource *source)
+{
+    s32 boxIndex = 0;
+    s32 index;
+    const float *box;
+    CullingVolume *volume;
+
+    cullingExistFlag[0] = 0;
+    cullingMapSource = 0;
+    if (strlen(source->name_with_prefix) < 32) {
+        strcpy((char *)&cullingMapName, source->name_with_prefix);
+    }
+    index = check_culling_map((const char *)&cullingMapName);
+    if (index < 0) {
+        return;
+    }
+    cullingMapSource = s_aCullingMap[index].source;
+    D_00967AF8 = source;
+    if (s_aCullingMap[index].entryCount == 0) {
+        return;
+    }
+    {
+    for (;;) {
+        box = s_aCullingMap[index].entryCount + (boxIndex++) * 9;
+        volume = &cullingVolumes[cullingExistFlag[0]];
+        if (cullingExistFlag[0] >= 10) {
+            return;
+        }
+        if (box[6] < 0.0f) {
+            return;
+        }
+        volume->position.x = box[0];
+        volume->position.y = box[1];
+        volume->position.z = box[2];
+        volume->position.w = 1.0f;
+        volume->rotation.x = box[3];
+        volume->rotation.y = box[4];
+        volume->rotation.z = box[5];
+        volume->scale.x = box[6];
+        volume->scale.y = box[7];
+        volume->scale.z = box[8];
+        volume->scale.w = 1.0f;
+        culling_matrix(volume);
+        cullingExistFlag[0]++;
+    }
+    }
+}
 
 /* xglCullingMapCreate: xglCullingMapCreate, X1 twin (high). */
-INCLUDE_ASM("asm/main/nonmatchings/face_point", xglCullingMapCreate);
+extern float s_aCullingBase[9];
 
-extern CullingVolume cullingVolumes[];
+/* Appends the base volume (s_aCullingBase) to the map while there is room; the
+ * body sits in a do { } while (0), which the -O0 nop after the prologue shows. */
+void xglCullingMapCreate(void)
+{
+    do {
+        const float *record = s_aCullingBase;
+        CullingVolume *volume = &cullingVolumes[cullingExistFlag[0]];
+
+        if (cullingExistFlag[0] >= 10) {
+            break;
+        }
+        volume->position.x = record[0];
+        volume->position.y = record[1];
+        volume->position.z = record[2];
+        volume->position.w = 1.0f;
+        volume->rotation.x = record[3];
+        volume->rotation.y = record[4];
+        volume->rotation.z = record[5];
+        volume->scale.x = record[6];
+        volume->scale.y = record[7];
+        volume->scale.z = record[8];
+        volume->scale.w = 1.0f;
+        culling_matrix(volume);
+        cullingExistFlag[0]++;
+    } while (0);
+}
 
 /* xglCullingMapDisp: xglCullingMapDisp (medium); loops culling_cell_disp over the volumes. */
 void xglCullingMapDisp(void) {
@@ -173,4 +512,34 @@ void xglCullingIgnoreOff(void)
 /* Empty in this build: the original body is a bare return. */
 void xglCullingMapDebug(void)
 {
+}
+
+#include "quadword.h"
+
+s32 xglCullingCheck(XglCamera *camera, const Vector4 *point);
+
+int nmlModelCalcClipCulling(int camera, int point)
+{
+    int result;
+
+    result = 0;
+    result = result | xglCullingCheck(camera, point);
+    return result;
+}
+
+void xglVectorZero_001B7408(register Vector4 *destination)
+{
+    QuadwordZero(destination);
+}
+
+#include "vu0_macro.h"
+
+void xglVectorAddXYZ_001B7430(register Vector4 *destination, register const Vector4 *left, register const Vector4 *right)
+{
+    Vu0AddVectorXYZ(destination, left, right);
+}
+
+void xglVectorSubXYZ_001B7468(register Vector4 *destination, register const Vector4 *minuend, register const Vector4 *subtrahend)
+{
+    Vu0SubVectorXYZ(destination, minuend, subtrahend);
 }

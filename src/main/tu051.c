@@ -1,11 +1,12 @@
 #include "common.h"
+#include "main/sdv_033.h"
 #include "main/pad.h"
 #include "main/tu021.h"
 #include "main/tu051.h"
 #include "main/tu086.h"
 #include "main/xenoActor.h"
 #include "main/xgl_font.h"
-#include "main/xgl_2_031.h"
+#include "main/xgl_2.h"
 
 INCLUDE_ASM("asm/main/nonmatchings/tu051", func_001D9280);
 
@@ -180,7 +181,7 @@ struct CameraAnchor {
     float rotation_y;
 };
 
-void func_001AA8F4();
+void xglMatrixStackTrans();
 struct CameraAnchor *cameraAnchorGet(Vector4 *, int, int);
 void xglMatrixStackRotX(float);
 void xglMatrixStackRotY(float);
@@ -198,7 +199,7 @@ struct CameraAnchor *cameraApplyAnchorOffset(Vector4 *position, int anchorIndex,
         xglMatrixStackUnit();
         xglMatrixStackRotY(node->rotation_y);
         xglMatrixStackRotX(node->rotation_x);
-        func_001AA8F4(offset);
+        xglMatrixStackTrans(offset);
         xglMatrixStackSave(matrix);
         position->x += matrix[12];
         position->y += matrix[13];
@@ -294,10 +295,6 @@ typedef struct UwamonoProbe {
     int ground;                             /* +0x18 */
 } UwamonoProbe;
 
-typedef struct StudioCamera {
-    int unmodeled_00;
-    int mode;                               /* +0x04: 4 while the player has control */
-} StudioCamera;
 
 extern int D_0069B988[];
 extern int D_0069B978;
@@ -318,7 +315,7 @@ extern UwamonoProbe D_002B9CB8;
 short D_0069B9A8[3] = { -1, -1, -1 };
 short D_0069B9B0[3] = { -1, -1, -1 };
 
-StudioCamera *xglStudioGetCamera2(int index);
+XglCamera *xglStudioGetCamera2(int index);
 int uwamonoUpdateLadderState(void);
 void XenoActorHidePart(struct XenoActor *actor, const char *part);
 void XenoActorShowPart(struct XenoActor *actor, const char *part);
@@ -507,7 +504,7 @@ void uwamonoPlayerUpdate(void)
     if (gameWork.control & CONTROL_PAUSED) {
         return;
     }
-    if (xglStudioGetCamera2(0)->mode != 4) {
+    if (xglStudioGetCamera2(0)->state != 4) {
         return;
     }
     if (gameWork.fadeTimer != 0) {

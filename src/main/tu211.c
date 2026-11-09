@@ -1,6 +1,6 @@
 #include "common.h"
 #include "main/tu213.h"
-#include "main/xgl_2_028.h"
+#include "main/xgl_2.h"
 
 INCLUDE_ASM("asm/main/nonmatchings/tu211", quadDrawTransformed);
 

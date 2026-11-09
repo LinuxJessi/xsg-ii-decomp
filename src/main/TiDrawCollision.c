@@ -1,7 +1,7 @@
 #include "common.h"
 #include "main/TiDrawCollision.h"
 #include "main/tu026.h"
-#include "main/xgl_2_031.h"
+#include "main/xgl_2.h"
 
 INCLUDE_ASM("asm/main/nonmatchings/TiDrawCollision", tiDrawCollisionBuildRing);
 

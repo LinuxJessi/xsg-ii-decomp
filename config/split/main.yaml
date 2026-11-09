@@ -88,25 +88,19 @@ segments:
       - [0x85EC8, c, xgl_hdd]
       - [0x87888, c, tu026]
       - [0x879A0, c, tu027]
-      - [0x885A8, c, xgl_2_028]
-      - [0x886BC, c, tu029]
-      - [0x88C9C, c, tu030]
-      - [0x88DC8, c, xgl_2_031]
-      - [0x9032C, c, tu032]
+      - [0x885A8, c, xgl_2]
       - [0x90494, c, sdv_033]
       - [0x93724, c, xgl_studio]
       - [0x93DE4, c, xgl_render]
       - [0x96E80, c, face_point]
-      - [0x983B0, c, tu037]
+      - [0x984A0, c, tu037]
       - [0x984D8, c, nml_packet_add]
       - [0x985E8, c, tu039]
       - [0x98944, c, tu040]
       - [0x98CD4, c, tu041]
       - [0x99B18, c, tu042]
       - [0x9A5F0, c, nml_model_set]
-      - [0xAD998, c, tu044]
-      - [0xADA30, c, tu045]
-      - [0xB4FB8, c, tu046]
+      - [0xADAA0, c, tu045]
       - [0xB5568, c, tu047]
       - [0xB6440, c, tu048]
       - [0xB8250, c, tu049]
@@ -435,7 +429,7 @@ segments:
       - [0x525F78, data, tu024]
       - [0x526100, data, xgl_hdd]
       - [0x526208, data, tu027]
-      - [0x5262F0, data, xgl_2_031]
+      - [0x5262F0, data, xgl_2]
       - [0x526580, data, xgl_render]
       - [0x526874, data, nml_model_set]
       - [0x5269A0, data, tu042]
@@ -546,7 +540,7 @@ segments:
       - [0x56F208, rodata, xgl_hdd]
       - [0x56F2C8, rodata, tu026]
       - [0x56F3B8, rodata, tu027]
-      - [0x56F548, rodata, xgl_2_031]
+      - [0x56F548, rodata, xgl_2]
       - [0x56F780, rodata, sdv_033]
       - [0x56FDD0, rodata, face_point]
       - [0x570000, rodata, tu041]
@@ -628,8 +622,7 @@ segments:
       - [0x57C5DC, lit4, act_3]
       - [0x57C620, lit4, tu017]
       - [0x57C624, lit4, xgl_jpeg]
-      - [0x57C650, lit4, tu029]
-      - [0x57C69C, lit4, xgl_2_031]
+      - [0x57C650, lit4, xgl_2]
       - [0x57C708, lit4, sdv_033]
       - [0x57C790, lit4, tu041]
       - [0x57C7A4, lit4, nml_model_set]
@@ -725,9 +718,9 @@ segments:
       - [0x57EF90, sdata, tu022]
       - [0x57EFA0, sdata, xgl_hdd]
       - [0x57EFF8, sdata, tu027]
-      - [0x57F070, sdata, xgl_2_031]
+      - [0x57F070, sdata, xgl_2]
       - [0x57F078, sdata, xgl_studio]
-      - [0x57F088, sdata, xgl_render]
+      - [0x57F084, sdata, xgl_render]
       - [0x57F0AC, sdata, face_point]
       - [0x57F0B0, sdata, tu042]
       - [0x57F0C0, sdata, nml_model_set]
@@ -762,6 +755,7 @@ segments:
       - { type: sbss, vram: 0x0069E380, name: tu012 }
       - { type: sbss, vram: 0x0069E384, name: tu021 }
       - { type: sbss, vram: 0x0069E388, name: tu027 }
+      - { type: sbss, vram: 0x0069E398, name: xgl_2 }
       - { type: sbss, vram: 0x0069E3A0, name: sdv_033 }
       - { type: sbss, vram: 0x0069E3A8, name: xgl_studio }
       - { type: sbss, vram: 0x0069E3B0, name: tu272 }
@@ -823,7 +817,7 @@ segments:
       - { type: bss, vram: 0x00955C80, name: xgl_cd }
       - { type: bss, vram: 0x00959D38, name: tu012 }
       - { type: bss, vram: 0x0095A3A0, name: tu027 }
-      - { type: bss, vram: 0x0095A410, name: xgl_2_031 }
+      - { type: bss, vram: 0x0095A410, name: xgl_2 }
       - { type: bss, vram: 0x0095A6A0, name: sdv_033 }
       - { type: bss, vram: 0x0095A710, name: xgl_studio }
       - { type: bss, vram: 0x00966D10, name: face_point }

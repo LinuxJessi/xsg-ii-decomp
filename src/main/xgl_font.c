@@ -2,7 +2,7 @@
 #include "shared.h"
 #include "main/xgl_font.h"
 #include "gs.h"
-#include "main/xgl_2_028.h"
+#include "main/xgl_2.h"
 
 extern void xglFontPrintf(int x, int y, unsigned int color, void *arg);
 unsigned int xglFontAscii2Euc(signed char character, signed char **text);

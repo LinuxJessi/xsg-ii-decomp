@@ -26,7 +26,7 @@ typedef struct MEfEffectObject {
     MEfEffectSub sub;              /* 0x20 */
 } MEfEffectObject;
 
-void func_001BB4AC(s32 value);
+void pxySetTxyBlock(s32 value);
 void pxySubmitModel(s32 value);
 void svGetPrmFromName(void *table, s32 slot, s32 *params);
 void nmlModelSetTransparency(f32 transparency);
@@ -51,7 +51,7 @@ void MEfDrawStencilA(MEfEffectObject *obj)
         nmlModelSetStencil(1);
         nmlModelSetStencilAlpha(D_00AB8C40);
         nmlModelSetTransparency(sub->transparency_a);
-        func_001BB4AC(params[5]);
+        pxySetTxyBlock(params[5]);
         nmlModelSetDrawMatrix(cursor);
         cursor += 0x40;
         pxySubmitModel(params[4]);
@@ -87,7 +87,7 @@ void MEfDrawStencilB(MEfEffectObject *obj)
         nmlModelSetStencil(1);
         nmlModelSetStencilAlpha(D_00AB8C48);
         nmlModelSetTransparency(sub->transparency_b);
-        func_001BB4AC(params[5]);
+        pxySetTxyBlock(params[5]);
         nmlModelSetDrawMatrix(cursor);
         cursor += 0x40;
         pxySubmitModel(params[4]);

@@ -197,8 +197,8 @@ int setMoveCmd(int call)
     return 1;
 }
 
-int func_001AB3F8(int);
-int func_001BA2AC(int);
+int xglLightSetDefault(int);
+int pxySetDefaultLight(int);
 int func_00253048(int);
 void *lightBlockGet(void);
 
@@ -207,8 +207,8 @@ int initLight(void)
     int lightBlock;
 
     lightBlock = lightBlockGet();
-    func_001AB3F8(lightBlock);
-    func_001BA2AC(lightBlock);
+    xglLightSetDefault(lightBlock);
+    pxySetDefaultLight(lightBlock);
     func_00253048(lightBlock);
     return 1;
 }

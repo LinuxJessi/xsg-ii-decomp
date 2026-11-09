@@ -53,7 +53,7 @@ typedef struct {
 } MRPack;
 
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
-void func_001A9B50(Matrix4 *destination, Matrix4 *matrix);
+void xglMatrixInverse(Matrix4 *destination, Matrix4 *matrix);
 void xglCurMatrixGet(f32 matrix[4][4]);
 /* assert expression "pMRPack->pGlobalMat" */
 extern unsigned char tiDynamicsCollAssertExpr[];
@@ -101,7 +101,7 @@ void tiDynamicsCollBuildMatrices(MRPack *pMRPack)
                 tiVu0LoadFixedMatrix();
                 xglCurMatrixGet(&entry->matrix);
             } else {
-                func_001A9B50(&entry->matrix, pMRPack->pGlobalMat + entry->matrixIndex);
+                xglMatrixInverse(&entry->matrix, pMRPack->pGlobalMat + entry->matrixIndex);
             }
             entryIndex++;
             entry++;
@@ -125,7 +125,7 @@ void tiDynamicsCollBuildWideMatrices(MRPack *pMRPack)
                 tiVu0LoadFixedMatrix();
                 xglCurMatrixGet(&entry->matrix);
             } else {
-                func_001A9B50(&entry->matrix, pMRPack->pGlobalMat + entry->matrixIndex);
+                xglMatrixInverse(&entry->matrix, pMRPack->pGlobalMat + entry->matrixIndex);
             }
             entryIndex++;
             entry++;

@@ -1,33 +1,7 @@
 #include "common.h"
+#include "main/sdv_033.h"
 #include "shared.h"
 
-typedef struct StudioCamera {
-    u32 active;
-    u32 state;
-    u8 unmodeled_08[0x18];
-    float nearClip;
-    float farClip;
-    u8 unmodeled_28[0x48];
-    Vector4 screenOffset;
-    Vector4 screenScale;
-    u8 unmodeled_90[4];
-    float fov;
-    u8 unmodeled_98[8];
-    DoublewordVector4 rotation;
-    Vector4 angleVelocity;
-    u8 unmodeled_c0[0x10];
-    DoublewordVector4 position;
-    u8 unmodeled_e0[0x40];
-    DoublewordVector4 chasePosition;
-    u8 unmodeled_130[0x40];
-    Matrix4 cameraToWorldMatrix;
-    Matrix4 occlusionTransform; /* 0x1B0: read by face_point.c's setup_occlusion/check_occlusion */
-    u8 unmodeled_1f0[0x280];
-    Matrix4 viewMatrix;
-    u8 unmodeled_4b0[0x40];
-    Matrix4 clipMatrices[2]; /* 0x4F0: the pair _ModelCalcClipInit loads into vf12..vf19 */
-    u8 unmodeled_570[0x80];
-} StudioCamera;
 
 Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
 Matrix4 *MMathRotateMatrixYX(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
@@ -190,7 +164,7 @@ Vector4 *MMathCalcAngleMatrixZ(Vector4 *out, Matrix4 *matrix)
     return out;
 }
 
-void MMathRotTransPers(Vector4 *destination, const StudioCamera *camera, const Matrix4 *matrix, const Vector4 *point)
+void MMathRotTransPers(Vector4 *destination, const XglCamera *camera, const Matrix4 *matrix, const Vector4 *point)
 {
     __asm__ __volatile__(
         "lqc2 vf1, 0(%0)\n\t"
@@ -213,5 +187,5 @@ void MMathRotTransPers(Vector4 *destination, const StudioCamera *camera, const M
         "vftoi4.xy vf1, vf4\n\t"
         "vftoi0.zw vf1, vf4\n\t"
         "sqc2 vf1, 0(%4)"
-        : : "r"(point), "r"(matrix), "r"(&camera->screenScale), "r"(&camera->screenOffset), "r"(destination) : "memory");
+        : : "r"(point), "r"(matrix), "r"(&camera->screen.screenScale), "r"(&camera->screen.screenOffset), "r"(destination) : "memory");
 }

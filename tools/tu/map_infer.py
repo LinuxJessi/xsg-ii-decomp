@@ -1367,11 +1367,23 @@ def attribute_data(unit, tus):
     for table in (unit.users, unit.indexed_users):
         for target, who in table.items():
             users[target] |= who
+    # At -O0 the compiler emits no .extern, so a $gp-relative access means the datum is defined in the
+    # same object (user 2026-11-09, VSyncCount 0x69E084: $gp in xgl_render, lui in tu041). Such a datum
+    # belongs to the one -O0 TU that reaches it through $gp, whoever else reads it through lui.
+    gp_owners = collections.defaultdict(set)
+    for i, refs in enumerate(unit.refs):
+        if i in owner and image.in_o0_zone(unit.vas[i]):
+            for _, target, kind, _ in refs:
+                if kind == 'gp':
+                    gp_owners[target].add(owner[i])
     for target, who in users.items():
         ordinals = {owner[i] for i in who if i in owner}
         if len(ordinals) == 1 and all(i in owner for i in who):
             section = image.section_of(target)
             claims[section][next(iter(ordinals))].append(target)
+        elif len(gp_owners.get(target, ())) == 1:
+            section = image.section_of(target)
+            claims[section][next(iter(gp_owners[target]))].append(target)
     section_order = {}
     for section, per_tu in claims.items():
         order = sorted(per_tu, key=lambda ordinal: min(per_tu[ordinal]))
@@ -1410,10 +1422,35 @@ JOINED_CUTS = [
      'jump table of sdvDrawSpecial (0x68C5A0) lies inside the .rodata run of the camera functions; X1 sdv.c '
      'defines the camera code, sdvTransOffset and the special/alter code in one file. Found matching '
      'sdvDrawSpecial, user 2026-11-08'),
+    # -O0 zone (main 0x1a75a8-0x1d5440), user 2026-11-08/09: at -O0 a $gp access means a definition in the
+    # same file, and the header static helpers (xglVectorCopy/Zero/AddXYZ/SubXYZ, xglMatrixCopy) are emitted
+    # once per object at its END, called only by that object.
+    (0x001A76BC,
+     'xgl_2: iRandSeed (.sbss 0x69E398, static in X1 xgl_2.c) is read $gp-relative by xglSRand/xglLRand '
+     '(0x1A75A8) and by xglRandSeedInit/func_001AB2F0 (0x1A7DC8 on), so 0x1A75A8-0x1AF494 is one file'),
+    (0x001A7C9C, 'xgl_2: inside the iRandSeed span 0x1A75A8-0x1AF494 (see 0x1A76BC)'),
+    (0x001A7DC8, 'xgl_2: inside the iRandSeed span 0x1A75A8-0x1AF494 (see 0x1A76BC)'),
+    (0x001AF32C,
+     'xgl_2: 0x1AF32C-0x1AF494 are the static header copies (xglVectorCopy, ...) that end the xgl_2 object; '
+     'only xgl_2 functions call them'),
+    (0x001CC998,
+     'nml_model_set: the static copies 0x1CC998-0x1CCAA0 (xglVectorCopy, xglMatrixCopy, xglVectorClear, '
+     'AddXYZ, SubXYZ) are called only by nml_model_set functions (pxySetupShadowProjector, pxySubmitModel, '
+     '...), so they are its tail'),
+    (0x001D3FB8,
+     'tu045: func_001CDC40 calls the static copy xglVectorSubXYZ 0x1D4530 at the end of this span, and '
+     'func_001D4498 reads .sdata 0x69E10C $gp-relative in the middle of tu045\'s .sdata run'),
 ]
 
 # Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).
 MOVED_CUTS = [
+    (0x001B73B0, 0x001B74A0,
+     '-O0 static-copy tail: xglVectorZero/AddXYZ/SubXYZ 0x1B7408-0x1B74A0 are called only by face_point '
+     '(_CheckLine, setup_occlusion), so they and the global func_001B73B0 before them end face_point, user '
+     '2026-11-08'),
+    (0x001CCA30, 0x001CCAA0,
+     '-O0 static-copy tail: AddXYZ/SubXYZ 0x1CCA30-0x1CCAA0 are called only by nml_model_set, so tu045 starts '
+     'at func_001CCAA0, user 2026-11-08'),
     (0x00249248, 0x0024B0E8,
      'func_00249518 and func_00249ED0 initialize vectors at 0x68D220-0x68D26F, right after the jump table '
      'of cfeCommandEvaluate (0x68D200) in one increasing .rodata run, while the next file starts its '

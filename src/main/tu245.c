@@ -132,7 +132,7 @@ struct MsgWindow {
     int item_count;
 };
 
-void func_001B2120(int);
+void xglPacketTextureTrans(int);
 void grSetupFullFrameState(void);
 void textTagDrawGlyph(int, int, int);
 void grFlushQuadBatch(void);
@@ -143,7 +143,7 @@ void grFlushQuadBatch(void);
  */
 void msgWindowDrawListIcons(struct MsgWindow *window)
 {
-    func_001B2120(msgBotanHandle);
+    xglPacketTextureTrans(msgBotanHandle);
     grSetupFullFrameState();
     if (window->item_count != 0) {
         grSetRgbaq(0x80808080);

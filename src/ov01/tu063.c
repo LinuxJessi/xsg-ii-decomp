@@ -9,7 +9,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu063", func_00AA8200);
 
 typedef int s32;
 
-s32 func_001B2120(s32 value);
+s32 xglPacketTextureTrans(s32 value);
 void grGpInit(void *packet);
 void grGsRegSet(void *packet, unsigned long long reg, unsigned long long value);
 void grPacketSend(void *packet);
@@ -23,7 +23,7 @@ void menuTexFlush(void) {
     s32 result;
 
     result = dataStatBufGet();
-    func_001B2120(result);
+    xglPacketTextureTrans(result);
     grGpInit(packet);
     grGsRegSet(packet, 0x3F, 1);
     grPacketSend(packet);

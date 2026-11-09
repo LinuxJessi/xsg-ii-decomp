@@ -1,14 +1,23 @@
 #include "common.h"
 #include "shared.h"
-
 #include "vu0_macro.h"
 
 void _CurApplyMatrix(Vector4 *destination, const Vector4 *vector) {
     Vu0ApplyCurrentMatrix(destination, vector);
 }
 
-/* _CurApplyMatrix33: _CurApplyMatrix33 (medium); applies the current matrix with xyzw lanes and no vf30 term. */
-INCLUDE_ASM("asm/main/nonmatchings/nml_packet_add", _CurApplyMatrix33);
+/* Applies the current 3x3 matrix (vf27..vf29) to the point in vector, xyzw lanes, no vf30 term. */
+void _CurApplyMatrix33(Vector4 *destination, const Vector4 *vector) {
+    __asm__ __volatile__(
+        "lqc2 vf31, 0(%1)\n"
+        "vmulax.xyzw ACC, vf27, vf31x\n"
+        "vmadday.xyzw ACC, vf28, vf31y\n"
+        "vmaddz.xyzw vf31, vf29, vf31z\n"
+        "sqc2 vf31, 0(%0)\n"
+        :
+        : "r"(destination), "r"(vector)
+        : "memory");
+}
 
 void _CurMatrixMul(Matrix4 matrix)
 {

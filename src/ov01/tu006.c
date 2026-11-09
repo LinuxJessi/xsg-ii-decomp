@@ -60,7 +60,7 @@ Matrix *grWorldMatGet(void)
 
 /* One object's transform record: the translation is position + offset, the angles go to grRotMatrix,
  * and scale is the vector applied last. The last field was named postRotation in the published
- * file; X1 names the same slot scale (xglMatrixScale), and func_001A9F88 sits in that position here. */
+ * file; X1 names the same slot scale (xglMatrixScale), and xglMatrixScale sits in that position here. */
 typedef struct TransformState {
     FloatVector3 position;
     u8 unmodeled_0c[4];
@@ -72,8 +72,8 @@ typedef struct TransformState {
 } TransformState;
 
 void xglMatrixUnit(Matrix *matrix);
-void func_001AA0CC(Matrix *destination, Matrix *source, const Vector4 *translation);
-void func_001A9F88(Matrix *destination, Matrix *source, const FloatVector3 *scale);
+void xglMatrixTrans(Matrix *destination, Matrix *source, const Vector4 *translation);
+void xglMatrixScale(Matrix *destination, Matrix *source, const FloatVector3 *scale);
 extern void xglMatrixMul(Matrix *destination, Matrix *left, Matrix *right);
 
 /* Proposed grCalcMatrix: destination = world * (translate(position + offset) * rotate(angles) * scale).
@@ -90,9 +90,9 @@ void grCalcMatrix(TransformState *state, Matrix *destination)
     translation.y = state->position.y + state->offset.y;
     translation.z = state->position.z + state->offset.z;
     translation.w = 1.0f;
-    func_001AA0CC(&localMatrix, &localMatrix, &translation);
+    xglMatrixTrans(&localMatrix, &localMatrix, &translation);
     grRotMatrix(&localMatrix, &localMatrix, &state->angles);
-    func_001A9F88(&localMatrix, &localMatrix, &state->scale);
+    xglMatrixScale(&localMatrix, &localMatrix, &state->scale);
     xglMatrixMul(destination, world, &localMatrix);
 }
 

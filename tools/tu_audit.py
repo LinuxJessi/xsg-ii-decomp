@@ -87,7 +87,8 @@ ROOT = TOOL_ROOT
 SCHEMA = 'tu-audit/2'
 TIMEOUT = 30
 CLASSES = ('ordinary', 'hardware', 'runtime-verbatim', 'native-ti', 'gnu-nested-function', 'ee-mmi',
-           'ee-asm-leaf', 'ee-fpu', 'ee-vu-clip', 'ee-assert-break', 'ee-retaddr-store', 'ee-asm-sort')
+           'ee-asm-leaf', 'ee-fpu', 'ee-vu-clip', 'ee-assert-break', 'ee-retaddr-store', 'ee-asm-sort',
+           'ee-sync-barrier', 'ee-interrupt-handler-return')
 # Classes whose functions may carry admitted inline assembly and are reported
 # `exact_c_with_asm` when they do: `hardware` (the ee-vu-cop2 route), `ee-mmi`
 # (constrained inline EE MMI, user decision 2026-10-10, docs/ee-mmi.md), and
@@ -102,7 +103,7 @@ CLASSES = ('ordinary', 'hardware', 'runtime-verbatim', 'native-ti', 'gnu-nested-
 # `ee-asm-sort` (the whole-body hand-written bubble sort of AlphaGroupSort, user
 # decision 2026-10-28 on main/tu106, docs/ee-hand-asm.md; that identity only).
 INLINE_ASM_CLASSES = ('hardware', 'ee-mmi', 'ee-asm-leaf', 'ee-fpu', 'ee-vu-clip', 'ee-assert-break',
-                      'ee-retaddr-store', 'ee-asm-sort')
+                      'ee-retaddr-store', 'ee-asm-sort', 'ee-sync-barrier', 'ee-interrupt-handler-return')
 # The one function identity `ee-retaddr-store` admits (user decision 2026-10-27).
 RETADDR_STORE_IDENTITY = ('main', 'main/tu273', 'UnduCheck')
 # The one function identity `ee-asm-sort` admits (user decision 2026-10-28).
@@ -1186,6 +1187,12 @@ def admission(cls, tu_class=None, *, unit=None, tu_id=None, function=None):
                 raise ValueError('ee-asm-sort is admitted only for %s %s' % ASM_SORT_IDENTITY[1:])
             return refused
         return match.asm_sort_native_ti_c if tu_class == 'native-ti' else match.asm_sort_c
+    if cls == 'ee-sync-barrier':
+        # A single sync/sync.l/sync.p asm statement (user decision 2026-11-08).
+        return match.sync_barrier_native_ti_c if tu_class == 'native-ti' else match.sync_barrier_c
+    if cls == 'ee-interrupt-handler-return':
+        # sync plus the handler's ei (user decision 2026-11-08).
+        return match.handler_return_native_ti_c if tu_class == 'native-ti' else match.handler_return_c
     raise AuditError(f'unknown source class {cls!r}')
 
 

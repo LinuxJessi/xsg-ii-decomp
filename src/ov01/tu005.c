@@ -1,6 +1,6 @@
 #include "common.h"
 #include "shared.h"
-#include "main/xgl_2_028.h"
+#include "main/xgl_2.h"
 #include "ov01/tu000.h"
 #include "ov01/tu001.h"
 #include "ov01/tu002.h"

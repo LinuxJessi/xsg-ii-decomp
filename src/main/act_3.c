@@ -179,12 +179,12 @@ INCLUDE_ASM("asm/main/nonmatchings/act_3", DrawDropCircle);
 /* Named in the proposals: ACT_DrawShadowBegin (X1 ACT_DrawShadowBegin: sRender shadow state, 10 quadwords). */
 INCLUDE_ASM("asm/main/nonmatchings/act_3", ACT_DrawShadowBegin);
 
-void func_001C374C(int, void *, int);
+void pxyAddEntry(int, void *, int);
 extern unsigned char D_0063E4B0[];
 
 /* Named in the proposals: ACT_DrawShadowEnd (X1 ACT_DrawShadowEnd: Tail_10, 3 quadwords). */
 void ACT_DrawShadowEnd(void) {
-    func_001C374C(8, D_0063E4B0, 3);
+    pxyAddEntry(8, D_0063E4B0, 3);
 }
 
 /* Named in the proposals: ACT_DrawShadow. Dispatches on shadow_type: 1 DrawCircleShadow (default),

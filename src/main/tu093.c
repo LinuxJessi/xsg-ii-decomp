@@ -3,7 +3,7 @@
 
 void xglDirectQueueBegin(void);
 void xglDirectQueuePush(int, int);
-void func_001D33D8(void);
+void xglDirectQueueSubmitRef(void);
 extern u16 sRenderFrameBase;
 
 /* grSetFrameBase: FRAME_1 (GS register 0x4C) with the frame base in sRenderFrameBase (sRenderFrameBase) and
@@ -11,18 +11,18 @@ extern u16 sRenderFrameBase;
 void grSetFrameBase(void) {
     xglDirectQueueBegin();
     xglDirectQueuePush(0x4C, sRenderFrameBase | 0x80000);
-    func_001D33D8();
+    xglDirectQueueSubmitRef();
 }
 
 /* grSetRenderFrame: FRAME_1 built from sRender: base at +0x20, FBW = width (+0x04) / 64, PSM at +0x02. */
 INCLUDE_ASM("asm/main/nonmatchings/tu093", grSetRenderFrame);
 
-void func_001CEC98(void);
-void func_001D0D28(u16, int);
+void xglPacketInitVuState(void);
+void pxyClearFrame(u16, int);
 
 void grResetRenderState(void) {
-    func_001CEC98();
-    func_001D0D28(sRenderFrameBase, 0xF);
+    xglPacketInitVuState();
+    pxyClearFrame(sRenderFrameBase, 0xF);
 }
 
 /* grDrawScreenSprite(expand, alpha): sets TEST_1, TEX0_1, CLAMP_1, TEX1_1, ALPHA_1 (alpha in its FIX byte),

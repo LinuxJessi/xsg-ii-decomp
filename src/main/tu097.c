@@ -29,13 +29,13 @@ INCLUDE_ASM("asm/main/nonmatchings/tu097", func_0020D0D0);
 
 void xglDirectQueueBegin(void);
 void xglDirectQueuePush(int, int);
-void func_001D33D8(void);
+void xglDirectQueueSubmitRef(void);
 
 /* Brackets one TEXFLUSH (GS register 0x3F) write with the GS begin and end helpers. */
 void fontObjTexFlush(void) {
     xglDirectQueueBegin();
     xglDirectQueuePush(0x3F, 0);
-    func_001D33D8();
+    xglDirectQueueSubmitRef();
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu097", fontObjBuildVifPacket);

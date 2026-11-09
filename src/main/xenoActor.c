@@ -518,37 +518,37 @@ void XenoActorSetVector(XenoActor *actor, float x, float y, float z) {
 extern char D_0068D7A0[], D_0068D7C0[], D_0068D7E0[], D_0068D828[];
 void func_00295EE8(XenoActor *actor, XenoMatrix *global, XenoMatrix *local);
 void func_001BAA98(int state);
-void func_001BB6E8(float *row);
+void pxySetModelScale(float *row);
 void func_001BA248(unsigned char *color);
 void nmlModelSetZwrite(int enabled);
 void nmlModelSetTransparency(float alpha);
 void func_001BBB18(void);
-void func_001ADBC4(XenoLight *light, void *source, void *block);
+void xglLightPackBuildByName(XenoLight *light, void *source, void *block);
 void func_001BB96C(XenoLight *light);
 void func_001BB9F4(void);
 void func_001BBA78(void);
-void func_001BAE88(void *block);
-void func_001BB0D8(float r, float g, float b, float a);
+void pxySetFogColor(void *block);
+void pxySetFogDist(float r, float g, float b, float a);
 void func_001BAA34(void);
 void func_001BA924(void);
 void func_001BB3CC(float value);
-void func_001BB628(Vector4 *position);
+void pxySetModelPosition(Vector4 *position);
 void func_001BBAB0(void);
 void func_001BA794(void);
-void func_001BACD4(int mode, float a, float b, float c);
+void pxySetShadowMode(int mode, float a, float b, float c);
 void func_001BADA8(float a, float b);
-XenoMatrix *func_001D2B20(int size);
-void func_001BADE8(XenoMatrix *joints, XenoMatrix *global);
+XenoMatrix *xglPacketReserve(int size);
+void pxySetJointMatrices(XenoMatrix *joints, XenoMatrix *global);
 void func_001BAE28(XenoMatrix *global);
 void tiMotionUpdateVisibility(int *handle, void *visibility);
 void func_001BAE58(int frame);
-void func_001BB4AC(int effect);
+void pxySetTxyBlock(int effect);
 void func_001BA9E4(void);
 void func_001BA618(float a, float b);
-void func_001BBCCC(void *a, void *b, void *c);
-void func_001BBE3C(void *a, void *b);
+void pxySetClipPlaneWithAngle(void *a, void *b, void *c);
+void pxyAddClipPlanePair(void *a, void *b);
 void *memset(void *dst, int value, unsigned int size);
-void func_001BC038(void *a, void *b, int count, u32 *mask, float x, float y, float z);
+void pxySetClipPlaneMasked(void *a, void *b, int count, u32 *mask, float x, float y, float z);
 void func_001BA278(void);
 void func_001BA9A0(float value);
 void func_001BAC70(int flags);
@@ -635,7 +635,7 @@ void XenoActorDrawMotion(XenoActor *actor)
             actor->state = 0;
         }
         nmlModelSetDrawMatrix(localMatrix);
-        func_001BB6E8(actor->rowC);
+        pxySetModelScale(actor->rowC);
         if (actor->colorIndex != 0xFF) {
             func_001BA248(&actor->colorIndex);
         }
@@ -655,7 +655,7 @@ void XenoActorDrawMotion(XenoActor *actor)
                 light = &actor->light;
                 if (actor->drawFlags & XENO_DRAW_LIGHT_SOURCE) {
                     light = &actor->sourceLight;
-                    func_001ADBC4(light, actor->lightSource, actor->sourceBlock);
+                    xglLightPackBuildByName(light, actor->lightSource, actor->sourceBlock);
                 }
                 func_001BB96C(light);
                 if (light->intensity > 0.0f) {
@@ -681,8 +681,8 @@ void XenoActorDrawMotion(XenoActor *actor)
             }
         }
         if (actor->drawFlags & 1) {
-            func_001BAE88(actor->colorBlock);
-            func_001BB0D8(actor->color[0], actor->color[1], actor->color[2], actor->color[3]);
+            pxySetFogColor(actor->colorBlock);
+            pxySetFogDist(actor->color[0], actor->color[1], actor->color[2], actor->color[3]);
         }
         if (actor->drawFlags & XENO_DRAW_ALPHA) {
             range = (PxyRange *) ((char *) pack + pack->rangeOffset);
@@ -707,7 +707,7 @@ void XenoActorDrawMotion(XenoActor *actor)
         func_001BB3CC(actor->modeValue3);
         position = actor->position;
         position.y += actor->heightOffset;
-        func_001BB628(&position);
+        pxySetModelPosition(&position);
         if (actor->flags & 0x80) {
             func_001BBAB0();
         }
@@ -716,7 +716,7 @@ void XenoActorDrawMotion(XenoActor *actor)
         }
         switch (actor->drawMode) {
         case 1:
-            func_001BACD4(1, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            pxySetShadowMode(1, actor->modeValue, actor->modeValue2, actor->modeValue4);
             if (actor->fogA != 0.0f || actor->fogB != 0.0f) {
                 func_001BADA8(actor->fogA, actor->fogB);
             } else {
@@ -728,17 +728,17 @@ void XenoActorDrawMotion(XenoActor *actor)
             }
             break;
         case 9:
-            func_001BACD4(5, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            pxySetShadowMode(5, actor->modeValue, actor->modeValue2, actor->modeValue4);
             break;
         case 8:
-            func_001BACD4(4, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            pxySetShadowMode(4, actor->modeValue, actor->modeValue2, actor->modeValue4);
             func_001BADA8(actor->fogA, actor->fogB);
             break;
         case 2:
-            func_001BACD4(2, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            pxySetShadowMode(2, actor->modeValue, actor->modeValue2, actor->modeValue4);
             break;
         case 3:
-            func_001BACD4(3, actor->modeValue, actor->modeValue2, actor->modeValue4);
+            pxySetShadowMode(3, actor->modeValue, actor->modeValue2, actor->modeValue4);
             break;
         }
         if (actor->table != 0
@@ -749,12 +749,12 @@ void XenoActorDrawMotion(XenoActor *actor)
                 assertFailed(D_0068D7E0, xenoActorAssertFile, 0x684);
             }
             if (jointPack->jointMatrixCount != 0) {
-                joints = func_001D2B20(jointPack->jointMatrixCount * 4);
+                joints = xglPacketReserve(jointPack->jointMatrixCount * 4);
                 jointBase = (XenoMatrix *) ((char *) jointPack + jointPack->jointMatrixOffset);
                 for (joint = 0; joint < jointPack->jointMatrixCount; joint++) {
                     xglMatrixMul(&joints[joint], &actor->globalMatrices[joint + 2], &jointBase[joint]);
                 }
-                func_001BADE8(joints, &actor->globalMatrices[2]);
+                pxySetJointMatrices(joints, &actor->globalMatrices[2]);
                 func_001BAE28(&actor->globalMatrices[2]);
             }
             if (actor->attr & 4) {
@@ -781,7 +781,7 @@ void XenoActorDrawMotion(XenoActor *actor)
             func_001BAE58(actor->pamFrame);
         }
         if (actor->effect != 0) {
-            func_001BB4AC(actor->effect);
+            pxySetTxyBlock(actor->effect);
         }
         if ((actor->drawFlags & XENO_DRAW_POST_MASK) || actor->shadowCount != 0) {
             if (actor->drawFlags & XENO_DRAW_FLAG_2000000) {
@@ -799,10 +799,10 @@ void XenoActorDrawMotion(XenoActor *actor)
                 nmlModelSetStencil(1);
                 nmlModelSetZwrite(1);
                 nmlModelSetTransparency(actor->alpha);
-                func_001BBCCC(actor->shadowA, actor->shadowB, actor->shadowC);
+                pxySetClipPlaneWithAngle(actor->shadowA, actor->shadowB, actor->shadowC);
             } else if (actor->drawFlags & XENO_DRAW_SHADOW_STENCIL) {
-                func_001BBE3C(actor->shadowA, actor->shadowB);
-                func_001BBE3C(actor->shadowA2, actor->shadowB2);
+                pxyAddClipPlanePair(actor->shadowA, actor->shadowB);
+                pxyAddClipPlanePair(actor->shadowA2, actor->shadowB2);
                 actor->drawFlags &= ~XENO_DRAW_SHADOW_STENCIL;
             }
             if (actor->shadowCount != 0) {
@@ -816,7 +816,7 @@ void XenoActorDrawMotion(XenoActor *actor)
                         geometry++;
                     }
                 }
-                func_001BC038(actor->shadowA, actor->shadowB, actor->shadowCount, actor->geometryMask, actor->shadowValue,
+                pxySetClipPlaneMasked(actor->shadowA, actor->shadowB, actor->shadowCount, actor->geometryMask, actor->shadowValue,
                               actor->shadowValue2, actor->shadowValue3);
             }
             if (actor->drawFlags & XENO_DRAW_FLAG_8000000) {
@@ -838,14 +838,14 @@ void XenoActorDrawMotion(XenoActor *actor)
             func_001BB678(subPack);
             nmlModelSetDrawMatrix(localMatrix);
             if (actor->drawFlags & 1) {
-                func_001BAE88(actor->colorBlock);
-                func_001BB0D8(actor->color[0], actor->color[1], actor->color[2], actor->color[3]);
+                pxySetFogColor(actor->colorBlock);
+                pxySetFogDist(actor->color[0], actor->color[1], actor->color[2], actor->color[3]);
             }
             if (actor->drawFlags & 8) {
                 func_001BB96C(&actor->light);
             }
             if (actor->effect != 0) {
-                func_001BB4AC(actor->effect);
+                pxySetTxyBlock(actor->effect);
             }
             func_001BB44C(actor->block4E0);
             func_001BB47C(actor->block520);

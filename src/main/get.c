@@ -1,7 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/get.h"
-#include "main/xgl_2_028.h"
+#include "main/xgl_2.h"
 
 extern float sinf(float angle);
 extern float cosf(float angle);

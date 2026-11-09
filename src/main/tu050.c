@@ -253,7 +253,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu050", func_001D7EB8);
 
 extern MainObject *mainObject;
 extern int D_0069B964;
-void func_001BB4AC(int);
+void pxySetTxyBlock(int);
 void pxySubmitModel(void *);
 extern MapObjectRecord uwamonoRecords[];
 extern int uwamonoCurrentIndex;
@@ -268,8 +268,8 @@ void xglMatrixStackSave(float matrix[4][4]);
 void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackRotZ(float angle);
-void func_001AA8F4(Vector4 *translation);
-void func_001AA8B0(Vector4 *scale);
+void xglMatrixStackTrans(Vector4 *translation);
+void xglMatrixStackScale(Vector4 *scale);
 int func_001D7A78(MapObjectRecord *record);
 void func_001D7D18(MapObjectRecord *record);
 void func_001D7EB8(MainActive *active);
@@ -285,7 +285,7 @@ void uwamonoUpdateMidpoints(int index);
 void func_00202CD0(Vector4 *position, float extent, float scale, int mode);
 void uwamonoUpdateTransform(MapObjectRecord *record);
 void elvUpdateMotion(MapObjectRecord *record);
-void *func_001D2B20(int size);
+void *xglPacketReserve(int size);
 void Get_MiddlePoint(const float *start, const float *following, short point_index, short point_count, float *result);
 void func_00209458(const float *start, const float *following, short point_index, short point_count,
                    void *curveStart, void *curveFollowing, short curveType, float *result);
@@ -482,8 +482,8 @@ int DispMapObject(void)
             } else {
                 xglMatrixStackLoad(uwamonoRecords[record->parent].matrix);
             }
-            func_001AA8F4(&record->position.vector);
-            func_001AA8F4(&record->pivot.vector);
+            xglMatrixStackTrans(&record->position.vector);
+            xglMatrixStackTrans(&record->pivot.vector);
             switch (record->rotationOrder) {
             case 0:
                 xglMatrixStackRotX(record->rotation.vector.x);
@@ -520,12 +520,12 @@ int DispMapObject(void)
             point.y = -record->pivot.vector.y;
             point.z = -record->pivot.vector.z;
             point.w = 1.0f;
-            func_001AA8F4(&point);
-            func_001AA8B0(&record->scale.vector);
+            xglMatrixStackTrans(&point);
+            xglMatrixStackScale(&record->scale.vector);
             xglMatrixStackSave(record->transform);
             xglMatrixStackSave(record->matrix);
             if (record->model != -1) {
-                header = func_001D2B20(8);
+                header = xglPacketReserve(8);
                 data = D_002B7BB0[record->model + 2].data;
                 source = (MapModelHeader *) ((u8 *) data + data->headerOffset);
                 if (record->tiltStep != -1) {
@@ -543,7 +543,7 @@ int DispMapObject(void)
                     nmlModelSetDrawMatrix(record->transform);
                     func_001BAE58(header);
                     func_001BA8F0();
-                    func_001BB4AC(D_002B7BB0[record->model + 2].texture);
+                    pxySetTxyBlock(D_002B7BB0[record->model + 2].texture);
                     pxySubmitModel(D_002B7BB0[record->model + 2].data);
                 }
                 if (record->model >= 7 && !(gameWork.flags & GAME_PAUSE_MAP_OBJECTS)) {
@@ -692,8 +692,8 @@ int DispMapObject(void)
     return 1;
 }
 
-void func_001BAE88(void *);
-void func_001BB0D8(f32, f32, f32, f32);
+void pxySetFogColor(void *);
+void pxySetFogDist(f32, f32, f32, f32);
 void func_001BB3FC(void *);
 extern unsigned char D_002B5E50[];
 extern void *D_0069B968;
@@ -710,12 +710,12 @@ void mainDrawObjects(void)
         return;
     }
     if (gameWork.extent.x != 0.0f && gameWork.extent.y != 0.0f) {
-        func_001BB0D8(gameWork.extent.x, gameWork.extent.y, gameWork.extent.z, gameWork.extent.w);
-        func_001BAE88(gameWork.unmodeled_360);
+        pxySetFogDist(gameWork.extent.x, gameWork.extent.y, gameWork.extent.z, gameWork.extent.w);
+        pxySetFogColor(gameWork.unmodeled_360);
     }
     func_001BB44C(D_002B7C88);
     if (D_0069B964 != 0) {
-        func_001BB4AC(D_0069B964);
+        pxySetTxyBlock(D_0069B964);
     }
     func_001BB3FC(D_002B5E50);
     pxySubmitModel(mainObject);
@@ -723,7 +723,7 @@ void mainDrawObjects(void)
         func_001BB678(mainObject);
         func_001BB44C(D_002B7CA8);
         func_001BB47C(D_002B7CC8);
-        func_001BB4AC(D_0069B964);
+        pxySetTxyBlock(D_0069B964);
         func_001BB3FC(D_002B5E50);
         pxySubmitModel(D_0069B968);
     }

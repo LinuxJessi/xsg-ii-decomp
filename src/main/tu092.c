@@ -92,7 +92,7 @@ void xglCdBufferClear(void) {
     xglCdBufferBase = 0;
 }
 
-/* Not named: saves or restores a byte flag (D_0069E084 with the saved copy D_0069D49C); its meaning is unknown. */
+/* Not named: saves or restores a byte flag (pxyTickScaleDouble with the saved copy D_0069D49C); its meaning is unknown. */
 INCLUDE_ASM("asm/main/nonmatchings/tu092", func_0020B7A8);
 
 extern int xglCdPendingReads;

@@ -6,7 +6,7 @@
 #include "main/nml_model_set.h"
 #include "main/TiWater.h"
 #include "main/tu148.h"
-#include "main/xgl_2_028.h"
+#include "main/xgl_2.h"
 #include "main/xgl_render.h"
 
 void nmlModelUseSubWindow(unsigned int index, int enabled);

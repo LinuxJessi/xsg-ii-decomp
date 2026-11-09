@@ -81,7 +81,7 @@ INCLUDE_ASM("asm/main/nonmatchings/yg2path", yg2PathLoadCitizens);
 
 INCLUDE_ASM("asm/main/nonmatchings/yg2path", yg2PathLoadScene);
 
-void func_001BAC2C(int first, int second);
+void pxySetCameraEnable(int first, int second);
 void XenoActorRelease(int handle);
 
 void yg2PathUnload(void) {
@@ -92,7 +92,7 @@ void yg2PathUnload(void) {
     D_0069D7D8 = 0;
     D_0069D7DC = 0;
     xglCdBufferRewind();
-    func_001BAC2C(1, 0);
+    pxySetCameraEnable(1, 0);
     sRender.callback = xglCallbackQueueRun;
     sRender.callback_context = 0;
 }

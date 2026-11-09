@@ -1,6 +1,6 @@
 #include "common.h"
 #include "shared.h"
-#include "main/xgl_2_028.h"
+#include "main/xgl_2.h"
 
 typedef struct XglPacket XglPacket;
 

@@ -31086,7 +31086,7 @@
      2
     ],
     [
-     "func_001A7758",
+     "xglEulerFromRotation",
      1734488,
      376,
      2
@@ -31362,13 +31362,13 @@
      2
     ],
     [
-     "func_001A979C",
+     "xglRotTransPers",
      1742748,
      188,
      2
     ],
     [
-     "func_001A9858",
+     "xglRotTransPersN",
      1742936,
      244,
      2
@@ -31398,19 +31398,19 @@
      2
     ],
     [
-     "func_001A9B50",
+     "xglMatrixInverse",
      1743696,
      1080,
      2
     ],
     [
-     "func_001A9F88",
+     "xglMatrixScale",
      1744776,
      324,
      2
     ],
     [
-     "func_001AA0CC",
+     "xglMatrixTrans",
      1745100,
      404,
      2
@@ -31470,13 +31470,13 @@
      2
     ],
     [
-     "func_001AA8B0",
+     "xglMatrixStackScale",
      1747120,
      68,
      2
     ],
     [
-     "func_001AA8F4",
+     "xglMatrixStackTrans",
      1747188,
      68,
      2
@@ -31506,7 +31506,7 @@
      2
     ],
     [
-     "func_001AAA60",
+     "xglMatrixStackFrustum",
      1747552,
      208,
      2
@@ -31554,7 +31554,7 @@
      2
     ],
     [
-     "func_001AAD20",
+     "xglMatrix2Quaternion_001AAD20",
      1748256,
      1044,
      2
@@ -31578,7 +31578,7 @@
      2
     ],
     [
-     "func_001AB2F0",
+     "xglGeometryInit",
      1749744,
      84,
      2
@@ -31596,163 +31596,163 @@
      2
     ],
     [
-     "func_001AB3C0",
+     "xglStudioLightReset",
      1749952,
      56,
      2
     ],
     [
-     "func_001AB3F8",
+     "xglLightSetDefault",
      1750008,
      820,
      2
     ],
     [
-     "func_001AB72C",
+     "xglLightPackTableInit",
      1750828,
      132,
      2
     ],
     [
-     "func_001AB7B0",
+     "xglLightPackRegister",
      1750960,
      408,
      2
     ],
     [
-     "func_001AB948",
+     "xglLightPackRelease",
      1751368,
      352,
      2
     ],
     [
-     "func_001ABAA8",
+     "xglLightPackSampleCurve",
      1751720,
      516,
      2
     ],
     [
-     "func_001ABCAC",
+     "xglLightPackEvaluate",
      1752236,
      588,
      2
     ],
     [
-     "func_001ABEF8",
+     "xglLightSlotsInsert",
      1752824,
      688,
      2
     ],
     [
-     "func_001AC1A8",
+     "xglLightPointColor",
      1753512,
      348,
      2
     ],
     [
-     "func_001AC304",
+     "xglLightSpotColor",
      1753860,
      472,
      2
     ],
     [
-     "func_001AC4DC",
+     "xglLightBoxColor",
      1754332,
      1152,
      2
     ],
     [
-     "func_001AC95C",
+     "xglLightConeColor",
      1755484,
      1536,
      2
     ],
     [
-     "xglMotionCacheGet",
+     "xglLightPackCacheGet",
      1757020,
      64,
      2
     ],
     [
-     "xglMotionCacheInvalidate",
+     "xglLightPackCacheInvalidate",
      1757084,
      36,
      2
     ],
     [
-     "xglMotionBuildPose",
+     "xglLightPackBuildLightSet",
      1757120,
      3076,
      2
     ],
     [
-     "func_001ADBC4",
+     "xglLightPackBuildByName",
      1760196,
      236,
      2
     ],
     [
-     "func_001ADCB0",
+     "xglLightPackTableClear",
      1760432,
      132,
      2
     ],
     [
-     "func_001ADD34",
+     "xglLightPackEvaluateAll",
      1760564,
      160,
      2
     ],
     [
-     "func_001ADDD4",
+     "xglLightPackDebugBox",
      1760724,
      504,
      2
     ],
     [
-     "func_001ADFCC",
+     "xglLightPackDebugAmbient",
      1761228,
      36,
      2
     ],
     [
-     "func_001ADFF0",
+     "xglLightPackDebugSpot",
      1761264,
      896,
      2
     ],
     [
-     "func_001AE370",
+     "xglLightPackDebugMarker",
      1762160,
      204,
      2
     ],
     [
-     "func_001AE43C",
+     "xglLightPackDebugDirectional",
      1762364,
      424,
      2
     ],
     [
-     "func_001AE5E4",
+     "xglLightPackDebugPoint",
      1762788,
      212,
      2
     ],
     [
-     "func_001AE6B8",
+     "xglLightPackDebugCone",
      1763000,
      2088,
      2
     ],
     [
-     "func_001AEEE0",
+     "xglLightPackDebugAxis",
      1765088,
      528,
      2
     ],
     [
-     "func_001AF0F0",
+     "xglLightPackDebugDrawAll",
      1765616,
      572,
      2
@@ -31842,7 +31842,7 @@
      2
     ],
     [
-     "func_001AFCF0",
+     "xglCameraTravelManual",
      1768688,
      1764,
      2
@@ -31914,7 +31914,7 @@
      2
     ],
     [
-     "func_001B2008",
+     "xglVectorCopy_001B2008",
      1777672,
      44,
      2
@@ -31932,25 +31932,25 @@
      2
     ],
     [
-     "func_001B20B0",
+     "xglVectorAddXYZ_001B20B0",
      1777840,
      56,
      2
     ],
     [
-     "func_001B20E8",
+     "xglVectorSubXYZ_001B20E8",
      1777896,
      56,
      2
     ],
     [
-     "func_001B2120",
+     "xglPacketTextureTrans",
      1777952,
      420,
      2
     ],
     [
-     "func_001B22C4",
+     "xglPacketInterpolate",
      1778372,
      244,
      2
@@ -32142,7 +32142,7 @@
      2
     ],
     [
-     "func_001B3A4C",
+     "xglRenderSyncMove",
      1784396,
      736,
      2
@@ -32370,7 +32370,7 @@
      2
     ],
     [
-     "func_001B6CF8",
+     "xglCullingMapLastCheck",
      1797368,
      128,
      2
@@ -32424,7 +32424,7 @@
      2
     ],
     [
-     "func_001B73B0",
+     "nmlModelCalcClipCulling",
      1799088,
      88,
      2
@@ -32520,13 +32520,13 @@
      2
     ],
     [
-     "func_001B7BD8",
+     "_ModelCalcClipMat1Xy",
      1801176,
      252,
      2
     ],
     [
-     "func_001B7CD4",
+     "pxyKeyInterpolate",
      1801428,
      280,
      2
@@ -32568,7 +32568,7 @@
      2
     ],
     [
-     "func_001B887C",
+     "pxyGetMsUnchecked",
      1804412,
      384,
      2
@@ -32610,7 +32610,7 @@
      2
     ],
     [
-     "pxyResetSlots",
+     "pxyResetBatchTables",
      1807856,
      312,
      2
@@ -32622,7 +32622,7 @@
      2
     ],
     [
-     "func_001B9758",
+     "pxyResetSlots",
      1808216,
      116,
      2
@@ -32664,13 +32664,13 @@
      2
     ],
     [
-     "func_001B9D78",
+     "pxyBuildFadeRamp",
      1809784,
      332,
      2
     ],
     [
-     "func_001B9EC4",
+     "pxyInitShadowTextures",
      1810116,
      848,
      2
@@ -32694,7 +32694,7 @@
      2
     ],
     [
-     "func_001BA2AC",
+     "pxySetDefaultLight",
      1811116,
      76,
      2
@@ -32718,7 +32718,7 @@
      2
     ],
     [
-     "func_001BA388",
+     "xglDirectionFromAngles",
      1811336,
      176,
      2
@@ -32868,7 +32868,7 @@
      2
     ],
     [
-     "pxyRegisterEntry",
+     "pxyRegisterDrawCallback",
      1813272,
      228,
      2
@@ -32880,7 +32880,7 @@
      2
     ],
     [
-     "func_001BAC2C",
+     "pxySetCameraEnable",
      1813548,
      68,
      2
@@ -32892,7 +32892,7 @@
      2
     ],
     [
-     "func_001BACD4",
+     "pxySetShadowMode",
      1813716,
      212,
      2
@@ -32904,7 +32904,7 @@
      2
     ],
     [
-     "func_001BADE8",
+     "pxySetJointMatrices",
      1813992,
      64,
      2
@@ -32922,37 +32922,37 @@
      2
     ],
     [
-     "func_001BAE88",
+     "pxySetFogColor",
      1814152,
      100,
      2
     ],
     [
-     "func_001BAEEC",
+     "pxyFogPara",
      1814252,
      492,
      2
     ],
     [
-     "func_001BB0D8",
+     "pxySetFogDist",
      1814744,
      108,
      2
     ],
     [
-     "func_001BB144",
+     "pxyGetFogParaStudio",
      1814852,
      440,
      2
     ],
     [
-     "func_001BB2FC",
+     "pxySetGlobalFogDist",
      1815292,
      108,
      2
     ],
     [
-     "func_001BB368",
+     "pxySetGlobalFogColor",
      1815400,
      100,
      2
@@ -32982,13 +32982,13 @@
      2
     ],
     [
-     "func_001BB4AC",
+     "pxySetTxyBlock",
      1815724,
      380,
      2
     ],
     [
-     "func_001BB628",
+     "pxySetModelPosition",
      1816104,
      80,
      2
@@ -33006,7 +33006,7 @@
      2
     ],
     [
-     "func_001BB6E8",
+     "pxySetModelScale",
      1816296,
      208,
      2
@@ -33132,25 +33132,25 @@
      2
     ],
     [
-     "func_001BBCCC",
+     "pxySetClipPlaneWithAngle",
      1817804,
      368,
      2
     ],
     [
-     "func_001BBE3C",
+     "pxyAddClipPlanePair",
      1818172,
      508,
      2
     ],
     [
-     "func_001BC038",
+     "pxySetClipPlaneMasked",
      1818680,
      424,
      2
     ],
     [
-     "func_001BC1E0",
+     "pxyInterpolateKeys",
      1819104,
      516,
      2
@@ -33162,61 +33162,61 @@
      2
     ],
     [
-     "func_001BDC48",
+     "pxyTrackStoreFocus",
      1825864,
      292,
      2
     ],
     [
-     "func_001BDD6C",
+     "pxyEvaluateTracks",
      1826156,
      2112,
      2
     ],
     [
-     "func_001BE5AC",
+     "pxyQueueBatch",
      1828268,
      1248,
      2
     ],
     [
-     "func_001BEA8C",
+     "pxyQueueBatchBasic",
      1829516,
      320,
      2
     ],
     [
-     "func_001BEBCC",
+     "pxyCalcFadeMetric",
      1829836,
      288,
      2
     ],
     [
-     "func_001BECEC",
+     "pxyCalcModelBounds",
      1830124,
      368,
      2
     ],
     [
-     "func_001BEE5C",
+     "pxyCalcCameraVisibility",
      1830492,
      976,
      2
     ],
     [
-     "func_001BF22C",
+     "pxyCalcFogFactors",
      1831468,
      452,
      2
     ],
     [
-     "func_001BF3F0",
+     "pxyCalcPartVisibility",
      1831920,
      1152,
      2
     ],
     [
-     "func_001BF870",
+     "pxyDescrambleHeader",
      1833072,
      1240,
      2
@@ -33234,43 +33234,43 @@
      2
     ],
     [
-     "func_001C3554",
+     "pxyPlayEntryGroup",
      1848660,
      212,
      2
     ],
     [
-     "func_001C3628",
+     "pxyPlayEntryGroupFiltered",
      1848872,
      292,
      2
     ],
     [
-     "func_001C374C",
+     "pxyAddEntry",
      1849164,
      80,
      2
     ],
     [
-     "func_001C379C",
+     "pxyAddEntryWithState",
      1849244,
      84,
      2
     ],
     [
-     "func_001C37F0",
+     "pxyAddEntryFlagged",
      1849328,
      84,
      2
     ],
     [
-     "func_001C3844",
+     "pxyAddEntryFull",
      1849412,
      356,
      2
     ],
     [
-     "func_001C39A8",
+     "pxyPartNotInIndexList",
      1849768,
      216,
      2
@@ -33282,31 +33282,31 @@
      2
     ],
     [
-     "func_001C5274",
+     "pxyDrawCircleShadows",
      1856116,
      744,
      2
     ],
     [
-     "func_001C555C",
+     "pxyDrawShadowPass",
      1856860,
      1800,
      2
     ],
     [
-     "func_001C5C64",
+     "pxyDrawMode3Pass",
      1858660,
      2452,
      2
     ],
     [
-     "func_001C65F8",
+     "pxyDrawScreenSampledParts",
      1861112,
      2384,
      2
     ],
     [
-     "func_001C6F48",
+     "pxyDrawZwriteParts",
      1863496,
      1464,
      2
@@ -33330,7 +33330,7 @@
      2
     ],
     [
-     "func_001CB700",
+     "pxyDrawSeparateBatches",
      1881856,
      1508,
      2
@@ -33402,13 +33402,13 @@
      2
     ],
     [
-     "func_001CC640",
+     "pxyAddFrameCopyPacket",
      1885760,
      676,
      2
     ],
     [
-     "func_001CC8E4",
+     "pxyPlayEntryGroup5",
      1886436,
      56,
      2
@@ -33456,7 +33456,7 @@
      2
     ],
     [
-     "func_001CCAE8",
+     "xglPacketMicrocodeEntry",
      1886952,
      928,
      2
@@ -33504,7 +33504,7 @@
      2
     ],
     [
-     "func_001CCFD4",
+     "pxyUpdateReflectionRotation",
      1888212,
      240,
      2
@@ -33546,13 +33546,13 @@
      2
     ],
     [
-     "func_001CD1D0",
+     "xglPacketInitVuStateArg",
      1888720,
      52,
      2
     ],
     [
-     "func_001CD204",
+     "xglPacketStateReset",
      1888772,
      80,
      2
@@ -33564,73 +33564,73 @@
      2
     ],
     [
-     "func_001CDC40",
+     "pxyUploadViewMatrices",
      1891392,
      2180,
      2
     ],
     [
-     "func_001CE4C4",
+     "pxyUploadPartState",
      1893572,
      480,
      2
     ],
     [
-     "func_001CE6A4",
+     "pxyUploadPartStateDefault",
      1894052,
      288,
      2
     ],
     [
-     "func_001CE7C4",
+     "pxyUploadRenderFlags",
      1894340,
      1092,
      2
     ],
     [
-     "func_001CEC08",
+     "xglPacketUploadVu1Data",
      1895432,
      144,
      2
     ],
     [
-     "func_001CEC98",
+     "xglPacketInitVuState",
      1895576,
      2000,
      2
     ],
     [
-     "func_001CF468",
+     "xglPacketSelectDefaultMode",
      1897576,
      184,
      2
     ],
     [
-     "func_001CF520",
+     "xglPacketSelectMode",
      1897760,
      292,
      2
     ],
     [
-     "func_001CF644",
+     "pxyUploadBoneMatrices",
      1898052,
      696,
      2
     ],
     [
-     "func_001CF8FC",
+     "pxyQueueTextureSet",
      1898748,
      428,
      2
     ],
     [
-     "func_001CFAA8",
+     "pxyUploadTextureSet",
      1899176,
      460,
      2
     ],
     [
-     "func_001CFC74",
+     "pxyUploadModelTextures",
      1899636,
      768,
      2
@@ -33642,31 +33642,31 @@
      2
     ],
     [
-     "func_001D00D0",
+     "xglDirectQueueFlushWide",
      1900752,
      356,
      2
     ],
     [
-     "func_001D0234",
+     "pxyResetGsState",
      1901108,
      688,
      2
     ],
     [
-     "func_001D04E4",
+     "xglStudioSetScissor",
      1901796,
      436,
      2
     ],
     [
-     "func_001D0698",
+     "xglSetFullScreenScissor",
      1902232,
      256,
      2
     ],
     [
-     "func_001D0798",
+     "pxyDrawPartData",
      1902488,
      220,
      2
@@ -33684,7 +33684,7 @@
      2
     ],
     [
-     "func_001D091C",
+     "xglPacketAddRefOffset",
      1902876,
      96,
      2
@@ -33696,7 +33696,7 @@
      2
     ],
     [
-     "func_001D09D8",
+     "xglDirectQueueAppendFlushWide",
      1903064,
      264,
      2
@@ -33708,19 +33708,19 @@
      2
     ],
     [
-     "func_001D0D28",
+     "pxyClearFrame",
      1903912,
      1048,
      2
     ],
     [
-     "func_001D1140",
+     "pxyDrawTextureRect",
      1904960,
      1148,
      2
     ],
     [
-     "func_001D15BC",
+     "pxyDrawTextureFullscreen",
      1906108,
      996,
      2
@@ -33732,13 +33732,13 @@
      2
     ],
     [
-     "func_001D2678",
+     "xglCopyZBufferToRenderFrame",
      1910392,
      348,
      2
     ],
     [
-     "func_001D27D4",
+     "xglCopyRenderFrameToZBuffer",
      1910740,
      348,
      2
@@ -33750,7 +33750,7 @@
      2
     ],
     [
-     "func_001D29AC",
+     "xglPacketAppendMatrix",
      1911212,
      108,
      2
@@ -33768,7 +33768,7 @@
      2
     ],
     [
-     "func_001D2B20",
+     "xglPacketReserve",
      1911584,
      184,
      2
@@ -33780,7 +33780,7 @@
      2
     ],
     [
-     "func_001D2D34",
+     "xglRoundUpLog2",
      1912116,
      348,
      2
@@ -33792,7 +33792,7 @@
      2
     ],
     [
-     "func_001D300C",
+     "xglPsmBufferWidth",
      1912844,
      320,
      2
@@ -33810,13 +33810,13 @@
      2
     ],
     [
-     "func_001D32A4",
+     "xglDirectQueuePushCopy",
      1913508,
      88,
      2
     ],
     [
-     "func_001D32FC",
+     "xglDirectQueueDefer",
      1913596,
      176,
      2
@@ -33828,7 +33828,7 @@
      2
     ],
     [
-     "func_001D33D8",
+     "xglDirectQueueSubmitRef",
      1913816,
      164,
      2
@@ -33852,19 +33852,19 @@
      2
     ],
     [
-     "func_001D35FC",
+     "xglPacketBufferUsedPercent",
      1914364,
      328,
      2
     ],
     [
-     "func_001D3744",
+     "pxyDrawCircleShadow",
      1914692,
      2164,
      2
     ],
     [
-     "func_001D3FB8",
+     "nmlPacketSendCircleTexture",
      1916856,
      456,
      2
@@ -33882,13 +33882,13 @@
      2
     ],
     [
-     "func_001D44C4",
+     "xglMatrixCopy_001D44C4",
      1918148,
      68,
      2
     ],
     [
-     "func_001D4508",
+     "xglVectorZero_001D4508",
      1918216,
      40,
      2
@@ -33900,25 +33900,25 @@
      2
     ],
     [
-     "func_001D4568",
+     "pxyClearFrameAlphaMsb",
      1918312,
      1132,
      2
     ],
     [
-     "func_001D49D4",
+     "pxyFillFrameAlpha80",
      1919444,
      916,
      2
     ],
     [
-     "func_001D4D68",
+     "pxyModulateFrameByAlpha",
      1920360,
      668,
      2
     ],
     [
-     "func_001D5004",
+     "pxyClearDepthByFrameAlpha",
      1921028,
      1080,
      2

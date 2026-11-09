@@ -5267,6 +5267,20 @@ def refresh_initialized_spans(root, unit, unit_dir, tu_id, obj, elf, ctx, declar
                         if run.get('generated') and hx(run['generated'][1]) > hi:
                             run['generated'] = [run['generated'][0], h8(hi)]
                         break
+            if len(exact) > 1:
+                # main/tu028 (2026-11-09): a short span whose bytes repeat in the
+                # object (1e-4, -1e-4, 1e-4, -1e-4 of one function) fits at several
+                # offsets. The compiler emits a section's items in address order, so
+                # the span lies after every part already placed below it and before
+                # every part above it; of what remains, the nearest offset is taken.
+                # The whole-file gate still decides.
+                same = [p for p in target_parts if p['input_section'] == input_sec]
+                floor = max((p['end'] for p in same if p['lo'] < lo), default=0)
+                ceiling = min((p['offset'] for p in same if p['lo'] > lo), default=None)
+                ordered = sorted(o for o in exact if o >= floor and
+                                 (ceiling is None or o + length <= ceiling))
+                if ordered:
+                    exact = ordered[:1]
             if len(exact) != 1 and id(run) in data_only_runs:
                 # Reached only through another item's data and not proven
                 # emitted by C: leave it scaffold, exactly as before.

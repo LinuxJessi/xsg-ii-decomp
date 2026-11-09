@@ -3597,6 +3597,51 @@ def assert_break_c(text, staged=None, headers=(), inner=None):
     return uses
 
 
+# `ee-sync-barrier` and `ee-interrupt-handler-return` (user decision 2026-11-08,
+# Xenosaga II -O0 xgl_render): the EE memory barrier and the interrupt-handler
+# return tail as single volatile asm statements inside otherwise ordinary C:
+#     __asm__ volatile("sync" ::: "memory");   (also sync.l / sync.p)
+#     __asm__ volatile("ei");                  (ee-interrupt-handler-return only)
+# with `volatile` or `__volatile__` and the "memory" clobber optional. Nothing
+# else is admitted; tools/tu_audit.py reports the function `exact_c_with_asm`.
+_SYNC_STATEMENT = re.compile(
+    r'\b__asm__\s+(?:__volatile__|volatile)\s*\(\s*"(sync(?:\.[lp])?|ei)"'
+    r'\s*(?::\s*:\s*:\s*"memory"\s*)?\)\s*;')
+
+
+def _barrier_c(text, staged, headers, inner, label, allowed):
+    found = []
+
+    def fold(match):
+        found.append(match.group(1))
+        return '(void)0;'
+    folded = _SYNC_STATEMENT.sub(fold, text)
+    require(found, 'an %s function carries a sync/ei asm statement' % label)
+    require(all(item in allowed for item in found),
+            '%s admits only %s' % (label, ', '.join(sorted(allowed))))
+    (inner or ordinary_c)(folded, staged, headers)
+    return len(found)
+
+
+def sync_barrier_c(text, staged=None, headers=(), inner=None):
+    return _barrier_c(text, staged, headers, inner, 'ee-sync-barrier', {'sync', 'sync.l', 'sync.p'})
+
+
+def handler_return_c(text, staged=None, headers=(), inner=None):
+    return _barrier_c(text, staged, headers, inner, 'ee-interrupt-handler-return',
+                      {'sync', 'sync.l', 'sync.p', 'ei'})
+
+
+def sync_barrier_native_ti_c(text, staged=None, headers=()):
+    from tools import native_ti
+    return sync_barrier_c(text, staged, headers, inner=native_ti.source)
+
+
+def handler_return_native_ti_c(text, staged=None, headers=()):
+    from tools import native_ti
+    return handler_return_c(text, staged, headers, inner=native_ti.source)
+
+
 def assert_break_native_ti_c(text, staged=None, headers=()):
     """An `ee-assert-break` function inside a `native-ti` TU; neither route widened."""
     from tools import native_ti          # imports ordinary_c from this module

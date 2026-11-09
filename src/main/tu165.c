@@ -216,14 +216,14 @@ void sefExecEffectFrames(int id, float frames) {
     sefExecEffectSteps(id, frames, 1.0f);
 }
 
-void func_001CD1D0(int);
+void xglPacketInitVuStateArg(int);
 
 void sefFinishDrawPass(int value) {
     xglPacketModeReset();
     func_001CD134();
     func_001CD1AC();
     func_001CD160();
-    func_001CD1D0(value);
+    xglPacketInitVuStateArg(value);
 }
 
 /* Draw pass installed at sRender +0x30. Guarded by the initialized flag sefInitialized and by the pending bit
