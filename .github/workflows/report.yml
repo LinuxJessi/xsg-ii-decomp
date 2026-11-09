@@ -45,12 +45,41 @@ jobs:
       - name: Generate the report with the pinned objdiff-cli
         run: |
           python3 -B - <<'PY'
-          import hashlib, json, os, pathlib, urllib.request
+          import hashlib, json, os, pathlib, time, urllib.request
           pin = json.loads(pathlib.Path('config/report-tools.json').read_text())['objdiff-cli']
           path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'objdiff-cli'
-          with urllib.request.urlopen(pin['url'], timeout=30) as response:
-              data = response.read()
-          assert hashlib.sha256(data).hexdigest() == pin['sha256'], 'objdiff-cli hash mismatch'
+          # The self-hosted runner keeps the verified binary between runs, so a
+          # GitHub download outage (HTTP 504 on 2026-11-09) does not fail the job.
+          cache = pathlib.Path(os.environ['RUNNER_TOOL_CACHE']) / 'objdiff-cli' / pin['version'] / 'objdiff-cli'
+          def verified(data):
+              return hashlib.sha256(data).hexdigest() == pin['sha256']
+          data = cache.read_bytes() if cache.is_file() else None
+          if data is None or not verified(data):
+              data = None
+              # Two routes to the same release asset; the API one is served apart.
+              routes = [(pin['url'], {}), (pin['api_url'], {'Accept': 'application/octet-stream'})]
+              for attempt in range(4):
+                  for url, headers in routes:
+                      try:
+                          request = urllib.request.Request(url, headers=headers)
+                          with urllib.request.urlopen(request, timeout=60) as response:
+                              candidate = response.read()
+                      except OSError as error:
+                          print(f'objdiff-cli: {url}: {error}', flush=True)
+                          continue
+                      if not verified(candidate):
+                          raise SystemExit(f'objdiff-cli hash mismatch from {url}')
+                      data = candidate
+                      break
+                  if data is not None:
+                      break
+                  time.sleep(15 * (attempt + 1))
+              if data is None:
+                  raise SystemExit('objdiff-cli: no route served the pinned binary')
+              cache.parent.mkdir(parents=True, exist_ok=True)
+              partial = cache.with_name(cache.name + '.partial')
+              partial.write_bytes(data)
+              partial.replace(cache)
           path.write_bytes(data)
           path.chmod(0o755)
           PY
