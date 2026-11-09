@@ -1084,16 +1084,21 @@ def _character_tu_record(root, tu_id):
     if (tu.get('category') != 'game' or tu.get('in_scope') is not True or
             tu.get('kind') != 'gcc' or
             tu.get('compiler_profile') != 'ee-gcc2_96-realconv-lp7' or
-            flags not in (['-O2', '-G0'], ['-O2', '-G8'])):
+            flags not in (['-O2', '-G0'], ['-O2', '-G8'], ['-O0', '-G0'], ['-O0', '-G8'])):
         raise CarveError('unsupported public typed character TU contract')
     tc = Toolchain(root)
     options = tu_assembler_options(tu)
-    contract_id = 'ee-tu-c296-' + flags[1][1:] + ('-g' if options else '')
-    recipe = tc.contract(contract_id)
+    # The -O0 TUs (main 0x1a75a8-0x1d5440) use the -O2 recipe of their -G level
+    # with only the optimization level changed; their private contract id is
+    # ee-tu-c296-O0-G<n>[-g] (config/tu-build.json), kept here for the digest.
+    level = '' if flags[0] == '-O2' else flags[0][1:] + '-'
+    suffix = flags[1][1:] + ('-g' if options else '')
+    contract_id = 'ee-tu-c296-' + level + suffix
+    recipe = tc.contract('ee-tu-c296-' + suffix)
     compiler = tc.entry(recipe['compiler'])
     assembler = tc.entry(recipe['assembler'])
     profile = manifest['toolchains'][tu['compiler_profile']]
-    if (recipe['flags'] != flags or recipe.get('driver') != 'ee-gcc' or
+    if (recipe['flags'] != ['-O2', flags[1]] or recipe.get('driver') != 'ee-gcc' or
             recipe.get('driver_flags') != ['-nostdinc', '-fno-builtin'] or
             recipe.get('assembler_argv') != ['-EL', '-m5900', '-mabi=eabi', flags[1], *options, '-I', '.'] or
             profile.get('cc_dir') != 'tool:' + recipe['compiler'] or
