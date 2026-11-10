@@ -1,7 +1,78 @@
 #include "common.h"
 #include "main/tu012.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcRequest);
+/* xglMcRequest commands (the callers in tu060.c use the same values). */
+#define MC_REQ_FREE_SPACE 1
+#define MC_REQ_EXIST 2
+#define MC_REQ_LIST 3
+#define MC_REQ_LOAD 4
+#define MC_REQ_SAVE 5
+#define MC_REQ_CREATE 6
+#define MC_REQ_FORMAT 7
+#define MC_REQ_CHECK_OLD 8
+#define MC_REQ_UNFORMAT 9
+/* The request queue holds 16 entries. */
+#define MC_QUEUE_MASK 0xF
+
+/* Parameters of a request: the file number, its buffer and size, and a callback the list and
+ * old-data scans call per entry (same layout as in tu060.c). */
+typedef struct McRequestParam {
+    int file;
+    void *data;
+    int size;
+    int (*callback)(int);
+} McRequestParam;
+
+/* One queued request (0x20 bytes, xglMcQueue). */
+typedef struct McQueueEntry {
+    short port;               /* +0x00 */
+    short command;            /* +0x02 */
+    int *result;              /* +0x04 */
+    int file;                 /* +0x08 */
+    int data;                 /* +0x0C: the buffer address */
+    int size;                 /* +0x10 */
+    int (*callback)(int);     /* +0x14 */
+    unsigned char unmodeled_18[8];
+} McQueueEntry;
+
+extern McQueueEntry xglMcQueue[];
+extern unsigned char xglMcQueueEnd;
+void xglMcMain(void);
+
+/* Queues a memory-card request (the parameters are copied for the commands that use them),
+ * clears *result and runs one step of xglMcMain. */
+int xglMcRequest(int port, int command, McRequestParam *param, int *result)
+{
+    int index;
+    McQueueEntry *entry;
+
+    index = xglMcQueueEnd;
+    *result = 0;
+    entry = &xglMcQueue[index];
+    entry->port = port;
+    entry->result = result;
+    entry->command = command;
+    switch (command) {
+    case MC_REQ_FREE_SPACE:
+    case MC_REQ_FORMAT:
+    case MC_REQ_UNFORMAT:
+        break;
+    case MC_REQ_EXIST:
+    case MC_REQ_LIST:
+    case MC_REQ_LOAD:
+    case MC_REQ_SAVE:
+    case MC_REQ_CREATE:
+    case MC_REQ_CHECK_OLD:
+        entry->file = param->file;
+        entry->data = (int)param->data;
+        entry->callback = param->callback;
+        entry->size = param->size;
+        break;
+    }
+    xglMcQueueEnd = (index + 1) & MC_QUEUE_MASK;
+    xglMcMain();
+    return 0;
+}
 
 #include "shared.h"
 
@@ -22,7 +93,7 @@ typedef struct XglMcState {
 extern XglMcState xglMcState;
 extern int D_00959F3C[];
 extern signed char xglMcQueueTop;
-extern signed char xglMcQueueEnd;
+extern unsigned char xglMcQueueEnd;
 extern char D_0069DF70[];
 extern char xglMcBasePath[];
 
