@@ -44,6 +44,8 @@
    "0x0063f680": "monthday",
    "0x0063f710": "head_8",
    "0x0063f730": "system_cnf",
+   "0x0063f7c0": "xglMcBasePaths",
+   "0x0063f81c": "xglMcFileNames",
    "0x0063f840": "SaveData",
    "0x006449a0": "ZigZag",
    "0x00644ae0": "LQTableOrg_1",

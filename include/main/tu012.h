@@ -4,6 +4,6 @@
 /* Functions of src/main/tu012.c that other files call. */
 
 void xglMcReset(void);
-char * xglMcSetFullPath(int card, const char *path);
+char * xglMcSetFullPath(int card, int selector);
 
 #endif /* INCLUDE_MAIN_TU012_H */

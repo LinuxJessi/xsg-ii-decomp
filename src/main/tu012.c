@@ -83,8 +83,7 @@ typedef struct XglMcState {
     unsigned char selector;         /* +0x1D: selector for the card search */
     signed char card;               /* +0x1E: card index chosen by the search */
     unsigned char status;           /* +0x1F */
-    unsigned char buffer[0x10];     /* +0x20: first bytes of the full path */
-    unsigned char unmodeled_30[0x50];
+    char full_path[0x60];           /* +0x20: full path of the current request (xglMcBuildPath) */
     short port;                     /* +0x80: sceMc port */
     unsigned char unmodeled_82[6];
     unsigned int mode;              /* +0x88: search mode of func_0019E508 (0..2) */
@@ -153,14 +152,86 @@ void xglMcSetEntryNumbers(unsigned char *object, int value, const unsigned char 
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcBuildPath);
+/* Card numbers xglMcBuildPath does not print as digits. */
+#define MC_CARD_NONE (-2)
+#define MC_CARD_ANY (-1)
+/* Selectors of xglMcBuildPath; other values point to a file name. */
+#define MC_PATH_REPEAT 0
+#define MC_PATH_END (-1)
+#define MC_PATH_NAME_COUNT 6
 
-char *xglMcBuildPath();
+/* File names of selectors 1..5: /icon.sys, /system.ico, /copy.ico, /delete.ico, /dummy.bin. */
+extern const char *xglMcFileNames[MC_PATH_NAME_COUNT];
+
+/* Builds the full path in xglMcState.full_path: base, then the card number as two digits ("*" for
+ * MC_CARD_ANY, nothing for MC_CARD_NONE), then by selector the path so far once more, one of the
+ * file names 1..5, nothing, or "/" and the name selector points to. Returns the path. */
+char *xglMcBuildPath(const char *base, int card, int selector)
+{
+    char *dest;
+    const char *source;
+    const char *prefix_end;
+
+    dest = xglMcState.full_path;
+    source = base;
+    while ((*dest = *source) != 0) {
+        dest++;
+        source++;
+    }
+    switch (card) {
+    case MC_CARD_NONE:
+        break;
+    case MC_CARD_ANY:
+        *dest = '*';
+        dest++;
+        break;
+    default:
+        dest[1] = '0' + card % 10;
+        dest[0] = '0' + (card / 10) % 10;
+        dest += 2;
+        break;
+    }
+    switch (selector) {
+    case MC_PATH_REPEAT:
+        prefix_end = dest;
+        for (source = xglMcState.full_path; source != prefix_end; source++) {
+            *dest = *source;
+            dest++;
+        }
+        *dest = 0;
+        break;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+        source = xglMcFileNames[selector];
+        while ((*dest = *source) != 0) {
+            dest++;
+            source++;
+        }
+        break;
+    case MC_PATH_END:
+        *dest = 0;
+        break;
+    default:
+        *dest = '/';
+        dest++;
+        source = (const char *)selector;
+        while ((*dest = *source) != 0) {
+            dest++;
+            source++;
+        }
+        break;
+    }
+    return xglMcState.full_path;
+}
+
 
 /* Full path for card `card` (or -1 for the wildcard) with the suffix path, built on the base path xglMcBasePath. */
-char *xglMcSetFullPath(int card, const char *path)
+char *xglMcSetFullPath(int card, int selector)
 {
-    return xglMcBuildPath(xglMcBasePath, card, path);
+    return xglMcBuildPath(xglMcBasePath, card, selector);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcExecute);
@@ -215,13 +286,13 @@ int xglMcStartDirectoryScan(void)
     }
     xglMcState.card = (signed char) card;
     xglMcState.status = 0;
-    xglMcSetFullPath(card, D_0069DF70);
-    func_001305B0(xglMcState.port, 0, xglMcState.buffer, 0, 0x10, (xglMcState.size + 0xA3) & ~0x3F);
+    xglMcSetFullPath(card, (int)D_0069DF70);
+    func_001305B0(xglMcState.port, 0, xglMcState.full_path, 0, 0x10, (xglMcState.size + 0xA3) & ~0x3F);
     return 0;
 }
 
-/* Base paths of the card search, one per xglMcState.mode. */
-extern char *D_0063F7C0[];
+/* Save folders of the card search, one per xglMcState.mode: /BASLUS-20469Xen, /BISLPS-29005Xen, /BISLPS-25353. */
+extern char *xglMcBasePaths[];
 int sceMcOpen(int port, int slot, const char *name, int mode);
 
 /* Opens the save file on the card nearest to the selector; when none fits, moves on to the next
@@ -237,13 +308,13 @@ int func_0019E508(void)
         switch (xglMcState.mode) {
         case 0:
             xglMcState.mode = 1;
-            xglMcBuildPath(D_0063F7C0[xglMcState.mode], -1, -1);
-            func_001305B0(xglMcState.port, 0, xglMcState.buffer, 0, 100, (xglMcState.size + 0xA3) & ~0x3F);
+            xglMcBuildPath(xglMcBasePaths[xglMcState.mode], -1, -1);
+            func_001305B0(xglMcState.port, 0, xglMcState.full_path, 0, 100, (xglMcState.size + 0xA3) & ~0x3F);
             return -1;
         case 1:
             xglMcState.mode = 2;
-            xglMcBuildPath(D_0063F7C0[xglMcState.mode], -2, 0);
-            sceMcOpen(xglMcState.port, 0, xglMcState.buffer, 1);
+            xglMcBuildPath(xglMcBasePaths[xglMcState.mode], -2, 0);
+            sceMcOpen(xglMcState.port, 0, xglMcState.full_path, 1);
             return 0;
         case 2:
             return 1;
@@ -251,8 +322,8 @@ int func_0019E508(void)
     }
     xglMcState.card = card;
     xglMcState.status = 0;
-    xglMcBuildPath(D_0063F7C0[xglMcState.mode], card, 0);
-    sceMcOpen(xglMcState.port, 0, xglMcState.buffer, 1);
+    xglMcBuildPath(xglMcBasePaths[xglMcState.mode], card, 0);
+    sceMcOpen(xglMcState.port, 0, xglMcState.full_path, 1);
     return 0;
 }
 
