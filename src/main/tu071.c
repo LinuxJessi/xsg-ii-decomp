@@ -8,7 +8,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu071", seSetVolumePan);
 
 int func_A9F0C0(void *call, int index);
 float I2F(int value);
-unsigned int func_001E16A0(float *position);
+unsigned int seVoicePanVolumeFromPosition(float *position);
 void seVoiceStart(int handle, unsigned int high, int low);
 extern unsigned char seDefaultVolume[];
 
@@ -26,7 +26,7 @@ int sePos(void *call) {
     position[0] = I2F(func_A9F0C0(call, 2)) / 100.0f;
     position[1] = I2F(func_A9F0C0(call, 3)) / 100.0f;
     position[2] = I2F(func_A9F0C0(call, 4)) / 100.0f;
-    volumePan = func_001E16A0(position);
+    volumePan = seVoicePanVolumeFromPosition(position);
     if (volumePan != 0) {
         seVoiceStart(handle, volumePan >> 8, volumePan & 0xFF);
     }
@@ -35,7 +35,7 @@ int sePos(void *call) {
 
 INCLUDE_ASM("asm/main/nonmatchings/tu071", runtime_001F4BE0);
 
-void func_001E1440(int handle, float *position);
+void seVoiceRecordAddAt(int handle, float *position);
 
 int bgmSePos(void *call) {
     float position[3];
@@ -45,7 +45,7 @@ int bgmSePos(void *call) {
     position[0] = I2F(func_A9F0C0(call, 2)) / 100.0f;
     position[1] = I2F(func_A9F0C0(call, 3)) / 100.0f;
     position[2] = I2F(func_A9F0C0(call, 4)) / 100.0f;
-    func_001E1440(handle, position);
+    seVoiceRecordAddAt(handle, position);
     return 1;
 }
 
@@ -58,17 +58,17 @@ int nextBgm(void *call) {
     return 1;
 }
 
-void func_001E1218(int result);
+void seBgmNameSet(int result);
 int func_A9F238(void *call, int value);
 
 /* Native "bgm": argument 1 names the track; the name is resolved through func_A9F238 and
-   passed to func_001E1218, which starts it (an empty name stops the music). */
+   passed to seBgmNameSet, which starts it (an empty name stops the music). */
 int bgmSetTrack(void *call) {
     int trackRef;
     int trackName;
 
     trackRef = func_A9F0C0(call, 1);
     trackName = func_A9F238(call, trackRef);
-    func_001E1218(trackName);
+    seBgmNameSet(trackName);
     return 1;
 }

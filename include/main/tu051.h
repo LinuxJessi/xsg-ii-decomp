@@ -20,26 +20,41 @@ struct XenoActor {
     unsigned char unmodeled_0b4[8];
     int drawFlags;                          /* 0x0BC: 0x4 hides the actor, 0x08000000 draws it translucent */
     float alpha;                            /* 0x0C0 */
-    unsigned char unmodeled_0c4[0x5CC - 0xC4];
+    int drawMode;                           /* 0x0C4: 1 while attached as a part (uwamonoAttachPlayerParts) */
+    unsigned char unmodeled_0c8[0x5CC - 0xC8];
     u32 flags;                              /* 0x5CC */
     unsigned char unmodeled_5d0[4];
     int mode;                               /* 0x5D4: the motion XenoActorCheckMode compares against */
     unsigned char unmodeled_5d8[4];
     int requested_mode;                     /* 0x5DC */
-    unsigned char unmodeled_5e0[0x654 - 0x5E0];
+    unsigned char unmodeled_5e0[0x5EC - 0x5E0];
+    /* The model resources resPathSlotLoadID returns (uwamonoLoadPlayer copies them in). */
+    int pack;                               /* 0x5EC: the model pack (xenoActor.c reads it as PxyHeader *) */
+    int effect;                             /* 0x5F0 */
+    int hierarchy;                          /* 0x5F4: XenoActorAllocMatrices builds the matrices from it */
+    unsigned char unmodeled_5f8[4];
+    int slotTable;                          /* 0x5FC: XenoActorGetSlotRange's table */
+    unsigned char unmodeled_600[0x618 - 0x600];
+    int lookLink;                           /* 0x618 */
+    unsigned char unmodeled_61c[0x640 - 0x61C];
+    int channel[4];                         /* 0x640: the tiMRPackage channel block (xenoActor.c handle640) */
+    unsigned char unmodeled_650[0x654 - 0x650];
     float motionSpeed;                      /* 0x654 */
     float motionFrame;                      /* 0x658 */
     unsigned char unmodeled_65c[0x740 - 0x65C];
     unsigned char hitBuffer[8];             /* 0x740: the result block of mapMoveProbe */
     unsigned short hitFlags;                /* 0x748 */
     unsigned short groundFlags;             /* 0x74A: 0x10 while on a slope */
-    unsigned char unmodeled_74c[4];
+    unsigned char unmodeled_74c[3];
+    unsigned char probeEnabled;             /* 0x74F: set to 1 when a player model is loaded */
     float stepHeight;                       /* 0x750 */
     unsigned char unmodeled_754[4];
     int ground;                             /* 0x758 */
     unsigned char unmodeled_75c[4];
     int status;                             /* 0x760: ground status (0x1xxxx slope, 0x1xx ladder, 0x2xx elevator) */
-    unsigned char unmodeled_764[0x780 - 0x764];
+    unsigned char unmodeled_764[4];
+    float probeRadius;                      /* 0x768: set with radius to the form's size */
+    unsigned char unmodeled_76c[0x780 - 0x76C];
     DoublewordVector4 previous;             /* 0x780: the position before this frame */
     unsigned char unmodeled_790[4];
     int moved;                              /* 0x794 */
@@ -51,7 +66,9 @@ struct XenoActor {
 
 /* The motion number table of a map object (+0x4078: one entry per walk mode). */
 typedef struct UwamonoMotionTable {
-    unsigned char unmodeled_0000[0x4028];
+    unsigned char unmodeled_0000[0x3FF0];
+    int flags;                              /* +0x3FF0: bit 0 keeps the player from being pushed */
+    unsigned char unmodeled_3ff4[0x4028 - 0x3FF4];
     short targetPriority;                   /* +0x4028: 3 keeps the current target */
     unsigned char unmodeled_402a[0x4078 - 0x402A];
     int walk[3];
@@ -74,7 +91,8 @@ typedef struct UwamonoObject {
     AlignedVector4 position;                /* +0x10 */
     unsigned char unmodeled_20[0x20];
     AlignedVector4 anchor;                  /* +0x40 */
-    unsigned char unmodeled_50[0x20];
+    AlignedVector4 scale;                   /* +0x50: x, y, z set by the player's form */
+    unsigned char unmodeled_60[0x10];
     float fade;                             /* +0x70: rider fade, 0..100 */
     unsigned char unmodeled_74[0xC];
     AlignedVector4 exitFrom;                /* +0x80: the ladder exit starts here (tu075.c) */
@@ -82,9 +100,12 @@ typedef struct UwamonoObject {
     unsigned char unmodeled_a0[0x330 - 0xA0];
     struct XenoActor *actor;                /* +0x330 */
     UwamonoMotionTable *motions;            /* +0x334 */
-    unsigned char unmodeled_338[0x238];
+    float form;                             /* +0x338: UWAMONO_FORM_ES while riding an ES, else 5.0 */
+    unsigned short formSet;                 /* +0x33C: 1 once the form is chosen */
+    unsigned char unmodeled_33e[0x570 - 0x33E];
     int flags;                              /* +0x570 */
-    unsigned char unmodeled_574[0x1C];
+    unsigned char unmodeled_574[0xC];
+    AlignedVector4 extent;                  /* +0x580: x is the form's size (init_uwamono_sys.c) */
     UwamonoSearch search;                   /* +0x590 */
     unsigned char unmodeled_5a0[0x21];
     signed char searchState;                /* +0x5C1 */

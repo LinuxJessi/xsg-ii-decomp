@@ -28,10 +28,10 @@ int xglCdSectorAlloc(int size) {
 }
 
 /* xglCdArenaOpen(size, handle): a nonzero size is kept with the 64-bit handle; size 0 takes the size from
-   func_001E1830 and sets the owned flag. */
+   GameResArenaReserve and sets the owned flag. */
 INCLUDE_ASM("asm/main/nonmatchings/tu092", xglCdArenaOpen);
 
-void func_001E1A40();
+void GameResArenaRelease();
 void bgLayerResetState();
 void func_00210C78();
 extern int xglCdArenaSize;
@@ -47,7 +47,7 @@ void xglCdArenaClose(void) {
         fontObjClearRunLists();
         bgLayerResetState();
         if (D_0069D480 != 0) {
-            func_001E1A40();
+            GameResArenaRelease();
         }
     }
     xglCdArenaUsed = 0;

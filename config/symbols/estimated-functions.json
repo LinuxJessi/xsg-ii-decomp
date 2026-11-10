@@ -30990,13 +30990,13 @@
      2
     ],
     [
-     "UsbRead_001A6CA0",
+     "UsbGetFileSize",
      1731744,
      220,
      2
     ],
     [
-     "UsbRead_001A6D80",
+     "UsbReadFile",
      1731968,
      248,
      2
@@ -31026,7 +31026,7 @@
      2
     ],
     [
-     "func_001A7278",
+     "UsbGetLocalAddress",
      1733240,
      128,
      2
@@ -31044,7 +31044,7 @@
      2
     ],
     [
-     "reg_handler",
+     "UsbInit",
      1733552,
      504,
      2
@@ -34002,7 +34002,7 @@
      2
     ],
     [
-     "func_001D74E0",
+     "mainResLoadCallback",
      1930464,
      1180,
      2
@@ -34020,13 +34020,13 @@
      2
     ],
     [
-     "func_001D7A78",
+     "mapObjectAdvanceTweens",
      1931896,
      668,
      2
     ],
     [
-     "func_001D7D18",
+     "mapObjectUpdateEffectTransform",
      1932568,
      412,
      2
@@ -34050,7 +34050,7 @@
      2
     ],
     [
-     "func_001D9280",
+     "mapObjectResourcesLoad",
      1938048,
      152,
      2
@@ -34068,13 +34068,13 @@
      2
     ],
     [
-     "func_001D9580",
+     "cameraRangeSetDefaults",
      1938816,
      108,
      2
     ],
     [
-     "func_001D95F0",
+     "cameraStudioReset",
      1938928,
      76,
      2
@@ -34152,55 +34152,55 @@
      2
     ],
     [
-     "func_001D9FD0",
+     "cameraProbeSlide",
      1941456,
      572,
      2
     ],
     [
-     "func_001DA210",
+     "cameraPullInAlongSight",
      1942032,
      596,
      2
     ],
     [
-     "func_001DA468",
+     "cameraSearchOrbitPitch",
      1942632,
      1484,
      2
     ],
     [
-     "func_001DAA38",
+     "cameraUpdateFollow",
      1944120,
      432,
      2
     ],
     [
-     "func_001DABE8",
+     "cameraUpdateFromRecord",
      1944552,
      328,
      2
     ],
     [
-     "func_001DAD30",
+     "cameraStageLookAt",
      1944880,
      156,
      2
     ],
     [
-     "func_001DADD0",
+     "cameraAngleLimitIndex",
      1945040,
      316,
      2
     ],
     [
-     "func_001DAF10",
+     "cameraClampAngles",
      1945360,
      816,
      2
     ],
     [
-     "func_001DB240",
+     "cameraCommitSlots",
      1946176,
      352,
      2
@@ -34230,7 +34230,7 @@
      2
     ],
     [
-     "func_001DB580",
+     "cameraWaveStep",
      1947008,
      300,
      2
@@ -34254,25 +34254,25 @@
      2
     ],
     [
-     "func_001DC378",
+     "resPathSlotLoadWithParts",
      1950584,
      240,
      2
     ],
     [
-     "func_001DC468",
+     "resPathSlotsLoadModels",
      1950824,
      252,
      2
     ],
     [
-     "func_001DC568",
+     "uwamonoAttachPlayerParts",
      1951080,
      760,
      2
     ],
     [
-     "func_001DC860",
+     "uwamonoChangePlayerModel",
      1951840,
      1540,
      2
@@ -34290,13 +34290,13 @@
      2
     ],
     [
-     "func_001DE738",
+     "uwamonoFindOverlapRecord",
      1959736,
      440,
      2
     ],
     [
-     "func_001DE8F0",
+     "uwamonoPushOutOfActor",
      1960176,
      444,
      2
@@ -34314,7 +34314,7 @@
      2
     ],
     [
-     "func_001DEDD8",
+     "uwamonoStartAreaBlend",
      1961432,
      688,
      2
@@ -34440,7 +34440,7 @@
      2
     ],
     [
-     "func_001DF928",
+     "GameResBufferAlloc",
      1964328,
      84,
      2
@@ -34458,7 +34458,7 @@
      2
     ],
     [
-     "func_001DFA58",
+     "GameResBufferAllocOwned",
      1964632,
      80,
      2
@@ -34506,7 +34506,7 @@
      2
     ],
     [
-     "func_001E00F0",
+     "xglCdLoadBinFileSet",
      1966320,
      872,
      2
@@ -34524,7 +34524,7 @@
      2
     ],
     [
-     "func_001E0610",
+     "xglCdLoadByKind",
      1967632,
      340,
      2
@@ -34548,7 +34548,7 @@
      2
     ],
     [
-     "func_001E0B10",
+     "GameResFindID",
      1968912,
      128,
      2
@@ -34596,7 +34596,7 @@
      2
     ],
     [
-     "func_001E0EB0",
+     "seNameCopyIfChanged",
      1969840,
      100,
      2
@@ -34608,7 +34608,7 @@
      2
     ],
     [
-     "func_001E0FD0",
+     "seBankSetName",
      1970128,
      504,
      2
@@ -34626,25 +34626,25 @@
      2
     ],
     [
-     "func_001E1218",
+     "seBgmNameSet",
      1970712,
      160,
      2
     ],
     [
-     "func_001E12B8",
+     "seVoiceRecordSet",
      1970872,
      388,
      2
     ],
     [
-     "func_001E1440",
+     "seVoiceRecordAddAt",
      1971264,
      196,
      2
     ],
     [
-     "func_001E1508",
+     "seVoiceRecordsUpdatePan",
      1971464,
      372,
      2
@@ -34656,25 +34656,25 @@
      2
     ],
     [
-     "func_001E16A0",
+     "seVoicePanVolumeFromPosition",
      1971872,
      396,
      2
     ],
     [
-     "func_001E1830",
+     "GameResArenaReserve",
      1972272,
      324,
      2
     ],
     [
-     "func_001E1978",
+     "GameResArenaReload",
      1972600,
      196,
      2
     ],
     [
-     "func_001E1A40",
+     "GameResArenaRelease",
      1972800,
      204,
      2
@@ -34812,7 +34812,7 @@
      2
     ],
     [
-     "func_001E2E08",
+     "resPreloadStep",
      1977864,
      200,
      2
@@ -34824,7 +34824,7 @@
      2
     ],
     [
-     "func_001E3000",
+     "resReadHalfPairWord",
      1978368,
      36,
      2
@@ -34836,19 +34836,19 @@
      2
     ],
     [
-     "func_001E3308",
+     "resJumpPointsBuild",
      1979144,
      808,
      2
     ],
     [
-     "func_001E3630",
+     "resJumpRecordSet",
      1979952,
      196,
      2
     ],
     [
-     "func_001E36F8",
+     "resJumpPointsUpdate",
      1980152,
      320,
      2
@@ -34872,7 +34872,7 @@
      2
     ],
     [
-     "func_001E39D0",
+     "resApplyCfFile",
      1980880,
      1540,
      2
@@ -34884,13 +34884,13 @@
      2
     ],
     [
-     "func_001E4000",
+     "resPathSlotsInit",
      1982464,
      224,
      2
     ],
     [
-     "func_001E40E0",
+     "resPathSlotFindByOwner",
      1982688,
      152,
      2
@@ -34914,13 +34914,13 @@
      2
     ],
     [
-     "func_001E44F0",
+     "resPathSlotLoadID",
      1983728,
      524,
      2
     ],
     [
-     "func_001E4700",
+     "resPathSlotBlockReset",
      1984256,
      224,
      2
@@ -34932,19 +34932,19 @@
      2
     ],
     [
-     "func_001E4890",
+     "seFootBanksLoad",
      1984656,
      588,
      2
     ],
     [
-     "func_001E4AE0",
+     "resFootMaterialIndex",
      1985248,
      128,
      2
     ],
     [
-     "func_001E4B60",
+     "seFootBankFromKind",
      1985376,
      408,
      2

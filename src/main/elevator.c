@@ -116,7 +116,7 @@ INCLUDE_ASM("asm/main/nonmatchings/elevator", elvSetKeepOff);
 
 int func_A9F0C0(int index, int selector);
 int func_A9F1C0(int index, int selector);
-void func_001E3630(int first, int second, float *values);
+void resJumpRecordSet(int first, int second, float *values);
 int func_A9CDB0();
 
 int preren(int index)
@@ -153,7 +153,7 @@ int preload(int index)
     sample.value[1] = elvValueToFloat(func_A9F0C0(index, 4));
     sample.value[2] = elvValueToFloat(func_A9F0C0(index, 5));
     sample.value[3] = elvValueToFloat(func_A9F0C0(index, 6));
-    func_001E3630(first, second, sample.value);
+    resJumpRecordSet(first, second, sample.value);
     return 1;
 }
 

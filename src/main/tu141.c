@@ -6,11 +6,11 @@
 #include "main/tu146.h"
 #include "main/xgl_studio.h"
 
-int func_001DF928(int);
+int GameResBufferAlloc(int);
 void cfeNodePoolSet(void *);
 
 void cfeNodePoolInit(void) {
-    cfeNodePoolSet(func_001DF928(0x48000));
+    cfeNodePoolSet(GameResBufferAlloc(0x48000));
     cfeNodePoolClear();
 }
 

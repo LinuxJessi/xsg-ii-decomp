@@ -1440,6 +1440,10 @@ JOINED_CUTS = [
     (0x001D3FB8,
      'tu045: func_001CDC40 calls the static copy xglVectorSubXYZ 0x1D4530 at the end of this span, and '
      'func_001D4498 reads .sdata 0x69E10C $gp-relative in the middle of tu045\'s .sdata run'),
+    (0x001E0B10,
+     'res_get_path joins tu054: func_001E4000 (0x1E4000) calls func_001DF9F0 (tu054) and matches only when '
+     'that callee is an earlier C definition in the same file (nothrow same-TU call, bnezl annul at '
+     '0x1E40A8); found matching func_001E4000, user 2026-11-09'),
 ]
 
 # Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).

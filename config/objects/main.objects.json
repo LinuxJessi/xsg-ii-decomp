@@ -92,9 +92,9 @@
      "c_split": false,
      "end": "0x002B5ED0",
      "ordinal": 54,
-     "piece": "tu054",
+     "piece": "res_get_path",
      "start": "0x002B5DBC",
-     "tu": "tu054"
+     "tu": "res_get_path"
     },
     {
      "c_split": false,
@@ -106,19 +106,11 @@
     },
     {
      "c_split": false,
-     "end": "0x002B5F20",
+     "end": "0x002B60C0",
      "ordinal": 77,
      "piece": "tu077",
      "start": "0x002B5EDC",
      "tu": "tu077"
-    },
-    {
-     "c_split": false,
-     "end": "0x002B60C0",
-     "ordinal": 55,
-     "piece": "res_get_path",
-     "start": "0x002B5F20",
-     "tu": "res_get_path"
     },
     {
      "c_split": false,
@@ -1090,7 +1082,7 @@
     {
      "c_split": false,
      "end": "0x00688328",
-     "ordinal": 55,
+     "ordinal": 54,
      "piece": "res_get_path",
      "start": "0x00688238",
      "tu": "res_get_path"
@@ -1977,7 +1969,7 @@
     {
      "c_split": false,
      "end": "0x0069AF10",
-     "ordinal": 55,
+     "ordinal": 54,
      "piece": "res_get_path",
      "start": "0x0069AEFC",
      "tu": "res_get_path"
@@ -2495,18 +2487,10 @@
     },
     {
      "c_split": false,
-     "end": "0x0069CEF0",
-     "ordinal": 54,
-     "piece": "tu054",
-     "start": "0x0069CEE0",
-     "tu": "tu054"
-    },
-    {
-     "c_split": false,
      "end": "0x0069CFD4",
-     "ordinal": 55,
+     "ordinal": 54,
      "piece": "res_get_path",
-     "start": "0x0069CEF0",
+     "start": "0x0069CEE0",
      "tu": "res_get_path"
     },
     {
@@ -3262,18 +3246,10 @@
     },
     {
      "c_split": false,
-     "end": "0x0069E198",
-     "ordinal": 54,
-     "piece": "tu054",
-     "start": "0x0069E190",
-     "tu": "tu054"
-    },
-    {
-     "c_split": false,
      "end": "0x0069E1C8",
-     "ordinal": 55,
+     "ordinal": 54,
      "piece": "res_get_path",
-     "start": "0x0069E198",
+     "start": "0x0069E190",
      "tu": "res_get_path"
     },
     {
@@ -3534,7 +3510,7 @@
     {
      "c_split": false,
      "end": "0x006A1880",
-     "ordinal": 55,
+     "ordinal": 54,
      "piece": "res_get_path",
      "start": "0x006A02C0",
      "tu": "res_get_path"
@@ -4126,7 +4102,6 @@
   "tu051",
   "tu052",
   "tu053",
-  "tu054",
   "res_get_path",
   "game_snap_shot",
   "game_defocus",
@@ -43013,18 +42988,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "UsbRead_001A6CA0",
+     "name": "UsbGetFileSize",
      "size": 220,
-     "splat_name": "UsbRead_001A6CA0",
+     "splat_name": "UsbGetFileSize",
      "va": "0x001a6ca0",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "UsbRead_001A6D80",
+     "name": "UsbReadFile",
      "size": 248,
-     "splat_name": "UsbRead_001A6D80",
+     "splat_name": "UsbReadFile",
      "va": "0x001a6d80",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -43067,9 +43042,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001A7278",
+     "name": "UsbGetLocalAddress",
      "size": 128,
-     "splat_name": "func_001A7278",
+     "splat_name": "UsbGetLocalAddress",
      "va": "0x001a7278",
      "name_basis": "address",
      "provenance": "estimated"
@@ -43094,9 +43069,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "reg_handler",
+     "name": "UsbInit",
      "size": 504,
-     "splat_name": "reg_handler",
+     "splat_name": "UsbInit",
      "va": "0x001a73b0",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -50056,9 +50031,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_001D74E0",
+     "name": "mainResLoadCallback",
      "size": 1180,
-     "splat_name": "func_001D74E0",
+     "splat_name": "mainResLoadCallback",
      "va": "0x001d74e0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -50083,18 +50058,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001D7A78",
+     "name": "mapObjectAdvanceTweens",
      "size": 668,
-     "splat_name": "func_001D7A78",
+     "splat_name": "mapObjectAdvanceTweens",
      "va": "0x001d7a78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001D7D18",
+     "name": "mapObjectUpdateEffectTransform",
      "size": 412,
-     "splat_name": "func_001D7D18",
+     "splat_name": "mapObjectUpdateEffectTransform",
      "va": "0x001d7d18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -50316,9 +50291,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_001D9280",
+     "name": "mapObjectResourcesLoad",
      "size": 152,
-     "splat_name": "func_001D9280",
+     "splat_name": "mapObjectResourcesLoad",
      "va": "0x001d9280",
      "name_basis": "address",
      "provenance": "estimated"
@@ -50343,18 +50318,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001D9580",
+     "name": "cameraRangeSetDefaults",
      "size": 108,
-     "splat_name": "func_001D9580",
+     "splat_name": "cameraRangeSetDefaults",
      "va": "0x001d9580",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001D95F0",
+     "name": "cameraStudioReset",
      "size": 76,
-     "splat_name": "func_001D95F0",
+     "splat_name": "cameraStudioReset",
      "va": "0x001d95f0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -50469,81 +50444,81 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001D9FD0",
+     "name": "cameraProbeSlide",
      "size": 572,
-     "splat_name": "func_001D9FD0",
+     "splat_name": "cameraProbeSlide",
      "va": "0x001d9fd0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DA210",
+     "name": "cameraPullInAlongSight",
      "size": 596,
-     "splat_name": "func_001DA210",
+     "splat_name": "cameraPullInAlongSight",
      "va": "0x001da210",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DA468",
+     "name": "cameraSearchOrbitPitch",
      "size": 1484,
-     "splat_name": "func_001DA468",
+     "splat_name": "cameraSearchOrbitPitch",
      "va": "0x001da468",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DAA38",
+     "name": "cameraUpdateFollow",
      "size": 432,
-     "splat_name": "func_001DAA38",
+     "splat_name": "cameraUpdateFollow",
      "va": "0x001daa38",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DABE8",
+     "name": "cameraUpdateFromRecord",
      "size": 328,
-     "splat_name": "func_001DABE8",
+     "splat_name": "cameraUpdateFromRecord",
      "va": "0x001dabe8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DAD30",
+     "name": "cameraStageLookAt",
      "size": 156,
-     "splat_name": "func_001DAD30",
+     "splat_name": "cameraStageLookAt",
      "va": "0x001dad30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DADD0",
+     "name": "cameraAngleLimitIndex",
      "size": 316,
-     "splat_name": "func_001DADD0",
+     "splat_name": "cameraAngleLimitIndex",
      "va": "0x001dadd0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DAF10",
+     "name": "cameraClampAngles",
      "size": 816,
-     "splat_name": "func_001DAF10",
+     "splat_name": "cameraClampAngles",
      "va": "0x001daf10",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DB240",
+     "name": "cameraCommitSlots",
      "size": 352,
-     "splat_name": "func_001DB240",
+     "splat_name": "cameraCommitSlots",
      "va": "0x001db240",
      "name_basis": "address",
      "provenance": "estimated"
@@ -50586,9 +50561,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DB580",
+     "name": "cameraWaveStep",
      "size": 300,
-     "splat_name": "func_001DB580",
+     "splat_name": "cameraWaveStep",
      "va": "0x001db580",
      "name_basis": "address",
      "provenance": "estimated"
@@ -50622,36 +50597,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DC378",
+     "name": "resPathSlotLoadWithParts",
      "size": 240,
-     "splat_name": "func_001DC378",
+     "splat_name": "resPathSlotLoadWithParts",
      "va": "0x001dc378",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DC468",
+     "name": "resPathSlotsLoadModels",
      "size": 252,
-     "splat_name": "func_001DC468",
+     "splat_name": "resPathSlotsLoadModels",
      "va": "0x001dc468",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DC568",
+     "name": "uwamonoAttachPlayerParts",
      "size": 760,
-     "splat_name": "func_001DC568",
+     "splat_name": "uwamonoAttachPlayerParts",
      "va": "0x001dc568",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DC860",
+     "name": "uwamonoChangePlayerModel",
      "size": 1540,
-     "splat_name": "func_001DC860",
+     "splat_name": "uwamonoChangePlayerModel",
      "va": "0x001dc860",
      "name_basis": "address",
      "provenance": "estimated"
@@ -50676,18 +50651,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DE738",
+     "name": "uwamonoFindOverlapRecord",
      "size": 440,
-     "splat_name": "func_001DE738",
+     "splat_name": "uwamonoFindOverlapRecord",
      "va": "0x001de738",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DE8F0",
+     "name": "uwamonoPushOutOfActor",
      "size": 444,
-     "splat_name": "func_001DE8F0",
+     "splat_name": "uwamonoPushOutOfActor",
      "va": "0x001de8f0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -50718,7 +50693,7 @@
       "0x002b9ca9"
      ],
      "bounds": [
-      "0x002bb351",
+      "0x002bb7a9",
       "0x002b5edc"
      ],
      "end": "0x002B5EDC",
@@ -50950,9 +50925,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DEDD8",
+     "name": "uwamonoStartAreaBlend",
      "size": 688,
-     "splat_name": "func_001DEDD8",
+     "splat_name": "uwamonoStartAreaBlend",
      "va": "0x001dedd8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51190,9 +51165,9 @@
    "id": "main/tu054",
    "unit": "main",
    "ordinal": 54,
-   "name": "tu054",
-   "path": "src/main/tu054.c",
-   "scaffold_path": "scaffold/src/main/tu054.c",
+   "name": "res_get_path",
+   "path": "src/main/res_get_path.c",
+   "scaffold_path": "scaffold/src/main/res_get_path.c",
    "kind": "gcc",
    "mode": "c",
    "category": "game",
@@ -51206,8 +51181,8 @@
    ],
    "boundary_confidence": "low",
    "provisional": true,
-   "name_basis": "first named function GameResLoadID",
-   "name_confidence": "low",
+   "name_basis": "X1 file of 2 homolog function(s)",
+   "name_confidence": "medium",
    "contract": {
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
@@ -51231,7 +51206,7 @@
     "assembler_class": "LA29",
     "assembler_confidence": "medium",
     "g_flag": "-G8",
-    "g_basis": "20 gp-relative instructions in the code",
+    "g_basis": "112 gp-relative instructions in the code",
     "g_confidence": "high",
     "optimization": "-O2",
     "source": "reports/x2-compiler-calibration.md"
@@ -51239,7 +51214,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 34,
+    "of": 101,
     "migration_hints": [],
     "records": []
    },
@@ -51390,9 +51365,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DF928",
+     "name": "GameResBufferAlloc",
      "size": 84,
-     "splat_name": "func_001DF928",
+     "splat_name": "GameResBufferAlloc",
      "va": "0x001df928",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51417,9 +51392,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001DFA58",
+     "name": "GameResBufferAllocOwned",
      "size": 80,
-     "splat_name": "func_001DFA58",
+     "splat_name": "GameResBufferAllocOwned",
      "va": "0x001dfa58",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51489,9 +51464,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E00F0",
+     "name": "xglCdLoadBinFileSet",
      "size": 872,
-     "splat_name": "func_001E00F0",
+     "splat_name": "xglCdLoadBinFileSet",
      "va": "0x001e00f0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51516,9 +51491,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E0610",
+     "name": "xglCdLoadByKind",
      "size": 340,
-     "splat_name": "func_001E0610",
+     "splat_name": "xglCdLoadByKind",
      "va": "0x001e0610",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51549,175 +51524,12 @@
      "va": "0x001e0aa8",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c",
-    ".data": "asm",
-    ".sdata": "asm",
-    ".sbss": "asm"
-   },
-   "sections": {
-    ".data": {
-     "anchored": [
-      "0x002b5dbc",
-      "0x002bb351"
-     ],
-     "bounds": [
-      "0x00645869",
-      "0x002b5ed0"
-     ],
-     "end": "0x002B5ED0",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x002B5ED0",
-       "name": "tu054",
-       "start": "0x002B5DBC"
-      }
-     ],
-     "size": 276,
-     "splat_type": "data",
-     "start": "0x002B5DBC"
     },
-    ".sdata": {
-     "anchored": [
-      "0x0069cee0",
-      "0x0069cee1"
-     ],
-     "bounds": [
-      "0x0069b9b7",
-      "0x0069cef0"
-     ],
-     "end": "0x0069CEF0",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069CEF0",
-       "name": "tu054",
-       "start": "0x0069CEE0"
-      }
-     ],
-     "size": 16,
-     "splat_type": "sdata",
-     "start": "0x0069CEE0"
-    },
-    ".sbss": {
-     "anchored": [
-      "0x0069e190",
-      "0x0069e1bd"
-     ],
-     "bounds": [
-      "0x0069e189",
-      "0x0069e198"
-     ],
-     "end": "0x0069E198",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069E198",
-       "name": "tu054",
-       "start": "0x0069E190"
-      }
-     ],
-     "size": 8,
-     "splat_type": "sbss",
-     "start": "0x0069E190"
-    }
-   },
-   "text": {
-    "start": "0x001df120",
-    "end": "0x001e0b10",
-    "code_end": "0x001e0b0c",
-    "size": 6640,
-    "splat": "c",
-    "splat_range": [
-     "0x001df120",
-     "0x001e0b10"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
-    "source": {
-     "kind": "file",
-     "path": "src/main/tu054.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu055",
-   "unit": "main",
-   "ordinal": 55,
-   "name": "res_get_path",
-   "path": "src/main/res_get_path.c",
-   "scaffold_path": "scaffold/src/main/res_get_path.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -1.83",
-    "precision of this score band on X1, held out: 0.227 (17/75)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "X1 file of 2 homolog function(s)",
-   "name_confidence": "medium",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "58a63b84ed4385101b1135a71919a2516f2d6c61b80258b5917ccd47bc56b1f4",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G8"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G8",
-    "g_basis": "92 gp-relative instructions in the code",
-    "g_confidence": "high",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 67,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_001E0B10",
+     "name": "GameResFindID",
      "size": 128,
-     "splat_name": "func_001E0B10",
+     "splat_name": "GameResFindID",
      "va": "0x001e0b10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51787,9 +51599,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E0EB0",
+     "name": "seNameCopyIfChanged",
      "size": 100,
-     "splat_name": "func_001E0EB0",
+     "splat_name": "seNameCopyIfChanged",
      "va": "0x001e0eb0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51805,9 +51617,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E0FD0",
+     "name": "seBankSetName",
      "size": 504,
-     "splat_name": "func_001E0FD0",
+     "splat_name": "seBankSetName",
      "va": "0x001e0fd0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51832,36 +51644,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E1218",
+     "name": "seBgmNameSet",
      "size": 160,
-     "splat_name": "func_001E1218",
+     "splat_name": "seBgmNameSet",
      "va": "0x001e1218",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E12B8",
+     "name": "seVoiceRecordSet",
      "size": 388,
-     "splat_name": "func_001E12B8",
+     "splat_name": "seVoiceRecordSet",
      "va": "0x001e12b8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E1440",
+     "name": "seVoiceRecordAddAt",
      "size": 196,
-     "splat_name": "func_001E1440",
+     "splat_name": "seVoiceRecordAddAt",
      "va": "0x001e1440",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E1508",
+     "name": "seVoiceRecordsUpdatePan",
      "size": 372,
-     "splat_name": "func_001E1508",
+     "splat_name": "seVoiceRecordsUpdatePan",
      "va": "0x001e1508",
      "name_basis": "address",
      "provenance": "estimated"
@@ -51877,36 +51689,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E16A0",
+     "name": "seVoicePanVolumeFromPosition",
      "size": 396,
-     "splat_name": "func_001E16A0",
+     "splat_name": "seVoicePanVolumeFromPosition",
      "va": "0x001e16a0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E1830",
+     "name": "GameResArenaReserve",
      "size": 324,
-     "splat_name": "func_001E1830",
+     "splat_name": "GameResArenaReserve",
      "va": "0x001e1830",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E1978",
+     "name": "GameResArenaReload",
      "size": 196,
-     "splat_name": "func_001E1978",
+     "splat_name": "GameResArenaReload",
      "va": "0x001e1978",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E1A40",
+     "name": "GameResArenaRelease",
      "size": 204,
-     "splat_name": "func_001E1A40",
+     "splat_name": "GameResArenaRelease",
      "va": "0x001e1a40",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52111,9 +51923,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E2E08",
+     "name": "resPreloadStep",
      "size": 200,
-     "splat_name": "func_001E2E08",
+     "splat_name": "resPreloadStep",
      "va": "0x001e2e08",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52129,9 +51941,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E3000",
+     "name": "resReadHalfPairWord",
      "size": 36,
-     "splat_name": "func_001E3000",
+     "splat_name": "resReadHalfPairWord",
      "va": "0x001e3000",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52147,27 +51959,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E3308",
+     "name": "resJumpPointsBuild",
      "size": 808,
-     "splat_name": "func_001E3308",
+     "splat_name": "resJumpPointsBuild",
      "va": "0x001e3308",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E3630",
+     "name": "resJumpRecordSet",
      "size": 196,
-     "splat_name": "func_001E3630",
+     "splat_name": "resJumpRecordSet",
      "va": "0x001e3630",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E36F8",
+     "name": "resJumpPointsUpdate",
      "size": 320,
-     "splat_name": "func_001E36F8",
+     "splat_name": "resJumpPointsUpdate",
      "va": "0x001e36f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52201,9 +52013,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E39D0",
+     "name": "resApplyCfFile",
      "size": 1540,
-     "splat_name": "func_001E39D0",
+     "splat_name": "resApplyCfFile",
      "va": "0x001e39d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52219,18 +52031,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E4000",
+     "name": "resPathSlotsInit",
      "size": 224,
-     "splat_name": "func_001E4000",
+     "splat_name": "resPathSlotsInit",
      "va": "0x001e4000",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E40E0",
+     "name": "resPathSlotFindByOwner",
      "size": 152,
-     "splat_name": "func_001E40E0",
+     "splat_name": "resPathSlotFindByOwner",
      "va": "0x001e40e0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52264,18 +52076,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E44F0",
+     "name": "resPathSlotLoadID",
      "size": 524,
-     "splat_name": "func_001E44F0",
+     "splat_name": "resPathSlotLoadID",
      "va": "0x001e44f0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E4700",
+     "name": "resPathSlotBlockReset",
      "size": 224,
-     "splat_name": "func_001E4700",
+     "splat_name": "resPathSlotBlockReset",
      "va": "0x001e4700",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52291,27 +52103,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E4890",
+     "name": "seFootBanksLoad",
      "size": 588,
-     "splat_name": "func_001E4890",
+     "splat_name": "seFootBanksLoad",
      "va": "0x001e4890",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E4AE0",
+     "name": "resFootMaterialIndex",
      "size": 128,
-     "splat_name": "func_001E4AE0",
+     "splat_name": "resFootMaterialIndex",
      "va": "0x001e4ae0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001E4B60",
+     "name": "seFootBankFromKind",
      "size": 408,
-     "splat_name": "func_001E4B60",
+     "splat_name": "seFootBankFromKind",
      "va": "0x001e4b60",
      "name_basis": "address",
      "provenance": "estimated"
@@ -52329,27 +52141,27 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x002b5f20",
+      "0x002b5dbc",
       "0x002bb7a9"
      ],
      "bounds": [
-      "0x003e7051",
-      "0x002b60c0"
+      "0x00645869",
+      "0x002b5ed0"
      ],
-     "end": "0x002B60C0",
+     "end": "0x002B5ED0",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x002B60C0",
+       "end": "0x002B5ED0",
        "name": "res_get_path",
-       "start": "0x002B5F20"
+       "start": "0x002B5DBC"
       }
      ],
-     "size": 416,
+     "size": 276,
      "splat_type": "data",
-     "start": "0x002B5F20"
+     "start": "0x002B5DBC"
     },
     ".rodata": {
      "anchored": [
@@ -52401,11 +52213,11 @@
     },
     ".sdata": {
      "anchored": [
-      "0x0069cef0",
+      "0x0069cee0",
       "0x0069cfc9"
      ],
      "bounds": [
-      "0x0069cee1",
+      "0x0069b9b7",
       "0x0069cfd4"
      ],
      "end": "0x0069CFD4",
@@ -52416,20 +52228,20 @@
        "c_split": false,
        "end": "0x0069CFD4",
        "name": "res_get_path",
-       "start": "0x0069CEF0"
+       "start": "0x0069CEE0"
       }
      ],
-     "size": 228,
+     "size": 244,
      "splat_type": "sdata",
-     "start": "0x0069CEF0"
+     "start": "0x0069CEE0"
     },
     ".sbss": {
      "anchored": [
-      "0x0069e198",
+      "0x0069e190",
       "0x0069e1c5"
      ],
      "bounds": [
-      "0x0069e1bd",
+      "0x0069e189",
       "0x0069e1c8"
      ],
      "end": "0x0069E1C8",
@@ -52440,12 +52252,12 @@
        "c_split": false,
        "end": "0x0069E1C8",
        "name": "res_get_path",
-       "start": "0x0069E198"
+       "start": "0x0069E190"
       }
      ],
-     "size": 48,
+     "size": 56,
      "splat_type": "sbss",
-     "start": "0x0069E198"
+     "start": "0x0069E190"
     },
     ".bss": {
      "anchored": [
@@ -52473,20 +52285,20 @@
     }
    },
    "text": {
-    "start": "0x001e0b10",
+    "start": "0x001df120",
     "end": "0x001e4cf8",
     "code_end": "0x001e4cf8",
-    "size": 16872,
+    "size": 23512,
     "splat": "c",
     "splat_range": [
-     "0x001e0b10",
+     "0x001df120",
      "0x001e4cf8"
     ],
     "note": null
    },
    "import": {
     "mode": "c",
-    "note": "X1 C under express order (user 2026-11-05)",
+    "note": "Express publication, order \"Haz 1\" (user 2026-11-05); res_get_path (old tu055, X1 C under express order) merged in, user 2026-11-09",
     "source": {
      "kind": "file",
      "path": "src/main/res_get_path.c",
@@ -57791,20 +57603,20 @@
      ],
      "bounds": [
       "0x002b9ca9",
-      "0x002b5f20"
+      "0x002b60c0"
      ],
-     "end": "0x002B5F20",
+     "end": "0x002B60C0",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x002B5F20",
+       "end": "0x002B60C0",
        "name": "tu077",
        "start": "0x002B5EDC"
       }
      ],
-     "size": 68,
+     "size": 484,
      "splat_type": "data",
      "start": "0x002B5EDC"
     },
@@ -59969,7 +59781,7 @@
       "0x0063eda9"
      ],
      "bounds": [
-      "0x002bb7a9",
+      "0x003e7051",
       "0x002b60c4"
      ],
      "end": "0x002B60C4",

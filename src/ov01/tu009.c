@@ -7,8 +7,8 @@
 #include "ov01/tu009.h"
 
 /* The fourth argument is a completion callback: ov01CdReadFileAsync passes ov01CdReadCallback in $7. */
-extern void func_001E1830(void);
-extern u32 func_001E0B10(int key, void *buffer);
+extern void GameResArenaReserve(void);
+extern u32 GameResFindID(int key, void *buffer);
 /* Scaffold-owned data: the splat names of the words this TU reads. */
 /* ov01HeapStart is the overlay heap range: word 0 is the first block, word 1 (ov01HeapEnd) the end. */
 extern int ov01CdPendingCount; /* pending CD read count */
@@ -62,19 +62,19 @@ u64 ov01CdReadFileSync(const char *name, void *buffer)
     return xglCdReadFile(name, buffer, 0, 0) >= 0;
 }
 
-/* Tail-jumps to func_001E1830: the heap base comes back in $2 (the C prototype says void). */
+/* Tail-jumps to GameResArenaReserve: the heap base comes back in $2 (the C prototype says void). */
 void ov01HeapBaseGet(void)
 {
-    func_001E1830();
+    GameResArenaReserve();
 }
 
-/* Key lookup through func_001E0B10: a result inside the heap range gives 0, any other result is returned. */
+/* Key lookup through GameResFindID: a result inside the heap range gives 0, any other result is returned. */
 u32 ov01LookupNonHeap(int key)
 {
     u32 buffer[4];
     u32 address;
 
-    address = func_001E0B10(key, buffer);
+    address = GameResFindID(key, buffer);
     if (address >= ov01HeapStart[0] && address <= ov01HeapStart[1]) {
         return 0;
     }

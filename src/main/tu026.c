@@ -2,7 +2,7 @@
 #include "main/tu026.h"
 
 int printf(const char *format, ...);
-int assertExit();
+/* Exit path shared by the assertion and error reporters: prints "> Exit Program", then traps (break). */ void assertExit(void);
 extern char assertBannerTop[];
 extern char assertFormat[];
 extern char assertBannerBottom[];
@@ -15,8 +15,15 @@ void assertFailed(int message, int file, int line) {
     assertExit();
 }
 
+#include "debug_break.h"
+
+extern char exitProgramBanner[];
+
 /* Exit path shared by the assertion and error reporters: prints "> Exit Program", then traps (break). */
-INCLUDE_ASM("asm/main/nonmatchings/tu026", assertExit);
+void assertExit(void) {
+    printf(exitProgramBanner);
+    DEBUG_BREAK();
+}
 
 typedef char *va_list;
 

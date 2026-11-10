@@ -4314,25 +4314,30 @@
    ".lit4": [
     {
      "range": [
-      "0x0069ae0c",
+      "0x0069ae08",
       "0x0069ae14"
      ],
      "generated": [
-      "0x0069ae0c",
+      "0x0069ae08",
       "0x0069ae14"
      ],
      "generated_by": [
-      "DispMapObject"
+      "DispMapObject",
+      "func_001D7EB8"
      ],
      "c_owned_symbols": [
+      "D_0069AE08",
       "D_0069AE0C",
       "D_0069AE10"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "D_0069AE00",
+      "D_0069AE04"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "/home/pc/.claude/jobs/ee99faea/tmp/clone/build/main/build/c/tu050.o"
+      "object": "build/main/build/c/tu050.o"
      }
     }
    ],
@@ -4356,7 +4361,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "/home/pc/.claude/jobs/ee99faea/tmp/clone/build/main/build/c/tu050.o"
+      "object": "build/main/build/c/tu050.o"
      }
     }
    ]
@@ -4365,14 +4370,138 @@
    ".lit4": [
     {
      "range": [
+      "0x0069ae14",
+      "0x0069ae40"
+     ],
+     "generated": [
+      "0x0069ae14",
+      "0x0069ae40"
+     ],
+     "generated_by": [
+      "cameraAnglesBetween",
+      "cameraInit",
+      "cameraRangeSetDefaults",
+      "cameraStudioReset"
+     ],
+     "c_owned_symbols": [
+      "D_0069AE14",
+      "D_0069AE18",
+      "D_0069AE1C",
+      "D_0069AE20",
+      "D_0069AE24",
+      "D_0069AE28",
+      "D_0069AE2C",
+      "D_0069AE30",
+      "D_0069AE34",
+      "D_0069AE38",
+      "D_0069AE3C"
+     ],
+     "also_referenced_by_c": [
+      "D_0069AE40"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu051.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069ae44",
+      "0x0069ae48"
+     ],
+     "generated": [
+      "0x0069ae44",
+      "0x0069ae48"
+     ],
+     "generated_by": [
+      "cameraProbeSlide"
+     ],
+     "c_owned_symbols": [
+      "D_0069AE44"
+     ],
+     "also_referenced_by_c": [
+      "D_0069AE48",
+      "D_0069AE4C"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu051.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069ae50",
+      "0x0069aec0"
+     ],
+     "generated": [
+      "0x0069ae50",
+      "0x0069aec0"
+     ],
+     "generated_by": [
+      "cameraLerpAngle",
+      "cameraSearchOrbitPitch",
+      "cameraAngleLimitIndex",
+      "cameraClampAngles"
+     ],
+     "c_owned_symbols": [
+      "D_0069AE50",
+      "D_0069AE54",
+      "D_0069AE58",
+      "D_0069AE5C",
+      "D_0069AE60",
+      "D_0069AE64",
+      "D_0069AE68",
+      "D_0069AE6C",
+      "D_0069AE70",
+      "D_0069AE74",
+      "D_0069AE78",
+      "D_0069AE7C",
+      "D_0069AE80",
+      "D_0069AE84",
+      "D_0069AE88",
+      "D_0069AE8C",
+      "D_0069AE90",
+      "D_0069AE94",
+      "D_0069AE98",
+      "D_0069AE9C",
+      "D_0069AEA0",
+      "D_0069AEA4",
+      "D_0069AEA8",
+      "D_0069AEAC",
+      "D_0069AEB0",
+      "D_0069AEB4",
+      "D_0069AEB8",
+      "D_0069AEBC"
+     ],
+     "also_referenced_by_c": [
+      "D_0069AEC0",
+      "D_0069AEC4",
+      "D_0069AEC8",
+      "D_0069AECC",
+      "D_0069AED0",
+      "D_0069AED4",
+      "D_0069AED8",
+      "D_0069AEDC"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu051.o"
+     }
+    },
+    {
+     "range": [
       "0x0069aee0",
-      "0x0069aef8"
+      "0x0069aefc"
      ],
      "generated": [
       "0x0069aee0",
-      "0x0069aef8"
+      "0x0069aefc"
      ],
      "generated_by": [
+      "uwamonoPushOutOfActor",
       "uwamonoPlayerUpdate"
      ],
      "c_owned_symbols": [
@@ -4381,11 +4510,14 @@
       "D_0069AEE8",
       "D_0069AEEC",
       "D_0069AEF0",
-      "D_0069AEF4"
+      "D_0069AEF4",
+      "D_0069AEF8"
      ],
      "also_referenced_by_c": [],
      "basis": {
-      "reason": "uwamonoPickTarget and uwamonoPlayerUpdate recovered as C (2026-11-08)"
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu051.o"
      }
     }
    ],
@@ -4409,7 +4541,9 @@
      ],
      "also_referenced_by_c": [],
      "basis": {
-      "reason": "uwamonoPickTarget and uwamonoPlayerUpdate recovered as C (2026-11-08)"
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu051.o"
      }
     }
    ],
@@ -4423,7 +4557,9 @@
       "0x0069b9a8",
       "0x0069b9b6"
      ],
-     "generated_by": [],
+     "generated_by": [
+      "uwamonoChangePlayerModel"
+     ],
      "c_owned_symbols": [
       "D_0069B9A8",
       "D_0069B9B0"
@@ -4432,12 +4568,121 @@
       "D_0069B97C",
       "D_0069B980",
       "uwamonoCurrentIndex",
-      "D_0069B988",
+      "uwamonoPartIndices",
       "D_0069B992",
-      "D_0069B9B6"
+      "D_0069B998",
+      "D_0069B9A0",
+      "D_0069B9B6",
+      "D_0069B9B7"
      ],
      "basis": {
-      "reason": "uwamonoPickTarget and uwamonoPlayerUpdate recovered as C (2026-11-08)"
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu051.o"
+     }
+    }
+   ]
+  },
+  "main/tu054": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069aefc",
+      "0x0069af10"
+     ],
+     "generated": [
+      "0x0069aefc",
+      "0x0069af10"
+     ],
+     "generated_by": [
+      "seVoicePanVolumeFromPosition",
+      "resJumpPointsBuild"
+     ],
+     "c_owned_symbols": [
+      "D_0069AEFC",
+      "D_0069AF00",
+      "D_0069AF04",
+      "D_0069AF08",
+      "D_0069AF0C"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/res_get_path.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00688238",
+      "0x00688250"
+     ],
+     "generated": [
+      "0x00688238",
+      "0x00688250"
+     ],
+     "generated_by": [
+      "resCmdEnefoot"
+     ],
+     "c_owned_symbols": [
+      "D_00688238"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/res_get_path.o"
+     }
+    },
+    {
+     "range": [
+      "0x00688250",
+      "0x006882e8"
+     ],
+     "generated": [
+      "0x00688250",
+      "0x006882e8"
+     ],
+     "generated_by": [
+      "resParseJumpTarget"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00688250"
+     ],
+     "also_referenced_by_c": [
+      "D_006882E8",
+      "D_006882F8"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/res_get_path.o"
+     }
+    },
+    {
+     "range": [
+      "0x00688308",
+      "0x00688318"
+     ],
+     "generated": [
+      "0x00688308",
+      "0x00688314"
+     ],
+     "generated_by": [
+      "resSetPathSlot"
+     ],
+     "c_owned_symbols": [
+      "D_00688308"
+     ],
+     "also_referenced_by_c": [
+      "D_00688318"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/res_get_path.o"
      }
     }
    ]

@@ -1,14 +1,26 @@
 #include "common.h"
 #include "main/nml_model_set.h"
 #include "main/tu050.h"
-
-INCLUDE_ASM("asm/main/nonmatchings/tu050", func_001D74E0);
-
 #include "shared.h"
+#include "main/sdv_033.h"
 
+/* The resource record handed to mainResLoadCallback; gameWork.active points at it. */
 typedef struct MainActive {
-    u8 unmodeled_00[0x24];
-    int pending;
+    struct MainObject *object;  /* +0x00 */
+    int jpegData;               /* +0x04 */
+    u8 unmodeled_08[0x04];
+    int blockId;                /* +0x0C */
+    u8 *imageHead;              /* +0x10 */
+    int imageOffset;            /* +0x14 */
+    u8 unmodeled_18[0x08];
+    int *jpegStream;            /* +0x20 */
+    void *pending;              /* +0x24: decoded texture */
+    short offsetY;              /* +0x28 */
+    short offsetX;              /* +0x2A */
+    u16 height;                 /* +0x2C */
+    u16 width;                  /* +0x2E */
+    int viewY;                  /* +0x30 */
+    int viewX;                  /* +0x34 */
 } MainActive;
 
 /* Work block at gameWork. Members follow the offsets the functions access;
@@ -26,24 +38,61 @@ typedef struct MainWork {
     int current_id;
     u8 unmodeled_24[0x04];
     MainActive *active;
-    u8 unmodeled_2C[0x31C];
+    u8 *imageDst;               /* +0x2C */
+    u8 unmodeled_30[0x88];
+    int imageEnd;               /* +0xB8 */
+    u8 unmodeled_BC[0x264];
+    short ladderState;          /* +0x320: -1 = fresh load */
+    u8 unmodeled_322[0x26];
     Vector4 extent;
     u8 unmodeled_358[0x08];
     u8 unmodeled_360[0x10];
+    u8 unmodeled_370[0x04];
+    float unitScaleB;           /* +0x374 */
+    u8 unmodeled_378[0x4];
+    float unitScaleC;           /* +0x37C */
+    u8 unmodeled_380[0x4];
+    float tableA[16][12];
+    float tableB[16][12];
+    float tableP[16][4];
+    float tableQ[16][4];
+    float tableS[16];
 } MainWork;
 
+/* Header of a map object block. */
 typedef struct MainObject {
-    u8 unmodeled_00[0xD0];
-    int flags;
+    u8 unmodeled_00[0x34];
+    int entryCount;             /* +0x34 */
+    u8 unmodeled_38[0x98];
+    int secondHeaderOffset;     /* +0xD0: offset of the second header; nonzero = has one */
 } MainObject;
 
-/* A one-member union: the original accesses these vectors with alias set 0. */
+/* Second header inside the block. */
+typedef struct MainObjectSecond {
+    u8 unmodeled_00[0x34];
+    int entryCount;             /* +0x34 */
+} MainObjectSecond;
+
+/* Argument block of xglJpegDecode. */
+typedef struct JpegInfo {
+    u8 *source;                 /* +0x00 */
+    u8 *output;                 /* +0x04 */
+    int dataOffset;             /* +0x08 */
+    u8 unmodeled_0C[0x08];
+    short height;               /* +0x14: rows, stored to MainActive.height */
+    short width;                /* +0x16 */
+    u8 unmodeled_18[0x08];
+} JpegInfo;
+
+/* The original accesses these vectors with alias set 0, as named components or as a float array. */
 typedef union MapVector {
     Vector4 vector;
+    float component[4];
 } MapVector;
 
 typedef union AlignedMapVector {
     AlignedVector4 vector;
+    float component[4];
 } AlignedMapVector;
 
 /* The XenoActor of a map object; only the fields used below. */
@@ -96,15 +145,17 @@ enum {
 #define GAME_PAUSE_MAP_OBJECTS 0x01
 #define GAME_HIDE_RIDERS_DELAY 0x10 /* when set, one frame passes before GAME_HIDE_RIDERS is cleared */
 #define GAME_HIDE_RIDERS 0x20
-
 /* MapObjectRecord.flags bits. */
 #define MAP_OBJ_SHOWN 0x02
-
 /* Bit `key` of a map flag set (an array of 32-bit words). */
 #define MAP_BIT_CLEAR(set, key) ((set)[(key) >> 5] &= ~(1 << ((key) & 0x1F)))
 #define MAP_BIT_SET(set, key) ((set)[(key) >> 5] |= 1 << ((key) & 0x1F))
-
 #define MAP_RECORD_COUNT 0x100
+#define MAP_OBJ_EFFECT_FOLLOW 0x2000 /* mirrored into SefEffectRecord.flags bit SEF_FOLLOW */
+#define SEF_FOLLOW 0x10
+/* First word of a JPEG stream (FF D8 FF E0) read as a little-endian int, and the size of its decode buffer. */
+#define JPEG_MAGIC_WORD ((int)0xE0FFD8FF)
+#define JPEG_DECODE_BUFFER_SIZE 0x400000
 
 /* One 0x870-byte record of uwamonoRecords. */
 typedef struct MapObjectRecord {
@@ -128,16 +179,21 @@ typedef struct MapObjectRecord {
     MapVector turnTo;           /* +0x0B0 */
     MapVector scaleFrom;        /* +0x0C0 */
     MapVector scaleTo;          /* +0x0D0 */
-    u8 unmodeled_0e0[0x120];
+    float fadeFrom;             /* +0x0E0 */
+    float fadeTo;               /* +0x0E4 */
+    u8 unmodeled_0e8[0x118];
     MapVector tilt;             /* +0x200 */
-    u8 unmodeled_210[2];
+    short moveEndMode;          /* +0x210: mode for XenoActorCheckMode when the move ends, -1 for none */
     short moveStep;             /* +0x212 */
     short moveCount;            /* +0x214 */
     short turnStep;             /* +0x216 */
     short turnCount;            /* +0x218 */
     short scaleStep;            /* +0x21A */
     short scaleCount;           /* +0x21C */
-    u8 unmodeled_21e[0x2E];
+    short fadeStep;             /* +0x21E */
+    short fadeCount;            /* +0x220 */
+    u8 unmodeled_222[0x26];
+    int eventSlot;              /* +0x248: reset to -1 when the resource loads */
     short eventTimer;           /* +0x24C */
     u8 unmodeled_24e[2];
     int event;                  /* +0x250 */
@@ -201,18 +257,196 @@ typedef struct MapModelData {
     int headerOffset;           /* +0x68: byte offset of the MapModelHeader */
 } MapModelData;
 
-/* One pair of D_002B7BB0, the map resource table func_001D9280 loads. */
+/* One pair of mapObjectResources, the map resource table mapObjectResourcesLoad loads. */
 typedef struct MapModelResource {
     MapModelData *data;
     int texture;
 } MapModelResource;
 
-void func_001D74E0(int index, void *buffer, unsigned int size, int value);
+extern MainWork gameWork;
+extern MainObject *mainObject;
+extern int D_0069B964;
+extern void *D_0069B968;
+extern int uwamonoEntries;
+extern unsigned short *uwamonoEntryCountPtr;
+extern float D_0069AE00;
+extern float D_0069AE04;
+extern float D_0069B974[];
+extern int D_002B7C88[];
+extern int D_002B7CA8[];
+extern MapObjectRecord uwamonoRecords[];
+void *GameResBufferAlloc(unsigned int size);
+void ladderInitTable(void);
+void mapLoadBlock(int blockId);
+unsigned short *mapFindBlockEntry(int id, int index);
+void xglCullingMapSet(MainObject *object);
+void xglJpegDecode(void *info);
+void sefReleaseOwnedRecords(int owner);
+
+/* A 0x12000-byte block copy of the map image. */
+typedef struct MapImageBlock {
+    unsigned char bytes[0x12000];
+} MapImageBlock;
+
+void mainResLoadCallback(int index, void *buffer, unsigned int size, int value)
+{
+    JpegInfo jpegInfo;
+    MainActive *record = buffer;
+    MainObject *object;
+    MainObjectSecond *secondHeader;
+    u8 *pair;
+    u8 *pixels;
+    int i;
+    int entryIndex;
+    int i2;
+    int secondOffset;
+
+    int jpegData;
+
+    object = record->object;
+    jpegData = record->jpegData;
+    mainObject = object;
+    D_0069B964 = jpegData;
+
+    if (object != 0) {
+        xglCullingMapSet(object);
+        if (mainObject != 0) {
+            MainObject *m = mainObject;
+            for (entryIndex = 0; entryIndex < m->entryCount; entryIndex++) {
+                MAP_BIT_CLEAR(D_002B7C88, entryIndex);
+            }
+            secondOffset = m->secondHeaderOffset;
+            secondHeader = (MainObjectSecond *)((u8 *)m + secondOffset);
+            D_0069B968 = secondHeader;
+            if (secondOffset != 0) {
+                i2 = 0;
+                if (secondHeader->entryCount > 0) {
+                    MainObjectSecond *headerBase = secondHeader;
+                    secondHeader = 0;
+                    do {
+                        MAP_BIT_CLEAR(D_002B7CA8, i2);
+                        i2++;
+                    } while (i2 < headerBase->entryCount);
+                }
+            }
+        }
+    }
+
+    if (D_0069B964 != 0 && *(int *)D_0069B964 == JPEG_MAGIC_WORD) {
+        record->jpegStream = (int *)D_0069B964;
+        record->pending = GameResBufferAlloc(JPEG_DECODE_BUFFER_SIZE);
+        record->offsetX = 0;
+        record->offsetY = 0;
+        memset(&jpegInfo, 0, 0x20);
+        jpegInfo.source = (u8 *)record->jpegStream;
+        jpegInfo.output = record->pending;
+        xglJpegDecode(&jpegInfo);
+        pair = jpegInfo.output;
+        record->height = jpegInfo.height;
+        record->width = jpegInfo.width;
+        pixels = jpegInfo.source + ((jpegInfo.dataOffset + 0x3F) & ~0x3F);
+        for (i = 0; i < jpegInfo.height * jpegInfo.width; i++) {
+            pair[3] = (u8)(*pixels >> 1);
+            pixels++;
+            pair += 4;
+        }
+        D_0069B964 = 0;
+    }
+
+    mapLoadBlock(record->blockId);
+    uwamonoEntryCountPtr = 0;
+    uwamonoEntryCountPtr = mapFindBlockEntry(0x300, -1);
+    if (uwamonoEntryCountPtr != 0) {
+        unsigned short entryCount = uwamonoEntryCountPtr[0];
+        uwamonoEntries = (int)uwamonoEntryCountPtr + 16;
+        i2 = 0;
+        if (entryCount != 0) {
+            do {
+            } while (++i2 < (int)uwamonoEntryCountPtr[0]);
+        }
+    }
+
+    gameWork.flags |= GAME_HIDE_RIDERS_DELAY | GAME_HIDE_RIDERS;
+    if (gameWork.ladderState == -1) {
+        float zeroF = 0.0f;
+        gameWork.extent.w = zeroF;
+        gameWork.extent.z = zeroF;
+        gameWork.extent.y = zeroF;
+        gameWork.extent.x = zeroF;
+    }
+    gameWork.unitScaleB = D_0069AE00;
+    gameWork.unitScaleC = 1.5f;
+    if (gameWork.ladderState == -1) {
+        ladderInitTable();
+    }
+    sefReleaseOwnedRecords(-1);
+
+    {
+    u8 *imageHead = record->imageHead;
+    if (imageHead != 0) {
+        u8 *copyDst = gameWork.imageDst;
+        u8 *copySrc = imageHead + (((unsigned int)imageHead & 0xFF) >> 8);
+        *(MapImageBlock *)copyDst = *(MapImageBlock *)copySrc;
+        gameWork.imageEnd = (int)gameWork.imageDst + record->imageOffset;
+    }
+    }
+
+    {
+        float zero = D_0069B974[0];
+        float one = 1.0f;
+        float half = 0.5f;
+        float negOne = -1.0f;
+        for (i2 = 0; i2 < 16; i2++) {
+            gameWork.tableA[i2][0] = zero;
+            gameWork.tableA[i2][1] = negOne;
+            gameWork.tableA[i2][2] = zero;
+            gameWork.tableA[i2][3] = one;
+            gameWork.tableA[i2][4] = one;
+            gameWork.tableA[i2][5] = one;
+            gameWork.tableA[i2][6] = one;
+            gameWork.tableA[i2][7] = one;
+            gameWork.tableA[i2][8] = one;
+            gameWork.tableA[i2][9] = one;
+            gameWork.tableA[i2][10] = one;
+            gameWork.tableA[i2][11] = one;
+            gameWork.tableB[i2][0] = half;
+            gameWork.tableB[i2][1] = half;
+            gameWork.tableB[i2][2] = half;
+            gameWork.tableB[i2][3] = one;
+            gameWork.tableB[i2][4] = half;
+            gameWork.tableB[i2][5] = half;
+            gameWork.tableB[i2][6] = half;
+            gameWork.tableB[i2][7] = one;
+            gameWork.tableB[i2][8] = half;
+            gameWork.tableB[i2][9] = half;
+            gameWork.tableB[i2][10] = half;
+            gameWork.tableB[i2][11] = one;
+            gameWork.tableP[i2][0] = half;
+            gameWork.tableP[i2][1] = half;
+            gameWork.tableP[i2][2] = half;
+            gameWork.tableP[i2][3] = one;
+            gameWork.tableQ[i2][0] = 0;
+            gameWork.tableQ[i2][1] = one;
+            gameWork.tableQ[i2][2] = 0;
+            gameWork.tableQ[i2][3] = 0;
+            gameWork.tableS[i2] = D_0069AE04;
+        }
+    }
+
+    {
+        u8 *tailBase = (u8 *)uwamonoRecords;
+        int *slot = (int *)(tailBase + 0x869D8);
+        for (i2 = 0; i2 < MAP_RECORD_COUNT; i2++) {
+            *slot = -1;
+            slot = (int *)((u8 *)slot - 0x870);
+        }
+    }
+}
+
 int GameResLoadID(int id, void **buffer, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
 int GameResBlockFreeByOwner(int owner);
 void uwamonoResetRecords(int, int);
 void sefResetHandleSlots(void);
-extern MainWork gameWork;
 extern void *D_002B5DB8[];
 
 /* Makes id the current resource. With mode 1, a reload of the current id releases it first and then
@@ -231,7 +465,7 @@ void mainSwitchId(int id, signed char mode)
         sefResetHandleSlots();
     }
     gameWork.current_id = id;
-    while (GameResLoadID(id, D_002B5DB8, 0, func_001D74E0) == -1) {
+    while (GameResLoadID(id, D_002B5DB8, 0, mainResLoadCallback) == -1) {
     }
     if (id != prev_id) {
         GameResBlockFreeByOwner(prev_id);
@@ -245,23 +479,289 @@ void GameDefocusReset(void)
     GameDefocusSet(0, 0, 0);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu050", func_001D7A78);
+void Get_MiddlePoint(const float *start, const float *following, short point_index, short point_count, float *result);
+void func_00209458(const float *start, const float *following, short point_index, short point_count,
+                   void *curveStart, void *curveFollowing, short curveType, float *result);
+void XenoActorCheckMode(MapActor *actor, int expected_mode);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu050", func_001D7D18);
+/* Advances the move, turn, scale and fade steps of one map object by a frame.
+ * Returns 1 when any of the four steps ran. */
+int mapObjectAdvanceTweens(MapObjectRecord *record)
+{
+    int advanced = 0;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu050", func_001D7EB8);
+    if (gameWork.flags & GAME_PAUSE_MAP_OBJECTS) {
+        return 0;
+    }
+    if (record->moveStep != -1) {
+        if (record->moveCurveType == 0) {
+            Get_MiddlePoint(&record->moveFrom.vector.x, &record->moveTo.vector.x, record->moveStep,
+                            record->moveCount, &record->position.vector.x);
+        } else {
+            func_00209458(&record->moveFrom.vector.x, &record->moveTo.vector.x, record->moveStep,
+                          record->moveCount, record->moveCurve[0], record->moveCurve[1],
+                          record->moveCurveType, &record->position.vector.x);
+        }
+        record->moveStep = record->moveStep + 1;
+        if (record->moveCount < record->moveStep) {
+            short endMode = record->moveEndMode;
 
-extern MainObject *mainObject;
-extern int D_0069B964;
-void pxySetTxyBlock(int);
-void pxySubmitModel(void *);
+            record->moveStep = -1;
+            record->moveCount = 0;
+            if (endMode != -1) {
+                MapActor *actor = record->actor;
+
+                if (actor != 0) {
+                    XenoActorCheckMode(actor, endMode);
+                }
+            }
+        }
+        advanced = 1;
+    }
+    if (record->turnStep != -1) {
+        if (record->turnCurveType == 0) {
+            Get_MiddlePoint(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->turnStep,
+                            record->turnCount, &record->rotation.vector.x);
+        } else {
+            func_00209458(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->turnStep,
+                          record->turnCount, record->turnCurve[0], record->turnCurve[1],
+                          record->turnCurveType, &record->rotation.vector.x);
+        }
+        record->turnStep = record->turnStep + 1;
+        if (record->turnCount < record->turnStep) {
+            MapActor *actor = record->actor;
+
+            record->turnStep = -1;
+            record->turnCount = 0;
+            if (actor != 0) {
+                actor->direction.y = record->rotation.vector.y;
+            }
+        }
+        advanced = 1;
+    }
+    if (record->scaleStep != -1) {
+        record->scale.vector.x = record->scaleFrom.vector.x
+            + ((record->scaleTo.vector.x - record->scaleFrom.vector.x) * (float) record->scaleStep) / (float) record->scaleCount;
+        record->scale.vector.y = record->scaleFrom.vector.y
+            + ((record->scaleTo.vector.y - record->scaleFrom.vector.y) * (float) record->scaleStep) / (float) record->scaleCount;
+        record->scale.vector.z = record->scaleFrom.vector.z
+            + ((record->scaleTo.vector.z - record->scaleFrom.vector.z) * (float) record->scaleStep) / (float) record->scaleCount;
+        record->scaleStep = record->scaleStep + 1;
+        if (record->scaleCount < record->scaleStep) {
+            record->scaleStep = -1;
+            record->scaleCount = 0;
+        }
+        advanced = 1;
+    }
+    if (record->fadeStep != -1) {
+        record->fade = record->fadeFrom
+            + ((record->fadeTo - record->fadeFrom) * (float) record->fadeStep) / (float) record->fadeCount;
+        record->fadeStep = record->fadeStep + 1;
+        if (record->fadeCount < record->fadeStep) {
+            record->fadeStep = -1;
+            record->fadeCount = 0;
+        }
+        advanced = 1;
+    }
+    return advanced;
+}
+
+/* The effect record a map object owns through MapObjectRecord.effect; only the fields the transform code touches. */
+typedef struct SefEffectRecord {
+    float transform[3][4];      /* +0x00: position, rotation and scale rows, column 3 is 1.0f */
+    u8 unmodeled_30[0x14];
+    int flags;                  /* +0x44: bit 0x10 follows bit 0x2000 of MapObjectRecord.flags */
+    u8 unmodeled_48[0x26];
+    short shown;                /* +0x6E: bit 1 of MapObjectRecord.flags, shifted down */
+} SefEffectRecord;
+
+extern int D_002B5D98[];
+
+void mapObjectUpdateEffectTransform(MapObjectRecord *record)
+{
+    SefEffectRecord *effect;
+
+    effect = record->effect;
+    if (effect == 0) { return; }
+    if (record->key != -1) {
+        effect->shown = (record->flags >> 1) & 1;
+        if (record->flags & MAP_OBJ_EFFECT_FOLLOW) { effect->flags |= SEF_FOLLOW; } else { effect->flags &= ~SEF_FOLLOW; }
+    }
+    if ((D_002B5D98[0] & 1) == 0) {
+        if (record->parent == -1 || record->attached != 1) {
+            mapObjectAdvanceTweens(record);
+        } else {
+            record->position.vector.x = uwamonoRecords[record->parent].position.component[0] + record->savedPosition.vector.x;
+            record->position.vector.y = uwamonoRecords[record->parent].position.component[1] + record->savedPosition.vector.y;
+            record->position.vector.z = uwamonoRecords[record->parent].position.component[2] + record->savedPosition.vector.z;
+            record->rotation.vector.x = uwamonoRecords[record->parent].rotation.component[0] + record->savedRotation.vector.x;
+            record->rotation.vector.y = uwamonoRecords[record->parent].rotation.component[1] + record->savedRotation.vector.y;
+            record->rotation.vector.z = uwamonoRecords[record->parent].rotation.component[2] + record->savedRotation.vector.z;
+        }
+    }
+    effect->transform[0][0] = record->position.vector.x;
+    effect->transform[0][1] = record->position.vector.y;
+    effect->transform[0][2] = record->position.vector.z;
+    effect->transform[0][3] = 1.0f;
+    effect->transform[1][0] = record->rotation.vector.x;
+    effect->transform[1][1] = record->rotation.vector.y;
+    effect->transform[1][2] = record->rotation.vector.z;
+    effect->transform[1][3] = 1.0f;
+    effect->transform[2][0] = record->scale.vector.x;
+    effect->transform[2][1] = record->scale.vector.y;
+    effect->transform[2][2] = record->scale.vector.z;
+    effect->transform[2][3] = 1.0f;
+}
+
 extern MapObjectRecord uwamonoRecords[];
 extern int uwamonoCurrentIndex;
-extern MapModelResource D_002B7BB0[];
-extern int D_002B7C88[];
-extern int D_002B7CA8[];
-extern int D_002B7CC8[];
+/* The GIF packet of the map image strips; only the words rewritten per strip. */
+typedef struct StripPacket {
+    u8 unmodeled_00[0x30];
+    long long tag;              /* +0x30 */
+    u8 unmodeled_38[0x28];
+    int topY;                   /* +0x60 */
+    u8 unmodeled_64[0x10];
+    int topV;                   /* +0x74 */
+    int topU;                   /* +0x78 */
+    u8 unmodeled_7c[4];
+    int bottomY;                /* +0x80 */
+    u8 unmodeled_84[0x10];
+    int bottomV;                /* +0x94 */
+    int bottomU;                /* +0x98 */
+} StripPacket;
 
+extern StripPacket D_002B7A90[];
+extern u8 D_002B7B30[];
+extern u8 D_002B7BA0[];
+extern float D_0069AE08;
+extern XglPacket *xglPacketGetCurrent(void);
+extern void sceVif1PkRef(XglPacket *packet, const void *environment, int count, int mode,
+                         int offset, int flags);
+extern void sceVif1PkCnt(XglPacket *packet, int count);
+extern void sceVif1PkAddDataN(XglPacket *packet, const void *data, int count);
+XglCamera *xglStudioGetCamera2(int);
+void _CurMatrixSet(void *);
+void _CurSetViewScaleTrans(void *, void *);
+int _CurRotTransPersClipScreen(void *, void *);
+void func_001BA924(void);
+
+typedef struct ScanDelta {
+    float x;
+    float y;
+    float z;
+    float w;
+} ScanDelta;
+
+void func_001D7EB8(MainActive *active)
+{
+    u8 *cursor;
+    ScanDelta delta;
+    MapActor *target;
+    float bestDistance;
+    float nearestDz;
+    float dx;
+    float dz;
+    float distanceSq;
+    int i;
+    int recordIndex;
+    int rowFixedBottom;
+    int newViewX;
+    int col;
+    int row;
+    int maxCol;
+    int maxRow;
+    int rowFixedTop;
+    int imageAddress;
+    int texAddress;
+    int state;
+    XglPacket *packet;
+    XglCamera *camera;
+    StripPacket *strip;
+
+    target = uwamonoRecords[uwamonoCurrentIndex].actor;
+    cursor = (u8 *)&uwamonoRecords[0].position.vector.z;
+    nearestDz = 1.0f;
+    bestDistance = 1000000.0f;
+    for (recordIndex = 0; recordIndex < MAP_RECORD_COUNT; recordIndex++, cursor += 0x870) {
+        if (*(cursor - 0x16) == MAP_KIND_MOVER) {
+            state = *((signed char *)cursor + 0x579);
+            if (state != 0 && state != 10) {
+                dx = *(float *)(cursor - 8) - target->position.x;
+                delta.x = dx;
+                dz = *(float *)cursor - target->position.z;
+                delta.z = dz;
+                distanceSq = dx * dx + dz * dz;
+                delta.w = distanceSq;
+                if (distanceSq < bestDistance) {
+                    bestDistance = distanceSq;
+                    nearestDz = dz;
+                }
+            }
+        }
+    }
+
+    camera = xglStudioGetCamera2(0);
+    _CurMatrixSet(&camera->volume[0].viewMatrix);
+    _CurSetViewScaleTrans(&camera->screen.screenScale, &camera->screen.screenOffset);
+    _CurRotTransPersClipScreen(&active->viewY, D_002B7BA0);
+
+    active->viewY = 0x800 - (active->viewY >> 4);
+    newViewX = 0x800 - (active->viewX >> 4);
+    active->viewX = newViewX;
+    row = (short)active->height / 2 + active->offsetY + active->viewY - 0x100;
+    if (row < 0) {
+        row = 0;
+    }
+    maxRow = (short)active->height - 0x201;
+    if (maxRow < row) {
+        row = maxRow;
+    }
+    col = (short)active->width / 2 + active->offsetX + newViewX - 0xE0;
+    if (col < 0) {
+        col = 0;
+    }
+    maxCol = (short)active->width - 0x1C0;
+    if (maxCol < col) {
+        col = maxCol;
+    }
+    imageAddress = active->pending + (col << 12);
+    rowFixedTop = row << 4;
+    i = 0;
+    func_001BA924();
+    packet = xglPacketGetCurrent();
+
+    strip = D_002B7A90;
+    texAddress = 0x71F7;
+    rowFixedBottom = rowFixedTop + 0x2000;
+    for (; i < 4; i++) {
+        sceVif1PkRef(packet, D_002B7B30, 7, 0, 0, 0);
+        sceVif1PkRef(packet, (const void *)imageAddress, 0x7000, 0, 0x51007000, 0);
+        strip->tag = 0x53001;
+        strip->topV = texAddress;
+        texAddress += 0x700;
+        strip->topU = 0;
+        strip->topY = rowFixedTop;
+        imageAddress += 0x70000;
+        strip->bottomV = texAddress;
+        strip->bottomU = 0;
+        strip->bottomY = rowFixedBottom;
+        sceVif1PkCnt(packet, 0);
+        sceVif1PkAddDataN(packet, strip, 40);
+        if (0.0f < nearestDz) {
+            strip->tag = 0x5000D;
+            strip->topU = 0x20000;
+            strip->bottomU = 0x20000;
+            sceVif1PkAddDataN(packet, strip, 40);
+        }
+    }
+}
+
+void pxySetTxyBlock(int);
+void pxySubmitModel(void *);
+extern int uwamonoCurrentIndex;
+extern MapModelResource mapObjectResources[];
+extern int D_002B7CC8[];
 void xglMatrixUnit(float matrix[4][4]);
 void xglMatrixStackLoad(float matrix[4][4]);
 void xglMatrixStackSave(float matrix[4][4]);
@@ -270,13 +770,13 @@ void xglMatrixStackRotY(float angle);
 void xglMatrixStackRotZ(float angle);
 void xglMatrixStackTrans(Vector4 *translation);
 void xglMatrixStackScale(Vector4 *scale);
-int func_001D7A78(MapObjectRecord *record);
-void func_001D7D18(MapObjectRecord *record);
+/* Advances the move, turn, scale and fade steps of one map object by a frame. * Returns 1 when any of the four steps ran. */ int mapObjectAdvanceTweens(MapObjectRecord *record);
+void mapObjectUpdateEffectTransform(MapObjectRecord *record);
 void func_001D7EB8(MainActive *active);
-void func_001DC860(int value);
+void uwamonoChangePlayerModel(int value);
 void fadeStartIn(int frames);
 void func_00207028(int index);
-void func_001DEDD8(int index);
+void uwamonoStartAreaBlend(int index);
 float func_0020A968(int index, Vector4 *position, int motion, int frame, int flags);
 void uwamonoUpdateRecord(int index);
 float cursolGetByReduceSpeedAngleLoop(float current, float target, float speed);
@@ -286,9 +786,6 @@ void func_00202CD0(Vector4 *position, float extent, float scale, int mode);
 void uwamonoUpdateTransform(MapObjectRecord *record);
 void elvUpdateMotion(MapObjectRecord *record);
 void *xglPacketReserve(int size);
-void Get_MiddlePoint(const float *start, const float *following, short point_index, short point_count, float *result);
-void func_00209458(const float *start, const float *following, short point_index, short point_count,
-                   void *curveStart, void *curveFollowing, short curveType, float *result);
 void func_001BAE58(MapModelHeader *header);
 void func_001BA8F0(void);
 float Get_Decimal_Surplus_for_Radius(float angle);
@@ -341,7 +838,7 @@ int DispMapObject(void)
                     gameWork.stateArg = record->eventStateArg;
                     break;
                 case 1:
-                    func_001DC860(-1000);
+                    uwamonoChangePlayerModel(-1000);
                     fadeStartIn(30);
                     break;
                 }
@@ -355,7 +852,7 @@ int DispMapObject(void)
             if (record->flags & MAP_OBJ_SHOWN) {
                 actor->drawFlags &= ~4;
                 actor->motion = record->motion;
-                func_001DEDD8(i);
+                uwamonoStartAreaBlend(i);
             } else {
                 actor->drawFlags |= 4;
             }
@@ -365,7 +862,7 @@ int DispMapObject(void)
                 actor->previous.z = actor->position.z;
                 actor->previous.w = actor->position.w;
             }
-            if (func_001D7A78(record) == 1) {
+            if (mapObjectAdvanceTweens(record) == 1) {
                 if (record->flags & 0x08000000) {
                     record->position.vector.y = func_0020A968(i, &record->actor->position, record->motions->id,
                                                        record->motions->frame, 0);
@@ -417,7 +914,7 @@ int DispMapObject(void)
                     continue;
                 }
                 if (record->kind == MAP_KIND_ELEVATOR) {
-                    func_001D7D18(record);
+                    mapObjectUpdateEffectTransform(record);
                 }
                 if (record->actor != 0) {
                     XenoActorPushMatrix(record->actor);
@@ -448,7 +945,7 @@ int DispMapObject(void)
             }
             if (!(gameWork.flags & GAME_PAUSE_MAP_OBJECTS)) {
                 if (record->parent == -1 || record->attached != 1) {
-                    func_001D7A78(record);
+                    mapObjectAdvanceTweens(record);
                     if (record->tiltStep != -1) {
                         record->tiltStep++;
                         if (record->tiltStep > record->tiltCount) {
@@ -526,7 +1023,7 @@ int DispMapObject(void)
             xglMatrixStackSave(record->matrix);
             if (record->model != -1) {
                 header = xglPacketReserve(8);
-                data = D_002B7BB0[record->model + 2].data;
+                data = mapObjectResources[record->model + 2].data;
                 source = (MapModelHeader *) ((u8 *) data + data->headerOffset);
                 if (record->tiltStep != -1) {
                     Get_MiddlePoint(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->tiltStep, record->tiltCount,
@@ -543,8 +1040,8 @@ int DispMapObject(void)
                     nmlModelSetDrawMatrix(record->transform);
                     func_001BAE58(header);
                     func_001BA8F0();
-                    pxySetTxyBlock(D_002B7BB0[record->model + 2].texture);
-                    pxySubmitModel(D_002B7BB0[record->model + 2].data);
+                    pxySetTxyBlock(mapObjectResources[record->model + 2].texture);
+                    pxySubmitModel(mapObjectResources[record->model + 2].data);
                 }
                 if (record->model >= 7 && !(gameWork.flags & GAME_PAUSE_MAP_OBJECTS)) {
                     record->rotation.vector.y = Get_Decimal_Surplus_for_Radius(record->rotation.vector.y + 0.1f);
@@ -581,7 +1078,7 @@ int DispMapObject(void)
             }
             break;
         case MAP_KIND_ELEVATOR:
-            func_001D7D18(record);
+            mapObjectUpdateEffectTransform(record);
             break;
         case MAP_KIND_MOVER:
             record->previous.vector.x = record->position.vector.x;
@@ -696,7 +1193,6 @@ void pxySetFogColor(void *);
 void pxySetFogDist(f32, f32, f32, f32);
 void func_001BB3FC(void *);
 extern unsigned char D_002B5E50[];
-extern void *D_0069B968;
 
 void mainDrawObjects(void)
 {
@@ -719,7 +1215,7 @@ void mainDrawObjects(void)
     }
     func_001BB3FC(D_002B5E50);
     pxySubmitModel(mainObject);
-    if (mainObject->flags != 0 && D_0069B968 != 0) {
+    if (mainObject->secondHeaderOffset != 0 && D_0069B968 != 0) {
         func_001BB678(mainObject);
         func_001BB44C(D_002B7CA8);
         func_001BB47C(D_002B7CC8);

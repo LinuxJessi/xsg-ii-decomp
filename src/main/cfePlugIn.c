@@ -116,7 +116,7 @@ int ldDev(void)
     return 1;
 }
 
-void func_001E1218(void *);
+void seBgmNameSet(void *);
 
 int cfe_0024C278(int handle)
 {
@@ -130,7 +130,7 @@ int cfe_0024C278(int handle)
     record = &cfeSndRecords[count];
     count = count + 1;
     cfeSndRecordCount = count;
-    func_001E1218(record);
+    seBgmNameSet(record);
     return 1;
 }
 

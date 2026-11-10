@@ -3,6 +3,9 @@
 #include "main/game_snap_shot.h"
 #include "main/xgl_font.h"
 
+#define PAUSE_TEXT_COLOR 0xFFFFFF /* white */
+#define PAUSE_SCREEN_CENTER_X 256
+
 typedef struct XglPacket XglPacket;
 
 /* The draw cursor a queued font callback receives; only its packet word is read here. */
@@ -26,14 +29,32 @@ extern const char pauseSkipHintText[];
 extern const char pauseCancelHintText[];
 /* One-shot draw hook: set when the pause starts, cleared after the title is drawn. */
 extern void (*pauseDrawHook)(void);
-void pauseDrawTitleHook(void);
+/* One-shot draw hook: adds the pause backdrop to the packet, draws the title, then clears itself. */ void pauseDrawTitleHook(XglPacket *packet);
 
 void pauseTitleCallback(FontDrawCursor *cursor, void *argument)
 {
     sceVif1PkAddDirectDataN(cursor->packet, pauseBackdropPacket, 8);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu049", pauseDrawTitleHook);
+extern void sceVif1PkCnt(XglPacket *packet, int count);
+extern void sceVif1PkOpenDirectHLCode(XglPacket *packet, int mode);
+extern void sceVif1PkCloseDirectHLCode(XglPacket *packet);
+extern void xglFontFlush(void);
+
+/* One-shot draw hook: adds the pause backdrop to the packet, draws the title, then clears itself. */
+void pauseDrawTitleHook(XglPacket *packet)
+{
+    int width;
+
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, pauseBackdropPacket, 8);
+    sceVif1PkCloseDirectHLCode(packet);
+    width = xglFontGetStringWidth(pauseTitleText);
+    xglFontPrint(PAUSE_SCREEN_CENTER_X - width / 2, 200, PAUSE_TEXT_COLOR, pauseTitleText);
+    xglFontFlush();
+    pauseDrawHook = 0;
+}
 
 /* Draws the "Pause" title centred at the top of the screen when visible is nonzero. */
 void pauseDrawTitle(int visible)
@@ -41,9 +62,9 @@ void pauseDrawTitle(int visible)
     int width;
 
     if (visible != 0) {
-        xglFontPrintExtFunc(0xFFFFFF, pauseTitleCallback, 0);
+        xglFontPrintExtFunc(PAUSE_TEXT_COLOR, pauseTitleCallback, 0);
         width = xglFontGetStringWidth(pauseTitleText);
-        xglFontPrint(256 - width / 2, 200, 0xFFFFFF, pauseTitleText);
+        xglFontPrint(PAUSE_SCREEN_CENTER_X - width / 2, 200, PAUSE_TEXT_COLOR, pauseTitleText);
     }
 }
 
@@ -66,10 +87,10 @@ void pauseDrawHints(int skip_hidden)
 
     if (skip_hidden == 0) {
         width = xglFontGetStringWidth(pauseSkipHintText);
-        xglFontPrint(256 - width / 2, 256, 0xFFFFFF, pauseSkipHintText);
+        xglFontPrint(PAUSE_SCREEN_CENTER_X - width / 2, 256, PAUSE_TEXT_COLOR, pauseSkipHintText);
     }
     width = xglFontGetStringWidth(pauseCancelHintText);
-    xglFontPrint(256 - width / 2, 288, 0xFFFFFF, pauseCancelHintText);
+    xglFontPrint(PAUSE_SCREEN_CENTER_X - width / 2, 288, PAUSE_TEXT_COLOR, pauseCancelHintText);
 }
 
 void pauseDrawScreen(void)

@@ -108,8 +108,7 @@ segments:
       - [0xBA280, c, tu051]
       - [0xBFAE8, c, tu052]
       - [0xC0090, c, tu053]
-      - [0xC0120, c, tu054]
-      - [0xC1B10, c, res_get_path]
+      - [0xC0120, c, res_get_path]
       - [0xC5CF8, c, game_snap_shot]
       - [0xC64E0, c, game_defocus]
       - [0xC8570, c, game_movie]
@@ -327,10 +326,9 @@ segments:
       - [0x196D80, data, tu048]
       - [0x196D9C, data, tu075]
       - [0x196DA8, data, tu100]
-      - [0x196DBC, data, tu054]
+      - [0x196DBC, data, res_get_path]
       - [0x196ED0, data, tu051]
       - [0x196EDC, data, tu077]
-      - [0x196F20, data, res_get_path]
       - [0x1970C0, data, tu085]
       - [0x1970C4, data, tu089]
       - [0x197420, data, tu052]
@@ -634,8 +632,7 @@ segments:
       - [0x57C950, sdata, tu048]
       - [0x57C974, sdata, tu050]
       - [0x57C97C, sdata, tu051]
-      - [0x57DEE0, sdata, tu054]
-      - [0x57DEF0, sdata, res_get_path]
+      - [0x57DEE0, sdata, res_get_path]
       - [0x57DFD4, sdata, game_snap_shot]
       - [0x57DFE0, sdata, game_movie]
       - [0x57E020, sdata, tu060]
@@ -730,8 +727,7 @@ segments:
       - [0x57F140, sdata, korg_evag]
       - [0x57F17C]
       - { type: sbss, vram: 0x0069E180, name: tu051 }
-      - { type: sbss, vram: 0x0069E190, name: tu054 }
-      - { type: sbss, vram: 0x0069E198, name: res_get_path }
+      - { type: sbss, vram: 0x0069E190, name: res_get_path }
       - { type: sbss, vram: 0x0069E1C8, name: tu075 }
       - { type: sbss, vram: 0x0069E1E8, name: tu077 }
       - { type: sbss, vram: 0x0069E1F0, name: tu094 }
