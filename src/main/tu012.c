@@ -79,7 +79,10 @@ int xglMcRequest(int port, int command, McRequestParam *param, int *result)
 /* Memory-card state block at xglMcState. The full path of the current request starts at +0x20. */
 typedef struct XglMcState {
     unsigned char state;            /* +0x00: phase of the request state machine */
-    unsigned char unmodeled_01[0x1C];
+    unsigned char substate;         /* +0x01: step inside the current state, cleared per request */
+    unsigned char unmodeled_02[0x16];
+    int create_index;               /* +0x18: progress of the create request */
+    unsigned char unmodeled_1c[1];
     unsigned char selector;         /* +0x1D: selector for the card search */
     signed char card;               /* +0x1E: card index chosen by the search */
     unsigned char status;           /* +0x1F */
@@ -234,7 +237,84 @@ char *xglMcSetFullPath(int card, int selector)
     return xglMcBuildPath(xglMcBasePath, card, selector);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcExecute);
+/* xglMcState.state while a request runs (set by xglMcExecute). */
+#define MC_STATE_OPEN_CLOSE 2
+#define MC_STATE_WRITE 3
+#define MC_STATE_READ 4
+#define MC_STATE_CREATE 5
+#define MC_STATE_EXIST_SCAN 6
+#define MC_STATE_LIST 7
+#define MC_STATE_CHECK_OLD 8
+/* sceMcOpen modes and the directory read size. */
+#define MC_OPEN_READ 1
+#define MC_OPEN_WRITE_CREATE 0x202
+#define MC_DIRECTORY_MAX_ENTRIES 100
+
+int sceMcGetInfo(int port, int slot, int *type, int *free, int *format);
+int sceMcMkdir(int port, int slot, const char *name);
+int sceMcGetDir(int port, int slot, const char *name, int mode, int max_entries, int table);
+int sceMcOpen(int port, int slot, const char *name, int mode);
+extern char *xglMcBasePaths[];
+int sceMcFormat(int port, int slot);
+int sceMcUnformat(int port, int slot);
+
+/* Starts the queued request: the SDK call for the command and the state xglMcMain then follows. */
+void xglMcExecute(McQueueEntry *request)
+{
+    xglMcState.substate = 0;
+    switch (request->command) {
+    case MC_REQ_FREE_SPACE:
+        sceMcGetInfo(request->port, 0, 0, request->result, 0);
+        return;
+    case MC_REQ_EXIST:
+        if (request->file == -1) {
+            xglMcSetFullPath(-1, -1);
+            sceMcGetDir(request->port, 0, xglMcState.full_path, 0, MC_DIRECTORY_MAX_ENTRIES,
+                        (request->data + 0xA3) & ~0x3F);
+            xglMcState.state = MC_STATE_EXIST_SCAN;
+            return;
+        }
+        xglMcSetFullPath(request->file, 0);
+        sceMcOpen(request->port, 0, xglMcState.full_path, MC_OPEN_READ);
+        xglMcState.state = MC_STATE_OPEN_CLOSE;
+        return;
+    case MC_REQ_LIST:
+        xglMcSetFullPath(-1, -1);
+        xglMcState.state = MC_STATE_LIST;
+        sceMcGetDir(request->port, 0, xglMcState.full_path, 0, MC_DIRECTORY_MAX_ENTRIES,
+                    (request->data + 0xA3) & ~0x3F);
+        return;
+    case MC_REQ_CHECK_OLD:
+        xglMcBuildPath(xglMcBasePaths[0], -1, -1);
+        request->file = 0;
+        xglMcState.state = MC_STATE_CHECK_OLD;
+        sceMcGetDir(request->port, 0, xglMcState.full_path, 0, MC_DIRECTORY_MAX_ENTRIES,
+                    (request->data + 0xA3) & ~0x3F);
+        return;
+    case MC_REQ_CREATE:
+        xglMcSetFullPath(request->file, -1);
+        sceMcMkdir(request->port, 0, xglMcState.full_path);
+        xglMcState.create_index = 0;
+        xglMcState.state = MC_STATE_CREATE;
+        return;
+    case MC_REQ_SAVE:
+        xglMcSetFullPath(request->file, 0);
+        sceMcOpen(request->port, 0, xglMcState.full_path, MC_OPEN_WRITE_CREATE);
+        xglMcState.state = MC_STATE_WRITE;
+        return;
+    case MC_REQ_LOAD:
+        xglMcSetFullPath(request->file, 0);
+        sceMcOpen(request->port, 0, xglMcState.full_path, MC_OPEN_READ);
+        xglMcState.state = MC_STATE_READ;
+        return;
+    case MC_REQ_FORMAT:
+        sceMcFormat(request->port, 0);
+        return;
+    case MC_REQ_UNFORMAT:
+        sceMcUnformat(request->port, 0);
+        break;
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcCreateStep);
 
@@ -272,7 +352,6 @@ int func_0019E408(unsigned char *table, int index)
     return index;
 }
 
-int func_001305B0();
 
 /* Picks a card for the request, then starts a directory scan of 16 entries on it. Returns 1 when no card fits. */
 int xglMcStartDirectoryScan(void)
@@ -287,7 +366,7 @@ int xglMcStartDirectoryScan(void)
     xglMcState.card = (signed char) card;
     xglMcState.status = 0;
     xglMcSetFullPath(card, (int)D_0069DF70);
-    func_001305B0(xglMcState.port, 0, xglMcState.full_path, 0, 0x10, (xglMcState.size + 0xA3) & ~0x3F);
+    sceMcGetDir(xglMcState.port, 0, xglMcState.full_path, 0, 0x10, (xglMcState.size + 0xA3) & ~0x3F);
     return 0;
 }
 
@@ -309,7 +388,7 @@ int func_0019E508(void)
         case 0:
             xglMcState.mode = 1;
             xglMcBuildPath(xglMcBasePaths[xglMcState.mode], -1, -1);
-            func_001305B0(xglMcState.port, 0, xglMcState.full_path, 0, 100, (xglMcState.size + 0xA3) & ~0x3F);
+            sceMcGetDir(xglMcState.port, 0, xglMcState.full_path, 0, 100, (xglMcState.size + 0xA3) & ~0x3F);
             return -1;
         case 1:
             xglMcState.mode = 2;

@@ -38,7 +38,7 @@
      ],
      "generated": [
       "0x0068df60",
-      "0x0068df84"
+      "0x0068df88"
      ],
      "generated_by": [
       "xglMcRequest"
@@ -49,6 +49,28 @@
      "also_referenced_by_c": [
       "xglMcBasePath"
      ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu012.o"
+     }
+    },
+    {
+     "range": [
+      "0x0068dfa0",
+      "0x0068dfd0"
+     ],
+     "generated": [
+      "0x0068dfa0",
+      "0x0068dfc4"
+     ],
+     "generated_by": [
+      "xglMcExecute"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068DFA0"
+     ],
+     "also_referenced_by_c": [],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",

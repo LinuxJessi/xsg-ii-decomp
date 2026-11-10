@@ -9026,9 +9026,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012FD60",
+     "name": "sceMcMkdir",
      "size": 52,
-     "splat_name": "func_0012FD60",
+     "splat_name": "sceMcMkdir",
      "va": "0x0012fd60",
      "name_basis": "address",
      "provenance": "estimated"
@@ -9134,9 +9134,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001305B0",
+     "name": "sceMcGetDir",
      "size": 328,
-     "splat_name": "func_001305B0",
+     "splat_name": "sceMcGetDir",
      "va": "0x001305b0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -9161,9 +9161,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001308C0",
+     "name": "sceMcFormat",
      "size": 204,
-     "splat_name": "func_001308C0",
+     "splat_name": "sceMcFormat",
      "va": "0x001308c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -9206,9 +9206,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00130E80",
+     "name": "sceMcUnformat",
      "size": 204,
-     "splat_name": "func_00130E80",
+     "splat_name": "sceMcUnformat",
      "va": "0x00130e80",
      "name_basis": "address",
      "provenance": "estimated"
