@@ -166,17 +166,48 @@ INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcExecute);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcCreateStep);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu012", func_0019E408);
+/* Entries in the table func_0019E408 searches. */
+#define MC_SLOT_COUNT 100
+#define MC_SLOT_WANTED 1 /* the value the search looks for */
+
+/* Returns the index of the entry with value 1 in the 100-entry table nearest to index, searching
+ * index, index+1, index-1, index+2, ...; -1 once both directions have run off the table. */
+int func_0019E408(unsigned char *table, int index)
+{
+    int step;
+    int misses;
+
+    step = 1;
+    misses = 0;
+    while (table[index] != MC_SLOT_WANTED) {
+        for (;;) {
+            index += step;
+            if (step > 0) {
+                step = -step - 1;
+            } else {
+                step = 1 - step;
+            }
+            if ((unsigned int)index < MC_SLOT_COUNT) {
+                break;
+            }
+            misses++;
+            if (misses >= 2) {
+                return -1;
+            }
+        }
+        misses = 0;
+    }
+    return index;
+}
 
 int func_001305B0();
-int func_0019E408();
 
 /* Picks a card for the request, then starts a directory scan of 16 entries on it. Returns 1 when no card fits. */
 int xglMcStartDirectoryScan(void)
 {
     int card;
 
-    card = func_0019E408(xglMcState.size, xglMcState.selector);
+    card = func_0019E408((unsigned char *)xglMcState.size, xglMcState.selector);
     if (card < 0)
     {
         return 1;
