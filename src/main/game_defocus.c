@@ -76,7 +76,7 @@ typedef struct {
     u8 unmodeled_16[0x0a];
     u16 tex0_state_20;
     u16 tex0_state_22;
-    u8 unmodeled_24[0x10];
+    u8 unmodeled_24[0x3c - 0x24];
     void (*callback)(XglPacket *packet);
 } DefocusRenderState;
 
@@ -1160,7 +1160,26 @@ void DefocusMain(XglPacket *packet)
     sceVif1PkAddDataN(packet, defocusMainFooter, 0x10);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_defocus", GameDefocusCheck);
+void GameDefocusCheck(void)
+{
+    int layer_index;
+    int active;
+
+    active = 0;
+    layer_index = 0;
+    while (layer_index < DEFOCUS_LAYER_COUNT) {
+        if (GameDefocusParam[layer_index].type != 0) {
+            active = 1;
+            break;
+        }
+        layer_index++;
+    }
+    if (active == 0) {
+        sRender.callback = NULL;
+        return;
+    }
+    sRender.callback = DefocusMain;
+}
 
 void GameDefocusFinalize(int index)
 {
@@ -1175,6 +1194,149 @@ void GameDefocusFinalize(int index)
     layer->type = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_defocus", GameDefocusSet);
+void GameDefocusSet(int index, int type, const int *settings)
+{
+    int clear_index;
+    int parameter_index;
+    DefocusLayer *layer;
 
-INCLUDE_ASM("asm/main/nonmatchings/game_defocus", GameDefocusQuickSet);
+    if (index >= DEFOCUS_LAYER_COUNT) {
+        /* JP: GameDefocusSet()の引数が異常です(%d)。\n
+         * EN: Invalid argument to GameDefocusSet() (%d).\n */
+        printf("GameDefocusSet()\xA4\xCE\xB0\xFA\xBF\xF4\xA4\xAC\xB0\xDB\xBE\xEF\xA4\xC7\xA4\xB9(%d)\xA1\xA3\n", index);
+        return;
+    }
+    if (index < 0) {
+        for (clear_index = 0; clear_index < DEFOCUS_LAYER_COUNT; clear_index++) {
+            GameDefocusFinalize(clear_index);
+        }
+    } else {
+        layer = &GameDefocusParam[index];
+        GameDefocusFinalize(index);
+        layer->type = type;
+        if (type > 0) {
+            for (parameter_index = 0; parameter_index < DEFOCUS_LAYER_PARAMETERS; parameter_index++) {
+                if (settings == NULL) {
+                    layer->parameters[parameter_index] = 0;
+                } else {
+                    layer->parameters[parameter_index] = settings[parameter_index];
+                }
+            }
+        }
+    }
+    GameDefocusCheck();
+}
+
+void GameDefocusQuickSet(int group_index, int preset, int color, int intensity)
+{
+    DefocusLayer *layers;
+    int first_index;
+
+    layers = &GameDefocusParam[group_index * 4];
+    if (group_index >= 4) {
+        /* JP: GameDefocusQuickSet()の引数が異常です(%d)。\n
+         * EN: Invalid argument to GameDefocusQuickSet() (%d).\n */
+        printf("GameDefocusQuickSet()\xA4\xCE\xB0\xFA\xBF\xF4\xA4\xAC\xB0\xDB\xBE\xEF\xA4\xC7\xA4\xB9(%d)\xA1\xA3\n", group_index);
+        return;
+    }
+
+    first_index = group_index * 4;
+    GameDefocusFinalize(first_index);
+    GameDefocusFinalize(first_index + 1);
+    GameDefocusFinalize(first_index + 2);
+    GameDefocusFinalize(first_index + 3);
+
+    switch (preset) {
+    case 0:
+        break;
+    case 1:
+        layers[0].type = 1;
+        layers[0].parameters[0] = 0;
+        layers[0].parameters[1] = 1;
+        layers[0].parameters[2] = color;
+        layers[0].parameters[3] = 0x40808080;
+        layers[0].parameters[4] = intensity;
+        layers[0].parameters[5] = 0;
+        layers[0].parameters[6] = 0;
+        layers[0].parameters[7] = 0;
+        layers[1].type = 1;
+        layers[1].parameters[0] = 0;
+        layers[1].parameters[1] = 1;
+        layers[1].parameters[2] = color;
+        layers[1].parameters[3] = 0x40808080;
+        layers[1].parameters[4] = 0;
+        layers[1].parameters[5] = intensity;
+        layers[1].parameters[6] = 0;
+        layers[1].parameters[7] = 0;
+        break;
+    case 2:
+        layers[0].type = 2;
+        layers[0].parameters[0] = 0;
+        layers[0].parameters[1] = color;
+        layers[1].type = 3;
+        layers[1].parameters[0] = 1;
+        layers[1].parameters[1] = 0x40808080;
+        layers[1].parameters[2] = intensity;
+        layers[1].parameters[3] = 0;
+        layers[1].parameters[4] = 0;
+        layers[1].parameters[5] = 0;
+        layers[2].type = 3;
+        layers[2].parameters[0] = 1;
+        layers[2].parameters[1] = 0x40808080;
+        layers[2].parameters[2] = 0;
+        layers[2].parameters[3] = intensity;
+        layers[2].parameters[4] = 0;
+        layers[2].parameters[5] = 0;
+        layers[3].type = 3;
+        layers[3].parameters[0] = 1;
+        layers[3].parameters[1] = 0x40808080;
+        layers[3].parameters[2] = intensity;
+        layers[3].parameters[3] = intensity;
+        layers[3].parameters[4] = 0;
+        layers[3].parameters[5] = 0;
+        break;
+    case 4:
+        layers[0].type = 1;
+        layers[0].parameters[0] = 1;
+        layers[0].parameters[1] = 1;
+        layers[0].parameters[2] = color;
+        layers[0].parameters[3] = 0x00808080u + ((u32)intensity << 24);
+        layers[0].parameters[4] = 0;
+        layers[0].parameters[5] = 0;
+        layers[0].parameters[6] = 0;
+        layers[0].parameters[7] = 0;
+        break;
+    case 5:
+        layers[0].type = 5;
+        layers[0].parameters[0] = color;
+        layers[0].parameters[1] = 0x80808080;
+        layers[0].parameters[4] = 512;
+        layers[0].parameters[5] = 448;
+        layers[0].parameters[2] = 0;
+        layers[0].parameters[3] = 0;
+        layers[0].parameters[6] = intensity;
+        layers[0].parameters[7] = intensity;
+        break;
+    case 6:
+        layers[0].type = 6;
+        layers[0].parameters[0] = color;
+        layers[0].parameters[1] = 0x80ffffff;
+        layers[0].parameters[2] = 0;
+        layers[0].parameters[3] = 0;
+        layers[0].parameters[4] = 512;
+        layers[0].parameters[5] = 448;
+        break;
+    case 9:
+        layers[0].type = 9;
+        break;
+    case 10:
+        layers[0].type = 10;
+        layers[0].parameters[0] = (u32)intensity << 24;
+        layers[0].parameters[1] = 0;
+        layers[0].parameters[2] = 0;
+        layers[0].parameters[3] = 0;
+        layers[0].parameters[4] = 0;
+        break;
+    }
+    GameDefocusCheck();
+}
