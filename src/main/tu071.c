@@ -1,16 +1,40 @@
 #include "common.h"
 
 /* Native "se" (its name pointer is at 0x3e6f00).  Argument 1 is the handle; argument 2 the
-   volume, read from seDefaultVolume (the byte seVol writes) when absent; argument 3 the second value, 0x40 when
+   volume, read from seDefaultVolume (the byte seVol writes) when absent; argument 3 the pan, 0x40 when
    absent.  A volume above 0 calls seVoiceStart with the same three values sePos uses;
    otherwise func_001A3D88 is called with the handle. */
-INCLUDE_ASM("asm/main/nonmatchings/tu071", seSetVolumePan);
-
 int func_A9F0C0(void *call, int index);
+int func_A9F1C0(void *call, int index);
 float I2F(int value);
 unsigned int seVoicePanVolumeFromPosition(float *position);
 void seVoiceStart(int handle, unsigned int high, int low);
+void func_001A3D88(int handle);
 extern unsigned char seDefaultVolume[];
+
+int seSetVolumePan(void *call) {
+    int handle;
+    int volume;
+    int pan;
+
+    handle = func_A9F0C0(call, 1);
+    if (func_A9F1C0(call, 2) != 0) {
+        volume = seDefaultVolume[0];
+    } else {
+        volume = func_A9F0C0(call, 2);
+    }
+    if (func_A9F1C0(call, 3) == 0) {
+        pan = func_A9F0C0(call, 3);
+    } else {
+        pan = 0x40;
+    }
+    if (volume > 0) {
+        seVoiceStart(handle, volume, pan);
+    } else {
+        func_001A3D88(handle);
+    }
+    return 1;
+}
 
 int seVol(void *call) {
     seDefaultVolume[0] = (unsigned char) func_A9F0C0(call, 1);
@@ -33,7 +57,27 @@ int sePos(void *call) {
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu071", runtime_001F4BE0);
+void seVoiceRecordSet(unsigned int voice, unsigned int volume, unsigned int pan);
+
+int runtime_001F4BE0(void *call) {
+    int handle;
+    int volume;
+    int pan;
+
+    handle = func_A9F0C0(call, 1);
+    if (func_A9F1C0(call, 2) == 0) {
+        volume = func_A9F0C0(call, 2);
+    } else {
+        volume = -1;
+    }
+    if (func_A9F1C0(call, 3) == 0) {
+        pan = func_A9F0C0(call, 3);
+    } else {
+        pan = 0x40;
+    }
+    seVoiceRecordSet(handle, volume, pan);
+    return 1;
+}
 
 void seVoiceRecordAddAt(int handle, float *position);
 
@@ -49,7 +93,21 @@ int bgmSePos(void *call) {
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu071", runtime_001F4D48);
+void seVolumeSet(int handle, int volume);
+
+int runtime_001F4D48(void *call) {
+    int handle;
+    int volume;
+
+    handle = func_A9F0C0(call, 1);
+    if (func_A9F1C0(call, 2) == 0) {
+        volume = func_A9F0C0(call, 2);
+    } else {
+        volume = 0;
+    }
+    seVolumeSet(handle, volume);
+    return 1;
+}
 
 extern signed char D_0069CFD0;
 
