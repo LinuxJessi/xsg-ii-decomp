@@ -86,7 +86,8 @@ typedef struct XglMcState {
     unsigned char buffer[0x10];     /* +0x20: first bytes of the full path */
     unsigned char unmodeled_30[0x50];
     short port;                     /* +0x80: sceMc port */
-    unsigned char unmodeled_82[0xA];
+    unsigned char unmodeled_82[6];
+    unsigned int mode;              /* +0x88: search mode of func_0019E508 (0..2) */
     int size;                       /* +0x8C: work pointer; sceMcGetDir reserves (size + 0xA3) & ~0x3F */
 } XglMcState;
 
@@ -219,6 +220,40 @@ int xglMcStartDirectoryScan(void)
     return 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu012", func_0019E508);
+/* Base paths of the card search, one per xglMcState.mode. */
+extern char *D_0063F7C0[];
+int sceMcOpen(int port, int slot, const char *name, int mode);
+
+/* Opens the save file on the card nearest to the selector; when none fits, moves on to the next
+ * search mode: mode 0 starts a directory read of up to 100 entries on the second base path
+ * (returns -1), mode 1 opens the third base path, mode 2 gives up (returns 1). Returns 0 when a
+ * file open was started. */
+int func_0019E508(void)
+{
+    int card;
+
+    card = func_0019E408((unsigned char *)xglMcState.size, xglMcState.selector);
+    if (card < 0) {
+        switch (xglMcState.mode) {
+        case 0:
+            xglMcState.mode = 1;
+            xglMcBuildPath(D_0063F7C0[xglMcState.mode], -1, -1);
+            func_001305B0(xglMcState.port, 0, xglMcState.buffer, 0, 100, (xglMcState.size + 0xA3) & ~0x3F);
+            return -1;
+        case 1:
+            xglMcState.mode = 2;
+            xglMcBuildPath(D_0063F7C0[xglMcState.mode], -2, 0);
+            sceMcOpen(xglMcState.port, 0, xglMcState.buffer, 1);
+            return 0;
+        case 2:
+            return 1;
+        }
+    }
+    xglMcState.card = card;
+    xglMcState.status = 0;
+    xglMcBuildPath(D_0063F7C0[xglMcState.mode], card, 0);
+    sceMcOpen(xglMcState.port, 0, xglMcState.buffer, 1);
+    return 0;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcMain);
