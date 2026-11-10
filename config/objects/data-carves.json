@@ -4722,12 +4722,46 @@
    ".rodata": [
     {
      "range": [
+      "0x00688970",
+      "0x00688988"
+     ],
+     "generated": [
+      "0x00688970",
+      "0x00688988"
+     ],
+     "generated_by": [
+      "func_001EAB50"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00688970"
+     ],
+     "also_referenced_by_c": [
+      "D_006886C0",
+      "D_006886E0",
+      "D_006886F0",
+      "D_00688730",
+      "D_00688770",
+      "D_00688900",
+      "D_00688910",
+      "D_00688938",
+      "D_00688960",
+      "D_006889B8",
+      "D_006889C8"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu060.o"
+     }
+    },
+    {
+     "range": [
       "0x006889d8",
-      "0x00689090"
+      "0x00689360"
      ],
      "generated": [
       "0x006889d8",
-      "0x00689090"
+      "0x0068935c"
      ],
      "generated_by": [
       "MemcardTest"
@@ -4791,37 +4825,16 @@
       "D_00689020",
       "D_00689048",
       "D_00689060",
-      "D_00689078"
-     ],
-     "also_referenced_by_c": [
-      "D_00688900"
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu061.o"
-     }
-    },
-    {
-     "range": [
-      "0x00689090",
-      "0x00689360"
-     ],
-     "generated": [
-      "0x00689090",
-      "0x0068935c"
-     ],
-     "generated_by": [
-      "MemcardTest"
-     ],
-     "c_owned_symbols": [
+      "D_00689078",
       "jtbl_00689090"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "D_00689378"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu061.o"
+      "object": "build/main/build/c/tu060.o"
      }
     }
    ],
@@ -4843,12 +4856,17 @@
      ],
      "also_referenced_by_c": [
       "D_0069D028",
+      "D_0069D060",
+      "D_0069D068",
+      "D_0069D070",
+      "D_0069D078",
+      "D_0069D080",
       "D_0069D090"
      ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu061.o"
+      "object": "build/main/build/c/tu060.o"
      }
     },
     {
@@ -4871,11 +4889,16 @@
       "D_0069D0B8",
       "D_0069D0C8"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "D_0069D0D0",
+      "D_0069D0D8",
+      "D_0069D118",
+      "D_0069D120"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu061.o"
+      "object": "build/main/build/c/tu060.o"
      }
     }
    ]
