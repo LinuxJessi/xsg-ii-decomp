@@ -497,10 +497,10 @@ int XenoActorMulVector(struct XenoActor *actor, int unusedArg, Vector4 *vector) 
 /* XenoActorPushMatrix: pushes the actor transform on the matrix stack (rotations at 0x50..0x58, offsets 0x70 and 0x90). */
 INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorPushMatrix);
 
-void tiMRPackageSetFirstWord(void *child);
+void tiMRPackageSetFirstWord(void *package, int value);
 
-void XenoActorSetFirstWord(XenoActor *actor) {
-    tiMRPackageSetFirstWord(actor->handle640);
+void XenoActorSetFirstWord(struct XenoActor *actor, int value) {
+    tiMRPackageSetFirstWord(actor->handle640, value);
 }
 
 void tiMRPackageSetVectorUniform(void *child);

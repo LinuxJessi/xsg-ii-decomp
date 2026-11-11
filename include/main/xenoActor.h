@@ -14,5 +14,6 @@ void XenoActorSetChannelValueB(struct XenoActor *actor, float value);
 int XenoActorIsDone(struct XenoActor *actor);
 void XenoActorApplySourceValue(struct XenoActor *actor);
 void XenoActorSetPlayRange(struct XenoActor *actor, int start, int end);
+void XenoActorSetFirstWord(struct XenoActor *actor, int value);
 
 #endif /* INCLUDE_MAIN_XENOACTOR_H */

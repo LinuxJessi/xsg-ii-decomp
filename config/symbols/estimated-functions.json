@@ -35898,7 +35898,7 @@
      2
     ],
     [
-     "runtime_001F4E20",
+     "runtimeVibration",
      2051616,
      220,
      2
@@ -35910,13 +35910,13 @@
      2
     ],
     [
-     "enepc_001F4F28",
+     "enepcSetParams",
      2051880,
      1080,
      2
     ],
     [
-     "enepc_001F5360",
+     "enepcSetParamsAll",
      2052960,
      1592,
      2
@@ -35928,7 +35928,7 @@
      2
     ],
     [
-     "enepc_001F5B60",
+     "enepcMotion",
      2055008,
      676,
      2
@@ -35940,25 +35940,25 @@
      2
     ],
     [
-     "enepc_001F5F20",
+     "enepcExtra",
      2055968,
      192,
      2
     ],
     [
-     "enepc_001F5FE0",
+     "enepcExMotion",
      2056160,
      216,
      2
     ],
     [
-     "enepc_001F60B8",
+     "enepcLookAt",
      2056376,
      868,
      2
     ],
     [
-     "enepc_001F6420",
+     "enepcEncount",
      2057248,
      132,
      2
@@ -35976,43 +35976,43 @@
      2
     ],
     [
-     "enepc_001F6680",
+     "enepcSetBattle",
      2057856,
      168,
      2
     ],
     [
-     "enepc_001F6728",
+     "enepcSetSe",
      2058024,
      216,
      2
     ],
     [
-     "enepc_001F6800",
+     "enepcDefaultMotion",
      2058240,
      204,
      2
     ],
     [
-     "enepc_001F68D0",
+     "enepcSetTogether",
      2058448,
      396,
      2
     ],
     [
-     "enepc_001F6A60",
+     "enepcAlgorithm",
      2058848,
      344,
      2
     ],
     [
-     "enepc_001F6BB8",
+     "enepcReadyEnepcData",
      2059192,
      128,
      2
     ],
     [
-     "enepc_001F6C38",
+     "enepcEnableDrawFlags",
      2059320,
      344,
      2

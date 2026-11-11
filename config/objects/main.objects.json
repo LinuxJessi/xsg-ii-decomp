@@ -55936,9 +55936,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F4E20",
+     "name": "runtimeVibration",
      "size": 220,
-     "splat_name": "runtime_001F4E20",
+     "splat_name": "runtimeVibration",
      "va": "0x001f4e20",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -55954,18 +55954,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F4F28",
+     "name": "enepcSetParams",
      "size": 1080,
-     "splat_name": "enepc_001F4F28",
+     "splat_name": "enepcSetParams",
      "va": "0x001f4f28",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F5360",
+     "name": "enepcSetParamsAll",
      "size": 1592,
-     "splat_name": "enepc_001F5360",
+     "splat_name": "enepcSetParamsAll",
      "va": "0x001f5360",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -55981,9 +55981,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F5B60",
+     "name": "enepcMotion",
      "size": 676,
-     "splat_name": "enepc_001F5B60",
+     "splat_name": "enepcMotion",
      "va": "0x001f5b60",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -56162,36 +56162,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F5F20",
+     "name": "enepcExtra",
      "size": 192,
-     "splat_name": "enepc_001F5F20",
+     "splat_name": "enepcExtra",
      "va": "0x001f5f20",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F5FE0",
+     "name": "enepcExMotion",
      "size": 216,
-     "splat_name": "enepc_001F5FE0",
+     "splat_name": "enepcExMotion",
      "va": "0x001f5fe0",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F60B8",
+     "name": "enepcLookAt",
      "size": 868,
-     "splat_name": "enepc_001F60B8",
+     "splat_name": "enepcLookAt",
      "va": "0x001f60b8",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F6420",
+     "name": "enepcEncount",
      "size": 132,
-     "splat_name": "enepc_001F6420",
+     "splat_name": "enepcEncount",
      "va": "0x001f6420",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -56216,63 +56216,63 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F6680",
+     "name": "enepcSetBattle",
      "size": 168,
-     "splat_name": "enepc_001F6680",
+     "splat_name": "enepcSetBattle",
      "va": "0x001f6680",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F6728",
+     "name": "enepcSetSe",
      "size": 216,
-     "splat_name": "enepc_001F6728",
+     "splat_name": "enepcSetSe",
      "va": "0x001f6728",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F6800",
+     "name": "enepcDefaultMotion",
      "size": 204,
-     "splat_name": "enepc_001F6800",
+     "splat_name": "enepcDefaultMotion",
      "va": "0x001f6800",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F68D0",
+     "name": "enepcSetTogether",
      "size": 396,
-     "splat_name": "enepc_001F68D0",
+     "splat_name": "enepcSetTogether",
      "va": "0x001f68d0",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F6A60",
+     "name": "enepcAlgorithm",
      "size": 344,
-     "splat_name": "enepc_001F6A60",
+     "splat_name": "enepcAlgorithm",
      "va": "0x001f6a60",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F6BB8",
+     "name": "enepcReadyEnepcData",
      "size": 128,
-     "splat_name": "enepc_001F6BB8",
+     "splat_name": "enepcReadyEnepcData",
      "va": "0x001f6bb8",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "enepc_001F6C38",
+     "name": "enepcEnableDrawFlags",
      "size": 344,
-     "splat_name": "enepc_001F6C38",
+     "splat_name": "enepcEnableDrawFlags",
      "va": "0x001f6c38",
      "name_basis": "annotation",
      "provenance": "estimated"
