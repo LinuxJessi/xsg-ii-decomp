@@ -228,7 +228,9 @@ struct FontStateFromWindow {
         unsigned short default_scale;
         struct { signed char compact_width; unsigned char compact_height; };
     };
-    unsigned char unmodeled_1e[0x106];
+    unsigned char unmodeled_1e[6];
+    /* Scratch copy of one word while func_00196118 measures a line. */
+    char word_buffer[0x100];
     unsigned char *queue_cursor;
 };
 
@@ -387,6 +389,17 @@ int xglFontGetKanjiClutUV(int code, int *clut)
     return ((row & 0x1f) * 0x01800000) +
         (first_range_or_texture_column * 0x140);
 }
+
+/* FONT_OP_STYLE argument bits, and the cursor flags they set. */
+#define FONT_STYLE_PROPORTIONAL 1
+#define FONT_STYLE_WIDE_ASCII 2
+#define FONT_CURSOR_COMPACT 1
+#define FONT_CURSOR_PROPORTIONAL 2
+#define FONT_CURSOR_WIDE_ASCII 4
+/* Second half-width mode of the $han inline command ("n2"). */
+#define FONT_CURSOR_WIDE_ALL 8
+#define FONT_CURSOR_STYLE_CLEAR \
+    (~(FONT_CURSOR_COMPACT | FONT_CURSOR_PROPORTIONAL | FONT_CURSOR_WIDE_ASCII) & 0xff)
 
 /* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
  * register write. */
@@ -825,7 +838,32 @@ int xglFontGetStringWidth(const char *text)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00195E90);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196118);
+/* Copies the next word of `text` into `word`, stores its length and returns the text after it. */
+const char *func_00195E90(char *word, const char *text, int *length);
+
+/*
+ * Measures `text` word by word until the next word would pass *width; stores the width reached
+ * and returns the number of bytes that fit.
+ */
+int func_00196118(const char *text, int *width)
+{
+    const char *cursor = text;
+    int total = 0;
+
+    while (*cursor != 0) {
+        int length;
+        const char *next = func_00195E90(D_008DAD00.word_buffer, cursor, &length);
+
+        D_008DAD00.word_buffer[length] = 0;
+        total += xglFontGetStringWidth2(D_008DAD00.word_buffer, 0);
+        if (*width < total) {
+            break;
+        }
+        cursor = next;
+    }
+    *width = total;
+    return cursor - text;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001961D0);
 
@@ -904,7 +942,53 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196958);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", ruby);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", han);
+/*
+ * Inline width command: "n0;" / "n1;" / "n2;" pick the half-width mode, "p0;" / "p1;" proportional
+ * spacing; the letter stands in front of the text cursor.
+ */
+int han(FontDrawCursor *cursor, const char **text)
+{
+    const unsigned char *next = (const unsigned char *)*text;
+    unsigned char flags = cursor->flags;
+
+    if (next[1] != ';') {
+        return 0;
+    }
+    switch (next[-1]) {
+    case 'p':
+        flags &= ~FONT_CURSOR_PROPORTIONAL;
+        switch (next[0]) {
+        case '0':
+            break;
+        case '1':
+            flags |= FONT_CURSOR_PROPORTIONAL;
+            break;
+        default:
+            return 0;
+        }
+        break;
+    case 'n':
+        flags &= ~(FONT_CURSOR_WIDE_ASCII | FONT_CURSOR_WIDE_ALL);
+        switch (next[0]) {
+        case '0':
+            break;
+        case '1':
+            flags |= FONT_CURSOR_WIDE_ASCII;
+            break;
+        case '2':
+            flags |= FONT_CURSOR_WIDE_ALL;
+            break;
+        default:
+            return 0;
+        }
+        break;
+    default:
+        return 0;
+    }
+    cursor->flags = flags;
+    *text = (const char *)(next + 2);
+    return 1;
+}
 
 void func_00197200(int u, int v, int size, int flags);
 
@@ -1010,14 +1094,6 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001979E0);
 #define FONT_CONFIG_WRAP_WIDTH 3
 #define FONT_CONFIG_PROPORTIONAL_MODE 4
 #define FONT_CONFIG_HORIZONTAL_SHIFT 5
-/* FONT_OP_STYLE argument bits, and the cursor flags they set. */
-#define FONT_STYLE_PROPORTIONAL 1
-#define FONT_STYLE_WIDE_ASCII 2
-#define FONT_CURSOR_COMPACT 1
-#define FONT_CURSOR_PROPORTIONAL 2
-#define FONT_CURSOR_WIDE_ASCII 4
-#define FONT_CURSOR_STYLE_CLEAR \
-    (~(FONT_CURSOR_COMPACT | FONT_CURSOR_PROPORTIONAL | FONT_CURSOR_WIDE_ASCII) & 0xff)
 /* The compact position codes store x + 0x100 and y + 0x400 as 16-bit values. */
 #define FONT_POS_X_BIAS 0x100
 #define FONT_POS_Y_BIAS 0x400
