@@ -14,7 +14,7 @@ typedef struct MainActive {
     int imageOffset;            /* +0x14 */
     u8 unmodeled_18[0x08];
     int *jpegStream;            /* +0x20 */
-    void *pending;              /* +0x24: decoded texture */
+    u8 *pending;                /* +0x24: decoded texture */
     short offsetY;              /* +0x28 */
     short offsetX;              /* +0x2A */
     u16 height;                 /* +0x2C */
@@ -163,7 +163,7 @@ typedef struct MapObjectRecord {
     unsigned char kind;         /* +0x002: 0 free, 1/4 actor, 2 model, 3 flag, 6 elevator, 7 mover */
     unsigned char unmodeled_003;
     int key;                    /* +0x004: bit number in the map flag sets */
-    int model;                  /* +0x008: index into mapModelResources, -1 for none */
+    int type;                  /* +0x008: index into mapModelResources, -1 for none */
     u8 unmodeled_00c[4];
     AlignedMapVector position;  /* +0x010 */
     MapVector previous;         /* +0x020 */
@@ -230,12 +230,12 @@ typedef struct MapObjectRecord {
     u8 unmodeled_591;
     short elevatorMotion;       /* +0x592 */
     u8 unmodeled_594[0x1C];
-    MapVector riderOffset;      /* +0x5B0 */
+    MapVector focusOffset;      /* +0x5B0 */
     signed char talkMode;       /* +0x5C0 */
     signed char searchState;    /* +0x5C1 */
     signed char busy;           /* +0x5C2 */
     u8 unmodeled_5c3[0xD];
-    MapVector lookPoint;        /* +0x5D0 */
+    MapVector closedPosition;        /* +0x5D0 */
     u8 unmodeled_5e0[0x38];
     int lookLink;               /* +0x618 */
     u8 unmodeled_61c[0x10];
@@ -266,7 +266,7 @@ typedef struct MapModelResource {
 extern MainWork gameWork;
 extern MainObject *mainObject;
 extern int D_0069B964;
-extern void *D_0069B968;
+extern void *mapObjectTable;
 extern int uwamonoEntries;
 extern unsigned short *uwamonoEntryCountPtr;
 extern float D_0069AE00;
@@ -317,7 +317,7 @@ void mainResLoadCallback(int index, void *buffer, unsigned int size, int value)
             }
             secondOffset = m->secondHeaderOffset;
             secondHeader = (MainObjectSecond *)((u8 *)m + secondOffset);
-            D_0069B968 = secondHeader;
+            mapObjectTable = secondHeader;
             if (secondOffset != 0) {
                 i2 = 0;
                 if (secondHeader->entryCount > 0) {
@@ -433,13 +433,8 @@ void mainResLoadCallback(int index, void *buffer, unsigned int size, int value)
         }
     }
 
-    {
-        u8 *tailBase = (u8 *)uwamonoRecords;
-        int *slot = (int *)(tailBase + 0x869D8);
-        for (i2 = 0; i2 < MAP_RECORD_COUNT; i2++) {
-            *slot = -1;
-            slot = (int *)((u8 *)slot - 0x870);
-        }
+    for (i2 = 0; i2 < MAP_RECORD_COUNT; i2++) {
+        uwamonoRecords[i2].eventSlot = -1;
     }
 }
 
@@ -672,7 +667,7 @@ void func_001D7EB8(MainActive *active)
     int maxCol;
     int maxRow;
     int rowFixedTop;
-    int imageAddress;
+    u8 *imageAddress;
     int texAddress;
     int state;
     XglPacket *packet;
@@ -736,7 +731,7 @@ void func_001D7EB8(MainActive *active)
     rowFixedBottom = rowFixedTop + 0x2000;
     for (; i < 4; i++) {
         sceVif1PkRef(packet, D_002B7B30, 7, 0, 0, 0);
-        sceVif1PkRef(packet, (const void *)imageAddress, 0x7000, 0, 0x51007000, 0);
+        sceVif1PkRef(packet, imageAddress, 0x7000, 0, 0x51007000, 0);
         strip->tag = 0x53001;
         strip->topV = texAddress;
         texAddress += 0x700;
@@ -775,14 +770,14 @@ void mapObjectUpdateEffectTransform(MapObjectRecord *record);
 void func_001D7EB8(MainActive *active);
 void uwamonoChangePlayerModel(int value);
 void fadeStartIn(int frames);
-void func_00207028(int index);
+void uwamonoPlayFootEffects(int index);
 void uwamonoStartAreaBlend(int index);
 float func_0020A968(int index, Vector4 *position, int motion, int frame, int flags);
 void uwamonoUpdateRecord(int index);
 float cursolGetByReduceSpeedAngleLoop(float current, float target, float speed);
 void mapObjectClearFlags(MapObjectRecord *record);
 void uwamonoUpdateMidpoints(int index);
-void func_00202CD0(Vector4 *position, float extent, float scale, int mode);
+void DispPillar(Vector4 *position, float extent, float scale, int mode);
 void uwamonoUpdateTransform(MapObjectRecord *record);
 void elvUpdateMotion(MapObjectRecord *record);
 void *xglPacketReserve(int size);
@@ -795,13 +790,13 @@ void *sefSpawnEffectRecordById(int id, Vector4 *position, int flags);
 void sefReleaseRecordHandle(void *record);
 void seVoiceStartDefault(int id);
 void battleSlotsRefresh(void);
-void func_00202FA0(float *point);
+void uwamonoDrawPointAxes(float *point);
 void XenoActorPushMatrix(MapActor *actor);
-void func_001FDA18(MapActor *actor, int index);
-void func_001FE5B0(int index, int value);
-void func_001FFA60(void);
-void func_001FEF78(void);
-void func_002025B0(void);
+void uwamonoUpdateInReach(MapActor *actor, int index);
+void uwamonoSetPairMode(int index, int value);
+void uwamonoUpdatePoints(void);
+void uwamonoUpdateCountdowns(void);
+void DispCollUwamono(void);
 
 int DispMapObject(void)
 {
@@ -848,7 +843,7 @@ int DispMapObject(void)
         case MAP_KIND_ACTOR:
         case MAP_KIND_ACTOR_STATIC:
             actor = record->actor;
-            func_00207028(i);
+            uwamonoPlayFootEffects(i);
             if (record->flags & MAP_OBJ_SHOWN) {
                 actor->drawFlags &= ~4;
                 actor->motion = record->motion;
@@ -901,7 +896,7 @@ int DispMapObject(void)
                 }
             }
             uwamonoUpdateMidpoints(i);
-            func_00202CD0(&record->position.vector, record->extent, 0.1f, 7);
+            DispPillar(&record->position.vector, record->extent, 0.1f, 7);
         }
         }
     }
@@ -1021,9 +1016,9 @@ int DispMapObject(void)
             xglMatrixStackScale(&record->scale.vector);
             xglMatrixStackSave(record->transform);
             xglMatrixStackSave(record->matrix);
-            if (record->model != -1) {
+            if (record->type != -1) {
                 header = xglPacketReserve(8);
-                data = mapObjectResources[record->model + 2].data;
+                data = mapObjectResources[record->type + 2].data;
                 source = (MapModelHeader *) ((u8 *) data + data->headerOffset);
                 if (record->tiltStep != -1) {
                     Get_MiddlePoint(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->tiltStep, record->tiltCount,
@@ -1040,13 +1035,13 @@ int DispMapObject(void)
                     nmlModelSetDrawMatrix(record->transform);
                     func_001BAE58(header);
                     func_001BA8F0();
-                    pxySetTxyBlock(mapObjectResources[record->model + 2].texture);
-                    pxySubmitModel(mapObjectResources[record->model + 2].data);
+                    pxySetTxyBlock(mapObjectResources[record->type + 2].texture);
+                    pxySubmitModel(mapObjectResources[record->type + 2].data);
                 }
-                if (record->model >= 7 && !(gameWork.flags & GAME_PAUSE_MAP_OBJECTS)) {
+                if (record->type >= 7 && !(gameWork.flags & GAME_PAUSE_MAP_OBJECTS)) {
                     record->rotation.vector.y = Get_Decimal_Surplus_for_Radius(record->rotation.vector.y + 0.1f);
                 }
-                if (record->model >= 7 && record->model <= 9) {
+                if (record->type >= 7 && record->type <= 9) {
                     if (Get_Distance3D(&uwamonoRecords[uwamonoCurrentIndex].position.vector, &record->position.vector)
                         <= (size = uwamonoRecords[uwamonoCurrentIndex].size) * 0.5f) {
                         if (record->effect == 0) {
@@ -1067,8 +1062,8 @@ int DispMapObject(void)
             point.y = record->position.vector.y + record->pivot.vector.y;
             point.z = record->position.vector.z + record->pivot.vector.z;
             point.w = 1.0f;
-            func_00202FA0(&point.x);
-            func_00202FA0(record->transform[3]);
+            uwamonoDrawPointAxes(&point.x);
+            uwamonoDrawPointAxes(record->transform[3]);
             break;
         case MAP_KIND_FLAG:
             if (record->flags & MAP_OBJ_SHOWN) {
@@ -1140,7 +1135,7 @@ int DispMapObject(void)
             if (record->kind < MAP_KIND_ACTOR || record->kind > MAP_KIND_FLAG) {
                 continue;
             }
-            func_001FDA18(uwamonoRecords[uwamonoCurrentIndex].actor, j);
+            uwamonoUpdateInReach(uwamonoRecords[uwamonoCurrentIndex].actor, j);
             if (record->riderSide != 0) {
                 riders[0] = record->riders[0];
                 riders[1] = record->riders[1];
@@ -1151,17 +1146,17 @@ int DispMapObject(void)
                     if (record->riderSide == 1) {
                         riders[0]->visible = 1;
                         riders[1]->visible = 0;
-                        riders[0]->position.vector.x = record->position.vector.x + record->riderOffset.vector.x;
-                        riders[0]->position.vector.y = record->position.vector.y + record->riderOffset.vector.y + record->height * 0.5f;
-                        riders[0]->position.vector.z = record->position.vector.z + record->riderOffset.vector.z;
+                        riders[0]->position.vector.x = record->position.vector.x + record->focusOffset.vector.x;
+                        riders[0]->position.vector.y = record->position.vector.y + record->focusOffset.vector.y + record->height * 0.5f;
+                        riders[0]->position.vector.z = record->position.vector.z + record->focusOffset.vector.z;
                         riders[0]->scale.vector.x = riders[0]->scale.vector.y = riders[0]->scale.vector.z
                             = uwamonoRecords[uwamonoCurrentIndex].size;
                     } else {
                         riders[0]->visible = 0;
                         riders[1]->visible = 1;
-                        riders[1]->position.vector.x = record->position.vector.x + record->riderOffset.vector.x;
-                        riders[1]->position.vector.y = record->position.vector.y + record->riderOffset.vector.y + record->height * 0.5f;
-                        riders[1]->position.vector.z = record->position.vector.z + record->riderOffset.vector.z;
+                        riders[1]->position.vector.x = record->position.vector.x + record->focusOffset.vector.x;
+                        riders[1]->position.vector.y = record->position.vector.y + record->focusOffset.vector.y + record->height * 0.5f;
+                        riders[1]->position.vector.z = record->position.vector.z + record->focusOffset.vector.z;
                         riders[1]->scale.vector.x = riders[1]->scale.vector.y = riders[1]->scale.vector.z
                             = uwamonoRecords[uwamonoCurrentIndex].size;
                     }
@@ -1172,20 +1167,20 @@ int DispMapObject(void)
             if (record->talkMode != 0 && record->searchState != 1 && record->busy == 0
                 && uwamonoCurrentIndex != -1) {
                 if (record->lookLink == -1) {
-                    point = record->lookPoint.vector;
+                    point = record->closedPosition.vector;
                 } else {
-                    Get_MiddlePoint(&record->lookPoint.vector.x, &uwamonoRecords[record->lookLink].lookPoint.vector.x, 1, 2, &point.x);
+                    Get_MiddlePoint(&record->closedPosition.vector.x, &uwamonoRecords[record->lookLink].closedPosition.vector.x, 1, 2, &point.x);
                 }
                 if (uwamonoRecords[uwamonoCurrentIndex].size * 5.0f
                     <= Get_Distance(&uwamonoRecords[uwamonoCurrentIndex].actor->position, &point)) {
-                    func_001FE5B0(j, 1);
+                    uwamonoSetPairMode(j, 1);
                 }
             }
         }
     }
-    func_001FFA60();
-    func_001FEF78();
-    func_002025B0();
+    uwamonoUpdatePoints();
+    uwamonoUpdateCountdowns();
+    DispCollUwamono();
     return 1;
 }
 
@@ -1215,12 +1210,12 @@ void mainDrawObjects(void)
     }
     func_001BB3FC(D_002B5E50);
     pxySubmitModel(mainObject);
-    if (mainObject->secondHeaderOffset != 0 && D_0069B968 != 0) {
+    if (mainObject->secondHeaderOffset != 0 && mapObjectTable != 0) {
         func_001BB678(mainObject);
         func_001BB44C(D_002B7CA8);
         func_001BB47C(D_002B7CC8);
         pxySetTxyBlock(D_0069B964);
         func_001BB3FC(D_002B5E50);
-        pxySubmitModel(D_0069B968);
+        pxySubmitModel(mapObjectTable);
     }
 }

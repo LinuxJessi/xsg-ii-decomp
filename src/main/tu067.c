@@ -223,24 +223,24 @@ int func_001EF650(short key)
     return -1;
 }
 
-/* The model pack D_0069B968 points to (xenoActor.c's PxyHeader); only the field this file reads. */
+/* The model pack mapObjectTable points to (xenoActor.c's PxyHeader); only the field this file reads. */
 typedef struct PxyHeader {
     unsigned char unmodeled_00[0x68];
     int entry_offset;           /* +0x68: nml_model_set.c offset68: offset of the 0x40-byte entry matrices */
 } PxyHeader;
 
-/* One 0x40-byte row of the table at D_0069B968: a placement matrix, its rotation rows then the position. */
+/* One 0x40-byte row of the table at mapObjectTable: a placement matrix, its rotation rows then the position. */
 typedef struct ObjTableEntry {
     float rotation[3][4];       /* +0x00 */
     Vector4 position;           /* +0x30 */
 } ObjTableEntry;
 
-extern PxyHeader *D_0069B968;
+extern PxyHeader *mapObjectTable;
 int pxyFindEntryIndex(PxyHeader *header, const char *name);
 
 void func_001EF6A0(Vector4 *destination, int index)
 {
-    ObjTableEntry *entry = (ObjTableEntry *)((unsigned char *)D_0069B968 + D_0069B968->entry_offset) + index;
+    ObjTableEntry *entry = (ObjTableEntry *)((unsigned char *)mapObjectTable + mapObjectTable->entry_offset) + index;
 
     destination->x = entry->position.x;
     destination->y = entry->position.y;
@@ -256,7 +256,7 @@ float atan2f(float y, float x);
  * heading of the third row, z from the roll (reflected across pi when the up row points down). */
 void func_001EF6E0(Vector4 *angles, int index)
 {
-    ObjTableEntry *entry = (ObjTableEntry *)((unsigned char *)D_0069B968 + D_0069B968->entry_offset) + index;
+    ObjTableEntry *entry = (ObjTableEntry *)((unsigned char *)mapObjectTable + mapObjectTable->entry_offset) + index;
     float roll;
 
     if (entry->rotation[1][1] >= 0.0f) {
@@ -1047,7 +1047,7 @@ int runtimeSetNumber(int call)
         entry = -1;
     } else if (func_A9F140(call, 3) == 3) {
         if (kind != MAP_KIND_EFFECT) {
-            entry = pxyFindEntryIndex(D_0069B968, func_A9F238(call, func_A9F0C0(call, 3)));
+            entry = pxyFindEntryIndex(mapObjectTable, func_A9F238(call, func_A9F0C0(call, 3)));
             if (entry == -1) {
                 return 0;
             }

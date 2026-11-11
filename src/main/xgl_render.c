@@ -101,6 +101,18 @@ extern void xglStudioMainCameraInit(void);
 #define VIF1_STAT_ADDRESS 0x10003C00
 #define GIF_STAT_APATH_MASK 0xC00 /* a GIF transfer path is active */
 #define VIF1_STAT_VPS_MASK 3 /* the VIF1 pipeline is not idle */
+/* EE hardware registers (GS privileged, DMAC, VIF). */
+#define GS_DISPFB1 0x12000070
+#define GS_DISPLAY1 0x12000080
+#define GS_EXTBUF 0x120000B0
+#define GS_EXTDATA 0x120000C0
+#define GS_EXTWRITE 0x120000D0
+#define GS_CSR 0x12001000
+#define D1_CHCR 0x10009000
+#define D2_CHCR 0x1000A000
+#define D_ENABLEW 0x1000F590
+#define VIF0_ERR 0x10003820
+#define VIF1_ERR 0x10003C20
 #define RENDER_COUNT_RESO 6
 #define GS_COORD_CENTER 2048 /* primitive coordinate system origin */
 /* ScanLineInterpolate modes. */
@@ -704,10 +716,10 @@ void xglRenderSyncMove(void)
     }
 
     if (pathBusy != 0) {
-        *(u32 *) 0x1000F590 = 0x10000;
-        *(u32 *) 0x10009000 = 0;
-        *(u32 *) 0x1000A000 = 0;
-        *(u32 *) 0x1000F590 = 0;
+        *(u32 *) D_ENABLEW = 0x10000;
+        *(u32 *) D1_CHCR = 0;
+        *(u32 *) D2_CHCR = 0;
+        *(u32 *) D_ENABLEW = 0;
         func_00129C28();
         sceGsResetGraph(1, 0, 0, 0);
         sceGsSyncPath(0, 0);
@@ -894,12 +906,12 @@ void xglRenderDispEnvMove(void)
     }
     SyncDCache(&DispEnv, &D_00645798);
     func_0012A0B8(&DispEnv);
-    *(volatile u64 *) 0x12000070 = D_00645768;
-    *(volatile u64 *) 0x12000080 = D_00645770;
-    *(volatile u64 *) 0x120000B0 = D_00645778;
-    *(volatile u64 *) 0x120000C0 = D_00645780;
-    *(volatile u64 *) 0x120000D0 = D_00645788;
-    *(volatile u64 *) 0x12001000 = 16;
+    *(volatile u64 *) GS_DISPFB1 = D_00645768;
+    *(volatile u64 *) GS_DISPLAY1 = D_00645770;
+    *(volatile u64 *) GS_EXTBUF = D_00645778;
+    *(volatile u64 *) GS_EXTDATA = D_00645780;
+    *(volatile u64 *) GS_EXTWRITE = D_00645788;
+    *(volatile u64 *) GS_CSR = 16;
 }
 
 void xglRenderClearDepth(void)
@@ -1008,8 +1020,8 @@ void xglRenderInit(void)
     int i;
 
     func_00129C28();
-    *(volatile u32 *) 0x10003820 = 0;
-    *(volatile u32 *) 0x10003C20 = 0;
+    *(volatile u32 *) VIF0_ERR = 0;
+    *(volatile u32 *) VIF1_ERR = 0;
     func_0012A510(0);
     sceGsResetGraph(0, 1, 2, 0);
     xglRenderSyncInit();

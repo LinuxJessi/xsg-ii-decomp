@@ -365,7 +365,7 @@ struct PxyPacket {
     float glowIntensity;            /* +0x58 */
     Matrix4 *boneMatrices;  /* +0x5C */
     u8 unk60[0x68 - 0x60];
-    void *levelTable;            /* +0x68 */
+    s32 (*levelTable)[4];            /* +0x68 */
     XglMatrixBank *matrixBank;   /* +0x6C */
     float unk70[4];         /* +0x70 */
     Matrix4 *shadowCamera;  /* +0x80: matrices of the shadow camera, the view at index 3 */
@@ -867,10 +867,10 @@ void pxyUploadRenderFlags(s32 mode)
     }
     params.alpha = SPR_CURRENT_PXY->glowScale * SPR_CURRENT_PXY->alpha;
     if (SPR_CURRENT_PXY->levelTable != 0 && SPR_PXY_CHANNEL != 0) {
-        register u8 *levelRow;
+        register s32 *levelRow;
 
-        levelRow = (SPR_PXY_CHANNEL->matrixIndex << 4) + (u8 *) SPR_CURRENT_PXY->levelTable;
-        cameraLevel = *(s32 *) (levelRow + (xglStudioSelectedIndex << 2));
+        levelRow = SPR_CURRENT_PXY->levelTable[SPR_PXY_CHANNEL->matrixIndex];
+        cameraLevel = *(s32 *) ((u8 *) levelRow + (xglStudioSelectedIndex << 2));
     }
     if ((SPR_CURRENT_PXY->renderStatus & 1) != 0 && (SPR_CURRENT_PXY->header->flags & 1) == 0) {
         params.alpha = params.alpha * ((float) cameraLevel / 4080.0f);

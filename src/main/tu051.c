@@ -86,6 +86,28 @@ struct CameraRange {
     Vector4 angles;                   /* +0x60 */
 };
 
+/* One of the four camera slots (0 look-at, 1 position and angles, 2 perspective, 3 roll): a timed transition set by
+   cameraSlotSetup. */
+struct CameraSlot {
+    unsigned char unmodeled_00[2];
+    unsigned char blendMode;            /* +0x02: stored by cameraSlotSetup when >= 0; slot 1 blends the position when 0, the angles otherwise */
+    unsigned char easeMode;             /* +0x03: stored by cameraSlotSetup when >= 0; the mode of cameraEase */
+    float progress;  /* +0x004 */
+    float duration;                      /* +0x08: the frames of the transition as a float; a slot is active when nonzero */
+    float fraction;                     /* +0x0C: the eased fraction of the transition, 1.0 when the frames were 0 */
+};
+
+/* One camera record of cameraCfSlots (208 bytes): its flag is cleared and its index set to -1 by cameraReset. */
+struct CameraRecord {
+    unsigned char unmodeled_00;
+    unsigned char flag01;               /* +0x01: cleared by cameraReset */
+    signed char index02;                /* +0x02: -1 after cameraReset */
+    unsigned char unmodeled_03[0xD];
+    struct CameraSlot slot;             /* +0x10: the slot settings of this record */
+    struct CameraRange range;           /* +0x20: the range cleared by cameraRangeSetDefaults */
+    unsigned char unmodeled_90[0x40];
+};
+
 /* File names of the map object resources (matumoto\\*.pxy models, *.txy textures, spline.dat, enemyorder.dat,
    treasurebox.dat, kowaremono.dat): the first argument of each GameResLoadName call in mapObjectResourcesLoad. */
 int GameResLoadName(const char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
@@ -94,10 +116,10 @@ extern const char *mapObjectResourceNames[MAP_RESOURCE_COUNT];
 /* Resource slots: each GameResLoadName call stores the loaded block through &mapObjectResources[i]. */
 extern void *mapObjectResources[];
 extern int D_0069D1DC;
-extern int D_0069D1E0;
+extern int uwamonoEventTable;
 
 /* Loads every map object resource named in mapObjectResourceNames (models, textures and data files), waiting for each CD read, and keeps
-   entries 1 and 2 in D_0069D1E0 and D_0069D1DC. */
+   entries 1 and 2 in uwamonoEventTable and D_0069D1DC. */
 void mapObjectResourcesLoad(void)
 {
     int i;
@@ -107,15 +129,18 @@ void mapObjectResourcesLoad(void)
         while (xglCdServiceIfPending() != 0) {
         }
     }
-    D_0069D1E0 = (int)mapObjectResources[1];
+    uwamonoEventTable = (int)mapObjectResources[1];
     D_0069D1DC = (int)mapObjectResources[2];
 }
 
 #include "shared.h"
 
-/* 0x1A00 bytes of camera slot records, 8-aligned: copied whole with ld/sd. */
+/* 32 camera records (0x1A00 bytes), copied whole. */
 typedef struct CameraSlotBlock {
-    DoublewordAlignedVector4 unmodeled_000[0x1A00 / 16];
+    union {
+        DoublewordAlignedVector4 quadwords[0x1A00 / 16];
+        struct CameraRecord record[0x1A00 / 0xD0];
+    };
 } CameraSlotBlock;
 
 /* 0x280 bytes of the camera slot table, copied with a runtime alignment test. */
@@ -137,17 +162,6 @@ void cameraSaveState(void)
     D_006A0040 = cameraSlotTable;
     D_0069E180 = D_002B5E6C[0];
 }
-
-/* One of the four camera slots (0 look-at, 1 position and angles, 2 perspective, 3 roll): a timed transition set by
-   cameraSlotSetup. */
-struct CameraSlot {
-    unsigned char unmodeled_00[2];
-    unsigned char blendMode;            /* +0x02: stored by cameraSlotSetup when >= 0; slot 1 blends the position when 0, the angles otherwise */
-    unsigned char easeMode;             /* +0x03: stored by cameraSlotSetup when >= 0; the mode of cameraEase */
-    float progress;  /* +0x004 */
-    float duration;                      /* +0x08: the frames of the transition as a float; a slot is active when nonzero */
-    float fraction;                     /* +0x0C: the eased fraction of the transition, 1.0 when the frames were 0 */
-};
 
 /* Triangle wave record: value is the current amplitude, step the amount it decays per cycle; period and phase
    are in frames, hold delays the decay, remaining counts the cycles left. */
@@ -178,13 +192,16 @@ struct CameraState {
     };
     unsigned char unmodeled_00C[0xC4];
     union { unsigned short flags; };               /* +0xD0: 0x10 set by cameraApplySlots, 0x20 by cameraSetIndex and cameraApplyAllSlots, 0x40 by cameraSetMode */
-    unsigned char unmodeled_0D2[3];
+    unsigned char cameraType;           /* +0xD2: the camera type of the active record */
+    unsigned char unmodeled_0D3;
+    signed char recordIndex;            /* +0xD4: the camera record in use */
     signed char mode;                   /* +0xD5: set by cameraSetMode */
     unsigned char allSlotsFlagA;  /* +0x0D6 */
     unsigned char allSlotsFlagB;  /* +0x0D7: also the anchor pending flag of the range update */
-    unsigned char unmodeled_0D8[0x1];
+    unsigned char previousRecordIndex;  /* +0xD8 */
     unsigned char anchorLocked;  /* +0x0D9 */
-    unsigned char unmodeled_0DA[0x2];
+    unsigned char previousCameraType;   /* +0xDA */
+    unsigned char unmodeled_0DB;
     signed char trackIndex;             /* +0xDC: set by cameraSetIndex */
     unsigned char unmodeled_0DD[0x3];
     XglQuadword wordE0;                 /* +0xE0: cleared when the record kind changes */
@@ -197,7 +214,8 @@ struct CameraState {
     short anchorSubIndex;  /* +0x184 */
     unsigned char unmodeled_186[0x6];
     unsigned char anchorReady;  /* +0x18C */
-    unsigned char unmodeled_18D[0x3];
+    unsigned char unmodeled_18D[0x2];
+    unsigned char rangeFlag;  /* +0x18F */
     float stickAngle;                   /* +0x190: the camera yaw the stick directions are relative to */
     unsigned char unmodeled_194[0xC];
     /* The current camera: offset (the anchor offset), position, look-at point, perspective, roll and the pitch, yaw
@@ -370,16 +388,6 @@ void cameraInit(void)
     } while (0);
 }
 
-/* One camera record of cameraCfSlots (208 bytes): its flag is cleared and its index set to -1 by cameraReset. */
-struct CameraRecord {
-    unsigned char unmodeled_00;
-    unsigned char flag01;               /* +0x01: cleared by cameraReset */
-    signed char index02;                /* +0x02: -1 after cameraReset */
-    unsigned char unmodeled_03[0x1D];
-    struct CameraRange range;           /* +0x20: the range cleared by cameraRangeSetDefaults */
-    unsigned char unmodeled_90[0x40];
-};
-
 /* One 20-byte entry of cameraSlotTable: two index bytes set to -1 and a word cleared by cameraReset. */
 struct CameraSlotEntry {
     signed char indexA;                 /* +0x00 */
@@ -407,7 +415,7 @@ void cameraReset(void)
     int i;
 
     cameraInit();
-    record = (struct CameraRecord *)&cameraCfSlots;
+    record = cameraCfSlots.record;
     for (i = 31; i >= 0; i--) {
         memset(record, 0, 208);
         record->flag01 = 0;
@@ -690,7 +698,9 @@ void cameraApplyAllSlots(void)
 struct CameraKeyEntry {
     signed char key;                /* +0x00 */
     signed char sub;                /* +0x01 */
-    unsigned char unmodeled_02[0x14 - 0x02];
+    unsigned char anchorReady;      /* +0x02 */
+    unsigned char unmodeled_03;
+    struct CameraSlot slot;         /* +0x04 */
 };
 
 /* A key or sub-key of -1 matches nothing: both become -1 before the scan of 32 entries. */
@@ -1062,15 +1072,24 @@ void cameraSearchOrbitPitch(void)
 
 struct CameraScratch {
     struct CameraRecord *record;        /* +0x00: the camera record pointer */
-    unsigned char unmodeled_04[0x08];
+    unsigned char unmodeled_04[0x04];
+    XglCamera *camera;                  /* +0x08 */
     int anchorIndex;                    /* +0x0C */
-    unsigned char unmodeled_10[0x20];
+    unsigned char unmodeled_10[0x08];
+    unsigned char moved;                /* +0x18 */
+    unsigned char seen;                 /* +0x19 */
+    unsigned char unmodeled_1A[0x02];
+    float step;                         /* +0x1C */
+    unsigned char unmodeled_20[0x10];
     Vector4 lookAt;                   /* +0x30 */
     unsigned char unmodeled_40[0x50];
     Vector4 angles;                   /* +0x90 */
     unsigned char unmodeled_A0[0x20];
     Vector4 position;                   /* +0xC0 */
 };
+
+/* The scratchpad block the camera update functions share. */
+#define CAMERA_PAD ((struct CameraScratch *)0x70000000)
 
 extern int D_0069E608[];
 /* Writes the angles from `to` to `from`: x the pitch, y the yaw (plus pi), w the length of the difference. */ void cameraAnglesBetween(Vector4 *angles, const Vector4 *from, const Vector4 *to);
@@ -1107,16 +1126,16 @@ void cameraUpdateFollow(void)
     }
     record = scratch->record;
     if (record->range.lockX != 0) {
-        *(float *)0x700000C0 = record->range.lockPosition.x;
+        CAMERA_PAD->position.x = record->range.lockPosition.x;
     }
     if (record->range.lockY != 0) {
-        *(float *)0x700000C4 = record->range.lockPosition.y;
+        CAMERA_PAD->position.y = record->range.lockPosition.y;
     }
     if (record->range.lockZ != 0) {
-        *(float *)0x700000C8 = record->range.lockPosition.z;
+        CAMERA_PAD->position.z = record->range.lockPosition.z;
     }
     cameraAnglesBetween(&scratch->angles, &scratch->lookAt, &scratch->position);
-    gameWork.pitch = *(float *)0x70000090;
+    gameWork.pitch = CAMERA_PAD->angles.x;
     gameWork.yaw = *(float *)0x70000094;
     gameWork.distance = *(float *)0x7000009C;
     /* The CameraVector union: the original orders these three stores with alias set 0. */
@@ -1142,7 +1161,7 @@ void cameraUpdateFromRecord(void)
     float stageZ;
 
     if (D_0069E568[0] != 0) {
-        record = *(struct CameraRecord **)0x70000000;
+        record = CAMERA_PAD->record;
         gameWork.positionX = record->range.lockPosition.x;
         gameWork.positionY = record->range.lockPosition.y;
         gameWork.positionZ = record->range.lockPosition.z;
@@ -1152,7 +1171,7 @@ void cameraUpdateFromRecord(void)
         gameWork.perspective = record->range.lockPosition.w;
         gameWork.roll = record->range.lookAt.w;
     } else {
-        record = *(struct CameraRecord **)0x70000000;
+        record = CAMERA_PAD->record;
     }
     ((CameraVector *)&cameraProbePosition)->vector.x = gameWork.positionX;
     ((CameraVector *)&cameraProbePosition)->vector.y = gameWork.positionY;
@@ -1163,10 +1182,10 @@ void cameraUpdateFromRecord(void)
         gameWork.lookAtY = anchorPosition.y;
         gameWork.lookAtZ = anchorPosition.z;
     }
-    (*(float *)0x70000030) = gameWork.lookAtX;
+    (CAMERA_PAD->lookAt.x) = gameWork.lookAtX;
     (*(float *)0x70000034) = gameWork.lookAtY;
     (*(float *)0x70000038) = gameWork.lookAtZ;
-    cameraAnglesBetween((Vector4 *)0x70000090, (Vector4 *)0x70000030, &cameraProbePosition);
+    cameraAnglesBetween(&CAMERA_PAD->angles, &CAMERA_PAD->lookAt, &cameraProbePosition);
     gameWork.pitch = *(float *)0x70000090;
     gameWork.yaw = *(float *)0x70000094;
     gameWork.distance = *(float *)0x7000009C;
@@ -1189,7 +1208,7 @@ void cameraStageLookAt(void)
         gameWork.lookAtY = anchorPosition.y;
         gameWork.lookAtZ = anchorPosition.z;
     }
-    *(float *)0x70000030 = gameWork.lookAtX;
+    CAMERA_PAD->lookAt.x = gameWork.lookAtX;
     *(float *)0x70000034 = gameWork.lookAtY;
     *(float *)0x70000038 = gameWork.lookAtZ;
 }
@@ -1257,17 +1276,17 @@ void cameraClampAngles(int afterCommit)
         yaw = gameWork.yaw;
         pitch = gameWork.pitch;
         yawDelta = yaw;
-        limitIndex = cameraAngleLimitIndex(&(*(struct CameraRecord **)0x70000000)->range.angleLimits.z, yaw);
+        limitIndex = cameraAngleLimitIndex(&(CAMERA_PAD->record)->range.angleLimits.z, yaw);
         if (limitIndex >= 0) {
-            yaw = (&(*(struct CameraRecord **)0x70000000)->range.angleLimits.z)[limitIndex];
+            yaw = (&(CAMERA_PAD->record)->range.angleLimits.z)[limitIndex];
             depth = gameWork.lookAtZ - gameWork.positionZ;
             tanYaw = xglSin(yaw) / xglCos(yaw);
             gameWork.lookAtX = gameWork.positionX + depth * tanYaw;
-            cameraAnglesBetween((Vector4 *)0x70000090, (Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.positionX);
-            gameWork.pitch = *(float *)0x70000090;
+            cameraAnglesBetween(&CAMERA_PAD->angles, (Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.positionX);
+            gameWork.pitch = CAMERA_PAD->angles.x;
             pitch = gameWork.pitch;
-            gameWork.yaw = *(float *)0x70000094;
-            gameWork.distance = *(float *)0x7000009C;
+            gameWork.yaw = CAMERA_PAD->angles.y;
+            gameWork.distance = CAMERA_PAD->angles.w;
         }
         yawDelta = yaw - yawDelta;
         while (yawDelta < -CAMERA_PI) {
@@ -1279,9 +1298,9 @@ void cameraClampAngles(int afterCommit)
         if (yawDelta < -CAMERA_HALF_PI || CAMERA_HALF_PI < yawDelta) {
             pitch = CAMERA_PI - pitch;
         }
-        limitIndex = cameraAngleLimitIndex(&(*(struct CameraRecord **)0x70000000)->range.angleLimits.x, pitch);
+        limitIndex = cameraAngleLimitIndex(&(CAMERA_PAD->record)->range.angleLimits.x, pitch);
         if (limitIndex >= 0) {
-            pitch = (&(*(struct CameraRecord **)0x70000000)->range.angleLimits.x)[limitIndex];
+            pitch = (&(CAMERA_PAD->record)->range.angleLimits.x)[limitIndex];
         }
         gameWork.pitch = pitch;
         gameWork.yaw = yaw;
@@ -1312,7 +1331,7 @@ void cameraClampAngles(int afterCommit)
         if (shift < -0.1f || 0.1f < shift) {
             moved = 1;
         }
-        *(unsigned char *)0x70000018 = moved;
+        CAMERA_PAD->moved = moved;
         gameWork.lookAtX = matrix[12];
         gameWork.lookAtY = matrix[13];
         gameWork.lookAtZ = matrix[14];
@@ -1357,7 +1376,7 @@ int cameraCommitSlots(void)
             state->fromOffsetZ = anchorZ;
             state->offsetZ = anchorZ;
             if (state->anchorReady != 0) {
-                if (*(unsigned char *)0x70000019 != 0 && *(unsigned char *)0x70000018 == 0) {
+                if (CAMERA_PAD->seen != 0 && CAMERA_PAD->moved == 0) {
                     if (state->anchorLocked == 0) {
                         state->slot[0].duration = 0.0f;
                     }
@@ -1522,21 +1541,21 @@ void cameraAdvanceTracks(float *tracks)
 
     scratch = (union { CameraTravel *p; } *)0x70000010;
     if (gameWork.slot[0].progress < gameWork.slot[0].duration) {
-        gameWork.slot[0].progress += *(float *)0x7000001C;
+        gameWork.slot[0].progress += CAMERA_PAD->step;
         gameWork.slot[0].fraction = cameraEase((unsigned char)gameWork.slot[0].easeMode, gameWork.slot[0].progress, gameWork.slot[0].duration);
         cameraLerpVector((Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.fromLookAtX, (Vector4 *)&gameWork.toLookAtX, gameWork.slot[0].fraction);
     }
 
     if (gameWork.slot[1].progress < gameWork.slot[1].duration) {
-        gameWork.slot[1].progress += *(float *)0x7000001C;
+        gameWork.slot[1].progress += CAMERA_PAD->step;
         e = cameraEase((unsigned char)gameWork.slot[1].easeMode, gameWork.slot[1].progress, gameWork.slot[1].duration);
         gameWork.slot[1].fraction = e;
         if (gameWork.slot[1].blendMode == 0) {
             cameraLerpVector((Vector4 *)&gameWork.positionX, (Vector4 *)&gameWork.fromPositionX, (Vector4 *)&gameWork.toPositionX, e);
-            cameraAnglesBetween((Vector4 *)0x70000090, (Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.positionX);
-            gameWork.pitch = *(float *)0x70000090;
-            gameWork.yaw = *(float *)0x70000094;
-            gameWork.distance = *(float *)0x7000009C;
+            cameraAnglesBetween(&CAMERA_PAD->angles, (Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.positionX);
+            gameWork.pitch = CAMERA_PAD->angles.x;
+            gameWork.yaw = CAMERA_PAD->angles.y;
+            gameWork.distance = CAMERA_PAD->angles.w;
         } else {
             gameWork.pitch = cameraLerpAngle(gameWork.fromPitch, gameWork.toPitch, e);
             gameWork.yaw = cameraLerpAngle(gameWork.fromYaw, gameWork.toYaw, e);
@@ -1549,7 +1568,7 @@ void cameraAdvanceTracks(float *tracks)
     p2 = gameWork.slot[2].progress;
     lim2 = gameWork.slot[2].duration;
     if (p2 < lim2) {
-        float next2 = p2 + *(float *)0x7000001C;
+        float next2 = p2 + CAMERA_PAD->step;
         gameWork.slot[2].progress = next2;
         d2 = cameraEase((unsigned char)gameWork.slot[2].easeMode, next2, lim2);
         gameWork.slot[2].fraction = d2;
@@ -1560,7 +1579,7 @@ void cameraAdvanceTracks(float *tracks)
     p3 = gameWork.slot[3].progress;
     lim3 = gameWork.slot[3].duration;
     if (p3 < lim3) {
-        float next3 = p3 + *(float *)0x7000001C;
+        float next3 = p3 + CAMERA_PAD->step;
         gameWork.slot[3].progress = next3;
         d3 = cameraEase((unsigned char)gameWork.slot[3].easeMode, next3, lim3);
         gameWork.slot[3].fraction = d3;
@@ -1611,7 +1630,7 @@ void cameraAdvanceTracks(float *tracks)
     *(int *)0x700000C4 = 0;
     *(int *)0x700000C8 = 0;
     if (gameWork.shakeFlags != 0) {
-        *(float *)0x700000C0 = cameraWaveStep(&gameWork.waves[0]);
+        CAMERA_PAD->position.x = cameraWaveStep(&gameWork.waves[0]);
         *(float *)0x700000C4 = cameraWaveStep(&gameWork.waves[1]);
         *(float *)0x700000C8 = cameraWaveStep(&gameWork.waves[2]);
         if (gameWork.waves[0].remaining == 0) {
@@ -1634,10 +1653,10 @@ void cameraAdvanceTracks(float *tracks)
             t2 = -(gameWork.sway[1] + gameWork.sway[3]) * ((r3 - 1.0f) * k1) + (r4 - 1.5f) * k2;
             gameWork.sway[2] += t1;
             gameWork.sway[0] += gameWork.sway[2];
-            *(float *)0x700000C0 += gameWork.sway[0];
+            CAMERA_PAD->position.x += gameWork.sway[0];
             gameWork.sway[3] += t2;
             gameWork.sway[1] += gameWork.sway[3];
-            *(float *)0x700000C4 += gameWork.sway[1];
+            CAMERA_PAD->position.y += gameWork.sway[1];
         }
     }
 
@@ -1653,8 +1672,8 @@ void cameraAdvanceTracks(float *tracks)
     }
     scratch->p->chase_position.y = gameWork.lookAtY;
     scratch->p->chase_position.z = gameWork.lookAtZ;
-    scratch->p->rotation.z = gameWork.roll + *(float *)0x700000C8;
-    cameraAnglesBetween((Vector4 *)0x70000090, &scratch->p->chase_position, &scratch->p->position);
+    scratch->p->rotation.z = gameWork.roll + CAMERA_PAD->position.z;
+    cameraAnglesBetween(&CAMERA_PAD->angles, &scratch->p->chase_position, &scratch->p->position);
     scratch->p->rotation.y = *(float *)0x70000094 + *(float *)0x700000C0;
     scratch->p->rotation.x = *(float *)0x70000090 + *(float *)0x700000C4;
     QuadwordCopy(&scratch->p->chase_reference, &scratch->p->chase_position);
@@ -1738,7 +1757,7 @@ void cameraUpdateFrame(void)
                 flags = gameWork.flags;
                 if (flags & CAMERA_FLAG_SNAP) {
                     gameWork.flags = flags | (CAMERA_FLAG_SNAP | CAMERA_FLAG_MODE_CHANGED | CAMERA_FLAG_TRACK_PLAYER);
-                    gameWork.unmodeled_0D2[2] = 0;
+                    gameWork.recordIndex = 0;
                     probe = (CameraGroundProbe *)cameraPlayerProbe;
                     mapProbeInit(&probe->probe);
                     probe->probe.scratchWork = 0x70000170;
@@ -1752,7 +1771,7 @@ void cameraUpdateFrame(void)
                     cameraSetIndex(-1);
                     cameraPlayerPositionOld = (scratch->anchor)->position;
                     ((CameraFlagsView *)&gameWork)->flags &= 0xFFDF;
-                    gameWork.unmodeled_0D2[2] = -1;
+                    gameWork.recordIndex = -1;
                     D_0069E5A0.clearedA = 0;
                     cameraPositionProbe.clearedA = 0;
                     ((CameraGroundProbe *)cameraPlayerProbe)->probe.clearedA = 0;
@@ -1770,17 +1789,17 @@ void cameraUpdateFrame(void)
                         }
                     }
                 }
-                record = (struct CameraRecord *)((unsigned char *)&cameraCfSlots + recordIndex * 0xD0);
+                record = &cameraCfSlots.record[recordIndex];
                 scratch->record = record;
-                scratch->slot = (struct CameraSlot *)((unsigned char *)record + 16);
-                previous = (signed char)gameWork.unmodeled_0D2[2];
+                scratch->slot = &record->slot;
+                previous = gameWork.recordIndex;
                 if (previous != recordIndex) {
-                    gameWork.unmodeled_0D8[0] = (unsigned char)gameWork.unmodeled_0D2[2];
-                    gameWork.unmodeled_0D2[2] = (unsigned char)recordIndex;
+                    gameWork.previousRecordIndex = gameWork.recordIndex;
+                    gameWork.recordIndex = recordIndex;
                     entry = cameraSlotFind(previous, (signed char)recordIndex);
                     if (entry != 0) {
-                        scratch->slot = (struct CameraSlot *)((unsigned char *)entry + 4);
-                        anchorReady = gameWork.anchorReady = entry->unmodeled_02[0];
+                        scratch->slot = &entry->slot;
+                        anchorReady = gameWork.anchorReady = entry->anchorReady;
                     } else {
                         record = scratch->record;
                         anchorReady = gameWork.anchorReady = (unsigned char)record->range.rangeMode;
@@ -1792,17 +1811,17 @@ void cameraUpdateFrame(void)
                         if (gameWork.anchorIndex != -1) {
                             record = scratch->record;
                             if (gameWork.anchorIndex == record->range.anchorIndex
-                                && !(*(long long *)((unsigned char *)record + 0x28) & 0xFFFFFF)) {
+                                && !(*(long long *)&record->range.lockX & 0xFFFFFF)) {
                                 scratch->anchorMatched = 1;
                             }
                         }
                     }
                     record = scratch->record;
-                    if (gameWork.unmodeled_0D2[0] != record->unmodeled_00) {
-                        gameWork.unmodeled_0DA[0] = gameWork.unmodeled_0D2[0];
-                        gameWork.unmodeled_0D2[0] = record->unmodeled_00;
+                    if (gameWork.cameraType != record->unmodeled_00) {
+                        gameWork.previousCameraType = gameWork.cameraType;
+                        gameWork.cameraType = record->unmodeled_00;
                         gameWork.wordE0 = 0;
-                        gameWork.unmodeled_0D2[1] = 0;
+                        gameWork.unmodeled_0D3 = 0;
                     }
                     *(struct CameraRange *)&gameWork.anchorIndex = record->range;
                     gameWork.anchorReady = anchorReady;
@@ -1815,7 +1834,7 @@ void cameraUpdateFrame(void)
                     gameWork.slot[2].duration = 0.0f;
                     gameWork.slot[3].duration = 0.0f;
                 }
-                switch (gameWork.unmodeled_0D2[0]) {
+                switch (gameWork.cameraType) {
                 case CAMERA_TYPE_FOLLOW:
                     cameraUpdateFollow();
                     cameraClampAngles(0);
@@ -1840,7 +1859,7 @@ void cameraUpdateFrame(void)
                 gameWork.anchorBase[1] = gameWork.lookAtY - gameWork.anchorOffset.y;
                 gameWork.anchorBase[2] = gameWork.lookAtZ - gameWork.anchorOffset.z;
                 gameWork.anchorLocked = scratch->anchorLocked;
-                if (gameWork.unmodeled_18D[2] != 0) {
+                if (gameWork.rangeFlag != 0) {
                     gameWork.stickAngle = scratch->camera->travel.rotation.y;
                 }
                 gameWork.allSlotsFlagA = 0;
@@ -2243,7 +2262,7 @@ extern PadRecord PadData;
 extern UwamonoSlope elvSlopeTable[];
 extern float D_002B9C98[];
 extern unsigned char D_002B9CA8[];
-extern UwamonoProbe D_002B9CB8;
+extern UwamonoProbe uwamonoProbeTemplate;
 
 /* Per jump height step (UwamonoSearch.level): the frames before the landing
  * check (D_0069B978) and before the target action (D_0069B97C). */
@@ -2254,9 +2273,9 @@ short D_0069B9B0[3] = { -1, -1, -1 };
 int uwamonoUpdateLadderState(void);
 void XenoActorHidePart(struct XenoActor *actor, const char *part);
 void XenoActorShowPart(struct XenoActor *actor, const char *part);
-int func_001FD7F8(void);
-void func_00207650(int kind, int id, int value);
-void func_001FF3C0(int index);
+int uwamonoFindSelected(void);
+void uwamonoSendEvent(int kind, int id, int value);
+void uwamonoTriggerRecord(int index);
 void uwamonoReleaseHandles(void);
 void XenoActorSetSelector(struct XenoActor *actor, int selector);
 float atan2f(float y, float x);
@@ -2266,14 +2285,14 @@ float xglSin(float angle);
 float xglCos(float angle);
 void XenoActorCheckMode(struct XenoActor *actor, int mode);
 void XenoActorSetMode(struct XenoActor *actor, int mode);
-int func_001FEAC8(struct XenoActor *actor, float range);
+int uwamonoFindTalkTarget(struct XenoActor *actor, float range);
 unsigned int msgWindowInUse(void);
 void talkSetResult(int id);
 void mapObjectSetActive(UwamonoObject *object, UwamonoObject *target);
-void func_001FE5B0(int index, int value);
-void func_001FE830(int index, int kind, int frames);
-void func_00205D20(int index, AlignedVector4 *position);
-void func_001FDE18(int step);
+void uwamonoSetPairMode(int index, int value);
+void uwamonoStartPairMove(int index, int kind, int frames);
+void uwamonoNoticePlayer(int index, AlignedVector4 *position);
+void uwamonoMoveSelection(int step);
 float Get_Angle(const Vector4 *first, const Vector4 *second);
 float cursolGetByReduceSpeedAngleLoop(float current, float target, float speed);
 int Get_Rnd(int min, int max);
@@ -2287,7 +2306,7 @@ void uwamonoHitCheckWithNyuru(struct XenoActor *actor);
    reaches point (the owner position when null), or -1. */ int uwamonoFindOverlapRecord(int owner, AlignedVector4 *point, float reachScale);
 int uwamonoPushOutOfActor(int index, struct XenoActor *actor);
 void uwamonoPickTarget(short index);
-void func_00205C78(void);
+void uwamonoAnyEngaged(void);
 void uwamonoSelectTarget(int index);
 void func_0029E690(void);
 
@@ -2352,7 +2371,7 @@ void uwamonoPickTarget(short index)
         uwamonoTryClearTarget(index, 0);
         return;
     }
-    scriptTarget = func_001FD7F8();
+    scriptTarget = uwamonoFindSelected();
     if (scriptTarget != -1) {
         uwamonoOfferTarget(index, 0, scriptTarget, NULL);
         uwamonoUpdateTargetVector(index);
@@ -2485,11 +2504,11 @@ void uwamonoPlayerUpdate(void)
             }
         }
         if (D_0069B97C != -1 && --D_0069B97C == -1 && D_0069B980 < 6 && D_0069B980 >= 3) {
-            target = func_001FD7F8();
+            target = uwamonoFindSelected();
             if (target != -1) {
-                func_00207650(1, uwamonoRecords[target].id, 0);
+                uwamonoSendEvent(1, uwamonoRecords[target].id, 0);
                 if (uwamonoRecords[target].flags & 0x40000) {
-                    func_001FF3C0(target);
+                    uwamonoTriggerRecord(target);
                     uwamonoReleaseHandles();
                 }
             }
@@ -2633,7 +2652,7 @@ void uwamonoPlayerUpdate(void)
                         }
                     }
                 }
-                target = func_001FEAC8(actor, 50.0f);
+                target = uwamonoFindTalkTarget(actor, 50.0f);
                 /* "Talk target -> %8d" */
                 xglFontDebugPrintf(8, 0x20, "\xa5\xc8\xa1\xbc\xa5\xaf\xc2\xd0\xbe\xdd \xa2\xaa %8d", target);
                 if (target != -1) {
@@ -2644,12 +2663,12 @@ void uwamonoPlayerUpdate(void)
                         case 2:
                             if (UWAMONO_IS_ES(actor)) {
                                 if (uwamonoRecords[target].searchState == 0) {
-                                    func_001FE5B0(target, 0);
+                                    uwamonoSetPairMode(target, 0);
                                 }
                             } else if (uwamonoRecords[target].searchState == 2) {
-                                func_001FE5B0(target, 0);
+                                uwamonoSetPairMode(target, 0);
                             }
-                            func_001FE830(target, 5, 30);
+                            uwamonoStartPairMove(target, 5, 30);
                             break;
                         case 1: {
                             struct XenoActor *other = uwamonoRecords[target].actor;
@@ -2674,26 +2693,26 @@ void uwamonoPlayerUpdate(void)
                     mapObjectSetActive(record, NULL);
                 }
                 if (walk == 2) {
-                    func_00205D20(uwamonoCurrentIndex, &uwamonoRecords[uwamonoCurrentIndex].actor->position);
+                    uwamonoNoticePlayer(uwamonoCurrentIndex, &uwamonoRecords[uwamonoCurrentIndex].actor->position);
                 }
                 if (walk != 0) {
-                    func_001FDE18(0);
+                    uwamonoMoveSelection(0);
                 }
                 if (!(gameWork.control & CONTROL_SCRIPTED) && !(gameWork.control & CONTROL_SEARCHING) && D_0069B97C == -1) {
                     if (PadData.pressed & PAD_L1) {
-                        func_001FDE18(1);
+                        uwamonoMoveSelection(1);
                     }
                     if (PadData.pressed & PAD_R1) {
-                        func_001FDE18(-1);
+                        uwamonoMoveSelection(-1);
                     }
                     if (PadData.pressed & PAD_SQUARE) {
                         int searched;
                         int jumpMode;
 
-                        searched = func_001FD7F8();
+                        searched = uwamonoFindSelected();
                         if (searched != -1 && (uwamonoRecords[searched].flags & 0x20000)) {
                             gameWork.control |= CONTROL_SEARCHING;
-                            func_00207650(0, uwamonoRecords[searched].id, 0);
+                            uwamonoSendEvent(0, uwamonoRecords[searched].id, 0);
                             actor->direction.y = Get_Angle(&actor->position, &uwamonoRecords[searched].position);
                             actor->rotation.y = cursolGetByReduceSpeedAngleLoop(actor->rotation.y, actor->direction.y, 4.0f);
                             /* The smoothed value above is overwritten at once; the call stays for the original code. */
@@ -2834,7 +2853,7 @@ void uwamonoPlayerUpdate(void)
         if (!(gameWork.control & 0x20) && (actor->status & ~0x1F) == GROUND_LADDER) {
             if (!(gameWork.control & 0x420)) {
                 gameWork.control |= 0x400;
-                func_00207650(3, (actor->status & 0x1F) + 1, 0);
+                uwamonoSendEvent(3, (actor->status & 0x1F) + 1, 0);
             }
             gameWork.control |= 0x400;
         } else {
@@ -2870,11 +2889,11 @@ void uwamonoPlayerUpdate(void)
             } while (0);
         }
     }
-    mapProbeInit(&D_002B9CB8);
-    D_002B9CB8.ground = actor->ground;
-    mapMoveProbe(&actor->position, NULL, &D_002B9CB8);
+    mapProbeInit(&uwamonoProbeTemplate);
+    uwamonoProbeTemplate.ground = actor->ground;
+    mapMoveProbe(&actor->position, NULL, &uwamonoProbeTemplate);
     record->position = actor->position;
-    record->anchor = actor->rotation;
+    record->rotation = actor->rotation;
     if (UWAMONO_IS_ES(actor)) {
         for (i = 0; i < 2; i++) {
             if (riders[i] != NULL) {
@@ -2892,7 +2911,7 @@ void uwamonoPlayerUpdate(void)
     unused.x = unused.y = unused.z = 0.0f;
     unused.w = 1.0f;
     uwamonoPickTarget(uwamonoCurrentIndex);
-    func_00205C78();
+    uwamonoAnyEngaged();
     uwamonoSelectTarget(uwamonoCurrentIndex);
     func_0029E690();
 }

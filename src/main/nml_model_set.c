@@ -68,7 +68,7 @@ typedef struct PxyHeader {
     char magic[4]; /* "pxy" */
     float version; /* +0x04 */
     u32 flags; /* +0x08 */
-    u8 unk0C[4]; /* +0x0c: u32 file size, read through the array address by pxyDescrambleHeader */
+    u32 fileSize[1]; /* +0x0c, a one-word array, read as *h->fileSize */
     char name[0x20]; /* +0x10 */
     int layerCount; /* +0x30 */
     u8 unk34[8];
@@ -2544,7 +2544,7 @@ void pxyDescrambleHeader(PxyHeader *hdr)
         seed = 0x16253495;
         j = 13;
         swapPairs = D_0068F050;
-        for (i = *(u32 *)h->unk0C - 1; i >= 16; i--) {
+        for (i = *h->fileSize - 1; i >= 16; i--) {
             j = seed;
             j = ((2121 * i - 909) * (i - 1) + j) - 1;
             j = j % i;
@@ -2555,8 +2555,8 @@ void pxyDescrambleHeader(PxyHeader *hdr)
             }
         }
         i = 4;
-        for (; i < (*(u32 *)h->unk0C >> 2); i++) {
-            if (i * 4 >= *(u32 *)h->unk0C) {
+        for (; i < (*h->fileSize >> 2); i++) {
+            if (i * 4 >= *h->fileSize) {
                 continue;
             }
             if (bytes[i * 4] || bytes[i * 4 + 1] || bytes[i * 4 + 2] || bytes[i * 4 + 3]) {
@@ -3149,10 +3149,10 @@ int pxySubmitModel(PxyHeader *header)
                                     w->swapped = 0;
                                     w->cursor = w->group->sorted;
                                     for (w->j = 0; w->j < w->group->count - 1; w->j++, w->cursor++) {
-                                        if (w->cursor[0]->depth < (*(w->cursor + 1))->depth) {
+                                        if (w->cursor[0]->depth < w->cursor[1]->depth) {
                                             w->swapped = *w->cursor;
-                                            *w->cursor = *(w->cursor + 1);
-                                            *(w->cursor + 1) = w->swapped;
+                                            *w->cursor = w->cursor[1];
+                                            w->cursor[1] = w->swapped;
                                         }
                                     }
                                 } while (w->swapped != 0);

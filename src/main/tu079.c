@@ -12,11 +12,22 @@ void mathInit(void)
     func_A9CDB0(D_0069D3B8, mathNativeTable);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu079", ptInit);
+int func_A9F0A8(void);
+void func_A9CC70(int, int);
+void selectionInit(void);
+
+int ptInit(int context)
+{
+    if (func_A9F0A8() != 0)
+    {
+        func_A9CC70(context, 2);
+        return 0;
+    }
+    selectionInit();
+    return 1;
+}
 
 void ptResetSlots(void);
-void func_A9CC70(int, int);
-int func_A9F0A8(void);
 
 /* Script native "ptClear": takes no arguments; calls ptResetSlots and returns 1. */
 int ptClear(int context)

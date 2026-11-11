@@ -820,7 +820,7 @@ int xglCdLoadBinFileSet(unsigned int file_id, unsigned int slot, int tag)
             *dest++ = *source++;
         }
         xglGetLanguageCode(dest);
-        *(dest + 2) = '\\';
+        dest[2] = '\\';
         dest = dest + 3;
         while (*source != '.') {
             *dest++ = *source++;
@@ -2515,7 +2515,7 @@ void resParseJumpTarget(void)
             }
             value = resReadHalfPairWord(cursor + 1);
             if (op == SB_OP_CALL_INDIRECT && value == matchKey) {
-                resJumpRecords[index].stackWord = *(u16 *) (stack - *stack);
+                resJumpRecords[index].stackWord = (u16) stack[-*stack];
                 break;
             }
             if (op == SB_OP_JUMP) {
@@ -2556,12 +2556,17 @@ f32 I2F();
 void *mapFindBlockEntry();
 f32 xglPointLength();
 
+typedef struct MapKeyEntry {
+    int key;
+    int unmodeled_04;
+} MapKeyEntry;
+
 typedef struct MapBlockHeader {
     u16 entryCount;
     u16 unmodeled_02;
     int vertexBase;
     int unmodeled_08;
-    int keyTable;
+    MapKeyEntry *keyTable;
 } MapBlockHeader;
 
 typedef struct MapEntry {
@@ -2578,7 +2583,7 @@ void resJumpPointsBuild(void) {
     int entryIndex;
     int key;
     int vertexBase;
-    int keyTable;
+    MapKeyEntry *keyTable;
     int i;
     int j;
     int k;
@@ -2602,7 +2607,7 @@ void resJumpPointsBuild(void) {
             vertexBase = block->vertexBase;
             keyTable = block->keyTable;
             for (entryIndex = 0; entryIndex < block->entryCount; entryIndex++) {
-                key = *(int *) (keyTable + entry->keyIndex * 8);
+                key = keyTable[entry->keyIndex].key;
                 if ((key & ~0x1F) == RES_MAP_KEY_JUMP) {
                     for (k = 0; resJumpRecords[k].kind != RES_JUMP_END; k++) {
                         record = &resJumpRecords[k];
@@ -3028,15 +3033,10 @@ void tiMRPackageSetEntryA(void *package, int value);
 
 void func_001E4178(int owner) {
     int i;
-    /* The original steps a pointer to each record's actor field; record is that field's owner. */
-    UwamonoObject *base = uwamonoRecords;
-    struct XenoActor **slot = &base->actor;
 
-    for (i = 255; i >= 0; i--, slot += sizeof(UwamonoObject) / sizeof(*slot)) {
-        UwamonoObject *record = (UwamonoObject *)((u8 *)slot - (int)&((UwamonoObject *)0)->actor);
-
-        if (record->key == owner) {
-            struct XenoActor *actor = *slot;
+    for (i = 0; i < 256; i++) {
+        if (uwamonoRecords[i].key == owner) {
+            struct XenoActor *actor = uwamonoRecords[i].actor;
 
             if (actor != 0) {
                 actor->kind = 0;
@@ -3202,6 +3202,12 @@ typedef struct {
     char text[9];
 } ResPlayerName;
 
+/* A path slot: the buffer block, directly followed by the pad block holding the pad text. */
+typedef struct {
+    unsigned char data[RES_PATH_BUFFER_SIZE];
+    ResPadText pad;
+} ResPathSlotBuffer;
+
 void resPathSlotBlockReset(void *buffer) {
     int block;
 
@@ -3210,7 +3216,7 @@ void resPathSlotBlockReset(void *buffer) {
         GameResBlockAssign(block, GAME_RES_OWNER, RES_PATH_BUFFER_SIZE);
         *(ResPlayerName *) buffer = *(ResPlayerName *) D_00688318;
         GameResBlockAssign(block + 1, GAME_RES_OWNER, RES_PATH_PAD_SIZE);
-        *(ResPadText *) ((unsigned char *) buffer + RES_PATH_BUFFER_SIZE) = D_006882F8;
+        ((ResPathSlotBuffer *) buffer)->pad = D_006882F8;
     }
 }
 

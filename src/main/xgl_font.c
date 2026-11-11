@@ -551,8 +551,8 @@ void xglFontResetPrintQueue(void)
         slot->link = 0;
         slot++;
     }
-    /* The block starts 0x128 bytes before the slot array, at D_008DAD00. */
-    block = (struct FontStateFromWindow *) ((unsigned char *) &fontPrintQueueBuffer - 0x128);
+    /* The block ends where the slot array begins; it is the state starting at D_008DAD00. */
+    block = (struct FontStateFromWindow *) &fontPrintQueueBuffer - 1;
     block->stored_value = 0;
     block->text_mode = 0;
     block->queue_end = slot;

@@ -5195,21 +5195,87 @@
     }
    ]
   },
+  "main/tu074": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069af80",
+      "0x0069af84"
+     ],
+     "generated": [
+      "0x0069af80",
+      "0x0069af84"
+     ],
+     "generated_by": [
+      "uwamonoSetDoorAll"
+     ],
+     "c_owned_symbols": [
+      "D_0069AF80"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "express hand publication",
+      "date": "2026-11-11",
+      "gate": "ninja gate whole-file identical",
+      "task": "x2-c12-express5"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00689940",
+      "0x00689960"
+     ],
+     "generated": [
+      "0x00689940",
+      "0x00689960"
+     ],
+     "generated_by": [
+      "uwamonoSendSignal"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689940"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "express hand publication",
+      "date": "2026-11-11",
+      "gate": "ninja gate whole-file identical",
+      "task": "x2-c12-express5"
+     }
+    }
+   ]
+  },
   "main/tu075": {
    ".lit4": [
     {
      "range": [
-      "0x0069afcc",
+      "0x0069af98",
       "0x0069b000"
      ],
      "generated": [
-      "0x0069afcc",
+      "0x0069af98",
       "0x0069b000"
      ],
      "generated_by": [
+      "uwamonoLadderTryExit",
       "uwamonoLadderMove"
      ],
      "c_owned_symbols": [
+      "D_0069AF98",
+      "D_0069AF9C",
+      "D_0069AFA0",
+      "D_0069AFA4",
+      "D_0069AFA8",
+      "D_0069AFAC",
+      "D_0069AFB0",
+      "D_0069AFB4",
+      "D_0069AFB8",
+      "D_0069AFBC",
+      "D_0069AFC0",
+      "D_0069AFC4",
+      "D_0069AFC8",
       "D_0069AFCC",
       "D_0069AFD0",
       "D_0069AFD4",
@@ -5228,12 +5294,13 @@
       "D_0069AF84",
       "D_0069AF88",
       "D_0069AF8C",
-      "D_0069AF90"
+      "D_0069AF90",
+      "D_0069AF94"
      ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "/home/pc/.claude/jobs/ee99faea/tmp/m19/pub.o"
+      "object": "build/main/build/c/tu075.o"
      }
     }
    ],
@@ -5245,7 +5312,7 @@
      ],
      "generated": [
       "0x00689a10",
-      "0x00689a2e"
+      "0x00689a30"
      ],
      "generated_by": [
       "uwamonoLadderMove"
@@ -5254,11 +5321,643 @@
       "D_00689A10",
       "D_00689A20"
      ],
+     "also_referenced_by_c": [
+      "D_006899D0",
+      "D_006899E0",
+      "D_006899F0",
+      "D_00689A00",
+      "D_00689A30"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu075.o"
+     }
+    },
+    {
+     "range": [
+      "0x00689a40",
+      "0x00689a60"
+     ],
+     "generated": [
+      "0x00689a40",
+      "0x00689a5c"
+     ],
+     "generated_by": [
+      "uwamonoUpdateLadderState"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689A40"
+     ],
      "also_referenced_by_c": [],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "/home/pc/.claude/jobs/ee99faea/tmp/m19/pub.o"
+      "object": "build/main/build/c/tu075.o"
+     }
+    }
+   ]
+  },
+  "main/tu082": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b020",
+      "0x0069b030"
+     ],
+     "generated": [
+      "0x0069b020",
+      "0x0069b030"
+     ],
+     "generated_by": [
+      "uwamonoInitRecord"
+     ],
+     "c_owned_symbols": [
+      "D_0069B020",
+      "D_0069B024",
+      "D_0069B028",
+      "D_0069B02C"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "express hand publication",
+      "date": "2026-11-11",
+      "gate": "ninja gate whole-file identical",
+      "task": "x2-c12-express5"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00689d30",
+      "0x00689d60"
+     ],
+     "generated": [
+      "0x00689d30",
+      "0x00689d58"
+     ],
+     "generated_by": [
+      "uwamonoInitRecord"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689D30"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "express hand publication",
+      "date": "2026-11-11",
+      "gate": "ninja gate whole-file identical",
+      "task": "x2-c12-express5"
+     }
+    }
+   ],
+   ".sdata": [
+    {
+     "range": [
+      "0x0069d3f8",
+      "0x0069d420"
+     ],
+     "generated": [
+      "0x0069d3f8",
+      "0x0069d41e"
+     ],
+     "generated_by": [
+      "uwamonoInitRecord"
+     ],
+     "c_owned_symbols": [
+      "D_0069D3F8",
+      "D_0069D400",
+      "D_0069D408",
+      "D_0069D410",
+      "D_0069D418"
+     ],
+     "also_referenced_by_c": [
+      "D_0069D3F0"
+     ],
+     "basis": {
+      "kind": "express hand publication",
+      "date": "2026-11-11",
+      "gate": "ninja gate whole-file identical",
+      "task": "x2-c12-express5"
+     }
+    }
+   ]
+  },
+  "main/tu083": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b03c",
+      "0x0069b05c"
+     ],
+     "generated": [
+      "0x0069b03c",
+      "0x0069b05c"
+     ],
+     "generated_by": [
+      "uwamonoFindTalkTarget"
+     ],
+     "c_owned_symbols": [
+      "D_0069B03C",
+      "D_0069B040",
+      "D_0069B044",
+      "D_0069B048",
+      "D_0069B04C",
+      "D_0069B050",
+      "D_0069B054",
+      "D_0069B058"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B030",
+      "D_0069B034",
+      "D_0069B038",
+      "D_0069B05C",
+      "D_0069B060"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu083.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00689d60",
+      "0x00689d78"
+     ],
+     "generated": [
+      "0x00689d60",
+      "0x00689d78"
+     ],
+     "generated_by": [
+      "uwamonoReleaseRecord"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689D60"
+     ],
+     "also_referenced_by_c": [
+      "uwamonoCellBitTable"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu083.o"
+     }
+    }
+   ]
+  },
+  "main/tu084": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b068",
+      "0x0069b07c"
+     ],
+     "generated": [
+      "0x0069b068",
+      "0x0069b07c"
+     ],
+     "generated_by": [
+      "HitCheckMapUnitPosAt",
+      "uwamonoPushOutOfCircle",
+      "uwamonoHitCheckBox"
+     ],
+     "c_owned_symbols": [
+      "D_0069B068",
+      "D_0069B06C",
+      "D_0069B070",
+      "D_0069B074",
+      "D_0069B078"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B064",
+      "D_0069B07C",
+      "D_0069B080"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/init_uwamono_sys.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b084",
+      "0x0069b08c"
+     ],
+     "generated": [
+      "0x0069b084",
+      "0x0069b08c"
+     ],
+     "generated_by": [
+      "uwamonoCrossPoint"
+     ],
+     "c_owned_symbols": [
+      "D_0069B084",
+      "D_0069B088"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B08C",
+      "D_0069B090"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/init_uwamono_sys.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b094",
+      "0x0069b098"
+     ],
+     "generated": [
+      "0x0069b094",
+      "0x0069b098"
+     ],
+     "generated_by": [
+      "uwamonoCrossCheckRecordAt"
+     ],
+     "c_owned_symbols": [
+      "D_0069B094"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B098"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/init_uwamono_sys.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b09c",
+      "0x0069b0b0"
+     ],
+     "generated": [
+      "0x0069b09c",
+      "0x0069b0b0"
+     ],
+     "generated_by": [
+      "uwamonoCanSeeRecord",
+      "uwamonoCheckHeight"
+     ],
+     "c_owned_symbols": [
+      "D_0069B09C",
+      "D_0069B0A0",
+      "D_0069B0A4",
+      "D_0069B0A8",
+      "D_0069B0AC"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B0B0",
+      "D_0069B0B4",
+      "D_0069B0BC",
+      "D_0069B0C0",
+      "D_0069B0C4",
+      "D_0069B0C8"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/init_uwamono_sys.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b0cc",
+      "0x0069b0d4"
+     ],
+     "generated": [
+      "0x0069b0cc",
+      "0x0069b0d4"
+     ],
+     "generated_by": [
+      "DispPillar"
+     ],
+     "c_owned_symbols": [
+      "D_0069B0CC",
+      "D_0069B0D0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/init_uwamono_sys.o"
+     }
+    }
+   ]
+  },
+  "main/tu085": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b0d4",
+      "0x0069b0e4"
+     ],
+     "generated": [
+      "0x0069b0d4",
+      "0x0069b0e4"
+     ],
+     "generated_by": [
+      "uwamonoPursueFocus"
+     ],
+     "c_owned_symbols": [
+      "D_0069B0D4",
+      "D_0069B0D8",
+      "D_0069B0DC",
+      "D_0069B0E0"
+     ],
+     "also_referenced_by_c": [
+      "uwamonoPi",
+      "D_0069B0E8"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu085.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b0ec",
+      "0x0069b0f0"
+     ],
+     "generated": [
+      "0x0069b0ec",
+      "0x0069b0f0"
+     ],
+     "generated_by": [
+      "uwamonoFollowSpline"
+     ],
+     "c_owned_symbols": [
+      "D_0069B0EC"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B0F0",
+      "D_0069B0F4",
+      "D_0069B0F8",
+      "D_0069B0FC"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu085.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b100",
+      "0x0069b108"
+     ],
+     "generated": [
+      "0x0069b100",
+      "0x0069b108"
+     ],
+     "generated_by": [
+      "uwamonoCopyPointIfNear",
+      "uwamonoMoveAlongHeading"
+     ],
+     "c_owned_symbols": [
+      "D_0069B100",
+      "D_0069B104"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B108"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu085.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b10c",
+      "0x0069b134"
+     ],
+     "generated": [
+      "0x0069b10c",
+      "0x0069b134"
+     ],
+     "generated_by": [
+      "uwamonoBeginEncounter"
+     ],
+     "c_owned_symbols": [
+      "D_0069B10C",
+      "D_0069B110",
+      "D_0069B114",
+      "D_0069B118",
+      "D_0069B11C",
+      "D_0069B120",
+      "D_0069B124",
+      "D_0069B128",
+      "D_0069B12C",
+      "D_0069B130"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu085.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00689df0",
+      "0x00689e60"
+     ],
+     "generated": [
+      "0x00689df0",
+      "0x00689e60"
+     ],
+     "generated_by": [
+      "uwamonoNextAction",
+      "uwamonoUpdateRecord"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689DF0",
+      "jtbl_00689E30"
+     ],
+     "also_referenced_by_c": [
+      "D_00689D90",
+      "D_00689DA8",
+      "D_00689DB8",
+      "D_00689DC8",
+      "D_00689DD8",
+      "D_00689E60"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu085.o"
+     }
+    },
+    {
+     "range": [
+      "0x00689e70",
+      "0x00689eb0"
+     ],
+     "generated": [
+      "0x00689e70",
+      "0x00689ea9"
+     ],
+     "generated_by": [
+      "uwamonoBeginEncounter",
+      "uwamonoSetAction"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689E70",
+      "D_00689EA0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu085.o"
+     }
+    }
+   ]
+  },
+  "main/tu087": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b138",
+      "0x0069b140"
+     ],
+     "generated": [
+      "0x0069b138",
+      "0x0069b140"
+     ],
+     "generated_by": [
+      "uwamonoClampToStopRange"
+     ],
+     "c_owned_symbols": [
+      "D_0069B138",
+      "D_0069B13C"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu087.o"
+     }
+    }
+   ]
+  },
+  "main/tu088": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b144",
+      "0x0069b154"
+     ],
+     "generated": [
+      "0x0069b144",
+      "0x0069b154"
+     ],
+     "generated_by": [
+      "uwamonoSearchCircleFan",
+      "func_00207D58"
+     ],
+     "c_owned_symbols": [
+      "D_0069B144",
+      "D_0069B148",
+      "D_0069B14C",
+      "D_0069B150"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B140"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu088.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00689eb0",
+      "0x00689f00"
+     ],
+     "generated": [
+      "0x00689eb0",
+      "0x00689efc"
+     ],
+     "generated_by": [
+      "uwamonoSelectTarget"
+     ],
+     "c_owned_symbols": [
+      "D_00689EB0",
+      "jtbl_00689ED0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu088.o"
+     }
+    }
+   ]
+  },
+  "main/tu089": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b154",
+      "0x0069b15c"
+     ],
+     "generated": [
+      "0x0069b154",
+      "0x0069b15c"
+     ],
+     "generated_by": [
+      "uwamonoCheckCollision"
+     ],
+     "c_owned_symbols": [
+      "D_0069B154",
+      "D_0069B158"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu089.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00689f20",
+      "0x00689f50"
+     ],
+     "generated": [
+      "0x00689f20",
+      "0x00689f4c"
+     ],
+     "generated_by": [
+      "uwamonoCheckCollision"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689F20"
+     ],
+     "also_referenced_by_c": [
+      "D_00689F00"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu089.o"
      }
     }
    ]

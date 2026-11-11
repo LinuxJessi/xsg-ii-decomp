@@ -747,7 +747,7 @@ unsigned short xglSRand(void);
 void FlushCache(int mode);
 
 void MemcardTest(void) {
-    void *files[MC_TEST_FILE_COUNT];
+    unsigned char *files[MC_TEST_FILE_COUNT];
     unsigned short port_status[2];
     MemcardTestWork work;
     McRequestParam list_request;
@@ -791,9 +791,9 @@ void MemcardTest(void) {
     hdd = -99;
     xglCdReadFile("yajima\\thumb.jpg", (void *)DEBUG_BUFFER_BASE, 0, 0);
     D_0063F9B4 = *(McThumbnail *)DEBUG_BUFFER_BASE;
-    files[0] = (void *)MC_TEST_FILE_BASE;
+    files[0] = (unsigned char *)MC_TEST_FILE_BASE;
     for (file = 1; file < MC_TEST_FILE_COUNT; file++) {
-        files[file] = (char *)files[file - 1] + MC_TEST_FILE_STRIDE;
+        files[file] = files[file - 1] + MC_TEST_FILE_STRIDE;
     }
     printf("carddata:%08x\n", files[0]);
     McFileSectionsReport("yajima\\mc\\clear.bin", files[0]);

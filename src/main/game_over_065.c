@@ -31,7 +31,7 @@ typedef union GameOverDmaPacket6 {
     XglQuadword quadwords[3];
 } GameOverDmaPacket6;
 
-void DrawImage_001EE618(void *framebuffer);
+void DrawImage_001EE618(XglQuadword *framebuffer);
 
 
 extern DrawImageRenderState sRender;
@@ -40,7 +40,7 @@ extern u64 TestEnv_0_002BD4C0[12];
 extern GameOverDmaPacket4 TransEnv_1_002BD520;
 extern GameOverDmaPacket6 FlushEnv_2_002BD540;
 
-void DrawImage_001EE618(void *framebuffer)
+void DrawImage_001EE618(XglQuadword *framebuffer)
 {
     XglPacket *packet;
 
@@ -51,7 +51,7 @@ void DrawImage_001EE618(void *framebuffer)
     sceVif1PkRef(packet, TransEnv_1_002BD520.words, 2, 0, 0, 0);
     sceVif1PkRef(packet, framebuffer, 0x7000, 0, 0x51007000, 0);
     sceVif1PkRef(packet, TransEnv_1_002BD520.words, 2, 0, 0, 0);
-    sceVif1PkRef(packet, (u8 *)framebuffer + 0x70000, 0x7000, 0, 0x51007000, 0);
+    sceVif1PkRef(packet, framebuffer + 0x7000, 0x7000, 0, 0x51007000, 0);
     sceVif1PkRef(packet, FlushEnv_2_002BD540.words, 3, 0, 0, 0);
 }
 

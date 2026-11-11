@@ -66,7 +66,7 @@ AS_PLAIN_NAME = "LA29-vsqrt-nolabel-laimm (runtime and hand-written objects)"
 # long long % 10, then / 10). dpcmp: the double compare of gifStateEffectFrame.
 SOFT_FLOAT_LIBCALLS = {0x002A7560: "litodp", 0x002A70E8: "dpmul", 0x002A7398: "dpdiv",
                        0x002A76E8: "dptofp", 0x002A6D88: "fptodp", 0x002A4F60: "__divdi3",
-                       0x002A55F8: "__moddi3", 0x002A7510: "dpcmp"}
+                       0x002A55F8: "__moddi3", 0x002A7510: "dpcmp", 0x002A7080: "dpsub"}
 CONTRACT_BASIS = ("X1's last patched cc1 and corrected assembler with -g; "
                   "see reports/x2-compiler-calibration.md")
 

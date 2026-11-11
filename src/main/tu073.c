@@ -34,7 +34,7 @@ struct XenoActor {
 };
 
 /* The per-unit state block pointed to by uwamonoSlotTable[].state,
- * D_003400F4[].state and uwamonoRecords[].motions (same 0x870-byte stride).
+ * uwamonoStateSlots[].state and uwamonoRecords[].motions (same 0x870-byte stride).
  * Only the fields used by the functions below are modeled. */
 struct UwamonoState {
     unsigned char unmodeled_0000[0xC];
@@ -286,12 +286,12 @@ int enepcLookAt(int call)
     return 1;
 }
 
-void func_00205FD8(int, int, int);
+void uwamonoBeginEncounter(int, int, int);
 
 /*
  * Native "Encount". Returns 0 after func_A9CC70 when func_A9F0A8 does not
  * report 2. Otherwise passes the record index of argument 1 (from
- * uwamonoFindIndexByShortKey), 1 and argument 2 to func_00205FD8 and
+ * uwamonoFindIndexByShortKey), 1 and argument 2 to uwamonoBeginEncounter and
  * returns 1.
  */
 int enepcEncount(int call)
@@ -305,7 +305,7 @@ int enepcEncount(int call)
     }
     key = func_A9F0C0(call, 1);
     index = uwamonoFindIndexByShortKey(key);
-    func_00205FD8(index, 1, func_A9F0C0(call, 2));
+    uwamonoBeginEncounter(index, 1, func_A9F0C0(call, 2));
     return 1;
 }
 
@@ -383,14 +383,14 @@ int setGroup(int call)
     return 1;
 }
 
-/* One 0x870-byte record of D_003400F4 (uwamonoRecords + 0x334), starting with
+/* One 0x870-byte record of uwamonoStateSlots (uwamonoRecords + 0x334), starting with
  * its state block pointer (same layout as src/main/tu086.c). */
 struct UwamonoStateSlot {
     struct UwamonoState *state;
     unsigned char unmodeled_04[0x870 - 4];
 };
 
-extern struct UwamonoStateSlot D_003400F4[];
+extern struct UwamonoStateSlot uwamonoStateSlots[];
 
 /*
  * Native "setBattle". Returns 0 after func_A9CC70 when func_A9F0A8 does not
@@ -412,7 +412,7 @@ int enepcSetBattle(int call)
     if (lookupIndex == -1) {
         return 1;
     }
-    D_003400F4[lookupIndex].state->battle = func_A9F0C0(call, 2);
+    uwamonoStateSlots[lookupIndex].state->battle = func_A9F0C0(call, 2);
     return 1;
 }
 
@@ -470,7 +470,7 @@ int enepcDefaultMotion(int call)
     }
     slot = func_A9F0C0(call, 2);
     motion = func_A9F0C0(call, 3);
-    D_003400F4[lookupIndex].state->walk[slot] = motion;
+    uwamonoStateSlots[lookupIndex].state->walk[slot] = motion;
     return 1;
 }
 

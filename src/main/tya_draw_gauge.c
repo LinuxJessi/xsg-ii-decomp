@@ -321,7 +321,7 @@ extern unsigned char D_003C6DC0[];      /* the scene file buffer */
 extern char D_006895C0[];               /* "sc0000.sb": the digits are rewritten */
 extern const char D_0069D1D0[];         /* "cf\\%s" */
 extern const char D_006895D0[];         /* "cf\\xx\\%sl" */
-extern int D_003E7AF8[];
+extern int uwamonoEventIds[];
 extern float D_0033EE90[];
 extern struct EnepcParamSet *enepcParamSets; /* the enepc parameter presets (readyEnepcData) */
 extern unsigned short *DataSpline;
@@ -397,7 +397,7 @@ void func_001EECE0(int id, signed char mode)
     uwamonoRecords[uwamonoCurrentIndex].flags |= 2;
     gameWork.state = -1;
     for (slot = 0; slot < 8; slot++) {
-        D_003E7AF8[slot] = -1;
+        uwamonoEventIds[slot] = -1;
     }
     uwamonoResetRecords(-1, 1);
 }

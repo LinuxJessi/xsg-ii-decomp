@@ -36,7 +36,7 @@ typedef struct ProgEffectEntry {
 
 extern IndexedRecord D_00340350[];
 extern ProgEffectEntry progEffectTable[];
-extern int D_003E7AF8[];
+extern int uwamonoEventIds[];
 
 /* A bit of gameWork.control; tu051.h cannot be included here, its record types clash with this file's. */
 #define CONTROL_SCRIPTED 0x8000 /* include/main/tu051.h */
@@ -220,7 +220,7 @@ int runtimeSetElevator(int call)
     return 1;
 }
 
-/* Native "message": argument 1 is an index into D_003E7AF8 and argument 2 the int stored there. */
+/* Native "message": argument 1 is an index into uwamonoEventIds and argument 2 the int stored there. */
 int runtimeMessage(int call)
 {
     int index;
@@ -232,7 +232,7 @@ int runtimeMessage(int call)
     }
     index = func_A9F0C0(call, 1);
     value = func_A9F0C0(call, 2);
-    D_003E7AF8[index] = value;
+    uwamonoEventIds[index] = value;
     return 1;
 }
 

@@ -56410,36 +56410,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "uwamono_001F6F10",
+     "name": "uwamonoSetDoorAll",
      "size": 1884,
-     "splat_name": "uwamono_001F6F10",
+     "splat_name": "uwamonoSetDoorAll",
      "va": "0x001f6f10",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "uwamono_001F7670",
+     "name": "uwamonoSetKowaremonoAll",
      "size": 1480,
-     "splat_name": "uwamono_001F7670",
+     "splat_name": "uwamonoSetKowaremonoAll",
      "va": "0x001f7670",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "uwamono_001F7C38",
+     "name": "uwamonoSendSignal",
      "size": 208,
-     "splat_name": "uwamono_001F7C38",
+     "splat_name": "uwamonoSendSignal",
      "va": "0x001f7c38",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "uwamono_001F7D08",
+     "name": "uwamonoSetCollisionSize",
      "size": 536,
-     "splat_name": "uwamono_001F7D08",
+     "splat_name": "uwamonoSetCollisionSize",
      "va": "0x001f7d08",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -56679,9 +56679,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001F8608",
+     "name": "uwamonoLadderTryExit",
      "size": 1504,
-     "splat_name": "func_001F8608",
+     "splat_name": "uwamonoLadderTryExit",
      "va": "0x001f8608",
      "name_basis": "address",
      "provenance": "estimated"
@@ -56971,18 +56971,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "ladder_001F9A68",
+     "name": "ladderSetLadder",
      "size": 296,
-     "splat_name": "ladder_001F9A68",
+     "splat_name": "ladderSetLadder",
      "va": "0x001f9a68",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "ladder_001F9B90",
+     "name": "ladderSetEntrance",
      "size": 300,
-     "splat_name": "ladder_001F9B90",
+     "splat_name": "ladderSetEntrance",
      "va": "0x001f9b90",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -58109,9 +58109,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "menu_001FC700",
+     "name": "ptChangeMode",
      "size": 196,
-     "splat_name": "menu_001FC700",
+     "splat_name": "ptChangeMode",
      "va": "0x001fc700",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -58223,9 +58223,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "menu_001FC9B8",
+     "name": "ptGetLeader",
      "size": 160,
-     "splat_name": "menu_001FC9B8",
+     "splat_name": "ptGetLeader",
      "va": "0x001fc9b8",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -58390,9 +58390,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FCC00",
+     "name": "uwamonoInitRecord",
      "size": 1864,
-     "splat_name": "func_001FCC00",
+     "splat_name": "uwamonoInitRecord",
      "va": "0x001fcc00",
      "name_basis": "address",
      "provenance": "estimated"
@@ -58641,9 +58641,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FD7F8",
+     "name": "uwamonoFindSelected",
      "size": 392,
-     "splat_name": "func_001FD7F8",
+     "splat_name": "uwamonoFindSelected",
      "va": "0x001fd7f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -58659,27 +58659,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FDA18",
+     "name": "uwamonoUpdateInReach",
      "size": 1020,
-     "splat_name": "func_001FDA18",
+     "splat_name": "uwamonoUpdateInReach",
      "va": "0x001fda18",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FDE18",
+     "name": "uwamonoMoveSelection",
      "size": 1148,
-     "splat_name": "func_001FDE18",
+     "splat_name": "uwamonoMoveSelection",
      "va": "0x001fde18",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FE298",
+     "name": "uwamonoIsActorInCells",
      "size": 524,
-     "splat_name": "func_001FE298",
+     "splat_name": "uwamonoIsActorInCells",
      "va": "0x001fe298",
      "name_basis": "address",
      "provenance": "estimated"
@@ -58704,27 +58704,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FE5B0",
+     "name": "uwamonoSetPairMode",
      "size": 640,
-     "splat_name": "func_001FE5B0",
+     "splat_name": "uwamonoSetPairMode",
      "va": "0x001fe5b0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FE830",
+     "name": "uwamonoStartPairMove",
      "size": 660,
-     "splat_name": "func_001FE830",
+     "splat_name": "uwamonoStartPairMove",
      "va": "0x001fe830",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FEAC8",
+     "name": "uwamonoFindTalkTarget",
      "size": 1088,
-     "splat_name": "func_001FEAC8",
+     "splat_name": "uwamonoFindTalkTarget",
      "va": "0x001feac8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -58740,18 +58740,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FEF78",
+     "name": "uwamonoUpdateCountdowns",
      "size": 1096,
-     "splat_name": "func_001FEF78",
+     "splat_name": "uwamonoUpdateCountdowns",
      "va": "0x001fef78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FF3C0",
+     "name": "uwamonoTriggerRecord",
      "size": 1456,
-     "splat_name": "func_001FF3C0",
+     "splat_name": "uwamonoTriggerRecord",
      "va": "0x001ff3c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -58776,9 +58776,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001FFA60",
+     "name": "uwamonoUpdatePoints",
      "size": 272,
-     "splat_name": "func_001FFA60",
+     "splat_name": "uwamonoUpdatePoints",
      "va": "0x001ffa60",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59072,9 +59072,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00200308",
+     "name": "uwamonoPointInBox",
      "size": 220,
-     "splat_name": "func_00200308",
+     "splat_name": "uwamonoPointInBox",
      "va": "0x00200308",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59117,9 +59117,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00200950",
+     "name": "uwamonoPushOutOfCircle",
      "size": 280,
-     "splat_name": "func_00200950",
+     "splat_name": "uwamonoPushOutOfCircle",
      "va": "0x00200950",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59243,9 +59243,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00201F88",
+     "name": "uwamonoCanSeeRecord",
      "size": 488,
-     "splat_name": "func_00201F88",
+     "splat_name": "uwamonoCanSeeRecord",
      "va": "0x00201f88",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59297,36 +59297,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002025B0",
+     "name": "DispCollUwamono",
      "size": 688,
-     "splat_name": "func_002025B0",
+     "splat_name": "DispCollUwamono",
      "va": "0x002025b0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00202860",
+     "name": "uwamonoDrawPointPath",
      "size": 224,
-     "splat_name": "func_00202860",
+     "splat_name": "uwamonoDrawPointPath",
      "va": "0x00202860",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00202940",
+     "name": "uwamonoDrawStateLinks",
      "size": 348,
-     "splat_name": "func_00202940",
+     "splat_name": "uwamonoDrawStateLinks",
      "va": "0x00202940",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00202AA0",
+     "name": "uwamonoDrawLadder",
      "size": 468,
-     "splat_name": "func_00202AA0",
+     "splat_name": "uwamonoDrawLadder",
      "va": "0x00202aa0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59342,9 +59342,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00202CD0",
+     "name": "DispPillar",
      "size": 400,
-     "splat_name": "func_00202CD0",
+     "splat_name": "DispPillar",
      "va": "0x00202cd0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59360,9 +59360,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00202E68",
+     "name": "uwamonoDrawFanEdge",
      "size": 128,
-     "splat_name": "func_00202E68",
+     "splat_name": "uwamonoDrawFanEdge",
      "va": "0x00202e68",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59378,18 +59378,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00202F00",
+     "name": "uwamonoDrawSegmentBox",
      "size": 160,
-     "splat_name": "func_00202F00",
+     "splat_name": "uwamonoDrawSegmentBox",
      "va": "0x00202f00",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00202FA0",
+     "name": "uwamonoDrawPointAxes",
      "size": 216,
-     "splat_name": "func_00202FA0",
+     "splat_name": "uwamonoDrawPointAxes",
      "va": "0x00202fa0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59579,9 +59579,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00203528",
+     "name": "uwamonoPursueFocus",
      "size": 2052,
-     "splat_name": "func_00203528",
+     "splat_name": "uwamonoPursueFocus",
      "va": "0x00203528",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59624,9 +59624,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002048C8",
+     "name": "uwamonoTickWait",
      "size": 180,
-     "splat_name": "func_002048C8",
+     "splat_name": "uwamonoTickWait",
      "va": "0x002048c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -59696,54 +59696,54 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00205A20",
+     "name": "uwamonoHaltPursuit",
      "size": 204,
-     "splat_name": "func_00205A20",
+     "splat_name": "uwamonoHaltPursuit",
      "va": "0x00205a20",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "uwamonoFindNearestReady",
+     "name": "uwamonoFindReadyInReach",
      "size": 392,
-     "splat_name": "uwamonoFindNearestReady",
+     "splat_name": "uwamonoFindReadyInReach",
      "va": "0x00205af0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00205C78",
+     "name": "uwamonoAnyEngaged",
      "size": 164,
-     "splat_name": "func_00205C78",
+     "splat_name": "uwamonoAnyEngaged",
      "va": "0x00205c78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00205D20",
+     "name": "uwamonoNoticePlayer",
      "size": 300,
-     "splat_name": "func_00205D20",
+     "splat_name": "uwamonoNoticePlayer",
      "va": "0x00205d20",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00205E50",
+     "name": "uwamonoBeginAim",
      "size": 392,
-     "splat_name": "func_00205E50",
+     "splat_name": "uwamonoBeginAim",
      "va": "0x00205e50",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00205FD8",
+     "name": "uwamonoBeginEncounter",
      "size": 1076,
-     "splat_name": "func_00205FD8",
+     "splat_name": "uwamonoBeginEncounter",
      "va": "0x00205fd8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -60071,7 +60071,7 @@
    "path": "src/main/tu087.c",
    "scaffold_path": "scaffold/src/main/tu087.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -60123,9 +60123,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00206D08",
+     "name": "uwamonoClampToStopRange",
      "size": 260,
-     "splat_name": "func_00206D08",
+     "splat_name": "uwamonoClampToStopRange",
      "va": "0x00206d08",
      "name_basis": "address",
      "provenance": "estimated"
@@ -60150,7 +60150,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".lit4": "asm"
    },
    "sections": {
@@ -60190,6 +60190,17 @@
      "0x00207028"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Ahora actua como orquestrador de hasta 20 suabgentes T1 y T2 para: 16 TUs \u00b7 219 funciones \u00b7 71,2 KB tu074 \u2026 tu089 (express integration of banked exact functions, x2-c12)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu087.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -60200,7 +60211,7 @@
    "path": "src/main/tu088.c",
    "scaffold_path": "scaffold/src/main/tu088.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -60252,36 +60263,36 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00207028",
+     "name": "uwamonoPlayFootEffects",
      "size": 1572,
-     "splat_name": "func_00207028",
+     "splat_name": "uwamonoPlayFootEffects",
      "va": "0x00207028",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00207650",
+     "name": "uwamonoSendEvent",
      "size": 92,
-     "splat_name": "func_00207650",
+     "splat_name": "uwamonoSendEvent",
      "va": "0x00207650",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002076B0",
+     "name": "uwamonoSearchArcHit",
      "size": 316,
-     "splat_name": "func_002076B0",
+     "splat_name": "uwamonoSearchArcHit",
      "va": "0x002076b0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002077F0",
+     "name": "uwamonoSearchFacingHit",
      "size": 328,
-     "splat_name": "func_002077F0",
+     "splat_name": "uwamonoSearchFacingHit",
      "va": "0x002077f0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -60306,18 +60317,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00207B38",
+     "name": "uwamonoSearchCircleFan",
      "size": 356,
-     "splat_name": "func_00207B38",
+     "splat_name": "uwamonoSearchCircleFan",
      "va": "0x00207b38",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00207CA0",
+     "name": "uwamonoSearchPlainHit",
      "size": 184,
-     "splat_name": "func_00207CA0",
+     "splat_name": "uwamonoSearchPlainHit",
      "va": "0x00207ca0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -60333,9 +60344,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00207EC0",
+     "name": "uwamonoSearchCircleFacing",
      "size": 328,
-     "splat_name": "func_00207EC0",
+     "splat_name": "uwamonoSearchCircleFacing",
      "va": "0x00207ec0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -60378,7 +60389,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
@@ -60493,6 +60504,17 @@
      "0x00208560"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Ahora actua como orquestrador de hasta 20 suabgentes T1 y T2 para: 16 TUs \u00b7 219 funciones \u00b7 71,2 KB tu074 \u2026 tu089 (express integration of banked exact functions, x2-c12)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu088.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -60573,9 +60595,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00208B28",
+     "name": "vibrationResetFade",
      "size": 36,
-     "splat_name": "func_00208B28",
+     "splat_name": "vibrationResetFade",
      "va": "0x00208b28",
      "name_basis": "address",
      "provenance": "estimated"
@@ -60600,9 +60622,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00208B80",
+     "name": "vibrationStepFade",
      "size": 128,
-     "splat_name": "func_00208B80",
+     "splat_name": "vibrationStepFade",
      "va": "0x00208b80",
      "name_basis": "address",
      "provenance": "estimated"

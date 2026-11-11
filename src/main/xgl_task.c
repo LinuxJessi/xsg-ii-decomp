@@ -44,6 +44,16 @@ extern void *xglTaskInitial(void *manager, int capacity, int reset_gs);
 /* Every task slot of the pool reserves this many bytes. */
 #define XGL_TASK_SLOT_SIZE 0x80
 
+typedef union XglTaskSlot {
+    XglTaskPrefix prefix;
+    char reserved[XGL_TASK_SLOT_SIZE];
+} XglTaskSlot;
+
+typedef struct XglTaskManager {
+    XglTaskScheduler scheduler;
+    XglTaskSlot pool[1];
+} XglTaskManager;
+
 extern int sceGsResetGraph(int interlace, int omode, int ffmode, int errorjump);
 
 /*
@@ -57,14 +67,14 @@ extern int sceGsResetGraph(int interlace, int omode, int ffmode, int errorjump);
 void *xglTaskInitial(void *manager, int capacity, int reset_gs)
 {
     XglTaskScheduler *scheduler;
-    XglTaskPrefix *task;
-    XglTaskPrefix *next;
+    XglTaskSlot *task;
+    XglTaskSlot *next;
     void *afterPool;
     int remaining;
 
     afterPool = 0;
     scheduler = (XglTaskScheduler *) manager;
-    task = (XglTaskPrefix *)((char *) manager + sizeof(XglTaskScheduler));
+    task = ((XglTaskManager *) manager)->pool;
     if (capacity != 0)
     {
         if (reset_gs != 0)
@@ -72,20 +82,20 @@ void *xglTaskInitial(void *manager, int capacity, int reset_gs)
             sceGsResetGraph(1, 0, 0, 0);
         }
         remaining = capacity - 1;
-        scheduler->free_tasks = task;
+        scheduler->free_tasks = &task->prefix;
         if (remaining > 0)
         {
             do
             {
-                next = (XglTaskPrefix *)((char *) task + XGL_TASK_SLOT_SIZE);
+                next = task + 1;
                 remaining -= 1;
-                task->next = next;
+                task->prefix.next = &next->prefix;
                 task = next;
             }
             while (remaining != 0);
         }
-        task->next = 0;
-        afterPool = (char *) task + XGL_TASK_SLOT_SIZE;
+        task->prefix.next = 0;
+        afterPool = task + 1;
         scheduler->active_head = 0;
         scheduler->active_tail = 0;
     }

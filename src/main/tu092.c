@@ -125,13 +125,13 @@ INCLUDE_ASM("asm/main/nonmatchings/tu092", func_0020B948);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu092", func_0020B980);
 
-void func_00208B80();
+void vibrationStepFade();
 extern int xglTickCounter;
 
-/* xglTickAdvance: advances the 16-bit xglTickCounter, then calls func_00208B80. */
+/* xglTickAdvance: advances the 16-bit xglTickCounter, then calls vibrationStepFade. */
 void xglTickAdvance(void) {
     xglTickCounter = (xglTickCounter + 1) & 0xFFFF;
-    func_00208B80();
+    vibrationStepFade();
     do { } while (0);
 }
 

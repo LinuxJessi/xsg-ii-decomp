@@ -1261,6 +1261,7 @@ PROVIDE(MEfAdvanceHistoryStep = 0x00AB4478); /* ov01 */
 PROVIDE(__divdi3 = 0x002A4F60); /* libgcc */
 PROVIDE(__moddi3 = 0x002A55F8); /* libgcc */
 PROVIDE(fptodp = 0x002A6D88); /* libgcc */
+PROVIDE(dpsub = 0x002A7080); /* libgcc */
 PROVIDE(dpmul = 0x002A70E8); /* libgcc */
 PROVIDE(dpdiv = 0x002A7398); /* libgcc */
 PROVIDE(dpcmp = 0x002A7510); /* libgcc */

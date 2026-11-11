@@ -76,8 +76,9 @@ typedef struct UwamonoMotionTable {
 
 /* The talk/search block of a map object record (+0x590). */
 typedef struct UwamonoSearch {
-    signed char mode;                       /* +0x590 */
-    unsigned char unmodeled_591[0xB];
+    signed char mode;                       /* +0x590: 0 or 1 by object type (tu082.c), argument 2 of the kowaremono native (tu074.c) */
+    signed char shape;                      /* +0x591: selects the search test (tu088.c uwamonoSelectTarget) and the collision test (tu089.c) */
+    unsigned char unmodeled_592[0xA];
     int level;                              /* +0x59C: the jump height step */
 } UwamonoSearch;
 
@@ -87,29 +88,77 @@ typedef struct UwamonoObject {
     unsigned char kind;                     /* +0x02: 1 talks, 2 is searched */
     unsigned char unmodeled_03;
     int key;                                /* +0x04 */
-    unsigned char unmodeled_08[8];
+    int type;                               /* +0x08: extra-object type and model index (mapObjectResources[type + 2]): 0-3 traps "ExTrp",
+                                             * 4-6 treasure boxes "ExTbx", 7-9 save points "ExSav", 10-11 dummies, 12 and up items "ExItm";
+                                             * -1 has no model (tu082.c uwamonoInitRecord, tu050.c) */
+    unsigned char unmodeled_0c[4];
     AlignedVector4 position;                /* +0x10 */
     unsigned char unmodeled_20[0x20];
-    AlignedVector4 anchor;                  /* +0x40 */
+    AlignedVector4 rotation;                /* +0x40: angles; y is the heading */
     AlignedVector4 scale;                   /* +0x50: x, y, z set by the player's form */
     unsigned char unmodeled_60[0x10];
     float fade;                             /* +0x70: rider fade, 0..100 */
     unsigned char unmodeled_74[0xC];
-    AlignedVector4 exitFrom;                /* +0x80: the ladder exit starts here (tu075.c) */
-    AlignedVector4 exitTo;                  /* +0x90 */
-    unsigned char unmodeled_a0[0x330 - 0xA0];
+    AlignedVector4 moveFrom;                /* +0x80: end points of the running move (tu050.c); the ladder exit uses them too (tu075.c) */
+    AlignedVector4 moveTo;                  /* +0x90 */
+    AlignedVector4 turnFrom;                /* +0xA0: end angles of the running turn; a sector record keeps its angle in x (tu089.c) */
+    AlignedVector4 turnTo;                  /* +0xB0: a sector record keeps its width in x */
+    unsigned char unmodeled_c0[0x264 - 0xC0];
+    Matrix4 *transform;                     /* +0x264: world matrix (init_uwamono_sys.c) */
+    unsigned char unmodeled_268[0x2F0 - 0x268];
+    Matrix4 matrix;                         /* +0x2F0: collision basis rows (init_uwamono_sys.c, tu050.c) */
     struct XenoActor *actor;                /* +0x330 */
     UwamonoMotionTable *motions;            /* +0x334 */
     float form;                             /* +0x338: UWAMONO_FORM_ES while riding an ES, else 5.0 */
     unsigned short formSet;                 /* +0x33C: 1 once the form is chosen */
-    unsigned char unmodeled_33e[0x570 - 0x33E];
+    unsigned char unmodeled_33e[2];
+    float moveX[32];                        /* +0x340: move curve, uwamonoAddMoveStep (init_uwamono_sys.c) */
+    float moveY[32];                        /* +0x3C0 */
+    short moveStepCount;                    /* +0x440 */
+    unsigned char unmodeled_442[2];
+    float turnX[32];                        /* +0x444: rotate curve, uwamonoAddRotateStep */
+    float turnY[32];                        /* +0x4C4 */
+    short turnStepCount;                    /* +0x544 */
+    short target;                           /* +0x546: index of the record this one follows or stands on, -1 when none */
+    unsigned char unmodeled_548[0x570 - 0x548];
     int flags;                              /* +0x570 */
-    unsigned char unmodeled_574[0xC];
+    int landedFlags;                        /* +0x574: uwamonoCheckHeight (init_uwamono_sys.c) */
+    unsigned char unmodeled_578[8];
     AlignedVector4 extent;                  /* +0x580: x is the form's size (init_uwamono_sys.c) */
     UwamonoSearch search;                   /* +0x590 */
-    unsigned char unmodeled_5a0[0x21];
+    int effectId;                           /* +0x5A0: effect or motion started when searched (tu074.c, tu083.c) */
+    int linkA;                              /* +0x5A4: partner records set by the kowaremono native (tu074.c) */
+    int linkB;                              /* +0x5A8 */
+    unsigned char unmodeled_5ac[4];
+    Vector4 focusOffset;                    /* +0x5B0: from the position to the point that is marked, aimed at and ridden
+                                             * (tu083.c selection marker, tu086.c target vector, tu050.c riders) */
+    signed char motionKind;                 /* +0x5C0: 1 = moves between two points, else rotates (tu074.c) */
     signed char searchState;                /* +0x5C1 */
-    unsigned char unmodeled_5c2[0x2AE];
+    signed char busy;                       /* +0x5C2: set while the door motion runs */
+    unsigned char unmodeled_5c3;
+    short timer;                            /* +0x5C4 */
+    unsigned char unmodeled_5c6[0x5D0 - 0x5C6];
+    Vector4 closedPosition;                 /* +0x5D0: the two states of a door: set by uwamonoSetDoorAll (tu074.c), moved between by
+                                             * uwamonoStartPairMove (tu083.c) */
+    Vector4 openPosition;                   /* +0x5E0 */
+    Vector4 closedRotation;                 /* +0x5F0 */
+    Vector4 openRotation;                   /* +0x600 */
+    float speed;                            /* +0x610 */
+    float swingLength;                      /* +0x614 */
+    int linkIndex;                          /* +0x618: the linked record, -1 when none (tu083.c) */
+    unsigned char unmodeled_61c[4];
+    int triggerSound;                       /* +0x620: seVoiceStartDefault id played when the record is triggered (tu083.c), -1 none */
+    int moveSound;                          /* +0x624: played when the pair move starts */
+    unsigned char unmodeled_628[4];
+    signed char state;                      /* +0x62C: 0 out of reach, 1 selected, 2 in reach (tu083.c) */
+    unsigned char unmodeled_62d[0x634 - 0x62D];
+    int cellMask;                           /* +0x634: map cells the record belongs to (tu083.c) */
+    void *handles[3];                       /* +0x638: effect and rider handles released with the record (tu083.c) */
+    int releaseNextIndex;                   /* +0x644 */
+    unsigned char unmodeled_648[0x740 - 0x648];
+    unsigned char hitBuffer[8];             /* +0x740: mapMoveProbe result (init_uwamono_sys.c) */
+    unsigned short hitFlags;                /* +0x748 */
+    unsigned char unmodeled_74a[0x870 - 0x74A];
 } UwamonoObject;
 
 /* Bits of gameWork.control. */

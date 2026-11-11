@@ -36030,25 +36030,25 @@
      2
     ],
     [
-     "uwamono_001F6F10",
+     "uwamonoSetDoorAll",
      2060048,
      1884,
      2
     ],
     [
-     "uwamono_001F7670",
+     "uwamonoSetKowaremonoAll",
      2061936,
      1480,
      2
     ],
     [
-     "uwamono_001F7C38",
+     "uwamonoSendSignal",
      2063416,
      208,
      2
     ],
     [
-     "uwamono_001F7D08",
+     "uwamonoSetCollisionSize",
      2063624,
      536,
      2
@@ -36084,7 +36084,7 @@
      2
     ],
     [
-     "func_001F8608",
+     "uwamonoLadderTryExit",
      2065928,
      1504,
      2
@@ -36120,13 +36120,13 @@
      2
     ],
     [
-     "ladder_001F9A68",
+     "ladderSetLadder",
      2071144,
      296,
      2
     ],
     [
-     "ladder_001F9B90",
+     "ladderSetEntrance",
      2071440,
      300,
      2
@@ -36528,7 +36528,7 @@
      2
     ],
     [
-     "menu_001FC700",
+     "ptChangeMode",
      2082560,
      196,
      2
@@ -36546,7 +36546,7 @@
      2
     ],
     [
-     "menu_001FC9B8",
+     "ptGetLeader",
      2083256,
      160,
      2
@@ -36582,7 +36582,7 @@
      2
     ],
     [
-     "func_001FCC00",
+     "uwamonoInitRecord",
      2083840,
      1864,
      2
@@ -36624,7 +36624,7 @@
      2
     ],
     [
-     "func_001FD7F8",
+     "uwamonoFindSelected",
      2086904,
      392,
      2
@@ -36636,19 +36636,19 @@
      2
     ],
     [
-     "func_001FDA18",
+     "uwamonoUpdateInReach",
      2087448,
      1020,
      2
     ],
     [
-     "func_001FDE18",
+     "uwamonoMoveSelection",
      2088472,
      1148,
      2
     ],
     [
-     "func_001FE298",
+     "uwamonoIsActorInCells",
      2089624,
      524,
      2
@@ -36666,19 +36666,19 @@
      2
     ],
     [
-     "func_001FE5B0",
+     "uwamonoSetPairMode",
      2090416,
      640,
      2
     ],
     [
-     "func_001FE830",
+     "uwamonoStartPairMove",
      2091056,
      660,
      2
     ],
     [
-     "func_001FEAC8",
+     "uwamonoFindTalkTarget",
      2091720,
      1088,
      2
@@ -36690,13 +36690,13 @@
      2
     ],
     [
-     "func_001FEF78",
+     "uwamonoUpdateCountdowns",
      2092920,
      1096,
      2
     ],
     [
-     "func_001FF3C0",
+     "uwamonoTriggerRecord",
      2094016,
      1456,
      2
@@ -36714,7 +36714,7 @@
      2
     ],
     [
-     "func_001FFA60",
+     "uwamonoUpdatePoints",
      2095712,
      272,
      2
@@ -36786,7 +36786,7 @@
      2
     ],
     [
-     "func_00200308",
+     "uwamonoPointInBox",
      2097928,
      220,
      2
@@ -36816,7 +36816,7 @@
      2
     ],
     [
-     "func_00200950",
+     "uwamonoPushOutOfCircle",
      2099536,
      280,
      2
@@ -36900,7 +36900,7 @@
      2
     ],
     [
-     "func_00201F88",
+     "uwamonoCanSeeRecord",
      2105224,
      488,
      2
@@ -36936,25 +36936,25 @@
      2
     ],
     [
-     "func_002025B0",
+     "DispCollUwamono",
      2106800,
      688,
      2
     ],
     [
-     "func_00202860",
+     "uwamonoDrawPointPath",
      2107488,
      224,
      2
     ],
     [
-     "func_00202940",
+     "uwamonoDrawStateLinks",
      2107712,
      348,
      2
     ],
     [
-     "func_00202AA0",
+     "uwamonoDrawLadder",
      2108064,
      468,
      2
@@ -36966,7 +36966,7 @@
      2
     ],
     [
-     "func_00202CD0",
+     "DispPillar",
      2108624,
      400,
      2
@@ -36978,7 +36978,7 @@
      2
     ],
     [
-     "func_00202E68",
+     "uwamonoDrawFanEdge",
      2109032,
      128,
      2
@@ -36990,13 +36990,13 @@
      2
     ],
     [
-     "func_00202F00",
+     "uwamonoDrawSegmentBox",
      2109184,
      160,
      2
     ],
     [
-     "func_00202FA0",
+     "uwamonoDrawPointAxes",
      2109344,
      216,
      2
@@ -37032,7 +37032,7 @@
      2
     ],
     [
-     "func_00203528",
+     "uwamonoPursueFocus",
      2110760,
      2052,
      2
@@ -37062,7 +37062,7 @@
      2
     ],
     [
-     "func_002048C8",
+     "uwamonoTickWait",
      2115784,
      180,
      2
@@ -37110,37 +37110,37 @@
      2
     ],
     [
-     "func_00205A20",
+     "uwamonoHaltPursuit",
      2120224,
      204,
      2
     ],
     [
-     "uwamonoFindNearestReady",
+     "uwamonoFindReadyInReach",
      2120432,
      392,
      2
     ],
     [
-     "func_00205C78",
+     "uwamonoAnyEngaged",
      2120824,
      164,
      2
     ],
     [
-     "func_00205D20",
+     "uwamonoNoticePlayer",
      2120992,
      300,
      2
     ],
     [
-     "func_00205E50",
+     "uwamonoBeginAim",
      2121296,
      392,
      2
     ],
     [
-     "func_00205FD8",
+     "uwamonoBeginEncounter",
      2121688,
      1076,
      2
@@ -37194,7 +37194,7 @@
      2
     ],
     [
-     "func_00206D08",
+     "uwamonoClampToStopRange",
      2125064,
      260,
      2
@@ -37212,25 +37212,25 @@
      2
     ],
     [
-     "func_00207028",
+     "uwamonoPlayFootEffects",
      2125864,
      1572,
      2
     ],
     [
-     "func_00207650",
+     "uwamonoSendEvent",
      2127440,
      92,
      2
     ],
     [
-     "func_002076B0",
+     "uwamonoSearchArcHit",
      2127536,
      316,
      2
     ],
     [
-     "func_002077F0",
+     "uwamonoSearchFacingHit",
      2127856,
      328,
      2
@@ -37248,13 +37248,13 @@
      2
     ],
     [
-     "func_00207B38",
+     "uwamonoSearchCircleFan",
      2128696,
      356,
      2
     ],
     [
-     "func_00207CA0",
+     "uwamonoSearchPlainHit",
      2129056,
      184,
      2
@@ -37266,7 +37266,7 @@
      2
     ],
     [
-     "func_00207EC0",
+     "uwamonoSearchCircleFacing",
      2129600,
      328,
      2
@@ -37308,7 +37308,7 @@
      2
     ],
     [
-     "func_00208B28",
+     "vibrationResetFade",
      2132776,
      36,
      2
@@ -37326,7 +37326,7 @@
      2
     ],
     [
-     "func_00208B80",
+     "vibrationStepFade",
      2132864,
      128,
      2

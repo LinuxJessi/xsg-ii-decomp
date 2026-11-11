@@ -11,7 +11,7 @@ int func_A9F0A8(int call);
 void func_A9CC70(int call, int error_code);
 int func_A9F0C0(int call, int index);
 int func_A9F1C0(int call, int index);
-void func_00208B28(void);
+void vibrationResetFade(void);
 void func_00208B50(int value);
 void vibrationStartFade(unsigned char targetValue, unsigned char currentValue, int framesTotal);
 
@@ -138,7 +138,7 @@ void enepcStoreParams(int index, float height, float extent,
                       int initState);
 
 /* Native "Vibration", at least 4 arguments.  When func_A9F1C0 reports argument 1 as
-   absent (nonzero), the fade is stopped (func_00208B28); otherwise argument 1 goes to
+   absent (nonzero), the fade is stopped (vibrationResetFade); otherwise argument 1 goes to
    func_00208B50 and arguments 2 to 4 start a vibrationStartFade. */
 int runtimeVibration(int call)
 {
@@ -152,7 +152,7 @@ int runtimeVibration(int call)
         return 0;
     }
     if (func_A9F1C0(call, 1) != 0) {
-        func_00208B28();
+        vibrationResetFade();
         return 1;
     }
     value = func_A9F0C0(call, 1);
