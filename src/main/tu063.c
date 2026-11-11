@@ -1,16 +1,23 @@
 #include "common.h"
+#include "main/control_entry.h"
 #include "main/elevator.h"
 #include "main/tu022.h"
 #include "main/tu063.h"
+#include "main/xgl_render.h"
 
-void tyaDisplaySetting(int);
+#define NULL ((void *) 0)
+
+void tyaDisplaySetting(int framebuffer);
 typedef struct TyaGaugeArgs TyaGaugeArgs;
 void tyaDrawGauge(TyaGaugeArgs *gauge);
 
-/* Draws the gauge, resets the elevator records, then runs the display
- * adjustment screen into the framebuffer at 0x01000000. */
+/* Calls tyaDrawGauge, registers the elevator "id" module and resets the
+ * elevator records (elvReset), then runs the display adjustment screen into
+ * the framebuffer at 0x01000000. */
 void tyaRunDisplaySetting(void) {
-    tyaDrawGauge(0);
+    /* passes a null gauge: tyaDrawGauge reads its arguments from address 0
+     * (no test in tyaDrawGauge.s) */
+    tyaDrawGauge(NULL);
     elvReset();
     tyaDisplaySetting(0x01000000);
 }
@@ -112,6 +119,8 @@ void YajimaTest(void) {
             xglClockRead(&clock);
             xglFontDebugPrintf(0x80, 0x10, D_00689490, clock.year, clock.month,
                                clock.day, clock.hour, clock.minute, clock.second);
+            /* Draws a random number each frame and drops it: only the
+             * generator's state advances. */
             xglFRand();
             xglSleep();
         }

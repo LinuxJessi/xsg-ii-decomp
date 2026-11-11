@@ -7969,6 +7969,7 @@ captionRubySplit = 0x0069CFE8;
 captionRubyEnd = 0x0069CFF0;
 tbl_49 = 0x0069D0E0;
 CdSlotCursor = 0x0069D0E4;
+enepcParamSets = 0x0069D1D8;
 objxModuleName = 0x0069D218;
 runtimeModuleName = 0x0069D2C8;
 ladderModuleName = 0x0069D318;
