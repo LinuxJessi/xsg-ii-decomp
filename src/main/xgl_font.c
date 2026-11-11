@@ -748,6 +748,53 @@ int xglFontGetStringWidth(const char *text)
     return xglFontGetStringWidth2(text, 0);
 }
 
+/* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
+ * register write. */
+struct FontEffectScratchPacket {
+    u64 vif_tag;
+    u64 vif_count;
+    u64 effect_state;
+    u64 payload_count;
+};
+
+/* The font renderer's draw cursor, built by xglFontFlush at the scratchpad base. */
+struct FontDrawCursor {
+    XglPacket *packet;
+    short origin_x;
+    unsigned char unmodeled_06[2];
+    unsigned short x;
+    unsigned short y;
+    int depth;
+    unsigned short offset_x;
+    unsigned short offset_y;
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    unsigned char unmodeled_17;
+    unsigned char flags;
+    unsigned char effect;
+    unsigned char attributes;
+    unsigned char draw_state_high;
+    unsigned char unmodeled_1c[4];
+    signed char effect_x;
+    signed char effect_y;
+    unsigned char unmodeled_22[2];
+    unsigned char effect_red;
+    unsigned char effect_green;
+    unsigned char effect_blue;
+    unsigned char unmodeled_27;
+    unsigned char primitive_flags;
+    unsigned char primitive_mode;
+    unsigned char alpha;
+    unsigned char unmodeled_2b;
+    unsigned short scale_x;
+    unsigned short scale_y;
+    union {
+        struct FontEffectScratchPacket effect_packet;
+        u64 qwords[(0x4000 - 0x30) / sizeof(u64)];
+    } work;
+};
+
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00195E90);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196118);
@@ -826,56 +873,26 @@ void xglFontNewLine(void)
     scratchpad[5] += FS.state.line_height;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197988);
+/* Two-byte code pairs, terminated by a 0 first byte. */
+extern unsigned char D_0063E870[];
+
+/* Glyph index of a code pair from the D_0063E870 list (0xF95 + position), or 0x7F if absent. */
+int func_00197988(unsigned char high, unsigned char low)
+{
+    unsigned char *pair = D_0063E870;
+    int index = 0;
+
+    while (pair[0] != 0) {
+        if (high == pair[0] && low == pair[1]) {
+            return index + 0xF95;
+        }
+        pair += 2;
+        index++;
+    }
+    return 0x7F;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001979E0);
-
-/* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
- * register write. */
-struct FontEffectScratchPacket {
-    u64 vif_tag;
-    u64 vif_count;
-    u64 effect_state;
-    u64 payload_count;
-};
-
-/* The font renderer's draw cursor, built by xglFontFlush at the scratchpad base. */
-struct FontDrawCursor {
-    XglPacket *packet;
-    short origin_x;
-    unsigned char unmodeled_06[2];
-    unsigned short x;
-    unsigned short y;
-    int depth;
-    unsigned short offset_x;
-    unsigned short offset_y;
-    unsigned char red;
-    unsigned char green;
-    unsigned char blue;
-    unsigned char unmodeled_17;
-    unsigned char flags;
-    unsigned char effect;
-    unsigned char attributes;
-    unsigned char draw_state_high;
-    unsigned char unmodeled_1c[4];
-    signed char effect_x;
-    signed char effect_y;
-    unsigned char unmodeled_22[2];
-    unsigned char effect_red;
-    unsigned char effect_green;
-    unsigned char effect_blue;
-    unsigned char unmodeled_27;
-    unsigned char primitive_flags;
-    unsigned char primitive_mode;
-    unsigned char alpha;
-    unsigned char unmodeled_2b;
-    unsigned short scale_x;
-    unsigned short scale_y;
-    union {
-        struct FontEffectScratchPacket effect_packet;
-        u64 qwords[(0x4000 - 0x30) / sizeof(u64)];
-    } work;
-};
 
 /* FONT_OP_EFFECT_MODE: how a glyph is drawn (cursor->effect). */
 #define FONT_EFFECT_PLAIN 1
@@ -1354,7 +1371,25 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198928);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198AE0);
+/* Glyph base per 32-code block of the EUC row 0xA3. */
+extern signed char D_0063EBC0[];
+
+/* Glyph index of a few EUC symbols and of row 0xA3 (alphanumerics), or -1. */
+int func_00198AE0(unsigned char high, unsigned char low)
+{
+    if (high == EUC_ROW_SYMBOLS) {
+        if (low == 0xA1) {
+            return 0x25;
+        }
+        if (low == 0xA5) {
+            return 0xA;
+        }
+    }
+    if (high == EUC_ROW_ALNUM) {
+        return D_0063EBC0[(low - 0xA0) >> 5] + (low & 0x1F);
+    }
+    return -1;
+}
 
 /* Advance of character code in the window's proportional widths; the default width when the low byte is 0xFF. */
 int xglFontGetProportionalSize(int code)
