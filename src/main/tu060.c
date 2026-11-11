@@ -1,22 +1,30 @@
 #include "common.h"
 #include "main/pad.h"
 
-/* One port of the pad record PadData, 0x80 bytes: the raw pad buffer, the
- * decoded buttons and sticks and the actuator settings. */
-typedef struct PadPort {
+/* One port of the pad record PadData, the full 0x80 bytes (xglPadRead
+ * scales the port index by 128): the raw pad buffer, the decoded buttons
+ * and sticks and the actuator settings. pad.h's PadRecord cannot serve here:
+ * it models only the first 0x68 bytes, so neither the port stride the pad
+ * test steps by nor the status and actuator members it shows. The members both
+ * records name carry pad.h's names at the same offsets. */
+typedef struct McTestPadPort {
     unsigned char raw[0x20];
     unsigned char status;
     unsigned char id;
     unsigned short buttons;
     unsigned char unmodeled_24[0x26 - 0x24];
     unsigned char rawButtons[2];
-    unsigned short held;
-    unsigned short pressed;
-    unsigned short repeated;
-    unsigned short released;
-    unsigned short holdCounts[4];
+    unsigned short held;     /* +0x28 */
+    unsigned short pressed;  /* +0x2A */
+    unsigned short repeated; /* +0x2C */
+    unsigned short released; /* +0x2E */
+    unsigned short directionHeld;
+    unsigned short directionPressed;  /* +0x32, as pad.h */
+    unsigned short directionRepeated; /* +0x34 */
+    unsigned short directionReleased;
     signed char sticks[4];
-    short stickSums[2];
+    short stickX;
+    short stickY; /* +0x3C/+0x3E as pad.h */
     unsigned char pressures[8];
     unsigned char unmodeled_48[0x50 - 0x48];
     unsigned char actuators[2];
@@ -25,26 +33,27 @@ typedef struct PadPort {
     unsigned char unmodeled_57[0x64 - 0x57];
     signed char sticksCentered[4];
     unsigned char unmodeled_68[0x80 - 0x68];
-} PadPort;
+} McTestPadPort;
 
-/* The pad record of port 1 (PadData): held, pressed and auto-repeated
- * buttons as halfwords at 0x28, 0x2A and 0x2C; the exit test reads the
- * held and pressed words together as one doubleword. */
+/* PadData: the two port records. The exit test of every page reads port
+ * 1's held and pressed halfwords together as one doubleword
+ * (PadRecord.heldAndPressed in pad.h). The doubleword overlays the port
+ * records here instead of sharing a union inside the port as in pad.h:
+ * with the inner union the compiler schedules func_001ED568's read of
+ * pads[0].pressed differently from the original. */
 typedef union McTestPad {
-    unsigned long long doublewords[8];
-    unsigned short halfwords[32];
-    PadPort ports[2];
+    McTestPadPort ports[2];
+    struct {
+        unsigned char unmodeled_00[0x28];
+        unsigned long long heldAndPressed; /* +0x28 */
+    } port1;
 } McTestPad;
 
 extern McTestPad PadData;
 
-#define PAD_HELD_AND_PRESSED PadData.doublewords[0x28 / 8]
-#define PAD_HELD PadData.halfwords[0x28 / 2]
-#define PAD_PRESSED PadData.halfwords[0x2A / 2]
-#define PAD_REPEATED PadData.halfwords[0x2C / 2]
-
-/* SELECT held (0x100) with START pressed (0x800 of the next halfword). */
-#define PAD_EXIT_COMBO 0x08000100
+/* PadRecord.heldAndPressed: SELECT held with START pressed (pressed is the
+ * upper halfword), the exit combination of every test page. */
+#define PAD_EXIT_COMBO (PAD_SELECT | (PAD_START << 16))
 
 /* A scrolling view of a CR/LF separated text: the text, the first line
  * shown and the selected line, with the screen position and height. */
@@ -126,26 +135,26 @@ void func_001E9B28(void) {
     int big = 0;
     int small = 0;
     int x;
-    PadPort *pad;
+    McTestPadPort *pad;
 
-    while ((PAD_HELD_AND_PRESSED & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
-        if (PAD_REPEATED & PAD_RIGHT) {
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+        if (PadData.ports[0].repeated & PAD_RIGHT) {
             small++;
         }
-        if (PAD_REPEATED & PAD_DOWN) {
+        if (PadData.ports[0].repeated & PAD_DOWN) {
             big++;
         }
-        if (PAD_REPEATED & PAD_LEFT) {
+        if (PadData.ports[0].repeated & PAD_LEFT) {
             small--;
         }
-        if (PAD_REPEATED & PAD_UP) {
+        if (PadData.ports[0].repeated & PAD_UP) {
             big--;
         }
-        if (PAD_HELD & PAD_CIRCLE) {
+        if (PadData.ports[0].held & PAD_CIRCLE) {
             PadData.ports[0].actuators[0] = small;
             PadData.ports[0].actuators[1] = big;
         }
-        if (PAD_PRESSED & PAD_CROSS) {
+        if (PadData.ports[0].pressed & PAD_CROSS) {
             actuatorMode ^= 1;
             PadData.ports[0].actuatorMode = actuatorMode;
         }
@@ -162,10 +171,10 @@ void func_001E9B28(void) {
             xglFontDebugHex(x, 0x40, pad->pressed, 4);
             xglFontDebugHex(x, 0x48, pad->repeated, 4);
             xglFontDebugHex(x, 0x50, pad->released, 4);
-            xglFontDebugHex(x, 0x60, pad->holdCounts[0], 4);
-            xglFontDebugHex(x, 0x68, pad->holdCounts[1], 4);
-            xglFontDebugHex(x, 0x70, pad->holdCounts[2], 4);
-            xglFontDebugHex(x, 0x78, pad->holdCounts[3], 4);
+            xglFontDebugHex(x, 0x60, pad->directionHeld, 4);
+            xglFontDebugHex(x, 0x68, pad->directionPressed, 4);
+            xglFontDebugHex(x, 0x70, pad->directionRepeated, 4);
+            xglFontDebugHex(x, 0x78, pad->directionReleased, 4);
             xglFontDebugHex(x, 0x88, pad->sticks[0], 2);
             xglFontDebugHex(x + 16, 0x88, pad->sticksCentered[0], 2);
             xglFontDebugHex(x, 0x90, pad->sticks[1], 2);
@@ -174,8 +183,8 @@ void func_001E9B28(void) {
             xglFontDebugHex(x + 16, 0x98, pad->sticksCentered[2], 2);
             xglFontDebugHex(x, 0xA0, pad->sticks[3], 2);
             xglFontDebugHex(x + 16, 0xA0, pad->sticksCentered[3], 2);
-            xglFontDebugHex(x, 0xA8, pad->stickSums[0], 4);
-            xglFontDebugHex(x, 0xB0, pad->stickSums[1], 4);
+            xglFontDebugHex(x, 0xA8, pad->stickX, 4);
+            xglFontDebugHex(x, 0xB0, pad->stickY, 4);
             xglFontDebugHex(x, 0xB8, pad->pressures[0], 2);
             xglFontDebugHex(x + 16, 0xB8, pad->pressures[4], 2);
             xglFontDebugHex(x, 0xC0, pad->pressures[1], 2);
@@ -206,10 +215,10 @@ extern const char D_00688770[];
 extern char D_002BD130[];
 
 void FontTestP1(void) {
-    if (PAD_PRESSED & PAD_CIRCLE) {
+    if (PadData.ports[0].pressed & PAD_CIRCLE) {
         xglFontLoad(0, 0);
     }
-    if (PAD_PRESSED & PAD_CROSS) {
+    if (PadData.ports[0].pressed & PAD_CROSS) {
         xglFontLoad(1, 0);
     }
     xglFontDebugPrintf(16, 16, D_006886C0);
@@ -223,11 +232,11 @@ void FontTestP1(void) {
 void FontTest(void) {
     int page = 0;
 
-    while ((PAD_HELD_AND_PRESSED & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
-        if (PAD_PRESSED & PAD_RIGHT) {
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+        if (PadData.ports[0].pressed & PAD_RIGHT) {
             ++page;
         }
-        if (PAD_PRESSED & PAD_LEFT) {
+        if (PadData.ports[0].pressed & PAD_LEFT) {
             --page;
         }
         switch (page) {
@@ -236,6 +245,7 @@ void FontTest(void) {
             break;
         case -1:
             page = 0;
+            /* fall through */
         case 0:
             FontTestP1();
             break;
@@ -262,9 +272,10 @@ const char *func_001EAB10(int port) {
 int printf(const char *, ...);
 extern const char D_00688900[];
 
-/* Logs a callback id; always returns -1. */
-int DebugCallbackLog(int callback_id) {
-    printf(D_00688900, callback_id);
+/* Enumerate callback: logs the result it is called with ("callback:%d");
+ * always returns -1. */
+int DebugCallbackLog(int result) {
+    printf(D_00688900, result);
     return -1;
 }
 
@@ -461,7 +472,7 @@ void McFileSectionsReport(const char *name, void *image) {
 #define MC_CREATE_PROGRESS_STEPS 20
 #define MC_DUMMY_LIMIT_KB 1000
 #define MC_EASY_SAVE_DUMMY_SIZE 0x77D800
-#define SCE_MC_ICON_SYS_SIZE 964
+#define MC_ICON_SYS_SIZE 964
 #define SAVE_FLAGS_COUNT 128
 
 /* MemcardTest state machine: the high nibble selects the screen family. */
@@ -692,7 +703,18 @@ typedef struct McThumbnail {
  * 0x50-byte header, the other files the rest from D_0063F890. */
 #define SAVE_DATA_SIZE 0x5160
 #define SAVE_HEADER_SIZE 0x50
-extern unsigned char SaveData[];
+/* The two save-image settings this TU reads: the Dolby Digital flag that
+ * MovieListTest toggles and the caption mode it forces. */
+typedef struct McTestSaveData {
+    unsigned char unmodeled_00[0x29];
+    unsigned char dolby_digital; /* +0x29: DOLBY DIGITAL ON/OFF */
+    unsigned char unmodeled_2a[0x3A - 0x2A];
+    /* +0x3A: nonzero shows every caption line, not only the ones starting
+     * with a space (game_movie.c); 2 is the save default. */
+    unsigned char caption_all;
+    unsigned char unmodeled_3b[SAVE_DATA_SIZE - 0x3B];
+} McTestSaveData;
+extern McTestSaveData SaveData;
 extern unsigned char D_0063F890[];
 /* The event flags the triangle button randomizes. */
 extern unsigned char D_0063F8B4[];
@@ -713,8 +735,8 @@ extern unsigned char tbl_49[4];
 
 unsigned int xglMcMain(void);
 int xglMcRequest(int port, int command, McRequestParam *param, int *result);
-int xglMcEasySave(const char *name, void *data, int size);
-int xglMcSetEntryNumbers(void *data, int file, const char *place);
+int xglMcEasySave(const char *path, const void *buffer, int size);
+void xglMcSetEntryNumbers(unsigned char *object, int value, const unsigned char *source);
 int xglHddCheck(void);
 int xglHddMcExist(struct HddExistRequest *request);
 int xglHddMcLoad(void *save);
@@ -722,7 +744,7 @@ int xglHddMcSave(const struct HddSaveRequest *save);
 int xglHddMcCreate_001A5B80(struct HddCheckState *state);
 int sceMcSync(int mode, int *command, int *result);
 unsigned short xglSRand(void);
-void FlushCache(int operation);
+void FlushCache(int mode);
 
 void MemcardTest(void) {
     void *files[MC_TEST_FILE_COUNT];
@@ -785,12 +807,12 @@ void MemcardTest(void) {
     McFileSectionsReport("yajima\\mc\\r05.bin", files[8]);
     McFileSectionsReport("yajima\\mc\\shion.bin", files[9]);
     McFileSectionsReport("yajima\\mc\\ziggy.bin", files[10]);
-    printf("sizeof(sceMcIconSys):%d\n", SCE_MC_ICON_SYS_SIZE);
+    printf("sizeof(sceMcIconSys):%d\n", MC_ICON_SYS_SIZE);
     printf("sizeof(sSaveData):%d\n", SAVE_DATA_SIZE);
     printf("sizeof(carddata):%d\n",
            ((struct HddTransferInfo *)files[0])->end - ((struct HddTransferInfo *)files[0])->begin);
 
-    while ((PAD_HELD_AND_PRESSED & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
         xglFontDebugPrintf(0, 0, MC_TEXT_TITLE);
         /* xglMcMain returns both ports' status halfwords as one word. */
         *(unsigned int *)port_status = xglMcMain();
@@ -829,8 +851,8 @@ void MemcardTest(void) {
                 xglFontDebugPrintf(16, 80, "\x0C   %s", name);
             }
             if (port_status[0] == MC_PORT_READY || port_status[1] == MC_PORT_READY || hdd == 0) {
-                port_step = (PAD_PRESSED & PAD_UP) ? -1 : 0;
-                if (PAD_PRESSED & PAD_DOWN) {
+                port_step = (PadData.ports[0].pressed & PAD_UP) ? -1 : 0;
+                if (PadData.ports[0].pressed & PAD_DOWN) {
                     port_step = 1;
                 }
                 if (port_step != 0) {
@@ -851,7 +873,7 @@ void MemcardTest(void) {
             } else {
                 work.result = -1;
             }
-            if (work.result != -1 && (PAD_PRESSED & PAD_CIRCLE)) {
+            if (work.result != -1 && (PadData.ports[0].pressed & PAD_CIRCLE)) {
                 if (work.result == MC_PORT_HDD) {
                     port = MC_PORT_HDD;
                     state = MCTEST_STATE_HDD_MENU_INIT;
@@ -876,15 +898,15 @@ void MemcardTest(void) {
             xglFontDebugPrintf(16, 112, MC_TEXT_LIST);
             xglFontDebugPrintf(16, 128, MC_TEXT_CHECK_OLD);
             xglFontDebugPrintf(16, 144, MC_TEXT_DUMMY);
-            menu_step = (PAD_PRESSED & PAD_UP) ? -1 : 0;
-            if (PAD_PRESSED & PAD_DOWN) {
+            menu_step = (PadData.ports[0].pressed & PAD_UP) ? -1 : 0;
+            if (PadData.ports[0].pressed & PAD_DOWN) {
                 menu_step = 1;
             }
             if (menu_step != 0) {
                 work.result = (work.result + menu_step + MC_MENU_ITEM_COUNT) % MC_MENU_ITEM_COUNT;
             }
             xglFontDebugPrintf(8, work.result * 16 + 48, D_0069D028);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 static unsigned char menu_states[8] = {
                     MCTEST_STATE_LOAD_LIST, MCTEST_STATE_SAVE_QUERY_FREE,
                     MCTEST_STATE_FORMAT_INIT, MCTEST_STATE_UNFORMAT_INIT,
@@ -892,7 +914,7 @@ void MemcardTest(void) {
                     MCTEST_STATE_DUMMY_QUERY_FREE
                 };
 
-                if (PAD_HELD & PAD_R1) {
+                if (PadData.ports[0].held & PAD_R1) {
                     state = MCTEST_STATE_INIT;
                     sceMcSync(0, &sync_command, &sync_result);
                     printf("%d %d\n", sync_command, sync_result);
@@ -901,7 +923,7 @@ void MemcardTest(void) {
                     state = menu_states[work.result];
                 }
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_INIT;
             }
             break;
@@ -926,7 +948,7 @@ void MemcardTest(void) {
 
         case MCTEST_STATE_LOAD_NO_FILE:
             xglFontDebugPrintf(0, 32, MC_TEXT_LOAD_NO_FILE, work.file);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -934,10 +956,10 @@ void MemcardTest(void) {
         case MCTEST_STATE_LOAD_SELECT:
             xglFontDebugPrintf(0, 32, MC_TEXT_LOAD);
             dir = 0;
-            if (PAD_REPEATED & PAD_LEFT) {
+            if (PadData.ports[0].repeated & PAD_LEFT) {
                 dir = -1;
             }
-            if (PAD_REPEATED & PAD_RIGHT) {
+            if (PadData.ports[0].repeated & PAD_RIGHT) {
                 dir = 1;
             }
             if (dir != 0) {
@@ -949,14 +971,14 @@ void MemcardTest(void) {
             } else {
                 xglFontDebugPrintf(16, 64, MC_TEXT_FILE_PRESENT);
             }
-            if ((PAD_PRESSED & PAD_CIRCLE) && found[work.file] != 0) {
+            if ((PadData.ports[0].pressed & PAD_CIRCLE) && found[work.file] != 0) {
                 load_request.file = work.file;
-                load_request.data = SaveData;
+                load_request.data = &SaveData;
                 load_request.size = SAVE_DATA_SIZE;
                 state = MCTEST_STATE_LOAD_READING;
                 xglMcRequest(port, MC_REQ_LOAD, &load_request, &work.result);
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -984,20 +1006,20 @@ void MemcardTest(void) {
 
         case MCTEST_STATE_SAVE_SELECT_FILE:
             xglFontDebugPrintf(0, 32, MC_TEXT_SAVE_FREE, work.result);
-            save_file_step = (PAD_REPEATED & PAD_LEFT) ? -1 : 0;
-            if (PAD_REPEATED & PAD_RIGHT) {
+            save_file_step = (PadData.ports[0].repeated & PAD_LEFT) ? -1 : 0;
+            if (PadData.ports[0].repeated & PAD_RIGHT) {
                 save_file_step = 1;
             }
             if (save_file_step != 0) {
                 work.file = (work.file + save_file_step + MC_SAVE_FILE_COUNT) % MC_SAVE_FILE_COUNT;
             }
             xglFontDebugPrintf(16, 48, MC_TEXT_FILE_NUMBER, work.file);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 check_request.file = work.file;
                 xglMcRequest(port, MC_REQ_EXIST, &check_request, &work.check);
                 state = MCTEST_STATE_SAVE_CHECKING_FILE;
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -1005,17 +1027,18 @@ void MemcardTest(void) {
         case MCTEST_STATE_SAVE_CREATE_CONFIRM:
             xglFontDebugPrintf(0, 32, MC_TEXT_SAVE_FREE, work.result);
             xglFontDebugPrintf(16, 48, MC_TEXT_CREATE_CONFIRM);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 create_request.data = files;
                 create_request.file = work.file;
                 if (work.file < MC_TEST_FILE_COUNT) {
                     create_request.data = files[work.file];
                 }
                 state = MCTEST_STATE_SAVE_CREATING;
-                xglMcSetEntryNumbers(create_request.data, create_request.file, MC_ENTRY_PLACE);
+                xglMcSetEntryNumbers(create_request.data, create_request.file,
+                                     (const unsigned char *)MC_ENTRY_PLACE);
                 xglMcRequest(port, MC_REQ_CREATE, &create_request, &work.result);
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -1046,10 +1069,10 @@ void MemcardTest(void) {
         case MCTEST_STATE_SAVE_OVERWRITE_CONFIRM:
             xglFontDebugPrintf(0, 32, MC_TEXT_SAVE_FILE, work.file);
             xglFontDebugPrintf(16, 48, MC_TEXT_OVERWRITE_CONFIRM);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 state = MCTEST_STATE_SAVE_START;
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -1057,7 +1080,7 @@ void MemcardTest(void) {
         case MCTEST_STATE_SAVE_START:
             save_request.file = work.file;
             if (work.file == 0) {
-                save_request.data = SaveData;
+                save_request.data = &SaveData;
                 save_request.size = SAVE_HEADER_SIZE;
             } else {
                 save_request.data = D_0063F890;
@@ -1079,11 +1102,11 @@ void MemcardTest(void) {
             /* fall through */
         case MCTEST_STATE_FORMAT_CONFIRM:
             xglFontDebugPrintf(0, 32, MC_TEXT_FORMAT_CONFIRM);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 xglMcRequest(port, MC_REQ_FORMAT, 0, &work.result);
                 state = MCTEST_STATE_FORMATTING;
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -1097,7 +1120,7 @@ void MemcardTest(void) {
 
         case MCTEST_STATE_FORMAT_DONE:
             xglFontDebugPrintf(0, 32, MC_TEXT_FORMAT_DONE);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -1107,11 +1130,11 @@ void MemcardTest(void) {
             /* fall through */
         case MCTEST_STATE_UNFORMAT_CONFIRM:
             xglFontDebugPrintf(0, 32, MC_TEXT_UNFORMAT_CONFIRM);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 xglMcRequest(port, MC_REQ_UNFORMAT, 0, &work.result);
                 state = MCTEST_STATE_UNFORMATTING;
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -1125,7 +1148,7 @@ void MemcardTest(void) {
 
         case MCTEST_STATE_UNFORMAT_DONE:
             xglFontDebugPrintf(0, 32, MC_TEXT_UNFORMAT_DONE);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -1159,7 +1182,7 @@ void MemcardTest(void) {
                 }
             } else {
                 xglFontDebugPrintf(0, 32, MC_TEXT_LIST_DONE);
-                if (PAD_PRESSED & PAD_CIRCLE) {
+                if (PadData.ports[0].pressed & PAD_CIRCLE) {
                     state = MCTEST_STATE_MENU_INIT;
                 }
             }
@@ -1193,7 +1216,7 @@ void MemcardTest(void) {
                 }
             } else {
                 xglFontDebugPrintf(0, 32, MC_TEXT_LIST_DONE);
-                if (PAD_PRESSED & PAD_CIRCLE) {
+                if (PadData.ports[0].pressed & PAD_CIRCLE) {
                     state = MCTEST_STATE_MENU_INIT;
                 }
             }
@@ -1214,11 +1237,11 @@ void MemcardTest(void) {
 
         case MCTEST_STATE_DUMMY_SELECT_SIZE:
             xglFontDebugPrintf(0, 32, MC_TEXT_DUMMY_FREE, work.result);
-            dummy_step = (PAD_REPEATED & PAD_LEFT) ? -1 : 0;
-            if (PAD_REPEATED & PAD_RIGHT) {
+            dummy_step = (PadData.ports[0].repeated & PAD_LEFT) ? -1 : 0;
+            if (PadData.ports[0].repeated & PAD_RIGHT) {
                 dummy_step = 1;
             }
-            if (PAD_HELD & PAD_SQUARE) {
+            if (PadData.ports[0].held & PAD_SQUARE) {
                 dummy_step *= 100;
             }
             if (dummy_step != 0) {
@@ -1226,13 +1249,13 @@ void MemcardTest(void) {
             }
             xglFontDebugPrintf(16, 48, MC_TEXT_DUMMY_KEEP, work.check);
             xglFontDebugPrintf(16, 64, MC_TEXT_DUMMY_HELP);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 sceMcSync(0, &dummy_command, &dummy_result);
                 xglMcEasySave("/BISLPS-99999Dummy", (void *)DEBUG_BUFFER_BASE,
                               (work.result - work.check) << 10);
                 state = MCTEST_STATE_DUMMY_QUERY_FREE;
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_MENU_INIT;
             }
             break;
@@ -1245,18 +1268,18 @@ void MemcardTest(void) {
             xglFontDebugPrintf(0, 32, "%s", func_001EAB10(port));
             xglFontDebugPrintf(16, 48, MC_TEXT_LOAD);
             xglFontDebugPrintf(16, 64, MC_TEXT_SAVE);
-            hdd_menu_step = (PAD_PRESSED & PAD_UP) ? -1 : 0;
-            if (PAD_PRESSED & PAD_DOWN) {
+            hdd_menu_step = (PadData.ports[0].pressed & PAD_UP) ? -1 : 0;
+            if (PadData.ports[0].pressed & PAD_DOWN) {
                 hdd_menu_step = 1;
             }
             if (hdd_menu_step != 0) {
                 work.result = (work.result + hdd_menu_step + MC_HDD_MENU_ITEM_COUNT) % MC_HDD_MENU_ITEM_COUNT;
             }
             xglFontDebugPrintf(8, work.result * 16 + 48, D_0069D028);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 state = tbl_49[work.result];
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_INIT;
             }
             break;
@@ -1273,7 +1296,7 @@ void MemcardTest(void) {
 
         case MCTEST_STATE_HDD_LOAD_NO_FILE:
             xglFontDebugPrintf(0, 32, MC_TEXT_HDD_LOAD_NO_FILE, work.file);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 state = MCTEST_STATE_HDD_MENU_INIT;
             }
             break;
@@ -1281,10 +1304,10 @@ void MemcardTest(void) {
         case MCTEST_STATE_HDD_LOAD_SELECT:
             xglFontDebugPrintf(0, 32, MC_TEXT_HDD_LOAD);
             dir = 0;
-            if (PAD_REPEATED & PAD_LEFT) {
+            if (PadData.ports[0].repeated & PAD_LEFT) {
                 dir = -1;
             }
-            if (PAD_REPEATED & PAD_RIGHT) {
+            if (PadData.ports[0].repeated & PAD_RIGHT) {
                 dir = 1;
             }
             if (dir != 0) {
@@ -1296,16 +1319,16 @@ void MemcardTest(void) {
             } else {
                 xglFontDebugPrintf(16, 64, MC_TEXT_FILE_PRESENT);
             }
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 if (found[work.file] != 0) {
                     hdd_load_request.card = work.file;
-                    hdd_load_request.data = SaveData;
+                    hdd_load_request.data = &SaveData;
                     hdd_load_request.size = SAVE_DATA_SIZE;
                     printf("xglHddMcLoad():%d\n", xglHddMcLoad(&hdd_load_request));
                     state = MCTEST_STATE_HDD_MENU_INIT;
                 }
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_HDD_MENU_INIT;
             }
             break;
@@ -1316,15 +1339,15 @@ void MemcardTest(void) {
             /* fall through */
         case MCTEST_STATE_HDD_SAVE_SELECT_FILE:
             xglFontDebugPrintf(0, 32, MC_TEXT_HDD_SAVE_FREE, work.result);
-            hdd_file_step = (PAD_PRESSED & PAD_LEFT) ? -1 : 0;
-            if (PAD_PRESSED & PAD_RIGHT) {
+            hdd_file_step = (PadData.ports[0].pressed & PAD_LEFT) ? -1 : 0;
+            if (PadData.ports[0].pressed & PAD_RIGHT) {
                 hdd_file_step = 1;
             }
             if (hdd_file_step != 0) {
                 work.file = (work.file + hdd_file_step + MC_SAVE_FILE_COUNT) % MC_SAVE_FILE_COUNT;
             }
             xglFontDebugPrintf(16, 48, MC_TEXT_FILE_NUMBER, work.file);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 int exist;
 
                 hdd_check_request.card = work.file;
@@ -1335,7 +1358,7 @@ void MemcardTest(void) {
                     state = MCTEST_STATE_HDD_MENU_INIT;
                 }
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_HDD_MENU_INIT;
             }
             break;
@@ -1343,14 +1366,14 @@ void MemcardTest(void) {
         case MCTEST_STATE_HDD_SAVE_CREATE_CONFIRM:
             xglFontDebugPrintf(0, 32, MC_TEXT_HDD_SAVE_FREE, work.result);
             xglFontDebugPrintf(16, 48, MC_TEXT_CREATE_CONFIRM);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 hdd_create_request.status = work.file;
                 hdd_create_request.transfer = files;
                 hdd_create_request.dataSize = SAVE_DATA_SIZE;
                 printf("xglHddMcCreate():%d\n", xglHddMcCreate_001A5B80(&hdd_create_request));
                 state = MCTEST_STATE_HDD_SAVE_WRITE;
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_HDD_MENU_INIT;
             }
             break;
@@ -1358,24 +1381,24 @@ void MemcardTest(void) {
         case MCTEST_STATE_HDD_SAVE_OVERWRITE_CONFIRM:
             xglFontDebugPrintf(0, 32, MC_TEXT_HDD_SAVE_FREE, work.result);
             xglFontDebugPrintf(16, 48, MC_TEXT_OVERWRITE_CONFIRM);
-            if (PAD_PRESSED & PAD_CIRCLE) {
+            if (PadData.ports[0].pressed & PAD_CIRCLE) {
                 state = MCTEST_STATE_HDD_SAVE_WRITE;
             }
-            if (PAD_PRESSED & PAD_CROSS) {
+            if (PadData.ports[0].pressed & PAD_CROSS) {
                 state = MCTEST_STATE_HDD_MENU_INIT;
             }
             break;
 
         case MCTEST_STATE_HDD_SAVE_WRITE:
             hdd_save_request.card = work.file;
-            hdd_save_request.data = SaveData;
+            hdd_save_request.data = &SaveData;
             hdd_save_request.size = SAVE_DATA_SIZE;
             printf("xglHddMcSave():%d\n", xglHddMcSave(&hdd_save_request));
             state = MCTEST_STATE_HDD_MENU_INIT;
             break;
         }
 
-        if (PAD_PRESSED & PAD_TRIANGLE) {
+        if (PadData.ports[0].pressed & PAD_TRIANGLE) {
             flags = D_0063F8B4;
             for (i = 0; i < SAVE_FLAGS_COUNT; i++) {
                 *flags++ = xglSRand();
@@ -1416,14 +1439,14 @@ void CdSlotTest(void) {
     resInitPathHeader(DEBUG_BUFFER_BASE, DEBUG_BUFFER_BASE);
     resPathSlotsInit();
     resSelectSlot(1);
-    while ((PAD_HELD_AND_PRESSED & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
         xglFontDebugPrintf(0, 0, D_00689378, view);
         D_0069D118++;
         xglFontDebugPrintf(((D_0069D118 * 4) & 0x38) + 0x50, 0, D_0069D120);
-        if (PAD_PRESSED & PAD_START) {
+        if (PadData.ports[0].pressed & PAD_START) {
             func_001E1B10();
         }
-        if (PAD_PRESSED & PAD_SELECT) {
+        if (PadData.ports[0].pressed & PAD_SELECT) {
             view ^= 1;
         }
         switch (view) {
@@ -1446,7 +1469,9 @@ extern const char D_006893C0[];
 extern const char D_006893D0[];
 /* "VOL%3d". */
 extern const char D_006893F0[];
+/* "ON". */
 extern const char D_0069D128[];
+/* "OFF". */
 extern const char D_0069D130[];
 extern int D_002B5D98[];
 
@@ -1455,7 +1480,7 @@ void *GameResBufferAlloc(int size);
 extern int sceOpen(const char *path, int flags, ...);
 extern int sceRead(int descriptor, void *buffer, int bytes);
 extern int sceClose(int descriptor);
-void *memset(void *dest, int value, unsigned int count);
+void *memset(void *destination, int value, unsigned int count);
 int DebugTextViewUpdate(DebugTextView *view);
 void func_001A4400(int flag);
 void GameMovieCaptionPlay(const char *name);
@@ -1481,20 +1506,20 @@ void MovieListTest(void) {
     sceRead(descriptor, list, 0x4000);
     sceClose(descriptor);
     DebugTextViewInit(&view, list);
-    SaveData[0x3A] = 2;
+    SaveData.caption_all = 2; /* the save default: every caption line shown */
     D_002B5D98[0] = 0;
     func_001A4400(0);
-    while ((PAD_HELD_AND_PRESSED & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
         xglFontDebugPrintf(0, 0, D_006893C0);
-        if (PAD_PRESSED & PAD_SQUARE) {
-            SaveData[0x29] ^= 1;
+        if (PadData.ports[0].pressed & PAD_SQUARE) {
+            SaveData.dolby_digital ^= 1;
         }
-        xglFontDebugPrintf(0, 0xD0, D_006893D0, SaveData[0x29] ? D_0069D128 : D_0069D130);
-        if (PAD_REPEATED & (PAD_L1 | PAD_R1)) {
-            if (PAD_REPEATED & PAD_L1) {
+        xglFontDebugPrintf(0, 0xD0, D_006893D0, SaveData.dolby_digital ? D_0069D128 : D_0069D130);
+        if (PadData.ports[0].repeated & (PAD_L1 | PAD_R1)) {
+            if (PadData.ports[0].repeated & PAD_L1) {
                 volume--;
             }
-            if (PAD_REPEATED & PAD_R1) {
+            if (PadData.ports[0].repeated & PAD_R1) {
                 volume++;
             }
             if (volume < 0) {
@@ -1533,22 +1558,22 @@ extern const char D_0069D140[];
  * at 0x46, the stream buffer at 0x90, the two decoded frame buffers at
  * 0xB0 with the index of the one being decoded at 0xC8, and the work
  * buffer at 0xCC. */
-typedef struct XglMovieInfo {
+typedef struct XglMovieWork {
     unsigned char unmodeled_00[0x40];
     short width;
     short height;
     unsigned char unmodeled_44[0x46 - 0x44];
-    short frame;
+    short currentFrame;
     unsigned char unmodeled_48[0x90 - 0x48];
-    unsigned char *streamBuffer;
-    int streamBufferSize;
+    unsigned char *source;
+    int sourceSize;
     unsigned char unmodeled_98[0xB0 - 0x98];
-    unsigned char *frameBuffers[2];
+    unsigned char *imageAddress[2];
     unsigned char unmodeled_B8[0xC8 - 0xB8];
-    unsigned char frameIndex;
+    unsigned char bufferIndex;
     unsigned char unmodeled_C9[0xCC - 0xC9];
     unsigned char *workBuffer;
-} XglMovieInfo;
+} XglMovieWork;
 
 /* The textured sprite that shows a decoded frame: TEX0 at 0x10, the two
  * XYZ2 vertices at 0x40 and 0x60 and the second vertex's UV at 0x50. */
@@ -1573,10 +1598,10 @@ extern unsigned long long D_002BD280[6];
 extern unsigned long long D_002BD2B0[8];
 extern IpuSpritePacket D_002BD2F0;
 
-void xglMovieInfoInit(XglMovieInfo *info);
-int xglMovieOpen(XglMovieInfo *info, const char *name);
-int xglMoviePlay(XglMovieInfo *info);
-void xglMovieRewind(XglMovieInfo *info);
+void xglMovieInfoInit(XglMovieWork *info);
+int xglMovieOpen(XglMovieWork *info, const char *name);
+int xglMoviePlay(XglMovieWork *info);
+void xglMovieRewind(XglMovieWork *info);
 
 typedef struct XglPacket XglPacket;
 
@@ -1591,7 +1616,7 @@ void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 /* IPU movie test: plays yajima\\ipu_101.ipu from a 64 KB stream buffer
  * and draws each decoded frame as a textured sprite; circle rewinds. */
 void IpuMovieTest(void) {
-    XglMovieInfo info;
+    XglMovieWork info;
     int frames = 0;
     XglPacket *packet;
     unsigned char *frame;
@@ -1600,23 +1625,23 @@ void IpuMovieTest(void) {
     int result;
 
     xglMovieInfoInit(&info);
-    info.streamBuffer = (unsigned char *)IPU_STREAM_BUFFER_BASE;
-    info.streamBufferSize = 0x10000;
+    info.source = (unsigned char *)IPU_STREAM_BUFFER_BASE;
+    info.sourceSize = 0x10000;
     xglMovieOpen(&info, D_00689400);
-    info.frameBuffers[0] = (unsigned char *)DEBUG_BUFFER_BASE;
-    info.frameBuffers[1] = (unsigned char *)(DEBUG_BUFFER_BASE + 0x200000);
+    info.imageAddress[0] = (unsigned char *)DEBUG_BUFFER_BASE;
+    info.imageAddress[1] = (unsigned char *)(DEBUG_BUFFER_BASE + 0x200000);
     info.workBuffer = (unsigned char *)(DEBUG_BUFFER_BASE + 0x400000);
     printf(D_0069D138, info.width, info.height);
-    while ((PAD_HELD_AND_PRESSED & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
-        if (PAD_PRESSED & PAD_CIRCLE) {
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+        if (PadData.ports[0].pressed & PAD_CIRCLE) {
             xglMovieRewind(&info);
         }
         xglFontDebugPrintf(0, 0, D_0069D140);
         result = xglMoviePlay(&info);
-        xglFontDebugPrintf(0, 0x20, D_00689418, info.frame, result, frames);
+        xglFontDebugPrintf(0, 0x20, D_00689418, info.currentFrame, result, frames);
         frames++;
         packet = xglPacketGetCurrent();
-        frame = info.frameBuffers[info.frameIndex ^ 1];
+        frame = info.imageAddress[info.bufferIndex ^ 1];
         width = info.width << 4;
         height = info.height << 4;
         sceVif1PkCnt(packet, 0);
@@ -1692,10 +1717,10 @@ void func_001ED1C0(void) {
     }
     out[0] = '\n';
     out[1] = 0;
-    while ((PAD_HELD_AND_PRESSED & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
         xglFontDebugPrintf(0, 0, D_00689440);
         xglFontDebugPrintf(16, 16, (const char *)list);
-        if (PAD_PRESSED & PAD_CIRCLE) {
+        if (PadData.ports[0].pressed & PAD_CIRCLE) {
             printf((const char *)list);
         }
         xglSleep();
@@ -1822,7 +1847,7 @@ void func_001ED568(void) {
     PointXZ to;
     PointXZ from;
     int state;
-    PadPort *pads;
+    McTestPadPort *pads;
     float t;
 
     start1.x = 0x800;
@@ -1833,7 +1858,7 @@ void func_001ED568(void) {
     start2.z = 0x400;
     end2.x = 0x1000;
     end2.z = 0x1000;
-    while ((PAD_HELD_AND_PRESSED & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
         pads = PadData.ports;
         start1.x += pads[1].sticksCentered[2];
         start1.z += pads[1].sticksCentered[3];
@@ -1848,7 +1873,8 @@ void func_001ED568(void) {
             start2.x = end2.x;
         }
         state = 0;
-        /* At most one pass: the body always ends in break. */
+        /* At most one pass: the body always ends in break. Written as an
+         * if, the compiler allocates the registers differently. */
         while (!func_001ED420(&start1, &end1, &start2, &end2)
                && !func_001ED420(&start2, &end2, &start1, &end1)) {
             state = 1;
@@ -1886,6 +1912,9 @@ void func_001ED568(void) {
         func_001ED358(&start2, &end2, 0xC0);
         xglFontDebugPrintf(0, 0, D_00689458, start1.x >> 4, start1.z >> 4, end1.x >> 4, end1.z >> 4);
         xglFontDebugPrintf(0, 8, D_00689458, start2.x >> 4, start2.z >> 4, end2.x >> 4, end2.z >> 4);
+        /* crossing is shown every frame: it keeps the last crossing found
+         * and is not set before the first one (the original reads the
+         * stack slot the same way). */
         xglFontDebugPrintf(0, 0x10, D_00689470, crossing.x >> 4, crossing.z >> 4);
         xglFontDebugPrintf(0, 0x18, D_0069D0D0, state);
         xglFontDebugPrintf(0, 0x40, D_0069D108,
