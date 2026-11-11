@@ -269,6 +269,20 @@ struct FontHexCommand {
     unsigned char terminator;
 };
 
+/* Queues the text at the given address to be printed in place (xglFontFlushCore recurses into it). */
+struct FontIncludeCommand {
+    unsigned char opcode;
+    unsigned char text_high;
+    unsigned char text_mid_high;
+    unsigned char text_mid_low;
+    unsigned char text_low;
+};
+
+/* The variadic arguments after `last`, as the 8-byte register save slots of the EE ABI. */
+#define FONT_ARGUMENT_START(list, last) \
+    ((list) = (unsigned long long *)((char *)__builtin_next_arg(last) - \
+              (8 - __builtin_args_info(2)) * 8))
+
 struct FontGsRegisterWrite {
     unsigned long long value;
     unsigned long long register_address;
@@ -530,7 +544,51 @@ void xglFontSetStoredValue(int stored_value) {
     FS.state.stored_value = stored_value;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontDebugPrintf);
+void xglFontDebugPrintf(int x, int y, const char *format, ...)
+{
+    unsigned long long arguments[32];
+    unsigned long long *output;
+    unsigned long long *list;
+
+    if ((D_008DAD00.flags & (FONT_STATE_ENABLED | FONT_STATE_DEBUG_PRINT))
+        == (FONT_STATE_ENABLED | FONT_STATE_DEBUG_PRINT)) {
+        arguments[0] = (unsigned int)format;
+        {
+        int count;
+
+        FONT_ARGUMENT_START(list, format);
+        output = arguments + 1;
+        count = 30;
+        do {
+            unsigned long long *argument = list++;
+            unsigned long long value = *argument;
+
+            count--;
+            *output = value;
+            output++;
+        } while (count >= 0);
+        }
+        if (D_008DAD00.debug_mode == 0) {
+            x <<= 1;
+            y <<= 1;
+        }
+        set_xyz(x, y, -1);
+        if (D_008DAD00.stored_value != 0) {
+            struct FontIncludeCommand *command = (struct FontIncludeCommand *)D_008DAD00.queue_cursor;
+            unsigned int text = D_008DAD00.stored_value;
+
+            command->opcode = FONT_OP_INCLUDE;
+            command->text_high = text >> 24;
+            command->text_mid_high = text >> 16;
+            command->text_mid_low = text >> 8;
+            command->text_low = text;
+            D_008DAD00.queue_cursor += sizeof(*command);
+        } else {
+            *D_008DAD00.queue_cursor++ = FONT_OP_RESET;
+        }
+        xglFontPrintSub(arguments);
+    }
+}
 
 void xglFontDebugHex(int x, int y, unsigned int value, int digits)
 {
@@ -866,14 +924,6 @@ struct FontLiteralHexCommand {
     unsigned char value_mid_high;
     unsigned char value_mid_low;
     unsigned char value_low;
-};
-
-struct FontIncludeCommand {
-    unsigned char opcode;
-    unsigned char text_high;
-    unsigned char text_mid_high;
-    unsigned char text_mid_low;
-    unsigned char text_low;
 };
 
 /* One A+D register write after the GIF tag xglFontAllocGifPacket writes. */
