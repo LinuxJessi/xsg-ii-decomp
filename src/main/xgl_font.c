@@ -1093,7 +1093,54 @@ int mark(FontDrawCursor *cursor, const char **text)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001970E0);
+typedef int (*FontInlineHandler)(FontDrawCursor *cursor, const char **text);
+
+/* One entry of the inline "$name" command table; the table ends with a null name. */
+struct FontInlineCommand {
+    const char *name;
+    FontInlineHandler handler;
+};
+
+/* ax ay az rx ry init save load col bg shadow alpha zoom xx ruby prop han mark */
+extern struct FontInlineCommand fontInlineCommands[];
+/* "[*error*:%c%c%c%c]\n" */
+extern char fontInlineErrorFormat[];
+int printf(const char *format, ...);
+
+/*
+ * Runs the inline command after the '$' at *text: the first table name that is a prefix of the text
+ * wins, its handler parses the arguments. Unknown names are reported with their first four characters.
+ */
+int func_001970E0(FontDrawCursor *cursor, unsigned char **text)
+{
+    unsigned char *next = *text + 1;
+    struct FontInlineCommand *command = fontInlineCommands;
+    FontInlineHandler handler = 0;
+    while (command->name != 0) {
+        const char *name = command->name;
+        const char *scan = (const char *)next;
+
+        while (*name == *scan) {
+            name++;
+            scan++;
+        }
+        if (*name == 0) {
+            next = (unsigned char *)scan;
+            handler = command->handler;
+            break;
+        }
+        command++;
+    }
+    if (handler != 0) {
+        if (handler(cursor, (const char **)&next)) {
+            *text = next;
+            return 1;
+        }
+    } else {
+        printf(fontInlineErrorFormat, next[0], next[1], next[2], next[3]);
+    }
+    return 0;
+}
 
 extern FontPrintQueueStorage fontPrintQueueBuffer;
 
