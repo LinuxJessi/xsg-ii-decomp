@@ -44,6 +44,7 @@
    "0x001303c0": "sceMcGetInfo",
    "0x001305b0": "sceMcGetDir",
    "0x001308c0": "sceMcFormat",
+   "0x00130990": "sceMcDelete",
    "0x00130e80": "sceMcUnformat",
    "0x00194890": "xglSleep",
    "0x001948d8": "xglTimer0Get",

@@ -58,17 +58,19 @@
     {
      "range": [
       "0x0068dfa0",
-      "0x0068dfd0"
+      "0x0068e010"
      ],
      "generated": [
       "0x0068dfa0",
-      "0x0068dfc4"
+      "0x0068e010"
      ],
      "generated_by": [
+      "xglMcCreateStep",
       "xglMcExecute"
      ],
      "c_owned_symbols": [
-      "jtbl_0068DFA0"
+      "jtbl_0068DFA0",
+      "jtbl_0068DFD0"
      ],
      "also_referenced_by_c": [],
      "basis": {

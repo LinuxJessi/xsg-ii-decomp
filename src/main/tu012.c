@@ -76,21 +76,26 @@ int xglMcRequest(int port, int command, McRequestParam *param, int *result)
 
 #include "shared.h"
 
-/* Memory-card state block at xglMcState. The full path of the current request starts at +0x20. */
+/* The icon.sys contents the create request keeps (sizeof(sceMcIconSys) bytes, byte aligned). */
+typedef struct McIconSys {
+    unsigned char bytes[0x3C4];
+} McIconSys;
+
+/* Memory-card state block at xglMcState. */
 typedef struct XglMcState {
     unsigned char state;            /* +0x00: phase of the request state machine */
     unsigned char substate;         /* +0x01: step inside the current state, cleared per request */
-    unsigned char unmodeled_02[0x16];
+    unsigned char unmodeled_02[6];
+    int descriptor;                 /* +0x08: the open file */
+    unsigned char unmodeled_0c[0xC];
     int create_index;               /* +0x18: progress of the create request */
     unsigned char unmodeled_1c[1];
     unsigned char selector;         /* +0x1D: selector for the card search */
     signed char card;               /* +0x1E: card index chosen by the search */
     unsigned char status;           /* +0x1F */
     char full_path[0x60];           /* +0x20: full path of the current request (xglMcBuildPath) */
-    short port;                     /* +0x80: sceMc port */
-    unsigned char unmodeled_82[6];
-    unsigned int mode;              /* +0x88: search mode of func_0019E508 (0..2) */
-    int size;                       /* +0x8C: work pointer; sceMcGetDir reserves (size + 0xA3) & ~0x3F */
+    McQueueEntry request;           /* +0x80: the request being worked on; the card search reuses its
+                                     * file number as the search mode (0..2) and data as the work address */
 } XglMcState;
 
 extern XglMcState xglMcState;
@@ -316,7 +321,107 @@ void xglMcExecute(McQueueEntry *request)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu012", xglMcCreateStep);
+/* The create request's buffer: a table of file offsets (file k spans offset[k]..offset[k + 1],
+ * each start rounded up to 64 bytes, relative to the end of the rounded header size offset[0]),
+ * then at +0x40 the icon.sys contents. */
+typedef struct McCreateData {
+    int offset[16];
+    McIconSys icon;
+} McCreateData;
+
+/* Steps of the create request (xglMcState.substate). */
+#define MC_CREATE_DELETE_SAVE 0
+#define MC_CREATE_DELETE_DUMMY 1
+#define MC_CREATE_COPY_ICON 2
+#define MC_CREATE_LAST_OPTIONAL_CLOSE 6
+#define MC_CREATE_DUMMY_WRITE 14
+#define MC_CREATE_LAST_CLOSE 15
+/* Each file takes three steps: open, write, close. */
+#define MC_CREATE_STEPS_PER_FILE 3
+/* The save folder is filled up to this many bytes by the dummy file. */
+#define MC_CREATE_TOTAL_BYTES 0x42400
+/* sceMc result the delete steps accept: the file did not exist. */
+#define MC_RESULT_NO_ENTRY (-4)
+
+/* The icon.sys contents the create request keeps (0x959FD8, right behind xglMcState). */
+extern McIconSys xglMcIconSys;
+int sceMcDelete(int port, int slot, const char *name);
+int sceMcClose(int descriptor);
+int sceMcWrite(int descriptor, const void *buffer, int size);
+
+/* One step of the create request, called with the result of the previous card operation: deletes
+ * the old save and dummy file, keeps the icon.sys contents, then opens, writes and closes the
+ * files of the buffer's offset table and the dummy file that fills the folder. Returns 1 when
+ * done, 0 while steps remain (the step count goes to the request's result), -1 on an error. */
+int xglMcCreateStep(int result)
+{
+    int file;
+    McCreateData *save;
+    char *data;
+    int *entry;
+    int offset;
+    int size;
+
+    file = xglMcState.request.file;
+    if (result >= 0 || (xglMcState.substate < 3 && result == MC_RESULT_NO_ENTRY)) {
+        save = (McCreateData *)xglMcState.request.data;
+        switch (xglMcState.substate) {
+        case MC_CREATE_DELETE_SAVE:
+            xglMcSetFullPath(file, 0);
+            sceMcDelete(xglMcState.request.port, 0, xglMcState.full_path);
+            break;
+        case MC_CREATE_DELETE_DUMMY:
+            xglMcSetFullPath(file, 5);
+            sceMcDelete(xglMcState.request.port, 0, xglMcState.full_path);
+            break;
+        case MC_CREATE_COPY_ICON:
+            xglMcIconSys = save->icon;
+            break;
+        case 3:
+            break;
+        case 6:
+        case 9:
+        case 12:
+        case MC_CREATE_LAST_CLOSE:
+            sceMcClose(xglMcState.descriptor);
+            if (save->offset[3] == 0 && xglMcState.substate == MC_CREATE_LAST_OPTIONAL_CLOSE) {
+                return 1;
+            }
+            if (xglMcState.substate == MC_CREATE_LAST_CLOSE) {
+                return 1;
+            }
+            break;
+        case 4:
+        case 7:
+        case 10:
+        case 13:
+            xglMcSetFullPath(file, xglMcState.substate / MC_CREATE_STEPS_PER_FILE + 1);
+            sceMcOpen(xglMcState.request.port, 0, xglMcState.full_path, MC_OPEN_WRITE_CREATE);
+            break;
+        case 5:
+        case 8:
+        case 11:
+            xglMcState.descriptor = result;
+            data = (char *)save + ((save->offset[0] + 0x3F) & ~0x3F);
+            /* The entry address is computed as an integer, index first (addu index*4, base). */
+            entry = (int *)(xglMcState.substate / MC_CREATE_STEPS_PER_FILE * 4 + (int)save);
+            offset = (entry[0] + 0x3F) & ~0x3F;
+            size = entry[1] - offset;
+            xglMcState.create_index += (size + 0x3FF) & ~0x3FF;
+            sceMcWrite(result, data + offset, size);
+            break;
+        case MC_CREATE_DUMMY_WRITE:
+            xglMcState.descriptor = result;
+            sceMcWrite(result, save, MC_CREATE_TOTAL_BYTES - xglMcState.create_index);
+            break;
+        }
+        xglMcState.substate++;
+        *xglMcState.request.result = xglMcState.substate;
+        return 0;
+    }
+    *xglMcState.request.result = result;
+    return -1;
+}
 
 /* Entries in the table func_0019E408 searches. */
 #define MC_SLOT_COUNT 100
@@ -358,7 +463,7 @@ int xglMcStartDirectoryScan(void)
 {
     int card;
 
-    card = func_0019E408((unsigned char *)xglMcState.size, xglMcState.selector);
+    card = func_0019E408((unsigned char *)xglMcState.request.data, xglMcState.selector);
     if (card < 0)
     {
         return 1;
@@ -366,11 +471,11 @@ int xglMcStartDirectoryScan(void)
     xglMcState.card = (signed char) card;
     xglMcState.status = 0;
     xglMcSetFullPath(card, (int)D_0069DF70);
-    sceMcGetDir(xglMcState.port, 0, xglMcState.full_path, 0, 0x10, (xglMcState.size + 0xA3) & ~0x3F);
+    sceMcGetDir(xglMcState.request.port, 0, xglMcState.full_path, 0, 0x10, (xglMcState.request.data + 0xA3) & ~0x3F);
     return 0;
 }
 
-/* Save folders of the card search, one per xglMcState.mode: /BASLUS-20469Xen, /BISLPS-29005Xen, /BISLPS-25353. */
+/* Save folders of the card search, one per search mode (xglMcState.request.file): /BASLUS-20469Xen, /BISLPS-29005Xen, /BISLPS-25353. */
 extern char *xglMcBasePaths[];
 int sceMcOpen(int port, int slot, const char *name, int mode);
 
@@ -382,18 +487,19 @@ int func_0019E508(void)
 {
     int card;
 
-    card = func_0019E408((unsigned char *)xglMcState.size, xglMcState.selector);
+    card = func_0019E408((unsigned char *)xglMcState.request.data, xglMcState.selector);
     if (card < 0) {
-        switch (xglMcState.mode) {
+        /* The search mode is tested unsigned (beqz for mode 0 after the test for 1). */
+        switch ((unsigned int)xglMcState.request.file) {
         case 0:
-            xglMcState.mode = 1;
-            xglMcBuildPath(xglMcBasePaths[xglMcState.mode], -1, -1);
-            sceMcGetDir(xglMcState.port, 0, xglMcState.full_path, 0, 100, (xglMcState.size + 0xA3) & ~0x3F);
+            xglMcState.request.file = 1;
+            xglMcBuildPath(xglMcBasePaths[xglMcState.request.file], -1, -1);
+            sceMcGetDir(xglMcState.request.port, 0, xglMcState.full_path, 0, 100, (xglMcState.request.data + 0xA3) & ~0x3F);
             return -1;
         case 1:
-            xglMcState.mode = 2;
-            xglMcBuildPath(xglMcBasePaths[xglMcState.mode], -2, 0);
-            sceMcOpen(xglMcState.port, 0, xglMcState.full_path, 1);
+            xglMcState.request.file = 2;
+            xglMcBuildPath(xglMcBasePaths[xglMcState.request.file], -2, 0);
+            sceMcOpen(xglMcState.request.port, 0, xglMcState.full_path, 1);
             return 0;
         case 2:
             return 1;
@@ -401,8 +507,8 @@ int func_0019E508(void)
     }
     xglMcState.card = card;
     xglMcState.status = 0;
-    xglMcBuildPath(xglMcBasePaths[xglMcState.mode], card, 0);
-    sceMcOpen(xglMcState.port, 0, xglMcState.full_path, 1);
+    xglMcBuildPath(xglMcBasePaths[xglMcState.request.file], card, 0);
+    sceMcOpen(xglMcState.request.port, 0, xglMcState.full_path, 1);
     return 0;
 }
 

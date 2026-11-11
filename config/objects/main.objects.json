@@ -9170,9 +9170,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00130990",
+     "name": "sceMcDelete",
      "size": 280,
-     "splat_name": "func_00130990",
+     "splat_name": "sceMcDelete",
      "va": "0x00130990",
      "name_basis": "address",
      "provenance": "estimated"
