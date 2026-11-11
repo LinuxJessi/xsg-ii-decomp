@@ -4713,7 +4713,65 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": ".work/x2-readable-integration-20261105-main/out/game_defocus/b.o"
+      "object": "build/main/build/c/game_defocus.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00688360",
+      "0x006883f0"
+     ],
+     "generated": [
+      "0x00688360",
+      "0x006883ec"
+     ],
+     "generated_by": [
+      "GameDefocusQuickSet",
+      "GameDefocusSet"
+     ],
+     "c_owned_symbols": [
+      "$LC0",
+      "$LC1",
+      "$L183"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/game_defocus.o"
+     }
+    }
+   ]
+  },
+  "main/tu058": {
+   ".sdata": [
+    {
+     "range": [
+      "0x0069cfe0",
+      "0x0069cff8"
+     ],
+     "generated": [
+      "0x0069cfe0",
+      "0x0069cff8"
+     ],
+     "generated_by": [
+      "caption_getparam"
+     ],
+     "c_owned_symbols": [
+      "captionRubyBegin",
+      "captionRubySplit",
+      "captionRubyEnd"
+     ],
+     "also_referenced_by_c": [
+      "D_0069D000",
+      "D_0069D010"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/game_movie.o"
      }
     }
    ]
