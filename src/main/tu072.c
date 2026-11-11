@@ -7,7 +7,7 @@
 
 /* Script native argument access: the VM supplies the argument count and the
    integer argument at each 1-based position of the running native call. */
-int func_A9F0A8(void);
+int func_A9F0A8(int call);
 void func_A9CC70(int call, int error_code);
 int func_A9F0C0(int call, int index);
 int func_A9F1C0(int call, int index);
@@ -15,18 +15,19 @@ void func_00208B28(void);
 void func_00208B50(int value);
 void vibrationStartFade(unsigned char targetValue, unsigned char currentValue, int framesTotal);
 
-/* The XenoActor of an enepc record (+0x330); only the fields used below. */
+/* The XenoActor of a record (UwamonoRecord.actor, +0x330); only the fields used
+   below, with the names of src/main/xenoActor.c. */
 struct XenoActor {
     unsigned char unmodeled_000[0xB0];
     float radius;                           /* +0x0B0 */
     unsigned char unmodeled_0b4[0x14C - 0xB4];
-    float actorParam14C;                    /* +0x14C */
+    float modeValue3;                       /* +0x14C */
     unsigned char unmodeled_150[0x170 - 0x150];
-    float actorParam170;                    /* +0x170 */
-    float actorParam174;                    /* +0x174 */
+    float fogA;                             /* +0x170 */
+    float fogB;                             /* +0x174 */
     unsigned char unmodeled_178[0x5CC - 0x178];
     unsigned int flags;                     /* +0x5CC: 0x2 loops the motion */
-    float playStart;                        /* +0x5D0 */
+    float transformScale;                   /* +0x5D0: the motion native stores the play-range start frame here */
     int mode;                               /* +0x5D4: motion number within the group */
     int modeGroup;                          /* +0x5D8: motion number / 100 */
 };
@@ -40,15 +41,16 @@ typedef union EnepcPoint {
     AlignedVector4 vector;
 } EnepcPoint;
 
-/* The state block of an enepc record (+0x334). */
-typedef struct EnepcState {
+/* The state block of a record (UwamonoRecord.motions, +0x334); only the fields used
+   here. */
+typedef struct UwamonoState {
     unsigned char unmodeled_0000[0x34];
     float floatParams[4];                   /* +0x0034 */
     float angle;                            /* +0x0044: radians */
     float floatParams48[2];                 /* +0x0048 */
     short shortParams[4];                   /* +0x0050 */
     unsigned char unmodeled_0058[7];
-    unsigned char routeMode;                /* +0x005F: 9 is turned into 8 once the path is mirrored */
+    unsigned char mode;                     /* +0x005F: 9 is turned into 8 once the path is mirrored */
     unsigned char unmodeled_0060[0x10A0 - 0x60];
     EnepcPoint points[0x100];               /* +0x10A0: path points, script units / 100 */
     short pointLinks[0x100][4];             /* +0x20A0: -1 for none */
@@ -59,24 +61,37 @@ typedef struct EnepcState {
     short routeNodeCount;                   /* +0x37B0: counted up by uwamonoAddRouteNode */
     unsigned char unmodeled_37b2[0x3FF0 - 0x37B2];
     int flags;                              /* +0x3FF0 */
-} EnepcState;
+} UwamonoState;
 
 /* One 0x870-byte record of uwamonoRecords; only the fields used here. */
-typedef struct EnepcRecord {
+typedef struct UwamonoRecord {
     unsigned char unmodeled_000[2];
-    unsigned char kind;                     /* +0x002: 1/4 actor */
+    unsigned char kind;                     /* +0x002: MAP_KIND_* */
     unsigned char unmodeled_003[0x330 - 3];
     struct XenoActor *actor;                /* +0x330 */
-    EnepcState *state;                      /* +0x334 */
+    UwamonoState *motions;                  /* +0x334 */
     unsigned char unmodeled_338[4];
     short motion;                           /* +0x33C */
     unsigned char unmodeled_33e[0x580 - 0x33E];
     float extent;                           /* +0x580 */
     float height;                           /* +0x584 */
     unsigned char unmodeled_588[0x870 - 0x588];
-} EnepcRecord;
+} UwamonoRecord;
 
-extern EnepcRecord uwamonoRecords[];
+/* UwamonoRecord.kind (the names of tu050.c's MapObjectRecord.kind). */
+enum {
+    MAP_KIND_FREE = 0,
+    MAP_KIND_ACTOR = 1,
+    MAP_KIND_MODEL = 2,
+    MAP_KIND_FLAG = 3,
+    MAP_KIND_ACTOR_STATIC = 4, /* an actor that is not moved by uwamonoUpdateRecord */
+    MAP_KIND_PART = 5,         /* a part attached to the player (tu051.c) */
+    MAP_KIND_EFFECT = 6,
+    MAP_KIND_MOVER = 7,
+    MAP_KIND_MODEL_REQUEST = 8 /* create only: uwamonoCreateRecord turns it into a model or frees it */
+};
+
+extern UwamonoRecord uwamonoRecords[];
 
 /* A path point of a script array: integer coordinates in script units (x 100). */
 typedef struct EnepcPathPoint {
@@ -94,7 +109,11 @@ typedef struct EnepcRouteNode {
     unsigned char unmodeled_0e[2];
 } EnepcRouteNode;
 
-/* One preset of D_0069D1D8, handed to enepcStoreParams in its argument order. */
+/* One preset of enepcParamSets, handed to enepcStoreParams in its argument order.
+   floatParams, floatParams48 and shortParams (and enepcStoreParams' paramA0..3,
+   paramB0..1, shortParam0..3) are named by position on purpose: only their setters
+   here and their reset (tya_draw_gauge.c) are recovered, not the code that reads them,
+   so their roles are unknown. */
 typedef struct EnepcParamSet {
     float height;                           /* +0x00 */
     float extent;                           /* +0x04 */
@@ -105,7 +124,7 @@ typedef struct EnepcParamSet {
     short shortParams[4];                   /* +0x28 */
 } EnepcParamSet;
 
-extern EnepcParamSet *D_0069D1D8;
+extern struct EnepcParamSet *enepcParamSets;
 
 int uwamonoFindIndexByShortKey(short key);
 void *func_A9F298(int call, int handle);
@@ -115,20 +134,20 @@ void enepcStoreParams(int index, float height, float extent,
                       float paramA0, float paramA1, float paramA2, float paramA3,
                       float angleDegrees, float paramB0, float paramB1,
                       short shortParam0, short shortParam1, short shortParam2, short shortParam3,
-                      float actorParam14C, short motion, float actorParam170, float actorParam174,
+                      float modeValue3, short motion, float fogA, float fogB,
                       int initState);
 
-/* Vibration native, at least 4 arguments.  When func_A9F1C0 reports argument 1 as
+/* Native "Vibration", at least 4 arguments.  When func_A9F1C0 reports argument 1 as
    absent (nonzero), the fade is stopped (func_00208B28); otherwise argument 1 goes to
    func_00208B50 and arguments 2 to 4 start a vibrationStartFade. */
-int runtime_001F4E20(int call)
+int runtimeVibration(int call)
 {
     int value;
     int targetValue;
     int currentValue;
     int framesTotal;
 
-    if (func_A9F0A8() < 4) {
+    if (func_A9F0A8(call) < 4) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -147,7 +166,7 @@ int runtime_001F4E20(int call)
 
 extern unsigned char runtimeNativeTable[];
 extern unsigned char runtimeModuleName[];
-void func_A9CDB0(void *, void *);
+int func_A9CDB0(void *module, void *nativeTable);
 
 /* Registers the "runtime" script module: runtimeModuleName holds its name string and
    runtimeNativeTable its table of name/function pointer pairs (setNumber, setLocater,
@@ -156,11 +175,11 @@ void runtimeRegisterNatives(void) {
     func_A9CDB0(runtimeModuleName, runtimeNativeTable);
 }
 
-/* enepc setPath native, 7 arguments: argument 1 is the record key, 3 a preset of
-   D_0069D1D8 (absent: none), 4 and 5 a path point array and its count, 6 and 7 a
+/* Native "setParams", 7 arguments: argument 1 is the record key, 3 a preset of
+   enepcParamSets (absent: none), 4 and 5 a path point array and its count, 6 and 7 a
    route node array and its count.  Argument 2 is read but not used.  A path in route
    mode 9 is mirrored back onto itself (mode 8). */
-int enepc_001F4F28(int call)
+int enepcSetParams(int call)
 {
     int key;
     int index;
@@ -169,12 +188,12 @@ int enepc_001F4F28(int call)
     int pointCount;
     EnepcRouteNode *nodes;
     int nodeCount;
-    EnepcState *state;
+    UwamonoState *state;
     short shortParam3;
     int i;
     int j;
 
-    if (func_A9F0A8() < 7) {
+    if (func_A9F0A8(call) < 7) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -183,6 +202,8 @@ int enepc_001F4F28(int call)
     if (index == -1) {
         return 1;
     }
+    /* Argument 2 is read and discarded (the original calls func_A9F0C0(call, 2)
+       and never uses the result). */
     func_A9F0C0(call, 2);
     if (func_A9F1C0(call, 3) == 0) {
         paramSet = func_A9F0C0(call, 3);
@@ -201,7 +222,7 @@ int enepc_001F4F28(int call)
         nodes = NULL;
     }
     nodeCount = func_A9F0C0(call, 7);
-    state = uwamonoRecords[index].state;
+    state = uwamonoRecords[index].motions;
     if (points != NULL) {
         state->pointCount = pointCount;
         for (i = 0; i < state->pointCount; i++) {
@@ -209,14 +230,16 @@ int enepc_001F4F28(int call)
             state->points[i].coords[1] = (float) points[i].y / 100.0f;
             state->points[i].coords[2] = (float) points[i].z / 100.0f;
         }
-        if (state->routeMode == 9) {
+        if (state->mode == 9) {
             for (i = 0; i < state->pointCount - 2; i++) {
                 state->points[state->pointCount + i].coords[0] = state->points[state->pointCount - i - 2].coords[0];
                 state->points[state->pointCount + i].coords[2] = state->points[state->pointCount - i - 2].coords[2];
             }
             state->pointCount = state->pointCount * 2 - 2;
-            if (state->routeMode == 9) {
-                state->routeMode = 8;
+            /* The original tests mode against 9 a second time here (lbu 0x5F reloaded,
+               bne at 0x001F51A8). */
+            if (state->mode == 9) {
+                state->mode = 8;
             }
         }
         for (j = 0; j < state->pointCount; j++) {
@@ -234,31 +257,34 @@ int enepc_001F4F28(int call)
         }
     }
     uwamonoCompactRoute(index, 0);
-    if (paramSet != -1 && D_0069D1D8 != NULL) {
+    if (paramSet != -1 && enepcParamSets != NULL) {
         /* The fourth short of the preset is read before the flag is cleared: the
            original loads it ahead of every other argument. */
-        shortParam3 = D_0069D1D8[paramSet].shortParams[3];
+        shortParam3 = enepcParamSets[paramSet].shortParams[3];
         state->flags &= ~4;
-        enepcStoreParams(index, D_0069D1D8[paramSet].height, D_0069D1D8[paramSet].extent,
-                         D_0069D1D8[paramSet].floatParams[0], D_0069D1D8[paramSet].floatParams[1],
-                         D_0069D1D8[paramSet].floatParams[2], D_0069D1D8[paramSet].floatParams[3],
-                         D_0069D1D8[paramSet].angleDegrees, D_0069D1D8[paramSet].floatParams48[0], D_0069D1D8[paramSet].floatParams48[1],
-                         D_0069D1D8[paramSet].shortParams[0], D_0069D1D8[paramSet].shortParams[1],
-                         D_0069D1D8[paramSet].shortParams[2], shortParam3,
+        enepcStoreParams(index, enepcParamSets[paramSet].height, enepcParamSets[paramSet].extent,
+                         enepcParamSets[paramSet].floatParams[0], enepcParamSets[paramSet].floatParams[1],
+                         enepcParamSets[paramSet].floatParams[2], enepcParamSets[paramSet].floatParams[3],
+                         enepcParamSets[paramSet].angleDegrees,
+                         enepcParamSets[paramSet].floatParams48[0], enepcParamSets[paramSet].floatParams48[1],
+                         enepcParamSets[paramSet].shortParams[0], enepcParamSets[paramSet].shortParams[1],
+                         enepcParamSets[paramSet].shortParams[2], shortParam3,
                          -1000.0f, -1, -1000.0f, -1000.0f, 1);
     }
     return 1;
 }
 
+/* tu067.c's second, byte-identical copy of uwamonoFindIndexByShortKey; the original
+   calls this copy here (jal func_001EF650). */
 int func_001EF650(short key);
 
-/* enepc setParams native, at least 15 arguments (fewer: error 2, returns 0).
+/* Native "setParamsAll", at least 15 arguments (fewer: error 2, returns 0).
    Argument 1 is the record key; the others are optional: arguments 2 to 10 are
    the floats of enepcStoreParams in script units (x 100; arguments 6 and 7 also
    x 1000), 11 to 14 its shorts, 16, 18 and 19 its actor floats, 17 its motion; -1 or
    -1000.0 when absent (func_A9F1C0 nonzero).  Argument 15, when not -1, sets bit 0x4 of
    the state flags; argument 20 absent makes enepcStoreParams run uwamonoInitState. */
-int enepc_001F5360(int call)
+int enepcSetParamsAll(int call)
 {
     int key;
     int index;
@@ -276,15 +302,15 @@ int enepc_001F5360(int call)
     short shortParam2;
     short shortParam3;
     signed char lockFlag;
-    float actorParam14C;
+    float modeValue3;
     short motion;
-    float actorParam170;
-    float actorParam174;
+    float fogA;
+    float fogB;
     int initState;
-    EnepcRecord *record;
-    EnepcState *state;
+    UwamonoRecord *record;
+    UwamonoState *state;
 
-    if (func_A9F0A8() < 15) {
+    if (func_A9F0A8(call) < 15) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -364,9 +390,9 @@ int enepc_001F5360(int call)
         lockFlag = -1;
     }
     if (func_A9F1C0(call, 16) == 0) {
-        actorParam14C = (float) func_A9F0C0(call, 16) / 100.0f;
+        modeValue3 = (float) func_A9F0C0(call, 16) / 100.0f;
     } else {
-        actorParam14C = -1000.0f;
+        modeValue3 = -1000.0f;
     }
     if (func_A9F1C0(call, 17) == 0) {
         motion = func_A9F0C0(call, 17);
@@ -374,52 +400,48 @@ int enepc_001F5360(int call)
         motion = -1;
     }
     if (func_A9F1C0(call, 18) == 0) {
-        actorParam170 = (float) func_A9F0C0(call, 18) / 100.0f;
+        fogA = (float) func_A9F0C0(call, 18) / 100.0f;
     } else {
-        actorParam170 = -1000.0f;
+        fogA = -1000.0f;
     }
     if (func_A9F1C0(call, 19) == 0) {
-        actorParam174 = (float) func_A9F0C0(call, 19) / 100.0f;
+        fogB = (float) func_A9F0C0(call, 19) / 100.0f;
     } else {
-        actorParam174 = -1000.0f;
+        fogB = -1000.0f;
     }
     initState = func_A9F1C0(call, 20) != 0;
     record = &uwamonoRecords[index];
-    state = record->state;
+    state = record->motions;
     if (lockFlag != -1) {
         state->flags |= 4;
     }
     enepcStoreParams(index, height, extent, paramA0, paramA1, paramA2, paramA3,
                      angleDegrees, paramB0, paramB1,
                      shortParam0, shortParam1, shortParam2, shortParam3,
-                     actorParam14C, motion, actorParam170, actorParam174, initState);
+                     modeValue3, motion, fogA, fogB, initState);
     return 1;
 }
 
 void uwamonoInitState(int index);
 
-/* A statement macro: the original keeps this tail call a jal plus epilogue; 2.96 does
-   not turn a call inside a do { } while (0) statement into a sibling j. */
-#define ENEPC_INIT_STATE(index) do { uwamonoInitState(index); } while (0)
-
-/* Shared by the enepc setParams natives.  For uwamonoRecords[index] whose kind byte is
-   4 or 1, every argument that is not its sentinel (-1 for the shorts and most floats,
-   -1000.0 for the three actor floats) is stored in its field; the angle is given in
-   degrees.  uwamonoInitState runs when initState is 1. */
+/* Shared by setParams and setParamsAll.  For uwamonoRecords[index] whose kind is
+   MAP_KIND_ACTOR_STATIC or MAP_KIND_ACTOR, every argument that is not its sentinel (-1
+   for the shorts and most floats, -1000.0 for the three actor floats) is stored in its
+   field; the angle is given in degrees.  uwamonoInitState runs when initState is 1. */
 void enepcStoreParams(int index, float height, float extent,
                       float paramA0, float paramA1, float paramA2, float paramA3,
                       float angleDegrees, float paramB0, float paramB1,
                       short shortParam0, short shortParam1, short shortParam2, short shortParam3,
-                      float actorParam14C, short motion, float actorParam170, float actorParam174,
+                      float modeValue3, short motion, float fogA, float fogB,
                       int initState)
 {
-    EnepcRecord *record = &uwamonoRecords[index];
+    UwamonoRecord *record = &uwamonoRecords[index];
     struct XenoActor *actor;
-    EnepcState *state;
+    UwamonoState *state;
 
-    if (record->kind == 4 || record->kind == 1) {
+    if (record->kind == MAP_KIND_ACTOR_STATIC || record->kind == MAP_KIND_ACTOR) {
         actor = record->actor;
-        state = record->state;
+        state = record->motions;
         if (height != -1.0f) {
             record->height = height;
         }
@@ -460,33 +482,35 @@ void enepcStoreParams(int index, float height, float extent,
         if (shortParam3 != -1) {
             state->shortParams[3] = shortParam3;
         }
-        if (actorParam14C != -1000.0f) {
-            actor->actorParam14C = actorParam14C;
+        if (modeValue3 != -1000.0f) {
+            actor->modeValue3 = modeValue3;
         }
         if (motion != -1) {
             record->motion = motion;
         }
-        if (actorParam170 != -1000.0f) {
-            actor->actorParam170 = actorParam170;
+        if (fogA != -1000.0f) {
+            actor->fogA = fogA;
         }
-        if (actorParam174 != -1000.0f) {
-            actor->actorParam174 = actorParam174;
+        if (fogB != -1000.0f) {
+            actor->fogB = fogB;
         }
-        if (initState == 1) {
-            ENEPC_INIT_STATE(index);
+        if (initState != 1) {
+            return;
         }
+        uwamonoInitState(index);
     }
 }
 
 void uwamonoSetMotion(int index, int motion, float speed);
 int XenoActorGetSlotRange(struct XenoActor *actor, int slot, unsigned int entry, int *start, int *end);
 
-/* enepc native, at least 6 arguments: argument 1 is the record key, argument 2 the
-   motion (group * 100 + number), argument 3 the speed in percent (default 100.0),
+/* Native "motion", at least 6 arguments: argument 1 is the record key, argument 2 the
+   motion (group * 100 + number), argument 3 the speed in percent, divided by 100 (absent:
+   100.0f is passed as is, not 1.0: the original loads that constant undivided),
    arguments 4 and 5 the play range (-1 or absent: keep the slot's bound).  Argument 6
    present clears the actor's loop bit 0x2, absent sets it.  The motion is only restarted
    when it differs from the actor's current one. */
-int enepc_001F5B60(int call)
+int enepcMotion(int call)
 {
     int key;
     int index;
@@ -499,7 +523,7 @@ int enepc_001F5B60(int call)
     int rangeStart;
     int rangeEnd;
 
-    if (func_A9F0A8() < 6) {
+    if (func_A9F0A8(call) < 6) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -525,7 +549,7 @@ int enepc_001F5B60(int call)
         end = -1;
     }
     clearLoop = func_A9F1C0(call, 6) == 0;
-    if (uwamonoRecords[index].kind != 4 && uwamonoRecords[index].kind != 1) {
+    if (uwamonoRecords[index].kind != MAP_KIND_ACTOR_STATIC && uwamonoRecords[index].kind != MAP_KIND_ACTOR) {
         return 1;
     }
     actor = uwamonoRecords[index].actor;
@@ -538,11 +562,11 @@ int enepc_001F5B60(int call)
         }
         if (start != -1 && end == -1) {
             XenoActorSetPlayRange(actor, start, rangeEnd);
-            actor->playStart = start;
+            actor->transformScale = start;
         }
         if (start != -1 && end != -1) {
             XenoActorSetPlayRange(actor, start, end);
-            actor->playStart = start;
+            actor->transformScale = start;
         }
     }
     if (clearLoop == 1) {
