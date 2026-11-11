@@ -223,8 +223,11 @@ struct FontStateFromWindow {
     int stored_value;
     unsigned char unmodeled_14[6];
     unsigned short unknown_1a;
-    signed char compact_width;
-    unsigned char unknown_1d;
+    /* The default glyph scale in 1/16 units (FONT_SCALE_ONE each); func_00194FA8 tests both bytes at once. */
+    union {
+        unsigned short default_scale;
+        struct { signed char compact_width; unsigned char compact_height; };
+    };
     unsigned char unmodeled_1e[0x106];
     unsigned char *queue_cursor;
 };
@@ -385,7 +388,79 @@ int xglFontGetKanjiClutUV(int code, int *clut)
         (first_range_or_texture_column * 0x140);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00194FA8);
+/* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
+ * register write. */
+struct FontEffectScratchPacket {
+    u64 vif_tag;
+    u64 vif_count;
+    u64 effect_state;
+    u64 payload_count;
+};
+
+/* The font renderer's draw cursor, built by xglFontFlush at the scratchpad base. */
+struct FontDrawCursor {
+    XglPacket *packet;
+    short origin_x;
+    unsigned char unmodeled_06[2];
+    unsigned short x;
+    unsigned short y;
+    int depth;
+    unsigned short offset_x;
+    unsigned short offset_y;
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    unsigned char unmodeled_17;
+    unsigned char flags;
+    unsigned char effect;
+    unsigned char attributes;
+    unsigned char draw_state_high;
+    unsigned char unmodeled_1c[4];
+    signed char effect_x;
+    signed char effect_y;
+    unsigned char unmodeled_22[2];
+    unsigned char effect_red;
+    unsigned char effect_green;
+    unsigned char effect_blue;
+    unsigned char unmodeled_27;
+    unsigned char primitive_flags;
+    unsigned char primitive_mode;
+    unsigned char alpha;
+    unsigned char unmodeled_2b;
+    unsigned short scale_x;
+    unsigned short scale_y;
+    union {
+        struct FontEffectScratchPacket effect_packet;
+        u64 qwords[(0x4000 - 0x30) / sizeof(u64)];
+    } work;
+};
+
+void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
+
+#define FONT_SCALE_ONE 16
+#define FONT_SCALE_PAIR_ONE ((FONT_SCALE_ONE << 16) | FONT_SCALE_ONE)
+#define FONT_DEFAULT_SCALE_ONE ((FONT_SCALE_ONE << 8) | FONT_SCALE_ONE)
+/* The two texture-filter packets: 1:1 glyphs and scaled glyphs. */
+extern unsigned int D_0063EA00[8];
+extern unsigned int D_0063EA20[8];
+
+/* Selects the texture filter for the cursor's own scale (mode != 0) or the font state's default scale. */
+void func_00194FA8(FontDrawCursor *cursor, int mode)
+{
+    int scaled;
+
+    if (mode == 0) {
+        scaled = D_008DAD00.default_scale != FONT_DEFAULT_SCALE_ONE;
+    } else {
+        /* scale_x and scale_y compared as one word. */
+        scaled = *(unsigned int *)&cursor->scale_x != FONT_SCALE_PAIR_ONE;
+    }
+    if (!scaled) {
+        sceVif1PkAddDirectDataN(cursor->packet, D_0063EA00, 2);
+    } else {
+        sceVif1PkAddDirectDataN(cursor->packet, D_0063EA20, 2);
+    }
+}
 
 void set_ot(int ot)
 {
@@ -748,53 +823,6 @@ int xglFontGetStringWidth(const char *text)
     return xglFontGetStringWidth2(text, 0);
 }
 
-/* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
- * register write. */
-struct FontEffectScratchPacket {
-    u64 vif_tag;
-    u64 vif_count;
-    u64 effect_state;
-    u64 payload_count;
-};
-
-/* The font renderer's draw cursor, built by xglFontFlush at the scratchpad base. */
-struct FontDrawCursor {
-    XglPacket *packet;
-    short origin_x;
-    unsigned char unmodeled_06[2];
-    unsigned short x;
-    unsigned short y;
-    int depth;
-    unsigned short offset_x;
-    unsigned short offset_y;
-    unsigned char red;
-    unsigned char green;
-    unsigned char blue;
-    unsigned char unmodeled_17;
-    unsigned char flags;
-    unsigned char effect;
-    unsigned char attributes;
-    unsigned char draw_state_high;
-    unsigned char unmodeled_1c[4];
-    signed char effect_x;
-    signed char effect_y;
-    unsigned char unmodeled_22[2];
-    unsigned char effect_red;
-    unsigned char effect_green;
-    unsigned char effect_blue;
-    unsigned char unmodeled_27;
-    unsigned char primitive_flags;
-    unsigned char primitive_mode;
-    unsigned char alpha;
-    unsigned char unmodeled_2b;
-    unsigned short scale_x;
-    unsigned short scale_y;
-    union {
-        struct FontEffectScratchPacket effect_packet;
-        u64 qwords[(0x4000 - 0x30) / sizeof(u64)];
-    } work;
-};
-
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00195E90);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196118);
@@ -927,7 +955,6 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001979E0);
 #define FONT_HEX_MINUS 16
 #define FONT_HEX_POINT 17
 #define FONT_HEX_BLANK 32
-#define FONT_SCALE_ONE 16
 #define FONT_COLOR_NEUTRAL 0x80
 #define FONT_ALPHA_NEUTRAL 0x80
 /* IEEE single precision fields used by the %f printer. */
@@ -1620,6 +1647,6 @@ void xglFontInitial(void)
     D_008DAD00.horizontal_shift = 0;
     D_008DAD00.character_spacing = 0;
     D_008DAD00.compact_width = 16;
-    D_008DAD00.unknown_1d = 16;
+    D_008DAD00.compact_height = 16;
     D_008DAD00.unknown_1a = 2;
 }
