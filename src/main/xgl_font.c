@@ -51,6 +51,7 @@ typedef enum FontOpcode {
 /* FS.state.flags. */
 #define FONT_STATE_ENABLED 1
 #define FONT_STATE_DEBUG_PRINT 2
+#define FONT_STATE_CLIP 8 /* skip glyphs that fall outside the GS drawing area */
 /* Size of the print queue buckets and of the draw cursor's scratchpad packet. */
 #define FONT_QUEUE_BUCKETS 16
 /* Coordinates above these use the extended position command. */
@@ -193,6 +194,8 @@ extern signed char tbl_7[];
 extern FontStateStorage FS;
 extern FontPrintQueueStorage fontPrintQueueBuffer;
 extern FontImageStorage FontImage;
+/* xglFontLoad reads the font texture files into this buffer (through D_008DAD00.window_image). */
+extern unsigned char fontTextureBuffer[];
 int xglFontCheckProportional(unsigned char row, int column);
 unsigned int hex2val(signed char digit);
 int xglFontGetStringWidth2(const char *text, int delimiter);
@@ -215,11 +218,13 @@ struct FontStateFromWindow {
     unsigned char default_width;
     unsigned char text_mode;
     unsigned char proportional_mode;
-    unsigned char unmodeled_0f[1];
+    unsigned char horizontal_shift;
     int stored_value;
-    unsigned char unmodeled_14[8];
+    unsigned char unmodeled_14[6];
+    unsigned short unknown_1a;
     signed char compact_width;
-    unsigned char unmodeled_1d[0x107];
+    unsigned char unknown_1d;
+    unsigned char unmodeled_1e[0x106];
     unsigned char *queue_cursor;
 };
 
@@ -1453,4 +1458,20 @@ unsigned char xglFontLoad(int font_index, int load_flags)
     return previous_font;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontInitial);
+void xglFontInitial(void)
+{
+    D_008DAD00.font_selection = 0xFF;
+    D_008DAD00.window_image = fontTextureBuffer;
+    xglFontLoad(1, 0);
+    xglFontResetPrintQueue();
+    D_008DAD00.flags = FONT_STATE_ENABLED | FONT_STATE_CLIP;
+    D_008DAD00.line_height = 24;
+    D_008DAD00.default_width = 4;
+    D_008DAD00.debug_mode = 0;
+    D_008DAD00.proportional_mode = 0;
+    D_008DAD00.horizontal_shift = 0;
+    D_008DAD00.character_spacing = 0;
+    D_008DAD00.compact_width = 16;
+    D_008DAD00.unknown_1d = 16;
+    D_008DAD00.unknown_1a = 2;
+}

@@ -123,6 +123,7 @@
    "0x0068deb8": "fontTexture1Path",
    "0x0063f87a": "xglLanguageIndex",
    "0x008dae28": "fontPrintQueueBuffer",
+   "0x008dd280": "fontTextureBuffer",
    "0x0063e770": "asciiEucTable",
    "0x00955a80": "PadDmaBuffer",
    "0x0069dee8": "PadActAlign",

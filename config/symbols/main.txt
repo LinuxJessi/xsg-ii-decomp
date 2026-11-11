@@ -8405,6 +8405,7 @@ xglSinDegTable = 0x00889FD0;
 recordBanks = 0x0088A068;
 FS = 0x008DACFC;
 fontPrintQueueBuffer = 0x008DAE28;
+fontTextureBuffer = 0x008DD280;
 PadDmaBuffer = 0x00955A80;
 LW = 0x00955C80;
 xglCdStreamsActive = 0x00955CB0;
