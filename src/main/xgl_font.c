@@ -4,6 +4,7 @@
 #include "main/xgl_cd.h"
 #include "gs.h"
 #include "main/xgl_2.h"
+#include "main/sdv_033.h"
 
 extern void xglFontPrintf(int x, int y, unsigned int color, void *arg);
 unsigned int xglFontAscii2Euc(signed char character, signed char **text);
@@ -1386,7 +1387,71 @@ unsigned short xglFontCharToEuc(signed char character, unsigned char **text)
     return asciiEucTable[character];
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontReloadTexture);
+extern void sceVif1PkCloseDirectHLCode(XglPacket *packet);
+extern void sceVif1PkRef(XglPacket *packet, const void *environment,
+                         int count, int mode, int offset, int flags);
+void sceVif1PkCnt(XglPacket *packet, int count);
+void sceVif1PkOpenDirectHLCode(XglPacket *packet, int count);
+
+/* The kanji texture upload chain: transfer setup, texture, CLUT, then the draw environment. */
+extern unsigned int KanjiTex0Env_8[28];
+extern unsigned int D_0063EC40[36];
+extern int LoopCount;
+/* Half the font texture, in quadwords. */
+#define FONT_KANJI_TEXTURE_QWORDS 0x3C02
+/* GS TEST_1 values: depth test GREATER, plus alpha test GREATER than 0 for the drawn effects. */
+#define FONT_TEST_DEPTH_GREATER 0x70000
+#define FONT_TEST_ALPHA_GREATER 0xD
+#define VIF_CODE_DIRECTHL 0x51000000
+
+/* One A+D write with a 64-bit register value after the GIF tag xglFontAllocGifPacket writes. */
+struct FontGsWrite {
+    unsigned long long value;
+    unsigned int register_address;
+};
+
+/*
+ * Closes an open DIRECTHL block and queues the kanji texture upload. XS1 picked the kanji or window
+ * texture from `request`; XS2 only has the kanji path left and no longer reads it.
+ */
+void xglFontReloadTexture(FontDrawCursor *cursor, unsigned int request)
+{
+    XglPacket *packet = cursor->packet;
+    unsigned int *saved_direct_state;
+    struct FontGsWrite *test;
+
+    if (packet->directCode && (saved_direct_state = packet->directState)) {
+        sceVif1PkCloseDirectHLCode(packet);
+        if (*saved_direct_state == VIF_CODE_DIRECTHL) {
+            cursor->packet->write_cursor -= 4;
+        }
+    }
+    sceVif1PkRef(cursor->packet, KanjiTex0Env_8, 7, 0, 0, 0);
+    sceVif1PkRef(cursor->packet, D_008DAD00.window_image, FONT_KANJI_TEXTURE_QWORDS, 0, 0, 0);
+    sceVif1PkRef(cursor->packet, &KanjiClutEnv, 15, 0, 0, 0);
+    sceVif1PkRef(cursor->packet, D_0063EC40, 9, 0, 0, 0);
+    if (D_008DAD00.debug_mode) {
+        sceVif1PkRef(cursor->packet, &ModeEnv[LoopCount & 1], 8, 0, 0, 0);
+    }
+    sceVif1PkCnt(cursor->packet, 0);
+    sceVif1PkOpenDirectHLCode(cursor->packet, 0);
+    if (D_008DAD00.debug_mode == 0) {
+        test = xglFontAllocGifPacket((int *)cursor, 1);
+        test->register_address = GS_TEST_1;
+        switch (cursor->effect) {
+        case 0:
+        case 2:
+        case 3:
+        case 4:
+            test->value = FONT_TEST_DEPTH_GREATER | FONT_TEST_ALPHA_GREATER;
+            break;
+        case 1:
+        default:
+            test->value = FONT_TEST_DEPTH_GREATER;
+            break;
+        }
+    }
+}
 
 /* EE scratchpad RAM, where xglFontFlush builds the draw cursor. */
 #define SCRATCHPAD_BASE 0x70000000
@@ -1405,8 +1470,6 @@ struct FontQueueRecord {
 };
 
 extern XglPacket *xglPacketGetCurrent(void);
-extern void sceVif1PkCloseDirectHLCode(XglPacket *packet);
-void xglFontReloadTexture(FontDrawCursor *cursor, unsigned int request);
 void xglFontResetPrintQueue(void);
 /* The GS packets xglFontFlush closes with (6 quadwords in debug mode, then 2). */
 extern unsigned int D_0063ECD0[24];
