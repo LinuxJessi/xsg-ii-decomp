@@ -829,6 +829,9 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196118);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001961D0);
 
+/* Hex number up to ';' or ','; still assembly (its jump table sits in tu005's rodata). */
+int func_001961D0(const char **cursor, int *value);
+
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196260);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196398);
@@ -853,7 +856,33 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", ruby);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", han);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", mark);
+void func_00197200(int u, int v, int size, int flags);
+
+/* Texture coordinate / size / draw-flag arguments of func_00197200. */
+#define FONT_ASCII_V_LOW 0x2f00
+#define FONT_ASCII_V_HIGH 0x2f80
+#define FONT_SYMBOL_V 0x2e80
+#define FONT_GLYPH_8X8 0x808
+#define FONT_DRAW_ASCII 0x10
+#define FONT_DRAW_COMPACT 0x20
+
+/* Inline mark command: draws symbol glyph `index` (0..63 from the low row, 64.. from the high row). */
+int mark(FontDrawCursor *cursor, const char **text)
+{
+    const char *next = *text;
+    int index;
+
+    if (!func_001961D0(&next, &index)) {
+        return 0;
+    }
+    if ((unsigned int)index < 0x40) {
+        func_00197200((index & 0x3F) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+    } else {
+        func_00197200((index & 0x3F) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+    }
+    *text = next;
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001970E0);
 
@@ -880,8 +909,6 @@ void xglFontResetPrintQueue(void)
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197200);
-
-void func_00197200(int u, int v, int size, int flags);
 
 /* Draws one hex digit (0..15) through func_00197200, at the glyph offset digit << 7. */
 void xglFontDrawHexDigit(int digit)
@@ -944,13 +971,6 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001979E0);
 /* The compact position codes store x + 0x100 and y + 0x400 as 16-bit values. */
 #define FONT_POS_X_BIAS 0x100
 #define FONT_POS_Y_BIAS 0x400
-/* Texture coordinate / size / draw-flag arguments of func_00197200. */
-#define FONT_ASCII_V_LOW 0x2f00
-#define FONT_ASCII_V_HIGH 0x2f80
-#define FONT_SYMBOL_V 0x2e80
-#define FONT_GLYPH_8X8 0x808
-#define FONT_DRAW_ASCII 0x10
-#define FONT_DRAW_COMPACT 0x20
 /* Hex digit glyphs 0..15, then the minus sign and decimal point; 32 is blank. */
 #define FONT_HEX_MINUS 16
 #define FONT_HEX_POINT 17
