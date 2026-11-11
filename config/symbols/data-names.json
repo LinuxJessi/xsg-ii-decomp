@@ -236,6 +236,7 @@
    "0x0069d218": "objxModuleName",
    "0x00644f1e": "seDefaultVolume",
    "0x0069d2c8": "runtimeModuleName",
+   "0x0069d1d8": "enepcParamSets",
    "0x003e6e40": "runtimeNativeTable",
    "0x0069d320": "uwamonoLadderState",
    "0x003e6ff0": "uwamonoNativeTable",

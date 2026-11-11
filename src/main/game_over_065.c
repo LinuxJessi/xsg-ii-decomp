@@ -64,8 +64,37 @@ void DrawImage_001EE618(void *framebuffer)
  */
 INCLUDE_ASM("asm/main/nonmatchings/game_over_065", tyaDisplaySetting);
 
+/* GS DISPLAY register: data is the whole 64-bit value, the struct its fields. */
+typedef union GsDisplay64 {
+    u64 data;
+    struct {
+        unsigned int dx : 12;
+        unsigned int dy : 11;
+        unsigned int magh : 4;
+        unsigned int magv : 2;
+        unsigned int unmodeled_29 : 3;
+        unsigned int dw : 12;
+        unsigned int dh : 11;
+        unsigned int unmodeled_55 : 9;
+    };
+} GsDisplay64;
+
+/* +0x50 is the base dx/dy the offset is measured from (see tyaSetDisplayOffset). */
+typedef struct TyaDisplayEnv {
+    u8 unmodeled_00[0x18];
+    GsDisplay64 display1; /* +0x18 */
+    u8 unmodeled_20[0x30];
+    GsDisplay64 base;      /* +0x50 */
+} TyaDisplayEnv;
+
+extern TyaDisplayEnv DispEnv;
+
 /*
  * Applies the display offset to DispEnv: dx = the base dx + 5 * horizontal, dy =
  * the base dy + vertical (the mode-0 arithmetic of X1 tyaDisplaySetting).
  */
-INCLUDE_ASM("asm/main/nonmatchings/game_over_065", tyaSetDisplayOffset);
+void tyaSetDisplayOffset(int horizontal, int vertical)
+{
+    DispEnv.display1.dx = DispEnv.base.dx + horizontal * 5;
+    DispEnv.display1.dy = DispEnv.base.dy + vertical;
+}
