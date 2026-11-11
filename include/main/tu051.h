@@ -118,6 +118,7 @@ typedef struct UwamonoObject {
 #define CONTROL_REPLAYED 0x10000
 #define CONTROL_SEARCHING 0x20000
 #define CONTROL_TOP_EXIT 0x20 /* reaching the top of a ladder moves on to the top state (tu075.c) */
+#define CONTROL_SOFT_RESET 0x10000000 /* the soft-reset pad combo was pressed; Title will not start a game while it is set */
 
 extern UwamonoObject uwamonoRecords[];
 extern int uwamonoCurrentIndex;

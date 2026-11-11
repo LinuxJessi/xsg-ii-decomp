@@ -8,6 +8,8 @@
 #include "main/xgl_font.h"
 #include "main/tu021.h"
 #include "main/pad.h"
+#include "main/tu051.h"
+#include "gs.h"
 
 
 extern void sceVif1PkRef(XglPacket *packet, const void *environment,
@@ -37,6 +39,11 @@ typedef union GameOverDmaPacket6 {
     XglQuadword quadwords[3];
 } GameOverDmaPacket6;
 
+typedef union GameOverDmaPacket12 {
+    u64 words[12];
+    XglQuadword quadwords[6];
+} GameOverDmaPacket12;
+
 typedef union GameOverDmaPacket20 {
     u64 words[20];
     XglQuadword quadwords[10];
@@ -50,31 +57,30 @@ extern void FlushCache(int mode);
 
 extern DrawImageRenderState sRender;
 extern void sceVif1PkAddDataN(XglPacket *packet, const void *data, int count);
-extern u64 D_002BCD00[12];
-extern GameOverDmaPacket4 D_002BCD60;
-extern GameOverDmaPacket6 D_002BCD80;
+extern GameOverDmaPacket12 TestEnv_0_002BCD00;
+extern GameOverDmaPacket4 TransEnv_1_002BCD60;
+extern GameOverDmaPacket6 FlushEnv_2_002BCD80;
 extern GameOverDmaPacket20 TestEnv_3_002BCED0;
-extern u16 sRenderDisplayBase;
-int *xglStudioGetCamera2(int);
-void uwamonoResetRecords(int, int);
+XglCamera *xglStudioGetCamera2(int camera_index);
+void uwamonoResetRecords(int index, signed char mode);
 void func_0023AD18(int);
 void fadeReset(void);
 
-typedef union GameOverDmaPacket12 {
-    u64 words[12];
-    XglQuadword quadwords[6];
-} GameOverDmaPacket12;
 
 /* The fields of gameWork this file reads and writes. */
 typedef struct GameOverWork {
     u8 unmodeled_00[0x06];
-    u16 play_mode;              /* +0x06: Intermission does nothing in mode 1 */
-    int control;                /* +0x08: CONTROL_SOFT_RESET */
+    u16 loadedFromSave;         /* +0x06: Title stores func_0023AD18(1)'s result here (1: the game was
+                                 * loaded from a save); Intermission then does nothing */
+    int control;                /* +0x08: CONTROL_* bits (main/tu051.h) */
     u8 unmodeled_0C[0x08];
-    int state;                  /* +0x14 */
-    int next_state;             /* +0x18: GameOver runs GameEnd for 0x1B91; Intermission copies state here */
+    int state;                  /* +0x14: the requested next map (-1 none); Title writes
+                                 * MAP_ID_NEW_GAME or GAME_STATE_LOAD_SAVE */
+    int mapId;                  /* +0x18: the current map; GameOver runs GameEnd on MAP_ID_GAME_END,
+                                 * Intermission copies state here */
     u8 unmodeled_1C[0x04];
-    int current_id;             /* +0x20 */
+    int current_id;             /* +0x20: the current resource id (tu050.c mainSwitchId);
+                                 * GameEnd sets 10, Intermission chapter + 1 */
 } GameOverWork;
 
 /* The JPEG decoder's 32-byte request: only the source and destination
@@ -84,12 +90,6 @@ typedef struct JpegDecodeRequest {
     u32 destination;
     u8 unmodeled_08[0x18];
 } JpegDecodeRequest;
-
-/* GS ALPHA_1 register: blend = ((A - B) * C >> 7) + D with the FIX
- * coefficient in bits 32..39. */
-#define GS_ALPHA(a, b, c, d, fix) \
-    ((u64)(a) | ((u64)(b) << 2) | ((u64)(c) << 4) | ((u64)(d) << 6) | \
-     ((u64)(fix) << 32))
 
 /* EE RAM staging buffer for the compressed image and the decoded image
  * that DrawImage presents. */
@@ -112,12 +112,14 @@ typedef struct JpegDecodeRequest {
  * the framebuffer. */
 #define IMAGE_LOAD_OFFSET 0x100000
 
-/* GameOverWork.control bit set by the reset button combination on the
- * synopsis screen (func_001E95C8); GameOver then does nothing. */
-#define CONTROL_SOFT_RESET 0x10000000
+/* The GameEnd map: GameOver shows the ending screen when gameWork.mapId is this. */
+#define MAP_ID_GAME_END 0x1B91 /* tu110.c MAP_ID_SPLIT_FLAG_MAP */
 
-/* GameOverWork.next_state value that routes GameOver to the ending screen. */
-#define GAME_END_STATE 0x1B91
+/* The first map of a new game: Title's New Game writes it to gameWork.state. */
+#define MAP_ID_NEW_GAME 0x1B59
+
+/* The state Title's Load Game writes after menuRequestLoad. */
+#define GAME_STATE_LOAD_SAVE 10
 
 /* GameEnd's prompt outcome. */
 #define END_CHOICE_SAVE 1
@@ -127,9 +129,6 @@ typedef struct JpegDecodeRequest {
 #define SE_DECIDE 0x1000002
 #define SE_CANCEL 0x1000008
 #define SE_SYNOPSIS_OPEN 0x1000006
-
-/* L2+R2+L1+R1+SELECT held and START pressed, read through PadRecord.heldAndPressed. */
-#define PAD_RESET_COMBO 0x0800010F
 
 /* An image of the synopsis screen and its size in pixels and in quadwords. */
 typedef struct GameSynopsisPanel {
@@ -141,16 +140,16 @@ typedef struct GameSynopsisPanel {
 
 typedef struct GameSynopsisPanelSet {
     void *framebuffer;
-    GameSynopsisPanel incoming;     /* +0x04 */
-    GameSynopsisPanel outgoing;     /* +0x14 */
+    GameSynopsisPanel outgoing;     /* +0x04: archive image 0, shown first, fades out */
+    GameSynopsisPanel incoming;     /* +0x14: archive image 1, fades in */
 } GameSynopsisPanelSet;
 
 extern GameSynopsisPanelSet GameSynopsisPanels;
 void GameSynopsisDrawPanel(GameSynopsisPanel *panel, int x, int y, int alpha);
 extern GameOverWork gameWork;
 extern PadRecord PadData;
-extern GameOverDmaPacket12 D_002BCF70;
-extern GameOverDmaPacket12 D_002BCFD0;
+extern GameOverDmaPacket12 TestEnv_4_002BCF70;
+extern GameOverDmaPacket12 TestEnv_5_002BCFD0;
 extern const char D_00688488[];
 extern const char D_00688498[];
 extern const char D_006884F8[];
@@ -160,20 +159,21 @@ extern const char D_00688580[];
 extern const char D_00688590[];
 extern const char D_006885E0[];
 void *memset(void *destination, int value, unsigned int count);
-int xglJpegDecode(JpegDecodeRequest *request);
+void xglJpegDecode(JpegDecodeRequest *request);
 void xglRenderDrawFlipPk(XglPacket *packet);
-void func_001A37E0(int, const char *, int);
-u32 func_001DF9F0(int);
-void seVolumeSet(int, int);
+void func_001A37E0(int packed, const char *name, int option);
+void *func_001DF9F0(unsigned int *size);
+void seVolumeSet(int value, int flags);
 extern void sceVif1PkOpenDirectHLCode(XglPacket *packet, int mode);
 extern void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int count);
 extern void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 extern const char D_00688648[];
 extern const char D_00688660[];
-extern u8 D_002BD030[];
-extern u8 D_002BD060[];
-extern u8 D_002BD0A0[];
-extern u8 D_002BD0F0[];
+/* The disc messages; GameDiskSetDiscDigit rewrites their disc digit. */
+extern u8 D_002BD030[]; /* "Please insert DISC 2 of\nXenosaga Episode II." */
+extern u8 D_002BD060[]; /* "Incorrect disc.\n\nPlease insert DISC 2 ..." */
+extern u8 D_002BD0A0[]; /* "There is no disc inserted.\n\nPlease insert DISC 2 ..." */
+extern u8 D_002BD0F0[]; /* "Checking disc..." */
 /* Message by identification status -3..0: checking, insert, wrong disc, no disc. */
 extern char *D_002BD108[4];
 extern const char D_0069D018[];
@@ -190,7 +190,7 @@ int xglFlagsGet8(int bit_offset);
 void fadeClear(void);
 
 void GameSceneReset(void *framebuffer) {
-    xglStudioGetCamera2(0)[1] = 1;
+    xglStudioGetCamera2(0)->state = 1;
     xglRenderClearDepth();
     fadeReset();
     xglRenderGlobalFadeReset();
@@ -210,15 +210,17 @@ void DrawImage(void *framebuffer)
     }
 
     packet = xglPacketGetCurrent();
+    /* BITBLTBUF: destination page buffer_select << 5, destination width 8
+     * (512 pixels) in bits 48-53. */
     msb = 0x8000;
-    D_002BCD00[4] = ((u64)sRenderDisplayBase << 37) | ((u64)msb << 36);
+    TestEnv_0_002BCD00.words[4] = ((u64)sRender.buffer_select << 37) | ((u64)msb << 36);
     sceVif1PkCnt(packet, 0);
-    sceVif1PkAddDataN(packet, D_002BCD00, 0x18);
-    sceVif1PkRef(packet, D_002BCD60.words, 2, 0, 0, 0);
+    sceVif1PkAddDataN(packet, TestEnv_0_002BCD00.words, 0x18);
+    sceVif1PkRef(packet, TransEnv_1_002BCD60.words, 2, 0, 0, 0);
     sceVif1PkRef(packet, framebuffer, 0x7000, 0, 0x51007000, 0);
-    sceVif1PkRef(packet, D_002BCD60.words, 2, 0, 0, 0);
+    sceVif1PkRef(packet, TransEnv_1_002BCD60.words, 2, 0, 0, 0);
     sceVif1PkRef(packet, (u8 *)framebuffer + 0x70000, 0x7000, 0, 0x51007000, 0);
-    sceVif1PkRef(packet, D_002BCD80.words, 3, 0, 0, 0);
+    sceVif1PkRef(packet, FlushEnv_2_002BCD80.words, 3, 0, 0, 0);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/game_over_059", GameSynopsisDrawPanel);
@@ -238,41 +240,79 @@ void DrawBack(int alpha)
     sceVif1PkRef(xglPacketGetCurrent(), TestEnv_3_002BCED0.words, 10, 0, 0, 0);
 }
 
-/* Builds a GS packet in the scratchpad that copies the displayed frame
- * into the draw buffer (two TEXFLUSH-terminated FRAME/TRXREG/TRXDIR
- * register sets) and sends it through VIF1 DIRECT. */
+/* GS registers of a local-to-local transfer, written through the A+D GIF tag
+ * (GS_TEXFLUSH and GIF_AD come from gs.h). */
+#define GS_BITBLTBUF 0x50
+#define GS_TRXPOS 0x51
+#define GS_TRXREG 0x52
+#define GS_TRXDIR 0x53
+
+/* TRXDIR 2: local-to-local transfer. */
+#define GS_TRXDIR_LOCAL_TO_LOCAL 2
+
+/* One A+D entry: register data, then register address. */
+typedef struct GameCopyFrameRegister {
+    u64 data;
+    u64 address;
+} GameCopyFrameRegister;
+
+/* VIF DIRECT header, A+D GIF tag (8 entries) and two GS copies: the second
+ * copy reuses the first one's TRXPOS and TRXREG. */
+typedef struct GameCopyFramePacket {
+    u64 header_padding;
+    u64 vif_direct;
+    u64 gif_tag;
+    u64 gif_registers;
+    GameCopyFrameRegister bitbltbuf;
+    GameCopyFrameRegister trxpos;
+    GameCopyFrameRegister trxreg;
+    GameCopyFrameRegister trxdir;
+    GameCopyFrameRegister texflush;
+    GameCopyFrameRegister second_bitbltbuf;
+    GameCopyFrameRegister second_trxdir;
+    GameCopyFrameRegister second_texflush;
+} GameCopyFramePacket;
+
+#define GAME_COPY_FRAME_PACKET ((GameCopyFramePacket *)SCRATCHPAD_BASE)
+#define GAME_COPY_FRAME_QWORDS 10
+
+/* Builds a GS packet in the scratchpad and sends it through VIF1 DIRECT:
+ * two TEXFLUSH-terminated BITBLTBUF/TRXPOS/TRXREG/TRXDIR copies of the whole
+ * 512x448 screen, page sRender +0x12 to page +0x10, then page +0x10 to the
+ * framebuffer page at +0x14 (width 8: 512 pixels, in BITBLTBUF's SBW and
+ * DBW fields). */
 void GameCopyFrame(void)
 {
     XglPacket *packet;
-    u64 *scratch;
+    GameCopyFramePacket *copy;
 
     packet = xglPacketGetCurrent();
-    scratch = (u64 *)SCRATCHPAD_BASE;
-    scratch[0] = 0;
-    scratch[1] = 0x51000009;
-    scratch[2] = ((u64)0x10000000 << 32) | 0x8008;
-    scratch[3] = 14;
-    scratch[4] = (0x80000 | (sRender.height << 5)) |
-                 ((u64)(sRender.width << 5) << 32) | ((u64)0x8000 << 36);
-    scratch[5] = 80;
-    scratch[6] = 0;
-    scratch[7] = 81;
-    scratch[8] = ((u64)448 << 32) | 0x200;
-    scratch[9] = 82;
-    scratch[10] = 2;
-    scratch[11] = 83;
-    scratch[12] = 0;
-    scratch[13] = 63;
-    scratch[14] = (0x80000 | (sRender.width << 5)) |
-                  ((u64)sRender.framebuffer_page << 37) | ((u64)0x8000 << 36);
-    scratch[15] = 80;
-    scratch[16] = 2;
-    scratch[17] = 83;
-    scratch[18] = 0;
-    scratch[19] = 63;
+    copy = GAME_COPY_FRAME_PACKET;
+    copy->header_padding = 0;
+    copy->vif_direct = 0x51000009;
+    copy->gif_tag = ((u64)0x10000000 << 32) | 0x8008; /* NREG 1, EOP, NLOOP 8 */
+    copy->gif_registers = GIF_AD;
+    copy->bitbltbuf.data = (0x80000 | (sRender.height << 5)) |
+                           ((u64)(sRender.width << 5) << 32) | ((u64)0x8000 << 36);
+    copy->bitbltbuf.address = GS_BITBLTBUF;
+    copy->trxpos.data = 0;
+    copy->trxpos.address = GS_TRXPOS;
+    copy->trxreg.data = ((u64)448 << 32) | 512;
+    copy->trxreg.address = GS_TRXREG;
+    copy->trxdir.data = GS_TRXDIR_LOCAL_TO_LOCAL;
+    copy->trxdir.address = GS_TRXDIR;
+    copy->texflush.data = 0;
+    copy->texflush.address = GS_TEXFLUSH;
+    copy->second_bitbltbuf.data = (0x80000 | (sRender.width << 5)) |
+                                  ((u64)sRender.framebuffer_page << 37) | ((u64)0x8000 << 36);
+    copy->second_bitbltbuf.address = GS_BITBLTBUF;
+    copy->second_trxdir.data = GS_TRXDIR_LOCAL_TO_LOCAL;
+    copy->second_trxdir.address = GS_TRXDIR;
+    copy->second_texflush.data = 0;
+    copy->second_texflush.address = GS_TEXFLUSH;
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
-    sceVif1PkAddDirectDataN(packet, scratch, 10);
+    sceVif1PkAddDirectDataN(packet, GAME_COPY_FRAME_PACKET, GAME_COPY_FRAME_QWORDS);
     sceVif1PkCloseDirectHLCode(packet);
 }
 
@@ -286,12 +326,14 @@ void redraw_frame(void *framebuffer) {
 
 /* One frame of the fade-out: present the image, program the ALPHA_1
  * register of the fade packet with the new level, send the packet and wait
- * for the next frame (a statement macro, as in X1's game_over.c, keeps the
- * block apart from the per-frame outcome check that follows it). */
+ * for the next frame. It stays a do-while statement macro, as in X1's
+ * game_over.c: written inline or as a static inline function, GCC hoists the
+ * alpha step of GameEnd's fade loop above the per-frame outcome check.
+ * GameOver's fade writes the same steps inline (see there). */
 #define DRAW_FADE_FRAME(env, alpha)                                     \
     do {                                                                \
         DrawImage((void *)IMAGE_FRAME_BUFFER);                          \
-        (env)[4] = GS_ALPHA(2, 0, 2, 1, (alpha));                       \
+        (env)[4] = GS_SET_ALPHA(2, 0, 2, 1, (alpha));                   \
         FlushCache(0);                                                  \
         sceVif1PkRef(xglPacketGetCurrent(), (env), 6, 0, 0, 0);         \
         xglSleep();                                                     \
@@ -306,7 +348,9 @@ void GameEnd(void)
     u32 framebuffer = IMAGE_FRAME_BUFFER;
     u32 jpeg_source = IMAGE_LOAD_BUFFER;
     int alpha;
-    /* The fade-in hold counter, then the prompt outcome. */
+    /* The fade-in hold counter, then the prompt outcome: one variable in
+     * the original (separate hold and outcome variables get other
+     * registers). */
     int count;
     int buttons;
 
@@ -366,10 +410,11 @@ void GameEnd(void)
     }
 
     if (count == END_CHOICE_QUIT) {
-        /* Fade to black; the original re-checks the outcome every frame. */
+        /* Fade to black. The original re-checks the outcome every frame
+         * (bne on it after xglSleep), although nothing in the loop changes it. */
         alpha = 4;
         for (;;) {
-            DRAW_FADE_FRAME(D_002BCF70.words, alpha);
+            DRAW_FADE_FRAME(TestEnv_4_002BCF70.words, alpha);
             if (count != END_CHOICE_QUIT) {
                 break;
             }
@@ -401,7 +446,7 @@ void GameOver(void)
     if (gameWork.control & CONTROL_SOFT_RESET) {
         return;
     }
-    if (gameWork.next_state == GAME_END_STATE) {
+    if (gameWork.mapId == MAP_ID_GAME_END) {
         GameEnd();
     } else {
         xglRenderClearDepth();
@@ -435,13 +480,17 @@ void GameOver(void)
         }
         xglSleep();
 
+        /* Fade the music out (volume 0, fade length 2) and the image to
+         * black. The frame is written out here, not as DRAW_FADE_FRAME:
+         * through the macro, the alpha step below compiles with one branch
+         * fewer than the original. */
         alpha = 4;
         seVolumeSet(0, 2);
         for (;;) {
             DrawImage((void *)framebuffer);
-            D_002BCFD0.words[4] = GS_ALPHA(2, 0, 2, 1, alpha);
+            TestEnv_5_002BCFD0.words[4] = GS_SET_ALPHA(2, 0, 2, 1, alpha);
             FlushCache(0);
-            sceVif1PkRef(xglPacketGetCurrent(), D_002BCFD0.words, 6, 0, 0, 0);
+            sceVif1PkRef(xglPacketGetCurrent(), TestEnv_5_002BCFD0.words, 6, 0, 0, 0);
             xglSleep();
             if (alpha < 255) {
                 alpha += 4;
@@ -477,12 +526,12 @@ void Intermission(int chapter)
     int count;
     int buttons;
 
-    if (gameWork.play_mode == 1) {
+    if (gameWork.loadedFromSave == 1) {
         return;
     }
     gameWork.current_id = chapter + 1;
     GameCopyFrame();
-    framebuffer = func_001DF9F0(0);
+    framebuffer = (u32)func_001DF9F0(0);
     archive = (u32 *)(framebuffer + IMAGE_LOAD_OFFSET);
     xglCdReadFile(D_00688580, archive, 0, 1);
 
@@ -526,7 +575,7 @@ void Intermission(int chapter)
         buttons = PadData.pressed;
         if (buttons & PAD_CIRCLE) {
             seVoiceStartDefault(SE_DECIDE);
-            gameWork.next_state = gameWork.state;
+            gameWork.mapId = gameWork.state;
             GameSceneReset((void *)framebuffer);
             break;
         }
@@ -569,9 +618,10 @@ void GameDiskSetDiscDigit(u8 *text, int digit) {
 }
 
 /* Asks for the disc number given in the low nibble of request (1 or 2)
- * over the disc-change image until the drive identifies it; bit 0x10
- * draws the image at the fixed framebuffer instead of the free resource
- * memory. Returns -1 for any other disc number, else 0. */
+ * over the disc-change image until the drive identifies it. A request
+ * below 0x10 decodes the image into the free resource memory, 0x10 and up
+ * (GameSynopsis passes 0x11 / 0x12) into the fixed framebuffer. Returns -1
+ * for any other disc number, else 0. */
 int GameDiskChange(int request)
 {
     JpegDecodeRequest jpeg;
@@ -585,14 +635,17 @@ int GameDiskChange(int request)
     int checked;
 
     disc = request & 0xF;
+    /* The original shifts before it rejects the disc number (sllv ahead of
+     * the printf call); the mask of a rejected disc is never used. */
     disc_mask = 1 << (disc - 1);
     printf(D_00688648, disc);
     if (disc < 1 || disc > 2) {
         return -1;
     }
 
-    /* A block left with break once the requested disc is in the drive (the
-     * original's loop construct: GCC rolls its leading test to the end). */
+    /* A block left with break once the requested disc is in the drive. The
+     * original's control flow needs the do-while: written as an if block
+     * around the prompt, GCC lays the prompt out in a different order. */
     do {
         fade = xglRenderGlobalFadeGet();
         xglRenderGlobalFadeSetPacked(0);
@@ -604,7 +657,7 @@ int GameDiskChange(int request)
             break;
         }
         if (request < 0x10) {
-            framebuffer = func_001DF9F0(0);
+            framebuffer = (u32)func_001DF9F0(0);
         } else {
             framebuffer = IMAGE_FRAME_BUFFER;
         }
@@ -664,7 +717,7 @@ void GameSynopsis(void)
     u32 *end;
     u32 *entry;
 
-    if (gameWork.state == 10) {
+    if (gameWork.state == GAME_STATE_LOAD_SAVE) {
         return;
     }
     if (xglFlagsGet8(STORY_PROGRESS_FLAG) < 0x4C) {
@@ -689,16 +742,16 @@ void GameSynopsis(void)
     }
 
     /* Each panel image follows a 0x50-byte header. */
-    GameSynopsisPanels.incoming.image = (u8 *)SYNOPSIS_ARCHIVE[0] + 0x50;
-    GameSynopsisPanels.outgoing.image = (u8 *)SYNOPSIS_ARCHIVE[1] + 0x50;
-    GameSynopsisPanels.incoming.width = 0x200;
-    GameSynopsisPanels.incoming.height = 0x40;
-    GameSynopsisPanels.incoming.qwc = 0x2000;
+    GameSynopsisPanels.outgoing.image = (u8 *)SYNOPSIS_ARCHIVE[0] + 0x50;
+    GameSynopsisPanels.incoming.image = (u8 *)SYNOPSIS_ARCHIVE[1] + 0x50;
     GameSynopsisPanels.outgoing.width = 0x200;
     GameSynopsisPanels.outgoing.height = 0x40;
     GameSynopsisPanels.outgoing.qwc = 0x2000;
+    GameSynopsisPanels.incoming.width = 0x200;
+    GameSynopsisPanels.incoming.height = 0x40;
+    GameSynopsisPanels.incoming.qwc = 0x2000;
 
-    if (gameWork.state == 0x1B59) {
+    if (gameWork.state == MAP_ID_NEW_GAME) {
         xglRenderClearFrame();
         GameSynopsisPanels.framebuffer = 0;
     } else {
@@ -712,10 +765,15 @@ void GameSynopsis(void)
         };
         JpegDecodeRequest jpeg;
 
+        /* 255 ends the table for every progress value but 255 itself: the
+         * original has no bound, so a progress of 255 would read past it. */
         while (progress >= thresholds[chapter]) {
             chapter++;
         }
         chapter++;
+        /* The two special cases (their story meaning is not known yet):
+         * progress exactly 0x87 shows image 20, and the 1-bit flag 0x279
+         * shows image 22 over anything else. */
         if (progress == 0x87) {
             chapter = 20;
         }
@@ -736,31 +794,31 @@ void GameSynopsis(void)
     fadeClear();
     xglSleep();
     DrawImage(GameSynopsisPanels.framebuffer);
-    GameSynopsisDrawPanel(&GameSynopsisPanels.incoming,
-                          0x200 - GameSynopsisPanels.incoming.width,
-                          0x1C0 - GameSynopsisPanels.incoming.height, 128);
+    GameSynopsisDrawPanel(&GameSynopsisPanels.outgoing,
+                          0x200 - GameSynopsisPanels.outgoing.width,
+                          0x1C0 - GameSynopsisPanels.outgoing.height, 128);
     xglSleep();
     DrawImage(GameSynopsisPanels.framebuffer);
-    GameSynopsisDrawPanel(&GameSynopsisPanels.incoming,
-                          0x200 - GameSynopsisPanels.incoming.width,
-                          0x1C0 - GameSynopsisPanels.incoming.height, 128);
+    GameSynopsisDrawPanel(&GameSynopsisPanels.outgoing,
+                          0x200 - GameSynopsisPanels.outgoing.width,
+                          0x1C0 - GameSynopsisPanels.outgoing.height, 128);
     xglSleep();
     xglRenderClearDepth();
 }
 
-/* Cross-fades the synopsis panels in (the incoming panel fades out while
- * the outgoing one fades in) and waits for decide. Returns 1 when the
- * reset button combination was pressed (and flags gameWork for it), else
- * 0; does nothing in states 10 and 0x1B59. */
+/* Cross-fades the synopsis panels (the outgoing panel fades out while the
+ * incoming one fades in) and waits for decide. Returns 1 when the soft-reset
+ * button combination was pressed (and sets CONTROL_SOFT_RESET for it), else
+ * 0; does nothing for GAME_STATE_LOAD_SAVE and MAP_ID_NEW_GAME. */
 int func_001E95C8(void)
 {
     int alpha;
 
     alpha = 0;
-    if (gameWork.state == 10) {
+    if (gameWork.state == GAME_STATE_LOAD_SAVE) {
         return 0;
     }
-    if (gameWork.state == 0x1B59) {
+    if (gameWork.state == MAP_ID_NEW_GAME) {
         return 0;
     }
     seVoiceStartDefault(SE_SYNOPSIS_OPEN);
@@ -770,13 +828,13 @@ int func_001E95C8(void)
         if (alpha > 128) {
             alpha = 128;
         }
-        GameSynopsisDrawPanel(&GameSynopsisPanels.incoming,
-                              0x200 - GameSynopsisPanels.incoming.width,
-                              0x1C0 - GameSynopsisPanels.incoming.height, 128 - alpha);
         GameSynopsisDrawPanel(&GameSynopsisPanels.outgoing,
                               0x200 - GameSynopsisPanels.outgoing.width,
-                              0x1C0 - GameSynopsisPanels.outgoing.height, alpha);
-        if ((PadData.heldAndPressed & PAD_RESET_COMBO) == PAD_RESET_COMBO) {
+                              0x1C0 - GameSynopsisPanels.outgoing.height, 128 - alpha);
+        GameSynopsisDrawPanel(&GameSynopsisPanels.incoming,
+                              0x200 - GameSynopsisPanels.incoming.width,
+                              0x1C0 - GameSynopsisPanels.incoming.height, alpha);
+        if ((PadData.heldAndPressed & PAD_SOFT_RESET) == PAD_SOFT_RESET) {
             gameWork.control |= CONTROL_SOFT_RESET;
             return 1;
         }

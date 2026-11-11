@@ -21,6 +21,11 @@
 #define PAD_DOWN 0x4000
 #define PAD_LEFT 0x8000
 
+/* L2+R2+L1+R1+SELECT: the buttons held for a soft reset. */
+#define PAD_SOFT_RESET_HELD (PAD_L2 | PAD_R2 | PAD_L1 | PAD_R1 | PAD_SELECT)
+/* PadRecord.heldAndPressed: PAD_SOFT_RESET_HELD held with START pressed (pressed is the upper halfword). */
+#define PAD_SOFT_RESET (PAD_SOFT_RESET_HELD | (PAD_START << 16))
+
 /* The first 0x68 bytes of a port record of PadData (the full record is 0x80 bytes: xglPadRead
  * scales the port index by 128). Only the members the game code reads are named. */
 typedef struct PadRecord {
