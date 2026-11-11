@@ -834,9 +834,59 @@ int func_001961D0(const char **cursor, int *value);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196260);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196398);
+int func_00196260(const char **cursor, int *value);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196460);
+/* Inline position command: the letter before the number picks x (also the line origin), y or depth. */
+int func_00196398(FontDrawCursor *cursor, const char **text)
+{
+    const char *next = *text;
+    unsigned char axis = next[-1];
+    int value;
+
+    if (!func_00196260(&next, &value)) {
+        return 0;
+    }
+    switch (axis) {
+    case 'x':
+        cursor->x = value;
+        cursor->origin_x = value;
+        break;
+    case 'y':
+        cursor->y = value;
+        break;
+    case 'z':
+        cursor->depth = value;
+        break;
+    default:
+        return 0;
+    }
+    *text = next;
+    return 1;
+}
+
+/* Inline move command: adds the number to x or y, picked by the letter before it. */
+int func_00196460(FontDrawCursor *cursor, const char **text)
+{
+    const char *next = *text;
+    unsigned char axis = next[-1];
+    int value;
+
+    if (!func_00196260(&next, &value)) {
+        return 0;
+    }
+    switch (axis) {
+    case 'x':
+        cursor->x += value;
+        break;
+    case 'y':
+        cursor->y += value;
+        break;
+    default:
+        return 0;
+    }
+    *text = next;
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", cfe_00196508);
 
