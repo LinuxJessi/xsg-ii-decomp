@@ -401,6 +401,24 @@ int xglFontGetKanjiClutUV(int code, int *clut)
 #define FONT_CURSOR_STYLE_CLEAR \
     (~(FONT_CURSOR_COMPACT | FONT_CURSOR_PROPORTIONAL | FONT_CURSOR_WIDE_ASCII) & 0xff)
 
+/* One A+D register write after the GIF tag xglFontAllocGifPacket writes. */
+struct FontAlphaWrite {
+    unsigned int primitive_flags;
+    unsigned int primitive_mode;
+    unsigned int register_address;
+    unsigned int register_address_high;
+};
+
+/* One A+D write with a 64-bit register value after the GIF tag xglFontAllocGifPacket writes. */
+struct FontGsWrite {
+    unsigned long long value;
+    unsigned int register_address;
+};
+
+/* GS TEST_1 values: depth test GREATER, plus alpha test GREATER than 0 for the drawn effects. */
+#define FONT_TEST_DEPTH_GREATER 0x70000
+#define FONT_TEST_ALPHA_GREATER 0xD
+
 /* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
  * register write. */
 struct FontEffectScratchPacket {
@@ -930,11 +948,68 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", cfe_00196508);
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", col);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196660);
+/* Inline effect command: "N;" with N = 0..3 selects the glyph effect and its TEST_1 setting. */
+int func_00196660(FontDrawCursor *cursor, const char **text)
+{
+    const unsigned char *next = (const unsigned char *)*text;
+    struct FontGsWrite *test;
+    int digit;
+
+    if (next[1] == ';') {
+        digit = next[0];
+        if (digit < '4') {
+            if (digit >= '0') {
+                *text = (const char *)(next + 2);
+                cursor->effect = next[0] - '0';
+                test = xglFontAllocGifPacket((int *)cursor, 1);
+                test->register_address = GS_TEST_1;
+                switch (cursor->effect) {
+                case 0:
+                case 2:
+                case 3:
+                case 4:
+                    test->value = FONT_TEST_DEPTH_GREATER | FONT_TEST_ALPHA_GREATER;
+                    break;
+                case 1:
+                default:
+                    test->value = FONT_TEST_DEPTH_GREATER;
+                    break;
+                }
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", shadow);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", alpha);
+/*
+ * Inline blend command: six numbers A, B, C, D (2 bits each of ALPHA_1), the mode byte and the
+ * alpha value; writes ALPHA_1 at once.
+ */
+int alpha(FontDrawCursor *cursor, const char **text)
+{
+    int values[6];
+    const char *next = *text;
+    int index;
+    struct FontAlphaWrite *packet;
+
+    for (index = 0; index < 6; index++) {
+        if (!func_00196260(&next, &values[index])) {
+            return 0;
+        }
+    }
+    *text = next;
+    cursor->primitive_flags = values[0] + (values[1] << 2) + (values[2] << 4) + (values[3] << 6);
+    cursor->primitive_mode = values[4];
+    cursor->alpha = values[5];
+    packet = xglFontAllocGifPacket((int *)cursor, 1);
+    packet->primitive_flags = cursor->primitive_flags;
+    packet->primitive_mode = cursor->primitive_mode;
+    packet->register_address = GS_ALPHA_1;
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", zoom);
 
@@ -1117,13 +1192,6 @@ struct FontLiteralHexCommand {
     unsigned char value_low;
 };
 
-/* One A+D register write after the GIF tag xglFontAllocGifPacket writes. */
-struct FontAlphaWrite {
-    unsigned int primitive_flags;
-    unsigned int primitive_mode;
-    unsigned int register_address;
-    unsigned int register_address_high;
-};
 
 struct FontRealDigits {
     signed char value[16];
@@ -1607,16 +1675,8 @@ extern unsigned int D_0063EC40[36];
 extern int LoopCount;
 /* Half the font texture, in quadwords. */
 #define FONT_KANJI_TEXTURE_QWORDS 0x3C02
-/* GS TEST_1 values: depth test GREATER, plus alpha test GREATER than 0 for the drawn effects. */
-#define FONT_TEST_DEPTH_GREATER 0x70000
-#define FONT_TEST_ALPHA_GREATER 0xD
 #define VIF_CODE_DIRECTHL 0x51000000
 
-/* One A+D write with a 64-bit register value after the GIF tag xglFontAllocGifPacket writes. */
-struct FontGsWrite {
-    unsigned long long value;
-    unsigned int register_address;
-};
 
 /*
  * Closes an open DIRECTHL block and queues the kanji texture upload. XS1 picked the kanji or window
