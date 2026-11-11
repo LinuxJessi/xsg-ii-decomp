@@ -4893,8 +4893,8 @@
      ],
      "generated_by": [
       "func_001EF6E0",
-      "objx_001EF898",
-      "objx_001F0180",
+      "objxGetParam",
+      "objxRotate",
       "uwamonoSetTarget",
       "uwamonoStartMove"
      ],
@@ -4929,8 +4929,8 @@
       "0x0069af78"
      ],
      "generated_by": [
-      "runtime_001F23A8",
-      "runtime_001F2860"
+      "runtimeSetLocater",
+      "runtimeSetPlayer"
      ],
      "c_owned_symbols": [
       "D_0069AF6C",
@@ -4957,7 +4957,7 @@
      ],
      "generated_by": [
       "func_001F0750",
-      "objx_001EF898",
+      "objxGetParam",
       "uwamonoStartMove"
      ],
      "c_owned_symbols": [
@@ -4986,7 +4986,7 @@
       "0x0069af7c"
      ],
      "generated_by": [
-      "runtime_001F43D0"
+      "runtimeSetMapLight"
      ],
      "c_owned_symbols": [
       "D_0069AF78"
@@ -5010,7 +5010,7 @@
       "0x0068978c"
      ],
      "generated_by": [
-      "runtime_001F47C8"
+      "runtimeSystem"
      ],
      "c_owned_symbols": [
       "jtbl_00689760"

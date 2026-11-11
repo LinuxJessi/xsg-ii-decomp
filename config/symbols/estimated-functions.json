@@ -35562,13 +35562,13 @@
      2
     ],
     [
-     "objx_001EF898",
+     "objxGetParam",
      2029720,
      1028,
      2
     ],
     [
-     "objx_001EFCA0",
+     "objxMove",
      2030752,
      584,
      2
@@ -35580,13 +35580,13 @@
      2
     ],
     [
-     "objx_001F0180",
+     "objxRotate",
      2032000,
      996,
      2
     ],
     [
-     "objx_001F0568",
+     "objxScale",
      2033000,
      484,
      2
@@ -35598,43 +35598,43 @@
      2
     ],
     [
-     "objx_001F08B0",
+     "objxTransparent",
      2033840,
      260,
      2
     ],
     [
-     "func_001F09B8",
+     "uwamonoStartTransparency",
      2034104,
      84,
      2
     ],
     [
-     "objx_001F0A10",
+     "objxOffsetPivot",
      2034192,
      360,
      2
     ],
     [
-     "objx_001F0B78",
+     "objxEnableFlags",
      2034552,
      360,
      2
     ],
     [
-     "objx_001F0CE0",
+     "objxDisableFlags",
      2034912,
      428,
      2
     ],
     [
-     "objx_001F0E90",
+     "objxSetRotateTurn",
      2035344,
      148,
      2
     ],
     [
-     "objx_001F0F28",
+     "objxSetParent",
      2035496,
      356,
      2
@@ -35646,7 +35646,7 @@
      2
     ],
     [
-     "objx_001F1458",
+     "objxSetPair",
      2036824,
      268,
      2
@@ -35664,13 +35664,13 @@
      2
     ],
     [
-     "objx_001F1778",
+     "objxChangeId",
      2037624,
      180,
      2
     ],
     [
-     "objx_001F1830",
+     "objxFootId",
      2037808,
      152,
      2
@@ -35682,7 +35682,7 @@
      2
     ],
     [
-     "runtime_001F18F0",
+     "runtimeSetNumber",
      2038000,
      480,
      2
@@ -35694,7 +35694,7 @@
      2
     ],
     [
-     "runtime_001F23A8",
+     "runtimeSetLocater",
      2040744,
      1132,
      2
@@ -35706,7 +35706,7 @@
      2
     ],
     [
-     "runtime_001F2860",
+     "runtimeSetPlayer",
      2041952,
      1432,
      2
@@ -35772,7 +35772,7 @@
      2
     ],
     [
-     "runtime_001F3920",
+     "runtimeJumpCf",
      2046240,
      316,
      2
@@ -35790,13 +35790,13 @@
      2
     ],
     [
-     "runtime_001F3C20",
+     "runtimeGetFlag",
      2047008,
      152,
      2
     ],
     [
-     "runtime_001F3CB8",
+     "runtimeSetMapFog",
      2047160,
      772,
      2
@@ -35808,19 +35808,19 @@
      2
     ],
     [
-     "runtime_001F40A0",
+     "runtimeSetItai",
      2048160,
      812,
      2
     ],
     [
-     "runtime_001F43D0",
+     "runtimeSetMapLight",
      2048976,
      1016,
      2
     ],
     [
-     "runtime_001F47C8",
+     "runtimeSystem",
      2049992,
      300,
      2

@@ -54752,18 +54752,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001EF898",
+     "name": "objxGetParam",
      "size": 1028,
-     "splat_name": "objx_001EF898",
+     "splat_name": "objxGetParam",
      "va": "0x001ef898",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001EFCA0",
+     "name": "objxMove",
      "size": 584,
-     "splat_name": "objx_001EFCA0",
+     "splat_name": "objxMove",
      "va": "0x001efca0",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -54779,18 +54779,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F0180",
+     "name": "objxRotate",
      "size": 996,
-     "splat_name": "objx_001F0180",
+     "splat_name": "objxRotate",
      "va": "0x001f0180",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F0568",
+     "name": "objxScale",
      "size": 484,
-     "splat_name": "objx_001F0568",
+     "splat_name": "objxScale",
      "va": "0x001f0568",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -54806,63 +54806,63 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F08B0",
+     "name": "objxTransparent",
      "size": 260,
-     "splat_name": "objx_001F08B0",
+     "splat_name": "objxTransparent",
      "va": "0x001f08b0",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001F09B8",
+     "name": "uwamonoStartTransparency",
      "size": 84,
-     "splat_name": "func_001F09B8",
+     "splat_name": "uwamonoStartTransparency",
      "va": "0x001f09b8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F0A10",
+     "name": "objxOffsetPivot",
      "size": 360,
-     "splat_name": "objx_001F0A10",
+     "splat_name": "objxOffsetPivot",
      "va": "0x001f0a10",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F0B78",
+     "name": "objxEnableFlags",
      "size": 360,
-     "splat_name": "objx_001F0B78",
+     "splat_name": "objxEnableFlags",
      "va": "0x001f0b78",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F0CE0",
+     "name": "objxDisableFlags",
      "size": 428,
-     "splat_name": "objx_001F0CE0",
+     "splat_name": "objxDisableFlags",
      "va": "0x001f0ce0",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F0E90",
+     "name": "objxSetRotateTurn",
      "size": 148,
-     "splat_name": "objx_001F0E90",
+     "splat_name": "objxSetRotateTurn",
      "va": "0x001f0e90",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F0F28",
+     "name": "objxSetParent",
      "size": 356,
-     "splat_name": "objx_001F0F28",
+     "splat_name": "objxSetParent",
      "va": "0x001f0f28",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -54878,9 +54878,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F1458",
+     "name": "objxSetPair",
      "size": 268,
-     "splat_name": "objx_001F1458",
+     "splat_name": "objxSetPair",
      "va": "0x001f1458",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -54905,18 +54905,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F1778",
+     "name": "objxChangeId",
      "size": 180,
-     "splat_name": "objx_001F1778",
+     "splat_name": "objxChangeId",
      "va": "0x001f1778",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "objx_001F1830",
+     "name": "objxFootId",
      "size": 152,
-     "splat_name": "objx_001F1830",
+     "splat_name": "objxFootId",
      "va": "0x001f1830",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -54932,9 +54932,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F18F0",
+     "name": "runtimeSetNumber",
      "size": 480,
-     "splat_name": "runtime_001F18F0",
+     "splat_name": "runtimeSetNumber",
      "va": "0x001f18f0",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -54950,9 +54950,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F23A8",
+     "name": "runtimeSetLocater",
      "size": 1132,
-     "splat_name": "runtime_001F23A8",
+     "splat_name": "runtimeSetLocater",
      "va": "0x001f23a8",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -54968,9 +54968,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F2860",
+     "name": "runtimeSetPlayer",
      "size": 1432,
-     "splat_name": "runtime_001F2860",
+     "splat_name": "runtimeSetPlayer",
      "va": "0x001f2860",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -55384,9 +55384,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F3920",
+     "name": "runtimeJumpCf",
      "size": 316,
-     "splat_name": "runtime_001F3920",
+     "splat_name": "runtimeJumpCf",
      "va": "0x001f3920",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -55411,18 +55411,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F3C20",
+     "name": "runtimeGetFlag",
      "size": 152,
-     "splat_name": "runtime_001F3C20",
+     "splat_name": "runtimeGetFlag",
      "va": "0x001f3c20",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F3CB8",
+     "name": "runtimeSetMapFog",
      "size": 772,
-     "splat_name": "runtime_001F3CB8",
+     "splat_name": "runtimeSetMapFog",
      "va": "0x001f3cb8",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -55438,27 +55438,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F40A0",
+     "name": "runtimeSetItai",
      "size": 812,
-     "splat_name": "runtime_001F40A0",
+     "splat_name": "runtimeSetItai",
      "va": "0x001f40a0",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F43D0",
+     "name": "runtimeSetMapLight",
      "size": 1016,
-     "splat_name": "runtime_001F43D0",
+     "splat_name": "runtimeSetMapLight",
      "va": "0x001f43d0",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F47C8",
+     "name": "runtimeSystem",
      "size": 300,
-     "splat_name": "runtime_001F47C8",
+     "splat_name": "runtimeSystem",
      "va": "0x001f47c8",
      "name_basis": "annotation",
      "provenance": "estimated"

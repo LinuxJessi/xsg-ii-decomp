@@ -4,9 +4,8 @@
 #include "main/tu165.h"
 #include "main/xgl_flags.h"
 
-/* Script native argument access: the VM supplies the argument count and the
-   integer argument at each 1-based position of the running native call. */
-int func_A9F0A8(void);
+/* Script natives: argument count, n-th argument, nonzero when argument n is omitted, wrong-count error. */
+int func_A9F0A8(int call);
 void func_A9CC70(int call, int error_code);
 int func_A9F0C0(int call, int index);
 int func_A9F1C0(int call, int index);
@@ -15,22 +14,23 @@ void uwamonoSetRoboMode(signed char id);
 void fadeStartColorAlpha(int frames, float red, float green, float blue, float alpha);
 int xglFlagsGet(int bit_offset, int bit_count);
 void fadeStartOut(int frames);
-void uwamonoSetTransition(signed char mode, int valueA, int valueB, int time);
+void uwamonoSetTransition(signed char mode, int state, int stateArg, int timer);
 void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source);
 
-/* Records of 0x870 bytes indexed by uwamonoFindIndexByShortKey.  Only the touched
-   fields are modeled; the gaps are left unmodeled. */
+/* The talk/elevator block of each 0x870-byte uwamonoRecords record (D_00340350 = uwamonoRecords + 0x590),
+   indexed by uwamonoFindIndexByShortKey.  Only the setElevator fields are modeled. */
 typedef struct IndexedRecord {
     unsigned char unmodeled_0[2];
-    short short_value;
-    int word_value;
+    short elevatorMotion;           /* record+0x592 */
+    int elevatorArg;                /* record+0x594: setElevator argument 3 */
     unsigned char unmodeled_8[0x870 - 8];
 } IndexedRecord;
 
-/* The same 0x870-byte stride, read by progEffect: the first word of each element
-   is the effect id passed to sefExecEffectFrames. */
+/* The same 0x870-byte stride, read by progEffect (progEffectTable = uwamonoRecords + 0x638):
+   each record's effect (the sef effect record tu067.c and tu050.c type as void *), passed to
+   sefExecEffectFrames, whose id parameter tu165.c declares int. */
 typedef struct ProgEffectEntry {
-    int effect_id;
+    void *effect;
     unsigned char unmodeled_4[0x870 - 4];
 } ProgEffectEntry;
 
@@ -38,32 +38,40 @@ extern IndexedRecord D_00340350[];
 extern ProgEffectEntry progEffectTable[];
 extern int D_003E7AF8[];
 
-typedef struct MapColorBlock {
+/* A bit of gameWork.control; tu051.h cannot be included here, its record types clash with this file's. */
+#define CONTROL_SCRIPTED 0x8000 /* include/main/tu051.h */
+
+/* The game work block (tu067.c's GameWork); only the fields these natives touch. */
+typedef struct GameWork {
     unsigned char unmodeled_0[8];
-    int control;                    /* +0x8: bits 0x8000/0x10000/0x100000/0x20000000 scripted-transition state */
+    int control;                    /* +0x8: CONTROL_SCRIPTED while a script controls the player */
     unsigned char unmodeled_c[0x14 - 0xC];
-    int transitionValueA;           /* +0x14: mirrors uwamono record transitionValueA while transitioning */
+    int state;                      /* +0x14: takes the record's eventState when a state change runs at once */
     unsigned char unmodeled_18[0x1C - 0x18];
-    int transitionValueB;           /* +0x1C: mirrors uwamono record transitionValueB while transitioning */
+    int stateArg;                   /* +0x1C: takes the record's eventStateArg */
     unsigned char unmodeled_20[0xC0 - 0x20];
     float color[3];
     unsigned char unmodeled_cc[0x348 - 0xCC];
-    float actorColor[4];            /* +0x348: setEffectColor's percentages / 100 for every actor */
+    float fogDist[4];               /* +0x348: setFog args 2-5 / 100: near, far, min, max for pxySetFogDist */
     unsigned char unmodeled_358[0x360 - 0x358];
-    float actorColorBlock[3];       /* +0x360: setEffectColor's block values for every actor */
+    float fogColor[3];              /* +0x360: setFog args 6-8, the color for pxySetFogColor */
     unsigned char unmodeled_36c[0x370 - 0x36C];
-    int actorParam;                 /* +0x370 */
+    int shadowCasterMode;           /* +0x370: setItai argument 2 (default 1); tu048 passes it each frame to
+                                       func_001BA358, the mode pxyDrawShadowCaster tests (1, 2) */
     unsigned char unmodeled_374[0x384 - 0x374];
     float lightDirection[16][3][4]; /* +0x384: per light set, light types 1-3 */
     float lightColor[16][3][4];     /* +0x684 */
     float ambientColor[16][4];      /* +0x984: light type 0 */
     float type4Direction[16][4];    /* +0xA84: light type 4; w 0 disables it */
     float type4Value[16];           /* +0xB84: light type 4, 0.2 by default */
-} MapColorBlock;
+} GameWork;
 
-extern MapColorBlock gameWork;
+extern GameWork gameWork;
 
-/* The XenoActor fields (xenoActor.c names) the color natives write. */
+/* A bit of XenoActor.drawFlags (defined in src/main/xenoActor.c, not in a header). */
+#define XENO_DRAW_COLOR 0x1 /* apply the color block: set by setFog after it writes fogDist/fogColor */
+
+/* The XenoActor fields (xenoActor.c names) the fog and draw natives write. */
 struct XenoActor {
     unsigned char unmodeled_000[0xBC];
     u32 drawFlags;                  /* 0x0BC */
@@ -72,8 +80,8 @@ struct XenoActor {
     unsigned char unmodeled_0d4[0x180 - 0xD4];
     float modeValue4;               /* 0x180 */
     unsigned char unmodeled_184[0x490 - 0x184];
-    float color[4];                 /* 0x490: setEffectColor's percentages / 100 */
-    float colorBlock[3];            /* 0x4A0: setEffectColor's block values */
+    float fogDist[4];               /* 0x490: setFog args 2-5 / 100 (xenoActor.c still names it color: asked) */
+    float fogColor[3];              /* 0x4A0: setFog args 6-8 (xenoActor.c still names it colorBlock: asked) */
     unsigned char unmodeled_4ac[0x590 - 0x4AC];
     unsigned char colorIndex[16];   /* 0x590: 0xFF marks a free entry */
 };
@@ -87,38 +95,54 @@ typedef struct UwamonoSlot {
 
 extern UwamonoSlot uwamonoSlotTable[];
 
-/* The same 0x870-byte stride as uwamonoRecords (tu051.h), with only the fields
-   touched by the robo-mode/transition natives modeled. */
-typedef struct UwamonoTransitionRecord {
+/* One 0x870-byte record of uwamonoRecords (tu051.h, tu067.c), with only the fields
+   touched by the robo-mode and state-change natives modeled. */
+typedef struct UwamonoRecord {
     unsigned char unmodeled_0[2];
-    unsigned char kind;             /* +0x2: nonzero for a live record */
+    unsigned char kind;             /* +0x2: MAP_KIND_* */
     unsigned char unmodeled_3[0x24C - 3];
-    short transitionTime;           /* +0x24C */
-    int transitionActive;           /* +0x250 */
-    int transitionValueA;           /* +0x254 */
-    int transitionValueB;           /* +0x258 */
+    short eventTimer;               /* +0x24C */
+    int event;                      /* +0x250: 0 state change, 1 player model change, -1 none */
+    int eventState;                 /* +0x254 */
+    int eventStateArg;              /* +0x258 */
     unsigned char unmodeled_25c[0x330 - 0x25C];
     struct XenoActor *actor;        /* +0x330 */
     unsigned char unmodeled_334[0x338 - 0x334];
-    float mode;                     /* +0x338: 1.0 for robo mode 0, 5.0 for robo mode 1 */
+    float form;                     /* +0x338: 1.0 in the ES form (robo 0), 5.0 otherwise */
     unsigned char unmodeled_33c[0x870 - 0x33C];
-} UwamonoTransitionRecord;
+} UwamonoRecord;
 
-extern UwamonoTransitionRecord uwamonoRecords[];
+/* UwamonoRecord.kind (tu050.c's MapObjectRecord.kind). */
+enum {
+    MAP_KIND_FREE = 0,
+    MAP_KIND_ACTOR = 1,
+    MAP_KIND_MODEL = 2,
+    MAP_KIND_FLAG = 3,
+    MAP_KIND_ACTOR_STATIC = 4,  /* an actor that is not moved by uwamonoUpdateRecord */
+    MAP_KIND_PART = 5,          /* a part attached to the player (tu051.c) */
+    MAP_KIND_EFFECT = 6,        /* the record carries a sef effect at +0x638 */
+    MAP_KIND_MOVER = 7,
+    MAP_KIND_MODEL_REQUEST = 8  /* create only: uwamonoCreateRecord turns it into a model or frees it */
+};
+
+#define MAP_RECORD_COUNT 0x100
+#define NULL ((void *) 0)
+
+extern UwamonoRecord uwamonoRecords[];
 extern int uwamonoCurrentIndex;
 extern short uwamonoLadderState;
 void uwamonoSetMotion(int index, int motion, float speed);
 
 /* Native "progEffect": argument 2 is the frame count.  Without argument 1 the first
    argument of sefExecEffectFrames is 0; with it, argument 2 is also read as a key
-   and the ProgEffectEntry found by uwamonoFindIndexByShortKey supplies the effect id. */
+   and the ProgEffectEntry found by uwamonoFindIndexByShortKey supplies the effect. */
 int runtimeProgEffect(int call)
 {
     int frames;
     int lookupKey;
     int lookupIndex;
 
-    if (func_A9F0A8() < 2) {
+    if (func_A9F0A8(call) < 2) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -128,7 +152,7 @@ int runtimeProgEffect(int call)
     } else {
         lookupKey = func_A9F0C0(call, 2);
         lookupIndex = uwamonoFindIndexByShortKey((short) lookupKey);
-        sefExecEffectFrames(progEffectTable[lookupIndex].effect_id, (float) frames);
+        sefExecEffectFrames((int) progEffectTable[lookupIndex].effect, (float) frames);
     }
     return 1;
 }
@@ -137,7 +161,7 @@ int changeRobo(int call)
 {
     int id;
 
-    if (func_A9F0A8() != 1) {
+    if (func_A9F0A8(call) != 1) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -147,51 +171,52 @@ int changeRobo(int call)
 }
 
 /* Called by changeRobo with the robo id.  Works on uwamonoRecords[uwamonoCurrentIndex]:
-   returns early when the record's mode float (+0x338) already equals the value for
-   the id (1.0 for 0, 5.0 for 1); otherwise it starts a change with time 30. */
+   returns early when the record's form already matches the id (1.0 for 0, 5.0 for 1);
+   otherwise it starts a player model change (event 1) with timer 30, with no state
+   (eventState/eventStateArg -1), sets CONTROL_SCRIPTED and calls fadeStartOut(0). */
 void uwamonoSetRoboMode(signed char id)
 {
-    UwamonoTransitionRecord *record = &uwamonoRecords[uwamonoCurrentIndex];
+    UwamonoRecord *record = &uwamonoRecords[uwamonoCurrentIndex];
 
-    if (record->mode == 1.0f) {
+    if (record->form == 1.0f) {
         if (id == 0) {
             return;
         }
     }
-    if (record->mode == 5.0f) {
+    if (record->form == 5.0f) {
         if (id == 1) {
             return;
         }
     }
-    record->transitionValueA = -1;
-    record->transitionTime = 30;
-    gameWork.control |= 0x8000;
-    record->transitionActive = 1;
-    record->transitionValueB = -1;
+    record->eventState = -1;
+    record->eventTimer = 30;
+    gameWork.control |= CONTROL_SCRIPTED;
+    record->event = 1;
+    record->eventStateArg = -1;
     fadeStartOut(0);
 }
 
-/* Native "setElevator": argument 1 is a lookup key, arguments 2 and 3 are
-   stored in the IndexedRecord that the key selects. */
+/* Native "setElevator": argument 1 is a record key, arguments 2 and 3 are the
+   elevator motion and its argument stored in that record. */
 int runtimeSetElevator(int call)
 {
-    int lookupKey;
-    int lookupIndex;
+    int key;
+    int index;
     IndexedRecord *record;
-    int shortValue;
-    int wordValue;
+    int elevatorMotion;
+    int elevatorArg;
 
-    if (func_A9F0A8() != 3) {
+    if (func_A9F0A8(call) != 3) {
         func_A9CC70(call, 2);
         return 0;
     }
-    lookupKey = func_A9F0C0(call, 1);
-    lookupIndex = uwamonoFindIndexByShortKey((short) lookupKey);
-    shortValue = func_A9F0C0(call, 2);
-    wordValue = func_A9F0C0(call, 3);
-    record = &D_00340350[lookupIndex];
-    record->short_value = shortValue;
-    record->word_value = wordValue;
+    key = func_A9F0C0(call, 1);
+    index = uwamonoFindIndexByShortKey((short) key);
+    elevatorMotion = func_A9F0C0(call, 2);
+    elevatorArg = func_A9F0C0(call, 3);
+    record = &D_00340350[index];
+    record->elevatorMotion = elevatorMotion;
+    record->elevatorArg = elevatorArg;
     return 1;
 }
 
@@ -201,7 +226,7 @@ int runtimeMessage(int call)
     int index;
     int value;
 
-    if (func_A9F0A8() != 2) {
+    if (func_A9F0A8(call) != 2) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -216,7 +241,7 @@ int runtimeMapChange(int call)
 {
     int id;
 
-    if (func_A9F0A8() != 1) {
+    if (func_A9F0A8(call) != 1) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -235,7 +260,7 @@ int runtimeFade(int call)
     int blue;
     int alpha;
 
-    if (func_A9F0A8() != 5) {
+    if (func_A9F0A8(call) != 5) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -248,56 +273,57 @@ int runtimeFade(int call)
     return 1;
 }
 
-/* Native "jumpCF": arguments 1 and 2 are two int values for the transition, argument 3
-   a mode (default 1) and argument 4 a short time (default 30), passed on to
-   uwamonoSetTransition.  Does nothing when the current record already has a
-   transition time set and is not active. */
-int runtime_001F3920(int call)
+/* Native "jumpCF": arguments 1 and 2 are the state and its argument (default -1) for a
+   deferred state change, argument 3 a mode (default 1) and argument 4 the timer
+   (default 30), passed on to uwamonoSetTransition.  Does nothing while a state change
+   is already pending on the current record. */
+int runtimeJumpCf(int call)
 {
-    UwamonoTransitionRecord *record = &uwamonoRecords[uwamonoCurrentIndex];
-    int valueA;
-    int valueB;
+    UwamonoRecord *record = &uwamonoRecords[uwamonoCurrentIndex];
+    int state;
+    int stateArg;
     signed char mode;
 
-    if (func_A9F0A8() < 2) {
+    if (func_A9F0A8(call) < 2) {
         func_A9CC70(call, 2);
         return 0;
     }
-    if (record->transitionTime != -1 && record->transitionActive == 0) {
+    if (record->eventTimer != -1 && record->event == 0) {
         return 1;
     }
-    valueA = func_A9F0C0(call, 1);
+    state = func_A9F0C0(call, 1);
     if (func_A9F1C0(call, 2) == 0) {
-        valueB = func_A9F0C0(call, 2);
+        stateArg = func_A9F0C0(call, 2);
     } else {
-        valueB = -1;
+        stateArg = -1;
     }
     if (func_A9F1C0(call, 3) == 0) {
         mode = (signed char) func_A9F0C0(call, 3);
     } else {
         mode = 1;
     }
-    uwamonoSetTransition(mode, valueA, valueB,
+    uwamonoSetTransition(mode, state, stateArg,
         func_A9F1C0(call, 4) != 0 ? 30 : func_A9F0C0(call, 4));
     return 1;
 }
 
-/* Called by runtime_001F3920 (jumpCF) with a mode (default 1), two int values and a
-   time (default 30) from the script.  Stores them in the current uwamono record at
-   +0x254, +0x258 and +0x24C and clears +0x250.  Sets gameWork.control bit 0x10000 for
-   mode 1; otherwise clears it and, while uwamonoLadderState is 0, starts motion 0 on
-   the current record.  When gameWork.control bit 0x100000 is clear and time is
-   nonzero, fades out over time frames.  When time is zero, marks the record inactive
-   (-1) and mirrors its two stored values into gameWork. */
-void uwamonoSetTransition(signed char mode, int valueA, int valueB, int time)
+/* Called by runtimeJumpCf (jumpCF) with a mode (default 1), a state and its argument
+   and a timer (default 30) from the script.  Queues a deferred state change (event 0)
+   on the current uwamono record: eventState, eventStateArg and eventTimer take the
+   values.  Sets gameWork.control bit 0x10000 for mode 1; otherwise clears it and,
+   while uwamonoLadderState is 0, starts motion 0 on the current record.  When
+   gameWork.control bit 0x100000 is clear and timer is nonzero, fades out over timer
+   frames.  When timer is zero the state change runs at once: the event becomes -1
+   (none) and gameWork.state/stateArg take the record's values. */
+void uwamonoSetTransition(signed char mode, int state, int stateArg, int timer)
 {
-    UwamonoTransitionRecord *record = &uwamonoRecords[uwamonoCurrentIndex];
+    UwamonoRecord *record = &uwamonoRecords[uwamonoCurrentIndex];
 
-    gameWork.control |= 0x20008000;
-    record->transitionValueA = valueA;
-    record->transitionValueB = valueB;
-    record->transitionTime = time;
-    record->transitionActive = 0;
+    gameWork.control |= 0x20000000 | CONTROL_SCRIPTED;
+    record->eventState = state;
+    record->eventStateArg = stateArg;
+    record->eventTimer = timer;
+    record->event = 0;
 
     if (mode == 1) {
         gameWork.control |= 0x10000;
@@ -309,14 +335,14 @@ void uwamonoSetTransition(signed char mode, int valueA, int valueB, int time)
     }
 
     if (!(gameWork.control & 0x100000)) {
-        if (time != 0) {
-            fadeStartOut(time);
+        if (timer != 0) {
+            fadeStartOut(timer);
         }
     }
-    if (time == 0) {
-        record->transitionActive = -1;
-        gameWork.transitionValueA = record->transitionValueA;
-        gameWork.transitionValueB = record->transitionValueB;
+    if (timer == 0) {
+        record->event = -1;
+        gameWork.state = record->eventState;
+        gameWork.stateArg = record->eventStateArg;
     }
 }
 
@@ -328,7 +354,7 @@ int runtimeSetFlag(int call)
     int bitOffset;
     int flagValue;
 
-    if (func_A9F0A8() != 3) {
+    if (func_A9F0A8(call) != 3) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -345,12 +371,12 @@ int runtimeSetFlag(int call)
 /* Native "getFlag": argument 1 is the bit offset, argument 2 the bit count
    (1 when absent), as the xglFlagsGet parameters.  Returns the flag value,
    not 1. */
-int runtime_001F3C20(int call)
+int runtimeGetFlag(int call)
 {
     int bitOffset;
     int bitCount;
 
-    if (func_A9F0A8() != 2) {
+    if (func_A9F0A8(call) != 2) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -363,10 +389,12 @@ int runtime_001F3C20(int call)
     return xglFlagsGet(bitOffset, bitCount);
 }
 
-/* Native "setEffectColor": argument 1 is a uwamono key, -1 or -2 for every slot (-1
-   also stores the color in gameWork); arguments 2-5 are color percentages and 6-8
-   the colorBlock values written to each slot's actor, which gets drawFlags bit 1. */
-int runtime_001F3CB8(int call)
+/* Native "setFog": argument 1 is a uwamono key, -1 or -2 for every slot (-1 also stores
+   the fog in gameWork); arguments 2-5 are the fog distances in hundredths (near, far,
+   min, max for pxySetFogDist) and 6-8 the fog color, written to each slot's actor,
+   whose drawFlags gets XENO_DRAW_COLOR (0x1, xenoActor.c).  A single key sets no
+   actor: the range ends at the found index itself (end = first). */
+int runtimeSetMapFog(int call)
 {
     int key;
     int first;
@@ -375,42 +403,42 @@ int runtime_001F3CB8(int call)
     /* Declared live before the loop and assigned after the slot test: the
        original loads the slot's actor into $2 for the test and copies it to
        $16 for the stores (one variable assigned in the test loads $16 directly). */
-    struct XenoActor *actor = 0;
+    struct XenoActor *actor = NULL;
 
-    if (func_A9F0A8() != 8) {
+    if (func_A9F0A8(call) != 8) {
         func_A9CC70(call, 2);
         return 0;
     }
     key = func_A9F0C0(call, 1);
     if (key == -1) {
-        gameWork.actorColor[0] = (float) func_A9F0C0(call, 2) / 100.0f;
-        gameWork.actorColor[1] = (float) func_A9F0C0(call, 3) / 100.0f;
-        gameWork.actorColor[2] = (float) func_A9F0C0(call, 4) / 100.0f;
-        gameWork.actorColor[3] = (float) func_A9F0C0(call, 5) / 100.0f;
-        gameWork.actorColorBlock[0] = (float) func_A9F0C0(call, 6);
-        gameWork.actorColorBlock[1] = (float) func_A9F0C0(call, 7);
-        gameWork.actorColorBlock[2] = (float) func_A9F0C0(call, 8);
+        gameWork.fogDist[0] = (float) func_A9F0C0(call, 2) / 100.0f;
+        gameWork.fogDist[1] = (float) func_A9F0C0(call, 3) / 100.0f;
+        gameWork.fogDist[2] = (float) func_A9F0C0(call, 4) / 100.0f;
+        gameWork.fogDist[3] = (float) func_A9F0C0(call, 5) / 100.0f;
+        gameWork.fogColor[0] = (float) func_A9F0C0(call, 6);
+        gameWork.fogColor[1] = (float) func_A9F0C0(call, 7);
+        gameWork.fogColor[2] = (float) func_A9F0C0(call, 8);
     }
     if (key == -1 || key == -2) {
         first = 0;
-        end = 0x100;
+        end = MAP_RECORD_COUNT;
     } else {
-        /* The original ends the range at the found index itself, so a single
-           key colors no slot; kept as compiled. */
-        first = uwamonoFindIndexByShortKey(key);
+        /* The original ends the range at the found index itself (end = first, not
+           first + 1 as in setItai), so a single key sets no slot's fog; kept as compiled. */
+        first = uwamonoFindIndexByShortKey((short) key);
         end = first;
     }
     for (index = first; index < end; index++) {
-        if (uwamonoSlotTable[index].actor != 0) {
+        if (uwamonoSlotTable[index].actor != NULL) {
             actor = uwamonoSlotTable[index].actor;
-            actor->color[0] = (float) func_A9F0C0(call, 2) / 100.0f;
-            actor->color[1] = (float) func_A9F0C0(call, 3) / 100.0f;
-            actor->color[2] = (float) func_A9F0C0(call, 4) / 100.0f;
-            actor->color[3] = (float) func_A9F0C0(call, 5) / 100.0f;
-            actor->colorBlock[0] = (float) func_A9F0C0(call, 6);
-            actor->colorBlock[1] = (float) func_A9F0C0(call, 7);
-            actor->colorBlock[2] = (float) func_A9F0C0(call, 8);
-            actor->drawFlags |= 1;
+            actor->fogDist[0] = (float) func_A9F0C0(call, 2) / 100.0f;
+            actor->fogDist[1] = (float) func_A9F0C0(call, 3) / 100.0f;
+            actor->fogDist[2] = (float) func_A9F0C0(call, 4) / 100.0f;
+            actor->fogDist[3] = (float) func_A9F0C0(call, 5) / 100.0f;
+            actor->fogColor[0] = (float) func_A9F0C0(call, 6);
+            actor->fogColor[1] = (float) func_A9F0C0(call, 7);
+            actor->fogColor[2] = (float) func_A9F0C0(call, 8);
+            actor->drawFlags |= XENO_DRAW_COLOR;
         }
     }
     return 1;
@@ -418,7 +446,7 @@ int runtime_001F3CB8(int call)
 
 int setMapColor(int call)
 {
-    if (func_A9F0A8() != 3) {
+    if (func_A9F0A8(call) != 3) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -428,31 +456,31 @@ int setMapColor(int call)
     return 1;
 }
 
-/* Native with up to 10 arguments: argument 2 (default 1) goes to gameWork.actorParam;
+/* Native "setItai", up to 10 arguments: argument 2 (default 1) goes to gameWork.shadowCasterMode;
    argument 3 is a uwamono key (every record when absent or negative).  For each live
    record with an actor, arguments 4/5 set/clear drawFlags bits, 6/7 set/clear
    renderFlags bits, 8 is a percentage for modeValue4 and 9 fills the first free (0xFF)
    colorIndex entry.  Argument 10 sets or clears gameWork.control bit 0x200000. */
-int runtime_001F40A0(int call)
+int runtimeSetItai(int call)
 {
     int first;
     int end;
     int index;
     int entry;
 
-    if (func_A9F0A8() > 10) {
+    if (func_A9F0A8(call) > 10) {
         func_A9CC70(call, 2);
         return 0;
     }
-    gameWork.actorParam = func_A9F1C0(call, 2) != 0 ? 1 : func_A9F0C0(call, 2);
+    gameWork.shadowCasterMode = func_A9F1C0(call, 2) != 0 ? 1 : func_A9F0C0(call, 2);
     first = 0;
-    end = 0x100;
+    end = MAP_RECORD_COUNT;
     if (func_A9F1C0(call, 3) == 0 && func_A9F0C0(call, 3) >= 0) {
-        first = uwamonoFindIndexByShortKey(func_A9F0C0(call, 3));
+        first = uwamonoFindIndexByShortKey((short) func_A9F0C0(call, 3));
         end = first + 1;
     }
     for (index = first; index < end; index++) {
-        if (uwamonoRecords[index].kind != 0 && uwamonoRecords[index].actor != 0) {
+        if (uwamonoRecords[index].kind != MAP_KIND_FREE && uwamonoRecords[index].actor != NULL) {
             if (func_A9F1C0(call, 4) == 0) {
                 uwamonoRecords[index].actor->drawFlags |= func_A9F0C0(call, 4);
             }
@@ -488,19 +516,19 @@ int runtime_001F40A0(int call)
     return 1;
 }
 
-/* Light native with 8 arguments: argument 1 selects one of 16 light sets in gameWork,
+/* Native "setLight", 8 arguments: argument 1 selects one of 16 light sets in gameWork,
    argument 2 the light type (0 ambient color, 1-3 a direction and color, 4 a direction
    and a value), arguments 3-5 a color out of 256 and 6-8 a direction out of 100.  A
    lone argument 3 gives a gray light color; type 4 without 6-8 disables the direction
    (w 0) and without 3-5 takes the value 0.2. */
-int runtime_001F43D0(int call)
+int runtimeSetMapLight(int call)
 {
     Vector4 direction;
     Vector4 color;
     int light;
     int type;
 
-    if (func_A9F0A8() != 8) {
+    if (func_A9F0A8(call) != 8) {
         func_A9CC70(call, 2);
         return 0;
     }
@@ -558,14 +586,14 @@ int runtime_001F43D0(int call)
     return 1;
 }
 
-/* Native "setFlags": argument 1 selects one of several gameWork.control bits to set or
+/* Native "System": argument 1 selects one of several gameWork.control bits to set or
    clear; out of range (or missing) values are ignored.  Always returns 1 once the
    argument count check passes. */
-int runtime_001F47C8(int call)
+int runtimeSystem(int call)
 {
     int flagId;
 
-    if (func_A9F0A8() <= 0) {
+    if (func_A9F0A8(call) <= 0) {
         func_A9CC70(call, 2);
         return 0;
     }
