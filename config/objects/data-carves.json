@@ -4776,6 +4776,44 @@
     }
    ]
   },
+  "main/tu059": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00688690",
+      "0x006886b0"
+     ],
+     "generated": [
+      "0x00688690",
+      "0x006886a5"
+     ],
+     "generated_by": [
+      "GameSynopsis"
+     ],
+     "c_owned_symbols": [
+      "D_00688690"
+     ],
+     "also_referenced_by_c": [
+      "D_00688488",
+      "D_00688498",
+      "D_006884F8",
+      "D_00688558",
+      "D_00688568",
+      "D_00688580",
+      "D_00688590",
+      "D_006885E0",
+      "D_00688648",
+      "D_00688660",
+      "D_00688678"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/game_over_059.o"
+     }
+    }
+   ]
+  },
   "main/tu060": {
    ".rodata": [
     {
