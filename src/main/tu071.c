@@ -1,23 +1,24 @@
 #include "common.h"
 
-/* Native "se" (its name pointer is at 0x3e6f00).  Argument 1 is the handle; argument 2 the
-   volume, read from seDefaultVolume (the byte seVol writes) when absent; argument 3 the pan, 0x40 when
-   absent.  A volume above 0 calls seVoiceStart with the same three values sePos uses;
-   otherwise func_001A3D88 is called with the handle. */
-int func_A9F0C0(void *call, int index);
-int func_A9F1C0(void *call, int index);
+int func_A9F0C0(int call, int index);
+int func_A9F1C0(int call, int index);
 float I2F(int value);
+/* res_get_path.c types this ResRecord *; it reads only rec->u.position at offset 0. */
 unsigned int seVoicePanVolumeFromPosition(float *position);
-void seVoiceStart(int handle, unsigned int high, int low);
-void func_001A3D88(int handle);
+void seVoiceStart(int voice, unsigned int volume, int pan);
+void func_001A3D88(unsigned int voice);
 extern unsigned char seDefaultVolume[];
 
-int seSetVolumePan(void *call) {
-    int handle;
+/* Native "se" (its name pointer is at 0x3e6f00).  Argument 1 is the voice; argument 2 the
+   volume, read from seDefaultVolume (the byte seVol writes) when absent; argument 3 the pan, 0x40 when
+   absent.  A volume above 0 calls seVoiceStart with the same three values sePos uses;
+   otherwise func_001A3D88 is called with the voice. */
+int seSetVolumePan(int call) {
+    int voice;
     int volume;
     int pan;
 
-    handle = func_A9F0C0(call, 1);
+    voice = func_A9F0C0(call, 1);
     if (func_A9F1C0(call, 2) != 0) {
         volume = seDefaultVolume[0];
     } else {
@@ -29,42 +30,44 @@ int seSetVolumePan(void *call) {
         pan = 0x40;
     }
     if (volume > 0) {
-        seVoiceStart(handle, volume, pan);
+        seVoiceStart(voice, volume, pan);
     } else {
-        func_001A3D88(handle);
+        func_001A3D88(voice);
     }
     return 1;
 }
 
-int seVol(void *call) {
+int seVol(int call) {
     seDefaultVolume[0] = (unsigned char) func_A9F0C0(call, 1);
     return 1;
 }
 
-int sePos(void *call) {
+int sePos(int call) {
     float position[3];
-    int handle;
+    int voice;
     unsigned int volumePan;
 
-    handle = func_A9F0C0(call, 1);
+    voice = func_A9F0C0(call, 1);
     position[0] = I2F(func_A9F0C0(call, 2)) / 100.0f;
     position[1] = I2F(func_A9F0C0(call, 3)) / 100.0f;
     position[2] = I2F(func_A9F0C0(call, 4)) / 100.0f;
     volumePan = seVoicePanVolumeFromPosition(position);
     if (volumePan != 0) {
-        seVoiceStart(handle, volumePan >> 8, volumePan & 0xFF);
+        seVoiceStart(voice, volumePan >> 8, volumePan & 0xFF);
     }
     return 1;
 }
 
 void seVoiceRecordSet(unsigned int voice, unsigned int volume, unsigned int pan);
 
-int runtime_001F4BE0(void *call) {
-    int handle;
+/* Native "bgmse": argument 1 is the voice; argument 2 the volume, -1 when absent; argument 3
+   the pan, 0x40 when absent.  The three values go to seVoiceRecordSet. */
+int bgmSe(int call) {
+    int voice;
     int volume;
     int pan;
 
-    handle = func_A9F0C0(call, 1);
+    voice = func_A9F0C0(call, 1);
     if (func_A9F1C0(call, 2) == 0) {
         volume = func_A9F0C0(call, 2);
     } else {
@@ -75,58 +78,60 @@ int runtime_001F4BE0(void *call) {
     } else {
         pan = 0x40;
     }
-    seVoiceRecordSet(handle, volume, pan);
+    seVoiceRecordSet(voice, volume, pan);
     return 1;
 }
 
-void seVoiceRecordAddAt(int handle, float *position);
+void seVoiceRecordAddAt(int voice, float *position);
 
-int bgmSePos(void *call) {
+int bgmSePos(int call) {
     float position[3];
-    int handle;
+    int voice;
 
-    handle = func_A9F0C0(call, 1);
+    voice = func_A9F0C0(call, 1);
     position[0] = I2F(func_A9F0C0(call, 2)) / 100.0f;
     position[1] = I2F(func_A9F0C0(call, 3)) / 100.0f;
     position[2] = I2F(func_A9F0C0(call, 4)) / 100.0f;
-    seVoiceRecordAddAt(handle, position);
+    seVoiceRecordAddAt(voice, position);
     return 1;
 }
 
-void seVolumeSet(int handle, int volume);
+void seVolumeSet(int value, int flags);
 
-int runtime_001F4D48(void *call) {
-    int handle;
+/* Native "bgmFade": argument 1 is the music volume (below 0: the default); argument 2 the
+   fade length seVolumeSet hands to seVolumeRampSet, 0 (at once) when absent. */
+int bgmFade(int call) {
     int volume;
+    int fade;
 
-    handle = func_A9F0C0(call, 1);
+    volume = func_A9F0C0(call, 1);
     if (func_A9F1C0(call, 2) == 0) {
-        volume = func_A9F0C0(call, 2);
+        fade = func_A9F0C0(call, 2);
     } else {
-        volume = 0;
+        fade = 0;
     }
-    seVolumeSet(handle, volume);
+    seVolumeSet(volume, fade);
     return 1;
 }
 
-extern signed char D_0069CFD0;
+extern unsigned char D_0069CFD0;
 
-int nextBgm(void *call) {
-    D_0069CFD0 = (signed char) func_A9F0C0(call, 1);
+int nextBgm(int call) {
+    D_0069CFD0 = (unsigned char) func_A9F0C0(call, 1);
     return 1;
 }
 
-void seBgmNameSet(int result);
-int func_A9F238(void *call, int value);
+void seBgmNameSet(signed char *name);
+char *func_A9F238(int call, int index);
 
 /* Native "bgm": argument 1 names the track; the name is resolved through func_A9F238 and
    passed to seBgmNameSet, which starts it (an empty name stops the music). */
-int bgmSetTrack(void *call) {
+int bgmSetTrack(int call) {
     int trackRef;
-    int trackName;
+    signed char *trackName;
 
     trackRef = func_A9F0C0(call, 1);
-    trackName = func_A9F238(call, trackRef);
+    trackName = (signed char *) func_A9F238(call, trackRef);
     seBgmNameSet(trackName);
     return 1;
 }

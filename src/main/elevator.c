@@ -2,20 +2,25 @@
 #include "debug_break.h"
 #include "main/elevator.h"
 
-struct ElevatorObject {
-    unsigned char unmodeled_00[0x760];
-    int status;
+/* The part of the actor body this file reads. */
+struct XenoActor {
+    unsigned char unmodeled_000[0x760];
+    int status;                             /* 0x760: ground status (tu051.h) */
 };
 
-struct ElevatorSlot {
-    struct ElevatorObject *object;
-    unsigned char unmodeled_04[0x86C];
+/* One 0x870-byte slot of uwamonoSlotTable (tu085.c). */
+struct UwamonoSlot {
+    struct XenoActor *actor;                /* +0x00 */
+    struct UwamonoState *state;             /* +0x04 */
+    unsigned char unmodeled_08[0x870 - 0x08];
 };
 
 struct ElevatorState {
     unsigned char unmodeled_00[0xD0];
-    unsigned short flags;
+    unsigned short flags;                   /* +0xD0: the camera flags word (CameraState.flags in tu051.c) */
 };
+
+#define CAMERA_FLAG_TRACK_PLAYER 0x20 /* src/main/tu051.c */
 
 /* One elevator: position moves from start to target over duration frames. */
 struct ElevatorRecord {
@@ -41,10 +46,11 @@ struct ElevatorSlope {
     float speed;
 };
 
-struct ElevatorDevice {
+/* The resource record gameWork.active points at (MainActive in tu050.c). */
+struct MainActive {
     unsigned char unmodeled_00[0x28];
-    short first;
-    short second;
+    short offsetY;                          /* +0x28 */
+    short offsetX;                          /* +0x2A */
 };
 
 struct ElevatorSample {
@@ -52,10 +58,10 @@ struct ElevatorSample {
 };
 
 extern int uwamonoCurrentIndex;
-extern struct ElevatorSlot uwamonoSlotTable[];
+extern struct UwamonoSlot uwamonoSlotTable[];
 extern struct ElevatorState gameWork;
 extern struct ElevatorRecord elvRecords[];
-extern struct ElevatorDevice *D_002B5DB8[];
+extern struct MainActive *D_002B5DB8[]; /* gameWork.active (gameWork+0x28) */
 extern unsigned char D_0069D1C0[];
 extern unsigned char D_002BD478[];
 extern unsigned char elvActiveMask;
@@ -68,9 +74,9 @@ extern struct ElevatorSlope elvSlopeTable[];
 extern int printf(const char *format, ...);
 extern float xglSin(float angle);
 extern float xglCos(float angle);
-extern int mapFindBlockEntry();
-int func_A9F0C0(int index, int selector);
-int func_A9F1C0(int index, int selector);
+int mapFindBlockEntry(int id, int index);
+int func_A9F0C0(int call, int index);
+int func_A9F1C0(int call, int index);
 
 extern const char D_006894A8[]; /* the assert format: expression, file, line */
 extern const char D_00689508[]; /* "(no > 0) && (no < 9)" */
@@ -95,20 +101,21 @@ int func_001EDCA8(void) {
     return 0x73;
 }
 
-/* Sets the 0x20 arrival flag when the current object reports status 0x2nn
- * with nn equal to this elevator's index (zero based). */
+/* Sets CAMERA_FLAG_TRACK_PLAYER in the camera flags word when the current actor
+ * reports status 0x2nn with nn equal to this elevator's index (zero based), that is
+ * while the player stands on this elevator. */
 void elvSetStatusFlag(int elevator_index)
 {
     int status;
 
-    status = uwamonoSlotTable[uwamonoCurrentIndex].object->status;
+    status = uwamonoSlotTable[uwamonoCurrentIndex].actor->status;
     if ((status & ~0xFF) == 0x200 && (status & 0xF) == elevator_index) {
-        gameWork.flags |= 0x20;
+        gameWork.flags |= CAMERA_FLAG_TRACK_PLAYER;
     }
 }
 
 /* Per-frame motion of one elevator: interpolates the record position toward
- * its target by elapsed/duration (VU0 lerp), and sets the arrival flag at the
+ * its target by elapsed/duration (VU0 lerp), and calls elvSetStatusFlag at the
  * end. Called by DispMapObject with the object that holds the elevator index. */
 INCLUDE_ASM("asm/main/nonmatchings/elevator", elvUpdateMotion);
 
@@ -140,14 +147,14 @@ float elvValueToFloat(int value)
 /* Script native id.elvActive: sets or clears bit (no - 1) of elvActiveMask
  * from the second argument. Asserts 0 < no < 9. The variable no is reused
  * for the bit value: one register serves both roles in the original. */
-int elvSetActive(int index)
+int elvSetActive(int call)
 {
     int no;
     int active;
     int mask;
 
-    no = func_A9F0C0(index, 1);
-    active = func_A9F0C0(index, 2);
+    no = func_A9F0C0(call, 1);
+    active = func_A9F0C0(call, 2);
     ELV_ASSERT((no > 0) && (no < 9), D_00689508, 161);
     no = 1 << (no - 1);
     mask = elvActiveMask & ~no;
@@ -159,14 +166,14 @@ int elvSetActive(int index)
 }
 
 /* Script native id.elvNoOut: the same bit operation on elvNoOutMask. */
-int elvSetNoOut(int index)
+int elvSetNoOut(int call)
 {
     int no;
     int no_out;
     int mask;
 
-    no = func_A9F0C0(index, 1);
-    no_out = func_A9F0C0(index, 2);
+    no = func_A9F0C0(call, 1);
+    no_out = func_A9F0C0(call, 2);
     ELV_ASSERT((no > 0) && (no < 9), D_00689508, 186);
     no = 1 << (no - 1);
     mask = elvNoOutMask & ~no;
@@ -180,7 +187,7 @@ int elvSetNoOut(int index)
 /* Script native id.elvMove: elevator no moves to the given x, y, z (an axis
  * left out is marked off in axis_moves and gets 0) over the given number of frames,
  * or jumps there at once when the frame count is not positive. */
-int elvMove(int index)
+int elvMove(int call)
 {
     struct ElevatorRecord *record;
     int no;
@@ -189,31 +196,31 @@ int elvMove(int index)
     float y;
     float z;
 
-    no = func_A9F0C0(index, 1);
+    no = func_A9F0C0(call, 1);
     ELV_ASSERT((no > 0) && (no < 9), D_00689508, 214);
     record = &elvRecords[no - 1];
-    if (func_A9F1C0(index, 2) != 0) {
+    if (func_A9F1C0(call, 2) != 0) {
         x = 0.0f;
         record->axis_moves[0] = 0;
     } else {
         record->axis_moves[0] = 1;
-        x = elvValueToFloat(func_A9F0C0(index, 2));
+        x = elvValueToFloat(func_A9F0C0(call, 2));
     }
-    if (func_A9F1C0(index, 3) != 0) {
+    if (func_A9F1C0(call, 3) != 0) {
         y = 0.0f;
         record->axis_moves[1] = 0;
     } else {
         record->axis_moves[1] = 1;
-        y = elvValueToFloat(func_A9F0C0(index, 3));
+        y = elvValueToFloat(func_A9F0C0(call, 3));
     }
-    if (func_A9F1C0(index, 4) != 0) {
+    if (func_A9F1C0(call, 4) != 0) {
         z = 0.0f;
         record->axis_moves[2] = 0;
     } else {
         record->axis_moves[2] = 1;
-        z = elvValueToFloat(func_A9F0C0(index, 4));
+        z = elvValueToFloat(func_A9F0C0(call, 4));
     }
-    frames = func_A9F0C0(index, 5);
+    frames = func_A9F0C0(call, 5);
     if (frames > 0) {
         record->target[0] = x;
         record->target[1] = y;
@@ -234,7 +241,7 @@ int elvMove(int index)
 /* Script native id.slopeSet: elvSlopeTable[no - 1] = {-sin, -cos} of the
  * angle (second argument times elvAngleScale), then the third and fourth
  * arguments as push and speed. */
-int elvSlopeSet(int index)
+int elvSlopeSet(int call)
 {
     struct ElevatorSlope *slope;
     int no;
@@ -242,12 +249,12 @@ int elvSlopeSet(int index)
     float push;
     float speed;
 
-    no = func_A9F0C0(index, 1);
+    no = func_A9F0C0(call, 1);
     ELV_ASSERT((no > 0) && (no < 9), D_00689508, 290);
     slope = &elvSlopeTable[no - 1];
-    angle = I2F(func_A9F0C0(index, 2)) * elvAngleScale;
-    push = elvValueToFloat(func_A9F0C0(index, 3));
-    speed = elvValueToFloat(func_A9F0C0(index, 4));
+    angle = I2F(func_A9F0C0(call, 2)) * elvAngleScale;
+    push = elvValueToFloat(func_A9F0C0(call, 3));
+    speed = elvValueToFloat(func_A9F0C0(call, 4));
     slope->x = -xglSin(angle);
     slope->z = -xglCos(angle);
     slope->push = push;
@@ -257,13 +264,13 @@ int elvSlopeSet(int index)
 
 /* Script native id.keepoff: elvKeepOffFlags[no] = 0 when the second argument
  * is zero, else mapFindBlockEntry(0xB00, no) with the argument's low bit. */
-int elvSetKeepOff(int index)
+int elvSetKeepOff(int call)
 {
     int no;
     int keep;
 
-    no = func_A9F0C0(index, 1);
-    keep = func_A9F0C0(index, 2);
+    no = func_A9F0C0(call, 1);
+    keep = func_A9F0C0(call, 2);
     ELV_ASSERT((no > 0) && (no < UNDUFLAGKEEPOFF_MAX), D_00689538, 323);
     if (keep == 0) {
         elvKeepOffFlags[no] = 0;
@@ -273,49 +280,50 @@ int elvSetKeepOff(int index)
     return 1;
 }
 
-void resJumpRecordSet(int first, int second, float *values);
-int func_A9CDB0();
+void resJumpRecordSet(int index, int cfId, float *values);
+/* ov01 sbNativeOwnerAdd: it returns 1, and elvReset's register choice needs the int result. */
+int func_A9CDB0(void *module, void *nativeTable);
 
-int preren(int index)
+int preren(int call)
 {
-    int first;
-    int second;
+    int offsetY;
+    int offsetX;
 
-    first = func_A9F0C0(index, 1);
-    second = func_A9F0C0(index, 2);
+    offsetY = func_A9F0C0(call, 1);
+    offsetX = func_A9F0C0(call, 2);
     if (D_002B5DB8[0] != 0) {
-        D_002B5DB8[0]->first = (short) first;
-        D_002B5DB8[0]->second = (short) second;
+        D_002B5DB8[0]->offsetY = (short) offsetY;
+        D_002B5DB8[0]->offsetX = (short) offsetX;
     }
     return 1;
 }
 
-int preload(int index)
+int preload(int call)
 {
     struct ElevatorSample sample;
-    int first;
-    int second;
+    int index;
+    int cfId;
 
-    if (func_A9F1C0(index, 1) == 0) {
-        first = func_A9F0C0(index, 1);
+    if (func_A9F1C0(call, 1) == 0) {
+        index = func_A9F0C0(call, 1);
     } else {
-        first = -1;
+        index = -1;
     }
-    if (func_A9F1C0(index, 2) == 0) {
-        second = func_A9F0C0(index, 2);
+    if (func_A9F1C0(call, 2) == 0) {
+        cfId = func_A9F0C0(call, 2);
     } else {
-        second = -1;
+        cfId = -1;
     }
-    sample.value[0] = elvValueToFloat(func_A9F0C0(index, 3));
-    sample.value[1] = elvValueToFloat(func_A9F0C0(index, 4));
-    sample.value[2] = elvValueToFloat(func_A9F0C0(index, 5));
-    sample.value[3] = elvValueToFloat(func_A9F0C0(index, 6));
-    resJumpRecordSet(first, second, sample.value);
+    sample.value[0] = elvValueToFloat(func_A9F0C0(call, 3));
+    sample.value[1] = elvValueToFloat(func_A9F0C0(call, 4));
+    sample.value[2] = elvValueToFloat(func_A9F0C0(call, 5));
+    sample.value[3] = elvValueToFloat(func_A9F0C0(call, 6));
+    resJumpRecordSet(index, cfId, sample.value);
     return 1;
 }
 
-/* Resets the eight elevator records: runs the table setup, then clears the
- * move duration of every record. */
+/* Registers the elevator script module "id" (elvActive, elvMove, elvNoOut, slopeSet,
+ * keepoff, preren, preload), then clears the move duration of the eight elevator records. */
 void elvReset(void)
 {
     struct ElevatorRecord *records;
