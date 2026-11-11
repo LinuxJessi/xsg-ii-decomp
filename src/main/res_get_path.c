@@ -1633,7 +1633,7 @@ u32 seVoicePanVolumeFromPosition(ResRecord *rec)
     return (volume << 8) + pan;
 }
 
-int GameResArenaReserve(unsigned int bytesWanted)
+void *GameResArenaReserve(unsigned int bytesWanted)
 {
     unsigned int first;
     unsigned int last;
