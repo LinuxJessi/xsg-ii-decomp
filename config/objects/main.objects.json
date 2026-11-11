@@ -55778,9 +55778,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F4BE0",
+     "name": "bgmSe",
      "size": 164,
-     "splat_name": "runtime_001F4BE0",
+     "splat_name": "bgmSe",
      "va": "0x001f4be0",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -55796,9 +55796,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "runtime_001F4D48",
+     "name": "bgmFade",
      "size": 108,
-     "splat_name": "runtime_001F4D48",
+     "splat_name": "bgmFade",
      "va": "0x001f4d48",
      "name_basis": "annotation",
      "provenance": "estimated"
