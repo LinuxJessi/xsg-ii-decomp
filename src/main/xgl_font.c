@@ -1114,9 +1114,58 @@ int func_001961D0(const char **cursor, int *value)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196260);
+/*
+ * Reads a number up to ';' or ',' and moves the text cursor past the delimiter: an optional sign, then
+ * decimal digits or "0x" and a hex number (func_001961D0). Returns 0 on any other character.
+ */
+int func_00196260(const char **cursor, int *value)
+{
+    const unsigned char *text = (const unsigned char *)*cursor;
+    int sign = 1;
+    int result = 0;
+    unsigned char ch;
 
-int func_00196260(const char **cursor, int *value);
+    switch (text[0]) {
+    case '-':
+        sign = -1;
+        /* fall through */
+    case '+':
+        text++;
+        break;
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+        break;
+    default:
+        return 0;
+    }
+    if (text[0] == '0' && text[1] == 'x') {
+        *cursor = (const char *)(text + 2);
+        if (!func_001961D0(cursor, &result)) {
+            return 0;
+        }
+        *value = sign * result;
+        return 1;
+    }
+    ch = *text++;
+    while (ch != ';' && ch != ',') {
+        if ((unsigned char)(ch - '0') >= 10) {
+            return 0;
+        }
+        result = result * 10 + ch - '0';
+        ch = *text++;
+    }
+    *cursor = (const char *)text;
+    *value = sign * result;
+    return 1;
+}
 
 /* Inline position command: the letter before the number picks x (also the line origin), y or depth. */
 int func_00196398(FontDrawCursor *cursor, const char **text)
