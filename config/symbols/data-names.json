@@ -77,6 +77,7 @@
    "0x0069dc34": "_sdvAmbState",
    "0x0069dc80": "tracePrintFormat",
    "0x0069de48": "spCodeParameterSizeTable",
+   "0x0069dee0": "fontOutlineDirections",
    "0x0069def0": "darkRedTextFormat",
    "0x0069def8": "dimTextFormat",
    "0x0069df00": "plainTextFormat",

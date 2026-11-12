@@ -37681,9 +37681,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00197200",
+     "name": "xglFontFlushSub",
      "size": 1848,
-     "splat_name": "func_00197200",
+     "splat_name": "xglFontFlushSub",
      "va": "0x00197200",
      "name_basis": "address",
      "provenance": "estimated"

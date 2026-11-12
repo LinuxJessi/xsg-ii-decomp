@@ -226,7 +226,7 @@ struct FontStateFromWindow {
     /* The default glyph scale in 1/16 units (FONT_SCALE_ONE each); func_00194FA8 tests both bytes at once. */
     union {
         unsigned short default_scale;
-        struct { signed char compact_width; unsigned char compact_height; };
+        struct { signed char compact_width; signed char compact_height; };
     };
     unsigned char unmodeled_1e[6];
     /* Scratch copy of one word while func_00196118 measures a line. */
@@ -1166,9 +1166,9 @@ int han(FontDrawCursor *cursor, const char **text)
     return 1;
 }
 
-void func_00197200(int u, int v, int size, int flags);
+void xglFontFlushSub(int texture_u, int texture_v, int size, int flags);
 
-/* Texture coordinate / size / draw-flag arguments of func_00197200. */
+/* Texture coordinate / size / draw-flag arguments of xglFontFlushSub. */
 #define FONT_ASCII_V_LOW 0x2f00
 #define FONT_ASCII_V_HIGH 0x2f80
 #define FONT_SYMBOL_V 0x2e80
@@ -1186,9 +1186,9 @@ int mark(FontDrawCursor *cursor, const char **text)
         return 0;
     }
     if ((unsigned int)index < 0x40) {
-        func_00197200((index & 0x3F) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+        xglFontFlushSub((index & 0x3F) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
     } else {
-        func_00197200((index & 0x3F) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+        xglFontFlushSub((index & 0x3F) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
     }
     *text = next;
     return 1;
@@ -1265,12 +1265,241 @@ void xglFontResetPrintQueue(void)
     block->queue_cursor = (unsigned char *) slot;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00197200);
+/* The font drawing cursor resides at the base of EE scratchpad RAM. */
+#define SCRATCHPAD_BASE 0x70000000
 
-/* Draws one hex digit (0..15) through func_00197200, at the glyph offset digit << 7. */
+/* GIF tag fields, register descriptors and GS PRIM bits of the glyph packets (XS1 include/main/xgl_packet.h). */
+#define GIF_TAG_EOP 0x8000
+#define GIF_TAG_PRE 0x4000
+#define GIF_TAG_PRIM_SHIFT 15
+#define GIF_TAG_NREG_SHIFT 28
+#define GIF_REG_RGBAQ 1
+#define GIF_REG_UV 3
+#define GIF_REG_XYZ2 5
+#define GIF_REG_TEX0_1 6
+#define GS_PRIM_TRISTRIP 4
+#define GS_PRIM_SPRITE 6
+#define GS_PRIM_TME 0x10
+#define GS_PRIM_ABE 0x40
+#define GS_PRIM_FST 0x100
+/* Sprite GIF tags: PRE with a textured, alpha-blended, UV-addressed sprite; the strip form is
+ * used for the horizontally sheared glyph. */
+#define FONT_SPRITE_TAG_HIGH ((6 << GIF_TAG_NREG_SHIFT) | \
+    ((GS_PRIM_SPRITE | GS_PRIM_TME | GS_PRIM_ABE | GS_PRIM_FST) << GIF_TAG_PRIM_SHIFT) | GIF_TAG_PRE)
+#define FONT_SPRITE_TAG_REGS (GIF_REG_TEX0_1 | (GIF_REG_RGBAQ << 4) | (GIF_REG_UV << 8) | \
+    (GIF_REG_XYZ2 << 12) | (GIF_REG_UV << 16) | (GIF_REG_XYZ2 << 20))
+#define FONT_STRIP_TAG_HIGH ((10 << GIF_TAG_NREG_SHIFT) | \
+    ((GS_PRIM_TRISTRIP | GS_PRIM_TME | GS_PRIM_ABE | GS_PRIM_FST) << GIF_TAG_PRIM_SHIFT) | GIF_TAG_PRE)
+#define FONT_STRIP_TAG_REGS_LOW (FONT_SPRITE_TAG_REGS | (GIF_REG_UV << 24) | (GIF_REG_XYZ2 << 28))
+#define FONT_STRIP_TAG_REGS_HIGH (GIF_REG_UV | (GIF_REG_XYZ2 << 4))
+/* Qword counts sent for one sprite and one sheared glyph. */
+#define FONT_SPRITE_QWORDS 7
+#define FONT_STRIP_QWORDS 11
+/* Glyphs whose top-left corner lies beyond this (12.4 fixed point) are skipped when clipping. */
+#define FONT_CLIP_LIMIT 0xf000U
+/* xglFontFlushSub flags: the low bits pick the texture (bit 0: second CLUT), FONT_DRAW_ASCII doubles. */
+#define FONT_DRAW_ATTRIBUTE_MASK 15
+/* Widest texture span a glyph is drawn from. */
+#define FONT_TEXTURE_SPAN_MAX 320
+
+struct FontSpriteCorner {
+    unsigned int texture_u_or_x;
+    unsigned int texture_v_or_y;
+    unsigned int backup_x;
+    unsigned int backup_y;
+    unsigned int x;
+    unsigned int y;
+    unsigned int depth;
+    unsigned int depth_upper;
+};
+
+/* The GIF packet a glyph is drawn with, in the scratchpad after the draw cursor. */
+struct FontSpritePacket {
+    unsigned int tag_low;
+    unsigned int tag_high;
+    unsigned int registers_low;
+    unsigned int registers_high;
+    unsigned long long texture;
+    unsigned char unmodeled_18[8];
+    unsigned int red;
+    unsigned int green;
+    unsigned int blue;
+    unsigned int alpha;
+    struct FontSpriteCorner corners[4];
+};
+
+/* Unit offsets of the outline effect: right, left, down, up (signed x, y pairs). */
+extern signed char fontOutlineDirections[4][2];
+
+void xglFontFlushSub(int texture_u, int texture_v, int size, int flags)
+{
+    struct FontDrawCursor *cursor = (struct FontDrawCursor *)SCRATCHPAD_BASE;
+    struct FontSpritePacket *sprite = (struct FontSpritePacket *)(SCRATCHPAD_BASE + 0x100);
+    int glyph_width = size >> 8;
+    unsigned int glyph_height = size & 0xff;
+    int texture_width;
+    int texture_height;
+    int draw_width;
+    int draw_height;
+    int effect_x;
+    int effect_y;
+    unsigned int left = (((short)cursor->offset_x + (short)cursor->x) * 16) - 8;
+    unsigned int top = (((short)cursor->offset_y + (short)cursor->y) * 16) - 9;
+    int attributes = flags & FONT_DRAW_ATTRIBUTE_MASK;
+
+    texture_width = glyph_width * 16;
+    texture_height = glyph_height * 16;
+    if (!D_008DAD00.debug_mode && (flags & FONT_DRAW_ASCII) && !(cursor->flags & FONT_CURSOR_WIDE_ALL)) {
+        draw_width = texture_width * 2;
+        draw_height = texture_height * 2;
+    } else {
+        draw_width = glyph_width * 16;
+        draw_height = glyph_height * 16;
+    }
+    effect_x = cursor->effect_x * 16;
+    effect_y = cursor->effect_y * 16;
+    if (texture_width > FONT_TEXTURE_SPAN_MAX) {
+        texture_width = FONT_TEXTURE_SPAN_MAX;
+    }
+    if (flags & FONT_DRAW_COMPACT) {
+        draw_width = (draw_width * D_008DAD00.compact_width) >> 4;
+        draw_height = (draw_height * D_008DAD00.compact_height) >> 4;
+    } else {
+        draw_width = (draw_width * (short)cursor->scale_x) >> 4;
+        draw_height = (draw_height * (short)cursor->scale_y) >> 4;
+    }
+    cursor->x += draw_width / 16;
+    if ((D_008DAD00.flags & FONT_STATE_CLIP) && (left > FONT_CLIP_LIMIT || top > FONT_CLIP_LIMIT)) {
+        return;
+    }
+    sprite->tag_low = GIF_TAG_EOP | 1;
+    sprite->tag_high = FONT_SPRITE_TAG_HIGH;
+    sprite->registers_low = FONT_SPRITE_TAG_REGS;
+    sprite->registers_high = 0;
+    sprite->texture = 0x2a942bc20ULL |
+        ((!D_008DAD00.debug_mode) ? 0x2000000400000000ULL : 0x2000000000000000ULL) |
+        (((unsigned long long)((attributes & 1) + 0x3c00)) << 37);
+    sprite->red = cursor->red;
+    sprite->green = cursor->green;
+    sprite->blue = cursor->blue;
+    sprite->alpha = cursor->alpha;
+    sprite->corners[0].texture_u_or_x = texture_u;
+    sprite->corners[0].texture_v_or_y = texture_v;
+    if (D_008DAD00.horizontal_shift) {
+        unsigned int shifted_left = left + D_008DAD00.horizontal_shift * 16;
+        int u_end = texture_u + texture_width;
+
+        sprite->corners[0].y = top;
+        sprite->corners[2].texture_u_or_x = texture_u;
+        sprite->corners[1].texture_v_or_y = texture_v;
+        sprite->tag_low = GIF_TAG_EOP | 1;
+        sprite->tag_high = FONT_STRIP_TAG_HIGH;
+        sprite->registers_low = FONT_STRIP_TAG_REGS_LOW;
+        sprite->registers_high = FONT_STRIP_TAG_REGS_HIGH;
+        sprite->corners[0].x = shifted_left;
+        sprite->corners[0].depth = cursor->depth;
+        sprite->corners[0].depth_upper = 0;
+        sprite->corners[1].y = top;
+        sprite->corners[1].x = shifted_left + draw_width;
+        sprite->corners[1].texture_u_or_x = u_end;
+        sprite->corners[1].depth = cursor->depth;
+        sprite->corners[1].depth_upper = 0;
+        sprite->corners[2].x = left;
+        sprite->corners[2].texture_v_or_y = texture_v + texture_height;
+        sprite->corners[2].y = top + draw_height;
+        sprite->corners[2].depth = cursor->depth;
+        sprite->corners[2].depth_upper = 0;
+        sprite->corners[3].texture_u_or_x = u_end;
+        sprite->corners[3].texture_v_or_y = texture_v + texture_height;
+        sprite->corners[3].x = left + draw_width;
+        sprite->corners[3].y = top + draw_height;
+        sprite->corners[3].depth = cursor->depth;
+        sprite->corners[3].depth_upper = 0;
+        sceVif1PkAddDirectDataN(cursor->packet, sprite, FONT_STRIP_QWORDS);
+        return;
+    }
+    sprite->corners[0].x = left;
+    sprite->corners[0].y = top;
+    sprite->corners[0].depth = cursor->depth;
+    sprite->corners[0].depth_upper = 0;
+    sprite->corners[1].texture_u_or_x = texture_u + texture_width;
+    sprite->corners[1].texture_v_or_y = texture_v + texture_height;
+    sprite->corners[1].x = left + draw_width;
+    sprite->corners[1].y = top + draw_height;
+    sprite->corners[1].depth = cursor->depth;
+    sprite->corners[1].depth_upper = 0;
+    sceVif1PkAddDirectDataN(cursor->packet, sprite, FONT_SPRITE_QWORDS);
+    sprite->corners[0].depth--;
+    sprite->corners[1].depth--;
+    if (cursor->effect == FONT_EFFECT_BOLD) {
+        unsigned int old_left = sprite->corners[0].x;
+        unsigned int old_right = sprite->corners[1].x;
+        unsigned int old_top = sprite->corners[0].y;
+        unsigned int old_bottom = sprite->corners[1].y;
+
+        sprite->corners[0].x = old_left + 16;
+        sprite->corners[2].texture_v_or_y = old_top;
+        sprite->corners[2].backup_x = old_right;
+        sprite->corners[2].backup_y = old_bottom;
+        sprite->corners[0].y = old_top;
+        sprite->corners[1].y = old_bottom;
+        sprite->corners[1].x = old_right + 16;
+        sprite->corners[2].texture_u_or_x = old_left;
+        sceVif1PkAddDirectDataN(cursor->packet, sprite, FONT_SPRITE_QWORDS);
+        sprite->corners[0].x = sprite->corners[2].texture_u_or_x;
+        sprite->corners[0].y = sprite->corners[2].texture_v_or_y + 16;
+        sprite->corners[1].x = sprite->corners[2].backup_x;
+        sprite->corners[1].y = sprite->corners[2].backup_y + 16;
+        sceVif1PkAddDirectDataN(cursor->packet, sprite, FONT_SPRITE_QWORDS);
+    } else if (cursor->effect >= FONT_EFFECT_SHADOW) {
+        unsigned char effect_red = cursor->effect_red;
+        unsigned char effect_green = cursor->effect_green;
+        unsigned char effect_blue = cursor->effect_blue;
+        unsigned int old_left = sprite->corners[0].x;
+        unsigned int old_top = sprite->corners[0].y;
+        unsigned int old_right = sprite->corners[1].x;
+        unsigned int old_bottom = sprite->corners[1].y;
+
+        sprite->red = effect_red;
+        sprite->green = effect_green;
+        sprite->blue = effect_blue;
+        sprite->corners[2].texture_u_or_x = old_left;
+        sprite->corners[2].texture_v_or_y = old_top;
+        sprite->corners[2].backup_x = old_right;
+        sprite->corners[2].backup_y = old_bottom;
+        if (cursor->effect == FONT_EFFECT_SHADOW) {
+            sprite->corners[0].x = old_left + effect_x;
+            sprite->corners[0].y = old_top + effect_y;
+            sprite->corners[1].x = old_right + effect_x;
+            sprite->corners[1].y = old_bottom + effect_y;
+            sceVif1PkAddDirectDataN(cursor->packet, sprite, FONT_SPRITE_QWORDS);
+        } else {
+            int row;
+            int column;
+            int direction;
+
+            for (row = 16; row <= effect_y; row += 16) {
+                for (column = 16; column <= effect_x; column += 16) {
+                    for (direction = 0; direction < 4; direction++) {
+                        int offset_x = fontOutlineDirections[direction][0] * column;
+                        int offset_y = fontOutlineDirections[direction][1] * row;
+
+                        sprite->corners[0].x = sprite->corners[2].texture_u_or_x + offset_x;
+                        sprite->corners[0].y = sprite->corners[2].texture_v_or_y + offset_y;
+                        sprite->corners[1].x = sprite->corners[2].backup_x + offset_x;
+                        sprite->corners[1].y = sprite->corners[2].backup_y + offset_y;
+                        sceVif1PkAddDirectDataN(cursor->packet, sprite, FONT_SPRITE_QWORDS);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* Draws one hex digit (0..15) through xglFontFlushSub, at the glyph offset digit << 7. */
 void xglFontDrawHexDigit(int digit)
 {
-    func_00197200(digit << 7, 0x2F00, 0x608, 0x10);
+    xglFontFlushSub(digit << 7, 0x2F00, 0x608, 0x10);
 }
 
 /*
@@ -1677,8 +1906,8 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
         }
         case FONT_OP_GLYPH: {
             signed char character = text[1];
-            if (character < 64) func_00197200((character & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
-            else func_00197200((character & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+            if (character < 64) xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+            else xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
             text += 2;
             break;
         }
@@ -1720,16 +1949,16 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
                 xglFontNewLine();
                 text++;
             } else if (code < 0x40) {
-                func_00197200((opcode & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+                xglFontFlushSub((opcode & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
             } else if (code < 0x80) {
-                func_00197200((opcode & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+                xglFontFlushSub((opcode & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
             } else if (code < 0xa0) {
-                func_00197200(0x1f80, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+                xglFontFlushSub(0x1f80, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
             } else if (cursor->flags & FONT_CURSOR_COMPACT) {
                 unsigned int glyph = func_00198928(high, low);
-                func_00197200((glyph >> 16) & 0x1f80, glyph & 0xffff, FONT_GLYPH_8X8, FONT_DRAW_COMPACT);
+                xglFontFlushSub((glyph >> 16) & 0x1f80, glyph & 0xffff, FONT_GLYPH_8X8, FONT_DRAW_COMPACT);
                 if (glyph & 0x20000000) {
-                    func_00197200((((int) glyph >> 30) + 0x3e) << 7, FONT_SYMBOL_V, 0x508, FONT_DRAW_COMPACT);
+                    xglFontFlushSub((((int) glyph >> 30) + 0x3e) << 7, FONT_SYMBOL_V, 0x508, FONT_DRAW_COMPACT);
                 }
             } else {
                 code = func_001979E0(high, low);
@@ -1738,12 +1967,12 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
                     unsigned short row = code >> 5;
                     unsigned int left = bounds & 255;
                     unsigned int right = (bounds >> 8) & 255;
-                    func_00197200(((code & 31) * 20 + left) * 16, row * 384 + 0x1b00,
+                    xglFontFlushSub(((code & 31) * 20 + left) * 16, row * 384 + 0x1b00,
                         (right - left) * 256 + 0x118, 0);
                 } else {
                     low = code & 31;
                     high = code >> 5;
-                    func_00197200(low * 320, (high & 31) * 384, 0x1318, high >> 5);
+                    xglFontFlushSub(low * 320, (high & 31) * 384, 0x1318, high >> 5);
                 }
             }
             break;
@@ -1865,7 +2094,6 @@ void xglFontReloadTexture(FontDrawCursor *cursor, unsigned int request)
 }
 
 /* EE scratchpad RAM, where xglFontFlush builds the draw cursor. */
-#define SCRATCHPAD_BASE 0x70000000
 /* xglFontFlush's cursor defaults: screen origin, colour and alpha. */
 #define FONT_SCREEN_ORIGIN_X 0x700
 #define FONT_SCREEN_ORIGIN_Y 0x720

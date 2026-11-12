@@ -289,6 +289,7 @@
    "0x00198b90": "xglFontCharToEuc",
    "0x00194ea0": "xglFontAllocGifPacket",
    "0x00195750": "xglFontSetStoredValue",
+   "0x00197200": "xglFontFlushSub",
    "0x00197938": "xglFontDrawHexDigit",
    "0x00197960": "xglFontNewLine",
    "0x00199548": "xglPadSetRepeat",
