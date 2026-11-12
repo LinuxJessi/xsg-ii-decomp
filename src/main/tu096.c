@@ -40,7 +40,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu096", func_0020CD50);
 
 /*
  * Stores the target pair (+0x8, +0xC) of a FontTrack, struct FontTrack in main/tu097.c:
- * target_pair[0] and target_pair[1]. func_0020CD50 moves the current pair (+0x0, +0x4)
+ * target_pair.x and target_pair.y. func_0020CD50 moves the current pair (+0x0, +0x4)
  * toward it and fontTrackAtTarget tests for arrival.
  */
 void fontTrackSetTarget(void *track, int targetX, int targetY) {

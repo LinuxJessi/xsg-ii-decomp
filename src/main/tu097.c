@@ -61,11 +61,17 @@ void fontObjResetAndBuild(void) {
 extern signed char D_0069E200[6];
 extern signed char D_0069E208[6];
 
+/* One x/y pair of a FontTrack. */
+struct FontPair {
+    int x;
+    int y;
+};
+
 /* One 0x1C-byte track of struct FontObject. current_pair moves toward target_pair under the
  * CE98 advance; the scaled copies and the step counter at +0x10 are written by the asm callees. */
 struct FontTrack {
-    int current_pair[2];
-    int target_pair[2];
+    struct FontPair current_pair;
+    struct FontPair target_pair;
     unsigned char unmodeled_10[12];
 };
 
@@ -198,22 +204,22 @@ void fontObjStartClose(struct FontObject *object)
     if (phase != 2) {
         if (object->flags & 2) {
             if (phase == 1) {
-                fontTrackSetTarget(&object->tracks[2], object->tracks[0].target_pair[0],
-                              object->tracks[0].target_pair[1]);
+                fontTrackSetTarget(&object->tracks[2], object->tracks[0].target_pair.x,
+                              object->tracks[0].target_pair.y);
                 size_track = &object->tracks[3];
             } else {
-                fontTrackSetPoint(&object->tracks[2], object->tracks[0].current_pair[0],
-                              object->tracks[0].current_pair[1]);
-                fontTrackSetTarget(&object->tracks[2], object->tracks[0].target_pair[0],
-                              object->tracks[0].target_pair[1]);
-                fontTrackSetPoint(&object->tracks[3], object->tracks[1].current_pair[0],
-                              object->tracks[1].current_pair[1]);
+                fontTrackSetPoint(&object->tracks[2], object->tracks[0].current_pair.x,
+                              object->tracks[0].current_pair.y);
+                fontTrackSetTarget(&object->tracks[2], object->tracks[0].target_pair.x,
+                              object->tracks[0].target_pair.y);
+                fontTrackSetPoint(&object->tracks[3], object->tracks[1].current_pair.x,
+                              object->tracks[1].current_pair.y);
                 size_track = &object->tracks[3];
             }
             fontTrackSetTarget(size_track, 0, 0);
         } else {
-            fontTrackSetBoth(&object->tracks[2], object->tracks[0].target_pair[0],
-                          object->tracks[0].target_pair[1]);
+            fontTrackSetBoth(&object->tracks[2], object->tracks[0].target_pair.x,
+                          object->tracks[0].target_pair.y);
             fontTrackSetBoth(&object->tracks[3], 0, 0);
         }
         object->move_phase = 2;
@@ -245,8 +251,8 @@ void fontObjSettleTracks(struct FontObject *object)
         fontTrackAdvance(&object->tracks[3]);
     }
     if (fontTrackAtTarget(&object->tracks[2]) != 0 && fontTrackAtTarget(&object->tracks[3]) != 0) {
-        fontTrackSetTarget(&object->tracks[0], object->tracks[2].current_pair[0], object->tracks[2].current_pair[1]);
-        fontTrackSetTarget(&object->tracks[1], object->tracks[3].current_pair[0], object->tracks[3].current_pair[1]);
+        fontTrackSetTarget(&object->tracks[0], object->tracks[2].current_pair.x, object->tracks[2].current_pair.y);
+        fontTrackSetTarget(&object->tracks[1], object->tracks[3].current_pair.x, object->tracks[3].current_pair.y);
         object->move_phase = 0;
     }
 }
