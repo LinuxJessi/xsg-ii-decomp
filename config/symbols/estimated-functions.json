@@ -29970,7 +29970,7 @@
      2
     ],
     [
-     "func_0019E408",
+     "xglMcFindNearestSlot",
      1696776,
      120,
      2
@@ -29982,7 +29982,7 @@
      2
     ],
     [
-     "func_0019E508",
+     "xglMcOpenNearestSave",
      1697032,
      292,
      2

@@ -39496,9 +39496,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019E408",
+     "name": "xglMcFindNearestSlot",
      "size": 120,
-     "splat_name": "func_0019E408",
+     "splat_name": "xglMcFindNearestSlot",
      "va": "0x0019e408",
      "name_basis": "address",
      "provenance": "estimated"
@@ -39514,9 +39514,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0019E508",
+     "name": "xglMcOpenNearestSave",
      "size": 292,
-     "splat_name": "func_0019E508",
+     "splat_name": "xglMcOpenNearestSave",
      "va": "0x0019e508",
      "name_basis": "address",
      "provenance": "estimated"

@@ -107,16 +107,18 @@ typedef struct XglMcState {
 } XglMcState;
 
 extern XglMcState xglMcState;
-extern int D_00959F3C[];
+/* xglMcState.card_status.combined (+0x04) under its own data label. xglMcGetState and the return of
+ * xglMcMain read it through this label; reading the field instead does not match in xglMcMain. */
+extern int xglMcStatusWord[];
 extern unsigned char xglMcQueueTop;
 extern unsigned char xglMcQueueEnd;
-extern char D_0069DF70[];
+extern char xglMcWildcardName[];
 extern char xglMcBasePath[];
 
 /* Returns the status word of the card state (+0x04 of xglMcState). */
 int xglMcGetState(void)
 {
-    return D_00959F3C[0];
+    return xglMcStatusWord[0];
 }
 
 /* Clears both queue indices and the request phase of the memory-card state. */
@@ -431,13 +433,13 @@ int xglMcCreateStep(int result)
     return -1;
 }
 
-/* Entries in the table func_0019E408 searches. */
+/* Entries in the table xglMcFindNearestSlot searches. */
 #define MC_SLOT_COUNT 100
 #define MC_SLOT_WANTED 1 /* the value the search looks for */
 
 /* Returns the index of the entry with value 1 in the 100-entry table nearest to index, searching
  * index, index+1, index-1, index+2, ...; -1 once both directions have run off the table. */
-int func_0019E408(unsigned char *table, int index)
+int xglMcFindNearestSlot(unsigned char *table, int index)
 {
     int step;
     int misses;
@@ -471,14 +473,15 @@ int xglMcStartDirectoryScan(void)
 {
     int card;
 
-    card = func_0019E408((unsigned char *)xglMcState.request.data, xglMcState.selector);
+    card = xglMcFindNearestSlot((unsigned char *)xglMcState.request.data, xglMcState.selector);
     if (card < 0)
     {
         return 1;
     }
     xglMcState.card = (signed char) card;
     xglMcState.status = 0;
-    xglMcSetFullPath(card, (int)D_0069DF70);
+    /* selector values outside the small codes are name pointers (xglMcBuildPath); this one is "*", every save folder */
+    xglMcSetFullPath(card, (int)xglMcWildcardName);
     sceMcGetDir(xglMcState.request.port, 0, xglMcState.full_path, 0, 0x10, (xglMcState.request.data + 0xA3) & ~0x3F);
     return 0;
 }
@@ -492,11 +495,11 @@ int sceMcOpen(int port, int slot, const char *name, int mode);
  * search mode: mode 0 starts a directory read of up to 100 entries on the second base path
  * (returns -1), mode 1 opens the third base path, mode 2 gives up (returns 1). Returns 0 when a
  * file open was started. */
-int func_0019E508(void)
+int xglMcOpenNearestSave(void)
 {
     int card;
 
-    card = func_0019E408((unsigned char *)xglMcState.request.data, xglMcState.selector);
+    card = xglMcFindNearestSlot((unsigned char *)xglMcState.request.data, xglMcState.selector);
     if (card < 0) {
         /* The search mode is tested unsigned (beqz for mode 0 after the test for 1). */
         switch ((unsigned int)xglMcState.request.file) {
@@ -608,7 +611,7 @@ unsigned int xglClockDayTime2UInt(XglClock *clock_time);
 int strcmp(const char *left, const char *right);
 void *memset(void *destination, int value, unsigned int size);
 int xglMcStartDirectoryScan(void);
-int func_0019E508(void);
+int xglMcOpenNearestSave(void);
 int xglMcCreateStep(int result);
 
 /* One step of the memory-card service: polls the pending card operation, then either starts the
@@ -837,7 +840,7 @@ int xglMcMain(void)
                 scan = xglMcStartDirectoryScan();
                 xglMcState.substate = MC_SCAN_ICON_CHECK;
             } else {
-                scan = func_0019E508();
+                scan = xglMcOpenNearestSave();
                 xglMcState.substate = MC_SCAN_READ;
             }
             switch (scan) {
@@ -938,5 +941,5 @@ int xglMcMain(void)
         xglMcState.state = MC_STATE_IDLE;
         break;
     }
-    return D_00959F3C[0];
+    return xglMcStatusWord[0];
 }
