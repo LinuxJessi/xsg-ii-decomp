@@ -6902,9 +6902,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00125B10",
+     "name": "sceFormat",
      "size": 620,
-     "splat_name": "func_00125B10",
+     "splat_name": "sceFormat",
      "va": "0x00125b10",
      "name_basis": "address",
      "provenance": "estimated"

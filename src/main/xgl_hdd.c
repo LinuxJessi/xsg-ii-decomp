@@ -898,7 +898,234 @@ void xglHddInstallReadCB(int event, int value) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_hdd", xglHddInstall);
+#define HDD_OPEN_READ_WRITE_CREATE 0x203
+#define HDD_MODE_RW_FILE 0x1b6
+#define HDD_SYSTEM_CNF_SIZE 80
+#define HDD_INSTALL_IMAGE_ADDRESS 0x1000000
+#define HDD_INSTALL_ARCHIVE_SIZE 0x1000000
+#define HDD_INSTALL_PARTITION_STEP 0x80000
+/* Progress stages and failures xglHddInstall reports to its callback. */
+#define HDD_INSTALL_STAGE_BEGIN 0
+#define HDD_INSTALL_STAGE_RESOURCE_READ 1
+#define HDD_INSTALL_STAGE_PARTITION_OPEN 2
+#define HDD_INSTALL_STAGE_EXTEND 3
+#define HDD_INSTALL_STAGE_FORMAT 4
+#define HDD_INSTALL_STAGE_MOUNT 5
+#define HDD_INSTALL_STAGE_COPY 6
+#define HDD_INSTALL_STAGE_FINISH 7
+#define HDD_INSTALL_STAGE_DONE 8
+#define HDD_INSTALL_FAIL_RESOURCE (-1)
+#define HDD_INSTALL_FAIL_PARTITION_OPEN (-2)
+#define HDD_INSTALL_FAIL_WRITE_HEADER (-3)
+#define HDD_INSTALL_FAIL_EXTEND (-4)
+#define HDD_INSTALL_FAIL_PARTITION_CLOSE (-5)
+#define HDD_INSTALL_FAIL_FORMAT (-6)
+#define HDD_INSTALL_FAIL_MOUNT (-7)
+#define HDD_INSTALL_FAIL_DATA_OPEN (-8)
+#define HDD_INSTALL_FAIL_DATA_WRITE (-9)
+#define HDD_INSTALL_FAIL_DATA_CLOSE (-10)
+#define HDD_INSTALL_FAIL_CHECK_OPEN (-11)
+#define HDD_INSTALL_FAIL_CHECK_WRITE (-12)
+#define HDD_INSTALL_FAIL_CHECK_CLOSE (-13)
+#define HDD_INSTALL_FAIL_UNMOUNT (-14)
+#define HDD_INSTALL_FAIL_REMOUNT (-15)
+
+/* The install image staged at the fixed work address: a size pair at +0x28
+ * and +0x2c, and the 80-byte SYSTEM.CNF copy at +0x200. */
+struct HddInstallImage {
+    unsigned char unmodeled_00[0x28];
+    int bodySize;
+    int tableSize;
+    unsigned char unmodeled_30[0x1d0];
+    unsigned char systemCnf[HDD_SYSTEM_CNF_SIZE];
+};
+
+extern int func_002AA5D8(char *buffer, const char *format, ...);
+extern int sceFormat(const char *mount_point, const char *device, void *payload, int payload_length);
+extern int xglCdGetFileSize(const char *name);
+extern int xglCdReadFilePart(const char *name, void *buffer, int mode,
+                             void (*callback)(int event, int value), int offset, int length);
+int xglHddDummyCallback(int stage, int offset, void *param);
+/* The resource file, the partition spec format, the 256 MB sub-partition
+ * size, the pfs device, the installed data file and the disc archive name
+ * (xenosaga.0N, digit at [10]). */
+extern char hddResourcePath[];
+extern char partitionSpecFormat[];
+extern char hddPartitionSize256M[];
+extern char pfsDevicePath[];
+extern char hddname[];
+extern char dvdname_2[];
+
+/* Installs the game data on the HDD: writes the hdd.res image (with this
+ * SYSTEM.CNF) into a new 256 MB partition, adds 256 MB sub-partitions up to the
+ * minimum size, formats and mounts it, copies the xenosaga.0N archives in 16 MB pieces and
+ * writes the check file. Progress and failures go to callback (stages and
+ * HDD_INSTALL_FAIL_* above). */
+int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *param)
+{
+    struct HddInstallImage *image = (struct HddInstallImage *)HDD_INSTALL_IMAGE_ADDRESS;
+    struct HddInstallCBParam context;
+    char path[HDD_PATH_MAX];
+    int formatSize;
+    int partition;
+    int descriptor;
+    int result;
+    int size;
+    int chunk;
+    u8 *source;
+    int i;
+    int archives;
+    int offset;
+    int length;
+
+    if (callback == 0)
+        callback = xglHddDummyCallback;
+    hddInstallContext = &context;
+    context.callback = callback;
+    context.param = param;
+    context.status = 0;
+    callback(HDD_INSTALL_STAGE_BEGIN, 0, param);
+
+    if (xglCdReadFile(hddResourcePath, image, 0, 1) < 0) {
+        callback(HDD_INSTALL_FAIL_RESOURCE, 0, param);
+        return -1;
+    }
+    source = system_cnf;
+    for (i = 0; i < HDD_SYSTEM_CNF_SIZE; i++)
+        image->systemCnf[i] = source[i];
+    size = (image->bodySize + image->tableSize + HDD_SECTOR_SIZE - 1) & -HDD_SECTOR_SIZE;
+
+    callback(HDD_INSTALL_STAGE_RESOURCE_READ, 0, param);
+    func_002AA5D8(path, partitionSpecFormat, partitionname);
+    partition = sceOpen(path, HDD_OPEN_READ_WRITE_CREATE);
+    if (partition < 0) {
+        callback(HDD_INSTALL_FAIL_PARTITION_OPEN, partition, param);
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_PARTITION_OPEN, 0, param);
+    if ((result = sceWrite(partition, image, size)) < 0) {
+        callback(HDD_INSTALL_FAIL_WRITE_HEADER, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+
+    for (size = HDD_INSTALL_PARTITION_STEP, chunk = 1; size <= HDD_INSTALL_MIN_SECTORS;
+         size += HDD_INSTALL_PARTITION_STEP, chunk++) {
+        callback(HDD_INSTALL_STAGE_EXTEND, chunk, param);
+        result = sceIoctl2(partition, HDD_IOCTL2_ADD_SUBPARTITION, hddPartitionSize256M, 5, 0, 0);
+        if (result < 0) {
+            callback(HDD_INSTALL_FAIL_EXTEND, result, param);
+            xglHddUninstall();
+            return -1;
+        }
+    }
+    if ((result = sceClose(partition)) < 0) {
+        callback(HDD_INSTALL_FAIL_PARTITION_CLOSE, result, param);
+        return -1;
+    }
+
+    callback(HDD_INSTALL_STAGE_FORMAT, 0, param);
+    formatSize = 0x2000;
+    if ((result = sceFormat(pfsDevicePath, partitionname, &formatSize, 4)) < 0) {
+        callback(HDD_INSTALL_FAIL_FORMAT, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_MOUNT, 0, param);
+    if ((result = xglHddMountPartition(HDD_MOUNT_READ_WRITE)) < 0) {
+        callback(HDD_INSTALL_FAIL_MOUNT, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_COPY, 0, param);
+    descriptor = sceOpen(hddname, HDD_OPEN_WRITE_CREATE_TRUNC, HDD_MODE_RW_FILE);
+    if (descriptor < 0) {
+        result = descriptor;
+        callback(HDD_INSTALL_FAIL_DATA_OPEN, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+
+    archives = 0;
+    dvdname_2[10] = '0';
+    while ((size = xglCdGetFileSize(dvdname_2)) >= 0) {
+        archives += (size + HDD_INSTALL_ARCHIVE_SIZE - 1) / HDD_INSTALL_ARCHIVE_SIZE;
+        dvdname_2[10]++;
+    }
+    archives <<= 16;
+
+    dvdname_2[10] = '0';
+    while ((size = xglCdGetFileSize(dvdname_2)) >= 0) {
+        for (offset = 0; offset < size;) {
+            length = size - offset;
+            if (length > HDD_INSTALL_ARCHIVE_SIZE)
+                length = HDD_INSTALL_ARCHIVE_SIZE;
+            context.base = archives++;
+            xglCdReadFilePart(dvdname_2, image, 2, xglHddInstallReadCB, offset, length);
+            offset += length;
+            if (context.status != 0) {
+                sceClose(descriptor);
+                if (xglHddCheck() == 0) {
+                    xglHddUninstall();
+                    return 1;
+                }
+                return context.status == 1 ? 1 : -1;
+            }
+            result = sceWrite(descriptor, image, length);
+            if (result != length) {
+                callback(HDD_INSTALL_FAIL_DATA_WRITE, result, param);
+                sceClose(descriptor);
+                if (xglHddCheck() == 0)
+                    xglHddUninstall();
+                return -1;
+            }
+        }
+        dvdname_2[10]++;
+    }
+
+    if ((result = sceClose(descriptor)) < 0) {
+        callback(HDD_INSTALL_FAIL_DATA_CLOSE, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_FINISH, 0, param);
+    descriptor = sceOpen(hddcheck, HDD_OPEN_WRITE_CREATE_TRUNC, HDD_MODE_RW_FILE);
+    if (descriptor < 0) {
+        result = descriptor;
+        callback(HDD_INSTALL_FAIL_CHECK_OPEN, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_FINISH, 1, param);
+    xglCdCheckFile(cd_filename, (unsigned int *)image);
+    result = sceWrite(descriptor, image, HDD_SECTOR_SIZE);
+    if (result != HDD_SECTOR_SIZE) {
+        callback(HDD_INSTALL_FAIL_CHECK_WRITE, result, param);
+        sceClose(descriptor);
+        xglHddUninstall();
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_FINISH, 2, param);
+    if ((result = sceClose(descriptor)) < 0) {
+        callback(HDD_INSTALL_FAIL_CHECK_CLOSE, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_FINISH, 3, param);
+    if ((result = sceUmount(mount_device)) < 0) {
+        callback(HDD_INSTALL_FAIL_UNMOUNT, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_FINISH, 4, param);
+    if ((result = xglHddMountPartition(HDD_MOUNT_READ_ONLY)) < 0) {
+        callback(HDD_INSTALL_FAIL_REMOUNT, result, param);
+        xglHddUninstall();
+        return -1;
+    }
+    callback(HDD_INSTALL_STAGE_DONE, 0, param);
+    return 0;
+}
 
 int xglHddActivate(int state)
 {

@@ -268,6 +268,7 @@
    "0x001dfd20": "xglCdLoadFileSet",
    "0x00125598": "sceIoctl2",
    "0x00125940": "sceMkdir",
+   "0x00125b10": "sceFormat",
    "0x001a5b80": "xglHddMcCreate",
    "0x001fd348": "uwamonoCountLeadingInUse",
    "0x001fd398": "uwamonoReleaseRecord",
