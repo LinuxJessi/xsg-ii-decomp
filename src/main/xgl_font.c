@@ -1535,7 +1535,82 @@ int func_00197988(unsigned char high, unsigned char low)
 }
 
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001979E0);
+/* Glyph index of codes the font does not have (also func_00197988's miss). */
+#define FONT_GLYPH_NONE 0x7F
+/* The level-1 kanji glyphs follow the 0x400 symbol and kana glyphs. */
+#define FONT_GLYPH_KANJI_BASE 0x400
+
+/* EUC code (row high, column low) to glyph index of the font texture: symbol, alphanumeric, kana, Greek
+ * and Cyrillic rows map onto the first 0x400 glyphs, level-1 kanji follow; FONT_GLYPH_NONE otherwise. */
+unsigned short func_001979E0(unsigned char high, unsigned char low)
+{
+    int glyph;
+
+    if (high < EUC_ROW_KANJI_LEVEL1) {
+        glyph = FONT_GLYPH_NONE;
+        switch (high) {
+        case EUC_ROW_SYMBOLS:
+            glyph = (unsigned short)(low - EUC_FIRST);
+            break;
+        case EUC_ROW_SYMBOLS_2:
+            switch (low & 0xF0) {
+            case 0xA0:
+                glyph = (low & 0xF) + 93;
+                break;
+            case 0xE0:
+                glyph = (low & 0xF) + 108;
+                break;
+            case 0xF0:
+                glyph = (low & 0xF) + 117;
+                break;
+            }
+            break;
+        case EUC_ROW_ALNUM:
+            switch (low & 0xE0) {
+            case 0xA0:
+                glyph = (low & 0xF) + 128;
+                break;
+            case 0xC0:
+                glyph = (low & 0x1F) + 137;
+                break;
+            case 0xE0:
+                glyph = (low & 0x1F) + 163;
+                break;
+            }
+            break;
+        case EUC_ROW_HIRAGANA:
+            glyph = low + 31;
+            break;
+        case 0xA5:
+            glyph = low + 127;
+            break;
+        case EUC_ROW_GREEK:
+            if (low < 0xC0) {
+                glyph = (low & 0x1F) + 383;
+            } else {
+                glyph = (low & 0x1F) + 407;
+            }
+            break;
+        case 0xA7:
+            glyph = (unsigned short)(low < 0xD0 ? low + 271 : low + 256);
+            break;
+        case 0xA8:
+            glyph = low + 351;
+            break;
+        case 0xA9:
+            glyph = low + 256;
+            break;
+        case EUC_ROW_NEC_SPECIAL:
+            glyph = low + 383;
+            break;
+        }
+    } else if (high < EUC_ROW_KANJI_LEVEL2) {
+        glyph = (unsigned short)((high - EUC_ROW_KANJI_LEVEL1) * FONT_JIS_ROW_SIZE + (low - EUC_FIRST) + FONT_GLYPH_KANJI_BASE);
+    } else {
+        glyph = (unsigned short)func_00197988(high, low);
+    }
+    return glyph;
+}
 
 /* FONT_OP_CONFIG sub-commands. */
 #define FONT_CONFIG_LINE_HEIGHT 1
