@@ -7945,6 +7945,7 @@ msgBotanPath = 0x0068D580;
 xenoActorAssertFile = 0x0068D6F0;
 xglLanguageCodeTable = 0x0068D918;
 fontInlineErrorFormat = 0x0068DC58;
+kanaFontCodeTable = 0x0068DD48;
 fontTexture0Path = 0x0068DEA8;
 fontTexture1Path = 0x0068DEB8;
 xglMcBasePath = 0x0068DF88;

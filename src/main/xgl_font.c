@@ -80,6 +80,7 @@ typedef enum FontOpcode {
 #define EUC_ROW_SYMBOLS 0xa1
 #define EUC_ROW_ALNUM 0xa3
 #define EUC_ROW_HIRAGANA 0xa4
+#define EUC_ROW_KATAKANA 0xa5
 #define EUC_ROW_GREEK 0xa6
 #define EUC_ROW_NEC_SPECIAL 0xad
 #define EUC_ROW_SYMBOLS_2 0xa2
@@ -1982,7 +1983,63 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
 }
 
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198928);
+/* The kana cell codes of the debug font, one per EUC column (copied to the stack before use). */
+extern const unsigned char kanaFontCodeTable[96];
+
+/* The glyph rows of the debug font texture: V of a glyph cell is its row << 23. */
+#define FONT_GLYPH_ROW(row) ((unsigned int)(row) << 23)
+/* The blank cell: last row of the high ASCII block. */
+#define FONT_GLYPH_BLANK (FONT_GLYPH_ROW(0x3F) + FONT_ASCII_V_HIGH)
+
+/*
+ * Texture cell (row << 23 | U) of an EUC code in the debug font: the alphanumeric row 0xA3, a few
+ * symbols of row 0xA1, and the kana rows 0xA4 / 0xA5 through a per-column cell table. Anything else
+ * gives the blank cell.
+ */
+unsigned int func_00198928(unsigned char high, unsigned char low)
+{
+    unsigned int cell = FONT_GLYPH_BLANK;
+
+    switch (high) {
+    case EUC_ROW_SYMBOLS:
+        switch (low) {
+        case 0xA1:
+            cell = 0;
+            break;
+        case 0xA2:
+            cell = FONT_GLYPH_ROW(4) + FONT_SYMBOL_V;
+            break;
+        case 0xA3:
+            cell = FONT_GLYPH_ROW(1) + FONT_SYMBOL_V;
+            break;
+        case 0xA6:
+            cell = FONT_GLYPH_ROW(5) + FONT_SYMBOL_V;
+            break;
+        case 0xBC:
+        case 0xDD:
+            cell = FONT_GLYPH_ROW(16) + FONT_SYMBOL_V;
+            break;
+        }
+        break;
+    case EUC_ROW_ALNUM:
+        if (low < 0xC0) {
+            cell = FONT_GLYPH_ROW(low & 0x3F) + FONT_ASCII_V_LOW;
+        } else {
+            cell = FONT_GLYPH_ROW(low & 0x3F) + FONT_ASCII_V_HIGH;
+        }
+        break;
+    case EUC_ROW_HIRAGANA:
+    case EUC_ROW_KATAKANA: {
+        unsigned char kana[96];
+
+        __builtin_memcpy(kana, kanaFontCodeTable, sizeof(kana));
+        low = kana[low - 0xA0];
+        cell = FONT_GLYPH_ROW(low) + ((0x101 - high) << 7);
+        break;
+    }
+    }
+    return cell;
+}
 
 /* Glyph base per 32-code block of the EUC row 0xA3. */
 extern signed char D_0063EBC0[];

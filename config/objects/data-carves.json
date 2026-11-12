@@ -11,7 +11,7 @@
      ],
      "generated": [
       "0x0068dcb0",
-      "0x0068dd44"
+      "0x0068dd48"
      ],
      "generated_by": [
       "xglFontFlushCore"
@@ -20,7 +20,35 @@
       "jtbl_0068DCB0",
       "jtbl_0068DD30"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "fontInlineErrorFormat",
+      "kanaFontCodeTable"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_font.o"
+     }
+    },
+    {
+     "range": [
+      "0x0068ddb0",
+      "0x0068dea8"
+     ],
+     "generated": [
+      "0x0068ddb0",
+      "0x0068dea4"
+     ],
+     "generated_by": [
+      "func_00198928"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068DDB0"
+     ],
+     "also_referenced_by_c": [
+      "fontTexture0Path",
+      "fontTexture1Path"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
