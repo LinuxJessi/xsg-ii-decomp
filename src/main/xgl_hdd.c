@@ -264,7 +264,7 @@ typedef struct HddRenderState {
 extern HddRenderState sRender;
 /* The GIF packet xglHddErrorScreen sends before each frame (6 quadwords on
  * DMA channel 2), and the error message it prints. */
-extern u8 D_00645190[];
+extern u8 TestEnv_0[];
 extern char hddLoadErrorText[];
 /* "pfs0:/xenosaga.hdd", the installed copy of the disc file record, and
  * "xenosaga.00", the disc file whose record it must equal. */
@@ -272,7 +272,7 @@ extern char hddcheck[];
 extern char cd_filename[];
 /* The error codes xglHddMcCreate returns (negated) for the xglHddMcCheckCore
  * results -1 to -4, and the "1G" size argument of the save partition. */
-extern unsigned char D_006451F0[];
+extern unsigned char tbl_1[];
 extern unsigned char mcPartitionSize1G[];
 extern u8 *WorkEnd;
 
@@ -331,7 +331,7 @@ void xglHddErrorScreen(void)
 
     sRender.errorScreenActive = 1;
     for (;;) {
-        xglDmaDirectNormal(2, (u32)D_00645190, 6);
+        xglDmaDirectNormal(2, (u32)TestEnv_0, 6);
         xglFontPrint(48, 64, 0xffffff, hddLoadErrorText);
         if (waitFrames > 0) {
             waitFrames--;
@@ -747,7 +747,7 @@ int xglHddMcCreate(struct HddCheckState *state)
     } else {
         checkResult = xglHddMcCheckCore(state);
         if (checkResult < 0) {
-            result = -(int)D_006451F0[~checkResult];
+            result = -(int)tbl_1[~checkResult];
             xglHddMcUmount();
             return result;
         }
