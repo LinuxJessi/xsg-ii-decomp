@@ -583,6 +583,12 @@ int xglFontGetSPcodeSize(int code, const unsigned char *text)
     return size;
 }
 
+/*
+ * Expands a printf-style argument list (format string first) into the print queue: control codes are
+ * copied with their parameters, "%b", "%d", "%x" and "%f" become FONT_OP_NUMBER commands, "%s" and "%c"
+ * are copied in place, "%$" and "%%" queue the character itself. X1's function plus the "%$" case; the
+ * shared numeric tail keeps X1's goto.
+ */
 void xglFontPrintSub(void *args)
 {
     unsigned long long *list = (unsigned long long *)args;
