@@ -978,8 +978,9 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
     int offset;
     int length;
 
-    if (callback == 0)
+    if (callback == 0) {
         callback = xglHddDummyCallback;
+    }
     hddInstallContext = &context;
     context.callback = callback;
     context.param = param;
@@ -991,8 +992,9 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
         return -1;
     }
     source = system_cnf;
-    for (i = 0; i < HDD_SYSTEM_CNF_SIZE; i++)
+    for (i = 0; i < HDD_SYSTEM_CNF_SIZE; i++) {
         image->systemCnf[i] = source[i];
+    }
     size = (image->bodySize + image->tableSize + HDD_SECTOR_SIZE - 1) & -HDD_SECTOR_SIZE;
 
     callback(HDD_INSTALL_STAGE_RESOURCE_READ, 0, param);
@@ -1058,8 +1060,9 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
     while ((size = xglCdGetFileSize(dvdname_2)) >= 0) {
         for (offset = 0; offset < size;) {
             length = size - offset;
-            if (length > HDD_INSTALL_ARCHIVE_SIZE)
+            if (length > HDD_INSTALL_ARCHIVE_SIZE) {
                 length = HDD_INSTALL_ARCHIVE_SIZE;
+            }
             context.base = archives++;
             xglCdReadFilePart(dvdname_2, image, 2, xglHddInstallReadCB, offset, length);
             offset += length;
@@ -1075,8 +1078,9 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
             if (result != length) {
                 callback(HDD_INSTALL_FAIL_DATA_WRITE, result, param);
                 sceClose(descriptor);
-                if (xglHddCheck() == 0)
+                if (xglHddCheck() == 0) {
                     xglHddUninstall();
+                }
                 return -1;
             }
         }
