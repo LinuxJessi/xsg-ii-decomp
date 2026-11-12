@@ -733,7 +733,7 @@ extern const char D_0069D0D8[];
  * (X1 names this static tbl_49). */
 extern unsigned char tbl_49[4];
 
-unsigned int xglMcMain(void);
+int xglMcMain(void);
 int xglMcRequest(int port, int command, McRequestParam *param, int *result);
 int xglMcEasySave(const char *path, const void *buffer, int size);
 void xglMcSetEntryNumbers(unsigned char *object, int value, const unsigned char *source);

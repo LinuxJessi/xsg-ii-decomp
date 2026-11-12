@@ -483,7 +483,8 @@ int xglMcStartDirectoryScan(void)
     return 0;
 }
 
-/* Save folders of the card search, one per search mode (xglMcState.request.file): /BASLUS-20469Xen, /BISLPS-29005Xen, /BISLPS-25353. */
+/* Save folders of the card search, one per search mode (xglMcState.request.file):
+ * /BASLUS-20469Xen, /BISLPS-29005Xen, /BISLPS-25353. */
 extern char *xglMcBasePaths[];
 int sceMcOpen(int port, int slot, const char *name, int mode);
 
@@ -502,7 +503,8 @@ int func_0019E508(void)
         case 0:
             xglMcState.request.file = 1;
             xglMcBuildPath(xglMcBasePaths[xglMcState.request.file], -1, -1);
-            sceMcGetDir(xglMcState.request.port, 0, xglMcState.full_path, 0, 100, (xglMcState.request.data + 0xA3) & ~0x3F);
+            sceMcGetDir(xglMcState.request.port, 0, xglMcState.full_path, 0, 100,
+                        (xglMcState.request.data + 0xA3) & ~0x3F);
             return -1;
         case 1:
             xglMcState.request.file = 2;
