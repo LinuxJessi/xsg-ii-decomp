@@ -50,6 +50,8 @@
    "0x00644ae0": "LQTableOrg_1",
    "0x00644b20": "CQTableOrg_2",
    "0x00644b60": "headerALL",
+   "0x00644dd0": "imm0_3",
+   "0x00644e70": "imm1_4",
    "0x00645100": "partitionname",
    "0x00645168": "commonname",
    "0x00645178": "yoursaves",

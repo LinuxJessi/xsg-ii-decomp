@@ -10086,7 +10086,7 @@
      2
     ],
     [
-     "func_0012A8C0",
+     "sceGsSetDefLoadImage",
      1222848,
      108,
      2
@@ -10122,7 +10122,7 @@
      2
     ],
     [
-     "func_0012ABE8",
+     "sceGsExecLoadImage",
      1223656,
      380,
      2

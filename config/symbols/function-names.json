@@ -183,6 +183,8 @@
    "0x002aaff0": "strncmp",
    "0x002af050": "vsprintf",
    "0x0012a428": "sceGsPutDrawEnv",
+   "0x0012a8c0": "sceGsSetDefLoadImage",
+   "0x0012abe8": "sceGsExecLoadImage",
    "0x0012b3f8": "sceGsSyncVCallback",
    "0x001a80ac": "xglVectorDiv",
    "0x001a8168": "xglVectorDivXYZ",

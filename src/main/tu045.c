@@ -1211,7 +1211,7 @@ void pxyUploadBoneMatrices(void)
     }
 }
 
-void func_0012A8C0(void *dst, s16 x, s16 w, int a, int b, int c, s16 d, s16 e);
+void sceGsSetDefLoadImage(void *dst, s16 x, s16 w, int a, int b, int c, s16 d, s16 e);
 void func_0012B7C0(XglPacket *packet, int mode);
 void func_0012B818(XglPacket *packet);
 void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
@@ -1274,7 +1274,7 @@ void pxyQueueTextureSet(int slot, XglPacketTable *table, int index, int originX)
         i = set->count - 1;
         while (i >= 0) {
             rec = &set->records[i];
-            func_0012A8C0(&msg.block, (s16) ((u16) originX + rec->originX), (s16) xglPsmBufferWidth(512, 0), 0, 0, 0,
+            sceGsSetDefLoadImage(&msg.block, (s16) ((u16) originX + rec->originX), (s16) xglPsmBufferWidth(512, 0), 0, 0, 0,
                           rec->extentA, rec->extentB);
             msg.block.words[0] &= ~0x8000;
             msg.tag[3] = 0x50000005;
@@ -1304,7 +1304,7 @@ void pxyUploadTextureSet(XglPacketTable *table, int index, int originX)
             rec = &set->records[i];
             sceVif1PkCnt(packet, 0);
             func_0012B9A0(packet, 0x11000000);
-            func_0012A8C0(&block, (s16) ((u16) originX + rec->originX), (s16) xglPsmBufferWidth(512, 0), 0, 0, 0,
+            sceGsSetDefLoadImage(&block, (s16) ((u16) originX + rec->originX), (s16) xglPsmBufferWidth(512, 0), 0, 0, 0,
                           rec->extentA, rec->extentB);
             block.words[0] &= ~0x8000;
             func_0012B7C0(packet, 0);
@@ -2285,14 +2285,14 @@ void nmlPacketSendCircleTexture(const void *indices, void *palette)
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
     func_0012B9A0(packet, 0x11000000);
-    func_0012A8C0(image, (short)(sRenderTextureBase << 5), 1, 19, 0, 0, 64, 64);
+    sceGsSetDefLoadImage(image, (short)(sRenderTextureBase << 5), 1, 19, 0, 0, 64, 64);
     image[0] |= 0x8000;
     func_0012B7C0(packet, 0);
     sceVif1PkAddDirectDataN(packet, image, 5);
     func_0012B818(packet);
     sceVif1PkRef(packet, indices, 258, 0, 0, 0);
     sceVif1PkCnt(packet, 0);
-    func_0012A8C0(image, (short)((sRenderTextureBase << 5) + 128), 1, 0, 0, 0, 16, 16);
+    sceGsSetDefLoadImage(image, (short)((sRenderTextureBase << 5) + 128), 1, 0, 0, 0, 16, 16);
     image[0] |= 0x8000;
     func_0012B7C0(packet, 0);
     sceVif1PkAddDirectDataN(packet, image, 5);
