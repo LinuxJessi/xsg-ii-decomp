@@ -83,7 +83,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu113", menuAddItem);
 /* Script native menuDeptQuest (table 0x3ec8c8): four arguments; up to 40 string entries are read from the script. */
 INCLUDE_ASM("asm/main/nonmatchings/tu113", menuDeptQuest);
 
-extern u16 D_0063EDAA;
+extern u16 textOptionFlags;
 /* Word 2 (byte offset 8) of gameWork receives bit 0x8000 on the success path. */
 extern u32 gameWork[];
 
@@ -125,7 +125,7 @@ int slotWinOpen(int ctx, int *error_flag)
         func_A9CC70(ctx, 2);
         return 0;
     }
-    if (msgWindowBusy() == 0 && msgWindowHasMore() == 0 && (D_0063EDAA & 0x20) != 0) {
+    if (msgWindowBusy() == 0 && msgWindowHasMore() == 0 && (textOptionFlags & 0x20) != 0) {
         first = func_A9F0C0(ctx, 1);
         second = func_A9F0C0(ctx, 2);
         msgChoiceOpen(first, second);

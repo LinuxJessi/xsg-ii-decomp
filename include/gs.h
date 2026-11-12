@@ -10,6 +10,8 @@
 #define GS_RGBAQ 0x01
 #define GS_UV 0x03
 #define GS_XYZF2 0x04
+/* XYZ2 register: a vertex without the fog value, 12.4 fixed point around the 2048 origin. */
+#define GS_XYZ2 0x05
 #define GS_TEX0_1 0x06
 #define GS_CLAMP_1 0x08
 #define GS_XYZ3 0x0C
@@ -25,9 +27,15 @@
 #define GS_FRAME_1 0x4C
 #define GS_FRAME_2 0x4D
 #define GS_ZBUF_1 0x4E
+#define GS_BITBLTBUF 0x50
+#define GS_TRXPOS 0x51
+#define GS_TRXREG 0x52
+#define GS_TRXDIR 0x53
 
 /* GIFtag register descriptor of an A+D (address plus data) register. */
 #define GIF_AD 0x0E
+/* GIF tag of one A+D pair (NLOOP 1, EOP set, NREG 1): its register list is GIF_AD. */
+#define GIF_TAG_ONE_AD_EOP 0x1000000000008001ULL
 
 /* Appends one A+D register write (value, then register address) at the u64 cursor p. */
 #define GS_PUT(p, reg, value) ((p)[0] = (value), (p)[1] = (reg), (p) += 2)
@@ -58,6 +66,18 @@
 #define GS_SET_FRAME(fbp, fbw, psm, fbmsk) \
     ((u64)(fbp) | ((u64)(fbw) << 16) | ((u64)(psm) << 24) | ((u64)(fbmsk) << 32))
 #define GS_SET_ZBUF(zbp, psm, zmsk) ((u64)(zbp) | ((u64)(psm) << 24) | ((u64)(zmsk) << 32))
+#define GS_SET_BITBLTBUF(sbp, sbw, spsm, dbp, dbw, dpsm) \
+    ((u64)(sbp) | ((u64)(sbw) << 16) | ((u64)(spsm) << 24) | ((u64)(dbp) << 32) | ((u64)(dbw) << 48) \
+     | ((u64)(dpsm) << 56))
+#define GS_SET_TRXREG(width, height) ((u64)(width) | ((u64)(height) << 32))
+
+/* PRIM values: the sprite primitive, with alpha blending (ABE 0x40), and the textured sprite (TME 0x10, FST 0x100). */
+#define GS_PRIM_SPRITE 0x06
+#define GS_PRIM_SPRITE_ABE 0x46
+#define GS_PRIM_TEXTURED_SPRITE 0x156
+
+/* TEST value: depth test enabled (ZTE) and always passing (ZTST ALWAYS). */
+#define GS_TEST_ZTE_ALWAYS 0x30000
 
 /* Pixel storage modes. */
 #define GS_PSMCT32 0x00

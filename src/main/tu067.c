@@ -189,7 +189,7 @@ void XenoActorAttachChildToJoint(struct XenoActor *parent, struct XenoActor *chi
 void XenoActorReleaseChild(struct XenoActor *parent, struct XenoActor *child);
 void uwamonoSetMotion(int index, int motion, float speed);
 float Get_Angle(const Vector4 *first, const Vector4 *second);
-float func_0020A968(int index, Vector4 *position, int id, int groundId, int flags);
+float unduGetSlotHeight(int index, Vector4 *position, int id, int groundId, int flags);
 int srsEffectKeyFromName(signed char *name);
 /* Script natives: type of argument n (3 is a string), string of a string token. */
 int func_A9F140(int call, int index);
@@ -441,7 +441,7 @@ void uwamonoStartMove(int index, MapVector *destination, int frames, signed char
     case MAP_KIND_MOVER:
         if (frames == 0) {
             if (hasMotion == 1) {
-                record->position.vector.y = func_0020A968(index, &destination->vector, record->motions->id, record->motions->groundId, 0);
+                record->position.vector.y = unduGetSlotHeight(index, &destination->vector, record->motions->id, record->motions->groundId, 0);
             }
             if (record->kind == MAP_KIND_ACTOR_STATIC || record->kind == MAP_KIND_ACTOR) {
                 struct XenoActor *actor = record->actor;

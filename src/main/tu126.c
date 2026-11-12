@@ -239,14 +239,14 @@ INCLUDE_ASM("asm/main/nonmatchings/tu126", func_0023A0C8);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu126", func_0023A608);
 
-int func_0020B948();
-int func_0020B980();
+int padCirclePressedAlone();
+int padCrossPressedAlone();
 int func_002381A8();
 extern signed char D_0069DA1C;
 
 int saveUiPollButtons(void) {
     D_0069DA1C = 1;
-    if ((func_0020B948() != 0) || (func_0020B980() != 0)) {
+    if ((padCirclePressedAlone() != 0) || (padCrossPressedAlone() != 0)) {
         D_0069DA1C = 0;
         func_002381A8(0);
     }

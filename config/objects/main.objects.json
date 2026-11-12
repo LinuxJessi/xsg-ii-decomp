@@ -60848,9 +60848,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00209458",
+     "name": "Get_MiddlePoint_Curve",
      "size": 628,
-     "splat_name": "func_00209458",
+     "splat_name": "Get_MiddlePoint_Curve",
      "va": "0x00209458",
      "name_basis": "address",
      "provenance": "estimated"
@@ -60947,9 +60947,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020A158",
+     "name": "uwamonoQuadEdgesVisible",
      "size": 528,
-     "splat_name": "func_0020A158",
+     "splat_name": "uwamonoQuadEdgesVisible",
      "va": "0x0020a158",
      "name_basis": "address",
      "provenance": "estimated"
@@ -61010,9 +61010,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020A968",
+     "name": "unduGetSlotHeight",
      "size": 220,
-     "splat_name": "func_0020A968",
+     "splat_name": "unduGetSlotHeight",
      "va": "0x0020a968",
      "name_basis": "address",
      "provenance": "estimated"
@@ -61509,9 +61509,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020B7A8",
+     "name": "pxyTickScaleDoubleOverride",
      "size": 48,
-     "splat_name": "func_0020B7A8",
+     "splat_name": "pxyTickScaleDoubleOverride",
      "va": "0x0020b7a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -61554,18 +61554,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020B948",
+     "name": "padCirclePressedAlone",
      "size": 52,
-     "splat_name": "func_0020B948",
+     "splat_name": "padCirclePressedAlone",
      "va": "0x0020b948",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020B980",
+     "name": "padCrossPressedAlone",
      "size": 52,
-     "splat_name": "func_0020B980",
+     "splat_name": "padCrossPressedAlone",
      "va": "0x0020b980",
      "name_basis": "address",
      "provenance": "estimated"
@@ -61941,9 +61941,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "xglPrimAddRenderScissor",
+     "name": "xglFontScissorReset",
      "size": 108,
-     "splat_name": "xglPrimAddRenderScissor",
+     "splat_name": "xglFontScissorReset",
      "va": "0x0020c0e0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -62472,9 +62472,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020CD50",
+     "name": "fontTrackEase",
      "size": 224,
-     "splat_name": "func_0020CD50",
+     "splat_name": "fontTrackEase",
      "va": "0x0020cd50",
      "name_basis": "address",
      "provenance": "estimated"
@@ -62656,9 +62656,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020D0D0",
+     "name": "fontObjMarkSlotLoaded",
      "size": 24,
-     "splat_name": "func_0020D0D0",
+     "splat_name": "fontObjMarkSlotLoaded",
      "va": "0x0020d0d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -62683,9 +62683,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020D260",
+     "name": "fontObjBuildBaseVifPacket",
      "size": 324,
-     "splat_name": "func_0020D260",
+     "splat_name": "fontObjBuildBaseVifPacket",
      "va": "0x0020d260",
      "name_basis": "address",
      "provenance": "estimated"
@@ -62719,9 +62719,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020D430",
+     "name": "fontObjResetBufferSlots",
      "size": 36,
-     "splat_name": "func_0020D430",
+     "splat_name": "fontObjResetBufferSlots",
      "va": "0x0020d430",
      "name_basis": "address",
      "provenance": "estimated"
@@ -62854,9 +62854,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020DCF0",
+     "name": "fontObjStartOpen",
      "size": 212,
-     "splat_name": "func_0020DCF0",
+     "splat_name": "fontObjStartOpen",
      "va": "0x0020dcf0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -62890,9 +62890,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020DFA8",
+     "name": "fontObjSettleClose",
      "size": 164,
-     "splat_name": "func_0020DFA8",
+     "splat_name": "fontObjSettleClose",
      "va": "0x0020dfa8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -62998,27 +62998,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020E470",
+     "name": "fontObjGetOriginTrack",
      "size": 28,
-     "splat_name": "func_0020E470",
+     "splat_name": "fontObjGetOriginTrack",
      "va": "0x0020e470",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020E490",
+     "name": "fontObjGetSizeTrack",
      "size": 32,
-     "splat_name": "func_0020E490",
+     "splat_name": "fontObjGetSizeTrack",
      "va": "0x0020e490",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020E4B0",
+     "name": "fontObjResetCursor",
      "size": 56,
-     "splat_name": "func_0020E4B0",
+     "splat_name": "fontObjResetCursor",
      "va": "0x0020e4b0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -63124,18 +63124,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020EAD0",
+     "name": "cursorBufferInitEntry",
      "size": 204,
-     "splat_name": "func_0020EAD0",
+     "splat_name": "cursorBufferInitEntry",
      "va": "0x0020ead0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020EBA0",
+     "name": "cursorBufferSetText",
      "size": 56,
-     "splat_name": "func_0020EBA0",
+     "splat_name": "cursorBufferSetText",
      "va": "0x0020eba0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -63160,9 +63160,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020EBF8",
+     "name": "cursorBufferUpdateEntry",
      "size": 408,
-     "splat_name": "func_0020EBF8",
+     "splat_name": "cursorBufferUpdateEntry",
      "va": "0x0020ebf8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -63545,9 +63545,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0020F230",
+     "name": "menuListPageCount",
      "size": 52,
-     "splat_name": "func_0020F230",
+     "splat_name": "menuListPageCount",
      "va": "0x0020f230",
      "name_basis": "address",
      "provenance": "estimated"
@@ -63617,9 +63617,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020F498",
+     "name": "textBoxDrawMark",
      "size": 132,
-     "splat_name": "func_0020F498",
+     "splat_name": "textBoxDrawMark",
      "va": "0x0020f498",
      "name_basis": "address",
      "provenance": "estimated"
@@ -63653,9 +63653,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020F7B0",
+     "name": "textSystemUpdate",
      "size": 324,
-     "splat_name": "func_0020F7B0",
+     "splat_name": "textSystemUpdate",
      "va": "0x0020f7b0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -63788,9 +63788,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0020FF88",
+     "name": "textBoxTryOpenWindow",
      "size": 192,
-     "splat_name": "func_0020FF88",
+     "splat_name": "textBoxTryOpenWindow",
      "va": "0x0020ff88",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64059,9 +64059,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002104B8",
+     "name": "cursorBuffersRewind",
      "size": 168,
-     "splat_name": "func_002104B8",
+     "splat_name": "cursorBuffersRewind",
      "va": "0x002104b8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64077,27 +64077,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210580",
+     "name": "menuUmnImageReset",
      "size": 156,
-     "splat_name": "func_00210580",
+     "splat_name": "menuUmnImageReset",
      "va": "0x00210580",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210620",
+     "name": "menuUmnImageLoad",
      "size": 176,
-     "splat_name": "func_00210620",
+     "splat_name": "menuUmnImageLoad",
      "va": "0x00210620",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002106D0",
+     "name": "menuUmnImageDecode",
      "size": 144,
-     "splat_name": "func_002106D0",
+     "splat_name": "menuUmnImageDecode",
      "va": "0x002106d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64113,81 +64113,81 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002109A8",
+     "name": "menuMapListDraw",
      "size": 512,
-     "splat_name": "func_002109A8",
+     "splat_name": "menuMapListDraw",
      "va": "0x002109a8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210BA8",
+     "name": "menuSkillModelBuffersAlloc",
      "size": 204,
-     "splat_name": "func_00210BA8",
+     "splat_name": "menuSkillModelBuffersAlloc",
      "va": "0x00210ba8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210C78",
+     "name": "menuSkillModelReset",
      "size": 96,
-     "splat_name": "func_00210C78",
+     "splat_name": "menuSkillModelReset",
      "va": "0x00210c78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210CD8",
+     "name": "menuSkillModelTailReset",
      "size": 96,
-     "splat_name": "func_00210CD8",
+     "splat_name": "menuSkillModelTailReset",
      "va": "0x00210cd8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210D38",
+     "name": "menuSkillModelReadDone",
      "size": 156,
-     "splat_name": "func_00210D38",
+     "splat_name": "menuSkillModelReadDone",
      "va": "0x00210d38",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210DD8",
+     "name": "menuSkillModelLoadOnce",
      "size": 196,
-     "splat_name": "func_00210DD8",
+     "splat_name": "menuSkillModelLoadOnce",
      "va": "0x00210dd8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210EA0",
+     "name": "menuSkillModelTailLoad",
      "size": 208,
-     "splat_name": "func_00210EA0",
+     "splat_name": "menuSkillModelTailLoad",
      "va": "0x00210ea0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00210F70",
+     "name": "menuMessageTextUpdate",
      "size": 1448,
-     "splat_name": "func_00210F70",
+     "splat_name": "menuMessageTextUpdate",
      "va": "0x00210f70",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00211518",
+     "name": "menuRebuildCursorBuffers",
      "size": 1020,
-     "splat_name": "func_00211518",
+     "splat_name": "menuRebuildCursorBuffers",
      "va": "0x00211518",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64203,27 +64203,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00211950",
+     "name": "menuSlotSetLeaveDirection",
      "size": 120,
-     "splat_name": "func_00211950",
+     "splat_name": "menuSlotSetLeaveDirection",
      "va": "0x00211950",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002119C8",
+     "name": "menuSlotSetEnterDirection",
      "size": 180,
-     "splat_name": "func_002119C8",
+     "splat_name": "menuSlotSetEnterDirection",
      "va": "0x002119c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00211A80",
+     "name": "menuFocusRootSlot",
      "size": 260,
-     "splat_name": "func_00211A80",
+     "splat_name": "menuFocusRootSlot",
      "va": "0x00211a80",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64239,27 +64239,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00211C28",
+     "name": "menuFocusMainSlot",
      "size": 324,
-     "splat_name": "func_00211C28",
+     "splat_name": "menuFocusMainSlot",
      "va": "0x00211c28",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00211D70",
+     "name": "menuCancelToMainSlot",
      "size": 68,
-     "splat_name": "func_00211D70",
+     "splat_name": "menuCancelToMainSlot",
      "va": "0x00211d70",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00211DB8",
+     "name": "menuSceneSetState",
      "size": 2296,
-     "splat_name": "func_00211DB8",
+     "splat_name": "menuSceneSetState",
      "va": "0x00211db8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64293,36 +64293,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00212798",
+     "name": "menuSceneInit",
      "size": 2112,
-     "splat_name": "func_00212798",
+     "splat_name": "menuSceneInit",
      "va": "0x00212798",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00212FD8",
+     "name": "menuModelDraw",
      "size": 432,
-     "splat_name": "func_00212FD8",
+     "splat_name": "menuModelDraw",
      "va": "0x00212fd8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00213188",
+     "name": "menuModelDrawRotated",
      "size": 376,
-     "splat_name": "func_00213188",
+     "splat_name": "menuModelDrawRotated",
      "va": "0x00213188",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00213300",
+     "name": "menuSelectionRingDraw",
      "size": 1908,
-     "splat_name": "func_00213300",
+     "splat_name": "menuSelectionRingDraw",
      "va": "0x00213300",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64347,9 +64347,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00213B80",
+     "name": "menuDrawMainCards",
      "size": 1748,
-     "splat_name": "func_00213B80",
+     "splat_name": "menuDrawMainCards",
      "va": "0x00213b80",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64374,27 +64374,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00214378",
+     "name": "menuDrawLicensePage",
      "size": 380,
-     "splat_name": "func_00214378",
+     "splat_name": "menuDrawLicensePage",
      "va": "0x00214378",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002144F8",
+     "name": "menuDrawCommandPage",
      "size": 444,
-     "splat_name": "func_002144F8",
+     "splat_name": "menuDrawCommandPage",
      "va": "0x002144f8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002146B8",
+     "name": "menuDrawEquipPage",
      "size": 1500,
-     "splat_name": "func_002146B8",
+     "splat_name": "menuDrawEquipPage",
      "va": "0x002146b8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64419,72 +64419,72 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00214CC0",
+     "name": "menuDrawConfigPage",
      "size": 76,
-     "splat_name": "func_00214CC0",
+     "splat_name": "menuDrawConfigPage",
      "va": "0x00214cc0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00214D10",
+     "name": "menuMapDraw",
      "size": 28,
-     "splat_name": "func_00214D10",
+     "splat_name": "menuMapDraw",
      "va": "0x00214d10",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00214D30",
+     "name": "menuDrawExtraPage",
      "size": 596,
-     "splat_name": "func_00214D30",
+     "splat_name": "menuDrawExtraPage",
      "va": "0x00214d30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00214F88",
+     "name": "menuSlotDraw",
      "size": 488,
-     "splat_name": "func_00214F88",
+     "splat_name": "menuSlotDraw",
      "va": "0x00214f88",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00215170",
+     "name": "menuSceneDraw",
      "size": 404,
-     "splat_name": "func_00215170",
+     "splat_name": "menuSceneDraw",
      "va": "0x00215170",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00215308",
+     "name": "selectionPlaceKey",
      "size": 228,
-     "splat_name": "func_00215308",
+     "splat_name": "selectionPlaceKey",
      "va": "0x00215308",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002153F0",
+     "name": "selectionTakePlainEntry",
      "size": 96,
-     "splat_name": "func_002153F0",
+     "splat_name": "selectionTakePlainEntry",
      "va": "0x002153f0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00215450",
+     "name": "ptAdvanceSlotCursor",
      "size": 236,
-     "splat_name": "func_00215450",
+     "splat_name": "ptAdvanceSlotCursor",
      "va": "0x00215450",
      "name_basis": "address",
      "provenance": "estimated"
@@ -64509,180 +64509,180 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002155D0",
+     "name": "menuSetLayout",
      "size": 744,
-     "splat_name": "func_002155D0",
+     "splat_name": "menuSetLayout",
      "va": "0x002155d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002158B8",
+     "name": "menuTutorialSaveState",
      "size": 688,
-     "splat_name": "func_002158B8",
+     "splat_name": "menuTutorialSaveState",
      "va": "0x002158b8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00215B68",
+     "name": "menuTutorialRestoreState",
      "size": 500,
-     "splat_name": "func_00215B68",
+     "splat_name": "menuTutorialRestoreState",
      "va": "0x00215b68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00215D60",
+     "name": "menuTutorialRewind",
      "size": 132,
-     "splat_name": "func_00215D60",
+     "splat_name": "menuTutorialRewind",
      "va": "0x00215d60",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00215DE8",
+     "name": "menuTutorialPageReset",
      "size": 292,
-     "splat_name": "func_00215DE8",
+     "splat_name": "menuTutorialPageReset",
      "va": "0x00215de8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00215F10",
+     "name": "menuTutorialStep",
      "size": 2376,
-     "splat_name": "func_00215F10",
+     "splat_name": "menuTutorialStep",
      "va": "0x00215f10",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00216858",
+     "name": "menuMainCommandStep",
      "size": 868,
-     "splat_name": "func_00216858",
+     "splat_name": "menuMainCommandStep",
      "va": "0x00216858",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00216BC0",
+     "name": "menuItemListStep",
      "size": 1504,
-     "splat_name": "func_00216BC0",
+     "splat_name": "menuItemListStep",
      "va": "0x00216bc0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002171A0",
+     "name": "menuLayoutPlaceStep",
      "size": 1028,
-     "splat_name": "func_002171A0",
+     "splat_name": "menuLayoutPlaceStep",
      "va": "0x002171a0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002175A8",
+     "name": "menuLicenseChargeStep",
      "size": 1896,
-     "splat_name": "func_002175A8",
+     "splat_name": "menuLicenseChargeStep",
      "va": "0x002175a8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00217D10",
+     "name": "menuCommandPageStep",
      "size": 288,
-     "splat_name": "func_00217D10",
+     "splat_name": "menuCommandPageStep",
      "va": "0x00217d10",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00217E30",
+     "name": "menuEquipAssignStep",
      "size": 2508,
-     "splat_name": "func_00217E30",
+     "splat_name": "menuEquipAssignStep",
      "va": "0x00217e30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00218800",
+     "name": "menuPartyFormationStep",
      "size": 1752,
-     "splat_name": "func_00218800",
+     "splat_name": "menuPartyFormationStep",
      "va": "0x00218800",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00218ED8",
+     "name": "menuRecordItemStep",
      "size": 612,
-     "splat_name": "func_00218ED8",
+     "splat_name": "menuRecordItemStep",
      "va": "0x00218ed8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00219140",
+     "name": "menuConfigSlotStep",
      "size": 1148,
-     "splat_name": "func_00219140",
+     "splat_name": "menuConfigSlotStep",
      "va": "0x00219140",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002195C0",
+     "name": "menuMapChoiceStep",
      "size": 636,
-     "splat_name": "func_002195C0",
+     "splat_name": "menuMapChoiceStep",
      "va": "0x002195c0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00219840",
+     "name": "menuButtonHandle",
      "size": 316,
-     "splat_name": "func_00219840",
+     "splat_name": "menuButtonHandle",
      "va": "0x00219840",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00219980",
+     "name": "menuSceneEnter",
      "size": 372,
-     "splat_name": "func_00219980",
+     "splat_name": "menuSceneEnter",
      "va": "0x00219980",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00219AF8",
+     "name": "menuSceneExit",
      "size": 88,
-     "splat_name": "func_00219AF8",
+     "splat_name": "menuSceneExit",
      "va": "0x00219af8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00219B50",
+     "name": "menuSceneRunLoop",
      "size": 2368,
-     "splat_name": "func_00219B50",
+     "splat_name": "menuSceneRunLoop",
      "va": "0x00219b50",
      "name_basis": "address",
      "provenance": "estimated"

@@ -5967,51 +5967,342 @@
     {
      "range": [
       "0x0069b15c",
-      "0x0069b16c"
+      "0x0069b1ac"
      ],
      "generated": [
       "0x0069b15c",
-      "0x0069b16c"
+      "0x0069b1ac"
      ],
      "generated_by": [
-      "Get_Decimal_Surplus_for_Radius"
+      "Check_Wall",
+      "Get_Angle_Relative",
+      "Get_Decimal_Surplus_for_Radius",
+      "padDebugPrintDirection",
+      "unduCheckMoveSquare"
      ],
      "c_owned_symbols": [
       "D_0069B15C",
       "D_0069B160",
       "D_0069B164",
-      "D_0069B168"
-     ],
-     "also_referenced_by_c": [],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": ".work/x2-readable-integration-20261105-main/out/get/b.o"
-     }
-    },
-    {
-     "range": [
-      "0x0069b19c",
-      "0x0069b1ac"
-     ],
-     "generated": [
-      "0x0069b19c",
-      "0x0069b1ac"
-     ],
-     "generated_by": [
-      "Get_Angle_Relative"
-     ],
-     "c_owned_symbols": [
+      "D_0069B168",
+      "D_0069B16C",
+      "D_0069B170",
+      "D_0069B174",
+      "D_0069B178",
+      "D_0069B17C",
+      "D_0069B180",
+      "D_0069B184",
+      "D_0069B188",
+      "D_0069B18C",
+      "D_0069B190",
+      "D_0069B194",
+      "D_0069B198",
       "D_0069B19C",
       "D_0069B1A0",
       "D_0069B1A4",
       "D_0069B1A8"
      ],
+     "also_referenced_by_c": [
+      "fanMinDistance",
+      "fanHeightTolerance",
+      "fanMaxHeightDelta"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/get.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b1b8",
+      "0x0069b1dc"
+     ],
+     "generated": [
+      "0x0069b1b8",
+      "0x0069b1dc"
+     ],
+     "generated_by": [
+      "cursolGetByReduceSpeedAngleLoop",
+      "unduGetEnemyIDPos"
+     ],
+     "c_owned_symbols": [
+      "D_0069B1B8",
+      "D_0069B1BC",
+      "D_0069B1C0",
+      "D_0069B1C4",
+      "D_0069B1C8",
+      "D_0069B1CC",
+      "D_0069B1D0",
+      "D_0069B1D4",
+      "D_0069B1D8"
+     ],
+     "also_referenced_by_c": [
+      "unduDistanceTolerance"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/get.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x00689f60",
+      "0x00689f70"
+     ],
+     "generated": [
+      "0x00689f60",
+      "0x00689f68"
+     ],
+     "generated_by": [
+      "unduCheckAngle"
+     ],
+     "c_owned_symbols": [
+      "D_00689F60"
+     ],
+     "also_referenced_by_c": [
+      "padDebugDirectionFormat"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/get.o"
+     }
+    }
+   ]
+  },
+  "main/tu094": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00689fd0",
+      "0x00689fe8"
+     ],
+     "generated": [
+      "0x00689fd0",
+      "0x00689fe8"
+     ],
+     "generated_by": [
+      "bgLayerAdvance"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689FD0"
+     ],
+     "also_referenced_by_c": [
+      "D_00689F70",
+      "D_00689F90",
+      "D_00689FB0"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu094.o"
+     }
+    }
+   ]
+  },
+  "main/tu100": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b1e8",
+      "0x0069b20c"
+     ],
+     "generated": [
+      "0x0069b1e8",
+      "0x0069b20c"
+     ],
+     "generated_by": [
+      "menuRebuildCursorBuffers",
+      "menuSceneInit",
+      "menuModelDraw",
+      "xglActiveCameraSetup"
+     ],
+     "c_owned_symbols": [
+      "D_0069B1E8",
+      "D_0069B1EC",
+      "D_0069B1F0",
+      "D_0069B1F4",
+      "D_0069B1F8",
+      "D_0069B1FC",
+      "D_0069B200",
+      "D_0069B204",
+      "D_0069B208"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B20C",
+      "D_0069B210",
+      "D_0069B214"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu100.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b218",
+      "0x0069b28c"
+     ],
+     "generated": [
+      "0x0069b218",
+      "0x0069b28c"
+     ],
+     "generated_by": [
+      "menuSelectionRingDraw"
+     ],
+     "c_owned_symbols": [
+      "D_0069B218",
+      "D_0069B21C",
+      "D_0069B220",
+      "D_0069B224",
+      "D_0069B228",
+      "D_0069B22C",
+      "D_0069B230",
+      "D_0069B234",
+      "D_0069B238",
+      "D_0069B23C",
+      "D_0069B240",
+      "D_0069B244",
+      "D_0069B248",
+      "D_0069B24C",
+      "D_0069B250",
+      "D_0069B254",
+      "D_0069B258",
+      "D_0069B25C",
+      "D_0069B260",
+      "D_0069B264",
+      "D_0069B268",
+      "D_0069B26C",
+      "D_0069B270",
+      "D_0069B274",
+      "D_0069B278",
+      "D_0069B27C",
+      "D_0069B280",
+      "D_0069B284",
+      "D_0069B288"
+     ],
      "also_referenced_by_c": [],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": ".work/x2-readable-integration-20261105-main/out/get/b.o"
+      "object": "build/main/build/c/tu100.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x0068a440",
+      "0x0068a600"
+     ],
+     "generated": [
+      "0x0068a440",
+      "0x0068a600"
+     ],
+     "generated_by": [
+      "menuMessageTextUpdate",
+      "menuSceneSetState",
+      "menuSetLayout",
+      "menuTutorialStep",
+      "menuItemListStep",
+      "menuEquipAssignStep",
+      "menuPartyFormationStep",
+      "menuConfigSlotStep"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068A440",
+      "jtbl_0068A470",
+      "jtbl_0068A4A0",
+      "jtbl_0068A4C0",
+      "jtbl_0068A560",
+      "jtbl_0068A580",
+      "jtbl_0068A5A0",
+      "jtbl_0068A5C0",
+      "jtbl_0068A5E0"
+     ],
+     "also_referenced_by_c": [
+      "D_0068A3F0"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu100.o"
+     }
+    }
+   ],
+   ".sdata": [
+    {
+     "range": [
+      "0x0069d560",
+      "0x0069d56c"
+     ],
+     "generated": [
+      "0x0069d560",
+      "0x0069d56c"
+     ],
+     "generated_by": [
+      "menuSetLayout",
+      "menuTutorialStep",
+      "menuItemListStep",
+      "menuLicenseChargeStep",
+      "menuSceneRunLoop"
+     ],
+     "c_owned_symbols": [
+      "D_0069D560",
+      "D_0069D568"
+     ],
+     "also_referenced_by_c": [
+      "menuLicenseState",
+      "D_0069D4CC",
+      "menuPendingSelection",
+      "menuCurrentSlot",
+      "D_0069D4D8",
+      "D_0069D4DC",
+      "D_0069D4E0",
+      "D_0069D4E4",
+      "countdownActive",
+      "D_0069D4EC",
+      "D_0069D4ED",
+      "D_0069D4F0",
+      "D_0069D4F8",
+      "D_0069D500",
+      "D_0069D501",
+      "D_0069D502",
+      "D_0069D503",
+      "D_0069D504",
+      "D_0069D508",
+      "D_0069D50C",
+      "D_0069D50E",
+      "menuSavedCursor",
+      "D_0069D514",
+      "D_0069D518",
+      "D_0069D519",
+      "menuLayoutMode",
+      "D_0069D51B",
+      "D_0069D51C",
+      "menuTutorialIndex",
+      "menuTutorialLine",
+      "menuTutorialStage",
+      "D_0069D529",
+      "D_0069D530",
+      "D_0069D538",
+      "D_0069D540",
+      "D_0069D548",
+      "D_0069D550",
+      "D_0069D558",
+      "D_0069D56C",
+      "D_0069D570",
+      "D_0069D578"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu100.o"
      }
     }
    ]

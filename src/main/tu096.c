@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu096.h"
+#include "main/tu097.h"
 
 void func_0020CCC0(int *left, int *right) {
     int leftValue = *left;
@@ -36,16 +37,59 @@ int xglTickWave(float divisor, float amplitude) {
     return (int) (xglSin(((float) xglTickCounter * xglPi) / divisor) * amplitude);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu096", func_0020CD50);
+/* The speed grows by this much each tick while the track moves, up to the maximum. */
+#define FONT_TRACK_SPEED_STEP 24
+#define FONT_TRACK_SPEED_MAX 64
 
 /*
- * Stores the target pair (+0x8, +0xC) of a FontTrack, struct FontTrack in main/tu097.c:
- * target_pair[0] and target_pair[1]. func_0020CD50 moves the current pair (+0x0, +0x4)
+ * Moves a track one tick toward its target pair: each axis closes a speed/128
+ * part of its distance in 1/16 units, and the speed grows. At the target the
+ * speed word counts down and is reset to 1 when it runs out.
+ */
+void fontTrackEase(struct FontTrack *track) {
+    int target_scaled;
+    int delta;
+
+    if (fontTrackAtTarget(track) != 0) {
+        track->step_count = track->step_count - 1;
+        if (track->step_count > 0) {
+            return;
+        }
+        track->step_count = 1;
+        return;
+    }
+
+    target_scaled = track->target_pair[0] << 4;
+    delta = target_scaled - track->scaled_pair[0];
+    if ((delta >> 4) != 0) {
+        track->scaled_pair[0] = track->scaled_pair[0] + ((delta * track->step_count) >> 7);
+        track->current_pair[0] = track->scaled_pair[0] >> 4;
+    } else {
+        track->current_pair[0] = track->target_pair[0];
+        track->scaled_pair[0] = target_scaled;
+    }
+
+    target_scaled = track->target_pair[1] << 4;
+    delta = target_scaled - track->scaled_pair[1];
+    if ((delta >> 4) != 0) {
+        track->scaled_pair[1] = track->scaled_pair[1] + ((delta * track->step_count) >> 7);
+        track->current_pair[1] = track->scaled_pair[1] >> 4;
+    } else {
+        track->current_pair[1] = track->target_pair[1];
+        track->scaled_pair[1] = target_scaled;
+    }
+
+    track->step_count = track->step_count + FONT_TRACK_SPEED_STEP;
+    if (track->step_count > FONT_TRACK_SPEED_MAX) {
+        track->step_count = FONT_TRACK_SPEED_MAX;
+    }
+}
+
+/*
+ * Stores the target pair of a track. fontTrackEase moves the current pair
  * toward it and fontTrackAtTarget tests for arrival.
  */
-void fontTrackSetTarget(void *track, int targetX, int targetY) {
-    int *track_words = (int *) track;
-
-    track_words[2] = targetX;
-    track_words[3] = targetY;
+void fontTrackSetTarget(struct FontTrack *track, int targetX, int targetY) {
+    track->target_pair[0] = targetX;
+    track->target_pair[1] = targetY;
 }

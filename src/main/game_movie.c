@@ -202,12 +202,7 @@ typedef struct MovieGsRegister {
     u64 address;
 } MovieGsRegister;
 
-/* GS registers of a local-to-local transfer, written through the A+D GIF tag
- * (GS_TEXFLUSH comes from gs.h; the same names as tu045.c and game_over_059.c). */
-#define GS_BITBLTBUF 0x50
-#define GS_TRXPOS 0x51
-#define GS_TRXREG 0x52
-#define GS_TRXDIR 0x53
+/* GS registers of a local-to-local transfer (BITBLTBUF, TRXPOS, TRXREG, TRXDIR from gs.h), written through the A+D GIF tag. */
 
 /* VIF DIRECTHL code word with its quadword count (the low 16 bits). */
 #define VIF_DIRECTHL(qwc) (0x51000000 | (qwc))

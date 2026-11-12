@@ -37368,7 +37368,7 @@
      2
     ],
     [
-     "func_00209458",
+     "Get_MiddlePoint_Curve",
      2135128,
      628,
      2
@@ -37434,7 +37434,7 @@
      2
     ],
     [
-     "func_0020A158",
+     "uwamonoQuadEdgesVisible",
      2138456,
      528,
      2
@@ -37476,7 +37476,7 @@
      2
     ],
     [
-     "func_0020A968",
+     "unduGetSlotHeight",
      2140520,
      220,
      2
@@ -37626,7 +37626,7 @@
      2
     ],
     [
-     "func_0020B7A8",
+     "pxyTickScaleDoubleOverride",
      2144168,
      48,
      2
@@ -37656,13 +37656,13 @@
      2
     ],
     [
-     "func_0020B948",
+     "padCirclePressedAlone",
      2144584,
      52,
      2
     ],
     [
-     "func_0020B980",
+     "padCrossPressedAlone",
      2144640,
      52,
      2
@@ -37764,7 +37764,7 @@
      2
     ],
     [
-     "xglPrimAddRenderScissor",
+     "xglFontScissorReset",
      2146528,
      108,
      2
@@ -37884,7 +37884,7 @@
      2
     ],
     [
-     "func_0020CD50",
+     "fontTrackEase",
      2149712,
      224,
      2
@@ -37932,7 +37932,7 @@
      2
     ],
     [
-     "func_0020D0D0",
+     "fontObjMarkSlotLoaded",
      2150608,
      24,
      2
@@ -37950,7 +37950,7 @@
      2
     ],
     [
-     "func_0020D260",
+     "fontObjBuildBaseVifPacket",
      2151008,
      324,
      2
@@ -37974,7 +37974,7 @@
      2
     ],
     [
-     "func_0020D430",
+     "fontObjResetBufferSlots",
      2151472,
      36,
      2
@@ -38064,7 +38064,7 @@
      2
     ],
     [
-     "func_0020DCF0",
+     "fontObjStartOpen",
      2153712,
      212,
      2
@@ -38088,7 +38088,7 @@
      2
     ],
     [
-     "func_0020DFA8",
+     "fontObjSettleClose",
      2154408,
      164,
      2
@@ -38160,19 +38160,19 @@
      2
     ],
     [
-     "func_0020E470",
+     "fontObjGetOriginTrack",
      2155632,
      28,
      2
     ],
     [
-     "func_0020E490",
+     "fontObjGetSizeTrack",
      2155664,
      32,
      2
     ],
     [
-     "func_0020E4B0",
+     "fontObjResetCursor",
      2155696,
      56,
      2
@@ -38244,13 +38244,13 @@
      2
     ],
     [
-     "func_0020EAD0",
+     "cursorBufferInitEntry",
      2157264,
      204,
      2
     ],
     [
-     "func_0020EBA0",
+     "cursorBufferSetText",
      2157472,
      56,
      2
@@ -38268,7 +38268,7 @@
      2
     ],
     [
-     "func_0020EBF8",
+     "cursorBufferUpdateEntry",
      2157560,
      408,
      2
@@ -38358,7 +38358,7 @@
      2
     ],
     [
-     "func_0020F230",
+     "menuListPageCount",
      2159152,
      52,
      2
@@ -38406,7 +38406,7 @@
      2
     ],
     [
-     "func_0020F498",
+     "textBoxDrawMark",
      2159768,
      132,
      2
@@ -38430,7 +38430,7 @@
      2
     ],
     [
-     "func_0020F7B0",
+     "textSystemUpdate",
      2160560,
      324,
      2
@@ -38520,7 +38520,7 @@
      2
     ],
     [
-     "func_0020FF88",
+     "textBoxTryOpenWindow",
      2162568,
      192,
      2
@@ -38592,7 +38592,7 @@
      2
     ],
     [
-     "func_002104B8",
+     "cursorBuffersRewind",
      2163896,
      168,
      2
@@ -38604,19 +38604,19 @@
      2
     ],
     [
-     "func_00210580",
+     "menuUmnImageReset",
      2164096,
      156,
      2
     ],
     [
-     "func_00210620",
+     "menuUmnImageLoad",
      2164256,
      176,
      2
     ],
     [
-     "func_002106D0",
+     "menuUmnImageDecode",
      2164432,
      144,
      2
@@ -38628,55 +38628,55 @@
      2
     ],
     [
-     "func_002109A8",
+     "menuMapListDraw",
      2165160,
      512,
      2
     ],
     [
-     "func_00210BA8",
+     "menuSkillModelBuffersAlloc",
      2165672,
      204,
      2
     ],
     [
-     "func_00210C78",
+     "menuSkillModelReset",
      2165880,
      96,
      2
     ],
     [
-     "func_00210CD8",
+     "menuSkillModelTailReset",
      2165976,
      96,
      2
     ],
     [
-     "func_00210D38",
+     "menuSkillModelReadDone",
      2166072,
      156,
      2
     ],
     [
-     "func_00210DD8",
+     "menuSkillModelLoadOnce",
      2166232,
      196,
      2
     ],
     [
-     "func_00210EA0",
+     "menuSkillModelTailLoad",
      2166432,
      208,
      2
     ],
     [
-     "func_00210F70",
+     "menuMessageTextUpdate",
      2166640,
      1448,
      2
     ],
     [
-     "func_00211518",
+     "menuRebuildCursorBuffers",
      2168088,
      1020,
      2
@@ -38688,19 +38688,19 @@
      2
     ],
     [
-     "func_00211950",
+     "menuSlotSetLeaveDirection",
      2169168,
      120,
      2
     ],
     [
-     "func_002119C8",
+     "menuSlotSetEnterDirection",
      2169288,
      180,
      2
     ],
     [
-     "func_00211A80",
+     "menuFocusRootSlot",
      2169472,
      260,
      2
@@ -38712,19 +38712,19 @@
      2
     ],
     [
-     "func_00211C28",
+     "menuFocusMainSlot",
      2169896,
      324,
      2
     ],
     [
-     "func_00211D70",
+     "menuCancelToMainSlot",
      2170224,
      68,
      2
     ],
     [
-     "func_00211DB8",
+     "menuSceneSetState",
      2170296,
      2296,
      2
@@ -38748,25 +38748,25 @@
      2
     ],
     [
-     "func_00212798",
+     "menuSceneInit",
      2172824,
      2112,
      2
     ],
     [
-     "func_00212FD8",
+     "menuModelDraw",
      2174936,
      432,
      2
     ],
     [
-     "func_00213188",
+     "menuModelDrawRotated",
      2175368,
      376,
      2
     ],
     [
-     "func_00213300",
+     "menuSelectionRingDraw",
      2175744,
      1908,
      2
@@ -38784,7 +38784,7 @@
      2
     ],
     [
-     "func_00213B80",
+     "menuDrawMainCards",
      2177920,
      1748,
      2
@@ -38802,19 +38802,19 @@
      2
     ],
     [
-     "func_00214378",
+     "menuDrawLicensePage",
      2179960,
      380,
      2
     ],
     [
-     "func_002144F8",
+     "menuDrawCommandPage",
      2180344,
      444,
      2
     ],
     [
-     "func_002146B8",
+     "menuDrawEquipPage",
      2180792,
      1500,
      2
@@ -38832,49 +38832,49 @@
      2
     ],
     [
-     "func_00214CC0",
+     "menuDrawConfigPage",
      2182336,
      76,
      2
     ],
     [
-     "func_00214D10",
+     "menuMapDraw",
      2182416,
      28,
      2
     ],
     [
-     "func_00214D30",
+     "menuDrawExtraPage",
      2182448,
      596,
      2
     ],
     [
-     "func_00214F88",
+     "menuSlotDraw",
      2183048,
      488,
      2
     ],
     [
-     "func_00215170",
+     "menuSceneDraw",
      2183536,
      404,
      2
     ],
     [
-     "func_00215308",
+     "selectionPlaceKey",
      2183944,
      228,
      2
     ],
     [
-     "func_002153F0",
+     "selectionTakePlainEntry",
      2184176,
      96,
      2
     ],
     [
-     "func_00215450",
+     "ptAdvanceSlotCursor",
      2184272,
      236,
      2
@@ -38892,121 +38892,121 @@
      2
     ],
     [
-     "func_002155D0",
+     "menuSetLayout",
      2184656,
      744,
      2
     ],
     [
-     "func_002158B8",
+     "menuTutorialSaveState",
      2185400,
      688,
      2
     ],
     [
-     "func_00215B68",
+     "menuTutorialRestoreState",
      2186088,
      500,
      2
     ],
     [
-     "func_00215D60",
+     "menuTutorialRewind",
      2186592,
      132,
      2
     ],
     [
-     "func_00215DE8",
+     "menuTutorialPageReset",
      2186728,
      292,
      2
     ],
     [
-     "func_00215F10",
+     "menuTutorialStep",
      2187024,
      2376,
      2
     ],
     [
-     "func_00216858",
+     "menuMainCommandStep",
      2189400,
      868,
      2
     ],
     [
-     "func_00216BC0",
+     "menuItemListStep",
      2190272,
      1504,
      2
     ],
     [
-     "func_002171A0",
+     "menuLayoutPlaceStep",
      2191776,
      1028,
      2
     ],
     [
-     "func_002175A8",
+     "menuLicenseChargeStep",
      2192808,
      1896,
      2
     ],
     [
-     "func_00217D10",
+     "menuCommandPageStep",
      2194704,
      288,
      2
     ],
     [
-     "func_00217E30",
+     "menuEquipAssignStep",
      2194992,
      2508,
      2
     ],
     [
-     "func_00218800",
+     "menuPartyFormationStep",
      2197504,
      1752,
      2
     ],
     [
-     "func_00218ED8",
+     "menuRecordItemStep",
      2199256,
      612,
      2
     ],
     [
-     "func_00219140",
+     "menuConfigSlotStep",
      2199872,
      1148,
      2
     ],
     [
-     "func_002195C0",
+     "menuMapChoiceStep",
      2201024,
      636,
      2
     ],
     [
-     "func_00219840",
+     "menuButtonHandle",
      2201664,
      316,
      2
     ],
     [
-     "func_00219980",
+     "menuSceneEnter",
      2201984,
      372,
      2
     ],
     [
-     "func_00219AF8",
+     "menuSceneExit",
      2202360,
      88,
      2
     ],
     [
-     "func_00219B50",
+     "menuSceneRunLoop",
      2202448,
      2368,
      2
