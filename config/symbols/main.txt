@@ -8411,6 +8411,7 @@ xglCdStreamList = 0x00959CD0;
 ArcHeader = 0x00959CD8;
 xglMcQueue = 0x00959D38;
 xglMcState = 0x00959F38;
+savedMcRequest = 0x00959FB8;
 xglMcIconSys = 0x00959FD8;
 netLocalAddressText = 0x0095A3A0;
 netLocalAddress = 0x0095A3B0;

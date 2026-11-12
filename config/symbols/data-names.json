@@ -132,6 +132,7 @@
    "0x00955cb0": "xglCdStreamsActive",
    "0x00959cd0": "xglCdStreamList",
    "0x00959f38": "xglMcState",
+   "0x00959fb8": "savedMcRequest",
    "0x00959fd8": "xglMcIconSys",
    "0x00959d38": "xglMcQueue",
    "0x0069e383": "xglMcQueueEnd",
