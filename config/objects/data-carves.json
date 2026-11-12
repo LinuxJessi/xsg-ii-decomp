@@ -14,8 +14,8 @@
       "0x0068dc58"
      ],
      "generated_by": [
-      "func_001961D0",
-      "func_00196958",
+      "xglFontParseHex",
+      "xx",
       "ruby",
       "xglFontPrintSub"
      ],
@@ -44,7 +44,7 @@
       "0x0068dd48"
      ],
      "generated_by": [
-      "func_001979E0",
+      "xglFontGetGlyphIndex",
       "xglFontFlushCore"
      ],
      "c_owned_symbols": [
@@ -71,7 +71,7 @@
       "0x0068dea4"
      ],
      "generated_by": [
-      "func_00198928"
+      "xglFontGetDebugCell"
      ],
      "c_owned_symbols": [
       "jtbl_0068DDB0"

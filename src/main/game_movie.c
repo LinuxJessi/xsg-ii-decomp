@@ -349,7 +349,7 @@ int func_001A04A0(AllocRecord *player);
 int func_001A0688(AllocRecord *player, int pause);
 int func_001A06B8(AllocRecord *player);
 void xglFontPrintDirect(const char *text);
-char *func_00195E90(int mode, char *cursor, int flag);
+char *xglFontCopyTextUnit(int mode, char *cursor, int flag);
 int func_002AA5D8(char *destination, const char *format, ...);
 void pauseRefBackdrop(void);
 void pauseDrawTitleAndHints(int skip_hidden);
@@ -461,7 +461,7 @@ void GameMovieCaptionPlay(const char *name)
                         if (*line == '\n') {
                             lines++;
                         }
-                        line = func_00195E90(0, line, 0);
+                        line = xglFontCopyTextUnit(0, line, 0);
                     }
                     if (lines >= 3) {
                         y -= (lines - 2) * 22;
