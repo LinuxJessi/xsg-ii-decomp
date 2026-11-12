@@ -38,6 +38,14 @@ typedef enum JpegSamplingMode {
 
 /* Marker bytes that follow the 0xFF prefix. */
 #define JPEG_MARKER_PREFIX 0xFF
+#define JPEG_MARKER_SOF0 0xC0
+#define JPEG_MARKER_DHT 0xC4
+#define JPEG_MARKER_RST0 0xD0
+#define JPEG_MARKER_SOI 0xD8
+#define JPEG_MARKER_EOI 0xD9
+#define JPEG_MARKER_SOS 0xDA
+#define JPEG_MARKER_DQT 0xDB
+#define JPEG_MARKER_DRI 0xDD
 
 /* Huffman tables: 16 code lengths; decoder tables use 0xFE/0xFF boundary entries. */
 #define JPEG_HUFF_LENGTHS 16
@@ -791,7 +799,121 @@ void ConvertYUV2RGB(int width, int height)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", StartOfScan);
 
-/* JPEG decode driver: walks the marker segments of the request's buffer,
-   dispatching DRI/DQT/SOF/DHT/SOS to their parsers, stops at EOI (0xD9) and
-   writes the decoded width and height back into the request. */
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", xglJpegDecode);
+/* JpegDecodeControl.scaleMode: no scaling, YUV percentages or RGB percentages. */
+#define JPEG_SCALE_NONE 0
+#define JPEG_SCALE_YUV 1
+#define JPEG_SCALE_RGB 2
+
+/* Maximum coordinate stored for an image without size limits. */
+#define JPEG_NO_LIMIT 0x7FFF
+
+typedef struct JpegImageDimensions {
+    short width;
+    short height;
+} JpegImageDimensions;
+
+typedef struct JpegDecodeControl {
+    u8 *source;
+    u8 *destination;
+    int consumedSize; /* +0x08: bytes of source parsed up to the RST0/EOI marker */
+    short frameBufferBase;
+    short frameBufferWidth;
+    u16 originX;
+    u16 originY;
+    JpegImageDimensions imageLimits; /* +0x14 */
+    u8 luminancePercent;
+    u8 chrominancePercent;
+    u8 scaleMode; /* +0x1a */
+    u8 pixelFormat;
+    u8 redPercent;
+    u8 greenPercent;
+    u8 bluePercent;
+    u8 unmodeled_1f;
+} JpegDecodeControl;
+
+u8 *StartOfScan(u8 *segment, void *requestAddress);
+
+/* JPEG decode driver: sets the size limits and colour scales from the
+   request, walks the marker segments of the request's buffer, dispatching
+   DRI/DQT/SOF/DHT/SOS to their parsers, stops at RST0 or EOI and writes the
+   decoded width and height and the parsed byte count back into the request. */
+int xglJpegDecode(void *requestAddress)
+{
+    JpegDecodeControl *request = requestAddress;
+    JpegWork *work;
+    u32 extentBits;
+    u8 *cursor;
+    u8 marker;
+    float yuvPercentScale;
+    float rgbPercentScale;
+    float chrominanceScale;
+
+    /* The complete dimension pair is zero for an unbounded image. */
+    __builtin_memcpy(&extentBits, &request->imageLimits, sizeof(extentBits));
+    if (extentBits == 0) {
+        work = sw;
+        work->maximumY = work->maximumX = JPEG_NO_LIMIT;
+    } else {
+        work = sw;
+        work->maximumX = request->imageLimits.width - 1;
+        work->maximumY = request->imageLimits.height - 1;
+    }
+    work->restartInterval = 0;
+    work->colorScaleMode = request->scaleMode;
+    work->blueScale = work->greenScale = work->redScale =
+        work->secondChromaScale = work->firstChromaScale =
+        work->luminanceScale = 1.0f;
+
+    switch (request->scaleMode) {
+    case JPEG_SCALE_YUV:
+        yuvPercentScale = JPEG_PERCENT_SCALE;
+        sw->luminanceScale = I2F(request->luminancePercent) * yuvPercentScale;
+        chrominanceScale = I2F(request->chrominancePercent) * yuvPercentScale;
+        sw->firstChromaScale = sw->secondChromaScale = chrominanceScale;
+        break;
+    case JPEG_SCALE_RGB:
+        rgbPercentScale = JPEG_PERCENT_SCALE;
+        sw->redScale = I2F(request->redPercent) * rgbPercentScale;
+        sw->greenScale = I2F(request->greenPercent) * rgbPercentScale;
+        sw->blueScale = I2F(request->bluePercent) * rgbPercentScale;
+        break;
+    default:
+        break;
+    }
+    cursor = request->source;
+    for (;;) {
+        while (*cursor++ != JPEG_MARKER_PREFIX) {
+        }
+        marker = *cursor;
+        if (marker == JPEG_MARKER_RST0 || marker == JPEG_MARKER_EOI) {
+            break;
+        }
+        cursor++;
+        switch (marker) {
+        case JPEG_MARKER_SOI:
+            break;
+        case JPEG_MARKER_DRI:
+            cursor = DefineRestartInterval(cursor);
+            break;
+        case JPEG_MARKER_DQT:
+            cursor = DefineQuantizeTable(cursor);
+            break;
+        case JPEG_MARKER_SOF0:
+            cursor = StartOfFrame(cursor);
+            break;
+        case JPEG_MARKER_DHT:
+            cursor = DefineHuffmanTable(cursor);
+            break;
+        case JPEG_MARKER_SOS:
+            cursor = StartOfScan(cursor, requestAddress);
+            break;
+        default:
+            cursor += (cursor[0] << 8) + cursor[1];
+            break;
+        }
+    }
+    request->imageLimits.width = sw->imageWidth;
+    request->imageLimits.height = sw->imageHeight;
+    request->consumedSize = cursor - request->source;
+    return 0;
+}

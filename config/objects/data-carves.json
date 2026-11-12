@@ -30,6 +30,30 @@
    ]
   },
   "main/tu019": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068e0e0",
+      "0x0068e158"
+     ],
+     "generated": [
+      "0x0068e0e0",
+      "0x0068e158"
+     ],
+     "generated_by": [
+      "xglJpegDecode"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068E0E0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_jpeg.o"
+     }
+    }
+   ],
    ".lit4": [
     {
      "range": [
@@ -46,6 +70,29 @@
      "c_owned_symbols": [
       "D_0069B624",
       "D_0069B628"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_jpeg.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b648",
+      "0x0069b650"
+     ],
+     "generated": [
+      "0x0069b648",
+      "0x0069b650"
+     ],
+     "generated_by": [
+      "xglJpegDecode"
+     ],
+     "c_owned_symbols": [
+      "D_0069B648",
+      "D_0069B64C"
      ],
      "also_referenced_by_c": [],
      "basis": {
