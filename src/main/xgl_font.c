@@ -419,6 +419,14 @@ struct FontGsWrite {
 #define FONT_TEST_DEPTH_GREATER 0x70000
 #define FONT_TEST_ALPHA_GREATER 0xD
 
+/* FONT_OP_EFFECT_MODE: how a glyph is drawn (cursor->effect). */
+#define FONT_EFFECT_PLAIN 1
+#define FONT_EFFECT_SHADOW 2
+#define FONT_EFFECT_OUTLINE 3
+#define FONT_EFFECT_BOLD 4
+#define FONT_COLOR_NEUTRAL 0x80
+#define FONT_ALPHA_NEUTRAL 0x80
+
 /* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
  * register write. */
 struct FontEffectScratchPacket {
@@ -729,8 +737,8 @@ extern int D_0063E878[];
 
 int func_00196260(const char **cursor, int *value);
 unsigned short xglFontCharToEuc(signed char character, unsigned char **text);
-int func_00198928(int high, int low);
-int func_001979E0(int high, int low);
+unsigned int func_00198928(unsigned char high, unsigned char low);
+unsigned short func_001979E0(unsigned char high, unsigned char low);
 
 int xglFontGetStringWidth2(const char *text, int delimiter)
 {
@@ -944,7 +952,42 @@ int func_00196460(FontDrawCursor *cursor, const char **text)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", cfe_00196508);
+/* GS state packet of the inline reset (4 quadwords). */
+extern unsigned int D_0063EA60[16];
+
+/*
+ * Inline "init" / "save" / "load" command: resets the draw cursor (colour, effect, blend, scale,
+ * style) and the font state defaults of xglFontInitial, then skips the ';'.
+ */
+int cfe_00196508(FontDrawCursor *cursor, const char **text)
+{
+    cursor->red = cursor->green = cursor->blue = FONT_COLOR_NEUTRAL;
+    cursor->effect = FONT_EFFECT_PLAIN;
+    cursor->flags &= FONT_CURSOR_STYLE_CLEAR;
+    cursor->effect_x = 1;
+    cursor->alpha = FONT_ALPHA_NEUTRAL;
+    cursor->effect_y = 1;
+    cursor->effect_red = 0;
+    cursor->effect_green = 0;
+    cursor->effect_blue = 0;
+    cursor->primitive_flags = 0;
+    cursor->primitive_mode = 0;
+    cursor->scale_x = FONT_SCALE_ONE;
+    cursor->scale_y = FONT_SCALE_ONE;
+    if (!D_008DAD00.debug_mode) {
+        sceVif1PkAddDirectDataN(cursor->packet, D_0063EA60, 4);
+    }
+    D_008DAD00.line_height = 24;
+    D_008DAD00.default_width = 4;
+    D_008DAD00.proportional_mode = 0;
+    D_008DAD00.horizontal_shift = 0;
+    D_008DAD00.character_spacing = 0;
+    D_008DAD00.compact_width = 16;
+    D_008DAD00.compact_height = 16;
+    D_008DAD00.unknown_1a = 2;
+    (*text)++;
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", col);
 
@@ -1203,13 +1246,9 @@ int func_00197988(unsigned char high, unsigned char low)
     return 0x7F;
 }
 
+
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001979E0);
 
-/* FONT_OP_EFFECT_MODE: how a glyph is drawn (cursor->effect). */
-#define FONT_EFFECT_PLAIN 1
-#define FONT_EFFECT_SHADOW 2
-#define FONT_EFFECT_OUTLINE 3
-#define FONT_EFFECT_BOLD 4
 /* FONT_OP_CONFIG sub-commands. */
 #define FONT_CONFIG_LINE_HEIGHT 1
 #define FONT_CONFIG_DEFAULT_WIDTH 2
@@ -1223,8 +1262,6 @@ INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001979E0);
 #define FONT_HEX_MINUS 16
 #define FONT_HEX_POINT 17
 #define FONT_HEX_BLANK 32
-#define FONT_COLOR_NEUTRAL 0x80
-#define FONT_ALPHA_NEUTRAL 0x80
 /* IEEE single precision fields used by the %f printer. */
 #define FONT_FLOAT_MANTISSA_MASK 0x7fffff
 #define FONT_FLOAT_HIDDEN_BIT 0x800000
@@ -1656,6 +1693,7 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
         }
     }
 }
+
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00198928);
 
