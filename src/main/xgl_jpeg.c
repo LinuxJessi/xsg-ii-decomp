@@ -736,7 +736,102 @@ void HuffmanDecode(float *coefficients, int component)
    counterpart of FFDCT). Pass one reads the block's columns and writes the rows
    of sw->idctBlock; pass two reads the columns of sw->idctBlock and writes the
    rows of the block. */
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", FFIDCT);
+/*
+ * 8x8 inverse DCT on VU0. Each pass gathers one column into idctStage in
+ * even/odd order, multiplies it by the basis rows already held in VF1-VF8
+ * (first pass) or VF11-VF18 (second pass), and finishes the butterfly on
+ * VU0 as well with VF27/VF28: the sum half goes out with sqc2, the reversed
+ * difference half through qmfc2/pexew/sq. The first pass writes the rows of
+ * idctBlock, the second the rows of the caller's block. XS1 did the
+ * butterfly on the FPU.
+ */
+void FFIDCT(float block[JPEG_BLOCK_DIM][JPEG_BLOCK_DIM])
+{
+    float *source;
+    float *column;
+    float *stage;
+    float *line;
+    float *out;
+    int i;
+
+    stage = sw->idctStage;
+
+    for (i = 0; i < JPEG_BLOCK_DIM; i++) {
+        line = sw->idctBlock[i];
+        source = block[0] + i;
+        stage[0] = source[0 * JPEG_BLOCK_DIM];
+        stage[1] = source[2 * JPEG_BLOCK_DIM];
+        stage[2] = source[4 * JPEG_BLOCK_DIM];
+        stage[3] = source[6 * JPEG_BLOCK_DIM];
+        stage[4] = source[1 * JPEG_BLOCK_DIM];
+        stage[5] = source[3 * JPEG_BLOCK_DIM];
+        stage[6] = source[5 * JPEG_BLOCK_DIM];
+        stage[7] = source[7 * JPEG_BLOCK_DIM];
+        __asm__ __volatile__(
+            "lqc2 vf9,0(%0)\n"
+            "lqc2 vf10,16(%0)\n"
+            "vmulax.xyzw ACCxyzw,vf1xyzw,vf9x\n"
+            "vmadday.xyzw ACCxyzw,vf2xyzw,vf9y\n"
+            "vmaddaz.xyzw ACCxyzw,vf3xyzw,vf9z\n"
+            "vmaddw.xyzw vf19xyzw,vf4xyzw,vf9w\n"
+            "vmulax.xyzw ACCxyzw,vf5xyzw,vf10x\n"
+            "vmadday.xyzw ACCxyzw,vf6xyzw,vf10y\n"
+            "vmaddaz.xyzw ACCxyzw,vf7xyzw,vf10z\n"
+            "vmaddw.xyzw vf20xyzw,vf8xyzw,vf10w\n"
+            "vmulax.xw ACCxw,vf27xw,vf19x\n"
+            "vmulay.yz ACCyz,vf27yz,vf19y\n"
+            "vmaddaz.xw ACCxw,vf28xw,vf19z\n"
+            "vmaddaw.yz ACCyz,vf28yz,vf19w\n"
+            "vmsub.xyzw vf10xyzw,vf27xyzw,vf20xyzw\n"
+            "vmadd.xyzw vf9xyzw,vf27xyzw,vf20xyzw\n"
+            "vmr32.xyzw vf19xyzw,vf10xyzw\n"
+            "qmfc2.ni $2,vf19\n"
+            "pexew $3,$2\n"
+            "sqc2 vf9,0(%1)\n"
+            "sq $3,16(%1)\n"
+            :
+            : "r"(stage), "r"(line)
+            : "$2", "$3", "memory");
+    }
+
+    for (i = 0; i < JPEG_BLOCK_DIM; i++) {
+        column = &sw->idctBlock[0][i];
+        stage[0] = column[0 * JPEG_BLOCK_DIM];
+        stage[1] = column[2 * JPEG_BLOCK_DIM];
+        stage[2] = column[4 * JPEG_BLOCK_DIM];
+        stage[3] = column[6 * JPEG_BLOCK_DIM];
+        stage[4] = column[1 * JPEG_BLOCK_DIM];
+        stage[5] = column[3 * JPEG_BLOCK_DIM];
+        stage[6] = column[5 * JPEG_BLOCK_DIM];
+        stage[7] = column[7 * JPEG_BLOCK_DIM];
+        out = block[i];
+        __asm__ __volatile__(
+            "lqc2 vf9,0(%0)\n"
+            "lqc2 vf10,16(%0)\n"
+            "vmulax.xyzw ACCxyzw,vf11xyzw,vf9x\n"
+            "vmadday.xyzw ACCxyzw,vf12xyzw,vf9y\n"
+            "vmaddaz.xyzw ACCxyzw,vf13xyzw,vf9z\n"
+            "vmaddw.xyzw vf19xyzw,vf14xyzw,vf9w\n"
+            "vmulax.xyzw ACCxyzw,vf15xyzw,vf10x\n"
+            "vmadday.xyzw ACCxyzw,vf16xyzw,vf10y\n"
+            "vmaddaz.xyzw ACCxyzw,vf17xyzw,vf10z\n"
+            "vmaddw.xyzw vf20xyzw,vf18xyzw,vf10w\n"
+            "vmulax.xw ACCxw,vf27xw,vf19x\n"
+            "vmulay.yz ACCyz,vf27yz,vf19y\n"
+            "vmaddaz.xw ACCxw,vf28xw,vf19z\n"
+            "vmaddaw.yz ACCyz,vf28yz,vf19w\n"
+            "vmsub.xyzw vf10xyzw,vf27xyzw,vf20xyzw\n"
+            "vmadd.xyzw vf9xyzw,vf27xyzw,vf20xyzw\n"
+            "vmr32.xyzw vf19xyzw,vf10xyzw\n"
+            "qmfc2.ni $2,vf19\n"
+            "pexew $3,$2\n"
+            "sqc2 vf9,0(%1)\n"
+            "sq $3,16(%1)\n"
+            :
+            : "r"(stage), "r"(out)
+            : "$2", "$3", "memory");
+    }
+}
 
 void ConvertMCU2YUV(void)
 {
