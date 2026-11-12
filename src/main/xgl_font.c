@@ -1048,7 +1048,23 @@ int cfe_00196508(FontDrawCursor *cursor, const char **text)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", col);
+/* Inline colour command "col": reads a 0xBBGGRR value after the text cursor into the draw colour. */
+int col(FontDrawCursor *cursor, const char **text)
+{
+    const char *next = *text;
+    const char *end;
+    int value;
+
+    if (!func_001961D0(&next, &value)) {
+        return 0;
+    }
+    end = next;
+    cursor->blue = (unsigned int)value >> 16;
+    cursor->green = (unsigned int)value >> 8;
+    cursor->red = value;
+    *text = end;
+    return 1;
+}
 
 /* Inline effect command: "N;" with N = 0..3 selects the glyph effect and its TEST_1 setting. */
 int func_00196660(FontDrawCursor *cursor, const char **text)
