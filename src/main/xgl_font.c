@@ -1308,7 +1308,34 @@ int func_00196660(FontDrawCursor *cursor, const char **text)
     return 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", shadow);
+/* Inline shadow command: "x,y,0xBBGGRR;" sets the effect offset and colour. Same local record as zoom. */
+int shadow(FontDrawCursor *cursor, const char **text)
+{
+    struct {
+        const char *next;
+        int x;
+        int y;
+        int color;
+    } work;
+
+    work.next = *text;
+    if (!func_00196260(&work.next, &work.x)) {
+        return 0;
+    }
+    if (!func_00196260(&work.next, &work.y)) {
+        return 0;
+    }
+    if (!func_001961D0(&work.next, &work.color)) {
+        return 0;
+    }
+    cursor->effect_x = work.x;
+    cursor->effect_y = work.y;
+    cursor->effect_red = work.color;
+    cursor->effect_green = (unsigned int)work.color >> 8;
+    cursor->effect_blue = (unsigned int)work.color >> 16;
+    *text = work.next;
+    return 1;
+}
 
 /*
  * Inline blend command: six numbers A, B, C, D (2 bits each of ALPHA_1), the mode byte and the
@@ -1337,7 +1364,34 @@ int alpha(FontDrawCursor *cursor, const char **text)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", zoom);
+/*
+ * Inline zoom command: "x;" or "x,y;" sets the glyph scale (1/16 units) and picks the texture filter.
+ * The parse cursor and the parsed values are one local record: the parsers take their addresses, and
+ * only as members of one object do the reloads after the calls match the original.
+ */
+int zoom(FontDrawCursor *cursor, const char **text)
+{
+    struct {
+        const char *next;
+        int scale_x;
+        int scale_y;
+    } work;
+
+    work.next = *text;
+    if (!func_00196260(&work.next, &work.scale_x)) {
+        return 0;
+    }
+    if (((const unsigned char *)work.next)[-1] == ';') {
+        work.scale_y = work.scale_x;
+    } else if (!func_00196260(&work.next, &work.scale_y)) {
+        return 0;
+    }
+    *text = work.next;
+    cursor->scale_x = work.scale_x;
+    cursor->scale_y = work.scale_y;
+    func_00194FA8(cursor, 1);
+    return 1;
+}
 
 unsigned short xglSRand(void);
 
