@@ -222,8 +222,12 @@ struct FontStateFromWindow {
     unsigned char proportional_mode;
     unsigned char horizontal_shift;
     int stored_value;
-    unsigned char unmodeled_14[6];
-    unsigned short unknown_1a;
+    /* "$rubyb;" marks where the base text of a ruby annotation starts. */
+    const unsigned char *ruby_base;
+    /* From the end of the annotation back to the end of its base text; set by "$rubys;". */
+    unsigned short ruby_advance;
+    /* How far the annotation is raised above the line, besides half its glyph height ("$rubyy"). */
+    unsigned short ruby_offset_y;
     /* The default glyph scale in 1/16 units (FONT_SCALE_ONE each); func_00194FA8 tests both bytes at once. */
     union {
         unsigned short default_scale;
@@ -399,6 +403,8 @@ int xglFontGetKanjiClutUV(int code, int *clut)
 #define FONT_CURSOR_WIDE_ASCII 4
 /* Second half-width mode of the $han inline command ("n2"). */
 #define FONT_CURSOR_WIDE_ALL 8
+/* Set between "$rubyb;" and "$rubye;": the base text of a ruby annotation was marked. */
+#define FONT_CURSOR_RUBY 0x10
 #define FONT_CURSOR_STYLE_CLEAR \
     (~(FONT_CURSOR_COMPACT | FONT_CURSOR_PROPORTIONAL | FONT_CURSOR_WIDE_ASCII) & 0xff)
 
@@ -1251,7 +1257,7 @@ int cfe_00196508(FontDrawCursor *cursor, const char **text)
     D_008DAD00.character_spacing = 0;
     D_008DAD00.compact_width = 16;
     D_008DAD00.compact_height = 16;
-    D_008DAD00.unknown_1a = 2;
+    D_008DAD00.ruby_offset_y = 2;
     (*text)++;
     return 1;
 }
@@ -1492,7 +1498,144 @@ int func_00196958(FontDrawCursor *cursor, const char **text)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", ruby);
+/*
+ * Inline ruby (furigana) commands; the letter after "ruby" stands two bytes in front of the cursor.
+ * "$rubyb;" marks the start of the base text, "$rubys;" ends it and starts the annotation, which is
+ * drawn in the compact size centred above the base text, "$rubye;" ends the annotation and returns to
+ * the end of the base text. "$rubyzW,H;" sets the compact glyph size, "$rubyyN;" the raise.
+ */
+int ruby(FontDrawCursor *cursor, const char **text)
+{
+    const char *next;
+    /* The cursor's address is taken before its first assignment and used for the first parser call:
+     * every access to `next` is then a memory access of one kind, and the stores and the reloads
+     * after the calls share a register as in the original. */
+    const char **parse = &next;
+    unsigned char flags;
+    int width;
+    int height;
+    int offset;
+
+    next = *text;
+    flags = cursor->flags;
+    next += 2;
+    switch (((const unsigned char *)next)[-2]) {
+    case 's':
+        if (((const unsigned char *)next)[-1] != ';') {
+            return 0;
+        }
+        if (flags & FONT_CURSOR_RUBY) {
+            const unsigned char *base;
+            unsigned char *word;
+            const unsigned char *source;
+            unsigned char *out;
+            unsigned char c;
+            int rise;
+            int mode;
+            int base_width;
+            int ruby_width;
+
+            rise = D_008DAD00.ruby_offset_y + ((D_008DAD00.compact_height * 8) >> 4);
+            cursor->y -= rise;
+            mode = 0;
+            if (cursor->flags & FONT_CURSOR_PROPORTIONAL) {
+                mode = FONT_MODE_PROP;
+            }
+            if (cursor->flags & FONT_CURSOR_WIDE_ASCII) {
+                mode |= FONT_MODE_HAN;
+            }
+            D_008DAD00.text_mode = mode;
+            base = D_008DAD00.ruby_base;
+            word = (unsigned char *)D_008DAD00.word_buffer;
+            while (base < (const unsigned char *)next - 7) {
+                *word++ = *base++;
+            }
+            *word = 0;
+            base_width = xglFontGetStringWidth2(D_008DAD00.word_buffer, 0);
+            out = (unsigned char *)D_008DAD00.word_buffer;
+            out[0] = FONT_OP_COMPACT;
+            out[1] = 1;
+            out += 2;
+            source = (const unsigned char *)next;
+            while (*source != 0) {
+                if (*source == '$') {
+                    if (source[1] == 'r' && source[2] == 'u' && source[3] == 'b' && source[4] == 'y' &&
+                        source[5] == 'e' && source[6] == ';') {
+                        break;
+                    }
+                    while (*source != ';') {
+                        *out++ = *source++;
+                    }
+                } else if (*source < 0x20) {
+                    int remaining = xglFontGetSPcodeSize(*source, source);
+
+                    for (; remaining >= 0; remaining--) {
+                        *out++ = *source++;
+                    }
+                } else {
+                    if (*source < 0xA0) {
+                        *out++ = *source++;
+                    } else {
+                        out[0] = source[0];
+                        out[1] = source[1];
+                        out += 2;
+                        source += 2;
+                    }
+                }
+            }
+            *out = 0;
+            ruby_width = xglFontGetStringWidth2(D_008DAD00.word_buffer, 0);
+            D_008DAD00.ruby_advance = base_width / 2 - ruby_width / 2;
+            cursor->x += -(base_width / 2) - ruby_width / 2;
+        }
+        func_00194FA8(cursor, 0);
+        flags |= FONT_CURSOR_COMPACT;
+        break;
+    case 'e':
+        if (((const unsigned char *)next)[-1] != ';') {
+            return 0;
+        }
+        if (flags & FONT_CURSOR_RUBY) {
+            int rise = D_008DAD00.ruby_offset_y + ((D_008DAD00.compact_height * 8) >> 4);
+
+            cursor->y += rise;
+            cursor->x += D_008DAD00.ruby_advance;
+        }
+        func_00194FA8(cursor, 1);
+        flags &= ~(FONT_CURSOR_RUBY | FONT_CURSOR_COMPACT);
+        break;
+    case 'b':
+        if (((const unsigned char *)next)[-1] != ';') {
+            return 0;
+        }
+        flags |= FONT_CURSOR_RUBY;
+        D_008DAD00.ruby_base = (const unsigned char *)next;
+        break;
+    case 'z':
+        next--;
+        if (func_00196260(parse, &width)) {
+            if (((const unsigned char *)next)[-1] == ';') {
+                height = width;
+            } else if (!func_00196260(&next, &height)) {
+                break;
+            }
+            D_008DAD00.compact_width = width;
+            D_008DAD00.compact_height = height;
+        }
+        break;
+    case 'y':
+        next--;
+        if (func_00196260(&next, &offset)) {
+            D_008DAD00.ruby_offset_y = offset;
+        }
+        break;
+    default:
+        return 0;
+    }
+    cursor->flags = flags;
+    *text = next;
+    return 1;
+}
 
 /*
  * Inline width command: "n0;" / "n1;" / "n2;" pick the half-width mode, "p0;" / "p1;" proportional
@@ -2732,5 +2875,5 @@ void xglFontInitial(void)
     D_008DAD00.character_spacing = 0;
     D_008DAD00.compact_width = 16;
     D_008DAD00.compact_height = 16;
-    D_008DAD00.unknown_1a = 2;
+    D_008DAD00.ruby_offset_y = 2;
 }
