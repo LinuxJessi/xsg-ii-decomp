@@ -551,11 +551,16 @@ int xglJpegEncode(JpegEncodeRequest *request)
 
     sw->rowBytes = request->width * 3;
     RebuildQuantizeTable(sw->unmodeled_02d0, sw->luminanceQuantization, 0, request->luminanceQuality);
-    RebuildQuantizeTable(&sw->unmodeled_02d0[JPEG_BLOCK_COEFFS], sw->chrominanceQuantization, 1, request->chrominanceQuality);
-    ExtractHuffmanTableSub(sw->luminanceDcCodes.encode, headerALL + JPEG_HEADER_DHT_DC_LUMA_OFFSET, JPEG_HUFF_DC_SYMBOLS);
-    ExtractHuffmanTableSub(sw->chrominanceDcCodes.encode, headerALL + JPEG_HEADER_DHT_DC_CHROMA_OFFSET, JPEG_HUFF_DC_SYMBOLS);
-    ExtractHuffmanTableSub(sw->luminanceAcCodes.encode, headerALL + JPEG_HEADER_DHT_AC_LUMA_OFFSET, JPEG_HUFF_AC_SYMBOLS);
-    ExtractHuffmanTableSub(sw->chrominanceAcCodes.encode, headerALL + JPEG_HEADER_DHT_AC_CHROMA_OFFSET, JPEG_HUFF_AC_SYMBOLS);
+    RebuildQuantizeTable(&sw->unmodeled_02d0[JPEG_BLOCK_COEFFS], sw->chrominanceQuantization, 1,
+                         request->chrominanceQuality);
+    ExtractHuffmanTableSub(sw->luminanceDcCodes.encode, headerALL + JPEG_HEADER_DHT_DC_LUMA_OFFSET,
+                           JPEG_HUFF_DC_SYMBOLS);
+    ExtractHuffmanTableSub(sw->chrominanceDcCodes.encode, headerALL + JPEG_HEADER_DHT_DC_CHROMA_OFFSET,
+                           JPEG_HUFF_DC_SYMBOLS);
+    ExtractHuffmanTableSub(sw->luminanceAcCodes.encode, headerALL + JPEG_HEADER_DHT_AC_LUMA_OFFSET,
+                           JPEG_HUFF_AC_SYMBOLS);
+    ExtractHuffmanTableSub(sw->chrominanceAcCodes.encode, headerALL + JPEG_HEADER_DHT_AC_CHROMA_OFFSET,
+                           JPEG_HUFF_AC_SYMBOLS);
 
     sw->buffer = request->outputBuffer;
     sw->bitsRemaining = 0;
@@ -623,8 +628,8 @@ int xglJpegEncode(JpegEncodeRequest *request)
 
     for (y = 0; y < request->height; y += mcuHeight) {
         for (x = 0; x < request->width; x += mcuWidth) {
-            sceGsSetDefStoreImage(&sw->unmodeled_0000[JPEG_STORE_IMAGE_OFFSET], request->sourceX, request->sourceY, SCE_GS_PSMCT24,
-                                  request->destinationX + x, request->destinationY + y,
+            sceGsSetDefStoreImage(&sw->unmodeled_0000[JPEG_STORE_IMAGE_OFFSET], request->sourceX, request->sourceY,
+                                  SCE_GS_PSMCT24, request->destinationX + x, request->destinationY + y,
                                   ((unsigned) mcuWidth << 16) >> 16, ((unsigned) mcuHeight << 16) >> 16);
             sceGsExecStoreImage(&sw->unmodeled_0000[JPEG_STORE_IMAGE_OFFSET], (void *) JPEG_STAGING_ADDRESS);
 
@@ -652,8 +657,10 @@ int xglJpegEncode(JpegEncodeRequest *request)
             FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS);
             FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS);
             Quantize(sw->decodedYuvPixels.blocks[0], sw->decodedMcuPlanes.planes + 0, sw->luminanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB], sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR], sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
             HuffmanEncode(sw->decodedYuvPixels.blocks[0], sw->luminanceDcCodes.encode,
                           sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
             HuffmanEncode(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB], sw->chrominanceDcCodes.encode,
@@ -667,9 +674,12 @@ int xglJpegEncode(JpegEncodeRequest *request)
             FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS);
             FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS);
             Quantize(sw->decodedYuvPixels.blocks[0], sw->decodedMcuPlanes.planes + 0, sw->luminanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[1], sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS, sw->luminanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB], sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR], sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[1], sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS,
+                     sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
             HuffmanEncode(sw->decodedYuvPixels.blocks[0], sw->luminanceDcCodes.encode,
                           sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
             HuffmanEncode(sw->decodedYuvPixels.blocks[1], sw->luminanceDcCodes.encode,
@@ -688,11 +698,16 @@ int xglJpegEncode(JpegEncodeRequest *request)
             FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS);
             FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS);
             Quantize(sw->decodedYuvPixels.blocks[0], sw->decodedMcuPlanes.planes + 0, sw->luminanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[1], sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS, sw->luminanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[2], sw->decodedMcuPlanes.planes + 2 * JPEG_BLOCK_COEFFS, sw->luminanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[3], sw->decodedMcuPlanes.planes + 3 * JPEG_BLOCK_COEFFS, sw->luminanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB], sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
-            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR], sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[1], sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS,
+                     sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[2], sw->decodedMcuPlanes.planes + 2 * JPEG_BLOCK_COEFFS,
+                     sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[3], sw->decodedMcuPlanes.planes + 3 * JPEG_BLOCK_COEFFS,
+                     sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
             HuffmanEncode(sw->decodedYuvPixels.blocks[0], sw->luminanceDcCodes.encode,
                           sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
             HuffmanEncode(sw->decodedYuvPixels.blocks[1], sw->luminanceDcCodes.encode,
@@ -1325,7 +1340,8 @@ u8 *StartOfScan(u8 *segment, void *requestAddress)
                 ConvertMCU2YUV();
                 ConvertYUV2RGB(mcuWidth, mcuHeight);
 
-                /* No destination buffer: upload the MCU to the GS (frame buffer base and width come from the request). */
+                /* No destination buffer: upload the MCU to the GS (frame buffer base and width come from the
+                 * request). */
                 if (request->destination == 0) {
                     /* The load-image packet lives in the work area; the MCU is read from 0x70003000. */
                     sceGsSetDefLoadImage(sw, request->frameBufferBase, request->frameBufferWidth, SCE_GS_PSMCT32,
@@ -1339,7 +1355,8 @@ u8 *StartOfScan(u8 *segment, void *requestAddress)
                         int texelsLeft;
 
                         stagedRgba = (u8 *)JPEG_STAGING_ADDRESS + texelRow * (mcuWidth * JPEG_RGBA_BYTES);
-                        destCursor = request->destination + ((mcuY + texelRow) * sw->imageWidth + mcuX) * JPEG_RGB555_BYTES;
+                        destCursor = request->destination
+                                     + ((mcuY + texelRow) * sw->imageWidth + mcuX) * JPEG_RGB555_BYTES;
                         texelsLeft = sw->imageWidth < mcuX + mcuWidth ? sw->imageWidth - mcuX : mcuWidth;
                         for (; texelsLeft > 0; texelsLeft--) {
                             int green555 = (stagedRgba[1] >> 3) << 5;

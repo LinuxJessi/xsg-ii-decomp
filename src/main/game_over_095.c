@@ -76,7 +76,7 @@ void gameOverDrawOverlay(u64 fade_value)
 }
 
 void *memset(void *dest, int value, unsigned int count);
-void xglJpegDecode(void *request[]);
+int xglJpegDecode(void *request[]);
 extern u8 *WorkEnd;
 
 /*

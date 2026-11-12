@@ -281,7 +281,7 @@ void ladderInitTable(void);
 void mapLoadBlock(int blockId);
 unsigned short *mapFindBlockEntry(int id, int index);
 void xglCullingMapSet(MainObject *object);
-void xglJpegDecode(void *info);
+int xglJpegDecode(void *info);
 void sefReleaseOwnedRecords(int owner);
 
 /* A 0x12000-byte block copy of the map image. */

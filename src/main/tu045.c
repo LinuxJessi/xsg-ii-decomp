@@ -1274,8 +1274,8 @@ void pxyQueueTextureSet(int slot, XglPacketTable *table, int index, int originX)
         i = set->count - 1;
         while (i >= 0) {
             rec = &set->records[i];
-            sceGsSetDefLoadImage(&msg.block, (s16) ((u16) originX + rec->originX), (s16) xglPsmBufferWidth(512, 0), 0, 0, 0,
-                          rec->extentA, rec->extentB);
+            sceGsSetDefLoadImage(&msg.block, (s16) ((u16) originX + rec->originX), (s16) xglPsmBufferWidth(512, 0), 0,
+                                 0, 0, rec->extentA, rec->extentB);
             msg.block.words[0] &= ~0x8000;
             msg.tag[3] = 0x50000005;
             msg.tag[0] = 0;
