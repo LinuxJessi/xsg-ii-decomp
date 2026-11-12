@@ -862,10 +862,68 @@ int xglFontGetStringWidth(const char *text)
     return xglFontGetStringWidth2(text, 0);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00195E90);
+/*
+ * Copies the next unit of `text` into `word` (the font state's word buffer when null): any control
+ * codes with their parameters and "$...;" commands (a "$rubys;" block up to its "$rubye"), then one
+ * character of one or two bytes. Stores the bytes taken in *length (if given) and returns the text
+ * after them.
+ */
+const char *func_00195E90(char *word, const char *text, int *length)
+{
+    const unsigned char *cursor = (const unsigned char *)text;
+    unsigned char c;
 
-/* Copies the next word of `text` into `word`, stores its length and returns the text after it. */
-const char *func_00195E90(char *word, const char *text, int *length);
+    if (word == 0) {
+        word = D_008DAD00.word_buffer;
+    }
+    while (*cursor != 0) {
+        if (*cursor == '$') {
+            if (cursor[1] == 'r' && cursor[2] == 'u' && cursor[3] == 'b' && cursor[4] == 'y' &&
+                cursor[5] == 's' && cursor[6] == ';') {
+                const unsigned char *scan = cursor + 7;
+
+                while (*scan != 0) {
+                    if (scan[0] == '$' && scan[1] == 'r' && scan[2] == 'u' && scan[3] == 'b' &&
+                        scan[4] == 'y' && scan[5] == 'e' && scan[6] == ';') {
+                        cursor = scan;
+                        break;
+                    }
+                    if (*scan < 0x20) {
+                        scan += xglFontGetSPcodeSize(*scan, scan + 1);
+                    }
+                    scan++;
+                }
+            }
+            while (*cursor != ';') {
+                *word++ = *cursor++;
+            }
+        } else if (*cursor < 0x20) {
+            int remaining = xglFontGetSPcodeSize(*cursor, cursor);
+
+            while (remaining >= 0) {
+                *word++ = *cursor++;
+                remaining--;
+            }
+        } else {
+            int wide;
+
+            c = *cursor;
+            wide = xglFontIsTextureGlyphCode(c, cursor[1]);
+            *word = c;
+            if (wide) {
+                word[1] = cursor[1];
+                cursor += 2;
+            } else {
+                cursor++;
+            }
+            break;
+        }
+    }
+    if (length != 0) {
+        *length = (const char *)cursor - text;
+    }
+    return (const char *)cursor;
+}
 
 /*
  * Measures `text` word by word until the next word would pass *width; stores the width reached
