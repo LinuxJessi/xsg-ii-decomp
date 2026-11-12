@@ -338,7 +338,7 @@ int movieRenderBufferAlloc(AllocRecord *player, int cursor, int extra_enabled);
 void *GameResArenaReserve(unsigned int bytesWanted);
 void GameResArenaRelease(void);
 int xglCdServiceIfPending(void);
-void xglFontLoad(int, int);
+unsigned char xglFontLoad(int, int);
 void xglRenderClearDepth(void);
 /* Also returns the two-letter code (daddu $2,$3 before its jr); declaring it void moves the '/' constant
  * from $3 to $2. */

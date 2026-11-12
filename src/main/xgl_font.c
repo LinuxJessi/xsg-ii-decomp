@@ -605,15 +605,17 @@ void xglFontPrintSub(void *args)
     for (;;) {
         unsigned int code;
 
-        if (*text == 0)
+        if (*text == 0) {
             break;
+        }
         code = *text & 0xff;
 
         if (code < 32) {
             int remaining = xglFontGetSPcodeSize(code, (const unsigned char *)text);
 
-            for (; remaining >= 0; remaining--)
+            for (; remaining >= 0; remaining--) {
                 *D_008DAD00.queue_cursor++ = *text++;
+            }
         } else if (code == '%') {
             int width = 0;
             unsigned int radix;
@@ -641,8 +643,9 @@ void xglFontPrintSub(void *args)
                         struct FontNumericCommand *command = (struct FontNumericCommand *)D_008DAD00.queue_cursor;
 
                         list++;
-                        if (width == 0)
+                        if (width == 0) {
                             width = 1;
+                        }
                         command->opcode = FONT_OP_NUMBER;
                         command->radix = radix;
                         command->digits_minus_one = (unsigned char)(width - 1);
@@ -2123,7 +2126,8 @@ unsigned short func_001979E0(unsigned char high, unsigned char low)
             break;
         }
     } else if (high < EUC_ROW_KANJI_LEVEL2) {
-        glyph = (unsigned short)((high - EUC_ROW_KANJI_LEVEL1) * FONT_JIS_ROW_SIZE + (low - EUC_FIRST) + FONT_GLYPH_KANJI_BASE);
+        glyph = (unsigned short)((high - EUC_ROW_KANJI_LEVEL1) * FONT_JIS_ROW_SIZE + (low - EUC_FIRST)
+                                 + FONT_GLYPH_KANJI_BASE);
     } else {
         glyph = (unsigned short)func_00197988(high, low);
     }
@@ -2500,8 +2504,11 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
         }
         case FONT_OP_GLYPH: {
             signed char character = text[1];
-            if (character < 64) xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
-            else xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+            if (character < 64) {
+                xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+            } else {
+                xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+            }
             text += 2;
             break;
         }
