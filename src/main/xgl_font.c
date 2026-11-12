@@ -583,7 +583,113 @@ int xglFontGetSPcodeSize(int code, const unsigned char *text)
     return size;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", xglFontPrintSub);
+void xglFontPrintSub(void *args)
+{
+    unsigned long long *list = (unsigned long long *)args;
+    const char *text = (const char *)(int)list[0];
+    unsigned char ahead = *text;
+
+    list++;
+    for (;;) {
+        unsigned int code;
+
+        if (*text == 0)
+            break;
+        code = *text & 0xff;
+
+        if (code < 32) {
+            int remaining = xglFontGetSPcodeSize(code, (const unsigned char *)text);
+
+            for (; remaining >= 0; remaining--)
+                *D_008DAD00.queue_cursor++ = *text++;
+        } else if (code == '%') {
+            int width = 0;
+            unsigned int radix;
+
+            text++;
+            for (;;) {
+                code = (unsigned char)*text++;
+
+                switch (code) {
+                case '0': case '1': case '2': case '3': case '4':
+                case '5': case '6': case '7': case '8': case '9':
+                    width = width * 10 + (code - '0');
+                    continue;
+                case 'b':
+                    radix = 2;
+                    goto numeric_tail;
+                case 'd':
+                    radix = 10;
+                    goto numeric_tail;
+                case 'x':
+                    radix = 16;
+                numeric_tail:
+                    {
+                        unsigned long long value = (unsigned int)list[0];
+                        struct FontNumericCommand *command = (struct FontNumericCommand *)D_008DAD00.queue_cursor;
+
+                        list++;
+                        if (width == 0)
+                            width = 1;
+                        command->opcode = FONT_OP_NUMBER;
+                        command->radix = radix;
+                        command->digits_minus_one = (unsigned char)(width - 1);
+                        command->value_high = value >> 24;
+                        command->value_mid_high = value >> 16;
+                        command->value_mid_low = value >> 8;
+                        command->value_low = value;
+                        D_008DAD00.queue_cursor += sizeof(*command);
+                    }
+                    break;
+                case 'f':
+                    {
+                        float value = dptofp(list[0]);
+                        unsigned int bits = *(unsigned int *)&value;
+                        struct FontNumericCommand *command = (struct FontNumericCommand *)D_008DAD00.queue_cursor;
+
+                        list++;
+                        command->opcode = FONT_OP_NUMBER;
+                        command->radix = FONT_NUMERIC_FLOAT;
+                        command->digits_minus_one = 0xff;
+                        command->value_high = bits >> 24;
+                        command->value_mid_high = bits >> 16;
+                        command->value_mid_low = bits >> 8;
+                        command->value_low = bits;
+                        D_008DAD00.queue_cursor += sizeof(*command);
+                    }
+                    break;
+                case 's': {
+                    const unsigned char *string = (const unsigned char *)(int)list[0];
+
+                    int c;
+
+                    list++;
+                    while ((c = *string) != 0) {
+                        *D_008DAD00.queue_cursor++ = *string++;
+                    }
+                    break;
+                }
+                case 'c':
+                    code = (unsigned char)list[0];
+                    list++;
+                    /* fall through */
+                case '$':
+                case '%':
+                    *D_008DAD00.queue_cursor++ = code;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            }
+        } else {
+            text++;
+            *D_008DAD00.queue_cursor++ = ahead;
+        }
+        ahead = *text;
+    }
+    *D_008DAD00.queue_cursor++ = 0;
+}
 
 void xglFontPrintDirectCore(const char *text)
 {

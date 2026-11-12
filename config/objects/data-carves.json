@@ -6,18 +6,20 @@
    ".rodata": [
     {
      "range": [
-      "0x0068daf0",
+      "0x0068d990",
       "0x0068dbf0"
      ],
      "generated": [
-      "0x0068daf0",
+      "0x0068d990",
       "0x0068dbf0"
      ],
      "generated_by": [
       "func_001961D0",
-      "func_00196958"
+      "func_00196958",
+      "xglFontPrintSub"
      ],
      "c_owned_symbols": [
+      "jtbl_0068D990",
       "jtbl_0068DAF0",
       "jtbl_0068DBD0"
      ],
