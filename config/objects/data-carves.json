@@ -6,6 +6,32 @@
    ".rodata": [
     {
      "range": [
+      "0x0068daf0",
+      "0x0068dbf0"
+     ],
+     "generated": [
+      "0x0068daf0",
+      "0x0068dbf0"
+     ],
+     "generated_by": [
+      "func_001961D0",
+      "func_00196958"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068DAF0",
+      "jtbl_0068DBD0"
+     ],
+     "also_referenced_by_c": [
+      "fontInlineErrorFormat"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_font.o"
+     }
+    },
+    {
+     "range": [
       "0x0068dc70",
       "0x0068dd48"
      ],
@@ -23,7 +49,6 @@
       "jtbl_0068DD30"
      ],
      "also_referenced_by_c": [
-      "fontInlineErrorFormat",
       "kanaFontCodeTable"
      ],
      "basis": {

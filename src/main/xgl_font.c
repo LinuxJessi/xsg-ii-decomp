@@ -950,10 +950,57 @@ int func_00196118(const char *text, int *width)
     return cursor - text;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_001961D0);
+/*
+ * Reads a hex number up to ';' or ',' and moves the text cursor past the delimiter; returns 0 on any
+ * other character. Upper-case digits come out wrong in the original: they take 'a' - 'A' off
+ * instead of adding it before the lower-case step.
+ */
+int func_001961D0(const char **cursor, int *value)
+{
+    const unsigned char *text = (const unsigned char *)*cursor;
+    unsigned int result = 0;
+    unsigned char c = *text++;
 
-/* Hex number up to ';' or ','; still assembly (its jump table sits in tu005's rodata). */
-int func_001961D0(const char **cursor, int *value);
+    while (c != ';' && c != ',') {
+        result = (result << 4) + c;
+        switch (c) {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            result -= '0';
+            break;
+        case 'A':
+        case 'B':
+        case 'C':
+        case 'D':
+        case 'E':
+        case 'F':
+            result -= 'a' - 'A';
+            /* fall through */
+        case 'a':
+        case 'b':
+        case 'c':
+        case 'd':
+        case 'e':
+        case 'f':
+            result -= 'a' - 10;
+            break;
+        default:
+            return 0;
+        }
+        c = *text++;
+    }
+    *value = result;
+    *cursor = (const char *)text;
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196260);
 
@@ -1131,7 +1178,104 @@ int alpha(FontDrawCursor *cursor, const char **text)
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", zoom);
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_font", func_00196958);
+unsigned short xglSRand(void);
+
+/*
+ * Inline "xx" command: "N,value;" sets a font state default (0 line height, 1 default width,
+ * 2 character spacing, 3 proportional mode, 4 horizontal shift); "5,u;" or "5,u,v;" writes
+ * CLAMP_1 with a repeat mask per axis (bit 7: masked with a random value), like FONT_OP_EFFECT_PACKET.
+ */
+int func_00196958(FontDrawCursor *cursor, const char **text)
+{
+    const char *next = *text;
+    int value;
+
+    if (!func_00196260(&next, &value)) {
+        return 0;
+    }
+    switch (value) {
+    case 0:
+        if (!func_00196260(&next, &value)) {
+            return 0;
+        }
+        D_008DAD00.line_height = value;
+        break;
+    case 1:
+        if (!func_00196260(&next, &value)) {
+            return 0;
+        }
+        D_008DAD00.default_width = value;
+        break;
+    case 2:
+        if (!func_00196260(&next, &value)) {
+            return 0;
+        }
+        D_008DAD00.character_spacing = value;
+        break;
+    case 3:
+        if (!func_00196260(&next, &value)) {
+            return 0;
+        }
+        D_008DAD00.proportional_mode = value;
+        break;
+    case 4:
+        if (!func_00196260(&next, &value)) {
+            return 0;
+        }
+        D_008DAD00.horizontal_shift = value;
+        break;
+    case 5: {
+        int u;
+        int v;
+        struct FontGsWrite *clamp;
+        long long horizontal_mode;
+        unsigned short horizontal_mask;
+        unsigned short horizontal_random;
+        long long vertical_mode;
+        unsigned short vertical_mask;
+        unsigned short vertical_random;
+
+        if (!func_00196260(&next, &u)) {
+            return 0;
+        }
+        if ((unsigned char)next[-1] == ';') {
+            v = u;
+        } else if (!func_00196260(&next, &v)) {
+            return 0;
+        }
+        clamp = xglFontAllocGifPacket((int *)cursor, 1);
+        clamp->register_address = GS_CLAMP_1;
+        horizontal_mode = 1;
+        horizontal_random = 0;
+        horizontal_mask = 0;
+        if (u != 0) {
+            horizontal_mode = 3;
+            horizontal_mask = u ^ 0x3FF;
+            if (u & 0x80) {
+                horizontal_random = u & xglSRand();
+            }
+        }
+        vertical_mode = 1;
+        vertical_random = 0;
+        vertical_mask = 0;
+        if (v != 0) {
+            vertical_mode = 3;
+            vertical_mask = v ^ 0x3FF;
+            if (v & 0x80) {
+                vertical_random = v & xglSRand();
+            }
+        }
+        clamp->value = horizontal_mode | (vertical_mode << 2) | ((long long)horizontal_mask << 4) |
+            ((long long)horizontal_random << 14) | ((long long)vertical_mask << 24) |
+            ((long long)vertical_random << 34);
+        break;
+    }
+    default:
+        return 0;
+    }
+    *text = next;
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/xgl_font", ruby);
 
