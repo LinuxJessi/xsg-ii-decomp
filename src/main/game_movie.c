@@ -349,7 +349,7 @@ int func_001A04A0(AllocRecord *player);
 int func_001A0688(AllocRecord *player, int pause);
 int func_001A06B8(AllocRecord *player);
 void xglFontPrintDirect(const char *text);
-char *xglFontCopyTextUnit(int mode, char *cursor, int flag);
+char *xglFontCopyTextUnit(char *word, const char *text, int *length);
 int func_002AA5D8(char *destination, const char *format, ...);
 void pauseRefBackdrop(void);
 void pauseDrawTitleAndHints(int skip_hidden);
