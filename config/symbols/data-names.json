@@ -46,6 +46,7 @@
    "0x0063f730": "system_cnf",
    "0x0063f840": "SaveData",
    "0x006449a0": "ZigZag",
+   "0x006449e0": "dctCosineTable",
    "0x00644ae0": "LQTableOrg_1",
    "0x00644b20": "CQTableOrg_2",
    "0x00644b60": "headerALL",

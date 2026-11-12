@@ -7826,6 +7826,7 @@ system_cnf = 0x0063F730;
 SaveData = 0x0063F840;
 xglLanguageIndex = 0x0063F87A;
 ZigZag = 0x006449A0;
+dctCosineTable = 0x006449E0;
 LQTableOrg_1 = 0x00644AE0;
 CQTableOrg_2 = 0x00644B20;
 headerALL = 0x00644B60;

@@ -214,7 +214,47 @@ void ConvertYUV2MCU(float *planes, const float *pixels, int samplingMode)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", FFDCT);
+/* DCT basis: row k holds the eight cosine weights of frequency k. */
+extern float dctCosineTable[JPEG_BLOCK_DIM][JPEG_BLOCK_DIM];
+
+/* Forward 8x8 DCT as two matrix passes over the cosine table: rows of the
+ * block into idctBlock, then columns of idctBlock back into the block,
+ * scaled by 1/8. XS2 replaces XS1's unrolled butterfly weights with this
+ * table form. */
+void FFDCT(float *block)
+{
+    JpegWork *work = sw;
+    int row;
+    int column;
+    int frequency;
+
+    for (row = 0; row < JPEG_BLOCK_DIM; row++) {
+        for (frequency = 0; frequency < JPEG_BLOCK_DIM; frequency++) {
+            sw->idctBlock[row][frequency] =
+                block[row * JPEG_BLOCK_DIM + 0] * dctCosineTable[frequency][0] +
+                block[row * JPEG_BLOCK_DIM + 1] * dctCosineTable[frequency][1] +
+                block[row * JPEG_BLOCK_DIM + 2] * dctCosineTable[frequency][2] +
+                block[row * JPEG_BLOCK_DIM + 3] * dctCosineTable[frequency][3] +
+                block[row * JPEG_BLOCK_DIM + 4] * dctCosineTable[frequency][4] +
+                block[row * JPEG_BLOCK_DIM + 5] * dctCosineTable[frequency][5] +
+                block[row * JPEG_BLOCK_DIM + 6] * dctCosineTable[frequency][6] +
+                block[row * JPEG_BLOCK_DIM + 7] * dctCosineTable[frequency][7];
+        }
+    }
+    for (column = 0; column < JPEG_BLOCK_DIM; column++) {
+        for (frequency = 0; frequency < JPEG_BLOCK_DIM; frequency++) {
+            block[frequency * JPEG_BLOCK_DIM + column] =
+                (work->idctBlock[0][column] * dctCosineTable[frequency][0] +
+                work->idctBlock[1][column] * dctCosineTable[frequency][1] +
+                work->idctBlock[2][column] * dctCosineTable[frequency][2] +
+                work->idctBlock[3][column] * dctCosineTable[frequency][3] +
+                work->idctBlock[4][column] * dctCosineTable[frequency][4] +
+                work->idctBlock[5][column] * dctCosineTable[frequency][5] +
+                work->idctBlock[6][column] * dctCosineTable[frequency][6] +
+                work->idctBlock[7][column] * dctCosineTable[frequency][7]) * 0.125f;
+        }
+    }
+}
 
 void Quantize(int *quantized, const float *coefficients, const float *reciprocals)
 {
