@@ -564,9 +564,9 @@ typedef struct LicenseRecord {
     unsigned char unmodeled_05;
 } LicenseRecord;
 
-struct ControlContext *ptGetMenuMember();
-int func_00229EC0(struct ControlContext *context, int group, int sub);
-int func_00229F30(struct ControlContext *context, int group, int slot, int sub);
+struct ControlContext *func_0022A560();
+int selectionCanOpenSlot(struct ControlContext *context, int group, int sub);
+int selectionCanTakeSub(struct ControlContext *context, int group, int slot, int sub);
 void func_0021CEF8(int x, int y, int width, int height, void *text);
 void func_0021CC08(int, int, int, int);
 void menuDrawBorder(int x, int y, int width, int height, unsigned long long color);
@@ -652,7 +652,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             }
             break;
         case 1:
-            if (func_00229EC0(ptGetMenuMember(), groupCursor->index, i)
+            if (selectionCanOpenSlot(func_0022A560(), groupCursor->index, i)
                 || ((board->header[groupCursor->index] >> i) & 1)) {
                 unlocked = 1;
             } else {
@@ -664,7 +664,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             }
             break;
         case 2:
-            if (func_00229F30(ptGetMenuMember(), groupCursor->index, slotCursor->index, i)
+            if (selectionCanTakeSub(func_0022A560(), groupCursor->index, slotCursor->index, i)
                 || ((board->cells[groupCursor->index][slotCursor->index] >> i) & 1)) {
                 unlocked = 1;
             } else {
