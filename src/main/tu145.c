@@ -17,11 +17,13 @@ typedef struct CfeTrackNode {
     int angle;                      /* +0x08: 8.8 fixed point */
     int firstDirection[2];
     int secondDirection[2];
-    unsigned char unmodeled_001C[4];
+    struct CfeTrackNode *prev;      /* +0x1C */
     struct CfeTrackNode *next;
 } CfeTrackNode;
 
 void cfeNormalizeFixed2(int *x, int *y);
+void func_0024FC90(CfeTrackNode *track);
+CfeTrackNode *cfeTrackFindAtOrBefore(CfeTrackNode *node, int time);
 
 /* Normalizes both direction pairs of the key (cfeNormalizeFixed2 on each). */
 void cfeEntryNormalizeDirs(CfeTrackNode *entry)
@@ -151,7 +153,19 @@ int cfeTrackCountValueRuns(CfeTrackNode *node)
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250E10);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackShiftTimes);
+/* Moves every key from the first one at or after `time` by `delta`, then updates the track. */
+void cfeTrackShiftTimes(CfeTrackNode *track, int time, int delta)
+{
+    CfeTrackNode *node = cfeTrackFindAtOrBefore(track, time);
+    CfeTrackNode *next;
+
+    while (node != 0) {
+        next = node->next;
+        node->startTime += delta;
+        node = next;
+    }
+    func_0024FC90(track);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250EF0);
 
