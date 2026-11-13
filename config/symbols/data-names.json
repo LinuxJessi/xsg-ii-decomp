@@ -149,6 +149,8 @@
    "0x0069e3a4": "pSendPacket",
    "0x0069e3a8": "pCurrentStudio",
    "0x00807ec0": "_sdvSpecialBuf",
+   "0x008886e0": "msgShownValue",
+   "0x008886e4": "msgTotalValue",
    "0x008dacfc": "FS",
    "0x00955c80": "LW",
    "0x00959cd8": "ArcHeader",
