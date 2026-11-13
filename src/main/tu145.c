@@ -169,4 +169,22 @@ void cfeTrackShiftTimes(CfeTrackNode *track, int time, int delta)
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250EF0);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackAllValuesEqual);
+/* 1 when every key of the track has the same angle; 0 for an empty track. */
+int cfeTrackAllValuesEqual(CfeTrackNode *node)
+{
+    int *first;
+    int value;
+
+    if (node == 0) {
+        return 0;
+    }
+    /* Read through a pointer: the loop's first compare loads the angle again, as in the original. */
+    first = &node->angle;
+    value = *first;
+    for (; node != 0; node = node->next) {
+        if (node->angle != value) {
+            return 0;
+        }
+    }
+    return 1;
+}
