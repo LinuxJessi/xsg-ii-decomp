@@ -395,7 +395,7 @@
     {
      "c_split": false,
      "end": "0x003ECB5C",
-     "ordinal": 120,
+     "ordinal": 118,
      "piece": "ysegf",
      "start": "0x003ECAB0",
      "tu": "ysegf"
@@ -1297,18 +1297,10 @@
     },
     {
      "c_split": false,
-     "end": "0x0068B200",
-     "ordinal": 118,
-     "piece": "tu118",
-     "start": "0x0068B1E0",
-     "tu": "tu118"
-    },
-    {
-     "c_split": false,
      "end": "0x0068B490",
-     "ordinal": 120,
+     "ordinal": 118,
      "piece": "ysegf",
-     "start": "0x0068B200",
+     "start": "0x0068B1E0",
      "tu": "ysegf"
     },
     {
@@ -2169,7 +2161,7 @@
     {
      "c_split": false,
      "end": "0x0069B2A8",
-     "ordinal": 120,
+     "ordinal": 118,
      "piece": "ysegf",
      "start": "0x0069B2A4",
      "tu": "ysegf"
@@ -2736,7 +2728,7 @@
     {
      "c_split": false,
      "end": "0x0069D8F8",
-     "ordinal": 120,
+     "ordinal": 118,
      "piece": "ysegf",
      "start": "0x0069D888",
      "tu": "ysegf"
@@ -3311,7 +3303,7 @@
     {
      "c_split": false,
      "end": "0x0069E290",
-     "ordinal": 120,
+     "ordinal": 118,
      "piece": "ysegf",
      "start": "0x0069E280",
      "tu": "ysegf"
@@ -3614,7 +3606,7 @@
     {
      "c_split": false,
      "end": "0x006ABD00",
-     "ordinal": 120,
+     "ordinal": 118,
      "piece": "ysegf",
      "start": "0x006ABC38",
      "tu": "ysegf"
@@ -4157,8 +4149,6 @@
   "tu115",
   "tu116",
   "yg2path",
-  "tu118",
-  "tu119",
   "ysegf",
   "tu121",
   "tu122",
@@ -67988,18 +67978,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "seg_0022D5A0",
+     "name": "segAddrOnMessage",
      "size": 324,
-     "splat_name": "seg_0022D5A0",
+     "splat_name": "segAddrOnMessage",
      "va": "0x0022d5a0",
      "name_basis": "annotation",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "seg_0022D6E8",
+     "name": "segAddrOnGetFlag",
      "size": 92,
-     "splat_name": "seg_0022D6E8",
+     "splat_name": "segAddrOnGetFlag",
      "va": "0x0022d6e8",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -68218,9 +68208,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022DDA8",
+     "name": "mapObjectBeginMessage",
      "size": 76,
-     "splat_name": "func_0022DDA8",
+     "splat_name": "mapObjectBeginMessage",
      "va": "0x0022dda8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -68236,9 +68226,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022DE00",
+     "name": "mapObjectFaceActive",
      "size": 188,
-     "splat_name": "func_0022DE00",
+     "splat_name": "mapObjectFaceActive",
      "va": "0x0022de00",
      "name_basis": "address",
      "provenance": "estimated"
@@ -68254,9 +68244,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022DEE0",
+     "name": "talkStateReset",
      "size": 16,
-     "splat_name": "func_0022DEE0",
+     "splat_name": "talkStateReset",
      "va": "0x0022dee0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -68383,7 +68373,7 @@
    "path": "src/main/tu115.c",
    "scaffold_path": "scaffold/src/main/tu115.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -68435,9 +68425,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0022DEF8",
+     "name": "renderFadeBand",
      "size": 1020,
-     "splat_name": "func_0022DEF8",
+     "splat_name": "renderFadeBand",
      "va": "0x0022def8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -68453,25 +68443,25 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022E500",
+     "name": "renderSpriteClut",
      "size": 528,
-     "splat_name": "func_0022E500",
+     "splat_name": "renderSpriteClut",
      "va": "0x0022e500",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022E710",
+     "name": "renderSpriteClutAlpha",
      "size": 556,
-     "splat_name": "func_0022E710",
+     "splat_name": "renderSpriteClutAlpha",
      "va": "0x0022e710",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".sdata": "asm"
    },
    "sections": {
@@ -68511,6 +68501,17 @@
      "0x0022e940"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Actua como orquestrador de subagentes T1/T2 para terminar de matchear lo siguiente: 23 TUs \u00b7 254 funciones \u00b7 75,0 KB tu112 \u2026 tu134 (TiWatSim). Las ultimas 15-10 funciones, encargate t\u00fa personalmente sin subagentes. / Integrate + keep working (Recommended): express integration of the banked x2-c14 functions now",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu115.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -68795,27 +68796,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022F5C8",
+     "name": "yg2PathDrawCellFrame",
      "size": 276,
-     "splat_name": "func_0022F5C8",
+     "splat_name": "yg2PathDrawCellFrame",
      "va": "0x0022f5c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022F6E0",
+     "name": "yg2PathDrawPageChrome",
      "size": 264,
-     "splat_name": "func_0022F6E0",
+     "splat_name": "yg2PathDrawPageChrome",
      "va": "0x0022f6e0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022F7E8",
+     "name": "yg2PathDrawMainMenu",
      "size": 992,
-     "splat_name": "func_0022F7E8",
+     "splat_name": "yg2PathDrawMainMenu",
      "va": "0x0022f7e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -68831,9 +68832,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022FE98",
+     "name": "yg2PathDrawNewMarker",
      "size": 268,
-     "splat_name": "func_0022FE98",
+     "splat_name": "yg2PathDrawNewMarker",
      "va": "0x0022fe98",
      "name_basis": "address",
      "provenance": "estimated"
@@ -68885,18 +68886,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00231148",
+     "name": "yg2PathHandleMenuInput",
      "size": 300,
-     "splat_name": "func_00231148",
+     "splat_name": "yg2PathHandleMenuInput",
      "va": "0x00231148",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00231278",
+     "name": "yg2PathHandleGridInput",
      "size": 668,
-     "splat_name": "func_00231278",
+     "splat_name": "yg2PathHandleGridInput",
      "va": "0x00231278",
      "name_basis": "address",
      "provenance": "estimated"
@@ -68948,9 +68949,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00231A20",
+     "name": "yg2PathEaseCursor",
      "size": 308,
-     "splat_name": "func_00231A20",
+     "splat_name": "yg2PathEaseCursor",
      "va": "0x00231a20",
      "name_basis": "address",
      "provenance": "estimated"
@@ -69148,9 +69149,9 @@
    "id": "main/tu118",
    "unit": "main",
    "ordinal": 118,
-   "name": "tu118",
-   "path": "src/main/tu118.c",
-   "scaffold_path": "scaffold/src/main/tu118.c",
+   "name": "ysegf",
+   "path": "src/main/ysegf.c",
+   "scaffold_path": "scaffold/src/main/ysegf.c",
    "kind": "gcc",
    "mode": "c",
    "category": "game",
@@ -69169,8 +69170,8 @@
    ],
    "boundary_confidence": "high",
    "provisional": true,
-   "name_basis": "no name evidence",
-   "name_confidence": "none",
+   "name_basis": "assert __FILE__ string used by this TU",
+   "name_confidence": "high",
    "contract": {
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
@@ -69180,7 +69181,7 @@
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
      "-O2",
-     "-G0"
+     "-G8"
     ],
     "language": "c",
     "source_class": "c",
@@ -69193,25 +69194,25 @@
     "compiler_confidence": "medium",
     "assembler_class": "LA29",
     "assembler_confidence": "medium",
-    "g_flag": "-G0",
-    "g_basis": "no gp-relative instruction in the code; -G0 cannot add one",
-    "g_confidence": "medium",
+    "g_flag": "-G8",
+    "g_basis": "83 gp-relative instructions in the code",
+    "g_confidence": "high",
     "optimization": "-O2",
     "source": "reports/x2-compiler-calibration.md"
    },
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 3,
+    "of": 33,
     "migration_hints": [],
     "records": []
    },
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00231F40",
+     "name": "ysegfSetTargetFlagOnMode",
      "size": 56,
-     "splat_name": "func_00231F40",
+     "splat_name": "ysegfSetTargetFlagOnMode",
      "va": "0x00231f40",
      "name_basis": "address",
      "provenance": "estimated"
@@ -69227,126 +69228,13 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00231FD8",
+     "name": "ysegfSwitchState",
      "size": 64,
-     "splat_name": "func_00231FD8",
+     "splat_name": "ysegfSwitchState",
      "va": "0x00231fd8",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c",
-    ".rodata": "asm"
-   },
-   "sections": {
-    ".rodata": {
-     "anchored": [
-      "0x0068b1e0",
-      "0x0068b1e1"
-     ],
-     "bounds": [
-      "0x0068b1c9",
-      "0x0068b200"
-     ],
-     "end": "0x0068B200",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0068B200",
-       "name": "tu118",
-       "start": "0x0068B1E0"
-      }
-     ],
-     "size": 32,
-     "splat_type": "rodata",
-     "start": "0x0068B1E0"
-    }
-   },
-   "text": {
-    "start": "0x00231f40",
-    "end": "0x00232018",
-    "code_end": "0x00232018",
-    "size": 216,
-    "splat": "c",
-    "splat_range": [
-     "0x00231f40",
-     "0x00232018"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
-    "source": {
-     "kind": "file",
-     "path": "src/main/tu118.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu119",
-   "unit": "main",
-   "ordinal": 119,
-   "name": "tu119",
-   "path": "src/main/tu119.c",
-   "scaffold_path": "scaffold/src/main/tu119.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -1.81",
-    "precision of this score band on X1, held out: 0.227 (17/75)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "no name evidence",
-   "name_confidence": "none",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "58a63b84ed4385101b1135a71919a2516f2d6c61b80258b5917ccd47bc56b1f4",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G0"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G0",
-    "g_basis": "no gp-relative instruction in the code; -G0 cannot add one",
-    "g_confidence": "medium",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 4,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
+    },
     {
      "binding": "GLOBAL",
      "name": "yg2PathResetAll",
@@ -69382,94 +69270,7 @@
      "va": "0x00232078",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c"
-   },
-   "sections": {},
-   "text": {
-    "start": "0x00232018",
-    "end": "0x002320b0",
-    "code_end": "0x002320ac",
-    "size": 152,
-    "splat": "c",
-    "splat_range": [
-     "0x00232018",
-     "0x002320b0"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
-    "source": {
-     "kind": "file",
-     "path": "src/main/tu119.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu120",
-   "unit": "main",
-   "ordinal": 120,
-   "name": "ysegf",
-   "path": "src/main/ysegf.c",
-   "scaffold_path": "scaffold/src/main/ysegf.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -1.71",
-    "precision of this score band on X1, held out: 0.227 (17/75)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "assert __FILE__ string used by this TU",
-   "name_confidence": "high",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "58a63b84ed4385101b1135a71919a2516f2d6c61b80258b5917ccd47bc56b1f4",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G8"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G8",
-    "g_basis": "83 gp-relative instructions in the code",
-    "g_confidence": "high",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 26,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
+    },
     {
      "binding": "GLOBAL",
      "name": "ysegfAllocFileBuffer",
@@ -69553,9 +69354,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002327E8",
+     "name": "ysegfDrawImageFrame",
      "size": 320,
-     "splat_name": "func_002327E8",
+     "splat_name": "ysegfDrawImageFrame",
      "va": "0x002327e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -69589,9 +69390,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00232F40",
+     "name": "ysegfDrawItemNameFrame",
      "size": 364,
-     "splat_name": "func_00232F40",
+     "splat_name": "ysegfDrawItemNameFrame",
      "va": "0x00232f40",
      "name_basis": "address",
      "provenance": "estimated"
@@ -69652,9 +69453,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00233A98",
+     "name": "ysegfListLeaveNoop",
      "size": 8,
-     "splat_name": "func_00233A98",
+     "splat_name": "ysegfListLeaveNoop",
      "va": "0x00233a98",
      "name_basis": "address",
      "provenance": "estimated"
@@ -69697,9 +69498,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "ysegfUpdateList",
+     "name": "ysegfUpdateDetail",
      "size": 240,
-     "splat_name": "ysegfUpdateList",
+     "splat_name": "ysegfUpdateDetail",
      "va": "0x00233c60",
      "name_basis": "address",
      "provenance": "estimated"
@@ -69741,11 +69542,11 @@
     },
     ".rodata": {
      "anchored": [
-      "0x0068b200",
+      "0x0068b1e0",
       "0x0068b449"
      ],
      "bounds": [
-      "0x0068b1e1",
+      "0x0068b1c9",
       "0x0068b490"
      ],
      "end": "0x0068B490",
@@ -69756,12 +69557,12 @@
        "c_split": false,
        "end": "0x0068B490",
        "name": "ysegf",
-       "start": "0x0068B200"
+       "start": "0x0068B1E0"
       }
      ],
-     "size": 656,
+     "size": 688,
      "splat_type": "rodata",
-     "start": "0x0068B200"
+     "start": "0x0068B1E0"
     },
     ".lit4": {
      "anchored": [
@@ -69861,20 +69662,20 @@
     }
    },
    "text": {
-    "start": "0x002320b0",
+    "start": "0x00231f40",
     "end": "0x00233d50",
     "code_end": "0x00233d50",
-    "size": 7328,
+    "size": 7696,
     "splat": "c",
     "splat_range": [
-     "0x002320b0",
+     "0x00231f40",
      "0x00233d50"
     ],
     "note": null
    },
    "import": {
     "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
+    "note": "Express publication, order \"Haz 1\" (user 2026-11-05); tu118+tu119+tu120 merged into ysegf (JOINED_CUTS 0x232018/0x2320B0, nothrow evidence, 2026-11-13)",
     "source": {
      "kind": "file",
      "path": "src/main/ysegf.c",
@@ -70058,54 +69859,54 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00233D78",
+     "name": "battleResultDrawRow",
      "size": 1924,
-     "splat_name": "func_00233D78",
+     "splat_name": "battleResultDrawRow",
      "va": "0x00233d78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00234500",
+     "name": "battleResultDrawEntries",
      "size": 968,
-     "splat_name": "func_00234500",
+     "splat_name": "battleResultDrawEntries",
      "va": "0x00234500",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002348C8",
+     "name": "battleResultDrawScreen",
      "size": 840,
-     "splat_name": "func_002348C8",
+     "splat_name": "battleResultDrawScreen",
      "va": "0x002348c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00234C10",
+     "name": "battleResultDrawCallback",
      "size": 20,
-     "splat_name": "func_00234C10",
+     "splat_name": "battleResultDrawCallback",
      "va": "0x00234c10",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00234C28",
+     "name": "battleResultBuildEntries",
      "size": 332,
-     "splat_name": "func_00234C28",
+     "splat_name": "battleResultBuildEntries",
      "va": "0x00234c28",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00234D78",
+     "name": "battleResultScene",
      "size": 1596,
-     "splat_name": "func_00234D78",
+     "splat_name": "battleResultScene",
      "va": "0x00234d78",
      "name_basis": "address",
      "provenance": "estimated"
@@ -70198,7 +69999,7 @@
    "path": "src/main/tu123.c",
    "scaffold_path": "scaffold/src/main/tu123.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -70259,25 +70060,25 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00235598",
+     "name": "textWindowReset",
      "size": 64,
-     "splat_name": "func_00235598",
+     "splat_name": "textWindowReset",
      "va": "0x00235598",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002355D8",
+     "name": "textWindowShow",
      "size": 220,
-     "splat_name": "func_002355D8",
+     "splat_name": "textWindowShow",
      "va": "0x002355d8",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".sbss": "asm"
    },
    "sections": {
@@ -70317,6 +70118,17 @@
      "0x002356b8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Actua como orquestrador de subagentes T1/T2 para terminar de matchear lo siguiente: 23 TUs \u00b7 254 funciones \u00b7 75,0 KB tu112 \u2026 tu134 (TiWatSim). Las ultimas 15-10 funciones, encargate t\u00fa personalmente sin subagentes. / Integrate + keep working (Recommended): express integration of the banked x2-c14 functions now",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu123.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -70415,9 +70227,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00235D78",
+     "name": "choiceMenuGetResult",
      "size": 68,
-     "splat_name": "func_00235D78",
+     "splat_name": "choiceMenuGetResult",
      "va": "0x00235d78",
      "name_basis": "address",
      "provenance": "estimated"
@@ -70688,9 +70500,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00236890",
+     "name": "textAddNextLineSize",
      "size": 212,
-     "splat_name": "func_00236890",
+     "splat_name": "textAddNextLineSize",
      "va": "0x00236890",
      "name_basis": "address",
      "provenance": "estimated"
@@ -70975,9 +70787,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00237A70",
+     "name": "saveSlotsPendingToEmpty",
      "size": 60,
-     "splat_name": "func_00237A70",
+     "splat_name": "saveSlotsPendingToEmpty",
      "va": "0x00237a70",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71065,9 +70877,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00238038",
+     "name": "saveMessageSetChoice",
      "size": 240,
-     "splat_name": "func_00238038",
+     "splat_name": "saveMessageSetChoice",
      "va": "0x00238038",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71083,9 +70895,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002381A8",
+     "name": "saveUiSetMode",
      "size": 1212,
-     "splat_name": "func_002381A8",
+     "splat_name": "saveUiSetMode",
      "va": "0x002381a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71110,18 +70922,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002388D0",
+     "name": "saveThumbnailSprite",
      "size": 408,
-     "splat_name": "func_002388D0",
+     "splat_name": "saveThumbnailSprite",
      "va": "0x002388d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00238A68",
+     "name": "saveSlotWindowDraw",
      "size": 564,
-     "splat_name": "func_00238A68",
+     "splat_name": "saveSlotWindowDraw",
      "va": "0x00238a68",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71191,27 +71003,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00239F98",
+     "name": "saveSlotScanCallback",
      "size": 300,
-     "splat_name": "func_00239F98",
+     "splat_name": "saveSlotScanCallback",
      "va": "0x00239f98",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023A0C8",
+     "name": "saveSlotListUpdate",
      "size": 1340,
-     "splat_name": "func_0023A0C8",
+     "splat_name": "saveSlotListUpdate",
      "va": "0x0023a0c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023A608",
+     "name": "saveSlotTransferUpdate",
      "size": 1460,
-     "splat_name": "func_0023A608",
+     "splat_name": "saveSlotTransferUpdate",
      "va": "0x0023a608",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71227,18 +71039,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023AC08",
+     "name": "saveThumbnailEncode",
      "size": 268,
-     "splat_name": "func_0023AC08",
+     "splat_name": "saveThumbnailEncode",
      "va": "0x0023ac08",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023AD18",
+     "name": "saveScreenRun",
      "size": 1180,
-     "splat_name": "func_0023AD18",
+     "splat_name": "saveScreenRun",
      "va": "0x0023ad18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71272,18 +71084,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023B8B8",
+     "name": "configOldDataCallback",
      "size": 344,
-     "splat_name": "func_0023B8B8",
+     "splat_name": "configOldDataCallback",
      "va": "0x0023b8b8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023BA10",
+     "name": "configScreenUpdate",
      "size": 2244,
-     "splat_name": "func_0023BA10",
+     "splat_name": "configScreenUpdate",
      "va": "0x0023ba10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71299,9 +71111,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023C308",
+     "name": "configScreenRun",
      "size": 756,
-     "splat_name": "func_0023C308",
+     "splat_name": "configScreenRun",
      "va": "0x0023c308",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71521,9 +71333,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0023C600",
+     "name": "testUiMenuRun",
      "size": 1148,
-     "splat_name": "func_0023C600",
+     "splat_name": "testUiMenuRun",
      "va": "0x0023c600",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71539,27 +71351,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023CB88",
+     "name": "debugCounterStepAndDraw",
      "size": 248,
-     "splat_name": "func_0023CB88",
+     "splat_name": "debugCounterStepAndDraw",
      "va": "0x0023cb88",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023CC80",
+     "name": "texUploadTest",
      "size": 120,
-     "splat_name": "func_0023CC80",
+     "splat_name": "texUploadTest",
      "va": "0x0023cc80",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023CCF8",
+     "name": "choiceMenuTest",
      "size": 640,
-     "splat_name": "func_0023CCF8",
+     "splat_name": "choiceMenuTest",
      "va": "0x0023ccf8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -71961,27 +71773,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023DBA8",
+     "name": "textScaleApplyOptions",
      "size": 124,
-     "splat_name": "func_0023DBA8",
+     "splat_name": "textScaleApplyOptions",
      "va": "0x0023dba8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023DC28",
+     "name": "heapWindowPaintMap",
      "size": 532,
-     "splat_name": "func_0023DC28",
+     "splat_name": "heapWindowPaintMap",
      "va": "0x0023dc28",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023DE40",
+     "name": "heapWindowAddAllocRows",
      "size": 536,
-     "splat_name": "func_0023DE40",
+     "splat_name": "heapWindowAddAllocRows",
      "va": "0x0023de40",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72006,27 +71818,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023E248",
+     "name": "heapWindowOpen",
      "size": 172,
-     "splat_name": "func_0023E248",
+     "splat_name": "heapWindowOpen",
      "va": "0x0023e248",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023E2F8",
+     "name": "heapOverviewWindowOpen",
      "size": 1588,
-     "splat_name": "func_0023E2F8",
+     "splat_name": "heapOverviewWindowOpen",
      "va": "0x0023e2f8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023E930",
+     "name": "heapOverviewMenuAttach",
      "size": 28,
-     "splat_name": "func_0023E930",
+     "splat_name": "heapOverviewMenuAttach",
      "va": "0x0023e930",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72250,9 +72062,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023EBB8",
+     "name": "sjisToEuc",
      "size": 124,
-     "splat_name": "func_0023EBB8",
+     "splat_name": "sjisToEuc",
      "va": "0x0023ebb8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72449,18 +72261,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023ED20",
+     "name": "xglVu1ReadControlRegisters",
      "size": 60,
-     "splat_name": "func_0023ED20",
+     "splat_name": "xglVu1ReadControlRegisters",
      "va": "0x0023ed20",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023ED60",
+     "name": "xglVu1ReadIntegerRegisters",
      "size": 60,
-     "splat_name": "func_0023ED60",
+     "splat_name": "xglVu1ReadIntegerRegisters",
      "va": "0x0023ed60",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72502,7 +72314,7 @@
    "path": "src/main/tu131.c",
    "scaffold_path": "scaffold/src/main/tu131.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -72554,18 +72366,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0023EDA0",
+     "name": "xglVu1ReadFloatRegisters",
      "size": 60,
-     "splat_name": "func_0023EDA0",
+     "splat_name": "xglVu1ReadFloatRegisters",
      "va": "0x0023eda0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "xglMatrixReverse_0023EDE0",
+     "name": "xglMatrixReverseInPlace",
      "size": 172,
-     "splat_name": "xglMatrixReverse_0023EDE0",
+     "splat_name": "xglMatrixReverseInPlace",
      "va": "0x0023ede0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72581,7 +72393,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -72595,6 +72407,17 @@
      "0x0023efc8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Actua como orquestrador de subagentes T1/T2 para terminar de matchear lo siguiente: 23 TUs \u00b7 254 funciones \u00b7 75,0 KB tu112 \u2026 tu134 (TiWatSim). Las ultimas 15-10 funciones, encargate t\u00fa personalmente sin subagentes. / Integrate + keep working (Recommended): express integration of the banked x2-c14 functions now",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu131.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -72729,9 +72552,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023F218",
+     "name": "tiWaterSendOrientedMatrix",
      "size": 176,
-     "splat_name": "func_0023F218",
+     "splat_name": "tiWaterSendOrientedMatrix",
      "va": "0x0023f218",
      "name_basis": "address",
      "provenance": "estimated"
@@ -72756,27 +72579,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023F3A0",
+     "name": "tiWaterSendDirection",
      "size": 208,
-     "splat_name": "func_0023F3A0",
+     "splat_name": "tiWaterSendDirection",
      "va": "0x0023f3a0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023F470",
+     "name": "tiWaterSendItemPair",
      "size": 64,
-     "splat_name": "func_0023F470",
+     "splat_name": "tiWaterSendItemPair",
      "va": "0x0023f470",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0023F4B0",
+     "name": "tiWaterSendFramePair",
      "size": 64,
-     "splat_name": "func_0023F4B0",
+     "splat_name": "tiWaterSendFramePair",
      "va": "0x0023f4b0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -73110,9 +72933,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00240320",
+     "name": "tiWatSimStoreSourcePos2",
      "size": 24,
-     "splat_name": "func_00240320",
+     "splat_name": "tiWatSimStoreSourcePos2",
      "va": "0x00240320",
      "name_basis": "address",
      "provenance": "estimated"

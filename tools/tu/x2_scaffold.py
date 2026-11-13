@@ -67,6 +67,17 @@ AS_PLAIN_NAME = "LA29-vsqrt-nolabel-laimm (runtime and hand-written objects)"
 SOFT_FLOAT_LIBCALLS = {0x002A7560: "litodp", 0x002A70E8: "dpmul", 0x002A7398: "dpdiv",
                        0x002A76E8: "dptofp", 0x002A6D88: "fptodp", 0x002A4F60: "__divdi3",
                        0x002A55F8: "__moddi3", 0x002A7510: "dpcmp", 0x002A7080: "dpsub"}
+# Addresses main's C reaches that no table offers: entries inside an OV01 function and scaffold
+# data without a label at that address. Hand edits of the output were lost at a regeneration
+# (2026-11-13), so they live here. Renamed labels must be renamed here too.
+EXTRA_PROVIDES = (
+    ("func_00A89428", 0x00A89428, "ov01, inside func_00A89340: testMenuCallbacks[0]"),
+    ("func_00A920EC", 0x00A920EC, "ov01, inside actStockRemoveStock: called by the text scale options"),
+    ("D_0069DA38", 0x0069DA38, "tu126 .sdata: 8-byte SJIS mark entry; scaffold label split at +1 (D_0069DA39)"),
+    ("D_0069DA40", 0x0069DA40, "tu126 .sdata: 8-byte SJIS mark entry; scaffold label split at +1 (D_0069DA41)"),
+    ("D_0069DA48", 0x0069DA48, "tu126 .sdata: 8-byte SJIS mark entry; scaffold label split at +1 (D_0069DA49)"),
+    ("D_006AC0C0", 0x006AC0C0, "tu126 saveLabelBuild data; no scaffold label at this address"),
+)
 CONTRACT_BASIS = ("X1's last patched cc1 and corrected assembler with -g; "
                   "see reports/x2-compiler-calibration.md")
 
@@ -626,6 +637,8 @@ def generate():
     out["config/symbols/main.externals.ld"] += "".join(
         f"PROVIDE({name} = 0x{va:08X}); /* libgcc */\n"
         for va, name in sorted(SOFT_FLOAT_LIBCALLS.items()))
+    out["config/symbols/main.externals.ld"] += "".join(
+        f"PROVIDE({name} = 0x{va:08X}); /* {note} */\n" for name, va, note in EXTRA_PROVIDES)
     out["config/symbols/estimated-functions.json"] = json_text(dict(
         schema="x2-estimated-functions/1", provenance="estimated",
         note=["Function starts and sizes inferred by tools/tu/map_infer.py, names from annotations",
