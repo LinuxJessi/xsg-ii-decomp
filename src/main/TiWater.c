@@ -11,10 +11,13 @@
 #include "main/xgl_font.h"
 #include "gs.h"
 #include "main/tu093.h"
+#include "main/tu045.h"
 
 extern int tiWaterDebugMode;      /* debug panel mode, toggled by select in the scene loop */
 extern int tiWaterDebugIndex;      /* selected debug parameter, 0..11 */
 extern float tiWaterEffectNum;
+extern unsigned int tiWaterSubCount;
+extern struct TiWaterSub *tiWaterSubList[];
 
 /* Resets the debug panel mode and its selected parameter to zero. */
 void tiWaterDebugReset(void) {
@@ -126,7 +129,46 @@ void tiWaterSendStateTemplate(void)
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterDrawItem);
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterDrawAll);
+void gifStateReset(void);
+void gifStateFlush(void);
+void gifStateAddReg(int gifAddress, u64 gifData);
+void xglPacketInitVuStateArg(int mode);
+void tiWaterDrawItem(void *item);
+/* Draw callback: in pass 0, draws every registered table (CLAMP_1 and the state template first when
+ * it has items, then each item) and empties the list; the packet state is reset afterwards. */
+void tiWaterDrawAll(int pass)
+{
+    XglPacket *packet = xglPacketGetCurrent();
+    unsigned int i;
+    unsigned int j;
+    char *item;
+
+    if (pass != 0) {
+        return;
+    }
+    for (i = 0; i < tiWaterSubCount; i++) {
+        item = (char *) tiWaterSubList[i] + 0x10;
+        gifStateReset();
+        if (tiWaterSubList[i]->active != 0) {
+            sceVif1PkCnt(packet, 0);
+            sceVif1PkOpenDirectHLCode(packet, 0);
+            gifStateAddReg(GS_CLAMP_1, GS_SET_CLAMP(0, 0, 0xFF, 0xFF, 0, 0));
+            gifStateFlush();
+            sceVif1PkCloseDirectHLCode(packet);
+            tiWaterSendStateTemplate();
+        }
+        for (j = 0; j < tiWaterSubList[i]->active; j++) {
+            tiWaterDrawItem(item);
+            item += 0x110;
+        }
+    }
+    tiWaterSubCount = 0;
+    xglPacketModeReset();
+    xglPacketInitVuStateArg(pass);
+    func_001CD134();
+    func_001CD1AC();
+    func_001CD160();
+}
 
 float func_002A1790(float value);
 extern float tiWaterTwoPi;
@@ -162,10 +204,10 @@ void tiWaterSetEffectMode(void) {
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterSceneLoop);
 
-void pxySetDrawCallback(void (*callback)(void));
+void pxySetDrawCallback(void (*callback)(int pass));
 int tiWaterRegisterSub(struct TiWaterSub *sub);
 void tiWaterStepSub(struct TiWaterSub *sub);
-extern void tiWaterDrawAll(void);
+void tiWaterDrawAll(int pass);
 
 /* Per-object update: registers the sub-table when it has items, steps it when stepMode is 0,
  * and installs the draw callback tiWaterDrawAll. */
