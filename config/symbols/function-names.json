@@ -2829,6 +2829,7 @@
    "0x00210d38": "menuSkillModelReadDone",
    "0x00215de8": "menuTutorialPageReset",
    "0x00214d10": "menuMapDraw",
+   "0x002285c8": "ptReset",
    "0x0022a560": "ptGetMenuMember",
    "0x0022a7d8": "ptSwapRosterEntries",
    "0x0022ada0": "ptFindRosterEntry",
