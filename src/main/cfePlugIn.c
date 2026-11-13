@@ -8,7 +8,16 @@
 #include "main/tu051.h"
 #include "main/tu138.h"
 #include "main/sef.h"
+#include "main/tu144.h"
 #include "main/xgl_cd.h"
+
+extern unsigned char cfeAssertFile[];
+
+/* An 8.8 fixed-point script value as a float. */
+#define CFE_FIXED_TO_FLOAT(value) ((float) ((value) / 256) + (float) ((value) % 256) * (1.0f / 256))
+
+void func_0024B0E8(CfeListNode **list, int mode, int key, float value);
+void func_0024B230(CfeListNode **list, int mode, int key, float value);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B0E8);
 
@@ -76,7 +85,6 @@ typedef struct XenoActor XenoActor;
 XenoActor *XenoActorAlloc(void);
 void xglCullingMapSet(int map);
 extern unsigned char cfeResLoadAssertMsg[];
-extern unsigned char cfeAssertFile[];
 
 /* The resource block the cfe object loaders read. */
 typedef struct CfeResourceBlock {
@@ -173,12 +181,6 @@ int cfe_0024BC10(int handle)
     return 1;
 }
 
-typedef struct CfeListNode CfeListNode;
-CfeListNode *func_0024F698(CfeListNode **list, int key, float value);
-CfeListNode *func_0024F730(CfeListNode **list, int key, float value);
-
-/* An 8.8 fixed-point script value as a float. */
-#define CFE_FIXED_TO_FLOAT(value) ((float) ((value) / 256) + (float) ((value) % 256) * (1.0f / 256))
 extern unsigned char D_0068CF10[];
 extern unsigned char D_0068CED0[];
 
@@ -240,8 +242,8 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C500);
 extern CfeListNode *D_00631A54[][108];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_00631A54
- * (the lists at +0x194 of each 0x1B0-byte entry of cfeEntries) to the 8.8 value, with flag 0x2 (func_0024F730) when
- * `flagged` is set. */
+ * (the lists at +0x194 of each 0x1B0-byte entry of cfeEntries) to the 8.8 value, with flag
+ * 0x2 (func_0024F730) when `flagged` is set. */
 int cfe_0024C7B8(int handle)
 {
     int index;
@@ -270,8 +272,6 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C940);
 
 typedef struct XglCamera XglCamera;
 void xglStudioGetCamera(XglCamera **camera, int index);
-CfeListNode *func_0024B0E8(CfeListNode **list, int key, int mode, float value);
-CfeListNode *func_0024B230(CfeListNode **list, int key, int mode, float value);
 
 /* The studio block (0x70 bytes, cleared by cfeStudioInit): the camera and its key lists. */
 typedef struct CfeStudioBlock {
@@ -282,7 +282,8 @@ typedef struct CfeStudioBlock {
 extern CfeStudioBlock D_006384C0;
 
 /* Script command (4 arguments): fetches the studio camera and sets key `key` of camera list `index`
- * to the 8.8 value; lists 3 to 5 go through func_0024B230, the others through func_0024B0E8. */
+ * to the 8.8 value in `mode`; lists 3 to 5 go through func_0024B230, the others through
+ * func_0024B0E8. */
 int cfe_0024CB80(int handle)
 {
     int index;
@@ -294,20 +295,18 @@ int cfe_0024CB80(int handle)
         assertFailed(D_0068CF10, cfeAssertFile, 856);
     }
     index = func_A9F0C0(handle, 1);
-    mode = func_A9F0C0(handle, 2);
-    key = func_A9F0C0(handle, 3);
+    key = func_A9F0C0(handle, 2);
+    mode = func_A9F0C0(handle, 3);
     value = func_A9F0C0(handle, 4);
     xglStudioGetCamera(&D_006384C0.camera, 0);
     if (index >= 3 && index < 6) {
-        func_0024B230(&D_006384C0.lists[index], key, mode, CFE_FIXED_TO_FLOAT(value));
+        func_0024B230(&D_006384C0.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024B0E8(&D_006384C0.lists[index], key, mode, CFE_FIXED_TO_FLOAT(value));
+        func_0024B0E8(&D_006384C0.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
 
-CfeListNode *func_0024F7C0(CfeListNode **list, int key, float value);
-CfeListNode *func_0024F860(CfeListNode **list, int key, float value);
 extern CfeListNode *D_0063857C[][32];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063857C to the 8.8 value.

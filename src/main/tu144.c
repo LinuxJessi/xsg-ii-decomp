@@ -1,19 +1,6 @@
 #include "common.h"
+#include "main/tu144.h"
 
-/*
- * A node of a doubly linked list whose entries carry a sort key at +0x04 (the
- * list helpers below compare it). Only the two link pointers are modeled:
- * `prev` (+0x1C) and `next` (+0x20) are the neighbours the list helpers store,
- * and every other byte is an unmodeled gap.
- */
-typedef struct CfeListNode {
-    int flags;                       /* 0x00 */
-    int key;                         /* 0x04 */
-    int value;                       /* 0x08: 8.8 fixed point */
-    unsigned char unmodeled_0c[0x10];
-    struct CfeListNode *prev;        /* 0x1C */
-    struct CfeListNode *next;        /* 0x20 */
-} CfeListNode;
 
 /* Links `node` between `prev` and `next`; either neighbour may be null. */
 void cfeListLink(CfeListNode *prev, CfeListNode *node, CfeListNode *next) {
