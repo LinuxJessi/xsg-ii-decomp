@@ -26,6 +26,43 @@ float xglAtan2Angle(float x, float y)
     return angle;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu130", func_0023ED20);
+#include "shared.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu130", func_0023ED60);
+/* VU0 data-memory quadword addresses of the VU1 register windows, and the quadwords read from each. */
+#define VU1_CONTROL_WINDOW 0x430
+#define VU1_INTEGER_WINDOW 0x420
+#define VU1_REGISTER_QUADS 16
+
+/*
+ * Reads the 16 quadwords of the VU1 control registers through the VU1 register window of
+ * VU0 data memory (quadword address 0x430) with post-incremented VI loads.
+ * Every value lands in one scratch quadword and is discarded.
+ */
+void xglVu1ReadControlRegisters(void)
+{
+    AlignedVector4 scratch;
+    int i;
+
+    __asm__ __volatile__("ctc2 %0,$vi1" : : "r"(VU1_CONTROL_WINDOW) : "memory");
+    for (i = VU1_REGISTER_QUADS - 1; i >= 0; i--) {
+        __asm__ __volatile__("vlqi.xyzw $vf2xyzw,($vi1++)" : : : "memory");
+        __asm__ __volatile__("sqc2 $vf2,0(%0)" : : "r"(&scratch) : "memory");
+    }
+}
+
+/*
+ * Reads the 16 quadwords of the VU1 integer registers through the VU1 register window of
+ * VU0 data memory (quadword address 0x420) with post-incremented VI loads.
+ * Every value lands in one scratch quadword and is discarded.
+ */
+void xglVu1ReadIntegerRegisters(void)
+{
+    AlignedVector4 scratch;
+    int i;
+
+    __asm__ __volatile__("ctc2 %0,$vi1" : : "r"(VU1_INTEGER_WINDOW) : "memory");
+    for (i = VU1_REGISTER_QUADS - 1; i >= 0; i--) {
+        __asm__ __volatile__("vlqi.xyzw $vf2xyzw,($vi1++)" : : : "memory");
+        __asm__ __volatile__("sqc2 $vf2,0(%0)" : : "r"(&scratch) : "memory");
+    }
+}

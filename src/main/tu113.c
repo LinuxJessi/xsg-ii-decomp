@@ -1,10 +1,7 @@
 #include "common.h"
 #include "main/tu116.h"
 #include "main/tu148.h"
-
-/* Script native seg.addrOn (table 0x3ec918): segment address number and a second argument; shows the message for number 1 or 2. */
-INCLUDE_ASM("asm/main/nonmatchings/tu113", seg_0022D5A0);
-
+#include "main/tu021.h"
 #include "shared.h"
 
 int segGetAddrOn(u32);
@@ -14,9 +11,68 @@ int func_A9F0C0(int, int);
 void questFlagSet(int, int);
 int yg2PathGetCitizenFlag(u32);
 int msgPurchaseUpdate(void);
+int func_A9F140(int, int);
+int func_A9F238(int, int);
+void msgWindowOpenText(int);
+extern u16 textOptionFlags;
+extern u32 gameWork[];
+void segSetAddrOn(int, int);
+int uwamonoCurrentRecord(void);
+void mapObjectBeginMessage(int);
+void msgBegin(void);
+void msgWindowSetScriptText(unsigned char *);
+void msgWindowSetSlot(int, int);
+int msgSlotCurrent(void);
+void msgSlotSet(int, int);
+extern unsigned char segAddrOnFoundText[];
+extern unsigned char segAddrOnDoorText[];
+extern unsigned char segAddrOnDecodedText[];
+
+/* Message kinds of seg.addrOn, the native's second argument: the address was found, written on a door, or decoded. */
+enum SegAddrMessage {
+    SEG_ADDR_MSG_FOUND = 1,
+    SEG_ADDR_MSG_ON_DOOR = 2,
+    SEG_ADDR_MSG_DECODED = 3
+};
+
+/* Entries of the department/quest menu: names and costs are read per entry, and the item counts are set per entry. */
+#define MENU_DEPT_ENTRIES 40
+
+/* Script native seg.addrOn (table 0x3ec918): segment address number (1-based) and message kind; sets the address flag
+   with segSetAddrOn, then shows the text for the kind (kinds 1 to 3). */
+int segAddrOnMessage(int ctx)
+{
+    int arg_count = func_A9F0A8();
+    int messageKind;
+
+    if (arg_count != 2) {
+        func_A9CC70(ctx, 2);
+        return 0;
+    }
+    messageKind = func_A9F0C0(ctx, 2);
+    segSetAddrOn(func_A9F0C0(ctx, 1) - 1, messageKind);
+    mapObjectBeginMessage(uwamonoCurrentRecord());
+    msgBegin();
+    switch (messageKind) {
+    case SEG_ADDR_MSG_FOUND:
+        seVoiceStartDefault(0x100000a);
+        msgWindowSetScriptText(segAddrOnFoundText);
+        break;
+    case SEG_ADDR_MSG_ON_DOOR:
+        msgWindowSetScriptText(segAddrOnDoorText);
+        break;
+    case SEG_ADDR_MSG_DECODED:
+        seVoiceStartDefault(0x200000c);
+        msgWindowSetScriptText(segAddrOnDecodedText);
+        break;
+    }
+    msgWindowSetSlot(1, func_A9F0C0(ctx, 1));
+    msgSlotSet(msgSlotCurrent(), 0);
+    return 1;
+}
 
 /* Script native seg.getAddrOn (table 0x3ec920): argument 1 is the segment address number, 1-based. */
-int seg_0022D6E8(int ctx)
+int segAddrOnGetFlag(int ctx)
 {
     if (func_A9F0A8() != 1) {
         func_A9CC70(ctx, 2);
@@ -78,14 +134,74 @@ int getCitizenFlag(int ctx)
 }
 
 /* Script native menuAddItem (table 0x3ec8b8): a string argument is added to the menu. */
-INCLUDE_ASM("asm/main/nonmatchings/tu113", menuAddItem);
+int menuAddItem(int ctx, int *error_flag)
+{
+    if (func_A9F0A8() != 2) {
+        func_A9CC70(ctx, 2);
+        return 0;
+    }
+    if ((func_A9F140(ctx, 2) & 0xff) != 3) {
+        func_A9CC70(ctx, 2);
+        return 0;
+    }
+    if (msgWindowBusy() == 0 && msgWindowHasMore() == 0 && (textOptionFlags & 0x20) != 0) {
+        msgWindowOpenText(func_A9F238(ctx, func_A9F0C0(ctx, 2)));
+        gameWork[2] |= 0x8000;
+    } else {
+        *error_flag = 1;
+    }
+    return 1;
+}
+
+void msgResetValues(int);
+void msgSetMode(int);
+void msgSetItemName(int, int);
+void msgSetItemCost(int, int);
+void msgSetItemCount(int, int);
+void msgWindowBindTables(void);
+int *func_A9F298(int handle, int value);
+int func_A9C7A8(int);
+int func_A9C808(int);
 
 /* Script native menuDeptQuest (table 0x3ec8c8): four arguments; up to 40 string entries are read from the script. */
-INCLUDE_ASM("asm/main/nonmatchings/tu113", menuDeptQuest);
+int menuDeptQuest(int ctx, int *error_flag)
+{
+    int *names;
+    int *costs;
+    int count;
+    int i;
 
-extern u16 textOptionFlags;
-/* Word 2 (byte offset 8) of gameWork receives bit 0x8000 on the success path. */
-extern u32 gameWork[];
+    count = 640;
+    if (func_A9F0A8() != 4) {
+        func_A9CC70(ctx, 2);
+        return 0;
+    }
+    if (msgWindowBusy() != 0 || msgWindowHasMore() != 0) {
+        *error_flag = 1;
+    } else {
+        names = func_A9F298(ctx, func_A9F0C0(ctx, 1));
+        costs = func_A9F298(ctx, func_A9F0C0(ctx, 2));
+        msgResetValues(func_A9F0C0(ctx, 3));
+        for (i = 0; i < count / 16; i++) {
+            msgSetItemName(i, func_A9F238(ctx, names[i]));
+            msgSetItemCost(i, costs[i]);
+        }
+        if (func_A9F0C0(ctx, 4) == 0) {
+            msgSetMode(0);
+            for (i = 0; i < MENU_DEPT_ENTRIES; i++) {
+                msgSetItemCount(i, func_A9C7A8(i + 1));
+            }
+        } else {
+            msgSetMode(1);
+            for (i = 0; i < MENU_DEPT_ENTRIES; i++) {
+                msgSetItemCount(i, func_A9C808(i + 1));
+            }
+        }
+        msgWindowBindTables();
+        gameWork[2] |= 0x8000;
+    }
+    return 1;
+}
 
 /* Script native menuDeptGetResult (table 0x3ec8d0). */
 int menuDeptGetResult(int unused_ctx, int *error_flag)
@@ -108,7 +224,7 @@ int menuGetResult(int ctx, int *arg_count_out)
         func_A9CC70(ctx, 2);
         return 0;
     }
-    result = msgPollSelect();
+    result = (int)msgPollSelect();
     if (result < 0) {
         *arg_count_out = arg_count;
     }
@@ -118,17 +234,17 @@ int menuGetResult(int ctx, int *arg_count_out)
 /* Script native slotWinOpen (table 0x3ec8d8): two arguments, passed to msgChoiceOpen when the window is ready. */
 int slotWinOpen(int ctx, int *error_flag)
 {
-    int first;
-    int second;
+    int timelineFrame;
+    int choiceIndex;
 
     if (func_A9F0A8() != 2) {
         func_A9CC70(ctx, 2);
         return 0;
     }
     if (msgWindowBusy() == 0 && msgWindowHasMore() == 0 && (textOptionFlags & 0x20) != 0) {
-        first = func_A9F0C0(ctx, 1);
-        second = func_A9F0C0(ctx, 2);
-        msgChoiceOpen(first, second);
+        timelineFrame = func_A9F0C0(ctx, 1);
+        choiceIndex = func_A9F0C0(ctx, 2);
+        msgChoiceOpen(timelineFrame, choiceIndex);
         gameWork[2] |= 0x8000;
     } else {
         *error_flag = 1;

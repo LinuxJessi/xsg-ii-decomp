@@ -457,7 +457,7 @@ int decoDisp2(int call)
     return 1;
 }
 
-void func_002355D8(int, int, int, int, int);
+void textWindowShow(int, int, int, int, int);
 
 int namePut(int call)
 {
@@ -478,7 +478,7 @@ int namePut(int call)
     slot = vmArgGet(call, 2);
     pos = vmArgGet(call, 3);
     mode = vmArgGet(call, 5);
-    func_002355D8(index, slot, pos, key, mode);
+    textWindowShow(index, slot, pos, key, mode);
     return 1;
 }
 

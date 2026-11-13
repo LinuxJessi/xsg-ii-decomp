@@ -3846,7 +3846,7 @@ void menuDrawPartyPanel(MenuItem *item, struct ControlContext *member, int x, in
                 menuDrawPanelHighlight(x - 0xA, y - 0xE, 1);
             }
         } else {
-            panelDrawNineSlice(D_003EB290, x, y + 0x19, 0x9D, 0x27);
+            panelDrawNineSlice(menuPanelFrame, x, y + 0x19, 0x9D, 0x27);
             packetSubmitRequest(0x120, x + 0x2F, y + 4, 0x11);
             menuDrawIndexedIconMarked(x + 6, y, status->memberIndex);
             textDrawGlyphString(x + 0x34, y + 7, status->text, MENU_PARTY_TEXT_COLOR);

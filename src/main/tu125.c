@@ -10,6 +10,25 @@ extern unsigned char *textMarkerPtrs[];
 #define BOX_OPEN_STEPS 4 /* opening box: tick 0..4 scales the size */
 #define CHOICE_VALUE_UNIT 0x10 /* ChoiceMenu.flags: values carry a unit mark */
 #define CHOICE_ITEM_HIGHLIGHT 2 /* ChoiceMenu.itemFlags: highlighted item */
+#define TEXT_ENTRY_POOL_SIZE 4 /* textEntryPool holds four entries */
+#define CHOICE_MENU_SLOTS 2 /* choiceMenuSlots holds two menus */
+#define TEXT_PAGE_WAIT_TICKS 20 /* a page without markers stays up this many ticks */
+#define TEXT_LINE_HEIGHT_DEFAULT 24 /* the line advance at the start of every line */
+#define TEXT_LINE_HEIGHT_ICON 27 /* control codes 6..8 raise the line to at least this */
+#define TEXT_LINE_HEIGHT_SPRITE 34 /* control codes 9..15 raise the line to at least this */
+#define TEXT_FONT_ZOOM 16 /* xglFontZoom while a text string is drawn */
+#define CHOICE_ROW_HEIGHT 24 /* one row of a choice menu list, in pixels */
+#define ANALYZE_PANEL_WIDTH 256 /* the ANALYZE box at its full size */
+#define ANALYZE_PANEL_HEIGHT 192
+
+/* The state byte shared by the text entries, the text block and the choice menus: 0 free, 1 open, 2 opening, 3
+ * closing (removed for an entry). */
+enum TextState {
+    TEXT_STATE_FREE = 0,
+    TEXT_STATE_OPEN = 1,
+    TEXT_STATE_OPENING = 2,
+    TEXT_STATE_CLOSING = 3
+};
 
 /* Cuts text at its page-th 0xA1 0xFC page marker: every marker before it becomes two 0x07 bytes and every
  * marker position is recorded for textMarkerRestore. */
@@ -57,15 +76,30 @@ void textMarkerRestore(void) {
     textMarkerFound = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu125", textMarkerCount);
+/* Counts the page markers before the terminating zero: the walk of textMarkerScan without its writes. */
+int textMarkerCount(unsigned char *text)
+{
+    int markerCount;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu125", textEntryUpdate);
+    if (text == 0) {
+        return 0;
+    }
+    markerCount = 0;
+    while (*text != 0) {
+        if (text[0] == PAGE_MARKER_LEAD && text[1] == PAGE_MARKER_TRAIL) {
+            markerCount++;
+            text += 2;
+        } else {
+            if ((signed char)text[0] < 0) {
+                text++;
+            }
+            text++;
+        }
+    }
+    return markerCount;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu125", textDrawControlCode);
-
-INCLUDE_ASM("asm/main/nonmatchings/tu125", func_00236890);
-
-INCLUDE_ASM("asm/main/nonmatchings/tu125", textDrawString);
+extern unsigned short textOptionFlags[];
 
 #include "main/tu097.h"
 #include "main/tu101.h"
@@ -74,15 +108,13 @@ INCLUDE_ASM("asm/main/nonmatchings/tu125", textDrawString);
 
 /* Text window: the box at the bottom of the screen and its single line of text. */
 typedef struct TextWindow {
-    int x;
-    int y;
-    int unmodeled_08[5];
-    int width;
+    struct FontTrack track; /* +0x00: x and y are track.current_pair[0] and [1], eased by fontTrackEase */
+    int width;             /* +0x1C */
     int fade;              /* +0x20 frames of the fade-in, opaque from 8 on */
     unsigned char *text;
 } TextWindow;
 
-/* One of the four text entries: an opening box with a list of pages. */
+/* One text entry: an opening box with a list of pages (the same layout as tu125 reads). */
 typedef struct TextEntry {
     int x;
     int y;
@@ -90,12 +122,17 @@ typedef struct TextEntry {
     int height;
     unsigned char **pages;
     int page;
-    unsigned char tick;    /* +0x18 opening step, 0..4 */
-    unsigned char state;   /* +0x19 0 free, 1 open, other values opening or closing */
-    unsigned char unmodeled_1a[2];
-    char *title;           /* +0x1C box title, NULL for none */
-    unsigned char marker;  /* +0x20 nonzero: the page holds page markers */
-    unsigned char unmodeled_21[3];
+    unsigned char tick;        /* +0x18 opening step, 0..4 */
+    unsigned char state;       /* +0x19 TextState: 0 free, 1 open, 2 opening, 3 closing (removed) */
+    unsigned char style_index; /* +0x1A */
+    unsigned char unmodeled_1b;
+    union {
+        unsigned int style_value;  /* +0x1C textStyleTable word of style_index */
+        char *title;               /* +0x1C box title (tu125), NULL for none */
+    } word_1c;
+    unsigned char count;       /* +0x20 voice cues started (tu124) or the page-cut count (tu125) */
+    unsigned char atLastPage;  /* +0x21 set when the entry reaches its last page */
+    unsigned char unmodeled_22[2];
 } TextEntry;
 
 /* One of the two choice menus. */
@@ -144,9 +181,276 @@ typedef struct AnalyzePanel {
 } AnalyzePanel;
 
 extern TextWindow textWindow;
-extern TextEntry textEntryPool[4];
-extern ChoiceMenu choiceMenuSlots[2];
+extern TextEntry textEntryPool[TEXT_ENTRY_POOL_SIZE];
+extern ChoiceMenu choiceMenuSlots[CHOICE_MENU_SLOTS];
 extern AnalyzePanel textBlock;
+
+/* Advances one text entry: state 2 ticks in, state 1 pages through its text, state 3 ticks out. */
+void textEntryUpdate(TextEntry *entry)
+{
+    unsigned char state;
+    int markerCount;
+
+    if (entry == 0) {
+        return;
+    }
+    state = entry->state;
+    switch (state) {
+    case TEXT_STATE_OPENING:
+        entry->tick++;
+        if (entry->tick >= BOX_OPEN_STEPS) {
+            entry->tick = 0;
+            entry->state = TEXT_STATE_OPEN;
+        }
+        break;
+    case TEXT_STATE_CLOSING:
+        entry->tick--;
+        if (entry->tick == 0) {
+            entry->state = TEXT_STATE_FREE;
+        }
+        break;
+    case TEXT_STATE_OPEN:
+        if (entry->pages == 0) {
+            break;
+        }
+        if (entry->count != 0) {
+            markerCount = textMarkerCount(entry->pages[entry->page]);
+            if (markerCount < entry->count) {
+                if (entry->pages[entry->page + 1] != 0) {
+                    entry->count = state;
+                    entry->page++;
+                } else {
+                    entry->count = markerCount;
+                    entry->atLastPage = state;
+                }
+            }
+        } else {
+            entry->tick++;
+            if (entry->tick >= TEXT_PAGE_WAIT_TICKS) {
+                entry->page++;
+                if (entry->pages[entry->page] == 0) {
+                    entry->page = 0;
+                }
+                entry->tick = 0;
+            }
+        }
+        break;
+    }
+}
+
+extern unsigned char textLineHeight;
+void menuTexFlush(void);
+void grGpInit(void *packet);
+void grPutSprOpen(void *packet);
+void grPutSprClose(void);
+void grPacketSend(void *packet);
+void func_00AA7750(void *packet, int x, int y, short value, int flag);
+void menuIconPut(void *packet, int x, int y, int col, int row);
+void menuStatSprite(void *packet, int x, int y, int width, int height, int u, int v);
+void func_00AA8530(void *packet);
+void menuStatusIconsTexState(void *packet);
+
+/* A pair of words per control code, read by the draw calls of codes 9..15 and 16..29. */
+typedef struct TextDrawPair {
+    int first;
+    int second;
+} TextDrawPair;
+
+extern TextDrawPair textCodeUv9[];
+extern TextDrawPair textCodeUv16[];
+
+/* Draws one inline control code of a text line at (x, y) and returns how far the line advances. */
+int textDrawControlCode(int x, int y, int code)
+{
+    unsigned char packet[16];
+    int advance;
+
+    advance = 0;
+    menuTexFlush();
+    grGpInit(packet);
+    switch (code) {
+    case 1:
+        advance = 20;
+        menuIconPut(packet, x + 1, y + 2, 1, 0);
+        break;
+    case 2:
+        advance = 20;
+        menuIconPut(packet, x + 1, y + 2, 2, 0);
+        break;
+    case 3:
+        advance = 20;
+        menuIconPut(packet, x + 1, y + 2, 0, 0);
+        break;
+    case 4:
+        advance = 20;
+        menuIconPut(packet, x + 1, y + 2, 3, 0);
+        break;
+    case 5:
+        advance = 29;
+        func_00AA8530(packet);
+        grPutSprOpen(packet);
+        menuStatSprite(packet, x + 1, y + 2, 27, 17, 464, 234);
+        grPutSprClose();
+        break;
+    case 6:
+        advance = 26;
+        func_00AA7750(packet, x + 1, y - 2, 52, 1);
+        if (textLineHeight < TEXT_LINE_HEIGHT_ICON) {
+            textLineHeight = TEXT_LINE_HEIGHT_ICON;
+        }
+        break;
+    case 7:
+        advance = 26;
+        func_00AA7750(packet, x + 1, y - 2, 53, 1);
+        if (textLineHeight < TEXT_LINE_HEIGHT_ICON) {
+            textLineHeight = TEXT_LINE_HEIGHT_ICON;
+        }
+        break;
+    case 8:
+        advance = 26;
+        func_00AA7750(packet, x + 1, y - 2, 16, 1);
+        if (textLineHeight < TEXT_LINE_HEIGHT_ICON) {
+            textLineHeight = TEXT_LINE_HEIGHT_ICON;
+        }
+        break;
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+        advance = 26;
+        func_00AA8530(packet);
+        grPutSprOpen(packet);
+        menuStatSprite(packet, x + 1, y - 9, 24, 42, textCodeUv9[code - 9].first, textCodeUv9[code - 9].second);
+        grPutSprClose();
+        if (textLineHeight < TEXT_LINE_HEIGHT_SPRITE) {
+            textLineHeight = TEXT_LINE_HEIGHT_SPRITE;
+        }
+        break;
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
+        advance = 38;
+        menuStatusIconsTexState(packet);
+        grPutSprOpen(packet);
+        menuStatSprite(packet, x + 1, y + 1, 36, 17, textCodeUv16[code - 16].first, textCodeUv16[code - 16].second);
+        grPutSprClose();
+        break;
+    }
+    grPacketSend(packet);
+    return advance;
+}
+
+/* Scans one line of text for its inline size codes: '&' + two digits 534..536 raises the line to 3 and 537..543
+ * raises it to 10; the widest code adds to textLineHeight. Two-byte characters are skipped whole. The digits are
+ * read as raw bytes, so a code number NN appears as 528 + NN in the comparisons below. */
+void textAddNextLineSize(unsigned char *text)
+{
+    unsigned char extraHeight;
+    unsigned char *cursor;
+    int sizeCode;
+
+    cursor = text;
+    extraHeight = 0;
+    while (*cursor != 0) {
+        if ((signed char)*cursor < 0) {
+            cursor++;
+        } else if (*cursor == '\n') {
+            break;
+        } else if (*cursor == '&' && cursor[1] != 0 && cursor[2] != 0) {
+            sizeCode = cursor[1] * 10 + cursor[2];
+            if ((unsigned int)(sizeCode - 529) < 29) {
+                if ((unsigned int)(sizeCode - 534) < 3) {
+                    if (extraHeight < 3) {
+                        extraHeight = 3;
+                    }
+                } else if ((unsigned int)(sizeCode - 537) < 7) {
+                    if (extraHeight < 10) {
+                        extraHeight = 10;
+                    }
+                }
+                cursor += 2;
+            }
+        }
+        cursor++;
+    }
+    textLineHeight += extraHeight;
+}
+
+extern int xglFontZoom;
+int xglFontGetMarkupWidth(const unsigned char *text);
+void textDrawSegment(int x, int y, void *text, int style);
+
+/* Draws a text: one segment per line or per &NN control code. The control
+ * code value is kept in next across the two draw calls. */
+void textDrawString(int x, int y, unsigned char *text)
+{
+    unsigned char *cursor;
+    unsigned char *nextOrCode;
+    unsigned char *lineStart;
+    int cursorX;
+    int startX;
+    int byteValue;
+    unsigned char curChar;
+    unsigned char curByte;
+    int controlCode;
+
+    startX = x;
+    xglFontZoom = TEXT_FONT_ZOOM;
+    textLineHeight = TEXT_LINE_HEIGHT_DEFAULT;
+    cursorX = startX;
+    lineStart = text;
+    cursor = text;
+    while ((curByte = *cursor) != 0) {
+        byteValue = curByte;
+        if ((signed char)byteValue < 0) {
+            nextOrCode = cursor + 2;
+        } else if ((curChar = byteValue) == '\n') {
+            *cursor = 0;
+            textDrawSegment(cursorX, y, lineStart, 4);
+            cursorX = startX;
+            xglFontGetMarkupWidth(lineStart);
+            *cursor = curChar;
+            lineStart = cursor + 1;
+            nextOrCode = lineStart;
+            textAddNextLineSize(lineStart);
+            y += textLineHeight;
+            textLineHeight = TEXT_LINE_HEIGHT_DEFAULT;
+        } else if (curChar == '&' && cursor[1] != 0 && cursor[2] != 0) {
+            controlCode = (cursor[1] - '0') * 10 + (cursor[2] - '0');
+            nextOrCode = (unsigned char *)controlCode;
+            if (controlCode >= 1 && controlCode <= 29) {
+                *cursor = 0;
+                textDrawSegment(cursorX, y, lineStart, 4);
+                cursorX += xglFontGetMarkupWidth(lineStart);
+                *cursor = curChar;
+                lineStart = cursor + 3;
+                cursorX += textDrawControlCode(cursorX, y, (int)nextOrCode);
+                nextOrCode = lineStart;
+            } else {
+                nextOrCode = cursor + 1;
+            }
+        } else {
+            nextOrCode = cursor + 1;
+        }
+        cursor = nextOrCode;
+    }
+    curChar = byteValue;
+    textDrawSegment(cursorX, y, lineStart, 4);
+}
 
 extern char D_0068B588[];
 extern char D_0068B5B8[];
@@ -173,7 +477,6 @@ extern char D_0069D9F0[];
 extern char D_0069D9F8[];
 extern char D_0069DA00[];
 extern char D_0069DA08[];
-
 void xglFontFlush(void);
 int xglCdArenaGetSize(void);
 void fontObjResetState(void);
@@ -222,22 +525,22 @@ void textDrawAll(void)
         if (textWindow.fade < 8) {
             fontObjSetOpacity(textWindow.fade << 4);
         }
-        packetSubmitRequestEx(0x2BE, textWindow.x, textWindow.y, textWindow.width, 0x20, 0x10104);
+        packetSubmitRequestEx(0x2BE, textWindow.track.current_pair[0], textWindow.track.current_pair[1], textWindow.width, 0x20, 0x10104);
         if (textWindow.text) {
             textDrawSegment(0, 0, D_0068B588, 0);
-            textDrawString(textWindow.x + 12, textWindow.y + 6, textWindow.text);
+            textDrawString(textWindow.track.current_pair[0] + 12, textWindow.track.current_pair[1] + 6, textWindow.text);
         }
         fontObjResetColor();
         fontObjResetOpacity();
         xglFontFlush();
     }
 
-    for (slot = 0; slot < 4; slot++) {
-        if (textEntryPool[slot].state == 0) {
+    for (slot = 0; slot < TEXT_ENTRY_POOL_SIZE; slot++) {
+        if (textEntryPool[slot].state == TEXT_STATE_FREE) {
             continue;
         }
         entry = &textEntryPool[slot];
-        if (entry->state == 1) {
+        if (entry->state == TEXT_STATE_OPEN) {
             x = entry->x;
             y = entry->y;
             width = entry->width;
@@ -252,16 +555,16 @@ void textDrawAll(void)
         fontObjResetState();
         menuDrawTitledWindow(x, y, width, height, entry->title);
         fontObjResetOpacity();
-        grSetScissor(x + 5, entry->title == 0 ? y + 5 : y + 16, x + width + 26, y + height + 25);
+        grSetScissor(x + 5, entry->word_1c.title == 0 ? y + 5 : y + 16, x + width + 26, y + height + 25);
         if (entry->pages && entry->pages[entry->page]) {
-            if (entry->marker) {
-                textMarkerScan(entry->pages[entry->page], entry->marker);
+            if (entry->count) {
+                textMarkerScan(entry->pages[entry->page], entry->count);
             }
             textDrawSegment(0, 0, D_0068B588, 0);
             textEncodeNewlines(entry->pages[entry->page]);
-            textDrawString(entry->x + 8, entry->y + (entry->title == 0 ? 8 : 19),
+            textDrawString(entry->x + 8, entry->y + (entry->word_1c.title == 0 ? 8 : 19),
                            entry->pages[entry->page]);
-            if (entry->marker) {
+            if (entry->count) {
                 textMarkerRestore();
             }
         }
@@ -269,12 +572,12 @@ void textDrawAll(void)
         grResetScissor();
     }
 
-    for (slot = 0; slot < 2; slot++) {
-        if (choiceMenuSlots[slot].state == 0) {
+    for (slot = 0; slot < CHOICE_MENU_SLOTS; slot++) {
+        if (choiceMenuSlots[slot].state == TEXT_STATE_FREE) {
             continue;
         }
         menu = &choiceMenuSlots[slot];
-        if (menu->state == 1) {
+        if (menu->state == TEXT_STATE_OPEN) {
             x = menu->x;
             y = menu->y;
             width = menu->width;
@@ -327,7 +630,7 @@ void textDrawAll(void)
                     }
                     if (i % menu->columns == menu->columns - 1) {
                         x = menu->x + 24;
-                        y += 24;
+                        y += CHOICE_ROW_HEIGHT;
                     } else {
                         x += columnWidth;
                     }
@@ -340,19 +643,19 @@ void textDrawAll(void)
     }
 
     panel = &textBlock;
-    if (panel->state == 0) {
+    if (panel->state == TEXT_STATE_FREE) {
         return;
     }
-    if (panel->state == 1) {
+    if (panel->state == TEXT_STATE_OPEN) {
         x = panel->x;
-        width = 256;
+        width = ANALYZE_PANEL_WIDTH;
         y = panel->y;
-        height = 192;
+        height = ANALYZE_PANEL_HEIGHT;
     } else {
-        width = 256 * panel->tick / BOX_OPEN_STEPS;
-        height = 192 * panel->tick / BOX_OPEN_STEPS;
-        x = panel->x + ((256 - width) >> 1);
-        y = panel->y + ((192 - height) >> 1);
+        width = ANALYZE_PANEL_WIDTH * panel->tick / BOX_OPEN_STEPS;
+        height = ANALYZE_PANEL_HEIGHT * panel->tick / BOX_OPEN_STEPS;
+        x = panel->x + ((ANALYZE_PANEL_WIDTH - width) >> 1);
+        y = panel->y + ((ANALYZE_PANEL_HEIGHT - height) >> 1);
         fontObjSetOpacity(panel->tick << 5);
     }
     fontObjResetState();
@@ -434,17 +737,84 @@ void textDrawAll(void)
     grResetScissor();
 }
 
-
 /* Clears the tick (+8) and the state byte (+9) of the text block. */
 void textBlockClear(void) {
-    textBlock.state = 0;
+    textBlock.state = TEXT_STATE_FREE;
     textBlock.tick = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu125", textBlockStart);
+/* Starts the text block at (x, y): copies the 40 bytes of analysis stats (hp to itemKind) and opens it. */
+void textBlockStart(int x, int y, const unsigned char *stats)
+{
+    if (stats == 0) {
+        return;
+    }
+    textBlock.x = x;
+    textBlock.y = y;
+    __builtin_memcpy(&textBlock.hp, stats, 40);
+    textBlock.state = TEXT_STATE_OPENING;
+    textBlock.tick = 0;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu125", textBlockIsActive);
+/* Nonzero while the ANALYZE block is open or opening: states 0 and 3 are inactive. */
+int textBlockIsActive(void)
+{
+    if (textBlock.state == TEXT_STATE_FREE || textBlock.state == TEXT_STATE_CLOSING) {
+        return 0;
+    }
+    return 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu125", textBlockUpdate);
+/* Steps textBlock.state: 2 counts tick up to 4 and then becomes 1; 1 waits until textOptionFlags bits 0x60 are set,
+ * then becomes 3 with tick 4; 3 counts tick down to 0 and then becomes 0. */
+void textBlockUpdate(void)
+{
+    switch (textBlock.state) {
+    case TEXT_STATE_OPENING:
+        textBlock.tick++;
+        if (textBlock.tick >= BOX_OPEN_STEPS) {
+            textBlock.tick = 0;
+            textBlock.state = TEXT_STATE_OPEN;
+        }
+        break;
+    case TEXT_STATE_CLOSING:
+        textBlock.tick--;
+        if (textBlock.tick == 0) {
+            textBlock.state = TEXT_STATE_FREE;
+        }
+        break;
+    case TEXT_STATE_OPEN:
+        if ((textOptionFlags[0] & 0x60) != 0) {
+            textBlock.state = TEXT_STATE_CLOSING;
+            textBlock.tick = BOX_OPEN_STEPS;
+        }
+        break;
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu125", textUpdate);
+void choiceMenuUpdate(int index);
+void xglTickIncrement(void);
+
+/* Advances the text window, the text entries, the choice menus and the text block, then queues the text draw. */
+void textUpdate(void)
+{
+    int i;
+
+    if (textWindow.fade > 0) {
+        fontTrackEase(&textWindow.track);
+        textWindow.fade--;
+    }
+    for (i = 0; i < TEXT_ENTRY_POOL_SIZE; i++) {
+        if (textEntryPool[i].state != TEXT_STATE_FREE) {
+            textEntryUpdate(&textEntryPool[i]);
+        }
+    }
+    for (i = 0; i < CHOICE_MENU_SLOTS; i++) {
+        if (choiceMenuSlots[i].state != TEXT_STATE_FREE) {
+            choiceMenuUpdate(i);
+        }
+    }
+    textBlockUpdate();
+    xglCallbackQueueAdd((int)textDrawAll);
+    xglTickIncrement();
+}

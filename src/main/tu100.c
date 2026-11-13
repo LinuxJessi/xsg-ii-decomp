@@ -361,7 +361,7 @@ void panelDrawNineSlice(void *record, int x, int y, int width, int height);
 void menuDrawTitledFrame(int x, int y, int width, int height, void *text);
 int xglFontGetStringWidth();
 extern char D_0068A3F0[];
-extern unsigned char D_003EB290[];
+extern unsigned char menuPanelFrame[];
 extern unsigned char D_0069D530[];
 extern int D_006A54A4[];
 extern int D_006A54A8[];
@@ -382,7 +382,7 @@ void menuMapListDraw(struct ItemList *list) {
     panelTop = 0x94 - list->count * 7;
     panelHeight = list->count * MENU_ITEM_ROW_HEIGHT + 0x1B;
     textDrawSegment(0, 0, D_0068A3F0, 0);
-    panelDrawNineSlice(D_003EB290, 0x1A, panelTop, 0x1CC, panelHeight);
+    panelDrawNineSlice(menuPanelFrame, 0x1A, panelTop, 0x1CC, panelHeight);
     fontTrackEase(&D_006A54A0[0]);
     fontTrackEase(&D_006A54A0[1]);
     fontTrackEase(&D_006A54A0[2]);
