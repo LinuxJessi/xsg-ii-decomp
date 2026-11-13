@@ -11,7 +11,7 @@ extern unsigned char xglFontWidthFormat[];
 extern unsigned char xglFontPropTag[];
 extern unsigned char xglFontWidthPlaceholder[];
 extern unsigned char xglFontWidthValueFormat[];
-void func_002AA5D8();
+void sprintf();
 void xglFontWidthMeasureTemplate(void);
 
 /*
@@ -44,7 +44,7 @@ void xglFontWidthMeasureTemplate(void)
 {
     int template_text[20];
 
-    func_002AA5D8(template_text, xglFontWidthFormat, D_0068D590, xglFontPropTag, xglFontWidthPlaceholder);
+    sprintf(template_text, xglFontWidthFormat, D_0068D590, xglFontPropTag, xglFontWidthPlaceholder);
     xglFontWidthBase = xglFontGetStringWidth(template_text);
 }
 
@@ -60,8 +60,8 @@ void xglFontWidthAddValue(void)
 
     if (xglFontWidthValues != 0)
     {
-        func_002AA5D8(value_text, xglFontWidthValueFormat, xglFontWidthValues[xglFontWidthIndex]);
-        func_002AA5D8(item_text, xglFontWidthFormat, D_0068D590, xglFontPropTag, value_text);
+        sprintf(value_text, xglFontWidthValueFormat, xglFontWidthValues[xglFontWidthIndex]);
+        sprintf(item_text, xglFontWidthFormat, D_0068D590, xglFontPropTag, value_text);
         width = xglFontGetStringWidth(item_text);
         xglFontWidthSum = xglFontWidthSum + (width - xglFontWidthBase);
         xglFontWidthIndex = xglFontWidthIndex + 1;

@@ -336,7 +336,7 @@ void func_A9C938(void);
 void scriptRegisterModules(void);
 void sefSetCurrentOwner(int owner);
 void resApplyCfFile(int id);
-int func_002AA5D8(char *destination, const char *format, ...);
+int sprintf(char *destination, const char *format, ...);
 int xglCdReadFile(const char *name, void *buffer, int mode, int flags);
 int xglGetLanguageCode(char *code);
 int func_A9CEE8(unsigned char *scene, unsigned char *end);
@@ -384,9 +384,9 @@ void func_001EECE0(int id, signed char mode)
     sceneName[3] = id / 100 % 10 + '0';
     sceneName[4] = id / 10 % 10 + '0';
     sceneName[5] = id % 10 + '0';
-    func_002AA5D8(path, D_0069D1D0, sceneName);
+    sprintf(path, D_0069D1D0, sceneName);
     size = xglCdReadFile(path, D_003C6DC0, 0, 0);
-    func_002AA5D8(languagePath, D_006895D0, sceneName);
+    sprintf(languagePath, D_006895D0, sceneName);
     xglGetLanguageCode(languagePath + 3);
     xglCdReadFile(languagePath, D_003C6DC0 + size, 0, 0);
     if (!func_A9CEE8(D_003C6DC0, D_003C6DC0 + size)) {

@@ -172,6 +172,14 @@ typedef struct UwamonoObject {
 extern UwamonoObject uwamonoRecords[];
 extern int uwamonoCurrentIndex;
 
+/* One 0x870-byte record of uwamonoScaleRecords: the scale of the map object record in the same slot. */
+typedef struct UwamonoScaleRecord {
+    float scale;                        /* +0x000 */
+    unsigned char unmodeled_004[0x870 - 0x004];
+} UwamonoScaleRecord;
+
+extern UwamonoScaleRecord uwamonoScaleRecords[];
+
 /* Functions of src/main/tu051.c that other files call. */
 
 void cameraApplySlots(int slot_mask, int index_a, int index_b, int enable_flag);

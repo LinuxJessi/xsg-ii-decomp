@@ -461,7 +461,7 @@ int xglRenderCpUDispFlag = 0;     /* 0 by xglRenderCpUDispOff, 1 by xglRenderCpU
 int xglRenderClearSkip = 0;       /* 1 by xglRenderClearSkipOn, 0 by xglRenderClearSkipOff */
 signed char D_0069E094 = 0;
 int D_0069E098 = 0;
-int D_0069E09C = 0;
+int LoopCount = 0;
 /* The GS VSync interrupt callback increments this counter while
  * xglRenderSyncMove polls it on the render thread. */
 volatile u32 VSyncCount = 0;
@@ -1027,7 +1027,7 @@ void xglRenderInit(void)
     xglRenderSyncInit();
     xglRenderSetReso(1);
     D_0069E098 = 0;
-    D_0069E09C = 0;
+    LoopCount = 0;
     D_0069E094 = 2;
     ScanLineInterpolate = 1;
     xglRenderStatus = 0;
@@ -1206,7 +1206,7 @@ void pxyBeginFrame(void);
 void xglRenderMove(void)
 {
             extern int D_0069E098;
-    extern int D_0069E09C;
+    extern int LoopCount;
 
     func_001CC4EC();
     if (D_006458A4 == 0) {
@@ -1232,7 +1232,7 @@ void xglRenderMove(void)
     xglPacketSwapBuffers();
     xglRenderSyncMove();
     D_0069E098++;
-    D_0069E09C++;
+    LoopCount++;
     sceGsResetGraph(1, 0, 0, 0);
     xglRenderSwapBase();
     xglRenderDrawEnvMove();

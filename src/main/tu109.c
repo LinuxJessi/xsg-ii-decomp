@@ -683,26 +683,26 @@ typedef struct SelectionRecord {
 } SelectionRecord;
 
 extern SelectionRecord selectionRecordTable[];
-void *func_A9B850(int dispatch_value, int value);
-void *func_A9B750(int dispatch_value, int value);
+char *func_00A9B850(int dispatch_value, int value);
+char *func_00A9B750(int dispatch_value, int value);
 
 /* Returns the text pointer of the OV01 call (tu101 draws it with textDrawSegment). */
-void *selectionRecordSetValue(int index, int value)
+char *selectionRecordSetValue(int index, int value)
 {
     SelectionRecord *record;
 
     record = &selectionRecordTable[index];
     if (record->kind < 2)
     {
-        return func_A9B850(record->dispatch_value, value);
+        return func_00A9B850(record->dispatch_value, value);
     }
     else
     {
-        return func_A9B750(record->dispatch_value, value);
+        return func_00A9B750(record->dispatch_value, value);
     }
 }
 
-void *selectionSetValue(int group, int slot, int sub, int value)
+char *selectionSetValue(int group, int slot, int sub, int value)
 {
     return selectionRecordSetValue(selectionRecordIndex(group, slot, sub), value);
 }

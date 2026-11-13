@@ -306,13 +306,13 @@ INCLUDE_ASM("asm/main/nonmatchings/tu242", textSkipLineBreaksBack);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu242", func_00286CA0);
 
-void func_002AA5D8(int first, const char *text, int second);
+void sprintf(int first, const char *text, int second);
 extern char textHanTagFormat[];
 
 /* Formats the "$han1;" markup tag followed by the name into first. */
 void textFormatHanTag(char *dst, const char *src)
 {
-    func_002AA5D8(dst, textHanTagFormat, src);
+    sprintf(dst, textHanTagFormat, src);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu242", func_00286D40);

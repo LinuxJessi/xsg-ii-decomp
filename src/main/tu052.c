@@ -1,7 +1,8 @@
 #include "common.h"
 #include "shared.h"
 
-/* The request block of mapProbeInit and mapMoveProbe (get.c's UnduParam): the header word and the attribute word. */
+/* The request block of mapProbeInit and mapMoveProbe (get.c's UnduParam): the header word and the attribute word.
+   local view: the shared UnduParam of get.h (0x2C bytes, same members) changed the .text bytes of uwamonoStartAreaBlend in a probe; this 0x40-byte view stays. */
 typedef struct UnduParam {
     unsigned char unmodeled_00[0x18];
     int header;                         /* +0x18: set from mapFindBlockEntry before the probe */
@@ -76,6 +77,7 @@ int mapFindBlockEntry(int, int);
 void mapProbeInit(UnduParam *request);
 float mapMoveProbe(const Vector4 *position, int mode, UnduParam *request);
 void xglFontDebugPrintf(int, int, const char *, ...);
+/* local view: the shared Get_MiddlePoint of get.h takes Vector4 pointers; the Vector4 record views change the code of uwamonoUpdateMidpoints. */
 void Get_MiddlePoint(float *start, float *follow, int cursor, int count, float *out);
 
 /*

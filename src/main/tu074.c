@@ -541,7 +541,8 @@ int uwamonoSendSignal(int source)
     return 0;
 }
 
-/* The record block at uwamonoScaleRecords: only the first float is read here. */
+/* The record block at uwamonoScaleRecords: only the first float is read here.
+   local view: the shared UwamonoScaleRecord of tu051.h cannot be included here, because tu051.h types uwamonoRecords as UwamonoObject and this file as UwamonoRecordView. */
 typedef struct UwamonoScaleRecord {
     float scale;                        /* +0x000 */
     unsigned char unmodeled_004[0x870 - 0x004];

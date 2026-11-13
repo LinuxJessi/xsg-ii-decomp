@@ -1504,7 +1504,7 @@ void xglStudioLightReset(void *light)
     xglLightSetDefault(light);
 }
 
-void func_002A9E04(void *destination, void *source, int size);
+void *memcpy(void *destination, const void *source, unsigned int size);
 void xglZeroQuadwords18(AlignedVector4 *dst);
 void xglDirectionFromAngles(Vector4 *destination, const Vector4 *source);
 
@@ -1562,14 +1562,14 @@ void xglLightSetDefault(XglLightSet *lightSet)
             register Vector4 *src = (Vector4 *)lightSet;
             register void *saved = &xglLightSetDefaultCache;
             register Vector4 *copy = src;
-            func_002A9E04(saved, copy, sizeof(XglLightSet));
+            memcpy(saved, copy, sizeof(XglLightSet));
         }
         xglLightSetDefaultReady = 1;
     } else {
         {
             register XglLightSet *dst = lightSet;
             register XglLightSet *cache = &xglLightSetDefaultCache;
-            func_002A9E04(dst, cache, sizeof(XglLightSet));
+            memcpy(dst, cache, sizeof(XglLightSet));
         }
     }
     xglMotionCacheValid = 0;

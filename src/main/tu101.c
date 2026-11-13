@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/pad.h"
 #include "main/tu101.h"
+#include "main/tu109.h"
 #include "main/tu096.h"
 #include "main/tu097.h"
 #include "main/tu110.h"
@@ -411,21 +412,19 @@ INCLUDE_ASM("asm/main/nonmatchings/tu101", func_0021EE68);
    cleared through fontTrackSetBoth and pending is zeroed. */
 typedef struct Tu104Record {
     int status;
-    unsigned char first_block[0x1C];
-    unsigned char second_block[0x1C];
+    struct FontTrack first_block;
+    struct FontTrack second_block;
     int pending;
 } Tu104Record;
 
 
-void func_0020CD50(void *);
-void fontTrackSetBoth(void *, int, int);
 void fontObjSetColorRgba(int, int, int, int);
 void textDrawDigits(int, int, int, int);
 void func_0021CC08(int, int, int, int);
 void func_0021F658(int, int, int, int, int);
 extern unsigned short menuIconKinds[];
-extern int menuCursorPos[];
-extern int menuCursorSize[];
+extern struct FontTrack menuCursorPos[];
+extern struct FontTrack menuCursorSize[];
 
 /* Icon at (x, y): the backing piece 0x157, then the kind stored in menuIconKinds[index]. */
 void menuDrawIndexedIcon(int x, int y, int index)
@@ -451,12 +450,12 @@ INCLUDE_ASM("asm/main/nonmatchings/tu101", func_0021F2F0);
 /* Cursor box: position from menuCursorPos, size from menuCursorSize, kind 0x82 with mode 0x105. */
 void menuDrawCursor(void)
 {
-    func_0020CD50(menuCursorPos);
-    func_0020CD50(menuCursorSize);
-    func_0020CD50(menuCursorPos);
-    func_0020CD50(menuCursorSize);
+    fontTrackEase(menuCursorPos);
+    fontTrackEase(menuCursorSize);
+    fontTrackEase(menuCursorPos);
+    fontTrackEase(menuCursorSize);
     fontObjSetColorRgba(0x24, 0, 0x48, 0x80);
-    packetSubmitRequestEx(0x82, menuCursorPos[0], menuCursorPos[1], menuCursorSize[0], menuCursorSize[1], 0x105);
+    packetSubmitRequestEx(0x82, menuCursorPos[0].current_pair[0], menuCursorPos[0].current_pair[1], menuCursorSize[0].current_pair[0], menuCursorSize[0].current_pair[1], 0x105);
     fontObjResetColor();
 }
 
@@ -580,8 +579,6 @@ void func_0021F2F0(int x, int y, int width, int blink);
 void func_0021F8A8(int x, int y, int record);
 int selectionEntryBitOutsideMask(int group, int slot, int sub, int mask);
 int selectionRecordIndex(int group, int slot, int sub);
-void *selectionSetValue(int group, int slot, int sub, int value);
-unsigned short selectionGetValue(int group, int slot, int sub);
 extern LicenseRecord selectionRecordTable[];
 extern unsigned char msgStyleInit[];
 extern unsigned char D_0069D620[];
@@ -809,8 +806,8 @@ void menuResetRecord(Tu104Record *record)
 {
     if (record != 0) {
         record->status = -1;
-        fontTrackSetBoth(record->first_block, 0, 0);
-        fontTrackSetBoth(record->second_block, 0, 0);
+        fontTrackSetBoth(&record->first_block, 0, 0);
+        fontTrackSetBoth(&record->second_block, 0, 0);
         record->pending = 0;
     }
 }
@@ -1156,7 +1153,11 @@ typedef int s32;
  * flags: 0x4 locks the cursor. */
 typedef struct MenuObject {
     s32 state_words[4];
-    unsigned char unmodeled_10[0x3CC - 0x10];
+    unsigned char unmodeled_10[0x1C - 0x10];
+    struct FontTrack track_1C;
+    struct FontTrack track_38;
+    struct FontTrack track_54;
+    unsigned char unmodeled_70[0x3CC - 0x70];
     s32 cursor;
     s32 prev_cursor;
     unsigned char unmodeled_3D4[4];
@@ -1165,7 +1166,6 @@ typedef struct MenuObject {
     s32 flags;
 } MenuObject;
 
-void fontTrackAdvance(void *);
 void menuPlaceItemCursor(void *, s32);
 void menuSetMode();
 
@@ -1179,15 +1179,15 @@ void menuHide(MenuObject *object) {
         element = (char *) object;
         do {
             index += 1;
-            fontTrackAdvance(element + 0x90);
-            fontTrackAdvance(element + 0xAC);
+            fontTrackAdvance((struct FontTrack *) (element + 0x90));
+            fontTrackAdvance((struct FontTrack *) (element + 0xAC));
             element += 0x40;
         } while (index < object->item_count);
     }
     menuPlaceItemCursor(object, object->cursor);
-    fontTrackAdvance((char *) object + 0x1C);
-    fontTrackAdvance((char *) object + 0x38);
-    fontTrackAdvance((char *) object + 0x54);
+    fontTrackAdvance(&object->track_1C);
+    fontTrackAdvance(&object->track_38);
+    fontTrackAdvance(&object->track_54);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu101", menuSkipDisabled);
@@ -1320,7 +1320,7 @@ typedef struct CountdownState {
 } CountdownState;
 
 extern CountdownState countdownState;
-extern int D_006A5824[];
+extern struct FontTrack D_006A5824[];
 extern int choiceFirstOptionText[];
 
 /* Sets the text of the first option of the choice prompt (choiceState +0x40); choiceDraw draws it at x 0xB4. */
@@ -1345,7 +1345,7 @@ int choiceUpdate(void)
         if (PadData[0].directionRepeated & 0xA000) {
             seVoiceStartDefault(0x01000001);
             choiceState.state ^= 1;
-            fontTrackSetTarget(&choiceState, (signed char) choiceState.state * 0x78 + 0xA0, choiceState.id);
+            fontTrackSetTarget((struct FontTrack *) &choiceState, (signed char) choiceState.state * 0x78 + 0xA0, choiceState.id);
         }
         if (PadData[0].directionPressed & 0x40) {
             choiceState.state = 2;
@@ -1381,7 +1381,6 @@ int countdownTick(void)
     return countdownState.count;
 }
 
-void func_0020CD50(void *);
 void textDrawSegment(int, int, void *, int);
 void func_0021DE60(int, int, int, int);
 void func_0021E338(int, int, int, int);
@@ -1396,8 +1395,8 @@ void countdownDraw(void)
     /* The record starts four bytes before D_006A5824, the word that the
      * two callees below receive by address. */
     countdown = (CountdownState *) ((unsigned char *) D_006A5824 - 4);
-    func_0020CD50(D_006A5824);
-    func_0020CD50(D_006A5824);
+    fontTrackEase(D_006A5824);
+    fontTrackEase(D_006A5824);
     fontObjSetOpacity(countdown->value);
     func_0021DE60(0x50, 0xB4, 0x160, 0x50);
     func_0021E338(0x54, 0xB8, 0x158, 0x48);
