@@ -113,7 +113,7 @@ typedef struct JpegDecodeRequest {
 #define IMAGE_LOAD_OFFSET 0x100000
 
 /* The GameEnd map: GameOver shows the ending screen when gameWork.mapId is this. */
-#define MAP_ID_GAME_END 0x1B91 /* tu110.c MAP_ID_SPLIT_FLAG_MAP */
+#define MAP_ID_GAME_END 0x1B91
 
 /* The first map of a new game: Title's New Game writes it to gameWork.state. */
 #define MAP_ID_NEW_GAME 0x1B59

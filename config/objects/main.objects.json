@@ -67149,9 +67149,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0022A560",
+     "name": "ptGetMenuMember",
      "size": 64,
-     "splat_name": "func_0022A560",
+     "splat_name": "ptGetMenuMember",
      "va": "0x0022a560",
      "name_basis": "address",
      "provenance": "estimated"
@@ -67194,9 +67194,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022A7D8",
+     "name": "ptSwapRosterEntries",
      "size": 92,
-     "splat_name": "func_0022A7D8",
+     "splat_name": "ptSwapRosterEntries",
      "va": "0x0022a7d8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -67275,18 +67275,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022ADA0",
+     "name": "ptFindRosterEntry",
      "size": 112,
-     "splat_name": "func_0022ADA0",
+     "splat_name": "ptFindRosterEntry",
      "va": "0x0022ada0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022AE10",
+     "name": "ptGetClothId",
      "size": 228,
-     "splat_name": "func_0022AE10",
+     "splat_name": "ptGetClothId",
      "va": "0x0022ae10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -67302,9 +67302,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022AF98",
+     "name": "ptApplyCurrentModel",
      "size": 144,
-     "splat_name": "func_0022AF98",
+     "splat_name": "ptApplyCurrentModel",
      "va": "0x0022af98",
      "name_basis": "address",
      "provenance": "estimated"
@@ -67320,18 +67320,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022B0B8",
+     "name": "ptFillCopilots",
      "size": 272,
-     "splat_name": "func_0022B0B8",
+     "splat_name": "ptFillCopilots",
      "va": "0x0022b0b8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022B1C8",
+     "name": "ptFillReserve",
      "size": 220,
-     "splat_name": "func_0022B1C8",
+     "splat_name": "ptFillReserve",
      "va": "0x0022b1c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -67365,27 +67365,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022B498",
+     "name": "ptGetMainPilotId",
      "size": 80,
-     "splat_name": "func_0022B498",
+     "splat_name": "ptGetMainPilotId",
      "va": "0x0022b498",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022B4E8",
+     "name": "ptGetCopilotId",
      "size": 80,
-     "splat_name": "func_0022B4E8",
+     "splat_name": "ptGetCopilotId",
      "va": "0x0022b4e8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022B538",
+     "name": "ptAllCopilotsAssigned",
      "size": 96,
-     "splat_name": "func_0022B538",
+     "splat_name": "ptAllCopilotsAssigned",
      "va": "0x0022b538",
      "name_basis": "address",
      "provenance": "estimated"
@@ -67401,9 +67401,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022B5E0",
+     "name": "ptResetStatusBlock",
      "size": 104,
-     "splat_name": "func_0022B5E0",
+     "splat_name": "ptResetStatusBlock",
      "va": "0x0022b5e0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -67419,18 +67419,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022BA18",
+     "name": "ptFlagCombinationIndex",
      "size": 224,
-     "splat_name": "func_0022BA18",
+     "splat_name": "ptFlagCombinationIndex",
      "va": "0x0022ba18",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022BAF8",
+     "name": "ptLoadPartyModels",
      "size": 252,
-     "splat_name": "func_0022BAF8",
+     "splat_name": "ptLoadPartyModels",
      "va": "0x0022baf8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -67464,9 +67464,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0022CEE0",
+     "name": "saveReadGameWork",
      "size": 456,
-     "splat_name": "func_0022CEE0",
+     "splat_name": "saveReadGameWork",
      "va": "0x0022cee0",
      "name_basis": "address",
      "provenance": "estimated"
