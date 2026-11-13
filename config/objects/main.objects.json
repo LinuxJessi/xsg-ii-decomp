@@ -106494,9 +106494,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A9E04",
+     "name": "memcpy",
      "size": 176,
-     "splat_name": "func_002A9E04",
+     "splat_name": "memcpy",
      "va": "0x002a9e04",
      "name_basis": "address",
      "provenance": "estimated"

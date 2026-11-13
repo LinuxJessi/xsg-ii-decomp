@@ -160,7 +160,7 @@ void drawSellCloseButtons(LabelWidget *widget) {
 }
 
 int textRunLength(int used);
-s32 func_002A9E04(char *dst, const char *src, s32 n);
+void *memcpy(void *destination, const void *source, unsigned int size);
 
 /* Appends the colour tag for `color` and the run of `src` up to its break to dst; returns the rest of src. */
 const char *appendColoredRun(char *dst, const char *src, s32 color) {
@@ -172,7 +172,7 @@ const char *appendColoredRun(char *dst, const char *src, s32 color) {
     color_tag = fontColorTag(color);
     func_002AA5D8(dst, fmtString, color_tag);
     end = strchr(dst, '\0');
-    func_002A9E04(end, src, run_len);
+    memcpy(end, src, run_len);
     end[run_len] = '\0';
     return src + run_len;
 }
@@ -189,7 +189,7 @@ char *appendStyledRun(char *dest, char *text, int color) {
     color_tag = fontColorTag(color);
     func_002AA5D8(dest, fmtThreeStrings, fontStylePrefix, fontPropTag, color_tag);
     end = strchr(dest, 0);
-    func_002A9E04(end, text, run_len);
+    memcpy(end, text, run_len);
     end[run_len] = '\0';
     return text + run_len;
 }

@@ -174,6 +174,7 @@
    "0x002a1c20": "sinf",
    "0x002a1df8": "atan2f",
    "0x002a1e28": "sqrtf",
+   "0x002a9e04": "memcpy",
    "0x002a9eb4": "memset",
    "0x002aa0a8": "printf",
    "0x002aa91c": "strchr",

@@ -1835,14 +1835,14 @@ void xglCopyRenderFrameToZBuffer(s32 unused0, s32 unused1)
 }
 
 
-void func_002A9E04(void *, void *, int);
+void *memcpy(void *destination, const void *source, unsigned int size);
 
 u8 *xglPacketAppendData(void *data, int size)
 {
     XglPacket *packet;
 
     packet = xglPacketGetCurrent();
-    func_002A9E04(packet->cursor, data, size);
+    memcpy(packet->cursor, data, size);
     packet->cursor += size;
     return packet->cursor - size;
 }

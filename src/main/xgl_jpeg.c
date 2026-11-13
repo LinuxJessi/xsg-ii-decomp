@@ -1216,7 +1216,7 @@ typedef struct JpegDecodeControl {
 
 void sceGsSetDefLoadImage(void *image, short fbp, short fbw, short psm, short x, short y, short w, short h);
 void sceGsExecLoadImage(void *image, void *data);
-void *func_002A9E04(void *destination, const void *source, int size);
+void *memcpy(void *destination, const void *source, unsigned int size);
 
 /* VU0 constants of the IDCT: imm0_3 holds the eight basis rows (vf1-vf8) and the two butterfly
  * vectors (vf27/vf28), imm1_4 the six colour-conversion rows (vf21-vf26). */
@@ -1375,9 +1375,9 @@ u8 *StartOfScan(u8 *segment, void *requestAddress)
                     for (texelRow = 0; texelRow < mcuHeight; texelRow++) {
                         if (sw->imageWidth < mcuX + mcuWidth) {
                             /* Clip the last MCU to the image width. */
-                            func_002A9E04(destCursor, stagedRgba, (sw->imageWidth - mcuX) * JPEG_RGBA_BYTES);
+                            memcpy(destCursor, stagedRgba, (sw->imageWidth - mcuX) * JPEG_RGBA_BYTES);
                         } else {
-                            func_002A9E04(destCursor, stagedRgba, mcuWidth * JPEG_RGBA_BYTES);
+                            memcpy(destCursor, stagedRgba, mcuWidth * JPEG_RGBA_BYTES);
                         }
                         destCursor += sw->imageWidth * JPEG_RGBA_BYTES; /* advance one destination row */
                         stagedRgba += mcuWidth * JPEG_RGBA_BYTES; /* advance one staged row */
