@@ -4,11 +4,58 @@
 #include "main/sef.h"
 #include "main/tu256.h"
 
+f32 func_002508C8(int, int);
+int cfeListHasItems(void *list);
+
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeListHasItems);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeRecordSample);
+/* One sampled flag: the value and the track it is sampled from (8 bytes). */
+typedef struct CfeFlagRecord {
+    int value;
+    int track;
+} CfeFlagRecord;
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeRecordListSample);
+/* The object whose flag words (+0x4C0) the records set; +0x5EC is its record list. */
+typedef struct CfeFlagOwner {
+    unsigned char unmodeled_000[0x4C0];
+    u32 flags[(0x5EC - 0x4C0) / 4];
+    struct CfeFlagList *list;
+} CfeFlagOwner;
+
+typedef struct CfeFlagList {
+    unsigned char unmodeled_00[0x60];
+    int count;
+} CfeFlagList;
+
+/* Samples a flag record: its track at `time` into its value and into bit
+ * `index` of the owner's flag words. */
+void cfeRecordSample(int time, CfeFlagOwner *owner, CfeFlagRecord *record, int index)
+{
+    int value;
+
+    if (record->track != 0) {
+        value = (int) func_002508C8(record->track, time);
+        record->value = value;
+        if (value != 0) {
+            owner->flags[index >> 5] |= 1 << (index & 0x1F);
+        } else {
+            owner->flags[index >> 5] &= ~(1 << (index & 0x1F));
+        }
+    }
+}
+
+/* Samples every record of the owner's list (records[i] into flag bit i). */
+void cfeRecordListSample(int time, CfeFlagOwner *owner, CfeFlagRecord *records)
+{
+    CfeFlagList *list = owner->list;
+    int i;
+
+    if (cfeListHasItems(list)) {
+        for (i = 0; i < list->count; i++) {
+            cfeRecordSample(time, owner, &records[i], i);
+        }
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeEvaluateNode);
 
@@ -127,7 +174,6 @@ INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeCommandTableEvaluate);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeEvaluateDirections);
 
-f32 func_002508C8(int, int);
 extern CfeEvalGlobal cfeEvalGlobal;
 
 /* Samples the eight sources of the global block cfeEvalGlobal. */
