@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/tu228.h"
 #include "main/tu229.h"
+#include "main/xgl_font.h"
 
 /*
  * Talk-script scroll state. A TalkWork is one talk window: its state gates
@@ -110,16 +111,14 @@ void talkActivate(void) {
     talkSetActive();
 }
 
-int func_00195E90(int, int, int);
-
-/* Applies func_00195E90 to the value twice (its meaning is not read yet). */
-int func_0027E7A0(int value) {
-    int result;
+/* Skips two text units of text (xglFontCopyTextUnit into the word buffer) and returns the text after them. */
+const char *func_0027E7A0(const char *text) {
+    const char *result;
     int pass;
 
-    result = value;
+    result = text;
     for (pass = 0; pass < 2; pass++) {
-        result = func_00195E90(0, result, 0);
+        result = xglFontCopyTextUnit(0, result, 0);
     }
     return result;
 }

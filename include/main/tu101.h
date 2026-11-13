@@ -8,5 +8,8 @@ void packetSubmitRequestEx(int command, int first, int second, int fourth, int f
 void menuDrawKindIcon(int x, int y, int index);
 void menuDrawOutlineFrame(int x, int y, int width, int height);
 void countdownDraw(void);
+int countdownTick(void);
+int choiceUpdate(void);
+void menuDrawSelectArrows(int x, int width, int y);
 
 #endif /* INCLUDE_MAIN_TU101_H */

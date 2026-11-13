@@ -1,64 +1,87 @@
 #include "common.h"
 #include "main/tu097.h"
+#include "main/tu098.h"
+#include "main/pad.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu098", cursorBufferHandlePad);
+extern PadRecord PadData[2];
 
-typedef struct CursorBuffer CursorBuffer;
+/* Sound id of the cursor move sound (seVoiceStartDefault). */
+#define SE_CURSOR_MOVE 0x01000001
+
+int textBoxAnyActive(void);
+int textBoxShowPending(void);
 
 /*
- * Fields named from the loads and stores of the functions in this file.
- * Roles are inferred from access patterns only. cursorBufferHandlePad reads a second
- * step record at offset 0x34: its fields sit at 0x48-0x59, the same layout as
- * 0x14-0x25 here. Offsets 0x26-0x47 are not accessed in this file.
+ * Pad handling for the object. While the first record is active, circle may show pending text,
+ * and then fires the track object unless paused. While the second record is pending a tick and
+ * text is not active, circle or pause advances the second record.
  */
-struct CursorBuffer {
-    int cursor;                        /* 0x00: byte offset into the buffer */
-    int previous_cursor;               /* 0x04: the cursor before the last move */
-    int capacity;                      /* 0x08: size of the buffer in bytes */
-    int unit_size;                     /* 0x0C: size of one element; 0 means none */
-    int mode_flags;                    /* 0x10: bit 0x100 set by cursorBufferInit */
-    int status_flags;                  /* 0x14: bit 0x10000 cleared by cursorBufferReset, bit 0x20000 by cursorBufferTick */
-    int count;                         /* 0x18: advanced by step in cursorBufferTick */
-    int state;                         /* 0x1C: bit 0x10000 is the active flag, bit 0x1 pauses the tracks */
-    int aux_value;                     /* 0x20: cleared by cursorBufferReset */
-    unsigned char mode;                /* 0x24: copied into state by cursorBufferReset and cursorBufferTick */
-    unsigned char step;                /* 0x25: added to count by cursorBufferTick */
-    unsigned char unmodeled_26[0x36];  /* 0x26-0x5B: not accessed in this file */
-    /*
-     * 0x5C: the track object handed to func_0020DCF0, fontObjStartClose and
-     * fontObjAdvanceTracks (main/tu097 treats such a block as struct Tu097Object).
-     * Only its start offset is evidenced; its extent is not, so the one-byte
-     * size is a placeholder and sizeof(CursorBuffer) must not be used.
-     */
-    unsigned char track_object[1];
-};
+void cursorBufferHandlePad(CursorBuffer *buffer) {
+    CursorStep *step;
+    int next_status;
+    int next_state;
+    int next_count;
 
-int func_0020DCF0(void *object);
+    if (buffer == 0) {
+        return;
+    }
+    if (!(buffer->state & CURSOR_FLAG_ACTIVE)) {
+        return;
+    }
+    if (buffer->second_step.status_flags & CURSOR_FLAG_ACTIVE) {
+        if ((PadData[0].pressed & PAD_CIRCLE) && textBoxShowPending()) {
+            return;
+        }
+        if (textBoxAnyActive()) {
+            return;
+        }
+        if ((PadData[0].pressed & PAD_CIRCLE) && !(buffer->state & CURSOR_STATE_PAUSE)) {
+            cursorBufferUpdateTracks(buffer);
+        }
+    } else if (buffer->second_step.status_flags & CURSOR_FLAG_TICK_PENDING) {
+        if ((PadData[0].pressed & PAD_CIRCLE) && textBoxShowPending()) {
+            return;
+        }
+        if (textBoxAnyActive()) {
+            return;
+        }
+        if (!(PadData[0].pressed & PAD_CIRCLE)) {
+            if (!(buffer->state & CURSOR_STATE_PAUSE)) {
+                return;
+            }
+        }
+        step = &buffer->second_step;
+        next_status = step->status_flags & ~CURSOR_FLAG_TICK_PENDING;
+        next_state = step->mode;
+        next_count = step->count + step->step;
+        step->status_flags = next_status;
+        step->count = next_count;
+        step->state = next_state;
+    }
+}
 
 /* Activates the object: sets the active flag in state and starts the track object. */
 void cursorBufferActivate(CursorBuffer *buffer) {
     if (buffer != 0) {
-        buffer->state = buffer->state | 0x10000;
-        func_0020DCF0(buffer->track_object);
+        buffer->state = buffer->state | CURSOR_FLAG_ACTIVE;
+        fontObjStartOpen((struct FontObject *) buffer->track_object);
     }
 }
-
 
 /* Advances the track object unless state bit 0x1 is set. */
 void cursorBufferUpdateTracks(CursorBuffer *buffer) {
     if (buffer != 0) {
-        if (!(buffer->state & 1)) {
-            fontObjStartClose(buffer->track_object);
+        if (!(buffer->state & CURSOR_STATE_PAUSE)) {
+            fontObjStartClose((struct FontObject *) buffer->track_object);
         }
     }
 }
 
-
 /* Deactivates the object: clears the active flag in state and stops the track object. */
 void cursorBufferDeactivate(CursorBuffer *buffer) {
     if (buffer != 0) {
-        buffer->state = buffer->state & 0xFFFEFFFF;
-        fontObjAdvanceTracks(buffer->track_object);
+        buffer->state = buffer->state & ~CURSOR_FLAG_ACTIVE;
+        fontObjAdvanceTracks((struct FontObject *) buffer->track_object);
     }
 }
 
@@ -67,7 +90,7 @@ void cursorBufferReset(CursorBuffer *buffer) {
     int mode;
 
     mode = buffer->mode;
-    buffer->status_flags &= 0xFFFEFFFF;
+    buffer->status_flags &= ~CURSOR_FLAG_ACTIVE;
     buffer->state = mode;
     buffer->aux_value = 0;
     buffer->count = 0;
@@ -82,7 +105,7 @@ void cursorBufferTick(CursorBuffer *buffer) {
     int mode;
     int count;
 
-    status = buffer->status_flags & 0xFFFDFFFF;
+    status = buffer->status_flags & ~CURSOR_FLAG_TICK_PENDING;
     mode = buffer->mode;
     count = buffer->count + buffer->step;
     buffer->state = mode;
@@ -92,17 +115,48 @@ void cursorBufferTick(CursorBuffer *buffer) {
 
 /* Initializes the cursor over a buffer of capacity bytes with unit_size-byte elements; sets mode bit 0x100. */
 void cursorBufferInit(CursorBuffer *buffer, int capacity, int unit_size, int mode_flags) {
-    buffer->mode_flags = mode_flags | 0x100;
+    buffer->mode_flags = mode_flags | CURSOR_MODE_WRAP;
     buffer->unit_size = unit_size;
     buffer->cursor = 0;
     buffer->previous_cursor = 0;
     buffer->capacity = capacity;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu098", cursorBufferWrapOrClamp);
+/*
+ * Keeps the cursor inside [0, capacity). Without CURSOR_MODE_WRAP, or while a direction is held
+ * (auto-repeat, not newly pressed), it clamps to the ends; otherwise it wraps around.
+ */
+void cursorBufferWrapOrClamp(CursorBuffer *buffer) {
+    unsigned int capacity;
 
-/* Keeps cursor inside [0, capacity): a held direction clamps, a fresh one wraps (mode bit 0x100). */
-int cursorBufferWrapOrClamp(CursorBuffer *buffer);
+    capacity = buffer->capacity;
+    if (capacity == 0) {
+        buffer->cursor = 0;
+        return;
+    }
+    if ((buffer->mode_flags & CURSOR_MODE_WRAP) &&
+        !(PadData[0].directionRepeated & ~PadData[0].directionPressed & (PAD_UP | PAD_RIGHT | PAD_DOWN | PAD_LEFT))) {
+        if (buffer->cursor < 0) {
+            if (buffer->previous_cursor == 0) {
+                buffer->cursor = capacity - 1;
+            } else {
+                buffer->cursor = 0;
+            }
+        } else if (buffer->cursor >= capacity) {
+            if (buffer->previous_cursor == capacity - 1) {
+                buffer->cursor = 0;
+            } else {
+                buffer->cursor = capacity - 1;
+            }
+        }
+    } else {
+        if (buffer->cursor < 0) {
+            buffer->cursor = 0;
+        } else if (buffer->cursor >= capacity) {
+            buffer->cursor = capacity - 1;
+        }
+    }
+}
 
 /* Sets the cursor to an absolute byte offset, then clamps or wraps it. */
 void cursorBufferSetOffset(CursorBuffer *buffer, int cursor) {
@@ -116,7 +170,7 @@ void cursorBufferSetOffset(CursorBuffer *buffer, int cursor) {
 
 int seVoiceStartDefault(int code);
 
-/* Moves the cursor by delta bytes, clamps or wraps it, and requests sound 0x01000001 when it moved. */
+/* Moves the cursor by delta bytes, clamps or wraps it, and requests the cursor move sound when it moved. */
 void cursorBufferMoveBy(CursorBuffer *buffer, int delta) {
     int old_cursor;
 
@@ -125,7 +179,7 @@ void cursorBufferMoveBy(CursorBuffer *buffer, int delta) {
     buffer->cursor = old_cursor + delta;
     cursorBufferWrapOrClamp(buffer);
     if (buffer->previous_cursor != buffer->cursor) {
-        seVoiceStartDefault(0x01000001);
+        seVoiceStartDefault(SE_CURSOR_MOVE);
     }
 }
 
@@ -140,7 +194,7 @@ void cursorBufferMoveUnits(CursorBuffer *buffer, int units) {
     buffer->cursor = delta + old_cursor;
     cursorBufferWrapOrClamp(buffer);
     if (buffer->previous_cursor != buffer->cursor) {
-        seVoiceStartDefault(0x01000001);
+        seVoiceStartDefault(SE_CURSOR_MOVE);
     }
 }
 

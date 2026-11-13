@@ -176,11 +176,10 @@ int selectionRecordIndex(int group, int slot, int sub)
 
 INCLUDE_ASM("asm/main/nonmatchings/tu109", selectionRecordSetValue);
 
-void selectionRecordSetValue(int, int);
 
-void selectionSetValue(int group, int slot, int sub, int value)
+char *selectionSetValue(int group, int slot, int sub, int value)
 {
-    selectionRecordSetValue(selectionRecordIndex(group, slot, sub), value);
+    return selectionRecordSetValue(selectionRecordIndex(group, slot, sub), value);
 }
 
 /* One entry per (group, slot, sub), indexed by selectionRecordIndex: kind selects the device call (2 or not),

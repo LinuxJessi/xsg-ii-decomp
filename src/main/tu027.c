@@ -193,7 +193,7 @@ int UsbReadFile(const char *path, void *buffer) {
     return fileSize;
 }
 
-int func_002AA5D8(char *, const char *, int, int);
+int sprintf(char *, const char *, int, int);
 extern const char D_0068E4D8[];
 extern const char netSendCommand[];
 extern const char netPutCommand[];
@@ -228,7 +228,7 @@ int UsbWrite(const char *path, void *buffer, int size) {
             sentBytes = func_0029FFB0(netContext, netWork, handle, cursor, chunkSize, &sendStatus, LAN_NO_TIMEOUT);
             bytesLeft -= sentBytes;
             cursor += sentBytes;
-            func_002AA5D8(progressText, D_0068E4D8, bytesLeft, size);
+            sprintf(progressText, D_0068E4D8, bytesLeft, size);
             LanReportStatus(progressText);
         }
         LanClose(handle);
@@ -263,7 +263,7 @@ int UsbSend(const char *path, void *buffer, int size) {
                 sentBytes = func_0029FFB0(netContext, netWork, handle, cursor, chunkSize, &sendStatus, LAN_NO_TIMEOUT);
                 bytesLeft -= sentBytes;
                 cursor += sentBytes;
-                func_002AA5D8(progressText, D_0068E4D8, bytesLeft, size);
+                sprintf(progressText, D_0068E4D8, bytesLeft, size);
                 LanReportStatus(progressText);
             } while (bytesLeft != 0);
         }

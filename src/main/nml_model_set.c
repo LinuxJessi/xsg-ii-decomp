@@ -1091,7 +1091,7 @@ void pxySetDefaultLight(PxyShadowLight *light)
     register PxyState *dst = &pxyState;
     /* (src = src) is a dead same-value set: it adds a reference to src, so the light
      * pointer, not the address, takes the first volatile-free register as in the original */
-    func_002A9E04(dst, (src = src), 0x180);
+    memcpy(dst, (src = src), 0x180);
 }
 
 /* Address of the pxy state block: the 16-slot entry table at +0x630 and the slot records. */
@@ -1561,12 +1561,12 @@ void func_001BB96C(PxyLight *light)
 }
 
 void *xglPacketReserve(int);
-void func_002A9E04(void *, void *, int);
+void *memcpy(void *destination, const void *source, unsigned int size);
 
 void func_001BB99C(PxyLight *light)
 {
     D_0096A06C = xglPacketReserve(0x19);
-    func_002A9E04(D_0096A06C, light, 0x180);
+    memcpy(D_0096A06C, light, 0x180);
 }
 
 void func_001BB9F4(void) {
@@ -3160,10 +3160,10 @@ int pxySubmitModel(PxyHeader *header)
                             w->out = w->buffer;
                             w->cursor = w->group->sorted;
                             for (w->j = 0; w->j < w->group->count; w->j++, w->cursor++) {
-                                func_002A9E04(w->out, &w->entries[(*w->cursor)->start], (*w->cursor)->count * 8);
+                                memcpy(w->out, &w->entries[(*w->cursor)->start], (*w->cursor)->count * 8);
                                 w->out += (*w->cursor)->count;
                             }
-                            func_002A9E04(&w->entries[w->group->start], w->buffer, w->group->entryCount * 8);
+                            memcpy(&w->entries[w->group->start], w->buffer, w->group->entryCount * 8);
                         }
                     }
                 }
