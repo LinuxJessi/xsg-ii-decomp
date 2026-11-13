@@ -8180,9 +8180,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012B908",
+     "name": "sceVif1PkReserve",
      "size": 20,
-     "splat_name": "func_0012B908",
+     "splat_name": "sceVif1PkReserve",
      "va": "0x0012b908",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37690,9 +37690,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "xglFontDrawHexDigit",
+     "name": "xglFontFlushSubHex",
      "size": 36,
-     "splat_name": "xglFontDrawHexDigit",
+     "splat_name": "xglFontFlushSubHex",
      "va": "0x00197938",
      "name_basis": "address",
      "provenance": "estimated"

@@ -10254,7 +10254,7 @@
      2
     ],
     [
-     "func_0012B908",
+     "sceVif1PkReserve",
      1227016,
      20,
      2
@@ -29364,7 +29364,7 @@
      2
     ],
     [
-     "xglFontDrawHexDigit",
+     "xglFontFlushSubHex",
      1669432,
      36,
      2

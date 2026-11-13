@@ -350,7 +350,7 @@ static int xglFontIsTextureGlyphCode(unsigned char high, unsigned char low)
     return 0;
 }
 
-void *func_0012B908(int, int);
+void *sceVif1PkReserve(int, int);
 
 /*
  * Allocates a packet and writes a GIF tag: NLOOP = count with the EOP bit 0x8000, one register
@@ -360,7 +360,7 @@ void *xglFontAllocGifPacket(int *heap, int count)
 {
     unsigned int *packet;
 
-    packet = func_0012B908(*heap, count * 4 + 4);
+    packet = sceVif1PkReserve(*heap, count * 4 + 4);
     packet[0] = count + 0x8000;
     packet[1] = 0x10000000;
     packet[2] = 0xE;
@@ -2019,7 +2019,7 @@ void xglFontFlushSub(int texture_u, int texture_v, int size, int flags)
 }
 
 /* Draws one hex digit (0..15) through xglFontFlushSub, at the glyph offset digit << 7. */
-void xglFontDrawHexDigit(int digit)
+void xglFontFlushSubHex(int digit)
 {
     xglFontFlushSub(digit << 7, 0x2F00, 0x608, 0x10);
 }
@@ -2175,7 +2175,7 @@ void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 int xglFontInlineCommand(FontDrawCursor *cursor, unsigned char **text);
 void xglFontSetTextureFilter(FontDrawCursor *cursor, int mode);
 
-void xglFontDrawHexDigit(int digit);
+void xglFontFlushSubHex(int digit);
 void xglFontNewLine(void);
 
 void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
@@ -2309,7 +2309,7 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
                 ((unsigned int) command->value_mid_low << 8) + command->value_low;
             int digit = command->digit_index;
             while (digit >= 0) {
-                xglFontDrawHexDigit((value >> (digit * 4)) & 15);
+                xglFontFlushSubHex((value >> (digit * 4)) & 15);
                 digit--;
             }
             text += sizeof(*command);
@@ -2333,9 +2333,9 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
                 int remaining;
 
                 if ((int) bits < 0)
-                    xglFontDrawHexDigit(FONT_HEX_MINUS);
+                    xglFontFlushSubHex(FONT_HEX_MINUS);
                 else
-                    xglFontDrawHexDigit(FONT_HEX_BLANK);
+                    xglFontFlushSubHex(FONT_HEX_BLANK);
                 if (shift >= 32) {
                     integer = 0;
                     mask = (0x100000000ULL << (shift - 32)) - 1;
@@ -2358,16 +2358,16 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
                 for (digit = 0; digit < 7; digit++) {
                     if (real_digits.value[digit] || printed) {
                         printed++;
-                        xglFontDrawHexDigit(real_digits.value[digit]);
+                        xglFontFlushSubHex(real_digits.value[digit]);
                     }
                 }
-                xglFontDrawHexDigit(real_digits.value[7]);
-                xglFontDrawHexDigit(FONT_HEX_POINT);
+                xglFontFlushSubHex(real_digits.value[7]);
+                xglFontFlushSubHex(FONT_HEX_POINT);
                 printed += 2;
                 remaining = 7;
                 for (; remaining >= 0 && printed < 9; remaining--) {
                     printed++;
-                    xglFontDrawHexDigit(real_digits.value[remaining + 8]);
+                    xglFontFlushSubHex(real_digits.value[remaining + 8]);
                 }
             } else {
                 int suppress_zero = 0;
@@ -2388,10 +2388,10 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
                 }
                 for (digit = 0; integer_digits[digit] >= 0; digit++) {
                     if (suppress_zero && !integer_digits[digit] && integer_digits[digit + 1] >= 0) {
-                        if (suppress_zero == 2 && integer_digits[digit + 1] > 0) xglFontDrawHexDigit(FONT_HEX_MINUS);
-                        else xglFontDrawHexDigit(FONT_HEX_BLANK);
+                        if (suppress_zero == 2 && integer_digits[digit + 1] > 0) xglFontFlushSubHex(FONT_HEX_MINUS);
+                        else xglFontFlushSubHex(FONT_HEX_BLANK);
                     } else {
-                        xglFontDrawHexDigit(integer_digits[digit]);
+                        xglFontFlushSubHex(integer_digits[digit]);
                         suppress_zero = 0;
                     }
                 }
