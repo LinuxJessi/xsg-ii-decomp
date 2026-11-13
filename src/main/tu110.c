@@ -27,7 +27,7 @@ typedef struct PartyProgress {
     int key;
     PartyValue64 savedValues[2];
     unsigned char savedByte;
-    /* Set to 1 by saveWriteImage when gameWork's map id is MAP_ID_SPLIT_FLAG_MAP. */
+    /* Set to 1 by saveWriteImage when gameWork's map id is MAP_ID_GAME_END. */
     unsigned char mapFlag;
     PartyName name;
 } PartyProgress;
@@ -1170,7 +1170,7 @@ int msgBalanceGet(void);
  * counters, then the checksum. The blocks are copied through their address
  * (the original addresses them as SaveData+offset constants, not from the
  * SaveData base). */
-#define MAP_ID_SPLIT_FLAG_MAP 0x1B91 /* entering it sets the progress record's mapFlag */
+#define MAP_ID_GAME_END 0x1B91 /* game_over_059.c's name; entering it sets the progress record's mapFlag */
 #define SAVE_VERSION 200
 
 void saveWriteImage(void)
@@ -1193,7 +1193,7 @@ void saveWriteImage(void)
     *(SaveWords4 *) (unsigned char *) &SaveData.words2E70 = D_0061D000;
     SaveData.word2E6C = D_0069DC7C;
     party = &SaveData.party;
-    if (gameWork.mapId == MAP_ID_SPLIT_FLAG_MAP) {
+    if (gameWork.mapId == MAP_ID_GAME_END) {
         ptState.progress->mapFlag = 1;
     }
     party->mapFlag = ptState.progress->mapFlag;
@@ -1334,11 +1334,11 @@ void saveReadImage(void)
 int xglFlagsSet8(int bit_offset, int value);
 void msgBalanceSet(int value);
 
-#define MAP_ID_SPLIT_FLAG_RESUME 0x9EC /* the map a save made on MAP_ID_SPLIT_FLAG_MAP loads into */
+#define MAP_ID_GAME_END_RESUME 0x9EC /* the map a save made on MAP_ID_GAME_END loads into */
 
 /* Restores gameWork, the quest, citizen and segment flags and the balance
- * from the save image. A save made on MAP_ID_SPLIT_FLAG_MAP resumes on
- * MAP_ID_SPLIT_FLAG_RESUME with story progress 0x75. CONTROL_SOFT_RESET and
+ * from the save image. A save made on MAP_ID_GAME_END resumes on
+ * MAP_ID_GAME_END_RESUME with story progress 0x75. CONTROL_SOFT_RESET and
  * the control bits 27, 26 and 20 do not survive a load (tu069's runtimeSystem
  * sets 27 and toggles 20). The original copies the flag blocks inline in the
  * order quest, citizen, segment, all addressed from &SaveData.questFlags. A
@@ -1356,8 +1356,8 @@ void saveReadGameWork(void)
 
     gameWork = *(SaveGameWork *) (unsigned char *) &SaveData.game;
     gameWork.state = gameWork.mapId;
-    if (gameWork.mapId == MAP_ID_SPLIT_FLAG_MAP) {
-        gameWork.mapId = gameWork.state = MAP_ID_SPLIT_FLAG_RESUME;
+    if (gameWork.mapId == MAP_ID_GAME_END) {
+        gameWork.mapId = gameWork.state = MAP_ID_GAME_END_RESUME;
         xglFlagsSet8(STORY_PROGRESS_FLAG, 0x75);
     }
     control = gameWork.control;
@@ -1369,7 +1369,7 @@ void saveReadGameWork(void)
     msgBalanceSet(balance);
 }
 
-void tyaSetDisplayOffset(s16, s16);
+void tyaSetDisplayOffset(int x, int y);
 
 extern PadRecord PadData[2];
 
