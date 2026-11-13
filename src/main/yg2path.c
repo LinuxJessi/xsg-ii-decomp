@@ -148,7 +148,7 @@ INCLUDE_ASM("asm/main/nonmatchings/yg2path", yg2PathDrawMessagePage);
 INCLUDE_ASM("asm/main/nonmatchings/yg2path", yg2PathDrawCitizenProfile);
 
 void textDrawSegment(int, int, unsigned char *, int);
-void func_0021E338(int, int, int, int);
+void menuDrawShortOutlineFrame(int, int, int, int);
 extern int yg2PathScroll;
 extern int yg2PathQuestMessages;
 extern signed char D_0069E27A;
@@ -161,7 +161,7 @@ void yg2PathDrawPathDetail(void)
   unsigned char entry;
   panelDrawNineSlice(D_003EC958, 0xD, 0x14, 0xF7, 0x194);
   packetSubmitRequest(0x202, 0x19, 0x19, 1);
-  func_0021E338(0x15, 0x33, 0xE7, 0x167);
+  menuDrawShortOutlineFrame(0x15, 0x33, 0xE7, 0x167);
   packetSubmitRequest(0x20A, 0x176, 0x185, 1);
   packetSubmitRequest(0x209, 0x18B, 0x189, 1);
   textDrawSegment(0, 0, D_0068B0E0, 0);

@@ -104,8 +104,8 @@ typedef struct SaveOptionItem {
 
 void textDrawSegment(int, int, void *, int);
 void panelDrawNineSlice();
-void func_0021CEF8();
-void func_0021E338();
+void menuDrawTitledFrame();
+void menuDrawShortOutlineFrame();
 extern unsigned char D_003EB290[];
 extern unsigned char D_0068B688[];
 extern unsigned char D_0068B698[];
@@ -135,8 +135,8 @@ void saveOptionItemDraw(SaveOptionItem *item, int origin_x, int origin_y)
     {
         fontObjSetOpacity(magnitude * 0x10);
         panelDrawNineSlice(D_003EB290, origin_x, origin_y, 0xB6, 0x68);
-        func_0021CEF8(label_x, origin_y + 5, 0xAE, 0x26, D_0068B688);
-        func_0021E338(label_x, origin_y + 0x2D, 0xAE, 0x36);
+        menuDrawTitledFrame(label_x, origin_y + 5, 0xAE, 0x26, D_0068B688);
+        menuDrawShortOutlineFrame(label_x, origin_y + 0x2D, 0xAE, 0x36);
         textDrawSegment(0, 0, D_0068B698, 0);
         textDrawSegment(0, 0, D_0068B6D8, 0);
         textDrawSegment(origin_x + 0x10, origin_y + 0x13, item->text, 4);

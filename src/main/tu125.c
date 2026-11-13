@@ -180,7 +180,7 @@ void fontObjResetState(void);
 void fontObjSetAlpha(int alpha);
 void textDrawSegment(int x, int y, void *text, int style);
 void textDrawString(int x, int y, unsigned char *text);
-void func_0021E7B0(int x, int y, int width, int height, char *title);
+void menuDrawTitledWindow(int x, int y, int width, int height, char *title);
 void grSetScissor(int x0, int y0, int x1, int y1);
 void grResetScissor(void);
 int textEncodeNewlines(unsigned char *text);
@@ -250,7 +250,7 @@ void textDrawAll(void)
             fontObjSetOpacity(entry->tick << 5);
         }
         fontObjResetState();
-        func_0021E7B0(x, y, width, height, entry->title);
+        menuDrawTitledWindow(x, y, width, height, entry->title);
         fontObjResetOpacity();
         grSetScissor(x + 5, entry->title == 0 ? y + 5 : y + 16, x + width + 26, y + height + 25);
         if (entry->pages && entry->pages[entry->page]) {
@@ -288,7 +288,7 @@ void textDrawAll(void)
         }
         top = y + 5;
         fontObjResetState();
-        func_0021E7B0(x, y, width, height, menu->title);
+        menuDrawTitledWindow(x, y, width, height, menu->title);
         fontObjResetOpacity();
         if (menu->title) {
             top = y + 16;
@@ -356,7 +356,7 @@ void textDrawAll(void)
         fontObjSetOpacity(panel->tick << 5);
     }
     fontObjResetState();
-    func_0021E7B0(x, y, width, height, D_0069D9A8);
+    menuDrawTitledWindow(x, y, width, height, D_0069D9A8);
     fontObjResetOpacity();
     grSetScissor(x + 5, y + 5, x + width + 26, y + height + 25);
     x = panel->x;
