@@ -8,7 +8,7 @@ extern char assertFormat[];
 extern char assertBannerBottom[];
 
 /* Assertion failure report: prints the banner, "ASSERTION <file, line> :: message", then exits. */
-void assertFailed(int message, int file, int line) {
+void assertFailed(const char *message, const char *file, int line) {
     printf(assertBannerTop);
     printf(assertFormat, file, line, message);
     printf(assertBannerBottom);

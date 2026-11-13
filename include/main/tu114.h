@@ -3,7 +3,7 @@
 
 /* Functions of src/main/tu114.c that other files call. */
 
-void func_0022DEE0(void);
+void talkStateReset(void);
 void scriptRegisterNatives(void);
 
 #endif /* INCLUDE_MAIN_TU114_H */

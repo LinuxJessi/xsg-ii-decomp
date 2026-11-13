@@ -1444,6 +1444,12 @@ JOINED_CUTS = [
      'res_get_path joins tu054: func_001E4000 (0x1E4000) calls func_001DF9F0 (tu054) and matches only when '
      'that callee is an earlier C definition in the same file (nothrow same-TU call, bnezl annul at '
      '0x1E40A8); found matching func_001E4000, user 2026-11-09'),
+    (0x00232018,
+     'ysegf joins tu118: ysegfRunMenu (0x2334C0) calls ysegfRunState (0x231F78) and matches only when that '
+     'callee is an earlier C definition in the same file (nothrow same-TU call: reorg then sees a0 set '
+     'before use after the call and fills the triangle beqz at 0x23355C with lui a0); found matching '
+     'ysegfRunMenu, 2026-11-13'),
+    (0x002320B0, 'ysegf: inside the ysegfRunState..ysegfRunMenu span 0x231F78-0x2334C0 (see 0x232018)'),
 ]
 
 # Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).

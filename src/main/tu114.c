@@ -5,26 +5,22 @@
 
 int msgChoicePoll(void);
 
-/*
- * A map object, reached through mapActiveObject (func_0022DE00) and passed by the
- * talk and seg natives (func_0022DDA8) and DispMapObject (mapObjectClearFlags).
- * The word at 0x330 is a handle for XenoActorEnableChannel/XenoActorSetMode in
- * func_0022DDA8, and a subobject pointer in func_0022DE00, which reads float
- * positions at +0x10 and +0x18 through it and writes a heading at +0x64.
- * The flag word at 0x570 gets
- * 0x400400 in func_0022DE00 and loses it in mapObjectClearFlags.
- * Everything else in it is not modelled.
- */
+typedef struct MapModeBlock {
+    u8 unmodeled_0000[0x4084];
+    int mode;
+} MapModeBlock;
+
 typedef struct MapObject {
     u8 unmodeled_000[0x330];
     void *handle;
-    u8 unmodeled_334[0x570 - 0x334];
+    MapModeBlock *modeBlock;
+    u8 unmodeled_338[0x570 - 0x338];
     u32 flags;
 } MapObject;
 
 /*
  * Global block whose word at offset 8 is set to 0x8000 after a successful
- * menu, slot or message-window update (func_0022DDA8 and the natives in tu113).
+ * menu, slot or message-window update (mapObjectBeginMessage and the natives in tu113).
  */
 typedef struct WindowState {
     u8 unmodeled_00[8];
@@ -64,10 +60,10 @@ void scriptRegisterNatives(void)
     func_A9CDB0(D_0069D7C8, segNativeTable);
 }
 
-void XenoActorSetMode(int handle, int value);
+void XenoActorSetMode(struct XenoActor *actor, int value);
 extern WindowState gameWork;
 
-void func_0022DDA8(MapObject *object)
+void mapObjectBeginMessage(MapObject *object)
 {
     if (object != 0) {
         XenoActorEnableChannel(object->handle);
@@ -76,14 +72,44 @@ void func_0022DDA8(MapObject *object)
     }
 }
 
-extern int mapActiveObject;
+extern MapObject *mapActiveObject;
 
-void mapObjectSetActive(int unused_arg0, int value)
+void mapObjectSetActive(int unused_arg0, MapObject *value)
 {
     mapActiveObject = value;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu114", func_0022DE00);
+int msgSlotTestCurrent(int slot);
+float xglAtan2Angle(float x, float y);
+
+typedef struct MapActorPose {
+    u8 unmodeled_00[0x10];
+    float x;
+    u8 unmodeled_14[0x18 - 0x14];
+    float z;
+    u8 unmodeled_1C[0x64 - 0x1C];
+    float heading;
+} MapActorPose;
+
+extern float mapHeadingOffset;
+
+void mapObjectFaceActive(MapObject *object)
+{
+    if (object != 0 && mapActiveObject != 0) {
+        mapActiveObject->flags |= 0x400400;
+        if (msgSlotTestCurrent(16) == 0) {
+            /* The active object turns to face `object`: heading = offset - atan2 of the pose difference. */
+            MapActorPose *targetPose = object->handle;
+            MapActorPose *activePose = mapActiveObject->handle;
+            ((MapActorPose *)mapActiveObject->handle)->heading = mapHeadingOffset - xglAtan2Angle(targetPose->x - activePose->x, targetPose->z - activePose->z);
+        }
+        if (msgSlotTestCurrent(8) == 0) {
+            XenoActorEnableChannel(mapActiveObject->handle);
+            XenoActorSetMode(mapActiveObject->handle, mapActiveObject->modeBlock->mode);
+        }
+        mapActiveObject = 0;
+    }
+}
 
 int mapObjectClearFlags(MapObject *object)
 {
@@ -98,7 +124,7 @@ int mapObjectClearFlags(MapObject *object)
 
 extern int talkResult;
 
-void func_0022DEE0(void)
+void talkStateReset(void)
 {
     mapActiveObject = 0;
     talkResult = -1;

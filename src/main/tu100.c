@@ -361,7 +361,7 @@ void panelDrawNineSlice(void *record, int x, int y, int width, int height);
 void func_0021CEF8(int x, int y, int width, int height, void *text);
 int xglFontGetStringWidth();
 extern char D_0068A3F0[];
-extern unsigned char D_003EB290[];
+extern unsigned char menuPanelFrame[];
 extern unsigned char D_0069D530[];
 extern int D_006A54A4[];
 extern int D_006A54A8[];
@@ -382,7 +382,7 @@ void menuMapListDraw(struct ItemList *list) {
     panelTop = 0x94 - list->count * 7;
     panelHeight = list->count * MENU_ITEM_ROW_HEIGHT + 0x1B;
     textDrawSegment(0, 0, D_0068A3F0, 0);
-    panelDrawNineSlice(D_003EB290, 0x1A, panelTop, 0x1CC, panelHeight);
+    panelDrawNineSlice(menuPanelFrame, 0x1A, panelTop, 0x1CC, panelHeight);
     fontTrackEase(&D_006A54A0[0]);
     fontTrackEase(&D_006A54A0[1]);
     fontTrackEase(&D_006A54A0[2]);
@@ -2332,7 +2332,7 @@ void menuDrawEquipPage(ControlSlot *slot) {
     }
     x = D_006A5130[0].current_pair[0];
     y = D_006A5130[0].current_pair[1];
-    panelDrawNineSlice(D_003EB290, x, y, 0x77, 0x30);
+    panelDrawNineSlice(menuPanelFrame, x, y, 0x77, 0x30);
     menuDrawKindIcon(x + 0x18, y + 4, 3);
     menuDrawKindIcon(x + 0x18, y + 0x18, 2);
     if ((u8) slot->state == 6) {
@@ -2413,7 +2413,7 @@ void menuDrawExtraPage(void) {
         fontTrackSetTarget(&D_006A5110, 0x200, 0xFF);
     }
     fontTrackEase(&D_006A5110);
-    panelDrawNineSlice(D_003EB290, D_006A5110.current_pair[0], 0x149, 0xF0, 0x2B);
+    panelDrawNineSlice(menuPanelFrame, D_006A5110.current_pair[0], 0x149, 0xF0, 0x2B);
     func_0021CEF8(D_006A5110.current_pair[0] + 6, 0x14E, 0x6B, 0x21, D_0069D548);
     menuDrawPlayTime(D_006A5110.current_pair[0] + 0x75, 0x14E);
     if (D_0069D50E != 0) {

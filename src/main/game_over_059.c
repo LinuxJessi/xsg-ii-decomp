@@ -63,14 +63,14 @@ extern GameOverDmaPacket6 FlushEnv_2_002BCD80;
 extern GameOverDmaPacket20 TestEnv_3_002BCED0;
 XglCamera *xglStudioGetCamera2(int camera_index);
 void uwamonoResetRecords(int index, signed char mode);
-void func_0023AD18(int);
+void saveScreenRun(int);
 void fadeReset(void);
 
 
 /* The fields of gameWork this file reads and writes. */
 typedef struct GameOverWork {
     u8 unmodeled_00[0x06];
-    u16 loadedFromSave;         /* +0x06: Title stores func_0023AD18(1)'s result here (1: the game was
+    u16 loadedFromSave;         /* +0x06: Title stores saveScreenRun(1)'s result here (1: the game was
                                  * loaded from a save); Intermission then does nothing */
     int control;                /* +0x08: CONTROL_* bits (main/tu051.h) */
     u8 unmodeled_0C[0x08];
@@ -197,7 +197,7 @@ void GameSceneReset(void *framebuffer) {
     XenoActorPoolInitDefault();
     uwamonoResetRecords(-1, 1);
     redraw_frame(framebuffer);
-    func_0023AD18(0);
+    saveScreenRun(0);
 }
 
 void DrawImage(void *framebuffer)
