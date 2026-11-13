@@ -26,8 +26,8 @@
 /* PadRecord.heldAndPressed: PAD_SOFT_RESET_HELD held with START pressed (pressed is the upper halfword). */
 #define PAD_SOFT_RESET (PAD_SOFT_RESET_HELD | (PAD_START << 16))
 
-/* The first 0x68 bytes of a port record of PadData (the full record is 0x80 bytes: xglPadRead
- * scales the port index by 128). Only the members the game code reads are named. */
+/* A port record of PadData (0x80 bytes: xglPadRead scales the port index by 128). Only the
+ * members the game code reads are named. */
 typedef struct PadRecord {
     unsigned char unmodeled_00[0x28];
     union {
@@ -47,9 +47,12 @@ typedef struct PadRecord {
        down minus up; xglPadRead). */
     short horizontalPressure;         /* +0x3C */
     short verticalPressure;           /* +0x3E */
-    unsigned char unmodeled_40[0x26];
+    unsigned char unmodeled_40[0x56 - 0x40];
+    unsigned char actuatorMode;       /* +0x56: the actuator setting (SaveData +0x3E, tu060.c's name) */
+    unsigned char unmodeled_57[0x66 - 0x57];
     signed char directionX;           /* +0x66 */
     signed char directionY;           /* +0x67 */
+    unsigned char unmodeled_68[0x80 - 0x68];
 } PadRecord;
 
 #endif /* INCLUDE_MAIN_PAD_H */

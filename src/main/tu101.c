@@ -528,7 +528,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu101", menuDrawCopilotInfo);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu101", menuDrawClassInfo);
 
-/* The context returned by func_0022A560 (defined in main/tu100). */
+/* The context returned by ptGetMenuMember (defined in main/tu100). */
 struct ControlLimits {
     unsigned char unmodeled_00[8];
     int limit_a;
@@ -564,7 +564,7 @@ typedef struct LicenseRecord {
     unsigned char unmodeled_05;
 } LicenseRecord;
 
-struct ControlContext *func_0022A560();
+struct ControlContext *ptGetMenuMember();
 int func_00229EC0(struct ControlContext *context, int group, int sub);
 int func_00229F30(struct ControlContext *context, int group, int slot, int sub);
 void func_0021CEF8(int x, int y, int width, int height, void *text);
@@ -606,7 +606,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
     int firstRow; /* first visible row; scrolls the highlight */
     int unlocked = 0;
     int markCount = 0;
-    struct ControlBuffer *board = func_0022A560()->buffer;
+    struct ControlBuffer *board = ptGetMenuMember()->buffer;
     LicenseCursor *cursor;
     int i;
     int rowStyle;
@@ -652,7 +652,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             }
             break;
         case 1:
-            if (func_00229EC0(func_0022A560(), groupCursor->index, i)
+            if (func_00229EC0(ptGetMenuMember(), groupCursor->index, i)
                 || ((board->header[groupCursor->index] >> i) & 1)) {
                 unlocked = 1;
             } else {
@@ -664,7 +664,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             }
             break;
         case 2:
-            if (func_00229F30(func_0022A560(), groupCursor->index, slotCursor->index, i)
+            if (func_00229F30(ptGetMenuMember(), groupCursor->index, slotCursor->index, i)
                 || ((board->cells[groupCursor->index][slotCursor->index] >> i) & 1)) {
                 unlocked = 1;
             } else {
@@ -699,7 +699,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             if ((board->header[groupCursor->index] >> i) & 1) {
                 textDrawGlyphString(x + 0xBF, y + 0x66 + i * LICENSE_ROW_PITCH_COMPACT, D_0069D608, color);
             } else {
-                if (D_003EC0E8[groupCursor->index][i] > func_0022A560()->limits->limit_b) {
+                if (D_003EC0E8[groupCursor->index][i] > ptGetMenuMember()->limits->limit_b) {
                     fontObjSetOpacity(0x40);
                 } else {
                     fontObjResetOpacity();
@@ -736,7 +736,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
                         packetSubmitRequest(LICENSE_MARK_CMD, x + 0xCA, y + 0x66 + i * LICENSE_ROW_PITCH, 0x44);
                         fontObjResetColor();
                     } else {
-                        if (selectionGetValue(groupCursor->index, slotCursor->index, i) > func_0022A560()->limits->limit_a) {
+                        if (selectionGetValue(groupCursor->index, slotCursor->index, i) > ptGetMenuMember()->limits->limit_a) {
                             fontObjSetOpacity(0x40);
                         } else {
                             fontObjResetOpacity();
