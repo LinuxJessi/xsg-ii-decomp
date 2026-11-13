@@ -18,7 +18,7 @@ extern signed char pxyTickScaleDouble[];
 int strcmp(const char *, const char *);
 char *strcpy(char *, const char *);
 int func_002A6D88(float);
-int func_002AA5D8(char *, const char *, ...);
+int sprintf(char *, const char *, ...);
 int pxyDrawStringShadow(const char *str, int x, int y, float scale, u32 color, u32 depth, int flush);
 extern char D_0068F000[];
 
@@ -240,7 +240,7 @@ float pxyEnd(const char *name)
         result = (float) pxyEntries[found].totalTicks * msPerTick;
         textLine = pxyEntries[found].text;
         entryName = pxyEntries[found].name;
-        func_002AA5D8(textLine, D_0068F000, entryName, func_002A6D88(result));
+        sprintf(textLine, D_0068F000, entryName, func_002A6D88(result));
     }
     return result;
 }

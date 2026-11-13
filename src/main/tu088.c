@@ -283,7 +283,7 @@ void uwamonoSearchArcHit(int index, int other, int third)
     }
 }
 
-extern u16 D_0063EDAA[];
+extern u16 textOptionFlags[];
 extern int D_002B5D98[];
 
 void uwamonoSearchFacingHit(int index, int other, int third)
@@ -303,7 +303,7 @@ void uwamonoSearchFacingHit(int index, int other, int third)
     if ((D_002B5D98[0] & 0x20000000) != 0) {
         return;
     }
-    if ((D_0063EDAA[0] & 0x20) == 0) {
+    if ((textOptionFlags[0] & 0x20) == 0) {
         return;
     }
     if (uwamonoCheckCollision(index, other, third) == 0) {
@@ -350,7 +350,7 @@ void func_002079F0(int index, int other, int third)
     if ((D_002B5D98[0] & 0x20000000) != 0) {
         return;
     }
-    if ((D_0063EDAA[0] & 0x20) == 0) {
+    if ((textOptionFlags[0] & 0x20) == 0) {
         return;
     }
     if (uwamonoCheckCollision(index, other, third) == 0) {

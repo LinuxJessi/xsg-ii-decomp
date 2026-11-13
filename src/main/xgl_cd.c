@@ -116,20 +116,6 @@ typedef struct CdArchiveEntry {
     int size_bytes;
 } CdArchiveEntry;
 
-/* xglCdGetFilePos fills a 0x30-byte file-position record; only its leading
- * lbn word is evidenced by its callers in this TU. */
-typedef struct CdFilePosition {
-    unsigned int lbn;
-    int stored_bytes;
-    unsigned char unmodeled_08[0x1c];
-    unsigned char source;
-    unsigned char unmodeled_25;
-    unsigned char packed;
-    unsigned char unmodeled_27;
-    int descriptor;
-    int size_bytes;
-} CdFilePosition;
-
 unsigned int xglClockDayTime2UInt(XglClock *clock_time);
 extern int xglCdReadFilePart(const char *name, void *buffer, int mode,
                              CdCompletionCallback *callback, int offset, int length);

@@ -114,9 +114,9 @@ INCLUDE_ASM("asm/main/nonmatchings/tu124", textEntryAlloc);
 INCLUDE_ASM("asm/main/nonmatchings/tu124", objRemove);
 
 void seVoiceStartDefault(int voice);
-extern u16 D_0063EDAA;
+extern u16 textOptionFlags;
 
-/* Returns the status byte of a text entry; in page-advance state 1, with the option bit 0x20 of D_0063EDAA set, it
+/* Returns the status byte of a text entry; in page-advance state 1, with the option bit 0x20 of textOptionFlags set, it
  * starts the default voice cue 0x01000002 once and counts it in count. */
 u8 textEntryPlayVoice(TextEntry *entry)
 {
@@ -126,7 +126,7 @@ u8 textEntryPlayVoice(TextEntry *entry)
     if (entry->count == 0) {
         entry->count = 1;
     }
-    if (entry->state == 1 && (D_0063EDAA & 0x20)) {
+    if (entry->state == 1 && (textOptionFlags & 0x20)) {
         seVoiceStartDefault(0x01000002);
         entry->count += 1;
     }

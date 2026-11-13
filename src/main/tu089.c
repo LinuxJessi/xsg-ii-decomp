@@ -29,7 +29,7 @@ int Check_CrossingOver(const Vector4 *first_start, const Vector4 *first_end,
 void Get_MiddlePoint(const float *start, const float *following,
                      short point_index, short point_count, float *result);
 float Get_Distance(const Vector4 *first, const Vector4 *second);
-int func_0020A158();
+int uwamonoQuadEdgesVisible();
 void DispPillar(float *start, int index, float length, float angle);
 void uwamonoDrawSegmentBox(float *start, float *following, Vector4 *out);
 void xglFontDebugPrintf(int x, int y, const char *format, ...);
@@ -80,16 +80,16 @@ int uwamonoCheckCollision(int moverIndex, int sectorIndex, int otherIndex)
         if (Check_CrossingOver(&sector->position, &other->position, previousPosition, &moverPosition)) {
             return 1;
         }
-        if (func_0020A158(&moverPosition, sector->unmodeled_20, &sector->position, &other->position, other->unmodeled_20)) {
+        if (uwamonoQuadEdgesVisible(&moverPosition, sector->unmodeled_20, &sector->position, &other->position, other->unmodeled_20)) {
             return 1;
         }
-        if (func_0020A158(previousPosition, sector->unmodeled_20, &sector->position, &other->position, other->unmodeled_20)) {
+        if (uwamonoQuadEdgesVisible(previousPosition, sector->unmodeled_20, &sector->position, &other->position, other->unmodeled_20)) {
             return 1;
         }
-        if (func_0020A158(&moverPosition, other->unmodeled_20, &other->position, &sector->position, sector->unmodeled_20)) {
+        if (uwamonoQuadEdgesVisible(&moverPosition, other->unmodeled_20, &other->position, &sector->position, sector->unmodeled_20)) {
             return 1;
         }
-        return func_0020A158(previousPosition, other->unmodeled_20, &other->position, &sector->position, sector->unmodeled_20) != 0;
+        return uwamonoQuadEdgesVisible(previousPosition, other->unmodeled_20, &other->position, &sector->position, sector->unmodeled_20) != 0;
     case 1:
         Get_Point_By_AngleLength(&moverPosition, &moverAhead, moverActor->rotation.y, mover->form);
         func_00202E60(segmentStart, segmentEnd, 3);

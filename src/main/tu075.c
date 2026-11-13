@@ -140,7 +140,7 @@ extern AlignedVector4 ladderExitPoint;
 void uwamonoSetMotion(int index, int motion, float speed);
 void uwamonoSendEvent(int kind, int id, int value);
 void cameraApplyAllSlots(int arg);
-float func_0020A968(int index, Vector4 *point, int arg2, int arg3, int arg4);
+float unduGetSlotHeight(int index, Vector4 *point, int arg2, int arg3, int arg4);
 void func_0028B060(struct XenoActor *actor);
 float sinf(float angle);
 float cosf(float angle);
@@ -202,7 +202,7 @@ void uwamonoLadderApproach(void)
         landingPoint = actor->position;
         ladderFrame = -1;
         uwamonoLadderState.state = LADDER_STATE_ON;
-        func_0020A968(uwamonoCurrentIndex, &landingPoint, 256, -1, 0);
+        unduGetSlotHeight(uwamonoCurrentIndex, &landingPoint, 256, -1, 0);
         ladderRungIndex = 63;
         if (ladderExitSide == 0) {
             actor->position.y = ladderFootHeight;
@@ -610,7 +610,7 @@ void uwamonoLadderMove(void)
             }
         }
         if (exited == 1) {
-            exitPoint.y = func_0020A968(uwamonoCurrentIndex, &ladderExitPoint, 0x100, -1, 0);
+            exitPoint.y = unduGetSlotHeight(uwamonoCurrentIndex, &ladderExitPoint, 0x100, -1, 0);
         }
     }
     if (exited == 1) {

@@ -1,5 +1,7 @@
 #include "common.h"
+#include "gs.h"
 #include "shared.h"
+#include "main/xgl_jpeg.h"
 
 /* EE scratchpad RAM. */
 #define SCRATCHPAD_BASE 0x70000000
@@ -38,6 +40,14 @@ typedef enum JpegSamplingMode {
 
 /* Marker bytes that follow the 0xFF prefix. */
 #define JPEG_MARKER_PREFIX 0xFF
+#define JPEG_MARKER_SOF0 0xC0
+#define JPEG_MARKER_DHT 0xC4
+#define JPEG_MARKER_RST0 0xD0
+#define JPEG_MARKER_SOI 0xD8
+#define JPEG_MARKER_EOI 0xD9
+#define JPEG_MARKER_SOS 0xDA
+#define JPEG_MARKER_DQT 0xDB
+#define JPEG_MARKER_DRI 0xDD
 
 /* Huffman tables: 16 code lengths; decoder tables use 0xFE/0xFF boundary entries. */
 #define JPEG_HUFF_LENGTHS 16
@@ -49,6 +59,10 @@ typedef enum JpegSamplingMode {
 #define JPEG_DHT_AC_LUMA 0x10
 #define JPEG_AC_ZRL 0xF0 /* 16 zeros in a row */
 #define JPEG_ZRL_RUN 16
+/* The component an 8x8 block belongs to (selects the Huffman and quantization tables). */
+#define JPEG_COMPONENT_Y 0
+#define JPEG_COMPONENT_CB 1
+#define JPEG_COMPONENT_CR 2
 #define JPEG_STAGING_ADDRESS (SCRATCHPAD_BASE + 0x3000)
 
 /* IJG-style quality to quantizer scaling. */
@@ -106,7 +120,9 @@ typedef struct JpegWork {
     u8 unmodeled_0000[0xD0];
     float luminanceQuantization[JPEG_BLOCK_COEFFS];    /* +0xD0 */
     float chrominanceQuantization[JPEG_BLOCK_COEFFS];  /* +0x1D0 */
-    u8 unmodeled_02d0[0x350 - 0x2D0];
+    /* +0x2D0: the encoder's 8-bit quantizer values (luminance, chrominance),
+       rebuilt from the quality and written to the DQT segments. */
+    u8 quantizerValues[2][JPEG_BLOCK_COEFFS];
     u8 *buffer;
     int outputPosition;
     signed char bitsRemaining;
@@ -145,7 +161,10 @@ int GetBit(void);
 
 extern u8 LQTableOrg_1[JPEG_BLOCK_COEFFS];
 extern u8 CQTableOrg_2[JPEG_BLOCK_COEFFS];
-extern JpegWork *sw;
+#define JPEG_WORK_ADDRESS SCRATCHPAD_BASE
+/* The encoder and decoder work area is the scratchpad. Defined here with its initializer, as in X1:
+ * with a bare `extern` the compiler lets every store kill the loaded pointer and reloads it. */
+JpegWork *sw = (JpegWork *)JPEG_WORK_ADDRESS;
 extern u8 ZigZag[JPEG_BLOCK_COEFFS];
 
 /* Input rows contain sixteen consecutive Y/U/V float triples. */
@@ -202,7 +221,47 @@ void ConvertYUV2MCU(float *planes, const float *pixels, int samplingMode)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", FFDCT);
+/* DCT basis: row k holds the eight cosine weights of frequency k. */
+extern float dctCosineTable[JPEG_BLOCK_DIM][JPEG_BLOCK_DIM];
+
+/* Forward 8x8 DCT as two matrix passes over the cosine table: rows of the
+ * block into idctBlock, then columns of idctBlock back into the block,
+ * scaled by 1/8. XS2 replaces XS1's unrolled butterfly weights with this
+ * table form. */
+void FFDCT(float *block)
+{
+    JpegWork *work = sw;
+    int row;
+    int column;
+    int frequency;
+
+    for (row = 0; row < JPEG_BLOCK_DIM; row++) {
+        for (frequency = 0; frequency < JPEG_BLOCK_DIM; frequency++) {
+            sw->idctBlock[row][frequency] =
+                block[row * JPEG_BLOCK_DIM + 0] * dctCosineTable[frequency][0] +
+                block[row * JPEG_BLOCK_DIM + 1] * dctCosineTable[frequency][1] +
+                block[row * JPEG_BLOCK_DIM + 2] * dctCosineTable[frequency][2] +
+                block[row * JPEG_BLOCK_DIM + 3] * dctCosineTable[frequency][3] +
+                block[row * JPEG_BLOCK_DIM + 4] * dctCosineTable[frequency][4] +
+                block[row * JPEG_BLOCK_DIM + 5] * dctCosineTable[frequency][5] +
+                block[row * JPEG_BLOCK_DIM + 6] * dctCosineTable[frequency][6] +
+                block[row * JPEG_BLOCK_DIM + 7] * dctCosineTable[frequency][7];
+        }
+    }
+    for (column = 0; column < JPEG_BLOCK_DIM; column++) {
+        for (frequency = 0; frequency < JPEG_BLOCK_DIM; frequency++) {
+            block[frequency * JPEG_BLOCK_DIM + column] =
+                (work->idctBlock[0][column] * dctCosineTable[frequency][0] +
+                work->idctBlock[1][column] * dctCosineTable[frequency][1] +
+                work->idctBlock[2][column] * dctCosineTable[frequency][2] +
+                work->idctBlock[3][column] * dctCosineTable[frequency][3] +
+                work->idctBlock[4][column] * dctCosineTable[frequency][4] +
+                work->idctBlock[5][column] * dctCosineTable[frequency][5] +
+                work->idctBlock[6][column] * dctCosineTable[frequency][6] +
+                work->idctBlock[7][column] * dctCosineTable[frequency][7]) * 0.125f;
+        }
+    }
+}
 
 void Quantize(int *quantized, const float *coefficients, const float *reciprocals)
 {
@@ -431,7 +490,257 @@ void ExtractHuffmanTableSub(JpegHuffCode *table, const u8 *symbols, int tableSiz
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", xglJpegEncode);
+/* Layout of headerALL, the canned JFIF/DQT/SOF0/DHT/SOS header written by the encoder. */
+#define JPEG_HEADER_SIZE 0x26F
+#define JPEG_HEADER_DENSITY_OFFSET 14
+#define JPEG_HEADER_DQT_LUMA_OFFSET 25
+#define JPEG_HEADER_DQT_CHROMA_OFFSET 94
+#define JPEG_HEADER_SOF_SIZE_OFFSET 163 /* height, width, then component sampling at +6 */
+#define JPEG_HEADER_DHT_DC_LUMA_OFFSET 0xB6
+#define JPEG_HEADER_DHT_AC_LUMA_OFFSET 0xD7
+#define JPEG_HEADER_DHT_DC_CHROMA_OFFSET 0x18E
+#define JPEG_HEADER_DHT_AC_CHROMA_OFFSET 0x1AF
+#define JPEG_HUFF_DC_SYMBOLS 16
+#define JPEG_HUFF_AC_SYMBOLS 256
+#define JPEG_DENSITY_HEIGHT_NUMERATOR 0xAF00
+#define JPEG_DENSITY_WIDTH_NUMERATOR 0xFA00
+/* sceGsSetDefStoreImage's packet sits at this offset of the work area. */
+#define JPEG_STORE_IMAGE_OFFSET 0x60
+
+/* RGB to YCbCr (JFIF). */
+#define JPEG_Y_FROM_R 0.299f
+#define JPEG_Y_FROM_G 0.587f
+#define JPEG_Y_FROM_B 0.114f
+#define JPEG_CB_FROM_R -0.16874f
+#define JPEG_CB_FROM_G -0.33126f
+#define JPEG_CB_FROM_B 0.5f
+#define JPEG_CR_FROM_R 0.5f
+#define JPEG_CR_FROM_G -0.41869f
+#define JPEG_CR_FROM_B -0.08131f
+
+typedef struct JpegEncodeRequest {
+    u8 unmodeled_00[4];
+    u8 *outputBuffer;
+    int outputSize;
+    short frameBufferBase;  /* +0x0C: sceGsSetDefStoreImage fbp */
+    short frameBufferWidth; /* +0x0E: fbw */
+    short originX;
+    short originY;
+    short width;
+    short height;
+    u8 luminanceQuality;
+    u8 chrominanceQuality;
+    u8 samplingMode;
+    u8 unmodeled_1b;
+} JpegEncodeRequest;
+
+extern u8 headerALL[];
+int sceGsSetDefStoreImage(void *image, short fbp, short fbw, short psm, short x, short y,
+                          unsigned int w, unsigned int h);
+int sceGsExecStoreImage(void *image, void *buffer);
+
+int xglJpegEncode(JpegEncodeRequest *request)
+{
+    u8 *header;
+    u8 *outputBuffer;
+    int y;
+    int x;
+    int row;
+    int column;
+    int i;
+    int mcuWidth;
+    int mcuHeight;
+    int quotient;
+
+    sw->rowBytes = request->width * 3;
+    RebuildQuantizeTable(sw->quantizerValues[0], sw->luminanceQuantization, 0, request->luminanceQuality);
+    RebuildQuantizeTable(sw->quantizerValues[1], sw->chrominanceQuantization, 1,
+                         request->chrominanceQuality);
+    ExtractHuffmanTableSub(sw->luminanceDcCodes.encode, headerALL + JPEG_HEADER_DHT_DC_LUMA_OFFSET,
+                           JPEG_HUFF_DC_SYMBOLS);
+    ExtractHuffmanTableSub(sw->chrominanceDcCodes.encode, headerALL + JPEG_HEADER_DHT_DC_CHROMA_OFFSET,
+                           JPEG_HUFF_DC_SYMBOLS);
+    ExtractHuffmanTableSub(sw->luminanceAcCodes.encode, headerALL + JPEG_HEADER_DHT_AC_LUMA_OFFSET,
+                           JPEG_HUFF_AC_SYMBOLS);
+    ExtractHuffmanTableSub(sw->chrominanceAcCodes.encode, headerALL + JPEG_HEADER_DHT_AC_CHROMA_OFFSET,
+                           JPEG_HUFF_AC_SYMBOLS);
+
+    sw->buffer = request->outputBuffer;
+    sw->bitsRemaining = 0;
+    sw->bufferedByte = 0;
+    __builtin_memcpy(sw->buffer, headerALL, JPEG_HEADER_SIZE);
+
+    sw->outputPosition = JPEG_HEADER_SIZE;
+    header = sw->buffer + JPEG_HEADER_DENSITY_OFFSET;
+    quotient = JPEG_DENSITY_HEIGHT_NUMERATOR / request->height;
+    header[1] = quotient;
+    header[0] = quotient >> 8;
+    quotient = JPEG_DENSITY_WIDTH_NUMERATOR / request->width;
+    header[3] = quotient;
+    header[2] = quotient >> 8;
+
+    header = sw->buffer + JPEG_HEADER_DQT_LUMA_OFFSET;
+    for (i = 0; i < JPEG_BLOCK_COEFFS; i++) {
+        *header = sw->quantizerValues[0][ZigZag[i]];
+        header++;
+    }
+    header = sw->buffer + JPEG_HEADER_DQT_CHROMA_OFFSET;
+    for (i = 0; i < JPEG_BLOCK_COEFFS; i++) {
+        *header = sw->quantizerValues[1][ZigZag[i]];
+        header++;
+    }
+
+    switch (request->samplingMode) {
+    case JPEG_SAMPLING_444:
+        i = JPEG_SAMPLING_FACTORS_444;
+        break;
+    case JPEG_SAMPLING_422:
+        i = JPEG_SAMPLING_FACTORS_422;
+        break;
+    case JPEG_SAMPLING_420:
+    default:
+        i = JPEG_SAMPLING_FACTORS_420;
+        break;
+    }
+    header = sw->buffer + JPEG_HEADER_SOF_SIZE_OFFSET;
+    header[0] = request->height >> 8;
+    header[1] = request->height;
+    header[2] = request->width >> 8;
+    header[3] = request->width;
+    header[6] = i;
+
+    sw->dcPredictors[JPEG_COMPONENT_CR] = 0;
+    sw->dcPredictors[JPEG_COMPONENT_CB] = 0;
+    sw->dcPredictors[JPEG_COMPONENT_Y] = 0;
+
+    switch (request->samplingMode) {
+    case JPEG_SAMPLING_444:
+        mcuWidth = JPEG_BLOCK_DIM;
+        mcuHeight = mcuWidth;
+        break;
+    case JPEG_SAMPLING_422:
+        mcuWidth = JPEG_MCU_PIXELS;
+        mcuHeight = JPEG_BLOCK_DIM;
+        break;
+    case JPEG_SAMPLING_420:
+    default:
+        mcuWidth = JPEG_MCU_PIXELS;
+        mcuHeight = mcuWidth;
+        break;
+    }
+
+    for (y = 0; y < request->height; y += mcuHeight) {
+        for (x = 0; x < request->width; x += mcuWidth) {
+            sceGsSetDefStoreImage(&sw->unmodeled_0000[JPEG_STORE_IMAGE_OFFSET], request->frameBufferBase, request->frameBufferWidth,
+                                  GS_PSMCT24, request->originX + x, request->originY + y,
+                                  /* Zero-extended with sll/srl as in the original; a (u16) cast
+                                     compiles to andi and moves the argument loads. */
+                                  ((unsigned) mcuWidth << 16) >> 16, ((unsigned) mcuHeight << 16) >> 16);
+            sceGsExecStoreImage(&sw->unmodeled_0000[JPEG_STORE_IMAGE_OFFSET], (void *) JPEG_STAGING_ADDRESS);
+
+            for (row = 0; row < mcuHeight; row++) {
+                u8 *rgb = (u8 *) JPEG_STAGING_ADDRESS + row * mcuWidth * 3;
+                float *pixel = sw->decodedYuvPixels.floats + row * JPEG_YUV_ROW_FLOATS;
+                for (column = 0; column < mcuWidth; column++) {
+                    float red = I2F(rgb[0]);
+                    float green = I2F(rgb[1]);
+                    float blue = I2F(rgb[2]);
+
+                    pixel[0] = red * JPEG_Y_FROM_R + green * JPEG_Y_FROM_G + blue * JPEG_Y_FROM_B;
+                    pixel[1] = red * JPEG_CB_FROM_R + green * JPEG_CB_FROM_G + blue * JPEG_CB_FROM_B;
+                    pixel[2] = red * JPEG_CR_FROM_R + green * JPEG_CR_FROM_G + blue * JPEG_CR_FROM_B;
+                    rgb += 3;
+                    pixel += 3;
+                }
+            }
+
+            ConvertYUV2MCU(sw->decodedMcuPlanes.planes, sw->decodedYuvPixels.floats, request->samplingMode);
+
+            switch (request->samplingMode) {
+        case JPEG_SAMPLING_444:
+            FFDCT(sw->decodedMcuPlanes.planes + 0);
+            FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS);
+            FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS);
+            Quantize(sw->decodedYuvPixels.blocks[0], sw->decodedMcuPlanes.planes + 0, sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[0], sw->luminanceDcCodes.encode,
+                          sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB], sw->chrominanceDcCodes.encode,
+                          sw->chrominanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_CB]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR], sw->chrominanceDcCodes.encode,
+                          sw->chrominanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_CR]);
+            break;
+        case JPEG_SAMPLING_422:
+            FFDCT(sw->decodedMcuPlanes.planes + 0);
+            FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS);
+            FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS);
+            FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS);
+            Quantize(sw->decodedYuvPixels.blocks[0], sw->decodedMcuPlanes.planes + 0, sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[1], sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS,
+                     sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[0], sw->luminanceDcCodes.encode,
+                          sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[1], sw->luminanceDcCodes.encode,
+                          sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB], sw->chrominanceDcCodes.encode,
+                          sw->chrominanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_CB]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR], sw->chrominanceDcCodes.encode,
+                          sw->chrominanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_CR]);
+            break;
+        case JPEG_SAMPLING_420:
+        default:
+            FFDCT(sw->decodedMcuPlanes.planes + 0);
+            FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS);
+            FFDCT(sw->decodedMcuPlanes.planes + 2 * JPEG_BLOCK_COEFFS);
+            FFDCT(sw->decodedMcuPlanes.planes + 3 * JPEG_BLOCK_COEFFS);
+            FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS);
+            FFDCT(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS);
+            Quantize(sw->decodedYuvPixels.blocks[0], sw->decodedMcuPlanes.planes + 0, sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[1], sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS,
+                     sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[2], sw->decodedMcuPlanes.planes + 2 * JPEG_BLOCK_COEFFS,
+                     sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[3], sw->decodedMcuPlanes.planes + 3 * JPEG_BLOCK_COEFFS,
+                     sw->luminanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            Quantize(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR],
+                     sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, sw->chrominanceQuantization);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[0], sw->luminanceDcCodes.encode,
+                          sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[1], sw->luminanceDcCodes.encode,
+                          sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[2], sw->luminanceDcCodes.encode,
+                          sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[3], sw->luminanceDcCodes.encode,
+                          sw->luminanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_Y]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CB], sw->chrominanceDcCodes.encode,
+                          sw->chrominanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_CB]);
+            HuffmanEncode(sw->decodedYuvPixels.blocks[JPEG_BLOCK_CR], sw->chrominanceDcCodes.encode,
+                          sw->chrominanceAcCodes.encode, &sw->dcPredictors[JPEG_COMPONENT_CR]);
+            break;
+            }
+        }
+    }
+
+    if (sw->bitsRemaining != 0) {
+        sw->buffer[sw->outputPosition] = sw->bufferedByte;
+        sw->outputPosition++;
+    }
+    sw->buffer[sw->outputPosition] = JPEG_MARKER_PREFIX;
+    sw->buffer[sw->outputPosition + 1] = JPEG_MARKER_EOI;
+    sw->outputPosition += 2;
+    request->outputSize = sw->outputPosition;
+    return 0;
+}
+
 
 /* A DRI marker carries a big-endian restart interval in bytes 2 and 3.
  * The parser stores that value and its successor at +0x2BA0/+0x2BA4,
@@ -595,13 +904,191 @@ s16 decode_sub(s16 *codes)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", HuffmanDecode);
+void HuffmanDecode(float *coefficients, int component)
+{
+    JpegWork *work;
+    s16 *dcCodes;
+    s16 *acCodes;
+    float *quantization;
+    int *predictor;
+    int value;
+    int bits;
+    int dcBias;
+    int acBias;
+    int position;
+
+    switch (component) {
+    case JPEG_COMPONENT_Y:
+    default:
+        work = sw;
+        dcCodes = work->luminanceDcCodes.decode;
+        acCodes = work->luminanceAcCodes.decode;
+        quantization = work->luminanceQuantization;
+        break;
+    case JPEG_COMPONENT_CB:
+    case JPEG_COMPONENT_CR:
+        work = sw;
+        dcCodes = work->chrominanceDcCodes.decode;
+        acCodes = work->chrominanceAcCodes.decode;
+        quantization = work->chrominanceQuantization;
+        break;
+    }
+
+    value = 0;
+    predictor = &work->dcPredictors[component];
+    bits = decode_sub(dcCodes);
+    if (bits != 0) {
+        if (GetBit() == 0) {
+            dcBias = (1 << bits) - 1;
+        } else {
+            dcBias = 0;
+            value = 1;
+        }
+        bits--;
+        while (bits > 0) {
+            bits--;
+            value = value * 2 + GetBit();
+        }
+        value -= dcBias;
+    }
+    position = 1;
+    value += *predictor;
+    *predictor = value;
+    coefficients[0] = I2F(value) * quantization[0];
+
+    do {
+        value = 0;
+        bits = decode_sub(acCodes);
+        if (bits != 0) {
+            while (bits >= JPEG_ZRL_RUN) {
+                coefficients[ZigZag[position++]] = 0.0f;
+                bits -= JPEG_ZRL_RUN;
+            }
+            if (bits != 0) {
+                if (GetBit() == 0) {
+                    value = 0;
+                    acBias = (1 << bits) - 1;
+                } else {
+                    acBias = 0;
+                    value = 1;
+                }
+                bits--;
+                while (bits > 0) {
+                    bits--;
+                    value = value * 2 + GetBit();
+                }
+                value -= acBias;
+            }
+            coefficients[ZigZag[position]] = I2F(value) * quantization[position];
+        } else {
+            while (position < JPEG_BLOCK_COEFFS) {
+                coefficients[ZigZag[position++]] = 0.0f;
+            }
+        }
+        position++;
+    } while (position < JPEG_BLOCK_COEFFS);
+}
 
 /* Two-dimensional inverse DCT of one 8x8 float block, in place (the decoder's
    counterpart of FFDCT). Pass one reads the block's columns and writes the rows
    of sw->idctBlock; pass two reads the columns of sw->idctBlock and writes the
    rows of the block. */
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", FFIDCT);
+/*
+ * 8x8 inverse DCT on VU0. Each pass gathers one column into idctStage in
+ * even/odd order, multiplies it by the basis rows already held in VF1-VF8
+ * (first pass) or VF11-VF18 (second pass), and finishes the butterfly on
+ * VU0 as well with VF27/VF28: the sum half goes out with sqc2, the reversed
+ * difference half through qmfc2/pexew/sq. The first pass writes the rows of
+ * idctBlock, the second the rows of the caller's block. XS1 did the
+ * butterfly on the FPU.
+ */
+void FFIDCT(float block[JPEG_BLOCK_DIM][JPEG_BLOCK_DIM])
+{
+    float *source;
+    float *column;
+    float *stage;
+    float *line;
+    float *out;
+    int i;
+
+    stage = sw->idctStage;
+
+    for (i = 0; i < JPEG_BLOCK_DIM; i++) {
+        line = sw->idctBlock[i];
+        source = block[0] + i;
+        stage[0] = source[0 * JPEG_BLOCK_DIM];
+        stage[1] = source[2 * JPEG_BLOCK_DIM];
+        stage[2] = source[4 * JPEG_BLOCK_DIM];
+        stage[3] = source[6 * JPEG_BLOCK_DIM];
+        stage[4] = source[1 * JPEG_BLOCK_DIM];
+        stage[5] = source[3 * JPEG_BLOCK_DIM];
+        stage[6] = source[5 * JPEG_BLOCK_DIM];
+        stage[7] = source[7 * JPEG_BLOCK_DIM];
+        __asm__ __volatile__(
+            "lqc2 vf9,0(%0)\n"
+            "lqc2 vf10,16(%0)\n"
+            "vmulax.xyzw ACCxyzw,vf1xyzw,vf9x\n"
+            "vmadday.xyzw ACCxyzw,vf2xyzw,vf9y\n"
+            "vmaddaz.xyzw ACCxyzw,vf3xyzw,vf9z\n"
+            "vmaddw.xyzw vf19xyzw,vf4xyzw,vf9w\n"
+            "vmulax.xyzw ACCxyzw,vf5xyzw,vf10x\n"
+            "vmadday.xyzw ACCxyzw,vf6xyzw,vf10y\n"
+            "vmaddaz.xyzw ACCxyzw,vf7xyzw,vf10z\n"
+            "vmaddw.xyzw vf20xyzw,vf8xyzw,vf10w\n"
+            "vmulax.xw ACCxw,vf27xw,vf19x\n"
+            "vmulay.yz ACCyz,vf27yz,vf19y\n"
+            "vmaddaz.xw ACCxw,vf28xw,vf19z\n"
+            "vmaddaw.yz ACCyz,vf28yz,vf19w\n"
+            "vmsub.xyzw vf10xyzw,vf27xyzw,vf20xyzw\n"
+            "vmadd.xyzw vf9xyzw,vf27xyzw,vf20xyzw\n"
+            "vmr32.xyzw vf19xyzw,vf10xyzw\n"
+            "qmfc2.ni $2,vf19\n"
+            "pexew $3,$2\n"
+            "sqc2 vf9,0(%1)\n"
+            "sq $3,16(%1)\n"
+            :
+            : "r"(stage), "r"(line)
+            : "$2", "$3", "memory");
+    }
+
+    for (i = 0; i < JPEG_BLOCK_DIM; i++) {
+        column = &sw->idctBlock[0][i];
+        stage[0] = column[0 * JPEG_BLOCK_DIM];
+        stage[1] = column[2 * JPEG_BLOCK_DIM];
+        stage[2] = column[4 * JPEG_BLOCK_DIM];
+        stage[3] = column[6 * JPEG_BLOCK_DIM];
+        stage[4] = column[1 * JPEG_BLOCK_DIM];
+        stage[5] = column[3 * JPEG_BLOCK_DIM];
+        stage[6] = column[5 * JPEG_BLOCK_DIM];
+        stage[7] = column[7 * JPEG_BLOCK_DIM];
+        out = block[i];
+        __asm__ __volatile__(
+            "lqc2 vf9,0(%0)\n"
+            "lqc2 vf10,16(%0)\n"
+            "vmulax.xyzw ACCxyzw,vf11xyzw,vf9x\n"
+            "vmadday.xyzw ACCxyzw,vf12xyzw,vf9y\n"
+            "vmaddaz.xyzw ACCxyzw,vf13xyzw,vf9z\n"
+            "vmaddw.xyzw vf19xyzw,vf14xyzw,vf9w\n"
+            "vmulax.xyzw ACCxyzw,vf15xyzw,vf10x\n"
+            "vmadday.xyzw ACCxyzw,vf16xyzw,vf10y\n"
+            "vmaddaz.xyzw ACCxyzw,vf17xyzw,vf10z\n"
+            "vmaddw.xyzw vf20xyzw,vf18xyzw,vf10w\n"
+            "vmulax.xw ACCxw,vf27xw,vf19x\n"
+            "vmulay.yz ACCyz,vf27yz,vf19y\n"
+            "vmaddaz.xw ACCxw,vf28xw,vf19z\n"
+            "vmaddaw.yz ACCyz,vf28yz,vf19w\n"
+            "vmsub.xyzw vf10xyzw,vf27xyzw,vf20xyzw\n"
+            "vmadd.xyzw vf9xyzw,vf27xyzw,vf20xyzw\n"
+            "vmr32.xyzw vf19xyzw,vf10xyzw\n"
+            "qmfc2.ni $2,vf19\n"
+            "pexew $3,$2\n"
+            "sqc2 vf9,0(%1)\n"
+            "sq $3,16(%1)\n"
+            :
+            : "r"(stage), "r"(out)
+            : "$2", "$3", "memory");
+    }
+}
 
 void ConvertMCU2YUV(void)
 {
@@ -702,9 +1189,289 @@ void ConvertYUV2RGB(int width, int height)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", StartOfScan);
+/* JpegDecodeControl.pixelFormat bit 0: the destination takes RGB555 instead of RGBA32 texels. */
+#define JPEG_PIXEL_FORMAT_RGB555 1
+#define JPEG_RGBA_BYTES 4
+#define JPEG_RGB555_BYTES 2
 
-/* JPEG decode driver: walks the marker segments of the request's buffer,
-   dispatching DRI/DQT/SOF/DHT/SOS to their parsers, stops at EOI (0xD9) and
-   writes the decoded width and height back into the request. */
-INCLUDE_ASM("asm/main/nonmatchings/xgl_jpeg", xglJpegDecode);
+void sceGsSetDefLoadImage(void *image, short fbp, short fbw, short psm, short x, short y, short w, short h);
+void sceGsExecLoadImage(void *image, void *data);
+void *memcpy(void *destination, const void *source, unsigned int size);
+
+/* VU0 constants of the IDCT: imm0_3 holds the eight basis rows (vf1-vf8) and the two butterfly
+ * vectors (vf27/vf28), imm1_4 the six colour-conversion rows (vf21-vf26). */
+extern float imm0_3[];
+extern u32 imm1_4[];
+
+u8 *StartOfScan(u8 *segment, JpegDecodeControl *requestAddress)
+{
+    JpegDecodeControl *request = requestAddress;
+    int mcuWidth;
+    int mcuHeight;
+    int mcuX;
+    int mcuY;
+    int texelRow;
+    u8 *destCursor;
+    u8 *stagedRgba;
+
+    /* VU0 setup: the I register is loaded with 0.125f through $2 (hence the clobber),
+     * vf1-vf8 and vf27/vf28 are loaded, vf1-vf8 are scaled into vf11-vf18, then vf21-vf26 are loaded. */
+    __asm__ __volatile__(
+        "lui $2,0x3e00\n\t"
+        "ctc2 $2,$vi21\n\t"
+        "lqc2 vf1,0(%0)\n\t"
+        "lqc2 vf2,16(%0)\n\t"
+        "lqc2 vf3,32(%0)\n\t"
+        "lqc2 vf4,48(%0)\n\t"
+        "lqc2 vf5,64(%0)\n\t"
+        "lqc2 vf6,80(%0)\n\t"
+        "lqc2 vf7,96(%0)\n\t"
+        "lqc2 vf8,112(%0)\n\t"
+        "lqc2 vf27,128(%0)\n\t"
+        "lqc2 vf28,144(%0)\n\t"
+        "vmuli.xyzw vf11xyzw,vf1xyzw,I\n\t"
+        "vmuli.xyzw vf12xyzw,vf2xyzw,I\n\t"
+        "vmuli.xyzw vf13xyzw,vf3xyzw,I\n\t"
+        "vmuli.xyzw vf14xyzw,vf4xyzw,I\n\t"
+        "vmuli.xyzw vf15xyzw,vf5xyzw,I\n\t"
+        "vmuli.xyzw vf16xyzw,vf6xyzw,I\n\t"
+        "vmuli.xyzw vf17xyzw,vf7xyzw,I\n\t"
+        "vmuli.xyzw vf18xyzw,vf8xyzw,I\n\t"
+        :
+        : "r"(imm0_3)
+        : "$2", "memory");
+    __asm__ __volatile__(
+        "lqc2 vf21,0(%0)\n\t"
+        "lqc2 vf22,16(%0)\n\t"
+        "lqc2 vf23,32(%0)\n\t"
+        "lqc2 vf24,48(%0)\n\t"
+        "lqc2 vf25,64(%0)\n\t"
+        "lqc2 vf26,80(%0)\n\t"
+        :
+        : "r"(imm1_4)
+        : "memory");
+
+    /* Skip the scan header (length, component count, selectors, spectral range). */
+    segment += 12;
+    sw->buffer = segment; /* cursor into the entropy-coded data */
+    sw->bitsRemaining = 0; /* bit reader starts byte-aligned */
+    sw->bufferedByte = 0; /* nothing buffered from the stream yet */
+    sw->dcPredictors[JPEG_COMPONENT_CR] = 0;
+    sw->dcPredictors[JPEG_COMPONENT_CB] = 0;
+    sw->dcPredictors[JPEG_COMPONENT_Y] = 0;
+
+    /* MCU size: 8x8 (mode 0), 16x8 (mode 1) or 16x16 (mode 2). */
+    switch (sw->samplingMode) {
+    case JPEG_SAMPLING_444:
+        mcuWidth = JPEG_BLOCK_DIM;
+        mcuHeight = JPEG_BLOCK_DIM;
+        break;
+    case JPEG_SAMPLING_422:
+        mcuWidth = JPEG_MCU_PIXELS;
+        mcuHeight = JPEG_BLOCK_DIM;
+        break;
+    case JPEG_SAMPLING_420:
+    default:
+        mcuWidth = JPEG_MCU_PIXELS;
+        mcuHeight = JPEG_MCU_PIXELS;
+        break;
+    }
+
+    /* Decode the image one MCU at a time, left to right, top to bottom. */
+    for (mcuY = 0; mcuY < sw->imageHeight; mcuY += mcuHeight) {
+        for (mcuX = 0; mcuX < sw->imageWidth; mcuX += mcuWidth) {
+            u32 restartPeriod = sw->restartInterval;
+            /* A restart interval resets the bit reader and the DC predictors. */
+            if (restartPeriod != 0 && --sw->restartIntervalPlusOne == 0) {
+                sw->restartIntervalPlusOne = restartPeriod; /* restart the interval countdown */
+                sw->buffer += 2; /* step over the RSTn marker */
+                sw->bitsRemaining = 0; /* no bits left in the current byte */
+                sw->dcPredictors[JPEG_COMPONENT_CR] = 0;
+                sw->dcPredictors[JPEG_COMPONENT_CB] = 0;
+                sw->dcPredictors[JPEG_COMPONENT_Y] = 0;
+            }
+
+            /* Block order: component 0 (1, 2 or 4 blocks), then components 1 and 2. */
+            HuffmanDecode(sw->decodedMcuPlanes.planes, JPEG_COMPONENT_Y);
+            if (sw->samplingMode > 0) {
+                HuffmanDecode(sw->decodedMcuPlanes.planes + JPEG_BLOCK_COEFFS, JPEG_COMPONENT_Y);
+            }
+            if (sw->samplingMode == JPEG_SAMPLING_420) {
+                HuffmanDecode(sw->decodedMcuPlanes.planes + 2 * JPEG_BLOCK_COEFFS, JPEG_COMPONENT_Y);
+                HuffmanDecode(sw->decodedMcuPlanes.planes + 3 * JPEG_BLOCK_COEFFS, JPEG_COMPONENT_Y);
+            }
+            HuffmanDecode(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CB * JPEG_BLOCK_COEFFS, JPEG_COMPONENT_CB);
+            HuffmanDecode(sw->decodedMcuPlanes.planes + JPEG_BLOCK_CR * JPEG_BLOCK_COEFFS, JPEG_COMPONENT_CR);
+
+            /* MCUs outside the requested crop window are decoded but not converted or stored. */
+            if (mcuX <= sw->maximumX && mcuY <= sw->maximumY) {
+                /* Inverse DCT of each decoded 8x8 block, in decode order. */
+                FFIDCT(sw->decodedMcuPlanes.blocks[0]);
+                if (sw->samplingMode > 0) {
+                    FFIDCT(sw->decodedMcuPlanes.blocks[1]);
+                }
+                if (sw->samplingMode == JPEG_SAMPLING_420) {
+                    FFIDCT(sw->decodedMcuPlanes.blocks[2]);
+                    FFIDCT(sw->decodedMcuPlanes.blocks[3]);
+                }
+                FFIDCT(sw->decodedMcuPlanes.blocks[JPEG_BLOCK_CB]);
+                FFIDCT(sw->decodedMcuPlanes.blocks[JPEG_BLOCK_CR]);
+                /* Gather the IDCT output into per-pixel YUV, then convert to RGBA at 0x70003000. */
+                ConvertMCU2YUV();
+                ConvertYUV2RGB(mcuWidth, mcuHeight);
+
+                /* No destination buffer: upload the MCU to the GS (frame buffer base and width come from the
+                 * request). */
+                if (request->destination == 0) {
+                    /* The load-image packet lives in the work area; the MCU is read from 0x70003000. */
+                    sceGsSetDefLoadImage(sw, request->frameBufferBase, request->frameBufferWidth, GS_PSMCT32,
+                                         (short)(request->originX + mcuX), /* GS x */
+                                         (short)(request->originY + mcuY), /* GS y */
+                                         (short)mcuWidth, (short)mcuHeight); /* upload size: one MCU */
+                    sceGsExecLoadImage(sw, (void *)JPEG_STAGING_ADDRESS);
+                } else if (request->pixelFormat & JPEG_PIXEL_FORMAT_RGB555) {
+                    /* 16-bit RGB555 destination: pack each RGBA texel. */
+                    for (texelRow = 0; texelRow < mcuHeight; texelRow++) {
+                        int texelsLeft;
+
+                        stagedRgba = (u8 *)JPEG_STAGING_ADDRESS + texelRow * (mcuWidth * JPEG_RGBA_BYTES);
+                        /* destCursor stays a byte pointer shared with the 32-bit branch:
+                           the original keeps both cursors in $17, and a separate u16 *
+                           local moves this one to $7 and renumbers the loop registers.
+                           The fields are added, not or-ed: with | the pack is scheduled
+                           differently. */
+                        destCursor = request->destination
+                                     + ((mcuY + texelRow) * sw->imageWidth + mcuX) * JPEG_RGB555_BYTES;
+                        texelsLeft = sw->imageWidth < mcuX + mcuWidth ? sw->imageWidth - mcuX : mcuWidth;
+                        for (; texelsLeft > 0; texelsLeft--) {
+                            int green555 = (stagedRgba[1] >> 3) << 5;
+                            int blue555 = (stagedRgba[2] >> 3) << 10;
+
+                            *(u16 *)destCursor = (u16)((stagedRgba[0] >> 3) + (blue555 + green555));
+                            destCursor += JPEG_RGB555_BYTES; /* advance one RGB555 pixel */
+                            stagedRgba += JPEG_RGBA_BYTES; /* advance one RGBA texel */
+                        }
+                    }
+                } else {
+                    /* 32-bit destination: copy each MCU row. */
+                    destCursor = request->destination + (mcuY * sw->imageWidth + mcuX) * JPEG_RGBA_BYTES;
+                    stagedRgba = (u8 *)JPEG_STAGING_ADDRESS;
+
+                    for (texelRow = 0; texelRow < mcuHeight; texelRow++) {
+                        if (sw->imageWidth < mcuX + mcuWidth) {
+                            /* Clip the last MCU to the image width. */
+                            memcpy(destCursor, stagedRgba, (sw->imageWidth - mcuX) * JPEG_RGBA_BYTES);
+                        } else {
+                            memcpy(destCursor, stagedRgba, mcuWidth * JPEG_RGBA_BYTES);
+                        }
+                        destCursor += sw->imageWidth * JPEG_RGBA_BYTES; /* advance one destination row */
+                        stagedRgba += mcuWidth * JPEG_RGBA_BYTES; /* advance one staged row */
+                    }
+                }
+            }
+        }
+    }
+
+    /* Scan for the next marker: a 0xFF that is not a stuffed 0x00 byte. The
+     * returned pointer addresses that 0xFF. */
+    for (;;) {
+        while (*segment++ != JPEG_MARKER_PREFIX) {
+        }
+        if (*segment != 0) {
+            return segment - 1; /* return the address of the marker byte */
+        }
+    }
+}
+
+/* JpegDecodeControl.scaleMode: no scaling, YUV percentages or RGB percentages. */
+#define JPEG_SCALE_NONE 0
+#define JPEG_SCALE_YUV 1
+#define JPEG_SCALE_RGB 2
+
+/* Maximum coordinate stored for an image without size limits. */
+#define JPEG_NO_LIMIT 0x7FFF
+
+/* JPEG decode driver: sets the size limits and colour scales from the
+   request, walks the marker segments of the request's buffer, dispatching
+   DRI/DQT/SOF/DHT/SOS to their parsers, stops at RST0 or EOI and writes the
+   decoded width and height and the parsed byte count back into the request. */
+int xglJpegDecode(JpegDecodeControl *requestAddress)
+{
+    JpegDecodeControl *request = requestAddress;
+    JpegWork *work;
+    u32 extentBits;
+    u8 *cursor;
+    u8 marker;
+    float yuvPercentScale;
+    float rgbPercentScale;
+    float chrominanceScale;
+
+    /* The complete dimension pair is zero for an unbounded image. */
+    __builtin_memcpy(&extentBits, &request->imageLimits, sizeof(extentBits));
+    if (extentBits == 0) {
+        work = sw;
+        work->maximumY = work->maximumX = JPEG_NO_LIMIT;
+    } else {
+        work = sw;
+        work->maximumX = request->imageLimits.width - 1;
+        work->maximumY = request->imageLimits.height - 1;
+    }
+    work->restartInterval = 0;
+    work->colorScaleMode = request->scaleMode;
+    work->blueScale = work->greenScale = work->redScale =
+        work->secondChromaScale = work->firstChromaScale =
+        work->luminanceScale = 1.0f;
+
+    switch (request->scaleMode) {
+    case JPEG_SCALE_YUV:
+        yuvPercentScale = JPEG_PERCENT_SCALE;
+        sw->luminanceScale = I2F(request->luminancePercent) * yuvPercentScale;
+        chrominanceScale = I2F(request->chrominancePercent) * yuvPercentScale;
+        sw->firstChromaScale = sw->secondChromaScale = chrominanceScale;
+        break;
+    case JPEG_SCALE_RGB:
+        rgbPercentScale = JPEG_PERCENT_SCALE;
+        sw->redScale = I2F(request->redPercent) * rgbPercentScale;
+        sw->greenScale = I2F(request->greenPercent) * rgbPercentScale;
+        sw->blueScale = I2F(request->bluePercent) * rgbPercentScale;
+        break;
+    default:
+        break;
+    }
+    cursor = request->source;
+    for (;;) {
+        while (*cursor++ != JPEG_MARKER_PREFIX) {
+        }
+        marker = *cursor;
+        if (marker == JPEG_MARKER_RST0 || marker == JPEG_MARKER_EOI) {
+            break;
+        }
+        cursor++;
+        switch (marker) {
+        case JPEG_MARKER_SOI:
+            break;
+        case JPEG_MARKER_DRI:
+            cursor = DefineRestartInterval(cursor);
+            break;
+        case JPEG_MARKER_DQT:
+            cursor = DefineQuantizeTable(cursor);
+            break;
+        case JPEG_MARKER_SOF0:
+            cursor = StartOfFrame(cursor);
+            break;
+        case JPEG_MARKER_DHT:
+            cursor = DefineHuffmanTable(cursor);
+            break;
+        case JPEG_MARKER_SOS:
+            cursor = StartOfScan(cursor, requestAddress);
+            break;
+        default:
+            cursor += (cursor[0] << 8) + cursor[1];
+            break;
+        }
+    }
+    request->imageLimits.width = sw->imageWidth;
+    request->imageLimits.height = sw->imageHeight;
+    request->consumedSize = cursor - request->source;
+    return 0;
+}

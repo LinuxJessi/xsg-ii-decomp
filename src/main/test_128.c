@@ -259,7 +259,7 @@ void RgHeapDumpBlock(struct RgHeap *pHeap, void *pPtr)
 
 extern char D_0068BF40[];
 struct RgHeap *InstanceOfRgHeapById(u32 heapId);
-void func_002AA5D8(char *pDest, const char *pSrc, u32 count);
+int sprintf(char *destination, const char *format, ...);
 
 void RgHeapDumpById(u32 heapId)
 {
@@ -268,7 +268,7 @@ void RgHeapDumpById(u32 heapId)
 
     if (heapId < 6) {
         pHeap = InstanceOfRgHeapById(heapId);
-        func_002AA5D8(sourceFile, D_0068BF40, heapId);
+        sprintf(sourceFile, D_0068BF40, heapId);
         RgHeapDump_sub(pHeap, sourceFile, D_0068BAC0, 611);
     }
 }

@@ -74,8 +74,8 @@ int xglDmaDisable(unsigned int channel)
  * InitializeSystem. */
 INCLUDE_ASM("asm/main/nonmatchings/tu024", xglIntrInit);
 
-/* Default callback that does nothing and returns 0. */
-int xglHddDummyCallback(void)
+/* Default xglHddInstall progress callback: does nothing and returns 0. */
+int xglHddDummyCallback(int stage, int offset, void *param)
 {
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/pad.h"
 #include "main/tu101.h"
+#include "main/tu109.h"
 #include "main/tu096.h"
 #include "main/tu097.h"
 #include "main/tu110.h"
@@ -1759,19 +1760,6 @@ void func_0021EE68(int count)
 
 #include "shared.h"
 
-/* One x/y pair of a FontTrack. */
-struct FontPair {
-    int x;
-    int y;
-};
-
-/* The track record of main/tu097 (fontTrackSetBoth sets both pairs); 0x1C bytes. */
-struct FontTrack {
-    struct FontPair current_pair;
-    struct FontPair target_pair;
-    unsigned char unmodeled_10[12];
-};
-
 /* Record reset by menuResetRecord: status is set to -1, both blocks are
    cleared through fontTrackSetBoth and pending is zeroed. */
 typedef struct Tu104Record {
@@ -1782,13 +1770,11 @@ typedef struct Tu104Record {
 } Tu104Record;
 
 
-void func_0020CD50(void *);
-void fontTrackSetBoth(void *, int, int);
 void fontObjSetColorRgba(int, int, int, int);
 void func_0021CC08(int, int, int, int);
 extern unsigned short menuIconKinds[];
-extern int menuCursorPos[];
-extern int menuCursorSize[];
+extern struct FontTrack menuCursorPos[];
+extern struct FontTrack menuCursorSize[];
 
 /* Icon at (x, y): the backing piece 0x157, then the kind stored in menuIconKinds[index]. */
 void menuDrawIndexedIcon(int x, int y, int index)
@@ -1950,12 +1936,12 @@ void func_0021F2F0(int x, int y, int width, int blink)
 /* Cursor box: position from menuCursorPos, size from menuCursorSize, kind 0x82 with mode 0x105. */
 void menuDrawCursor(void)
 {
-    func_0020CD50(menuCursorPos);
-    func_0020CD50(menuCursorSize);
-    func_0020CD50(menuCursorPos);
-    func_0020CD50(menuCursorSize);
+    fontTrackEase(menuCursorPos);
+    fontTrackEase(menuCursorSize);
+    fontTrackEase(menuCursorPos);
+    fontTrackEase(menuCursorSize);
     fontObjSetColorRgba(0x24, 0, 0x48, 0x80);
-    packetSubmitRequestEx(0x82, menuCursorPos[0], menuCursorPos[1], menuCursorSize[0], menuCursorSize[1], 0x105);
+    packetSubmitRequestEx(0x82, menuCursorPos[0].current_pair[0], menuCursorPos[0].current_pair[1], menuCursorSize[0].current_pair[0], menuCursorSize[0].current_pair[1], 0x105);
     fontObjResetColor();
 }
 
@@ -3180,8 +3166,6 @@ void menuDrawClassInfo(int x, int y)
 int func_00229EC0(struct ControlContext *context, int group, int slot);
 int func_00229F30(struct ControlContext *context, int group, int slot, int sub);
 int selectionRecordIndex(int group, int slot, int sub);
-void *selectionSetValue(int group, int slot, int sub, int value);
-unsigned short selectionGetValue(int group, int slot, int sub);
 extern unsigned char D_0068AB18[];
 extern unsigned char D_0069D720[];
 extern unsigned char D_0069D728[];
@@ -3747,42 +3731,42 @@ void menuDrawAnimatedBand(int first, int second)
 }
 
 /* A framed panel from three tracks: pos gives the top-left corner, size the outer width and
-   height, tabs the widths of the top (current_pair.x) and bottom (current_pair.y) tabs. The request commands
+   height, tabs the widths of the top (current_pair[0]) and bottom (current_pair[1]) tabs. The request commands
    are command + 0..11 for the pieces, 0xC1 for the top tab mark. */
 void func_002251A0(int command, struct FontTrack *pos, struct FontTrack *size, struct FontTrack *tabs)
 {
-    int y = pos->current_pair.y;
-    int x = pos->current_pair.x;
+    int y = pos->current_pair[1];
+    int x = pos->current_pair[0];
     int width;
 
     packetSubmitRequest(command + 7, x, y, 1);
     x += 0x10;
-    width = size->current_pair.x - tabs->current_pair.x - 0x30;
+    width = size->current_pair[0] - tabs->current_pair[0] - 0x30;
     packetSubmitRequestEx(command + 8, x, y, width, 0x16, 1);
     x += width;
     packetSubmitRequest(command + 9, x, y, 1);
     x += 0x10;
-    width = tabs->current_pair.x;
+    width = tabs->current_pair[0];
     packetSubmitRequestEx(command + 10, x, y, width, 0x16, 1);
     packetSubmitRequest(0xC1, x + ((width - fontObjCellOffsetX(0xC1)) >> 1) + 4, y + 4, 1);
     packetSubmitRequest(command + 11, x + width, y, 1);
     y += 0x16;
 
-    x = pos->current_pair.x;
-    width = size->current_pair.y - 0x2C;
+    x = pos->current_pair[0];
+    width = size->current_pair[1] - 0x2C;
     packetSubmitRequestEx(command + 5, x, y, 0x10, width, 1);
-    packetSubmitRequestEx(command + 6, x + size->current_pair.x - 0x10, y, 0x10, width, 1);
+    packetSubmitRequestEx(command + 6, x + size->current_pair[0] - 0x10, y, 0x10, width, 1);
     y += width;
 
-    x = pos->current_pair.x;
+    x = pos->current_pair[0];
     packetSubmitRequest(command, x, y, 1);
     x += 0x10;
-    width = tabs->current_pair.y;
+    width = tabs->current_pair[1];
     packetSubmitRequestEx(command + 1, x, y, width, 0x16, 1);
     x += width;
     packetSubmitRequest(command + 2, x, y, 1);
     x += 0x10;
-    width = size->current_pair.x - tabs->current_pair.y - 0x30;
+    width = size->current_pair[0] - tabs->current_pair[1] - 0x30;
     packetSubmitRequestEx(command + 3, x, y, width, 0x16, 1);
     packetSubmitRequest(command + 4, x + width, y, 1);
 }
@@ -4070,7 +4054,6 @@ typedef struct MenuObject {
     s32 flags;
 } MenuObject;
 
-void fontTrackAdvance(void *);
 void menuPlaceItemCursor(MenuObject *object, s32 index);
 
 /* Draws an empty party slot: background, the mark icon for panel->flags, and (PARTY_PANEL_LABEL)
@@ -4172,46 +4155,46 @@ void menuPlaceItemCursor(MenuObject *object, s32 index) {
     case 1:
         if (object->items[index].pending & 4) {
             fontTrackSetTarget(&object->tracks[0],
-                               object->state_words[2] + object->items[index].first_block.target_pair.x - 0xA,
-                               object->state_words[3] + object->items[index].first_block.target_pair.y - 0xE);
+                               object->state_words[2] + object->items[index].first_block.target_pair[0] - 0xA,
+                               object->state_words[3] + object->items[index].first_block.target_pair[1] - 0xE);
             fontTrackSetTarget(&object->tracks[1], 0xF6, 0x43);
         } else {
             fontTrackSetTarget(&object->tracks[0],
-                               object->state_words[2] + object->items[index].first_block.target_pair.x - 0xA,
-                               object->state_words[3] + object->items[index].first_block.target_pair.y - 0xA);
+                               object->state_words[2] + object->items[index].first_block.target_pair[0] - 0xA,
+                               object->state_words[3] + object->items[index].first_block.target_pair[1] - 0xA);
             fontTrackSetTarget(&object->tracks[1], 0xB1, 0x62);
         }
         fontTrackSetTarget(&object->tracks[2], 0x4E, 0x20);
         break;
     case 4:
         fontTrackSetTarget(&object->tracks[0],
-                           object->state_words[2] + object->items[index].first_block.target_pair.x - 0x14,
-                           object->state_words[3] + object->items[index].first_block.target_pair.y + 9);
+                           object->state_words[2] + object->items[index].first_block.target_pair[0] - 0x14,
+                           object->state_words[3] + object->items[index].first_block.target_pair[1] + 9);
         break;
     case 8:
         fontTrackSetTarget(&object->tracks[0],
-                           object->state_words[2] + object->items[index].first_block.target_pair.x - 0x14,
-                           object->state_words[3] + object->items[index].first_block.target_pair.y + 0x1E);
+                           object->state_words[2] + object->items[index].first_block.target_pair[0] - 0x14,
+                           object->state_words[3] + object->items[index].first_block.target_pair[1] + 0x1E);
         break;
     case 5:
     case 6:
         if (object->items[index].pending & 0x10000) {
             fontTrackSetTarget(&object->tracks[0],
-                               object->state_words[2] + object->items[index].first_block.target_pair.x - 9,
-                               object->state_words[3] + object->items[index].first_block.target_pair.y - 0xA);
+                               object->state_words[2] + object->items[index].first_block.target_pair[0] - 9,
+                               object->state_words[3] + object->items[index].first_block.target_pair[1] - 0xA);
             fontTrackSetTarget(&object->tracks[1], 0xC2, 0x62);
             fontTrackSetTarget(&object->tracks[2], 0x5F, 0x20);
         } else {
             fontTrackSetTarget(&object->tracks[0],
-                               object->state_words[2] + object->items[index].first_block.target_pair.x - 8,
-                               object->state_words[3] + object->items[index].first_block.target_pair.y - 0x12);
+                               object->state_words[2] + object->items[index].first_block.target_pair[0] - 8,
+                               object->state_words[3] + object->items[index].first_block.target_pair[1] - 0x12);
             fontTrackSetTarget(&object->tracks[1], 0x6F, 0x31);
             fontTrackSetTarget(&object->tracks[2], 0x2B, 0x12);
         }
         break;
     default:
-        fontTrackSetTarget(&object->tracks[0], object->state_words[2] + object->items[index].first_block.target_pair.x,
-                           object->state_words[3] + object->items[index].first_block.target_pair.y);
+        fontTrackSetTarget(&object->tracks[0], object->state_words[2] + object->items[index].first_block.target_pair[0],
+                           object->state_words[3] + object->items[index].first_block.target_pair[1]);
         fontTrackSetTarget(&object->tracks[1], 0x12, 0xA);
         fontTrackSetTarget(&object->tracks[2], 0x12, 0xA);
         fontTrackSetTarget(&object->tracks[3], 0, 0);
@@ -4273,7 +4256,7 @@ void menuRefreshItems(MenuObject *object) {
                                (object->items[index].pending & 1) ? 0x80 : 0);
         }
         if ((object->flags & 1) && (object->items[index].pending & 8)) {
-            object->items[index].second_block.target_pair.x >>= 2;
+            object->items[index].second_block.target_pair[0] >>= 2;
         }
     }
 }
@@ -4288,13 +4271,13 @@ void menuDraw(MenuObject *object) {
     menuRefreshItems(object);
     if (object->item_count > 0) {
         do {
-            if (object->items[index].second_block.target_pair.x != 0) {
-                func_0020CD50(&object->items[index].first_block);
+            if (object->items[index].second_block.target_pair[0] != 0) {
+                fontTrackEase(&object->items[index].first_block);
             } else {
                 fontTrackAdvance(&object->items[index].second_block);
                 fontTrackAdvance(&object->items[index].first_block);
             }
-            func_0020CD50(&object->items[index].second_block);
+            fontTrackEase(&object->items[index].second_block);
             index += 1;
         } while (index < object->item_count);
     }
@@ -4303,12 +4286,12 @@ void menuDraw(MenuObject *object) {
     } else {
         fontTrackSetTarget(&object->tracks[3], 0, 0);
     }
-    func_0020CD50(&object->tracks[0]);
-    func_0020CD50(&object->tracks[3]);
-    func_0020CD50(&object->tracks[1]);
-    func_0020CD50(&object->tracks[2]);
+    fontTrackEase(&object->tracks[0]);
+    fontTrackEase(&object->tracks[3]);
+    fontTrackEase(&object->tracks[1]);
+    fontTrackEase(&object->tracks[2]);
     menuPlaceItemCursor(object, object->cursor);
-    func_0020CD50(object);
+    fontTrackEase(object);
 }
 
 /* Draws the items: party items from their roster entry (layout 7 draws them as layout 3), empty grid slots
@@ -4360,21 +4343,21 @@ void func_00226948(MenuObject *object) {
             fontObjSetOpacity(0x20);
         }
         for (index = 0; index < object->item_count; index++) {
-            if (object->items[index].status != -1 && object->items[index].second_block.target_pair.x > 0
+            if (object->items[index].status != -1 && object->items[index].second_block.target_pair[0] > 0
                 && ptState.slots[object->items[index].status] != 0) {
                 menuPlaceItemCursor(object, index);
                 fontTrackAdvance(&object->tracks[0]);
-                menuDrawAnimatedBand(object->tracks[0].current_pair.x, object->tracks[0].current_pair.y);
+                menuDrawAnimatedBand(object->tracks[0].current_pair[0], object->tracks[0].current_pair[1]);
             }
         }
         fontObjResetOpacity();
         object->tracks[0] = savedTrack;
     } else if (object->layout == 4 || object->layout == 8) {
         if (object->flags & 1) {
-            menuDrawAnimatedBand(object->tracks[0].current_pair.x, object->tracks[0].current_pair.y);
+            menuDrawAnimatedBand(object->tracks[0].current_pair[0], object->tracks[0].current_pair[1]);
         }
     } else {
-        fontObjSetOpacity(object->tracks[3].current_pair.x);
+        fontObjSetOpacity(object->tracks[3].current_pair[0]);
         func_002251A0(0x88, &object->tracks[0], &object->tracks[1], &object->tracks[2]);
         fontObjResetOpacity();
     }
@@ -4421,7 +4404,7 @@ void menuSetMode(object, layout)
         }
         fontTrackSetTarget(&object->items[index].first_block, D_003EB400[layout][slot].x,
                            D_003EB400[layout][slot].y);
-        if (object->items[index].second_block.target_pair.x == 0) {
+        if (object->items[index].second_block.target_pair[0] == 0) {
             fontTrackAdvance(&object->items[index].first_block);
         }
     }
@@ -4449,15 +4432,15 @@ void menuHide(MenuObject *object) {
         element = (char *) object;
         do {
             index += 1;
-            fontTrackAdvance(element + 0x90);
-            fontTrackAdvance(element + 0xAC);
+            fontTrackAdvance((struct FontTrack *) (element + 0x90));
+            fontTrackAdvance((struct FontTrack *) (element + 0xAC));
             element += 0x40;
         } while (index < object->item_count);
     }
     menuPlaceItemCursor(object, object->cursor);
-    fontTrackAdvance((char *) object + 0x1C);
-    fontTrackAdvance((char *) object + 0x38);
-    fontTrackAdvance((char *) object + 0x54);
+    fontTrackAdvance(&object->track_1C);
+    fontTrackAdvance(&object->track_38);
+    fontTrackAdvance(&object->track_54);
 }
 
 extern unsigned char D_0069D74F;
@@ -4568,13 +4551,13 @@ void menuNavigate(MenuObject *object, s32 direction) {
         default:
             continue;
         case 0:
-            along = object->items[index].first_block.current_pair.y + itemAdjY
-                    - object->items[object->cursor].first_block.current_pair.y - cursorAdjY;
+            along = object->items[index].first_block.current_pair[1] + itemAdjY
+                    - object->items[object->cursor].first_block.current_pair[1] - cursorAdjY;
             if (along >= 0) {
                 continue;
             }
-            across = object->items[index].first_block.current_pair.x + itemAdjX
-                     - object->items[object->cursor].first_block.current_pair.x - cursorAdjX;
+            across = object->items[index].first_block.current_pair[0] + itemAdjX
+                     - object->items[object->cursor].first_block.current_pair[0] - cursorAdjX;
             along = (along < 0) ? -along : along;
             across = (across < 0) ? -across : across;
             if (along < across) {
@@ -4588,13 +4571,13 @@ void menuNavigate(MenuObject *object, s32 direction) {
             best = index;
             break;
         case 2:
-            along = object->items[index].first_block.current_pair.y + itemAdjY
-                    - object->items[object->cursor].first_block.current_pair.y - cursorAdjY;
+            along = object->items[index].first_block.current_pair[1] + itemAdjY
+                    - object->items[object->cursor].first_block.current_pair[1] - cursorAdjY;
             if (along <= 0) {
                 continue;
             }
-            across = object->items[index].first_block.current_pair.x + itemAdjX
-                     - object->items[object->cursor].first_block.current_pair.x - cursorAdjX;
+            across = object->items[index].first_block.current_pair[0] + itemAdjX
+                     - object->items[object->cursor].first_block.current_pair[0] - cursorAdjX;
             along = (along < 0) ? -along : along;
             across = (across < 0) ? -across : across;
             if (along < across) {
@@ -4608,13 +4591,13 @@ void menuNavigate(MenuObject *object, s32 direction) {
             best = index;
             break;
         case 3:
-            along = object->items[index].first_block.current_pair.x + itemAdjX
-                    - object->items[object->cursor].first_block.current_pair.x - cursorAdjX;
+            along = object->items[index].first_block.current_pair[0] + itemAdjX
+                    - object->items[object->cursor].first_block.current_pair[0] - cursorAdjX;
             if (along >= 0) {
                 continue;
             }
-            across = object->items[index].first_block.current_pair.y + itemAdjY
-                     - object->items[object->cursor].first_block.current_pair.y - cursorAdjY;
+            across = object->items[index].first_block.current_pair[1] + itemAdjY
+                     - object->items[object->cursor].first_block.current_pair[1] - cursorAdjY;
             along = (along < 0) ? -along : along;
             across = (across < 0) ? -across : across;
             if (along * 2 < across) {
@@ -4631,13 +4614,13 @@ void menuNavigate(MenuObject *object, s32 direction) {
             best = index;
             break;
         case 1:
-            along = object->items[index].first_block.current_pair.x + itemAdjX
-                    - object->items[object->cursor].first_block.current_pair.x - cursorAdjX;
+            along = object->items[index].first_block.current_pair[0] + itemAdjX
+                    - object->items[object->cursor].first_block.current_pair[0] - cursorAdjX;
             if (along <= 0) {
                 continue;
             }
-            across = object->items[index].first_block.current_pair.y + itemAdjY
-                     - object->items[object->cursor].first_block.current_pair.y - cursorAdjY;
+            across = object->items[index].first_block.current_pair[1] + itemAdjY
+                     - object->items[object->cursor].first_block.current_pair[1] - cursorAdjY;
             along = (along < 0) ? -along : along;
             across = (across < 0) ? -across : across;
             if (along * 2 < across) {
@@ -4670,10 +4653,10 @@ void menuSetSelected(MenuObject *object, s32 selected) {
 
     for (index = 0; index < object->item_count; index++) {
         if (index == selected) {
-            object->items[index].second_block.target_pair.y = 0x80;
+            object->items[index].second_block.target_pair[1] = 0x80;
             object->items[index].pending |= 1;
         } else {
-            object->items[index].second_block.target_pair.y = 0;
+            object->items[index].second_block.target_pair[1] = 0;
             object->items[index].pending &= ~1;
         }
     }
@@ -4704,13 +4687,13 @@ void func_00227458(MenuObject *object, s32 index) {
         return;
     }
     savedTrack = object->items[index].first_block;
-    savedOpacity = object->items[index].second_block.current_pair.x;
+    savedOpacity = object->items[index].second_block.current_pair[0];
     if (index >= 6) {
         fontTrackSetBoth(&object->items[index].first_block, 0x11, 0x121);
     } else {
         fontTrackSetBoth(&object->items[index].first_block, 0x11, 0x100);
     }
-    object->items[index].second_block.current_pair.x = 0x80;
+    object->items[index].second_block.current_pair[0] = 0x80;
     entry = (MenuPartyEntry *) ptState.roster[object->items[index].status];
     if (entry != 0) {
         menuDrawPartyPanel((MenuPartyPanel *) &object->items[index], entry, object->state_words[0],
@@ -4719,7 +4702,7 @@ void func_00227458(MenuObject *object, s32 index) {
         func_00225FE0((MenuPartyPanel *) &object->items[index], object->state_words[0], object->state_words[1]);
     }
     object->items[index].first_block = savedTrack;
-    object->items[index].second_block.current_pair.x = savedOpacity;
+    object->items[index].second_block.current_pair[0] = savedOpacity;
 }
 
 /* Disables every item (pending bit 0x8), then enables the groups selected by enableMask and moves the
@@ -5121,7 +5104,7 @@ typedef struct ChoiceState {
     unsigned char unmodeled_10[0x04];
     int rowPixelY;                          /* 0x14 */
     unsigned char unmodeled_18[0x04];
-    struct FontTrack fade;                  /* 0x1C: current_pair.x is the opacity choiceDraw applies */
+    struct FontTrack fade;                  /* 0x1C: current_pair[0] is the opacity choiceDraw applies */
     unsigned char state;                    /* 0x38 */
     unsigned char unmodeled_39[0x3C - 0x39];
     unsigned char *buffer;                  /* 0x3C */
@@ -5163,7 +5146,7 @@ typedef struct CountdownState {
 } CountdownState;
 
 extern CountdownState countdownState;
-extern int D_006A5824[];
+extern struct FontTrack D_006A5824[];
 extern int choiceFirstOptionText[];
 
 /* Sets the text of the first option of the choice prompt (choiceState +0x40); choiceDraw draws it at x 0xB4. */
@@ -5195,7 +5178,7 @@ int choiceUpdate(void)
         if (PadData[0].directionRepeated & 0xA000) {
             seVoiceStartDefault(0x01000001);
             choiceState.state ^= 1;
-            fontTrackSetTarget(&choiceState, (signed char) choiceState.state * 0x78 + 0xA0, choiceState.id);
+            fontTrackSetTarget((struct FontTrack *) &choiceState, (signed char) choiceState.state * 0x78 + 0xA0, choiceState.id);
         }
         if (PadData[0].directionPressed & 0x40) {
             choiceState.state = 2;
@@ -5215,16 +5198,16 @@ void xglFontFlush(void);
 
 /* Draws the yes/no prompt: panel frame, prompt text, the two option labels (glyph kind 5 for
    the currently selected option, 4 for the other) and, while state read as a signed byte is
-   not negative, the moving highlight band. func_0020CD50 runs twice on each track, as in the asm. */
+   not negative, the moving highlight band. fontTrackEase runs twice on each track, as in the asm. */
 void choiceDraw(void)
 {
     /* The asm addresses the opacity track first and reaches the record through it. */
     struct FontTrack *fade = &choiceState.fade;
     ChoiceState *state = &choiceState;
 
-    func_0020CD50(fade);
-    func_0020CD50(fade);
-    fontObjSetOpacity(state->fade.current_pair.x);
+    fontTrackEase(fade);
+    fontTrackEase(fade);
+    fontObjSetOpacity(state->fade.current_pair[0]);
     func_0021DE60(0x78, 0xA0, 0x110, 0x78);
     func_0021E338(0x7C, 0xA4, 0x108, 0x70);
     textDrawSegment(0, 0, msgStyleInit, 4);
@@ -5237,8 +5220,8 @@ void choiceDraw(void)
                     (signed char) state->state == 1 ? 5 : 4);
     xglFontFlush();
     if ((signed char) state->state >= 0) {
-        func_0020CD50(state);
-        func_0020CD50(state);
+        fontTrackEase(state);
+        fontTrackEase(state);
         fontObjResetAndBuild();
         packetRequest.first = state->x;
         packetRequest.command = 0x134;
@@ -5297,8 +5280,8 @@ void countdownDraw(void)
     /* The record starts four bytes before D_006A5824, the word that the
      * two callees below receive by address. */
     countdown = (CountdownState *) ((unsigned char *) D_006A5824 - 4);
-    func_0020CD50(D_006A5824);
-    func_0020CD50(D_006A5824);
+    fontTrackEase(D_006A5824);
+    fontTrackEase(D_006A5824);
     fontObjSetOpacity(countdown->value);
     func_0021DE60(0x50, 0xB4, 0x160, 0x50);
     func_0021E338(0x54, 0xB8, 0x158, 0x48);

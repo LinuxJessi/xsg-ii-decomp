@@ -1053,7 +1053,7 @@ typedef struct UwamonoGameWork {
 
 extern UwamonoGameWork gameWork;
 extern signed char pxyTickScaleDouble;
-extern unsigned short D_0063EDAA[];
+extern unsigned short textOptionFlags[];
 extern float D_0069B0F0;
 extern float D_0069B0F4;
 extern float D_0069B0F8;
@@ -1206,7 +1206,7 @@ void uwamonoUpdateRecord(int index)
     }
     if (pxyTickScaleDouble != 0)
     {
-        if ((D_0063EDAA[0] & 4) || gameWork.blocked != 0)
+        if ((textOptionFlags[0] & 4) || gameWork.blocked != 0)
         {
             if ((*(signed char *) &state->mode) == 5)
             {
@@ -1227,7 +1227,7 @@ void uwamonoUpdateRecord(int index)
 
 int HitCheckMapUnitPosSize(const Vector4 *position, float radius);
 int uwamonoFindOverlapRecord(int index, Vector4 *position, float scale);
-float func_0020A968(int index, Vector4 *position, int motion, int frame, int flags);
+float unduGetSlotHeight(int index, Vector4 *position, int motion, int frame, int flags);
 extern char D_00689E60[];
 
 /*
@@ -1278,7 +1278,7 @@ int uwamonoMoveAlongHeading(int index, Vector4 *target, float speed)
         record->position = swept;
         actor->position = record->position.vector;
         actor->position.y = record->position.vector.y =
-            func_0020A968(index, position, state->fanFlags,
+            unduGetSlotHeight(index, position, state->fanFlags,
                           state->groundFrame, 0);
         return 0;
     }
@@ -1303,7 +1303,7 @@ int uwamonoMoveAlongHeading(int index, Vector4 *target, float speed)
     ((UwamonoWordView *) &actor->direction.y)->value = heading;
     record->position = swept;
     actor->position = record->position.vector;
-    ground = func_0020A968(index, position, state->fanFlags,
+    ground = unduGetSlotHeight(index, position, state->fanFlags,
                            state->groundFrame, 0);
     if (ground != -1000.0f)
     {
