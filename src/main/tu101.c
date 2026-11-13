@@ -1921,7 +1921,7 @@ void func_0021F2F0(int x, int y, int width, int blink)
         fontTrackSetBoth(menuCursorSize, 0, 0);
         return;
     }
-    if (menuCursorPos[2] == 0 && menuCursorPos[3] == 0 && menuCursorSize[2] == 0) {
+    if (menuCursorPos[0].target_pair[0] == 0 && menuCursorPos[0].target_pair[1] == 0 && menuCursorSize[0].target_pair[0] == 0) {
         fontTrackSetBoth(menuCursorPos, x, y + 0xA);
         fontTrackSetBoth(menuCursorSize, width, 0);
         return;
@@ -2515,7 +2515,6 @@ void menuDrawCharStats(int x, int y, struct ControlContext *member, int item, in
     }
 }
 
-void *selectionRecordSetValue(int index, int value);
 extern unsigned char D_003EB380[];
 extern unsigned char D_0069D690[];
 
@@ -4438,9 +4437,9 @@ void menuHide(MenuObject *object) {
         } while (index < object->item_count);
     }
     menuPlaceItemCursor(object, object->cursor);
-    fontTrackAdvance(&object->track_1C);
-    fontTrackAdvance(&object->track_38);
-    fontTrackAdvance(&object->track_54);
+    fontTrackAdvance(&object->tracks[0]);
+    fontTrackAdvance(&object->tracks[1]);
+    fontTrackAdvance(&object->tracks[2]);
 }
 
 extern unsigned char D_0069D74F;
