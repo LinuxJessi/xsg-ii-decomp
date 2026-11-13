@@ -243,7 +243,45 @@ void msgChoiceOpen(int frame, int second) {
     msgChoiceSetIndex(msgChoice, second);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu148", msgChoicePoll);
+int msgChoiceTestFlags(void *choice, int mask);
+long long msgChoiceGetFrames(void *choice);
+void func_0027D9D8(void *choice, int step);
+void func_0027D9F0(void *choice, int step);
+void msgGameFlagClear(void);
+
+/* Polls the open choice: CIRCLE closes it and returns its frame count; left/right and up/down move the
+ * selection. -1 while nothing is chosen or no choice is open. */
+int msgChoicePoll(void)
+{
+    int frames;
+
+    if (msgChoiceTestFlags(msgChoice, 8) == 0) {
+        return -1;
+    }
+    if (msgChoiceTestFlags(msgChoice, 0x300) != 0) {
+        return -1;
+    }
+    if (PadData[0].pressed & PAD_CIRCLE) {
+        frames = msgChoiceGetFrames(msgChoice);
+        func_0027DE28(msgChoice);
+        msgWindowRunAll(msgWindow);
+        msgGameFlagClear();
+        return frames;
+    }
+    if (PadData[0].directionRepeated & PAD_LEFT) {
+        func_0027D9D8(msgChoice, 1);
+    }
+    if (PadData[0].directionRepeated & PAD_RIGHT) {
+        func_0027D9D8(msgChoice, -1);
+    }
+    if (PadData[0].directionRepeated & PAD_UP) {
+        func_0027D9F0(msgChoice, 1);
+    }
+    if (PadData[0].directionRepeated & PAD_DOWN) {
+        func_0027D9F0(msgChoice, -1);
+    }
+    return -1;
+}
 
 void func_00251B18(void);
 void timecodeStartAtHms(void *, int, int, int);
