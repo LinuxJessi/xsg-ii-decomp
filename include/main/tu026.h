@@ -3,6 +3,6 @@
 
 /* Functions of src/main/tu026.c that other files call. */
 
-void assertFailed(int message, int file, int line);
+void assertFailed(const char *message, const char *file, int line);
 
 #endif /* INCLUDE_MAIN_TU026_H */

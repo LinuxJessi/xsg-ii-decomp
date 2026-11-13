@@ -913,7 +913,7 @@ typedef struct MenuPartyRecord {
 #define PARTY_PANEL_VALUES 0x400 /* layout 4 shows values C and 8 instead of gauge and level */
 #define PARTY_PANEL_TALL 0x10000 /* tall variant of layouts 5 to 7 */
 
-extern unsigned char D_003EB290[];
+extern unsigned char menuPanelFrame[];
 extern char D_0069D6E0[];
 
 MenuPartyRecord *func_A8B490(int id);
@@ -956,7 +956,7 @@ void menuDrawPartyPanel(MenuPartyPanel *panel, MenuPartyEntry *entry, int x, int
     case 0:
     case 1:
         if (panel->flags & PARTY_PANEL_ALT_FRAME) {
-            panelDrawNineSlice(D_003EB290, x, y, 0xE2, 0x2B);
+            panelDrawNineSlice(menuPanelFrame, x, y, 0xE2, 0x2B);
             packetSubmitRequest(0x121, x + 0xE, y + 4, 0x11);
             func_0021F218(x + 8, y + 7, name->icon);
             textDrawGlyphString(x + 0x28, y + 7, name->text, MENU_PARTY_TEXT_COLOR);
@@ -968,7 +968,7 @@ void menuDrawPartyPanel(MenuPartyPanel *panel, MenuPartyEntry *entry, int x, int
                 func_002253A8(x - 0xA, y - 0xE, 1);
             }
         } else {
-            panelDrawNineSlice(D_003EB290, x, y + 0x19, 0x9D, 0x27);
+            panelDrawNineSlice(menuPanelFrame, x, y + 0x19, 0x9D, 0x27);
             packetSubmitRequest(0x120, x + 0x2F, y + 4, 0x11);
             func_0021EFC8(x + 6, y, name->icon);
             textDrawGlyphString(x + 0x34, y + 7, name->text, MENU_PARTY_TEXT_COLOR);
@@ -1052,7 +1052,7 @@ void menuDrawPartyPanel(MenuPartyPanel *panel, MenuPartyEntry *entry, int x, int
     case 5:
     case 6:
         if (panel->flags & PARTY_PANEL_TALL) {
-            panelDrawNineSlice(D_003EB290, x, y + 0x19, 0xAF, 0x27);
+            panelDrawNineSlice(menuPanelFrame, x, y + 0x19, 0xAF, 0x27);
             if (panel->flags & PARTY_PANEL_ALT_FRAME) {
                 packetSubmitRequest(0x121, x + 0x2F, y + 4, 0x11);
             } else {
@@ -1089,7 +1089,7 @@ void menuDrawPartyPanel(MenuPartyPanel *panel, MenuPartyEntry *entry, int x, int
         }
         break;
     case 8:
-        panelDrawNineSlice(D_003EB290, x, y + 0x29, 0xAE, 0x27);
+        panelDrawNineSlice(menuPanelFrame, x, y + 0x29, 0xAE, 0x27);
         if (panel->flags & PARTY_PANEL_ALT_FRAME) {
             packetSubmitRequest(0x121, x + 0x2F, y + 4, 0x11);
             packetSubmitRequest(0x115, x + 0x38, y + 0x19, 0x11);

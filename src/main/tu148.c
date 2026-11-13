@@ -34,7 +34,7 @@ void msgStateReset(void) {
     msgEntryClear(msgChoice);
     msgSlotIndex = -1;
     msgChoiceTimer = 0;
-    func_0022DEE0();
+    talkStateReset();
 }
 
 /* Same reset as msgStateReset, and the panel object is initialised too. */
@@ -47,7 +47,7 @@ void msgResetAll(void) {
     msgEntryClear(msgPanel);
     msgSlotIndex = -1;
     msgChoiceTimer = 0;
-    func_0022DEE0();
+    talkStateReset();
 }
 
 int msgSlotTestCurrent(int mask);
