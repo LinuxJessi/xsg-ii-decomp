@@ -1,5 +1,7 @@
 #include "common.h"
+#include "gs.h"
 #include "shared.h"
+#include "main/xgl_jpeg.h"
 
 /* EE scratchpad RAM. */
 #define SCRATCHPAD_BASE 0x70000000
@@ -118,7 +120,9 @@ typedef struct JpegWork {
     u8 unmodeled_0000[0xD0];
     float luminanceQuantization[JPEG_BLOCK_COEFFS];    /* +0xD0 */
     float chrominanceQuantization[JPEG_BLOCK_COEFFS];  /* +0x1D0 */
-    u8 unmodeled_02d0[0x350 - 0x2D0];
+    /* +0x2D0: the encoder's 8-bit quantizer values (luminance, chrominance),
+       rebuilt from the quality and written to the DQT segments. */
+    u8 quantizerValues[2][JPEG_BLOCK_COEFFS];
     u8 *buffer;
     int outputPosition;
     signed char bitsRemaining;
@@ -502,7 +506,6 @@ void ExtractHuffmanTableSub(JpegHuffCode *table, const u8 *symbols, int tableSiz
 #define JPEG_DENSITY_WIDTH_NUMERATOR 0xFA00
 /* sceGsSetDefStoreImage's packet sits at this offset of the work area. */
 #define JPEG_STORE_IMAGE_OFFSET 0x60
-#define SCE_GS_PSMCT24 1
 
 /* RGB to YCbCr (JFIF). */
 #define JPEG_Y_FROM_R 0.299f
@@ -519,10 +522,10 @@ typedef struct JpegEncodeRequest {
     u8 unmodeled_00[4];
     u8 *outputBuffer;
     int outputSize;
-    short sourceX;
-    short sourceY;
-    short destinationX;
-    short destinationY;
+    short frameBufferBase;  /* +0x0C: sceGsSetDefStoreImage fbp */
+    short frameBufferWidth; /* +0x0E: fbw */
+    short originX;
+    short originY;
     short width;
     short height;
     u8 luminanceQuality;
@@ -532,8 +535,8 @@ typedef struct JpegEncodeRequest {
 } JpegEncodeRequest;
 
 extern u8 headerALL[];
-int sceGsSetDefStoreImage(void *image, short sourceX, short sourceY, short psm, short destinationX,
-                          short destinationY, unsigned int width, unsigned int height);
+int sceGsSetDefStoreImage(void *image, short fbp, short fbw, short psm, short x, short y,
+                          unsigned int w, unsigned int h);
 int sceGsExecStoreImage(void *image, void *buffer);
 
 int xglJpegEncode(JpegEncodeRequest *request)
@@ -550,8 +553,8 @@ int xglJpegEncode(JpegEncodeRequest *request)
     int quotient;
 
     sw->rowBytes = request->width * 3;
-    RebuildQuantizeTable(sw->unmodeled_02d0, sw->luminanceQuantization, 0, request->luminanceQuality);
-    RebuildQuantizeTable(&sw->unmodeled_02d0[JPEG_BLOCK_COEFFS], sw->chrominanceQuantization, 1,
+    RebuildQuantizeTable(sw->quantizerValues[0], sw->luminanceQuantization, 0, request->luminanceQuality);
+    RebuildQuantizeTable(sw->quantizerValues[1], sw->chrominanceQuantization, 1,
                          request->chrominanceQuality);
     ExtractHuffmanTableSub(sw->luminanceDcCodes.encode, headerALL + JPEG_HEADER_DHT_DC_LUMA_OFFSET,
                            JPEG_HUFF_DC_SYMBOLS);
@@ -578,12 +581,12 @@ int xglJpegEncode(JpegEncodeRequest *request)
 
     header = sw->buffer + JPEG_HEADER_DQT_LUMA_OFFSET;
     for (i = 0; i < JPEG_BLOCK_COEFFS; i++) {
-        *header = sw->unmodeled_02d0[ZigZag[i]];
+        *header = sw->quantizerValues[0][ZigZag[i]];
         header++;
     }
     header = sw->buffer + JPEG_HEADER_DQT_CHROMA_OFFSET;
     for (i = 0; i < JPEG_BLOCK_COEFFS; i++) {
-        *header = sw->unmodeled_02d0[JPEG_BLOCK_COEFFS + ZigZag[i]];
+        *header = sw->quantizerValues[1][ZigZag[i]];
         header++;
     }
 
@@ -628,8 +631,10 @@ int xglJpegEncode(JpegEncodeRequest *request)
 
     for (y = 0; y < request->height; y += mcuHeight) {
         for (x = 0; x < request->width; x += mcuWidth) {
-            sceGsSetDefStoreImage(&sw->unmodeled_0000[JPEG_STORE_IMAGE_OFFSET], request->sourceX, request->sourceY,
-                                  SCE_GS_PSMCT24, request->destinationX + x, request->destinationY + y,
+            sceGsSetDefStoreImage(&sw->unmodeled_0000[JPEG_STORE_IMAGE_OFFSET], request->frameBufferBase, request->frameBufferWidth,
+                                  GS_PSMCT24, request->originX + x, request->originY + y,
+                                  /* Zero-extended with sll/srl as in the original; a (u16) cast
+                                     compiles to andi and moves the argument loads. */
                                   ((unsigned) mcuWidth << 16) >> 16, ((unsigned) mcuHeight << 16) >> 16);
             sceGsExecStoreImage(&sw->unmodeled_0000[JPEG_STORE_IMAGE_OFFSET], (void *) JPEG_STAGING_ADDRESS);
 
@@ -1184,35 +1189,10 @@ void ConvertYUV2RGB(int width, int height)
     }
 }
 
-typedef struct JpegImageDimensions {
-    short width;
-    short height;
-} JpegImageDimensions;
-
-typedef struct JpegDecodeControl {
-    u8 *source;
-    u8 *destination;
-    int consumedSize; /* +0x08: bytes of source parsed up to the RST0/EOI marker */
-    short frameBufferBase;
-    short frameBufferWidth;
-    u16 originX;
-    u16 originY;
-    JpegImageDimensions imageLimits; /* +0x14 */
-    u8 luminancePercent;
-    u8 chrominancePercent;
-    u8 scaleMode; /* +0x1a */
-    u8 pixelFormat;
-    u8 redPercent;
-    u8 greenPercent;
-    u8 bluePercent;
-    u8 unmodeled_1f;
-} JpegDecodeControl;
-
 /* JpegDecodeControl.pixelFormat bit 0: the destination takes RGB555 instead of RGBA32 texels. */
 #define JPEG_PIXEL_FORMAT_RGB555 1
 #define JPEG_RGBA_BYTES 4
 #define JPEG_RGB555_BYTES 2
-#define SCE_GS_PSMCT32 0
 
 void sceGsSetDefLoadImage(void *image, short fbp, short fbw, short psm, short x, short y, short w, short h);
 void sceGsExecLoadImage(void *image, void *data);
@@ -1223,7 +1203,7 @@ void *memcpy(void *destination, const void *source, unsigned int size);
 extern float imm0_3[];
 extern u32 imm1_4[];
 
-u8 *StartOfScan(u8 *segment, void *requestAddress)
+u8 *StartOfScan(u8 *segment, JpegDecodeControl *requestAddress)
 {
     JpegDecodeControl *request = requestAddress;
     int mcuWidth;
@@ -1344,7 +1324,7 @@ u8 *StartOfScan(u8 *segment, void *requestAddress)
                  * request). */
                 if (request->destination == 0) {
                     /* The load-image packet lives in the work area; the MCU is read from 0x70003000. */
-                    sceGsSetDefLoadImage(sw, request->frameBufferBase, request->frameBufferWidth, SCE_GS_PSMCT32,
+                    sceGsSetDefLoadImage(sw, request->frameBufferBase, request->frameBufferWidth, GS_PSMCT32,
                                          (short)(request->originX + mcuX), /* GS x */
                                          (short)(request->originY + mcuY), /* GS y */
                                          (short)mcuWidth, (short)mcuHeight); /* upload size: one MCU */
@@ -1355,6 +1335,11 @@ u8 *StartOfScan(u8 *segment, void *requestAddress)
                         int texelsLeft;
 
                         stagedRgba = (u8 *)JPEG_STAGING_ADDRESS + texelRow * (mcuWidth * JPEG_RGBA_BYTES);
+                        /* destCursor stays a byte pointer shared with the 32-bit branch:
+                           the original keeps both cursors in $17, and a separate u16 *
+                           local moves this one to $7 and renumbers the loop registers.
+                           The fields are added, not or-ed: with | the pack is scheduled
+                           differently. */
                         destCursor = request->destination
                                      + ((mcuY + texelRow) * sw->imageWidth + mcuX) * JPEG_RGB555_BYTES;
                         texelsLeft = sw->imageWidth < mcuX + mcuWidth ? sw->imageWidth - mcuX : mcuWidth;
@@ -1410,7 +1395,7 @@ u8 *StartOfScan(u8 *segment, void *requestAddress)
    request, walks the marker segments of the request's buffer, dispatching
    DRI/DQT/SOF/DHT/SOS to their parsers, stops at RST0 or EOI and writes the
    decoded width and height and the parsed byte count back into the request. */
-int xglJpegDecode(void *requestAddress)
+int xglJpegDecode(JpegDecodeControl *requestAddress)
 {
     JpegDecodeControl *request = requestAddress;
     JpegWork *work;

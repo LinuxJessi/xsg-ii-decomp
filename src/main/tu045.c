@@ -1211,7 +1211,7 @@ void pxyUploadBoneMatrices(void)
     }
 }
 
-void sceGsSetDefLoadImage(void *dst, s16 x, s16 w, int a, int b, int c, s16 d, s16 e);
+void sceGsSetDefLoadImage(void *image, short fbp, short fbw, short psm, short x, short y, short w, short h);
 void func_0012B7C0(XglPacket *packet, int mode);
 void func_0012B818(XglPacket *packet);
 void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
