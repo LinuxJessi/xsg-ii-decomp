@@ -176,6 +176,7 @@
    "0x002a1e28": "sqrtf",
    "0x002a9eb4": "memset",
    "0x002aa0a8": "printf",
+   "0x002aa5d8": "sprintf",
    "0x002aa91c": "strchr",
    "0x002aaaac": "strcmp",
    "0x002aabf0": "strcpy",

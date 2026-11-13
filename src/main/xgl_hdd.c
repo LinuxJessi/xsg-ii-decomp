@@ -940,7 +940,7 @@ struct HddInstallImage {
     unsigned char systemCnf[HDD_SYSTEM_CNF_SIZE];
 };
 
-extern int func_002AA5D8(char *buffer, const char *format, ...);
+extern int sprintf(char *buffer, const char *format, ...);
 extern int sceFormat(const char *mount_point, const char *device, void *payload, int payload_length);
 extern int xglCdGetFileSize(const char *name);
 extern int xglCdReadFilePart(const char *name, void *buffer, int mode,
@@ -998,7 +998,7 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
     size = (image->bodySize + image->tableSize + HDD_SECTOR_SIZE - 1) & -HDD_SECTOR_SIZE;
 
     callback(HDD_INSTALL_STAGE_RESOURCE_READ, 0, param);
-    func_002AA5D8(path, partitionSpecFormat, partitionname);
+    sprintf(path, partitionSpecFormat, partitionname);
     partition = sceOpen(path, HDD_OPEN_READ_WRITE_CREATE);
     if (partition < 0) {
         callback(HDD_INSTALL_FAIL_PARTITION_OPEN, partition, param);

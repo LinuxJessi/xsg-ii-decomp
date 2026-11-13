@@ -2992,7 +2992,7 @@ typedef struct {
     char text[10];
 } ResPadText;
 
-int func_002AA5D8(char *destination, const char *format, ...);
+int sprintf(char *destination, const char *format, ...);
 extern char D_006882E8[];
 extern ResPadText D_006882F8;
 
@@ -3008,7 +3008,7 @@ void resPathSlotsInit(void)
         buffer = GameResBufferAlloc(RES_PATH_BUFFER_SIZE);
         resPathSlots[i].unmodeled_04 = 0;
         resPathSlots[i].base = (int) buffer;
-        func_002AA5D8((char *) buffer, D_006882E8, i);
+        sprintf((char *) buffer, D_006882E8, i);
         buffer = GameResBufferAlloc(RES_PATH_PAD_SIZE);
         *(ResPadText *) buffer = D_006882F8;
     }

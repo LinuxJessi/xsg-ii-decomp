@@ -106674,9 +106674,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AA5D8",
+     "name": "sprintf",
      "size": 144,
-     "splat_name": "func_002AA5D8",
+     "splat_name": "sprintf",
      "va": "0x002aa5d8",
      "name_basis": "address",
      "provenance": "estimated"

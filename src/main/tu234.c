@@ -31,7 +31,7 @@ typedef struct LabelWidget {
 
 u8 *fontColorTag(s32 color);
 u8 *fontZoomTag(s32 zoom);
-int func_002AA5D8();
+int sprintf();
 extern unsigned char fontStylePrefix[];
 extern unsigned char fmtSevenStrings[];
 extern unsigned char fontShadowTagA[];
@@ -47,7 +47,7 @@ void drawShadowedText(int x, int y, int z, unsigned int *text) {
     text_y = y + 10;
     color_tag = fontColorTag(0x73960A);
     zoom_tag = fontZoomTag(0x12);
-    func_002AA5D8((char *) 0x70000000, fmtSevenStrings, fontStylePrefix, color_tag, zoom_tag, fontPropTag, fontShadowTagA, text, fontShadowTagB);
+    sprintf((char *) 0x70000000, fmtSevenStrings, fontStylePrefix, color_tag, zoom_tag, fontPropTag, fontShadowTagA, text, fontShadowTagB);
     xglFontPrint(x, text_y, z, (char *) 0x70000000);
 }
 
@@ -134,7 +134,7 @@ void drawSellCloseButtons(LabelWidget *widget) {
 
     state = &widget->state;
     line_y = widget->y + 7;
-    func_002AA5D8((char *) 0x70000000, fmtString, fontStylePrefix);
+    sprintf((char *) 0x70000000, fmtString, fontStylePrefix);
     zoom_tag = fontZoomTag(0xE);
     func_002AA7F0((char *) 0x70000000, zoom_tag);
     func_002AA7F0((char *) 0x70000000, fontPropTag);
@@ -170,7 +170,7 @@ const char *appendColoredRun(char *dst, const char *src, s32 color) {
 
     run_len = textRunLength(src);
     color_tag = fontColorTag(color);
-    func_002AA5D8(dst, fmtString, color_tag);
+    sprintf(dst, fmtString, color_tag);
     end = strchr(dst, '\0');
     func_002A9E04(end, src, run_len);
     end[run_len] = '\0';
@@ -187,7 +187,7 @@ char *appendStyledRun(char *dest, char *text, int color) {
 
     run_len = textRunLength(text);
     color_tag = fontColorTag(color);
-    func_002AA5D8(dest, fmtThreeStrings, fontStylePrefix, fontPropTag, color_tag);
+    sprintf(dest, fmtThreeStrings, fontStylePrefix, fontPropTag, color_tag);
     end = strchr(dest, 0);
     func_002A9E04(end, text, run_len);
     end[run_len] = '\0';
@@ -212,7 +212,7 @@ void drawEmptyNotice(struct TextPosition *pos) {
     u8 *color_tag;
 
     color_tag = fontColorTag(0x50509C);
-    func_002AA5D8((u8 *) 0x70000000, fmtThreeStrings, fontStylePrefix, fontPropTag, color_tag);
+    sprintf((u8 *) 0x70000000, fmtThreeStrings, fontStylePrefix, fontPropTag, color_tag);
     if (D_0069DCA0 == 0) {
         func_002AA7F0((u8 *) 0x70000000, sellNoItemsText);
     }
@@ -416,7 +416,7 @@ void appendXAdvanceTag(s32 dst, s32 advance_x) {
     u8 tag[0x20];
 
     memset(&tag[0], 0, sizeof(tag));
-    func_002AA5D8(&tag[0], fmtXAdvance, advance_x);
+    sprintf(&tag[0], fmtXAdvance, advance_x);
     func_002AA7F0(dst, &tag[0]);
 }
 
@@ -427,7 +427,7 @@ void appendNumberText(s32 dst, s32 number) {
     u8 number_text[0x20];
 
     memset(&number_text[0], 0, sizeof(number_text));
-    func_002AA5D8(&number_text[0], fmtDecimal, number);
+    sprintf(&number_text[0], fmtDecimal, number);
     func_002AA7F0(dst, &number_text[0]);
 }
 
@@ -444,7 +444,7 @@ int sellItemFirstRowY(const TextLayout *layout)
 extern unsigned char fontXOffsetTag[];
 
 void drawPlainText(s32 x, s32 y, s32 color, const char *text) {
-    func_002AA5D8((u8 *) 0x70000000, fmtThreeStrings, fontStylePrefix, fontXOffsetTag, text);
+    sprintf((u8 *) 0x70000000, fmtThreeStrings, fontStylePrefix, fontXOffsetTag, text);
     xglFontPrint(x, y, color, (u8 *) 0x70000000);
 }
 
@@ -454,7 +454,7 @@ void drawAccentText(s32 x, s32 y, s32 color, const char *text) {
     u8 *color_tag;
 
     color_tag = fontColorTag(0x202050);
-    func_002AA5D8((u8 *) 0x70000000, fmtFourStrings, fontStylePrefix, fontXOffsetTag, color_tag, text);
+    sprintf((u8 *) 0x70000000, fmtFourStrings, fontStylePrefix, fontXOffsetTag, color_tag, text);
     xglFontPrint(x, y - 1, color, (u8 *) 0x70000000);
 }
 
@@ -469,7 +469,7 @@ extern unsigned char D_00888798[];
 
 /* Returns the colour tag "$col%06x;" for `color`, formatted into a static buffer. */
 u8 *fontColorTag(s32 color) {
-    func_002AA5D8(D_00888798, fmtColorTag, color);
+    sprintf(D_00888798, fmtColorTag, color);
     return D_00888798;
 }
 
@@ -478,6 +478,6 @@ extern unsigned char D_008887B0[];
 
 /* Returns the zoom tag "$zoom%d,%d;" for `zoom`, formatted into a static buffer. */
 u8 *fontZoomTag(s32 zoom) {
-    func_002AA5D8(D_008887B0, fmtZoomTag, zoom, zoom);
+    sprintf(D_008887B0, fmtZoomTag, zoom, zoom);
     return D_008887B0;
 }

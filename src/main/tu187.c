@@ -7,7 +7,7 @@ typedef char *va_list;
 #define va_start(ap, last) ((ap) = (va_list)__builtin_next_arg(last) - (8 - __builtin_args_info(2)) * 8)
 
 /* Formats into the shared debug buffer MOutputDebugBuffer, then prints it with the variadic arguments. */
-void func_002AA5D8(unsigned char *buffer, unsigned char *format, int value);
+void sprintf(unsigned char *buffer, unsigned char *format, int value);
 void func_002AF028(unsigned char *buffer, va_list args);
 extern unsigned char MOutputDebugInfoFormat[];
 extern unsigned char MOutputDebugBuffer[];
@@ -18,7 +18,7 @@ void MOutputDebugString(char *value, ...)
     va_list ap;
     va_start(ap, value);
 
-    func_002AA5D8(MOutputDebugBuffer, MOutputDebugInfoFormat, value);
+    sprintf(MOutputDebugBuffer, MOutputDebugInfoFormat, value);
     func_002AF028(MOutputDebugBuffer, ap);
 }
 
@@ -30,7 +30,7 @@ void MOutputDebugStringWarn(char *value, ...)
     va_list ap;
     va_start(ap, value);
 
-    func_002AA5D8(MOutputDebugBuffer, MOutputDebugWarnFormat, value);
+    sprintf(MOutputDebugBuffer, MOutputDebugWarnFormat, value);
     func_002AF028(MOutputDebugBuffer, ap);
 }
 
