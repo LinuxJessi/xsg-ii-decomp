@@ -729,11 +729,11 @@ void menuMessageTextUpdate(void) {
 }
 
 
-int func_00229460();
-int func_002294B0();
-int func_00229678();
-int func_00229978();
-int func_00229C60();
+int selectionMemberCapacity();
+int selectionPairRecordCount();
+int selectionCopilotRecordCount();
+int selectionSubIsTaken();
+int selectionCollectEntries();
 int func_A8B810();
 extern u16 D_0069D50C;
 extern unsigned char D_003EC0D8[];
@@ -761,7 +761,7 @@ void menuRebuildCursorBuffers(void) {
             }
             if (D_006A53FE[0] == 5) {
                 context = func_0022A560();
-                capacity = func_00229678(context->kind, D_0069D50C);
+                capacity = selectionCopilotRecordCount(context->kind, D_0069D50C);
                 cursorBufferSetCapacity(D_006A5198, capacity);
                 return;
             }
@@ -770,12 +770,12 @@ void menuRebuildCursorBuffers(void) {
         }
         if (D_006A53FE[0] == 5) {
             context = func_0022A560();
-            capacity = func_002294B0(context->kind, D_0069D50C);
+            capacity = selectionPairRecordCount(context->kind, D_0069D50C);
             cursorBufferSetCapacity(D_006A5198, capacity);
             return;
         }
         context = func_0022A560();
-        capacity = func_00229460(context->kind);
+        capacity = selectionMemberCapacity(context->kind);
         cursorBufferSetCapacity(D_006A5198, capacity);
         return;
     case 2:
@@ -813,8 +813,8 @@ void menuRebuildCursorBuffers(void) {
                 break;
             }
             context = func_0022A560();
-            D_0069E23C = func_00229C60(D_006A52E0, context, mode, D_0069D508);
-            D_0069D504 = func_00229978(func_0022A560(), 1, 7, 1) + 3;
+            D_0069E23C = selectionCollectEntries(D_006A52E0, context, mode, D_0069D508);
+            D_0069D504 = selectionSubIsTaken(func_0022A560(), 1, 7, 1) + 3;
             cursorBufferSetCapacity(D_006A51C8, D_0069E23C);
             D_006A51C8[0].unit_size = 4;
         }
@@ -1203,7 +1203,7 @@ void menuSceneSetState(int menuState) {
             cursorBufferSetOrInit(D_006A51B0, func_0022A560()->buffer->count, 4, 0);
             cursorBufferSetCapacity(D_006A4928, 1);
         } else {
-            D_0069D504 = (u8) (func_00229978(func_0022A560(), 1, 7, 1) + 3);
+            D_0069D504 = (u8) (selectionSubIsTaken(func_0022A560(), 1, 7, 1) + 3);
             cursorBufferSetOrInit(D_006A51B0, func_0022A560()->buffer->count, 4, 0);
             cursorBufferSetCapacity(D_006A4928, 4);
         }
@@ -1674,7 +1674,7 @@ float xglCos(float);
 int xglTickGet(void);
 void nmlModelSetTransparency(float);
 int selectionEntryBitCount(struct ControlContext *, int, int);
-int func_00229E68(struct ControlContext *, int);
+int selectionGroupIsComplete(struct ControlContext *, int);
 
 typedef union FloatBits {
     float f;
@@ -1826,7 +1826,7 @@ void menuSelectionRingDraw(int mode) {
                     f20 = xglSin(cellAngle) * cellRadius;
                     columnSpeed[col] = columnSpeed[col] - 0.001f * (float) entryCount;
                 }
-                busy = func_00229E68(ctx, col);
+                busy = selectionGroupIsComplete(ctx, col);
                 if (passCount != 0) {
                     k = passCount;
                     do {
@@ -2926,7 +2926,7 @@ extern u8 D_006A51F4[];
 extern u8 D_006A5208[];
 int msgRangeIsRevealed(void *range);
 void selectionHolderCharge(struct ControlContext *ctx, int a, int b);
-int func_00229FD8(struct ControlContext *ctx, int a, int b, int c);
+int selectionTakeSub(struct ControlContext *ctx, int a, int b, int c);
 long padCirclePressedAlone(void);
 int padCrossPressedAlone(void);
 
@@ -3180,7 +3180,7 @@ void menuTutorialStep(void) {
                 case 6:
                     ctx = func_0022A560();
                     links = (ControlLink *) D_006A51E0;
-                    if (func_00229FD8(ctx, links[0].kind, links[1].kind, links[2].kind)) {
+                    if (selectionTakeSub(ctx, links[0].kind, links[1].kind, links[2].kind)) {
                         ctx = func_0022A560();
                         ctx->limits->limit_b += D_003EC120[links[0].kind * 8 + links[1].kind];
                     }
@@ -3214,7 +3214,7 @@ void menuTutorialStep(void) {
                     case 6:
                         ctx = func_0022A560();
                         links = (ControlLink *) D_006A51E0;
-                        if (func_00229FD8(ctx, links[0].kind, links[1].kind, links[2].kind)) {
+                        if (selectionTakeSub(ctx, links[0].kind, links[1].kind, links[2].kind)) {
                             menuSetLayout(3);
                             ctx = func_0022A560();
                             ctx->limits->limit_b += D_003EC120[links[0].kind * 8 + links[1].kind];
@@ -3387,8 +3387,8 @@ u16 selectionWindowEntryMarkedFlags(int index);
 int selectionWindowEntryHasFlag4(int index);
 int selectionWindowListDropAt(int key);
 SelectionEntry *func_002245B8(SelectionEntry *entry);
-int func_00229130(void);
-int func_00228F68(int key, SelectionEntry *entry);
+int selectionCountedMemberNeedsHpEp(void);
+int selectionEntryIsUseful(int key, SelectionEntry *entry);
 int func_00A8B658(int key, int value);
 int func_00A8F3C0(int value);
 int func_00A8F478(int value);
@@ -3508,7 +3508,7 @@ int menuItemListStep(ControlSlot *slot) {
         }
         if (padCirclePressedAlone()) {
             if (selectionWindowEntryHasFlag4(((CursorBuffer *) slot->link)->cursor)) {
-                if (!func_00229130()) {
+                if (!selectionCountedMemberNeedsHpEp()) {
                     goto soundFail;
                 }
                 seVoiceStartDefault(MENU_SE_CONFIRM);
@@ -3526,7 +3526,7 @@ int menuItemListStep(ControlSlot *slot) {
                 break;
             }
             entry = func_002245B8(&((SelectionBlock *) D_006A4D28)->entries[((SelectionBlock *) D_006A4D28)->current]);
-            if (!func_00228F68(((CursorBuffer *) slot->link)->cursor, entry)) {
+            if (!selectionEntryIsUseful(((CursorBuffer *) slot->link)->cursor, entry)) {
                 goto soundFail;
             }
             seVoiceStartDefault(MENU_SE_CONFIRM);
@@ -3577,7 +3577,7 @@ typedef struct ProbePartyRecord {
 
 /* Clears the mark bit of the current slot, then sets menuPendingSelection to -1 before the tail call. */
 void menuCancelToMainSlot(void);
-int func_00229088(void);
+int selectionActiveMemberNeedsHp(void);
 void func_A8B4F8(int id, int value, unsigned char flags);
 int func_A8B4B0(int id, unsigned char flags);
 ProbePartyRecord *func_A8B490(int id);
@@ -3656,7 +3656,7 @@ int menuLayoutPlaceStep(ControlSlot *slot) {
             rec2 = func_A8B490(ctx->kind);
             menu = (ProbeMenuObject *) D_006A4D28;
             if (rec16->value5C != rec2->gauge
-                || (D_0069E238[((ControlLink *) slot->link)->kind] == 3 && func_00229088() != 0)) {
+                || (D_0069E238[((ControlLink *) slot->link)->kind] == 3 && selectionActiveMemberNeedsHp() != 0)) {
                 seVoiceStartDefault(MENU_SE_CONFIRM);
                 ctx = func_0022A560();
                 func_A8B4F8(ctx->kind, id20, D_0069E238[((ControlLink *) slot->link)->kind]);
@@ -3685,8 +3685,8 @@ int menuLayoutPlaceStep(ControlSlot *slot) {
     return 0;
 }
 
-int func_00229EC0(struct ControlContext *ctx, int a, int b);
-int func_00229F30(struct ControlContext *ctx, int a, int b, int c);
+int selectionCanOpenSlot(struct ControlContext *ctx, int a, int b);
+int selectionCanTakeSub(struct ControlContext *ctx, int a, int b, int c);
 int selectionApplyEntry(struct ControlContext *ctx, int a, int b, int c);
 extern u64 D_0063EDB0[];
 
@@ -3781,7 +3781,7 @@ int menuLicenseChargeStep(ControlSlot *slot) {
             func_00211918((ControlLink *) D_006A51E0);
             slot->state = 4;
         } else if (padCirclePressedAlone() != 0) {
-            int found = func_00229EC0(func_0022A560(), D_006A51E0[0], D_006A51E0[5]);
+            int found = selectionCanOpenSlot(func_0022A560(), D_006A51E0[0], D_006A51E0[5]);
             if (found != 0) {
                 seVoiceStartDefault(MENU_SE_CONFIRM);
                 choiceInit(menuMainTxdEntry(D_006A51E0[0] + 0x36), 1);
@@ -3833,7 +3833,7 @@ int menuLicenseChargeStep(ControlSlot *slot) {
             slot->state = 5;
         } else if (padCirclePressedAlone() != 0) {
             if (selectionEntryBitOutsideMask(D_006A51E0[0], D_006A51E0[5], D_006A51E0[10], D_0069D508) == 0
-                && func_00229F30(func_0022A560(), D_006A51E0[0], D_006A51E0[5], D_006A51E0[10]) != 0) {
+                && selectionCanTakeSub(func_0022A560(), D_006A51E0[0], D_006A51E0[5], D_006A51E0[10]) != 0) {
                 int value;
 
                 seVoiceStartDefault(MENU_SE_CONFIRM);

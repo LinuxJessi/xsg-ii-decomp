@@ -2249,171 +2249,20 @@ typedef struct MenuPartyRecord {
 } MenuPartyRecord;
 
 struct ControlContext *func_0022A560();
-/* OV01 battleContextStateGet (config/symbols/ov01.txt). */
-MenuPartyRecord *func_A8B490(int id);
-
-void *func_A9B7D8(int id, int unused);
-/* OV01 dataBoxChkCategory2 (config/symbols/ov01.txt). */
-int func_A9C808(int value);
-extern unsigned char selectionPlainCount;
-extern unsigned char selectionPlainList[];
-
-/* Plain item list ("  List" / "  Num" columns): up to eight rows of selectionPlainList
-   from the first visible row with their counts, the page marks when the list has
-   more than one page, then the icons of the back members (slots 7-9) other than the
-   current character, marked when the selected item is in that member's list. */
-void func_00220210(int x, int y, LicenseCursor *cursor)
-{
-    int firstRow = cursorBufferGetAlignedOffset(cursor);
-    int page = cursorBufferGetIndex(cursor);
-    int pageCount = func_0020F230(cursor);
-    int i;
-    int rowStyle;
-    unsigned char icon;
-
-    func_0021CC08(x, y, 0xCF, 0x11F);
-    if (pageCount >= 2) {
-        packetSubmitRequest(0x1C, x + 0x83, y + 0x10C, 0x40);
-        textDrawDigits(x + 0xAF, y + 0x10C, page + 1, 2);
-        func_0021F658(x + 0xC, y + 0x101, page, pageCount, 8);
-    }
-    func_0021CEF8(x + 8, y + 0x20, 0x90, 0xBE, D_0069D620);
-    func_0021CEF8(x + 0x9A, y + 0x20, 0x2D, 0xBE, D_0069D628);
-    packetSubmitRequest(0x141, x + 0x1E, y + 4, 1);
-    textDrawSegment(0, 0, msgStyleInit, 0);
-    for (i = 0; i < 8 && i + firstRow < selectionPlainCount; i++) {
-        rowStyle = (firstRow + i) == cursor->index;
-        textDrawDecimalShadow(x + 0xA8, y + i * 0x14 + 0x34, func_A9C808(selectionPlainList[firstRow + i]), 2,
-                              rowStyle ? LICENSE_COLOR_SELECTED : LICENSE_COLOR_IDLE);
-        textDrawSegment(x + 0x10, y + i * 0x14 + 0x32, func_A9B7D8(selectionPlainList[firstRow + i], 0), rowStyle);
-    }
-    if (cursor->flags & 1) {
-        func_0021F2F0(x + 0xA, y + (cursor->index - firstRow) * 0x14 + 0x32, 0x8C, 1);
-        menuDrawCursor();
-    }
-    /* x now walks the member icons. */
-    x += 0x30;
-    for (i = 7; i < 10; i++) {
-        if (ptState.slots[i] != 0 && func_0022A560()->id != ptState.slots[i]->id) {
-            icon = ptState.slots[i]->status->value;
-            if (cursor->count != 0 && menuListContains(ptState.slots[i], selectionPlainList[cursor->index])) {
-                func_0021F0A0(x, y + 0xE3, icon);
-                fontObjSetColor(0x3F80000060708040LL);
-                packetSubmitRequest(0x2E, x + 0x1B, y + 0xE9, 5);
-                fontObjResetColor();
-            } else {
-                func_0021F190(x, y + 0xE3, icon);
-            }
-            x += 0x4A;
-        }
-    }
-}
-
-extern unsigned char D_0069D630[];
-/* OV01 battleContextApplyLookup (config/symbols/ov01.txt). */
-int func_A8B4B0(int id, int item);
-void *func_A9B750(int dispatch_value, int value);
-
-/* Item list of the selected party member: member tabs (0x166 for the selected one),
-   then one row per item with its count; a row whose count exceeds the member
-   record's value60 (the member's EP, see func_00224740) is drawn dimmed. Only the count
-   lookup tests func_0022A560's member for null; the dim test reads it unchecked. */
-void func_00220550(int x, int y, LicenseCursor *cursor, unsigned char *items)
-{
-    int firstRow;
-    int tabX;
-    int tab;
-    unsigned int i;
-    int count;
-    int memberCount;
-    int rowStyle;
-    unsigned char selected = ptState.menuSlot;
-
-    firstRow = cursorBufferGetAlignedOffset(cursor);
-    func_0021CC08(x, y, 0xE0, 0xAA);
-    func_0021CEF8(x + 8, y + 0x20, 0xA1, 0x6A, D_0069D620);
-    func_0021CEF8(x + 0xAB, y + 0x20, 0x2D, 0x6A, D_0069D630);
-    packetSubmitRequest(0x12A, x + 0x41, y + 4, 1);
-    packetSubmitRequest(0x43, x + 0x98, y + 0x97, 0x40);
-    if (ptState.splitMode == PARTY_SPLIT_ON) {
-        memberCount = ptState.counts[2];
-    } else {
-        memberCount = ptState.counts[1];
-    }
-    if (memberCount >= 2) {
-        tabX = x + 0x10;
-        for (tab = 0; tab < memberCount; tab++) {
-            if (tab == selected) {
-                tabX -= 2;
-                packetSubmitRequest(0x166, tabX, y + 0x8A, 1);
-                tabX += 0x10;
-            } else {
-                packetSubmitRequest(0x167, tabX, y + 0x94, 1);
-                tabX += 9;
-            }
-        }
-    }
-    textDrawSegment(0, 0, msgStyleInit, 0);
-    for (i = 0; i < cursor->count; i++) {
-        count = 0;
-        if (func_0022A560() != 0) {
-            count = func_A8B4B0(func_0022A560()->id, items[i]);
-        }
-        rowStyle = (firstRow + i) == cursor->index;
-        textDrawDecimalShadow(x + 0xB9, y + i * 0x14 + 0x32, count, 2,
-                              rowStyle ? LICENSE_COLOR_SELECTED : LICENSE_COLOR_IDLE);
-        if (func_A8B490(func_0022A560()->id)->value60 < count) {
-            rowStyle |= 2;
-        }
-        textDrawSegment(x + 0x18, y + i * 0x14 + 0x30, func_A9B750(items[i], 0), rowStyle);
-    }
-    if (cursor->flags & 1) {
-        func_0021F2F0(x + 0xA, y + (cursor->index - firstRow) * 0x14 + 0x30, 0x9D, 1);
-        menuDrawCursor();
-    }
-}
-
-/* The default menu text colour (64-bit RGBA+Q word). */
-#define MENU_PARTY_TEXT_COLOR 0x3F8000008054200BLL
-
-/* Draws a stat value, colour-coded against a second value (menuDrawCharStats): a
-   marker is drawn beside it when the values differ. */
-void func_00220840(int x, int y, int value, int compare)
-{
-    unsigned long long accentColour;
-    unsigned long long textColour;
-
-    if (value > compare) {
-        accentColour = 0x3F8000008010104BULL;
-        textColour = 0x3F80000080545B80ULL;
-        func_0021BBE8(x + 0x1C, y, 0, accentColour);
-    } else if (value < compare) {
-        accentColour = 0x3F80000080641B15ULL;
-        textColour = 0x3F80000080805148ULL;
-        func_0021BBE8(x + 0x1C, y, 1, accentColour);
-    } else {
-        accentColour = MENU_PARTY_TEXT_COLOR;
-        textColour = 0x3F80000080808080ULL;
-    }
-
-    fontObjSetColor(textColour);
-    textDrawDecimal(x, y, value, 3, accentColour);
-    fontObjResetColor();
-}
-
-extern unsigned char D_003EB290[];
-extern unsigned char D_0069D638[];
-extern unsigned char D_0069D640[];
-extern unsigned char D_0069D648[];
-extern unsigned char D_0069D650[];
-extern unsigned char D_0069D658[];
-extern unsigned char D_0069D660[];
-extern unsigned char D_0069D668[];
-extern unsigned char D_0069D670[];
-extern unsigned char D_0069D678[];
-extern unsigned char D_0069D680[];
-extern unsigned char D_0069D688[];
-extern unsigned char D_0068AA10[];
+int selectionCanOpenSlot(struct ControlContext *context, int group, int sub);
+int selectionCanTakeSub(struct ControlContext *context, int group, int slot, int sub);
+void func_0021CEF8(int x, int y, int width, int height, void *text);
+void func_0021CC08(int, int, int, int);
+void menuDrawBorder(int x, int y, int width, int height, unsigned long long color);
+int cursorBufferGetAlignedOffset(LicenseCursor *cursor);
+void menuDrawCharInfo(int x, int y, int group, int slot, int mode);
+void textDrawSegment(int, int, void *, int);
+void textDrawGlyphString(int x, int y, unsigned char *text, u64 colour);
+void textDrawDecimalShadow(int x, int y, int value, int digits, unsigned long long color);
+void func_0021F2F0(int x, int y, int width, int blink);
+void func_0021F8A8(int x, int y, int record);
+int selectionEntryBitOutsideMask(int group, int slot, int sub, int mask);
+int selectionRecordIndex(int group, int slot, int sub);
 extern LicenseRecord selectionRecordTable[];
 /* Copy of the member's record taken before the preview equip. */
 extern MenuPartyRecord D_006A5530;
@@ -3232,7 +3081,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             }
             break;
         case 1:
-            if (func_00229EC0(func_0022A560(), groupCursor->index, i)
+            if (selectionCanOpenSlot(func_0022A560(), groupCursor->index, i)
                 || ((board->header[groupCursor->index] >> i) & 1)) {
                 unlocked = 1;
             } else {
@@ -3244,7 +3093,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             }
             break;
         case 2:
-            if (func_00229F30(func_0022A560(), groupCursor->index, slotCursor->index, i)
+            if (selectionCanTakeSub(func_0022A560(), groupCursor->index, slotCursor->index, i)
                 || ((board->cells[groupCursor->index][slotCursor->index] >> i) & 1)) {
                 unlocked = 1;
             } else {

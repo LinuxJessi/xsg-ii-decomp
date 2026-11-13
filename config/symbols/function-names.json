@@ -2828,7 +2828,22 @@
    "0x00210dd8": "menuSkillModelLoadOnce",
    "0x00210d38": "menuSkillModelReadDone",
    "0x00215de8": "menuTutorialPageReset",
-   "0x00214d10": "menuMapDraw"
+   "0x00214d10": "menuMapDraw",
+   "0x00228f68": "selectionEntryIsUseful",
+   "0x00229088": "selectionActiveMemberNeedsHp",
+   "0x00229130": "selectionCountedMemberNeedsHpEp",
+   "0x00229460": "selectionMemberCapacity",
+   "0x002294b0": "selectionPairRecordCount",
+   "0x00229578": "selectionPairRecordAt",
+   "0x00229678": "selectionCopilotRecordCount",
+   "0x00229750": "selectionCopilotRecordAt",
+   "0x00229978": "selectionSubIsTaken",
+   "0x002299b0": "selectionHolderHasEntry",
+   "0x00229c60": "selectionCollectEntries",
+   "0x00229e68": "selectionGroupIsComplete",
+   "0x00229ec0": "selectionCanOpenSlot",
+   "0x00229f30": "selectionCanTakeSub",
+   "0x00229fd8": "selectionTakeSub"
   },
   "ov01": {
    "0x00a80d88": "rnd",
