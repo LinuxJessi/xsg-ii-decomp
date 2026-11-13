@@ -7846,6 +7846,7 @@ cfeEntries = 0x006318C0;
 cfePlugInSlots = 0x00631980;
 cfeCommands = 0x00638530;
 cfeDirections = 0x0063A530;
+cfeDirectionTable = 0x0063A630;
 cfeGroups = 0x0063A7B0;
 cfeEvalEntries = 0x0063AAB0;
 cfeEvalGlobal = 0x0063CDB0;

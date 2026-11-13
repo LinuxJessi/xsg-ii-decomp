@@ -37,6 +37,7 @@
    "0x005e6d40": "_sdvMapRgb",
    "0x005e6d50": "_sdvAmbient",
    "0x00631668": "g_aSubWindow",
+   "0x0063a630": "cfeDirectionTable",
    "0x0063e870": "fontPairGlyphCodes",
    "0x0063ea00": "nearest_5",
    "0x0063ea20": "biliner_6",

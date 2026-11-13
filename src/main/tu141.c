@@ -53,7 +53,32 @@ void cfeCommandTableInit(void) {
 
 INCLUDE_ASM("asm/main/nonmatchings/tu141", func_0024EB48);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu141", func_0024ECA0);
+/* A row of cfeDirections: two pointers into the direction table at +0x10/+0x14. */
+typedef struct CfeDirectionRow {
+    unsigned char unmodeled_00[0x10];
+    const Vector4 *first;       /* +0x10 */
+    const Vector4 *second;      /* +0x14 */
+    unsigned char unmodeled_18[0x28];
+} CfeDirectionRow;
+
+extern CfeDirectionRow cfeDirections[4];
+extern Vector4 cfeDirectionTable[];
+void func_0024EB48(Vector4 *table);
+
+/* Builds the direction table, clears cfeDirections and points each row at its two directions. */
+void func_0024ECA0(void)
+{
+    func_0024EB48(cfeDirectionTable);
+    memset(cfeDirections, 0, sizeof(cfeDirections));
+    cfeDirections[0].first = 0;
+    cfeDirections[0].second = &cfeDirectionTable[13];
+    cfeDirections[1].first = &cfeDirectionTable[0];
+    cfeDirections[1].second = &cfeDirectionTable[7];
+    cfeDirections[2].first = &cfeDirectionTable[1];
+    cfeDirections[2].second = &cfeDirectionTable[8];
+    cfeDirections[3].first = &cfeDirectionTable[2];
+    cfeDirections[3].second = &cfeDirectionTable[9];
+}
 
 extern int cfeGroupCount;
 extern unsigned char cfeGroups[];
@@ -69,7 +94,23 @@ void cfePlugInRecordCountReset(void) {
     cfePlugInRecordCount = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu141", cfeEvalGlobalInit);
+#include "cfeEvaluate.h"
+extern CfeEvalGlobal cfeEvalGlobal;
+
+/* Clears the global block and sets its two default vectors (255, 255, 255, 1) and (5, 20, 0, 1). */
+void cfeEvalGlobalInit(void)
+{
+    memset(&cfeEvalGlobal, 0, sizeof(cfeEvalGlobal));
+    cfeEvalGlobal.result_int = 0;
+    cfeEvalGlobal.evaluated[0].x = 255.0f;
+    cfeEvalGlobal.evaluated[0].y = 255.0f;
+    cfeEvalGlobal.evaluated[0].z = 255.0f;
+    cfeEvalGlobal.evaluated[0].w = 1.0f;
+    cfeEvalGlobal.evaluated[1].x = 5.0f;
+    cfeEvalGlobal.evaluated[1].y = 20.0f;
+    cfeEvalGlobal.evaluated[1].z = 0.0f;
+    cfeEvalGlobal.evaluated[1].w = 1.0f;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu141", cfeEvalEntriesInit);
 
@@ -103,8 +144,8 @@ void cfePlugInTextReset(void) {
 }
 
 int cfeEvalRecordsInit(void);
-int func_0024ECA0(void);
-int cfeEvalGlobalInit(void);
+void func_0024ECA0(void);
+void cfeEvalGlobalInit(void);
 int cfeEvalEntriesInit(void);
 
 /* Module init: calls two helpers, then each table initializer of this file in order. */
