@@ -6,21 +6,80 @@
    ".rodata": [
     {
      "range": [
-      "0x0068dcb0",
+      "0x0068d990",
+      "0x0068dc58"
+     ],
+     "generated": [
+      "0x0068d990",
+      "0x0068dc58"
+     ],
+     "generated_by": [
+      "xglFontParseHex",
+      "xx",
+      "ruby",
+      "xglFontPrintSub"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068D990",
+      "jtbl_0068DAF0",
+      "jtbl_0068DBD0",
+      "jtbl_0068DBF0"
+     ],
+     "also_referenced_by_c": [
+      "fontInlineErrorFormat"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_font.o"
+     }
+    },
+    {
+     "range": [
+      "0x0068dc70",
       "0x0068dd48"
      ],
      "generated": [
-      "0x0068dcb0",
-      "0x0068dd44"
+      "0x0068dc70",
+      "0x0068dd48"
      ],
      "generated_by": [
+      "xglFontGetGlyphIndex",
       "xglFontFlushCore"
      ],
      "c_owned_symbols": [
+      "jtbl_0068DC70",
       "jtbl_0068DCB0",
       "jtbl_0068DD30"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "kanaFontCodeTable"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xgl_font.o"
+     }
+    },
+    {
+     "range": [
+      "0x0068ddb0",
+      "0x0068dea8"
+     ],
+     "generated": [
+      "0x0068ddb0",
+      "0x0068dea4"
+     ],
+     "generated_by": [
+      "xglFontGetDebugCell"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068DDB0"
+     ],
+     "also_referenced_by_c": [
+      "fontTexture0Path",
+      "fontTexture1Path"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
@@ -2829,7 +2888,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0069E09C"
+      "LoopCount"
      ],
      "c_input_spans": [
       {
@@ -2843,7 +2902,7 @@
         28
        ],
        "symbols": [
-        "D_0069E09C"
+        "LoopCount"
        ]
       }
      ],

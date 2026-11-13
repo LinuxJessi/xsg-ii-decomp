@@ -67,7 +67,7 @@ typedef struct DebugTextView {
 } DebugTextView;
 
 void xglFontDebugPrintf(int x, int y, const char *format, ...);
-void xglFontLoad(int font, int mode);
+unsigned char xglFontLoad(int font, int mode);
 void GameSnapShotCheck(void);
 void xglSleep(void);
 

@@ -10254,7 +10254,7 @@
      2
     ],
     [
-     "func_0012B908",
+     "sceVif1PkReserve",
      1227016,
      20,
      2
@@ -29154,7 +29154,7 @@
      2
     ],
     [
-     "func_00194FA8",
+     "xglFontSetTextureFilter",
      1658792,
      112,
      2
@@ -29250,43 +29250,43 @@
      2
     ],
     [
-     "func_00195E90",
+     "xglFontCopyTextUnit",
      1662608,
      648,
      2
     ],
     [
-     "func_00196118",
+     "xglFontFitWords",
      1663256,
      184,
      2
     ],
     [
-     "func_001961D0",
+     "xglFontParseHex",
      1663440,
      144,
      2
     ],
     [
-     "func_00196260",
+     "xglFontParseNumber",
      1663584,
      312,
      2
     ],
     [
-     "func_00196398",
+     "ax",
      1663896,
      196,
      2
     ],
     [
-     "func_00196460",
+     "rx",
      1664096,
      164,
      2
     ],
     [
-     "cfe_00196508",
+     "init",
      1664264,
      228,
      2
@@ -29298,7 +29298,7 @@
      2
     ],
     [
-     "func_00196660",
+     "bg",
      1664608,
      212,
      2
@@ -29322,7 +29322,7 @@
      2
     ],
     [
-     "func_00196958",
+     "xx",
      1665368,
      568,
      2
@@ -29346,7 +29346,7 @@
      2
     ],
     [
-     "func_001970E0",
+     "xglFontInlineCommand",
      1667296,
      216,
      2
@@ -29358,13 +29358,13 @@
      2
     ],
     [
-     "func_00197200",
+     "xglFontFlushSub",
      1667584,
      1848,
      2
     ],
     [
-     "xglFontDrawHexDigit",
+     "xglFontFlushSubHex",
      1669432,
      36,
      2
@@ -29376,13 +29376,13 @@
      2
     ],
     [
-     "func_00197988",
+     "xglFontFindPairGlyph",
      1669512,
      88,
      2
     ],
     [
-     "func_001979E0",
+     "xglFontGetGlyphIndex",
      1669600,
      468,
      2
@@ -29394,13 +29394,13 @@
      2
     ],
     [
-     "func_00198928",
+     "xglFontGetDebugCell",
      1673512,
      440,
      2
     ],
     [
-     "func_00198AE0",
+     "xglFontGetAlnumGlyph",
      1673952,
      88,
      2

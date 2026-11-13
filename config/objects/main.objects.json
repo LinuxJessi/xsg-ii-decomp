@@ -8180,9 +8180,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012B908",
+     "name": "sceVif1PkReserve",
      "size": 20,
-     "splat_name": "func_0012B908",
+     "splat_name": "sceVif1PkReserve",
      "va": "0x0012b908",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37375,9 +37375,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00194FA8",
+     "name": "xglFontSetTextureFilter",
      "size": 112,
-     "splat_name": "func_00194FA8",
+     "splat_name": "xglFontSetTextureFilter",
      "va": "0x00194fa8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37519,63 +37519,63 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00195E90",
+     "name": "xglFontCopyTextUnit",
      "size": 648,
-     "splat_name": "func_00195E90",
+     "splat_name": "xglFontCopyTextUnit",
      "va": "0x00195e90",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00196118",
+     "name": "xglFontFitWords",
      "size": 184,
-     "splat_name": "func_00196118",
+     "splat_name": "xglFontFitWords",
      "va": "0x00196118",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001961D0",
+     "name": "xglFontParseHex",
      "size": 144,
-     "splat_name": "func_001961D0",
+     "splat_name": "xglFontParseHex",
      "va": "0x001961d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00196260",
+     "name": "xglFontParseNumber",
      "size": 312,
-     "splat_name": "func_00196260",
+     "splat_name": "xglFontParseNumber",
      "va": "0x00196260",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00196398",
+     "name": "ax",
      "size": 196,
-     "splat_name": "func_00196398",
+     "splat_name": "ax",
      "va": "0x00196398",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00196460",
+     "name": "rx",
      "size": 164,
-     "splat_name": "func_00196460",
+     "splat_name": "rx",
      "va": "0x00196460",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "cfe_00196508",
+     "name": "init",
      "size": 228,
-     "splat_name": "cfe_00196508",
+     "splat_name": "init",
      "va": "0x00196508",
      "name_basis": "annotation",
      "provenance": "estimated"
@@ -37591,9 +37591,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00196660",
+     "name": "bg",
      "size": 212,
-     "splat_name": "func_00196660",
+     "splat_name": "bg",
      "va": "0x00196660",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37627,9 +37627,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00196958",
+     "name": "xx",
      "size": 568,
-     "splat_name": "func_00196958",
+     "splat_name": "xx",
      "va": "0x00196958",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37663,9 +37663,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001970E0",
+     "name": "xglFontInlineCommand",
      "size": 216,
-     "splat_name": "func_001970E0",
+     "splat_name": "xglFontInlineCommand",
      "va": "0x001970e0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37681,18 +37681,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00197200",
+     "name": "xglFontFlushSub",
      "size": 1848,
-     "splat_name": "func_00197200",
+     "splat_name": "xglFontFlushSub",
      "va": "0x00197200",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "xglFontDrawHexDigit",
+     "name": "xglFontFlushSubHex",
      "size": 36,
-     "splat_name": "xglFontDrawHexDigit",
+     "splat_name": "xglFontFlushSubHex",
      "va": "0x00197938",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37708,18 +37708,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00197988",
+     "name": "xglFontFindPairGlyph",
      "size": 88,
-     "splat_name": "func_00197988",
+     "splat_name": "xglFontFindPairGlyph",
      "va": "0x00197988",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_001979E0",
+     "name": "xglFontGetGlyphIndex",
      "size": 468,
-     "splat_name": "func_001979E0",
+     "splat_name": "xglFontGetGlyphIndex",
      "va": "0x001979e0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -37735,18 +37735,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00198928",
+     "name": "xglFontGetDebugCell",
      "size": 440,
-     "splat_name": "func_00198928",
+     "splat_name": "xglFontGetDebugCell",
      "va": "0x00198928",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00198AE0",
+     "name": "xglFontGetAlnumGlyph",
      "size": 88,
-     "splat_name": "func_00198AE0",
+     "splat_name": "xglFontGetAlnumGlyph",
      "va": "0x00198ae0",
      "name_basis": "address",
      "provenance": "estimated"

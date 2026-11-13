@@ -338,7 +338,7 @@ int movieRenderBufferAlloc(AllocRecord *player, int cursor, int extra_enabled);
 void *GameResArenaReserve(unsigned int bytesWanted);
 void GameResArenaRelease(void);
 int xglCdServiceIfPending(void);
-void xglFontLoad(int, int);
+unsigned char xglFontLoad(int, int);
 void xglRenderClearDepth(void);
 /* Also returns the two-letter code (daddu $2,$3 before its jr); declaring it void moves the '/' constant
  * from $3 to $2. */
@@ -373,7 +373,7 @@ void GameMovieCaptionPlay(const char *name)
     char *cursor;
     char *dst;
     unsigned char *entry;
-    char *line;
+    const char *line;
     int status;
     int size;
     int time;
@@ -461,7 +461,7 @@ void GameMovieCaptionPlay(const char *name)
                         if (*line == '\n') {
                             lines++;
                         }
-                        line = func_00195E90(0, line, 0);
+                        line = xglFontCopyTextUnit(0, line, 0);
                     }
                     if (lines >= 3) {
                         y -= (lines - 2) * 22;
