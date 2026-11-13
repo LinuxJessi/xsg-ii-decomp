@@ -40458,13 +40458,13 @@
      2
     ],
     [
-     "seg_0022D5A0",
+     "segAddrOnMessage",
      2282912,
      324,
      2
     ],
     [
-     "seg_0022D6E8",
+     "segAddrOnGetFlag",
      2283240,
      92,
      2
@@ -40536,7 +40536,7 @@
      2
     ],
     [
-     "func_0022DDA8",
+     "mapObjectBeginMessage",
      2284968,
      76,
      2
@@ -40548,7 +40548,7 @@
      2
     ],
     [
-     "func_0022DE00",
+     "mapObjectFaceActive",
      2285056,
      188,
      2
@@ -40560,7 +40560,7 @@
      2
     ],
     [
-     "func_0022DEE0",
+     "talkStateReset",
      2285280,
      16,
      2
@@ -40572,7 +40572,7 @@
      2
     ],
     [
-     "func_0022DEF8",
+     "renderFadeBand",
      2285304,
      1020,
      2
@@ -40584,13 +40584,13 @@
      2
     ],
     [
-     "func_0022E500",
+     "renderSpriteClut",
      2286848,
      528,
      2
     ],
     [
-     "func_0022E710",
+     "renderSpriteClutAlpha",
      2287376,
      556,
      2
@@ -40686,19 +40686,19 @@
      2
     ],
     [
-     "func_0022F5C8",
+     "yg2PathDrawCellFrame",
      2291144,
      276,
      2
     ],
     [
-     "func_0022F6E0",
+     "yg2PathDrawPageChrome",
      2291424,
      264,
      2
     ],
     [
-     "func_0022F7E8",
+     "yg2PathDrawMainMenu",
      2291688,
      992,
      2
@@ -40710,7 +40710,7 @@
      2
     ],
     [
-     "func_0022FE98",
+     "yg2PathDrawNewMarker",
      2293400,
      268,
      2
@@ -40746,13 +40746,13 @@
      2
     ],
     [
-     "func_00231148",
+     "yg2PathHandleMenuInput",
      2298184,
      300,
      2
     ],
     [
-     "func_00231278",
+     "yg2PathHandleGridInput",
      2298488,
      668,
      2
@@ -40788,7 +40788,7 @@
      2
     ],
     [
-     "func_00231A20",
+     "yg2PathEaseCursor",
      2300448,
      308,
      2
@@ -40800,7 +40800,7 @@
      2
     ],
     [
-     "func_00231F40",
+     "ysegfSetTargetFlagOnMode",
      2301760,
      56,
      2
@@ -40812,7 +40812,7 @@
      2
     ],
     [
-     "func_00231FD8",
+     "ysegfSwitchState",
      2301912,
      64,
      2
@@ -40896,7 +40896,7 @@
      2
     ],
     [
-     "func_002327E8",
+     "ysegfDrawImageFrame",
      2303976,
      320,
      2
@@ -40920,7 +40920,7 @@
      2
     ],
     [
-     "func_00232F40",
+     "ysegfDrawItemNameFrame",
      2305856,
      364,
      2
@@ -40962,7 +40962,7 @@
      2
     ],
     [
-     "func_00233A98",
+     "ysegfListLeaveNoop",
      2308760,
      8,
      2
@@ -40992,7 +40992,7 @@
      2
     ],
     [
-     "ysegfUpdateList",
+     "ysegfUpdateDetail",
      2309216,
      240,
      2
@@ -41016,37 +41016,37 @@
      2
     ],
     [
-     "func_00233D78",
+     "battleResultDrawRow",
      2309496,
      1924,
      2
     ],
     [
-     "func_00234500",
+     "battleResultDrawEntries",
      2311424,
      968,
      2
     ],
     [
-     "func_002348C8",
+     "battleResultDrawScreen",
      2312392,
      840,
      2
     ],
     [
-     "func_00234C10",
+     "battleResultDrawCallback",
      2313232,
      20,
      2
     ],
     [
-     "func_00234C28",
+     "battleResultBuildEntries",
      2313256,
      332,
      2
     ],
     [
-     "func_00234D78",
+     "battleResultScene",
      2313592,
      1596,
      2
@@ -41058,13 +41058,13 @@
      2
     ],
     [
-     "func_00235598",
+     "textWindowReset",
      2315672,
      64,
      2
     ],
     [
-     "func_002355D8",
+     "textWindowShow",
      2315736,
      220,
      2
@@ -41094,7 +41094,7 @@
      2
     ],
     [
-     "func_00235D78",
+     "choiceMenuGetResult",
      2317688,
      68,
      2
@@ -41184,7 +41184,7 @@
      2
     ],
     [
-     "func_00236890",
+     "textAddNextLineSize",
      2320528,
      212,
      2
@@ -41250,7 +41250,7 @@
      2
     ],
     [
-     "func_00237A70",
+     "saveSlotsPendingToEmpty",
      2325104,
      60,
      2
@@ -41310,7 +41310,7 @@
      2
     ],
     [
-     "func_00238038",
+     "saveMessageSetChoice",
      2326584,
      240,
      2
@@ -41322,7 +41322,7 @@
      2
     ],
     [
-     "func_002381A8",
+     "saveUiSetMode",
      2326952,
      1212,
      2
@@ -41340,13 +41340,13 @@
      2
     ],
     [
-     "func_002388D0",
+     "saveThumbnailSprite",
      2328784,
      408,
      2
     ],
     [
-     "func_00238A68",
+     "saveSlotWindowDraw",
      2329192,
      564,
      2
@@ -41394,19 +41394,19 @@
      2
     ],
     [
-     "func_00239F98",
+     "saveSlotScanCallback",
      2334616,
      300,
      2
     ],
     [
-     "func_0023A0C8",
+     "saveSlotListUpdate",
      2334920,
      1340,
      2
     ],
     [
-     "func_0023A608",
+     "saveSlotTransferUpdate",
      2336264,
      1460,
      2
@@ -41418,13 +41418,13 @@
      2
     ],
     [
-     "func_0023AC08",
+     "saveThumbnailEncode",
      2337800,
      268,
      2
     ],
     [
-     "func_0023AD18",
+     "saveScreenRun",
      2338072,
      1180,
      2
@@ -41448,13 +41448,13 @@
      2
     ],
     [
-     "func_0023B8B8",
+     "configOldDataCallback",
      2341048,
      344,
      2
     ],
     [
-     "func_0023BA10",
+     "configScreenUpdate",
      2341392,
      2244,
      2
@@ -41466,13 +41466,13 @@
      2
     ],
     [
-     "func_0023C308",
+     "configScreenRun",
      2343688,
      756,
      2
     ],
     [
-     "func_0023C600",
+     "testUiMenuRun",
      2344448,
      1148,
      2
@@ -41484,19 +41484,19 @@
      2
     ],
     [
-     "func_0023CB88",
+     "debugCounterStepAndDraw",
      2345864,
      248,
      2
     ],
     [
-     "func_0023CC80",
+     "texUploadTest",
      2346112,
      120,
      2
     ],
     [
-     "func_0023CCF8",
+     "choiceMenuTest",
      2346232,
      640,
      2
@@ -41640,19 +41640,19 @@
      2
     ],
     [
-     "func_0023DBA8",
+     "textScaleApplyOptions",
      2349992,
      124,
      2
     ],
     [
-     "func_0023DC28",
+     "heapWindowPaintMap",
      2350120,
      532,
      2
     ],
     [
-     "func_0023DE40",
+     "heapWindowAddAllocRows",
      2350656,
      536,
      2
@@ -41670,19 +41670,19 @@
      2
     ],
     [
-     "func_0023E248",
+     "heapWindowOpen",
      2351688,
      172,
      2
     ],
     [
-     "func_0023E2F8",
+     "heapOverviewWindowOpen",
      2351864,
      1588,
      2
     ],
     [
-     "func_0023E930",
+     "heapOverviewMenuAttach",
      2353456,
      28,
      2
@@ -41706,7 +41706,7 @@
      2
     ],
     [
-     "func_0023EBB8",
+     "sjisToEuc",
      2354104,
      124,
      2
@@ -41730,25 +41730,25 @@
      2
     ],
     [
-     "func_0023ED20",
+     "xglVu1ReadControlRegisters",
      2354464,
      60,
      2
     ],
     [
-     "func_0023ED60",
+     "xglVu1ReadIntegerRegisters",
      2354528,
      60,
      2
     ],
     [
-     "func_0023EDA0",
+     "xglVu1ReadFloatRegisters",
      2354592,
      60,
      2
     ],
     [
-     "xglMatrixReverse_0023EDE0",
+     "xglMatrixReverseInPlace",
      2354656,
      172,
      2
@@ -41808,7 +41808,7 @@
      2
     ],
     [
-     "func_0023F218",
+     "tiWaterSendOrientedMatrix",
      2355736,
      176,
      2
@@ -41826,19 +41826,19 @@
      2
     ],
     [
-     "func_0023F3A0",
+     "tiWaterSendDirection",
      2356128,
      208,
      2
     ],
     [
-     "func_0023F470",
+     "tiWaterSendItemPair",
      2356336,
      64,
      2
     ],
     [
-     "func_0023F4B0",
+     "tiWaterSendFramePair",
      2356400,
      64,
      2
@@ -41928,7 +41928,7 @@
      2
     ],
     [
-     "func_00240320",
+     "tiWatSimStoreSourcePos2",
      2360096,
      24,
      2

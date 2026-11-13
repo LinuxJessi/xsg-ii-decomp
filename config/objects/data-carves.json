@@ -6363,6 +6363,310 @@
     }
    ]
   },
+  "main/tu117": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b298",
+      "0x0069b2a0"
+     ],
+     "generated": [
+      "0x0069b298",
+      "0x0069b2a0"
+     ],
+     "generated_by": [
+      "yg2PathLoadScene"
+     ],
+     "c_owned_symbols": [
+      "D_0069B298",
+      "D_0069B29C"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B2A0"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/yg2path.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x0068b1c0",
+      "0x0068b1c8"
+     ],
+     "generated": [
+      "0x0068b1c0",
+      "0x0068b1c8"
+     ],
+     "generated_by": [
+      "yg2PathEaseCursor"
+     ],
+     "c_owned_symbols": [
+      "D_0068B1C0"
+     ],
+     "also_referenced_by_c": [
+      "D_0068AE10",
+      "D_0068AE20",
+      "D_0068AE30",
+      "D_0068AE40",
+      "D_0068AE50",
+      "D_0068AE60",
+      "D_0068AE70",
+      "D_0068AE80",
+      "D_0068AE90",
+      "yg2PathSourceName",
+      "D_0068AEC0",
+      "D_0068AED0",
+      "D_0068AEE0",
+      "D_0068AEF0",
+      "D_0068AF08",
+      "D_0068AF28",
+      "D_0068AF48",
+      "D_0068AF68",
+      "D_0068AF80",
+      "D_0068AFD8",
+      "D_0068AFF8",
+      "D_0068B008",
+      "D_0068B028",
+      "D_0068B038",
+      "yg2PathTextHeader",
+      "D_0068B090",
+      "D_0068B0A8",
+      "yg2PathPortraitFormat",
+      "yg2PathDetailTextHeader",
+      "D_0068B128",
+      "D_0068B178",
+      "D_0068B1C8"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/yg2path.o"
+     }
+    }
+   ]
+  },
+  "main/tu118": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068b1e0",
+      "0x0068b200"
+     ],
+     "generated": [
+      "0x0068b1e0",
+      "0x0068b1fc"
+     ],
+     "generated_by": [
+      "ysegfSetTargetFlagOnMode"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068B1E0"
+     ],
+     "also_referenced_by_c": [
+      "D_0068B200",
+      "D_0068B210",
+      "D_0068B220",
+      "D_0068B230",
+      "D_0068B240",
+      "D_0068B258",
+      "D_0068B2C8",
+      "D_0068B2E8",
+      "D_0068B308",
+      "D_0068B328",
+      "D_0068B348",
+      "D_0068B358",
+      "D_0068B368",
+      "D_0068B3B0",
+      "D_0068B3C0",
+      "D_0068B3D0",
+      "D_0068B3E0",
+      "D_0068B420",
+      "D_0068B438",
+      "D_0068B448"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/ysegf.o"
+     }
+    }
+   ]
+  },
+  "main/tu125": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068b510",
+      "0x0068b588"
+     ],
+     "generated": [
+      "0x0068b510",
+      "0x0068b584"
+     ],
+     "generated_by": [
+      "textDrawControlCode"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068B510"
+     ],
+     "also_referenced_by_c": [
+      "D_0068B588",
+      "D_0068B5B8",
+      "D_0068B5F8",
+      "D_0068B608",
+      "D_0068B618",
+      "D_0068B628"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu125.o"
+     }
+    }
+   ]
+  },
+  "main/tu126": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068b720",
+      "0x0068b7d8"
+     ],
+     "generated": [
+      "0x0068b720",
+      "0x0068b7d8"
+     ],
+     "generated_by": [
+      "saveSlotListUpdate",
+      "saveSlotTransferUpdate"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068B720",
+      "jtbl_0068B780"
+     ],
+     "also_referenced_by_c": [
+      "D_0068B640",
+      "D_0068B678",
+      "D_0068B688",
+      "D_0068B698",
+      "D_0068B6D8",
+      "D_0068B6E8",
+      "D_0068B710",
+      "D_0068B7D8",
+      "D_0068B7E8",
+      "D_0068B800",
+      "D_0068B810",
+      "D_0068B858"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu126.o"
+     }
+    },
+    {
+     "range": [
+      "0x0068b870",
+      "0x0068b960"
+     ],
+     "generated": [
+      "0x0068b870",
+      "0x0068b958"
+     ],
+     "generated_by": [
+      "configScreenDraw",
+      "configOldDataCallback",
+      "configScreenUpdate"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068B870",
+      "jtbl_0068B8D0",
+      "jtbl_0068B8F0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu126.o"
+     }
+    }
+   ]
+  },
+  "main/tu127": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068ba30",
+      "0x0068ba50"
+     ],
+     "generated": [
+      "0x0068ba30",
+      "0x0068ba4c"
+     ],
+     "generated_by": [
+      "testUiMenuRun"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068BA30"
+     ],
+     "also_referenced_by_c": [
+      "testUiItemNames",
+      "testUiKanaSample",
+      "testUiFontMarkup",
+      "testUiTitle"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu127.o"
+     }
+    }
+   ]
+  },
+  "main/tu129": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068c730",
+      "0x0068c788"
+     ],
+     "generated": [
+      "0x0068c730",
+      "0x0068c788"
+     ],
+     "generated_by": [
+      "testMenuRun"
+     ],
+     "c_owned_symbols": [
+      "testMenuCallbacks",
+      "D_0068C740",
+      "D_0068C750",
+      "D_0068C760",
+      "D_0068C770",
+      "D_0068C778"
+     ],
+     "also_referenced_by_c": [
+      "D_0068C788",
+      "D_0068C790"
+     ],
+     "reached_through": {
+      "D_0068C740": "D_0068C778",
+      "D_0068C750": "D_0068C778",
+      "D_0068C760": "D_0068C778",
+      "D_0068C770": "D_0068C778"
+     },
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/test_129.o"
+     }
+    }
+   ]
+  },
   "main/tu136": {
    ".rodata": [
     {

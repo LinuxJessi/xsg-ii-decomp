@@ -716,7 +716,7 @@ def _check_q_2op(m):
 # Refused although the original uses no other spelling of them: nothing -- all
 # seventeen families the scaffold shows and the table lacked calibrate exactly.
 # VU0 macro families the original does not use (vrget, vrxor, vabs, vmulaq,
-# vaddai, viadd, vlqi/vsqi, vilwr/viswr, vftoi12/15, vitof12/15, ...) stay
+# vaddai, viadd, vsqi, vilwr/viswr, vftoi12/15, vitof12/15, ...) stay
 # refused: there is no original word to calibrate them against. The whole-file
 # gate stays the authority on bytes; this table only decides eligibility.
 _ORIGINAL_CALIBRATION = '.work/cop2-calibration-20260923/calibration.json'
@@ -1004,6 +1004,7 @@ _GPR_DEST_GROUP = {
     # write VF registers, ACC, Q, R or the clip flag, never a GPR.
     'accplain3': None, 'opmsub': None, 'imove': None, 'vdiv': None,
     'clipw': None, 'rinit': None, 'rnext': None,
+    'vlqi': None,        # writes a VF register and post-increments a VI register
     'gprquad': 'gpr',    # lq writes the GPR; sq reads it
     'mmiload': 'gpr', 'mmicmp': 'd', 'mmiext': 'd', 'mmishift': 'd',
     'mmiminmax': 'd', 'mmipack': 'd',   # pmaxw/pminw, ppach/ppacb (user decisions 2026-10-28)
@@ -1224,7 +1225,23 @@ def _line_patterns():
                   re.compile(r'vrnext(?:\.(?P<mask>' + _MLANES + r'))?' + _WS +
                              r'\$?vf(?P<d>[0-9]+)(?P<df>[xyzw]*)' + _SEP + r'R'),
                   _check_rnext))
-    missing = sorted({name for name, _, _ in table} - set(_GPR_DEST_GROUP))
+    # vlqi: VU0 load with VI post-increment, calibrated 2026-11-13 against the
+    # Xenosaga II original (SLUS_208.92). Its only sites are main tu130
+    # func_0023ED20 / func_0023ED60 and tu131 func_0023EDA0, each
+    # `vlqi.xyzw $vf2, ($vi1++)` = 0x4be20b7c. The splat spelling
+    # (`$vf2xyzw,($vi1++)`) and the bare one (`vf2xyzw, (vi1++)`) assemble to
+    # that word with the contract assembler (probes in
+    # .work/cop2-calibration-20261113/calibration.json). The original writes
+    # only the full `.xyzw` mask, so the entry admits exactly that; vsqi stays
+    # refused (no original word).
+    table.append(('vlqi',
+                  re.compile(r'(?P<op>vlqi)\.(?P<mask>xyzw)' + _WS +
+                             r'\$?vf(?P<d>[0-9]+)(?P<df>[xyzw]*)' + _SEP +
+                             r'\(\$?vi(?P<vi>[0-9]+)\+\+\)'),
+                  lambda m: (_cop2_vf(m.group('d'), '') or
+                             _cop2_field(m.group('mask'), m.group('df'), 'destination') or
+                             _cop2_vi(m.group('vi')))))
+    missing =sorted({name for name, _, _ in table} - set(_GPR_DEST_GROUP))
     assert not missing, ('every calibrated entry must state which operand it writes so '
                          '_cop2_quadword_scratch can require its clobber: ' + ', '.join(missing))
     return table
