@@ -40140,7 +40140,7 @@
      2
     ],
     [
-     "func_0022A560",
+     "ptGetMenuMember",
      2270560,
      64,
      2
@@ -40170,7 +40170,7 @@
      2
     ],
     [
-     "func_0022A7D8",
+     "ptSwapRosterEntries",
      2271192,
      92,
      2
@@ -40224,13 +40224,13 @@
      2
     ],
     [
-     "func_0022ADA0",
+     "ptFindRosterEntry",
      2272672,
      112,
      2
     ],
     [
-     "func_0022AE10",
+     "ptGetClothId",
      2272784,
      228,
      2
@@ -40242,7 +40242,7 @@
      2
     ],
     [
-     "func_0022AF98",
+     "ptApplyCurrentModel",
      2273176,
      144,
      2
@@ -40254,13 +40254,13 @@
      2
     ],
     [
-     "func_0022B0B8",
+     "ptFillCopilots",
      2273464,
      272,
      2
     ],
     [
-     "func_0022B1C8",
+     "ptFillReserve",
      2273736,
      220,
      2
@@ -40284,19 +40284,19 @@
      2
     ],
     [
-     "func_0022B498",
+     "ptGetMainPilotId",
      2274456,
      80,
      2
     ],
     [
-     "func_0022B4E8",
+     "ptGetCopilotId",
      2274536,
      80,
      2
     ],
     [
-     "func_0022B538",
+     "ptAllCopilotsAssigned",
      2274616,
      96,
      2
@@ -40308,7 +40308,7 @@
      2
     ],
     [
-     "func_0022B5E0",
+     "ptResetStatusBlock",
      2274784,
      104,
      2
@@ -40320,13 +40320,13 @@
      2
     ],
     [
-     "func_0022BA18",
+     "ptFlagCombinationIndex",
      2275864,
      224,
      2
     ],
     [
-     "func_0022BAF8",
+     "ptLoadPartyModels",
      2276088,
      252,
      2
@@ -40350,7 +40350,7 @@
      2
     ],
     [
-     "func_0022CEE0",
+     "saveReadGameWork",
      2281184,
      456,
      2
