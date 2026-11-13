@@ -240,13 +240,122 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024CF70);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024D1E8);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024D5E0);
+typedef struct CfeListNode CfeListNode;
+CfeListNode *func_0024F698(CfeListNode **list, int key, float value);
+CfeListNode *func_0024F730(CfeListNode **list, int key, float value);
+extern CfeListNode *D_0063CDE0[];
+extern unsigned char D_0068CF10[];
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024D738);
+/* An 8.8 fixed-point script value as a float. */
+#define CFE_FIXED_TO_FLOAT(value) ((float) ((value) / 256) + (float) ((value) % 256) * (1.0f / 256))
+/* Script command (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
+ * with flag 0x2 (func_0024F730) when `flagged` is set. */
+int cfe_0024D5E0(int handle)
+{
+    int index;
+    int key;
+    int flagged;
+    int value;
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024D8C0);
+    if (func_A9F0A8() != 4) {
+        assertFailed(D_0068CF10, cfeAssertFile, 1021);
+    }
+    index = func_A9F0C0(handle, 1);
+    key = func_A9F0C0(handle, 2);
+    flagged = func_A9F0C0(handle, 3);
+    value = func_A9F0C0(handle, 4);
+    if (flagged != 0) {
+        func_0024F730(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
+    } else {
+        func_0024F698(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
+    }
+    return 1;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024DA40);
+extern unsigned char D_0068CED0[];
+extern CfeListNode *D_0063ACB4[][140];
+
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4 (140 per row) to the 8.8
+ * value, with flag 0x2 (func_0024F730) when `flagged` is set. */
+int cfe_0024D738(int handle)
+{
+    int index;
+    int sub;
+    int key;
+    int flagged;
+    int value;
+
+    if (func_A9F0A8() != 5) {
+        assertFailed(D_0068CED0, cfeAssertFile, 1047);
+    }
+    index = func_A9F0C0(handle, 1);
+    sub = func_A9F0C0(handle, 2);
+    key = func_A9F0C0(handle, 3);
+    flagged = func_A9F0C0(handle, 4);
+    value = func_A9F0C0(handle, 5);
+    if (flagged != 0) {
+        func_0024F730(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+    } else {
+        func_0024F698(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+    }
+    return 1;
+}
+
+extern CfeListNode *D_0063CE0C[][6];
+
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C (6 per row) to the 8.8
+ * value, with flag 0x2 (func_0024F730) when `flagged` is set. */
+int cfe_0024D8C0(int handle)
+{
+    int index;
+    int sub;
+    int key;
+    int flagged;
+    int value;
+
+    if (func_A9F0A8() != 5) {
+        assertFailed(D_0068CED0, cfeAssertFile, 1073);
+    }
+    index = func_A9F0C0(handle, 1);
+    sub = func_A9F0C0(handle, 2);
+    key = func_A9F0C0(handle, 3);
+    flagged = func_A9F0C0(handle, 4);
+    value = func_A9F0C0(handle, 5);
+    if (flagged != 0) {
+        func_0024F730(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+    } else {
+        func_0024F698(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+    }
+    return 1;
+}
+
+extern CfeListNode *D_0063CE90[][20];
+
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE90 (20 per row) to the 8.8
+ * value, with flag 0x2 (func_0024F730) when `flagged` is set. */
+int cfe_0024DA40(int handle)
+{
+    int index;
+    int sub;
+    int key;
+    int flagged;
+    int value;
+
+    if (func_A9F0A8() != 5) {
+        assertFailed(D_0068CED0, cfeAssertFile, 1099);
+    }
+    index = func_A9F0C0(handle, 1);
+    sub = func_A9F0C0(handle, 2);
+    key = func_A9F0C0(handle, 3);
+    flagged = func_A9F0C0(handle, 4);
+    value = func_A9F0C0(handle, 5);
+    if (flagged != 0) {
+        func_0024F730(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+    } else {
+        func_0024F698(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024DBC0);
 
