@@ -1,12 +1,19 @@
 #include "common.h"
 #include "main/tu109.h"
 #include "main/tu121.h"
+#include "ov01/tu023.h"
+#include "ov01/tu032.h"
+#include "ov01/tu043.h"
 #include "shared.h"
+#include "main/tu100.h"
 
+/* The points block of a member (tu100.c/tu101.c's ControlLimits): menuDrawClassInfo (tu101.c)
+   draws skillPoints beside "S.Pt" and classPoints beside "C.Pt". Taking a sub costs skill points
+   (selectionTakeSub), opening a slot class points (selectionHolderCharge). */
 typedef struct SelectionCounter {
     unsigned char unmodeled_00[8];
-    int limit_a;
-    int count;
+    int skillPoints;                        /* 0x08 */
+    int classPoints;                        /* 0x0C */
 } SelectionCounter;
 
 /* The taken bits of one holder (0x2B bytes): bit s of header[g] marks slot s of group g opened,
@@ -23,7 +30,7 @@ struct ControlBuffer {
 };
 
 /* A member record (the type of ptState's slots): it owns a bitmap of taken slot bits and the
-   counter their costs are charged to; id is the character looked up with func_A8B490. */
+   counter their costs are charged to; id is the character looked up with battleContextStateGet. */
 typedef struct SelectionHolder {
     int id;
     struct PartyMemberStatus *status;
@@ -46,21 +53,51 @@ struct SelectionSettings {
 };
 
 /* Bits of selectionFlagTable: when an entry can be chosen (selectionEntryIsEligible)
-   and what makes it useful for a member (func_00228F68). */
+   and what makes it useful for a member (selectionEntryIsUseful). */
 enum SelectionFlag {
-    SELECTION_FLAG_RESTORE_GAUGE = 0x1,   /* useful while HP (value5C) differs from its maximum (gauge) */
-    SELECTION_FLAG_RESTORE_ETHER = 0x2,   /* useful while EP (value60) differs from its maximum (value6) */
+    SELECTION_FLAG_RESTORE_HP = 0x1,      /* useful while hp differs from maxHp */
+    SELECTION_FLAG_RESTORE_EP = 0x2,      /* useful while ep differs from maxEp */
     SELECTION_FLAG_ALWAYS = 0x4,          /* always useful */
     SELECTION_FLAG_RESTRICTED = 0x8,      /* eligible only while D_003EC664 is 7 or 8 */
     SELECTION_FLAG_DISABLED = 0x10,       /* never eligible */
     SELECTION_FLAG_SPLIT_ONLY = 0x20,     /* eligible only in split mode (without it, only outside) */
     SELECTION_FLAG_ANY_MODE = 0x40,       /* eligible in and outside split mode */
-    SELECTION_FLAG_COUNT = 0x80,          /* useful while counter->count is below 99999 */
-    SELECTION_FLAG_LIMIT = 0x100          /* useful while counter->limit_a is below 99999 */
+    SELECTION_FLAG_CLASS_POINTS = 0x80,   /* useful while classPoints is below SELECTION_POINTS_MAX */
+    SELECTION_FLAG_SKILL_POINTS = 0x100   /* useful while skillPoints is below SELECTION_POINTS_MAX */
 };
 
-/* OV01 dataBoxChkCategory1 (config/symbols/ov01.txt). */
-int func_A9C7A8(int value);
+/* The window entries 30..32, listed first in split mode and skipped by the second scan while
+   split_window is set. */
+#define SELECTION_SPLIT_ENTRY_FIRST 30
+#define SELECTION_SPLIT_ENTRY_END 33
+/* The D_003EC664 values 7 and 8 under which SELECTION_FLAG_RESTRICTED entries are eligible. */
+#define SELECTION_RESTRICTED_STATE_FIRST 7
+#define SELECTION_RESTRICTED_STATE_COUNT 2
+/* The point ceiling (tu100.c clamps classPoints to it). */
+#define SELECTION_POINTS_MAX 99999
+/* Skill and class points every member starts with, and the skill points added per saved maximum. */
+#define SELECTION_START_POINTS 600
+#define SELECTION_POINTS_PER_MAXIMUM 30
+/* cells[group][slot] once its four subs are taken. */
+#define SELECTION_SLOT_ALL_SUBS 0xF
+/* The pair records of D_003EBAA8 (two members each) that selectionPairRecordCount scans. */
+#define SELECTION_PAIR_RECORD_FIRST 79
+#define SELECTION_PAIR_RECORD_COUNT 16
+
+/* Entry values past the selectionRecordIndex range (0x00..0x6F) that selectionCollectEntries
+   appends: SELECTION_ENTRY_EXTRA_FLAG stands for battle-slot flag SELECTION_EXTRA_FLAG, the entries
+   from SELECTION_ENTRY_EXTRA_CODES for the battle-slot codes SELECTION_EXTRA_CODE_FIRST..END - 1,
+   and SELECTION_ENTRY_NONE is held by nobody. */
+#define SELECTION_ENTRY_EXTRA_FLAG 0x70
+#define SELECTION_ENTRY_EXTRA_CODES 0x71
+#define SELECTION_ENTRY_NONE 0x7F
+/* The flag selectionInit sets for members 2 and 5 when saveTextMaximaCopy reports saved maxima. */
+#define SELECTION_EXTRA_FLAG 0x3F
+#define SELECTION_EXTRA_CODE_FIRST 0x34
+#define SELECTION_EXTRA_CODE_END 0x3A
+/* Entry value minus battle-slot code (0x3D). */
+#define SELECTION_EXTRA_CODE_ENTRY_OFFSET (SELECTION_ENTRY_EXTRA_CODES - SELECTION_EXTRA_CODE_FIRST)
+
 /* unsigned: selectionWindowListDropAt reads it with lbu and decrements with addiu 0xFF. */
 extern unsigned char selectionWindowCount;
 extern struct SelectionSettings ptState;
@@ -75,22 +112,23 @@ void selectionRebuildWindowList(void)
     count = 0;
     if (ptSplitMode[0] != 0)
     {
-        candidate = 30;
+        candidate = SELECTION_SPLIT_ENTRY_FIRST;
         do
         {
-            if (func_A9C7A8(candidate) > 0)
+            if (dataBoxChkCategory1(candidate) > 0)
             {
                 selectionWindowList[count] = candidate;
                 count += 1;
             }
             candidate += 1;
         }
-        while (candidate < 33);
+        while (candidate < SELECTION_SPLIT_ENTRY_END);
     }
     candidate = 0;
     do
     {
-        if ((ptState.split_window == 0 || (unsigned int) (candidate - 30) >= 3) && func_A9C7A8(candidate) > 0)
+        if ((ptState.split_window == 0 || (unsigned int) (candidate - SELECTION_SPLIT_ENTRY_FIRST)
+             >= SELECTION_SPLIT_ENTRY_END - SELECTION_SPLIT_ENTRY_FIRST) && dataBoxChkCategory1(candidate) > 0)
         {
             selectionWindowList[count] = candidate;
             count += 1;
@@ -101,12 +139,12 @@ void selectionRebuildWindowList(void)
     selectionWindowCount = count;
 }
 
-/* The func_A9C7A8 count of window entry index; an entry without one is dropped from the list (returns 0). */
+/* The dataBoxChkCategory1 count of window entry index; an entry without one is dropped from the list (returns 0). */
 int selectionWindowListDropAt(int index)
 {
     int i;
 
-    if (func_A9C7A8(selectionWindowList[index]) <= 0)
+    if (dataBoxChkCategory1(selectionWindowList[index]) <= 0)
     {
         for (i = index + 1; i < selectionWindowCount; i++)
         {
@@ -115,7 +153,7 @@ int selectionWindowListDropAt(int index)
         selectionWindowCount--;
         return 0;
     }
-    return func_A9C7A8(selectionWindowList[index]);
+    return dataBoxChkCategory1(selectionWindowList[index]);
 }
 
 extern u16 selectionFlagTable[];
@@ -131,15 +169,15 @@ void selectionFlagTableInit(void)
     }
     flags = selectionFlagTable;
     *flags++ = SELECTION_FLAG_DISABLED;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE;
-    *flags++ = SELECTION_FLAG_RESTORE_ETHER;
-    *flags++ = SELECTION_FLAG_RESTORE_ETHER;
-    *flags++ = SELECTION_FLAG_RESTORE_ETHER;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE | SELECTION_FLAG_RESTORE_ETHER;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE | SELECTION_FLAG_RESTORE_ETHER;
+    *flags++ = SELECTION_FLAG_RESTORE_HP;
+    *flags++ = SELECTION_FLAG_RESTORE_HP;
+    *flags++ = SELECTION_FLAG_RESTORE_HP;
+    *flags++ = SELECTION_FLAG_RESTORE_HP;
+    *flags++ = SELECTION_FLAG_RESTORE_EP;
+    *flags++ = SELECTION_FLAG_RESTORE_EP;
+    *flags++ = SELECTION_FLAG_RESTORE_EP;
+    *flags++ = SELECTION_FLAG_RESTORE_HP | SELECTION_FLAG_RESTORE_EP;
+    *flags++ = SELECTION_FLAG_RESTORE_HP | SELECTION_FLAG_RESTORE_EP;
     *flags++ = SELECTION_FLAG_DISABLED;
     *flags++ = SELECTION_FLAG_DISABLED;
     *flags++ = SELECTION_FLAG_DISABLED;
@@ -151,18 +189,18 @@ void selectionFlagTableInit(void)
     *flags++ = SELECTION_FLAG_DISABLED;
     *flags++ = SELECTION_FLAG_DISABLED;
     *flags++ = SELECTION_FLAG_DISABLED;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE | SELECTION_FLAG_RESTORE_ETHER | SELECTION_FLAG_ALWAYS;
-    *flags++ = SELECTION_FLAG_LIMIT;
-    *flags++ = SELECTION_FLAG_LIMIT;
-    *flags++ = SELECTION_FLAG_LIMIT;
-    *flags++ = SELECTION_FLAG_LIMIT;
-    *flags++ = SELECTION_FLAG_LIMIT;
-    *flags++ = SELECTION_FLAG_COUNT;
-    *flags++ = SELECTION_FLAG_COUNT;
-    *flags++ = SELECTION_FLAG_COUNT;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE | SELECTION_FLAG_RESTORE_ETHER | SELECTION_FLAG_SPLIT_ONLY;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE | SELECTION_FLAG_RESTORE_ETHER | SELECTION_FLAG_SPLIT_ONLY;
-    *flags++ = SELECTION_FLAG_RESTORE_GAUGE | SELECTION_FLAG_RESTORE_ETHER | SELECTION_FLAG_ALWAYS
+    *flags++ = SELECTION_FLAG_RESTORE_HP | SELECTION_FLAG_RESTORE_EP | SELECTION_FLAG_ALWAYS;
+    *flags++ = SELECTION_FLAG_SKILL_POINTS;
+    *flags++ = SELECTION_FLAG_SKILL_POINTS;
+    *flags++ = SELECTION_FLAG_SKILL_POINTS;
+    *flags++ = SELECTION_FLAG_SKILL_POINTS;
+    *flags++ = SELECTION_FLAG_SKILL_POINTS;
+    *flags++ = SELECTION_FLAG_CLASS_POINTS;
+    *flags++ = SELECTION_FLAG_CLASS_POINTS;
+    *flags++ = SELECTION_FLAG_CLASS_POINTS;
+    *flags++ = SELECTION_FLAG_RESTORE_HP | SELECTION_FLAG_RESTORE_EP | SELECTION_FLAG_SPLIT_ONLY;
+    *flags++ = SELECTION_FLAG_RESTORE_HP | SELECTION_FLAG_RESTORE_EP | SELECTION_FLAG_SPLIT_ONLY;
+    *flags++ = SELECTION_FLAG_RESTORE_HP | SELECTION_FLAG_RESTORE_EP | SELECTION_FLAG_ALWAYS
                | SELECTION_FLAG_SPLIT_ONLY;
     *flags++ = SELECTION_FLAG_DISABLED;
     *flags++ = SELECTION_FLAG_DISABLED;
@@ -189,7 +227,7 @@ int selectionEntryIsEligible(int index)
     }
     if (flags & SELECTION_FLAG_RESTRICTED)
     {
-        if ((unsigned int) (D_003EC664[0] - 7) >= 2)
+        if ((unsigned int) (D_003EC664[0] - SELECTION_RESTRICTED_STATE_FIRST) >= SELECTION_RESTRICTED_STATE_COUNT)
         {
             return 0;
         }
@@ -213,33 +251,43 @@ int selectionEntryIsEligible(int index)
 
 int selectionWindowEntryHasFlag4(int index)
 {
-    if ((selectionFlagTable[selectionWindowList[index]] & 0x4) != 0) {
+    if ((selectionFlagTable[selectionWindowList[index]] & SELECTION_FLAG_ALWAYS) != 0) {
         return 1;
     }
     return 0;
 }
 
-/* Admitted aligned(1) scalar: the gauge word sits at the unaligned offset 2 of the record. */
+/* Admitted aligned(1) scalar: maxHp sits at the unaligned offset 2 of the record. */
 typedef signed int UnalignedS32 __attribute__((aligned(1)));
 
-/* The character record returned by func_A8B490 (OV01). */
+/* The character record returned by battleContextStateGet (tu101.c's typedef). HP, EP and their
+   maxima as src/ov01/tu026.c reads them: HP at +0x5C with its maximum the unaligned int at +0x2,
+   EP at +0x60 with its maximum the halfword at +0x6. */
 typedef struct MenuPartyRecord {
     unsigned char unmodeled_00[2];
-    UnalignedS32 gauge;                     /* 0x02 */
-    short value6;                           /* 0x06 */
-    unsigned char unmodeled_08[0xB];
+    UnalignedS32 maxHp;                     /* 0x02 */
+    short maxEp;                            /* 0x06 */
+    short strength;                         /* 0x08: "Str" ("Pow" in split mode) */
+    short vitality;                         /* 0x0A: "Vit" ("Arm" in split mode) */
+    short etherAttack;                      /* 0x0C: "Eatk" */
+    short etherDefense;                     /* 0x0E: "Edef" */
+    signed char dexterity;                  /* 0x10: "Dex" */
+    signed char evasion;                    /* 0x11: "Eva" */
+    signed char agility;                    /* 0x12: "Agl" */
     signed char level;                      /* 0x13 */
     unsigned char unmodeled_14[0x48];
-    int value5C;                            /* 0x5C */
-    short value60;                          /* 0x60 */
+    int hp;                                 /* 0x5C */
+    short ep;                               /* 0x60 */
+    unsigned char unmodeled_62[0x108 - 0x62]; /* menuDrawCharStats copies 0x108 bytes */
 } MenuPartyRecord;
 
-/* OV01 battleContextStateGet (config/symbols/ov01.txt). */
-MenuPartyRecord *func_A8B490(int id);
+/* OV01 battleContextStateGet (config/symbols/ov01.txt): the state record (BattleState in
+   ov01/tu023.c, 0x108 bytes) of the member bound to slot key. */
+MenuPartyRecord *battleContextStateGet(int key);
 
 /* Whether window entry index is eligible and useful for holder's character (enum SelectionFlag);
    an entry with no bit besides the two split-mode ones is useful. */
-int func_00228F68(int index, SelectionHolder *holder)
+int selectionEntryIsUseful(int index, SelectionHolder *holder)
 {
     u16 flags;
     MenuPartyRecord *record;
@@ -252,34 +300,34 @@ int func_00228F68(int index, SelectionHolder *holder)
     {
         return 0;
     }
-    record = func_A8B490(holder->id);
+    record = battleContextStateGet(holder->id);
     flags &= ~(SELECTION_FLAG_SPLIT_ONLY | SELECTION_FLAG_ANY_MODE);
     usable = 1;
     useful = flags == 0;
-    if (flags & SELECTION_FLAG_LIMIT)
+    if (flags & SELECTION_FLAG_SKILL_POINTS)
     {
-        if (holder->counter->limit_a < 99999)
+        if (holder->counter->skillPoints < SELECTION_POINTS_MAX)
         {
             useful = usable;
         }
     }
-    if (flags & SELECTION_FLAG_COUNT)
+    if (flags & SELECTION_FLAG_CLASS_POINTS)
     {
-        if (holder->counter->count < 99999)
+        if (holder->counter->classPoints < SELECTION_POINTS_MAX)
         {
             useful = usable;
         }
     }
-    if (flags & SELECTION_FLAG_RESTORE_GAUGE)
+    if (flags & SELECTION_FLAG_RESTORE_HP)
     {
-        if (record->gauge != record->value5C)
+        if (record->maxHp != record->hp)
         {
             useful = usable;
         }
     }
-    if (flags & SELECTION_FLAG_RESTORE_ETHER)
+    if (flags & SELECTION_FLAG_RESTORE_EP)
     {
-        if (record->value6 != record->value60)
+        if (record->maxEp != record->ep)
         {
             useful = usable;
         }
@@ -296,11 +344,11 @@ u16 selectionWindowEntryMarkedFlags(int index)
     u16 flags;
 
     flags = selectionFlagTable[selectionWindowList[index]];
-    return (flags & 0x180) ? flags : 0;
+    return (flags & (SELECTION_FLAG_CLASS_POINTS | SELECTION_FLAG_SKILL_POINTS)) ? flags : 0;
 }
 
 /* Whether a member of the active slots (back 7..9 in split mode, front 0..6 otherwise) is not at full HP. */
-int func_00229088(void)
+int selectionActiveMemberNeedsHp(void)
 {
     int start;
     int count;
@@ -323,8 +371,8 @@ int func_00229088(void)
         member = ptState.slots[start + i];
         if (member != 0)
         {
-            record = func_A8B490(member->id);
-            if (record->value5C != record->gauge)
+            record = battleContextStateGet(member->id);
+            if (record->hp != record->maxHp)
             {
                 return 1;
             }
@@ -334,8 +382,8 @@ int func_00229088(void)
 }
 
 /* Whether one of the counted members (counts[2] back ones while split_window is set, counts[1] front
-   ones otherwise) is not at full HP and EP. */
-int func_00229130(void)
+   ones otherwise) has HP or EP below its maximum. */
+int selectionCountedMemberNeedsHpEp(void)
 {
     int start;
     int count;
@@ -354,8 +402,8 @@ int func_00229130(void)
     }
     for (i = 0; i < count; i++)
     {
-        record = func_A8B490(ptState.slots[start + i]->id);
-        if (record->value5C != record->gauge || record->value60 != record->value6)
+        record = battleContextStateGet(ptState.slots[start + i]->id);
+        if (record->hp != record->maxHp || record->ep != record->maxEp)
         {
             return 1;
         }
@@ -388,7 +436,7 @@ void selectionBlockClear(void)
 }
 
 /* OV01 dataBoxChkCategory3 (config/symbols/ov01.txt). */
-int func_A9C868(int id);
+int dataBoxChkCategory3(int id);
 
 void selectionBlockFill(void)
 {
@@ -401,7 +449,7 @@ void selectionBlockFill(void)
     {
         bit = candidate & 7;
         slot = candidate >> 3;
-        if (func_A9C868(candidate) != 0)
+        if (dataBoxChkCategory3(candidate) != 0)
         {
             ptState.block->slots[slot] |= 1 << bit;
         }
@@ -419,7 +467,7 @@ int selectionBlockTestBit(int slot)
 }
 
 /* OV01 dataBoxChkCategory2 (config/symbols/ov01.txt). */
-int func_A9C808(int value);
+int dataBoxChkCategory2(int value);
 /* unsigned: selectionListDropAt reads it with lbu and decrements with addiu 0xFF. */
 extern unsigned char selectionPlainCount;
 extern unsigned char selectionPlainList[];
@@ -433,7 +481,7 @@ void selectionRebuildList(void)
     count = 0;
     do
     {
-        if (func_A9C808(candidate) > 0)
+        if (dataBoxChkCategory2(candidate) > 0)
         {
             selectionPlainList[count] = candidate;
             count += 1;
@@ -445,16 +493,16 @@ void selectionRebuildList(void)
 }
 
 /* OV01 dataBoxDecCategory2 (config/symbols/ov01.txt). */
-int func_A9C848(int value);
+int dataBoxDecCategory2(int value);
 
-/* Uses up one of plain entry index (func_A9C848) and returns what is left; an entry with none left is
+/* Uses up one of plain entry index (dataBoxDecCategory2) and returns what is left; an entry with none left is
    dropped from the list. */
 int selectionListDropAt(int index)
 {
     int i;
 
-    func_A9C848(selectionPlainList[index]);
-    if (func_A9C808(selectionPlainList[index]) <= 0)
+    dataBoxDecCategory2(selectionPlainList[index]);
+    if (dataBoxChkCategory2(selectionPlainList[index]) <= 0)
     {
         for (i = index + 1; i < selectionPlainCount; i++)
         {
@@ -463,17 +511,25 @@ int selectionListDropAt(int index)
         selectionPlainCount--;
         return 0;
     }
-    return func_A9C808(selectionPlainList[index]);
+    return dataBoxChkCategory2(selectionPlainList[index]);
 }
 
+/* tu101.c's LookupRecord. */
 struct LookupRecord {
-    int value;
-    /* The attribute bytes (tu101.c's spelling). In the special-attack records func_00229678
-     * and func_00229750 scan, attributes[1] is the copilot member mask (bit n for member id
-     * n + 1) and attributes[2] the bit of the caller's mask that enables the record; in the pair
-     * records of func_002294B0, attributes[0] and attributes[1] are the two members who perform it. */
+    char *text;                         /* 0x00: the record's text */
+    /* In the special-attack records selectionCopilotRecordCount and selectionCopilotRecordAt scan,
+     * attributes[1] is the copilot member mask (bit n for member id n + 1) and attributes[2] the bit
+     * of the caller's mask that enables the record; in the pair records of selectionPairRecordCount,
+     * attributes[0] and attributes[1] are the two members who perform it. */
     unsigned char attributes[3];
-    unsigned char unmodeled_07[9];
+    unsigned char target;               /* 0x07 */
+    unsigned char zone;                 /* 0x08 */
+    unsigned char type;                 /* 0x09 */
+    unsigned char range;                /* 0x0A */
+    unsigned char condition;            /* 0x0B */
+    unsigned char effect;               /* 0x0C */
+    unsigned char unmodeled_0d;
+    unsigned short elementMask;         /* 0x0E */
 };
 
 extern struct LookupRecord D_003EBAA8[];
@@ -491,18 +547,18 @@ void selectionBuildKeyTable(void)
     {
         key = index + 0x50;
         index += 1;
-        record->value = txdTableEntry(menuMainTxdBuffer, key);
+        record->text = (char *) txdTableEntry(menuMainTxdBuffer, key);
         record += 1;
     }
     while (index < 99);
 }
 
 extern unsigned char D_003EC0D7[];
-/* OV01 battleSlotMarkTest (config/symbols/ov01.txt). */
-int func_A8B870(int id, int mark);
+/* OV01 battleSlotMarkTest (config/symbols/ov01.txt); main reads its result. */
+int battleSlotMarkTest(int key, int mark);
 
 /* The D_003EC0D7 value of character id; for id 2 it is 3 higher, and 4 higher while its mark 4 is set. */
-int func_00229460(int id)
+int selectionMemberCapacity(int id)
 {
     int value;
 
@@ -510,7 +566,7 @@ int func_00229460(int id)
     if (id == 2)
     {
         value += 3;
-        if (func_A8B870(id, 4) != 0)
+        if (battleSlotMarkTest(id, 4) != 0)
         {
             value += 1;
         }
@@ -520,15 +576,16 @@ int func_00229460(int id)
 
 int ptFindSlot(int id);
 
-/* Counts the pair records 79..94 of D_003EBAA8 that are enabled in mask (bit attributes[2]), have member
-   as one of their two members and whose other member ptFindSlot finds. */
-int func_002294B0(int member, unsigned short mask)
+/* Counts the pair records of D_003EBAA8 (SELECTION_PAIR_RECORD_FIRST, 16 of them) that are enabled in
+   mask (bit attributes[2]), have member as one of their two members and whose other member ptFindSlot
+   finds. */
+int selectionPairRecordCount(int member, unsigned short mask)
 {
     int count;
     int i;
 
     count = 0;
-    for (i = 79; i < 95; i++)
+    for (i = SELECTION_PAIR_RECORD_FIRST; i < SELECTION_PAIR_RECORD_FIRST + SELECTION_PAIR_RECORD_COUNT; i++)
     {
         if ((mask >> D_003EBAA8[i].attributes[2]) & 1)
         {
@@ -553,19 +610,19 @@ int func_002294B0(int member, unsigned short mask)
 
 /* Index of the nth such pair record, or -1 when there is none. The original masks i with 15,
    although i is below 16 there. */
-int func_00229578(int member, int nth, unsigned short mask)
+int selectionPairRecordAt(int member, int nth, unsigned short mask)
 {
     int found;
     int i;
 
     found = 0;
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < SELECTION_PAIR_RECORD_COUNT; i++)
     {
-        if ((mask >> D_003EBAA8[i + 79].attributes[2]) & 1)
+        if ((mask >> D_003EBAA8[i + SELECTION_PAIR_RECORD_FIRST].attributes[2]) & 1)
         {
-            if (D_003EBAA8[i + 79].attributes[0] == member)
+            if (D_003EBAA8[i + SELECTION_PAIR_RECORD_FIRST].attributes[0] == member)
             {
-                if (ptFindSlot(D_003EBAA8[i + 79].attributes[1]) != -1)
+                if (ptFindSlot(D_003EBAA8[i + SELECTION_PAIR_RECORD_FIRST].attributes[1]) != -1)
                 {
                     found++;
                     if (nth + 1 == found)
@@ -574,9 +631,9 @@ int func_00229578(int member, int nth, unsigned short mask)
                     }
                 }
             }
-            else if (D_003EBAA8[i + 79].attributes[1] == member)
+            else if (D_003EBAA8[i + SELECTION_PAIR_RECORD_FIRST].attributes[1] == member)
             {
-                if (ptFindSlot(D_003EBAA8[i + 79].attributes[0]) != -1)
+                if (ptFindSlot(D_003EBAA8[i + SELECTION_PAIR_RECORD_FIRST].attributes[0]) != -1)
                 {
                     found++;
                     if (nth + 1 == found)
@@ -587,18 +644,18 @@ int func_00229578(int member, int nth, unsigned short mask)
             }
         }
     }
-    if (i == 16)
+    if (i == SELECTION_PAIR_RECORD_COUNT)
     {
         return -1;
     }
-    return (i & 15) + 79;
+    return (i & (SELECTION_PAIR_RECORD_COUNT - 1)) + SELECTION_PAIR_RECORD_FIRST;
 }
 
 SelectionHolder *ptFindRecord(int id);
 
 /* Counts the records among member's seven (from D_003EBAA8[member * 10 - 58]) that are enabled in mask
    (bit attributes[2]) and whose copilot member mask includes a member ptFindRecord finds. */
-int func_00229678(int member, unsigned short mask)
+int selectionCopilotRecordCount(int member, unsigned short mask)
 {
     int present;
     int count;
@@ -627,7 +684,7 @@ int func_00229678(int member, unsigned short mask)
 }
 
 /* Index of the nth such record, or -1 when there is none. */
-int func_00229750(int member, int nth, unsigned short mask)
+int selectionCopilotRecordAt(int member, int nth, unsigned short mask)
 {
     int present;
     int found;
@@ -687,18 +744,18 @@ char *func_00A9B850(int dispatch_value, int value);
 char *func_00A9B750(int dispatch_value, int value);
 
 /* Returns the text pointer of the OV01 call (tu101 draws it with textDrawSegment). */
-char *selectionRecordSetValue(int index, int value)
+char *selectionRecordSetValue(int record, int value)
 {
-    SelectionRecord *record;
+    SelectionRecord *entry;
 
-    record = &selectionRecordTable[index];
-    if (record->kind < 2)
+    entry = &selectionRecordTable[record];
+    if (entry->kind < 2)
     {
-        return func_00A9B850(record->dispatch_value, value);
+        return func_00A9B850(entry->dispatch_value, value);
     }
     else
     {
-        return func_00A9B750(record->dispatch_value, value);
+        return func_00A9B750(entry->dispatch_value, value);
     }
 }
 
@@ -707,13 +764,13 @@ char *selectionSetValue(int group, int slot, int sub, int value)
     return selectionRecordSetValue(selectionRecordIndex(group, slot, sub), value);
 }
 
-u16 selectionGetValue(int group, int slot, int sub)
+unsigned short selectionGetValue(int group, int slot, int sub)
 {
     return selectionRecordTable[selectionRecordIndex(group, slot, sub)].value;
 }
 
 /* Group 3 has only four slots: its slots 4..7 count as taken. */
-int func_00229978(SelectionHolder *holder, int group, int slot, int sub)
+int selectionSubIsTaken(SelectionHolder *holder, int group, int slot, int sub)
 {
     if (group == 3 && slot >= 4)
     {
@@ -722,69 +779,70 @@ int func_00229978(SelectionHolder *holder, int group, int slot, int sub)
     return ((unsigned int) holder->bits->cells[group][slot] >> sub) & 1;
 }
 
-/* OV01 battleSlotFlagTest and battleSlotCodeTest (config/symbols/ov01.txt). */
-int func_A8B750(int id, int flag);
-int func_A8B810(int id, int code);
+/* OV01 battleSlotCodeTest (config/symbols/ov01.txt); main reads its result. */
+int battleSlotCodeTest(int key, int code);
 
 /* Whether holder has entry index: the taken bit of a selectionRecordIndex value, or for the extra entries
-   func_00229C60 appends, flag 0x3F (0x70) or code index - 0x3D (0x71 and up); 0x7F is never held. */
-int func_002299B0(SelectionHolder *holder, int index)
+   selectionCollectEntries appends, the battle-slot flag or code it stands for. */
+int selectionHolderHasEntry(SelectionHolder *holder, int index)
 {
-    if (index == 0x7F)
+    if (index == SELECTION_ENTRY_NONE)
     {
         return 0;
     }
-    if (index == 0x70)
+    if (index == SELECTION_ENTRY_EXTRA_FLAG)
     {
-        return func_A8B750(holder->id, 0x3F) != 0;
+        return battleSlotFlagTest(holder->id, SELECTION_EXTRA_FLAG) != 0;
     }
-    if (index > 0x70)
+    if (index > SELECTION_ENTRY_EXTRA_FLAG)
     {
-        return func_A8B810(holder->id, index - 0x3D) != 0;
+        return battleSlotCodeTest(holder->id, index - SELECTION_EXTRA_CODE_ENTRY_OFFSET) != 0;
     }
     return ((unsigned int) holder->bits->cells[index >> 5][(index >> 2) & 7] >> (index & 3)) & 1;
 }
 
+/* The number of taken subs of (group, slot); the bits are summed pairwise, as in the original. */
 int selectionEntryBitCount(SelectionHolder *holder, int group, int slot)
 {
-    int sum_zero;
-    int sum_three;
-    int sum_two;
+    int sub0;
+    int sub3;
+    int sub2;
 
-    sum_zero = func_00229978(holder, group, slot, 0);
-    sum_three = func_00229978(holder, group, slot, 3);
-    sum_two = func_00229978(holder, group, slot, 2);
-    sum_zero += sum_three;
-    sum_two += func_00229978(holder, group, slot, 1);
-    return sum_zero + sum_two;
+    sub0 = selectionSubIsTaken(holder, group, slot, 0);
+    sub3 = selectionSubIsTaken(holder, group, slot, 3);
+    sub2 = selectionSubIsTaken(holder, group, slot, 2);
+    sub0 += sub3;
+    sub2 += selectionSubIsTaken(holder, group, slot, 1);
+    return sub0 + sub2;
 }
 
+/* The number of taken subs of group: the counts of its eight slots, summed pairwise as in the original. */
 int selectionRowBitCount(SelectionHolder *holder, int group)
 {
-    int value_0;
-    int value_1;
-    int value_2;
-    int value_3;
-    int value_4;
-    int value_5;
-    int value_6;
-    int value_7;
+    int slot0;
+    int slot1;
+    int slot2;
+    int slot3;
+    int slot4;
+    int slot5;
+    int slot6;
+    int slot7;
 
-    value_0 = selectionEntryBitCount(holder, group, 0);
-    value_7 = selectionEntryBitCount(holder, group, 7);
-    value_3 = selectionEntryBitCount(holder, group, 3);
-    value_5 = selectionEntryBitCount(holder, group, 5);
-    value_1 = selectionEntryBitCount(holder, group, 1);
-    value_2 = selectionEntryBitCount(holder, group, 2);
-    value_4 = selectionEntryBitCount(holder, group, 4);
-    value_6 = selectionEntryBitCount(holder, group, 6);
-    value_3 += value_5;
-    value_4 += value_6;
-    value_0 += value_7;
-    value_1 += value_2;
-    value_0 += value_3;
-    value_1 += value_4;
-    return value_0 + value_1;
+    slot0 = selectionEntryBitCount(holder, group, 0);
+    slot7 = selectionEntryBitCount(holder, group, 7);
+    slot3 = selectionEntryBitCount(holder, group, 3);
+    slot5 = selectionEntryBitCount(holder, group, 5);
+    slot1 = selectionEntryBitCount(holder, group, 1);
+    slot2 = selectionEntryBitCount(holder, group, 2);
+    slot4 = selectionEntryBitCount(holder, group, 4);
+    slot6 = selectionEntryBitCount(holder, group, 6);
+    slot3 += slot5;
+    slot4 += slot6;
+    slot0 += slot7;
+    slot1 += slot2;
+    slot0 += slot3;
+    slot1 += slot4;
+    return slot0 + slot1;
 }
 
 int selectionFindIndex(SelectionHolder *holder, int value)
@@ -805,9 +863,9 @@ int selectionFindIndex(SelectionHolder *holder, int value)
 }
 
 /* Fills list with the record indices the holder has taken whose record kind is kind (kind 3: every index,
-   taken or not), then the extra entries it holds (0x70 for kind 1; 0x71..0x76 for kind 2 of the
-   character with id 3), and returns the count. */
-int func_00229C60(unsigned char *list, SelectionHolder *holder, int kind)
+   taken or not), then the extra entries it holds (SELECTION_ENTRY_EXTRA_FLAG for kind 1; 0x71..0x76 for
+   kind 2 of the character with id 3), and returns the count. */
+int selectionCollectEntries(unsigned char *list, SelectionHolder *holder, int kind)
 {
     int group;
     int slot;
@@ -821,7 +879,7 @@ int func_00229C60(unsigned char *list, SelectionHolder *holder, int kind)
         {
             for (sub = 0; sub < 4; sub++)
             {
-                if (kind == 3 || func_00229978(holder, group, slot, sub) != 0)
+                if (kind == 3 || selectionSubIsTaken(holder, group, slot, sub) != 0)
                 {
                     list[count] = selectionRecordIndex(group, slot, sub);
                     if (kind == 3 || selectionRecordTable[list[count]].kind == kind)
@@ -832,19 +890,19 @@ int func_00229C60(unsigned char *list, SelectionHolder *holder, int kind)
             }
         }
     }
-    if (func_A8B750(holder->id, 0x3F) != 0 && kind == 1)
+    if (battleSlotFlagTest(holder->id, SELECTION_EXTRA_FLAG) != 0 && kind == 1)
     {
-        list[count++] = 0x70;
+        list[count++] = SELECTION_ENTRY_EXTRA_FLAG;
     }
     if (kind == 2 && holder->id == 3)
     {
-        /* The group counter is reused for the extra values 0x34..0x39: the original keeps them in
-           group's register, and a separate variable is allocated another one. */
-        for (group = 0x34; group < 0x3A; group++)
+        /* The group counter is reused for the extra codes: the original keeps them in group's
+           register, and a separate variable is allocated another one. */
+        for (group = SELECTION_EXTRA_CODE_FIRST; group < SELECTION_EXTRA_CODE_END; group++)
         {
-            if (func_A8B810(holder->id, group) != 0)
+            if (battleSlotCodeTest(holder->id, group) != 0)
             {
-                list[count++] = group + 0x3D;
+                list[count++] = group + SELECTION_EXTRA_CODE_ENTRY_OFFSET;
             }
         }
     }
@@ -865,8 +923,8 @@ int selectionEntryBitOutsideMask(int group, int slot, int sub, int mask)
 }
 
 /* Whether every sub of group counts as taken: 32 of them, or 16 for group 3, which the 16 that
-   func_00229978 reports for its missing slots 4..7 already reach. */
-int func_00229E68(SelectionHolder *holder, int group)
+   selectionSubIsTaken reports for its missing slots 4..7 already reach. */
+int selectionGroupIsComplete(SelectionHolder *holder, int group)
 {
     int count;
 
@@ -887,31 +945,31 @@ int func_00229E68(SelectionHolder *holder, int group)
 
 extern u16 D_003EC0E8[];
 
-/* Whether group can open slot: not taken yet, group open, and its D_003EC0E8 cost within counter->count. */
-int func_00229EC0(SelectionHolder *holder, int group, int slot)
+/* Whether group can open slot: not open yet, group open, and its D_003EC0E8 cost within classPoints. */
+int selectionCanOpenSlot(SelectionHolder *holder, int group, int slot)
 {
     if (((holder->bits->header[group] >> slot) & 1) || holder->bits->openGroup < group
-        || holder->counter->count < D_003EC0E8[group * 8 + slot])
+        || holder->counter->classPoints < D_003EC0E8[group * 8 + slot])
     {
         return 0;
     }
     return 1;
 }
 
-/* Whether sub of (group, slot) can be taken: not taken yet, slot open, and its record value within counter->limit_a. */
-int func_00229F30(SelectionHolder *holder, int group, int slot, int sub)
+/* Whether sub of (group, slot) can be taken: not taken yet, slot open, and its record value within skillPoints. */
+int selectionCanTakeSub(SelectionHolder *holder, int group, int slot, int sub)
 {
     if (((holder->bits->cells[group][slot] >> sub) & 1) || !((holder->bits->header[group] >> slot) & 1)
-        || holder->counter->limit_a < selectionRecordTable[selectionRecordIndex(group, slot, sub)].value)
+        || holder->counter->skillPoints < selectionRecordTable[selectionRecordIndex(group, slot, sub)].value)
     {
         return 0;
     }
     return 1;
 }
 
-/* Takes sub of (group, slot) and pays its record value; returns 1 once all four subs of the slot are taken,
-   opening the next group when the slot belongs to the highest open one. */
-int func_00229FD8(SelectionHolder *holder, int group, int slot, int sub)
+/* Takes sub of (group, slot) and pays its record value in skill points; returns 1 once all four subs
+   of the slot are taken, opening the next group when the slot belongs to the highest open one. */
+int selectionTakeSub(SelectionHolder *holder, int group, int slot, int sub)
 {
     int index;
     SelectionCounter *counter;
@@ -920,9 +978,9 @@ int func_00229FD8(SelectionHolder *holder, int group, int slot, int sub)
     holder->bits->cells[group][slot] |= 1 << sub;
     index = selectionRecordIndex(group, slot, sub);
     counter = holder->counter;
-    counter->limit_a -= selectionRecordTable[index].value;
+    counter->skillPoints -= selectionRecordTable[index].value;
     holder->bits->takenCount++;
-    if (holder->bits->cells[group][slot] != 0xF)
+    if (holder->bits->cells[group][slot] != SELECTION_SLOT_ALL_SUBS)
     {
         return 0;
     }
@@ -934,40 +992,42 @@ int func_00229FD8(SelectionHolder *holder, int group, int slot, int sub)
     return 1;
 }
 
-int selectionRecordIndex(int group, int slot, int sub);
 /* OV01 battleSlotFlagSet and battleSlotCodeSet (config/symbols/ov01.txt). */
-void func_A8B720(int handle, unsigned char value);
-void func_A8B7E0(int handle, unsigned char value);
+void battleSlotFlagSet(int key, unsigned char flag);
+void battleSlotCodeSet(int key, unsigned char code);
 
-int selectionApplyEntry(SelectionHolder *holder, int first, int second, int third)
+/* Applies the battle-slot flag or code of the record of (group, slot, sub) to holder's character
+   and takes the sub (selectionTakeSub). */
+int selectionApplyEntry(SelectionHolder *holder, int group, int slot, int sub)
 {
     int index;
     SelectionRecord *entry;
 
-    index = selectionRecordIndex(first, second, third);
+    index = selectionRecordIndex(group, slot, sub);
     entry = &selectionRecordTable[index];
     if (entry->kind == 2)
     {
-        func_A8B7E0(holder->id, entry->dispatch_value);
+        battleSlotCodeSet(holder->id, entry->dispatch_value);
     }
     else
     {
-        func_A8B720(holder->id, entry->dispatch_value);
+        battleSlotFlagSet(holder->id, entry->dispatch_value);
     }
-    return func_00229FD8(holder, first, second, third);
+    return selectionTakeSub(holder, group, slot, sub);
 }
 
+/* Opens slot bit of group slot and pays its D_003EC0E8 cost in class points. */
 void selectionHolderCharge(SelectionHolder *holder, int slot, int bit)
 {
     SelectionCounter *counter;
 
     holder->bits->header[slot] |= 1 << bit;
     counter = holder->counter;
-    counter->count -= D_003EC0E8[slot * 8 + bit];
+    counter->classPoints -= D_003EC0E8[slot * 8 + bit];
 }
 
-/* The clock reading xglClockRead fills. */
-typedef struct DayTime {
+/* The clock reading xglClockRead fills (xgl_cd.c's XglClock). */
+typedef struct XglClock {
     unsigned char status;
     unsigned char second;
     unsigned char minute;
@@ -975,56 +1035,57 @@ typedef struct DayTime {
     unsigned char day;
     unsigned char month;
     unsigned short year;
-} DayTime;
+} XglClock;
 
 /* The ten holders' buffers (ptMemberRecords[i].bits); tu108.c and tu110.c view them as SaveMemberName. */
 extern struct ControlBuffer D_006A5880[];
 extern SelectionHolder ptMemberRecords[];
 /* The block ptState.block points at. */
 extern SelectionBlock D_006A5A30;
-/* OV01 battleSlotsInit, dataBoxClearAll, sdvInitSpecialWork and dataBoxIncCategory3 (config/symbols/ov01.txt). */
-void func_A8AFC8(void);
-void func_A9C610(void);
-void func_A91A78(void);
-void func_A9C888(int id);
-void cursorBufferTablesInit(void);
+/* OV01 battleSlotsInit and dataBoxIncCategory3 (config/symbols/ov01.txt). */
+void battleSlotsInit(void);
+void dataBoxIncCategory3(int id);
 signed char saveTextMaximaCopy(signed char *maxima);
 void saveTextStateReset(void);
-void xglClockRead(DayTime *time);
-unsigned int xglClockDayTime2UInt(DayTime *time);
+void xglClockRead(XglClock *time);
+unsigned int xglClockDayTime2UInt(XglClock *time);
 
-/* Clears the ten holders' taken bits and gives their counters 600 points, takes the first two subs of
-   (0, 0) for the member with id 4, resets the selection state, adds 30 points per saved maximum when
-   saveTextMaximaCopy reports them, fills the eligibility bitmap and stamps the play time. */
+/* Clears the ten holders' taken bits and gives them SELECTION_START_POINTS skill and class points,
+   takes the first two subs of (0, 0) for the member with id 4, resets the selection state, adds
+   SELECTION_POINTS_PER_MAXIMUM skill points per saved maximum when saveTextMaximaCopy reports them,
+   fills the eligibility bitmap and stamps the play time.
+   Two spellings per object are needed: the clear loop stores to D_006A5880[member] directly while the
+   id-4 grant reloads ptMemberRecords[member].bits for each update, and mapFlag and progressId are
+   stored to D_006A5A30 directly while id and playTime go through ptState.block, as in the original. */
 void selectionInit(void)
 {
     signed char maxima[6];
-    DayTime now;
+    XglClock now;
     int member;
-    int j;
-    int k;
+    int group;
+    int slot;
     SelectionRecord *entry;
 
-    func_A8AFC8();
-    func_A9C610();
-    func_A91A78();
+    battleSlotsInit();
+    dataBoxClearAll();
+    sdvInitSpecialWork();
     member = 0;
     do
     {
-        for (j = 0; j < 4; j++)
+        for (group = 0; group < 4; group++)
         {
-            D_006A5880[member].header[j] = 0;
-            for (k = 0; k < 8; k++)
+            D_006A5880[member].header[group] = 0;
+            for (slot = 0; slot < 8; slot++)
             {
-                D_006A5880[member].cells[j][k] = 0;
+                D_006A5880[member].cells[group][slot] = 0;
             }
-            D_006A5880[member].entries[j] = 0;
+            D_006A5880[member].entries[group] = 0;
         }
         D_006A5880[member].openGroup = 0;
         D_006A5880[member].takenCount = 0;
         D_006A5880[member].entry_count = 0;
-        ptMemberRecords[member].counter->limit_a = 600;
-        ptMemberRecords[member].counter->count = 600;
+        ptMemberRecords[member].counter->skillPoints = SELECTION_START_POINTS;
+        ptMemberRecords[member].counter->classPoints = SELECTION_START_POINTS;
         ptState.slots[member] = 0;
         ptState.roster[member] = 0;
         if (ptMemberRecords[member].id == 4)
@@ -1035,20 +1096,20 @@ void selectionInit(void)
             entry = &selectionRecordTable[selectionRecordIndex(0, 0, 0)];
             if (entry->kind == 2)
             {
-                func_A8B7E0(4, entry->dispatch_value);
+                battleSlotCodeSet(4, entry->dispatch_value);
             }
             else
             {
-                func_A8B720(4, entry->dispatch_value);
+                battleSlotFlagSet(4, entry->dispatch_value);
             }
             entry = &selectionRecordTable[selectionRecordIndex(0, 0, 1)];
             if (entry->kind == 2)
             {
-                func_A8B7E0(4, entry->dispatch_value);
+                battleSlotCodeSet(4, entry->dispatch_value);
             }
             else
             {
-                func_A8B720(4, entry->dispatch_value);
+                battleSlotFlagSet(4, entry->dispatch_value);
             }
         }
         member++;
@@ -1067,15 +1128,15 @@ void selectionInit(void)
     selectionBlockClear();
     if (saveTextMaximaCopy(maxima) & 3)
     {
-        ptMemberRecords[0].counter->limit_a += maxima[0] * 30;
-        ptMemberRecords[1].counter->limit_a += maxima[1] * 30;
-        ptMemberRecords[2].counter->limit_a += maxima[2] * 30;
-        ptMemberRecords[4].counter->limit_a += maxima[3] * 30;
-        ptMemberRecords[5].counter->limit_a += maxima[4] * 30;
-        ptMemberRecords[6].counter->limit_a += maxima[5] * 30;
-        func_A8B720(5, 0x3F);
-        func_A8B720(2, 0x3F);
-        func_A9C888(0x45);
+        ptMemberRecords[0].counter->skillPoints += maxima[0] * SELECTION_POINTS_PER_MAXIMUM;
+        ptMemberRecords[1].counter->skillPoints += maxima[1] * SELECTION_POINTS_PER_MAXIMUM;
+        ptMemberRecords[2].counter->skillPoints += maxima[2] * SELECTION_POINTS_PER_MAXIMUM;
+        ptMemberRecords[4].counter->skillPoints += maxima[3] * SELECTION_POINTS_PER_MAXIMUM;
+        ptMemberRecords[5].counter->skillPoints += maxima[4] * SELECTION_POINTS_PER_MAXIMUM;
+        ptMemberRecords[6].counter->skillPoints += maxima[5] * SELECTION_POINTS_PER_MAXIMUM;
+        battleSlotFlagSet(5, SELECTION_EXTRA_FLAG);
+        battleSlotFlagSet(2, SELECTION_EXTRA_FLAG);
+        dataBoxIncCategory3(0x45);
     }
     saveTextStateReset();
     selectionBlockFill();
