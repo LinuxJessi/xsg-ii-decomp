@@ -8288,9 +8288,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012BEF0",
+     "name": "scePadInit",
      "size": 320,
-     "splat_name": "func_0012BEF0",
+     "splat_name": "scePadInit",
      "va": "0x0012bef0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8315,9 +8315,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012C150",
+     "name": "scePadPortOpen",
      "size": 484,
-     "splat_name": "func_0012C150",
+     "splat_name": "scePadPortOpen",
      "va": "0x0012c150",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8351,18 +8351,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012C4A0",
+     "name": "scePadRead",
      "size": 356,
-     "splat_name": "func_0012C4A0",
+     "splat_name": "scePadRead",
      "va": "0x0012c4a0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012C608",
+     "name": "scePadGetState",
      "size": 120,
-     "splat_name": "func_0012C608",
+     "splat_name": "scePadGetState",
      "va": "0x0012c608",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8387,9 +8387,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012C720",
+     "name": "scePadGetReqState",
      "size": 80,
-     "splat_name": "func_0012C720",
+     "splat_name": "scePadGetReqState",
      "va": "0x0012c720",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8405,9 +8405,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012C7A8",
+     "name": "scePadInfoAct",
      "size": 288,
-     "splat_name": "func_0012C7A8",
+     "splat_name": "scePadInfoAct",
      "va": "0x0012c7a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8423,36 +8423,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012C9E8",
+     "name": "scePadInfoMode",
      "size": 312,
-     "splat_name": "func_0012C9E8",
+     "splat_name": "scePadInfoMode",
      "va": "0x0012c9e8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012CB20",
+     "name": "scePadSetMainMode",
      "size": 180,
-     "splat_name": "func_0012CB20",
+     "splat_name": "scePadSetMainMode",
      "va": "0x0012cb20",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012CBD8",
+     "name": "scePadSetActDirect",
      "size": 192,
-     "splat_name": "func_0012CBD8",
+     "splat_name": "scePadSetActDirect",
      "va": "0x0012cbd8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012CC98",
+     "name": "scePadSetActAlign",
      "size": 216,
-     "splat_name": "func_0012CC98",
+     "splat_name": "scePadSetActAlign",
      "va": "0x0012cc98",
      "name_basis": "address",
      "provenance": "estimated"
@@ -8477,18 +8477,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012CED8",
+     "name": "scePadInfoPressMode",
      "size": 92,
-     "splat_name": "func_0012CED8",
+     "splat_name": "scePadInfoPressMode",
      "va": "0x0012ced8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012CF38",
+     "name": "scePadEnterPressMode",
      "size": 84,
-     "splat_name": "func_0012CF38",
+     "splat_name": "scePadEnterPressMode",
      "va": "0x0012cf38",
      "name_basis": "address",
      "provenance": "estimated"
