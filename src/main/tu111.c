@@ -13,8 +13,8 @@ void msgBegin(void);
 void msgWindowSetScriptText(int text);
 void msgWindowSetSlot(int slot, int value);
 void *uwamonoCurrentRecord(void);
-void func_0022DDA8(void *object);
-void func_0022DE00(void *object);
+void mapObjectBeginMessage(void *object);
+void mapObjectFaceActive(void *object);
 
 /* func_A9F140's type of a string argument. */
 #define SCRIPT_ARG_STRING 3
@@ -49,8 +49,8 @@ int smsg(int ctx)
     }
     msgSlotSet(msgSlotCurrent(), 0);
     object = uwamonoCurrentRecord();
-    func_0022DDA8(object);
-    func_0022DE00(object);
+    mapObjectBeginMessage(object);
+    mapObjectFaceActive(object);
     return 1;
 }
 
@@ -96,7 +96,7 @@ int msgDtl(int ctx)
     flags = func_A9F0C0(ctx, 1);
     msgSlotSet(msgSlotCurrent(), flags);
     object = uwamonoCurrentRecord();
-    func_0022DDA8(object);
-    func_0022DE00(object);
+    mapObjectBeginMessage(object);
+    mapObjectFaceActive(object);
     return 1;
 }
