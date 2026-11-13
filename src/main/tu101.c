@@ -1447,7 +1447,8 @@ void menuDrawPanel(int x, int y, int width, int height, unsigned long long color
     menuDrawBorder(x, y, width, height, color);
 }
 
-/* menuDrawPanel with the wide frames: menuDrawPanelFrameWide in mode 5, menuDrawPanelFrameWideAlt in mode 6, then the border. */
+/* menuDrawPanel with the wide frames: menuDrawPanelFrameWide in mode 5, menuDrawPanelFrameWideAlt in mode 6, then the
+   border. */
 void menuDrawPanelWide(int x, int y, int width, int height, unsigned long long color) {
     menuDrawPanelFrameWide(x, y, width, height, MENU_PANEL_FRAME_COLOR);
     menuDrawPanelFrameWideAlt(x, y, width, height, MENU_PANEL_FILL_COLOR);
@@ -2032,7 +2033,8 @@ void menuDrawPageCells(int x, int y, int selected, int count, int wideCellLimit)
     }
 }
 
-/* List window: a 0xE0 x 0x11F panel; with two or more entries it adds the 0x1C mark and the rows (menuDrawPageCells). */
+/* List window: a 0xE0 x 0x11F panel; with two or more entries it adds the 0x1C mark and the rows (menuDrawPageCells).
+   */
 void menuDrawListWindow(int x, int y, int layer, int count)
 {
     func_0021CC08(x, y, 0xE0, 0x11F);
@@ -3347,13 +3349,16 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
     if (cursor->flags & 1) {
         switch (mode) {
         case 0:
-            menuPlaceCursor(x + 0xA, y + 0x62 + (cursor->index - firstRow) * LICENSE_ROW_PITCH, 0x9B, cursor->flags & 1);
+            menuPlaceCursor(x + 0xA, y + 0x62 + (cursor->index - firstRow) * LICENSE_ROW_PITCH, 0x9B,
+                            cursor->flags & 1);
             break;
         case 1:
-            menuPlaceCursor(x + 0xA, y + 0x62 + (cursor->index - firstRow) * LICENSE_ROW_PITCH_COMPACT, 0xA5, cursor->flags & 1);
+            menuPlaceCursor(x + 0xA, y + 0x62 + (cursor->index - firstRow) * LICENSE_ROW_PITCH_COMPACT, 0xA5,
+                            cursor->flags & 1);
             break;
         case 2:
-            menuPlaceCursor(x + 0xA, y + 0x62 + (cursor->index - firstRow) * LICENSE_ROW_PITCH, 0xA5, cursor->flags & 1);
+            menuPlaceCursor(x + 0xA, y + 0x62 + (cursor->index - firstRow) * LICENSE_ROW_PITCH, 0xA5,
+                            cursor->flags & 1);
             break;
         }
         menuDrawCursor();
@@ -4172,7 +4177,8 @@ void menuPlaceItemCursor(MenuObject *object, s32 index) {
         }
         break;
     default:
-        fontTrackSetTarget(&object->tracks[0], object->position.target_pair.x + object->items[index].position.target_pair.x,
+        fontTrackSetTarget(&object->tracks[0],
+                           object->position.target_pair.x + object->items[index].position.target_pair.x,
                            object->position.target_pair.y + object->items[index].position.target_pair.y);
         fontTrackSetTarget(&object->tracks[1], 0x12, 0xA);
         fontTrackSetTarget(&object->tracks[2], 0x12, 0xA);
