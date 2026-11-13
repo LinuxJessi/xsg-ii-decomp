@@ -7928,9 +7928,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012A8C0",
+     "name": "sceGsSetDefLoadImage",
      "size": 108,
-     "splat_name": "func_0012A8C0",
+     "splat_name": "sceGsSetDefLoadImage",
      "va": "0x0012a8c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -7982,9 +7982,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012ABE8",
+     "name": "sceGsExecLoadImage",
      "size": 380,
-     "splat_name": "func_0012ABE8",
+     "splat_name": "sceGsExecLoadImage",
      "va": "0x0012abe8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -106494,9 +106494,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A9E04",
+     "name": "memcpy",
      "size": 176,
-     "splat_name": "func_002A9E04",
+     "splat_name": "memcpy",
      "va": "0x002a9e04",
      "name_basis": "address",
      "provenance": "estimated"
