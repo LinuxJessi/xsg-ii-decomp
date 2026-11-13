@@ -172,7 +172,63 @@ INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeCommandEvaluate);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeCommandTableEvaluate);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeEvaluateDirections);
+void cfeRotateVectorXY(Vector4 *result, const float *angles);
+
+/* A row of cfeDirections (0x40 bytes): the angles of a light direction, the vectors it drives and
+ * the tracks they are sampled from. */
+typedef struct CfeDirectionRow {
+    float angles[3];            /* +0x00: X and Y rotation of the direction */
+    unsigned char unmodeled_0c[4];
+    Vector4 *direction;         /* +0x10: rotated from angles */
+    Vector4 *color;             /* +0x14 */
+    Vector4 *extra;             /* +0x18 */
+    int extraTracks[3];         /* +0x1C */
+    int angleTracks[3];         /* +0x28 */
+    int colorTracks[3];         /* +0x34 */
+} CfeDirectionRow;
+
+extern CfeDirectionRow cfeDirections[4];
+
+/* Samples the tracks of the four light rows at `time` and rotates each row's direction. */
+void cfeEvaluateDirections(int time)
+{
+    CfeDirectionRow *row;
+    int i;
+
+    for (i = 0; i < 4; i++) {
+        row = &cfeDirections[i];
+        if (row->extraTracks[0] != 0) {
+            row->extra->x = cfeTrackSample(row->extraTracks[0], time);
+        }
+        if (row->extraTracks[1] != 0) {
+            row->extra->y = cfeTrackSample(row->extraTracks[1], time);
+        }
+        if (row->extraTracks[2] != 0) {
+            row->extra->z = cfeTrackSample(row->extraTracks[2], time);
+        }
+        if (row->colorTracks[0] != 0) {
+            row->color->x = cfeTrackSample(row->colorTracks[0], time);
+        }
+        if (row->colorTracks[1] != 0) {
+            row->color->y = cfeTrackSample(row->colorTracks[1], time);
+        }
+        if (row->colorTracks[2] != 0) {
+            row->color->z = cfeTrackSample(row->colorTracks[2], time);
+        }
+        if (row->angleTracks[0] != 0) {
+            row->angles[0] = cfeTrackSample(row->angleTracks[0], time);
+        }
+        if (row->angleTracks[1] != 0) {
+            row->angles[1] = cfeTrackSample(row->angleTracks[1], time);
+        }
+        if (row->angleTracks[2] != 0) {
+            row->angles[2] = cfeTrackSample(row->angleTracks[2], time);
+        }
+        if (row->direction != 0) {
+            cfeRotateVectorXY(row->direction, row->angles);
+        }
+    }
+}
 
 extern CfeEvalGlobal cfeEvalGlobal;
 
