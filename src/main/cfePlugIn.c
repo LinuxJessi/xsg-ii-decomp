@@ -16,12 +16,95 @@ extern unsigned char cfeAssertFile[];
 /* An 8.8 fixed-point script value as a float. */
 #define CFE_FIXED_TO_FLOAT(value) ((float) ((value) / 256) + (float) ((value) % 256) * (1.0f / 256))
 
-void func_0024B0E8(CfeListNode **list, int mode, int key, float value);
-void func_0024B230(CfeListNode **list, int mode, int key, float value);
+CfeListNode *cfeListTail(CfeListNode *node);
+void func_0024FC90(CfeListNode *list);
+extern unsigned char D_0068CD10[];
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B0E8);
+/* Sets key `key` of the value list to `value` by mode: 0 plain (func_0024F698), 1 flagged (func_0024F730), 2 to 4
+ * plain with flag 0x18, 0x8 or 0x10 on the list's tail, which is then updated (func_0024FC90). */
+void func_0024B0E8(CfeListNode **list, int mode, int key, float value)
+{
+    CfeListNode *tail;
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B230);
+    switch (mode) {
+    case 0:
+        func_0024F698(list, key, value);
+        break;
+    case 1:
+        func_0024F730(list, key, value);
+        break;
+    case 2:
+        func_0024F698(list, key, value);
+        tail = cfeListTail(*list);
+        if (tail != 0) {
+            tail->flags |= 0x18;
+            func_0024FC90(*list);
+        }
+        break;
+    case 3:
+        func_0024F698(list, key, value);
+        tail = cfeListTail(*list);
+        if (tail != 0) {
+            tail->flags |= 0x8;
+            func_0024FC90(*list);
+        }
+        break;
+    case 4:
+        func_0024F698(list, key, value);
+        tail = cfeListTail(*list);
+        if (tail != 0) {
+            tail->flags |= 0x10;
+            func_0024FC90(*list);
+        }
+        break;
+    default:
+        assertFailed(D_0068CD10, cfeAssertFile, 96);
+        break;
+    }
+}
+
+/* Sets key `key` of the angle list to `value` by mode: 0 plain (func_0024F7C0), 1 flagged (func_0024F860), 2 to 4
+ * plain with flag 0x18, 0x8 or 0x10 on the list's tail, which is then updated (func_0024FC90). */
+void func_0024B230(CfeListNode **list, int mode, int key, float value)
+{
+    CfeListNode *tail;
+
+    switch (mode) {
+    case 0:
+        func_0024F7C0(list, key, value);
+        break;
+    case 1:
+        func_0024F860(list, key, value);
+        break;
+    case 2:
+        func_0024F7C0(list, key, value);
+        tail = cfeListTail(*list);
+        if (tail != 0) {
+            tail->flags |= 0x18;
+            func_0024FC90(*list);
+        }
+        break;
+    case 3:
+        func_0024F7C0(list, key, value);
+        tail = cfeListTail(*list);
+        if (tail != 0) {
+            tail->flags |= 0x8;
+            func_0024FC90(*list);
+        }
+        break;
+    case 4:
+        func_0024F7C0(list, key, value);
+        tail = cfeListTail(*list);
+        if (tail != 0) {
+            tail->flags |= 0x10;
+            func_0024FC90(*list);
+        }
+        break;
+    default:
+        assertFailed(D_0068CD10, cfeAssertFile, 140);
+        break;
+    }
+}
 
 void xglMatrixStackUnit(void);
 void xglMatrixStackRotX(float angle);
