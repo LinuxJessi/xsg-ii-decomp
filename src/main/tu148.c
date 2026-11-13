@@ -103,7 +103,42 @@ int msgSlotCurrent(void) {
     return msgSlotIndex;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu148", msgUpdate);
+void msgWindowSeekToWindowEnd(void *window);
+int msgWindowRunCurrentValue(void *window, int value);
+void func_0027D438(void *window);
+void msgWindowUpdateCurrent(void *window);
+int msgWindowCurrentStatus(void *window);
+
+/* One step of the open message: CIRCLE finishes the window's text, shows the next page or closes the
+ * slot; CROSS closes a slot that allows it (flag 0x40) while the window is not locked (flag 4). */
+void msgUpdate(void)
+{
+    if (msgSlotCurrent() < 0) {
+        return;
+    }
+    if (msgWindowCurrentStatus(msgWindow) == 2) {
+        return;
+    }
+    if ((PadData[0].pressed & PAD_CIRCLE) && msgSlotTestCurrent(1) == 0) {
+        if (msgWindowTestCurrentFlags(msgWindow, 0x10) == 1) {
+            msgWindowSeekToWindowEnd(msgWindow);
+        } else if (msgWindowHasMore()) {
+            if (msgWindowBusy() == 0) {
+                msgWindowRunCurrentValue(msgWindow, 1);
+                func_0027D438(msgWindow);
+            }
+        } else if (msgWindowInUse() == 1 && msgWindowBusy() == 0) {
+            func_002512B0();
+            msgWindowUpdateCurrent(msgWindow);
+            msgSlotIndex--;
+        }
+    }
+    if (msgSlotTestCurrent(0x40) && msgWindowTestCurrentFlags(msgWindow, 4) == 0 && (PadData[0].pressed & PAD_CROSS)) {
+        func_002512B0();
+        msgWindowUpdateCurrent(msgWindow);
+        msgSlotIndex--;
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu148", msgUpdateTimed);
 
