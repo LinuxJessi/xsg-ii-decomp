@@ -21,7 +21,10 @@ typedef struct CfeListNode {
  */
 typedef struct CfePoolNode {
     int flags;
-    unsigned char unmodeled_04[0x2C];
+    unsigned char unmodeled_04[0x18];
+    struct CfePoolNode *prev;       /* +0x1C */
+    struct CfePoolNode *next;       /* +0x20 */
+    unsigned char unmodeled_24[0x0C];
 } CfePoolNode;
 
 #define CFE_POOL_NODE_COUNT 6144
@@ -61,7 +64,23 @@ void cfeNodePoolClear(void) {
     memset(cfeNodePool, 0, CFE_POOL_NODE_COUNT * sizeof(CfePoolNode));
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu146", cfeNodeAlloc);
+/* Allocates the first free pool node: clears it, unlinks it and marks it in use. Returns 0 when all
+ * CFE_POOL_NODE_COUNT nodes are in use. */
+CfePoolNode *cfeNodeAlloc(void)
+{
+    int i;
+
+    for (i = 0; i < CFE_POOL_NODE_COUNT; i++) {
+        if ((cfeNodePool[i].flags & 1) == 0) {
+            memset(&cfeNodePool[i], 0, sizeof(CfePoolNode));
+            cfeNodePool[i].prev = 0;
+            cfeNodePool[i].next = 0;
+            cfeNodePool[i].flags |= 1;
+            return &cfeNodePool[i];
+        }
+    }
+    return 0;
+}
 
 /* Frees a pool node: clears its in-use bit (cfeNodeRelease). */
 void cfeNodeRelease(CfePoolNode *record) {
