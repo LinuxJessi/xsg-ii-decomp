@@ -168,7 +168,73 @@ void cfeCommandReleaseRecords(CfeEvalCommand *command) {
     sefReleaseOwnedRecords((command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeCommandEvaluate);
+void func_002488F8(CfeEvalCommand *command);
+
+/* Releases the command's records and spawns its effect again. */
+static inline void cfeCommandRespawn(CfeEvalCommand *command)
+{
+    cfeCommandReleaseRecords(command);
+    func_002488F8(command);
+}
+
+/* Samples the command's tracks at `time` (position, rotation, scale, frames, owner, action) and runs
+ * its action: 1 spawns the effect, 2 sets the owner flags, 3 releases the owned records, 4 releases
+ * them and spawns the effect again. */
+void cfeCommandEvaluate(CfeEvalCommand *command, int time)
+{
+    if (command->positionTracks[0] != 0) {
+        command->position.x = cfeTrackSample(command->positionTracks[0], time);
+    }
+    if (command->positionTracks[1] != 0) {
+        command->position.y = cfeTrackSample(command->positionTracks[1], time);
+    }
+    if (command->positionTracks[2] != 0) {
+        command->position.z = cfeTrackSample(command->positionTracks[2], time);
+    }
+    if (command->rotationTracks[0] != 0) {
+        command->rotation.x = cfeTrackSample(command->rotationTracks[0], time);
+    }
+    if (command->rotationTracks[1] != 0) {
+        command->rotation.y = cfeTrackSample(command->rotationTracks[1], time);
+    }
+    if (command->rotationTracks[2] != 0) {
+        command->rotation.z = cfeTrackSample(command->rotationTracks[2], time);
+    }
+    if (command->scaleTracks[0] != 0) {
+        command->scale[0] = cfeTrackSample(command->scaleTracks[0], time);
+    }
+    if (command->scaleTracks[1] != 0) {
+        command->scale[1] = cfeTrackSample(command->scaleTracks[1], time);
+    }
+    if (command->scaleTracks[2] != 0) {
+        command->scale[2] = cfeTrackSample(command->scaleTracks[2], time);
+    }
+    if (command->framesTrack != 0) {
+        command->frames = (int) func_002508C8(command->framesTrack, time);
+    }
+    if (command->ownerTrack != 0) {
+        command->owner = (int) func_002508C8(command->ownerTrack, time);
+    }
+    if (command->actionTrack != 0) {
+        command->action = (int) func_002508C8(command->actionTrack, time);
+        switch (command->action) {
+        case 0:
+            break;
+        case 1:
+            func_002488F8(command);
+            break;
+        case 2:
+            cfeCommandSetOwnerFlags(command);
+            break;
+        case 3:
+            cfeCommandReleaseRecords(command);
+            break;
+        case 4:
+            cfeCommandRespawn(command);
+            break;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeCommandTableEvaluate);
 

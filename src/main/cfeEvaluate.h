@@ -3,11 +3,27 @@
 
 #include "shared.h"
 
-/* Command word built from a page index and a page offset (cfeCommandSetOwnerFlags). */
+/* One 0x80-byte command of cfeCommands: an effect (its id built from a page index and a page offset,
+ * cfeCommandSetOwnerFlags), where and how it is spawned, and the tracks that drive those values. */
 typedef struct CfeEvalCommand {
-    int flag;
-    int page_index;
-    int page_offset;
+    int flag;                   /* +0x00 */
+    int page_index;             /* +0x04 */
+    int page_offset;            /* +0x08 */
+    unsigned char unmodeled_0c[4];
+    Vector4 position;           /* +0x10 */
+    Vector4 rotation;           /* +0x20 */
+    float scale[3];             /* +0x30 */
+    unsigned char unmodeled_3c[4];
+    int frames;                 /* +0x40 */
+    int action;                 /* +0x44: what cfeCommandEvaluate does, 0 to 4 */
+    int owner;                  /* +0x48: entry of cfeEntries that owns the effect, or negative */
+    int positionTracks[3];      /* +0x4C */
+    int rotationTracks[3];      /* +0x58 */
+    int scaleTracks[3];         /* +0x64 */
+    int actionTrack;            /* +0x70 */
+    int framesTrack;            /* +0x74 */
+    int ownerTrack;             /* +0x78 */
+    unsigned char unmodeled_7c[4];
 } CfeEvalCommand;
 
 /* One 0x18-byte slot of the table at cfeEvalSlots: three sources and their results. */
