@@ -12,9 +12,12 @@ int xglFontGetSPcodeSize(int code, const unsigned char *text);
 unsigned short xglFontGetFlags(void);
 void xglFontPrintDirect(const char *text);
 void xglFontSetFlags(int flags);
-extern int xglFontGetStringWidth2(const char *text, int);
 
 #define FONT_STATE_FLAGS (FS.state.flags)
+
+/* EE scratchpad RAM: the font drawing cursor sits at its base, and xglFontNewLine
+ * reads the line origin there. */
+#define SCRATCHPAD_BASE 0x70000000
 
 /*
  * Control codes embedded in queued text. Bytes below 32 start a command whose length
@@ -182,12 +185,10 @@ struct KanjiClutEnvironment {
 };
 
 extern unsigned char spCodeParameterSizeTable[];
-extern signed char tbl_7[] ;
 void set_xyz(int x, int y, int color);
 void xglFontPrintSub(void *args);
 void xglFontPrintDirectCore(const char *text);
 void set_ot(int ot);
-extern int xglFontCheckProportional(unsigned char high, int low);
 extern float dptofp(unsigned long long value);
 extern unsigned short ascii2euc[96];
 extern struct KanjiClutEnvironment KanjiClutEnv;
@@ -244,7 +245,6 @@ extern struct FontStateFromWindow D_008DAD00;
 /* The state block ends where the print-queue slot array begins. */
 #define FONT_STATE_BLOCK() ((struct FontStateFromWindow *) &fontPrintQueueBuffer - 1)
 
-typedef struct XglPacket XglPacket;
 typedef struct FontDrawCursor FontDrawCursor;
 /* A queued draw callback: called with the draw cursor and the argument
  * registered with it. */
@@ -269,9 +269,11 @@ struct FontExtRecord {
     unsigned char terminator;
 };
 
+/* xglFontDebugHex's record: FONT_OP_RESET, then FONT_OP_HEX_DIGITS as the
+ * second opcode byte and the digit count and value. */
 struct FontHexCommand {
     unsigned char opcode;
-    unsigned char radix;
+    unsigned char hex_opcode;
     unsigned char digits_minus_one;
     unsigned char value_high;
     unsigned char value_mid_high;
@@ -294,9 +296,12 @@ struct FontIncludeCommand {
     ((list) = (unsigned long long *)((char *)__builtin_next_arg(last) - \
               (8 - __builtin_args_info(2)) * 8))
 
+/* One A+D register write: the 64-bit value, then the register address (the
+ * upper word of the address doubleword is never written). */
 struct FontGsRegisterWrite {
     unsigned long long value;
-    unsigned long long register_address;
+    unsigned int register_address;
+    unsigned int register_address_high;
 };
 
 /* The two debug-mode GS packets; xglFontDebugMode patches their FRAME value. */
@@ -317,16 +322,16 @@ void xglFontDebugMode(int mode)
 {
     if (mode >= 0) {
         struct FontModePacket *packets = ModeEnv;
-        int value0;
-        unsigned long long value1;
+        int frame0;
+        unsigned long long frame1;
 
         D_008DAD00.debug_mode = mode;
-        value1 = D_008DAD00.debug_mode | 0x50000ULL;
-        value0 = 0x50000;
-        value0 |= ((unsigned int)D_008DAD00.debug_mode & 0xff) + 0x23;
+        frame1 = D_008DAD00.debug_mode | 0x50000ULL;
+        frame0 = 0x50000;
+        frame0 |= ((unsigned int)D_008DAD00.debug_mode & 0xff) + 0x23;
 
-        packets[0].frame.value = value0;
-        packets[1].frame.value = value1;
+        packets[0].frame.value = frame0;
+        packets[1].frame.value = frame1;
     }
 }
 
@@ -350,20 +355,69 @@ static int xglFontIsTextureGlyphCode(unsigned char high, unsigned char low)
     return 0;
 }
 
-void *sceVif1PkReserve(int, int);
+/* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
+ * register write. */
+struct FontEffectScratchPacket {
+    u64 vif_tag;
+    u64 vif_count;
+    u64 effect_state;
+    u64 payload_count;
+};
+
+/* The font renderer's draw cursor, built by xglFontFlush at the scratchpad base. */
+struct FontDrawCursor {
+    XglPacket *packet;
+    short origin_x;
+    unsigned char unmodeled_06[2];
+    unsigned short x;
+    unsigned short y;
+    int depth;
+    unsigned short offset_x;
+    unsigned short offset_y;
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    unsigned char unmodeled_17;
+    unsigned char flags;
+    unsigned char effect;
+    unsigned char attributes;
+    unsigned char draw_state_high;
+    unsigned char unmodeled_1c[4];
+    signed char effect_x;
+    signed char effect_y;
+    unsigned char unmodeled_22[2];
+    unsigned char effect_red;
+    unsigned char effect_green;
+    unsigned char effect_blue;
+    unsigned char unmodeled_27;
+    /* The GS ALPHA_1 value: the A/B/C/D selectors and FIX. */
+    unsigned char alpha_abcd;
+    unsigned char alpha_fix;
+    unsigned char alpha;
+    unsigned char unmodeled_2b;
+    unsigned short scale_x;
+    unsigned short scale_y;
+    union {
+        struct FontEffectScratchPacket effect_packet;
+        u64 qwords[(0x4000 - 0x30) / sizeof(u64)];
+    } work;
+};
+
+void *sceVif1PkReserve(XglPacket *packet, int words);
 
 /*
- * Allocates a packet and writes a GIF tag: NLOOP = count with the EOP bit 0x8000, one register
- * (NREG = 1 in the upper word) and the register list 0xE (A+D). Returns the address 16 bytes in.
+ * Reserves count A+D writes in the cursor's packet and writes their GIF tag: NLOOP = count with
+ * the EOP bit 0x8000, one register (NREG = 1 in the upper word) and the register list GIF_AD.
+ * Returns the address 16 bytes in.
  */
-void *xglFontAllocGifPacket(int *heap, int count)
+void *xglFontAllocGifPacket(FontDrawCursor *cursor, int count)
 {
     unsigned int *packet;
 
-    packet = sceVif1PkReserve(*heap, count * 4 + 4);
+    packet = sceVif1PkReserve(cursor->packet, count * 4 + 4);
     packet[0] = count + 0x8000;
     packet[1] = 0x10000000;
-    packet[2] = 0xE;
+    packet[2] = GIF_AD;
     return packet + 4;
 }
 
@@ -410,16 +464,10 @@ int xglFontGetKanjiClutUV(int code, int *clut)
 
 /* One A+D register write after the GIF tag xglFontAllocGifPacket writes. */
 struct FontAlphaWrite {
-    unsigned int primitive_flags;
-    unsigned int primitive_mode;
+    unsigned int alpha_abcd;
+    unsigned int alpha_fix;
     unsigned int register_address;
     unsigned int register_address_high;
-};
-
-/* One A+D write with a 64-bit register value after the GIF tag xglFontAllocGifPacket writes. */
-struct FontGsWrite {
-    unsigned long long value;
-    unsigned int register_address;
 };
 
 /* GS TEST_1 values: depth test GREATER, plus alpha test GREATER than 0 for the drawn effects. */
@@ -433,53 +481,6 @@ struct FontGsWrite {
 #define FONT_EFFECT_BOLD 4
 #define FONT_COLOR_NEUTRAL 0x80
 #define FONT_ALPHA_NEUTRAL 0x80
-
-/* Packet that FONT_OP_EFFECT_PACKET builds in the cursor's work area: an A+D GIF tag and one
- * register write. */
-struct FontEffectScratchPacket {
-    u64 vif_tag;
-    u64 vif_count;
-    u64 effect_state;
-    u64 payload_count;
-};
-
-/* The font renderer's draw cursor, built by xglFontFlush at the scratchpad base. */
-struct FontDrawCursor {
-    XglPacket *packet;
-    short origin_x;
-    unsigned char unmodeled_06[2];
-    unsigned short x;
-    unsigned short y;
-    int depth;
-    unsigned short offset_x;
-    unsigned short offset_y;
-    unsigned char red;
-    unsigned char green;
-    unsigned char blue;
-    unsigned char unmodeled_17;
-    unsigned char flags;
-    unsigned char effect;
-    unsigned char attributes;
-    unsigned char draw_state_high;
-    unsigned char unmodeled_1c[4];
-    signed char effect_x;
-    signed char effect_y;
-    unsigned char unmodeled_22[2];
-    unsigned char effect_red;
-    unsigned char effect_green;
-    unsigned char effect_blue;
-    unsigned char unmodeled_27;
-    unsigned char primitive_flags;
-    unsigned char primitive_mode;
-    unsigned char alpha;
-    unsigned char unmodeled_2b;
-    unsigned short scale_x;
-    unsigned short scale_y;
-    union {
-        struct FontEffectScratchPacket effect_packet;
-        u64 qwords[(0x4000 - 0x30) / sizeof(u64)];
-    } work;
-};
 
 void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 
@@ -498,7 +499,9 @@ void xglFontSetTextureFilter(FontDrawCursor *cursor, int mode)
     if (mode == 0) {
         scaled = D_008DAD00.default_scale != FONT_DEFAULT_SCALE_ONE;
     } else {
-        /* scale_x and scale_y compared as one word. */
+        /* scale_x and scale_y compared as one word. A scale_pair union member
+           would put both halfwords in the union's alias set and reorders
+           their stores in zoom and xglFontFlushCore. */
         scaled = *(unsigned int *)&cursor->scale_x != FONT_SCALE_PAIR_ONE;
     }
     if (!scaled) {
@@ -659,6 +662,8 @@ void xglFontPrintSub(void *args)
                 case 'f':
                     {
                         float value = dptofp(list[0]);
+                        /* The float's bits through a cast: a local union puts the
+                           value through the stack and costs two instructions. */
                         unsigned int bits = *(unsigned int *)&value;
                         struct FontNumericCommand *command = (struct FontNumericCommand *)D_008DAD00.queue_cursor;
 
@@ -675,11 +680,12 @@ void xglFontPrintSub(void *args)
                     break;
                 case 's': {
                     const unsigned char *string = (const unsigned char *)(int)list[0];
-
-                    int c;
+                    /* The loop tests one load of the byte and copies a second one:
+                       `while (*string != 0)` shares the load (two instructions fewer). */
+                    int terminator_test;
 
                     list++;
-                    while ((c = *string) != 0) {
+                    while ((terminator_test = *string) != 0) {
                         *D_008DAD00.queue_cursor++ = *string++;
                     }
                     break;
@@ -810,6 +816,8 @@ void xglFontDebugPrintf(int x, int y, const char *format, ...)
             y <<= 1;
         }
         set_xyz(x, y, -1);
+        /* XS2 addition: a text set with xglFontSetStoredValue is queued as an
+           include in place of the reset, so it prefixes every debug line. */
         if (D_008DAD00.stored_value != 0) {
             struct FontIncludeCommand *command = (struct FontIncludeCommand *)D_008DAD00.queue_cursor;
             unsigned int text = D_008DAD00.stored_value;
@@ -842,7 +850,7 @@ void xglFontDebugHex(int x, int y, unsigned int value, int digits)
         set_xyz(x, y, -1);
         command = (struct FontHexCommand *)D_008DAD00.queue_cursor;
         command->opcode = FONT_OP_RESET;
-        command->radix = FONT_OP_HEX_DIGITS;
+        command->hex_opcode = FONT_OP_HEX_DIGITS;
         command->digits_minus_one = digits - 1;
         command->value_high = value >> 24;
         command->value_mid_high = value >> 16;
@@ -993,7 +1001,7 @@ int xglFontGetStringWidth(const char *text)
 const char *xglFontCopyTextUnit(char *word, const char *text, int *length)
 {
     const unsigned char *cursor = (const unsigned char *)text;
-    unsigned char c;
+    unsigned char high;
 
     if (word == 0) {
         word = D_008DAD00.word_buffer;
@@ -1029,9 +1037,9 @@ const char *xglFontCopyTextUnit(char *word, const char *text, int *length)
         } else {
             int wide;
 
-            c = *cursor;
-            wide = xglFontIsTextureGlyphCode(c, cursor[1]);
-            *word = c;
+            high = *cursor;
+            wide = xglFontIsTextureGlyphCode(high, cursor[1]);
+            *word = high;
             if (wide) {
                 word[1] = cursor[1];
                 cursor += 2;
@@ -1080,11 +1088,11 @@ int xglFontParseHex(const char **cursor, int *value)
 {
     const unsigned char *text = (const unsigned char *)*cursor;
     unsigned int result = 0;
-    unsigned char c = *text++;
+    unsigned char ch = *text++;
 
-    while (c != ';' && c != ',') {
-        result = (result << 4) + c;
-        switch (c) {
+    while (ch != ';' && ch != ',') {
+        result = (result << 4) + ch;
+        switch (ch) {
         case '0':
         case '1':
         case '2':
@@ -1116,7 +1124,7 @@ int xglFontParseHex(const char **cursor, int *value)
         default:
             return 0;
         }
-        c = *text++;
+        ch = *text++;
     }
     *value = result;
     *cursor = (const char *)text;
@@ -1246,8 +1254,8 @@ int init(FontDrawCursor *cursor, const char **text)
     cursor->effect_red = 0;
     cursor->effect_green = 0;
     cursor->effect_blue = 0;
-    cursor->primitive_flags = 0;
-    cursor->primitive_mode = 0;
+    cursor->alpha_abcd = 0;
+    cursor->alpha_fix = 0;
     cursor->scale_x = FONT_SCALE_ONE;
     cursor->scale_y = FONT_SCALE_ONE;
     if (!D_008DAD00.debug_mode) {
@@ -1287,7 +1295,7 @@ int col(FontDrawCursor *cursor, const char **text)
 int bg(FontDrawCursor *cursor, const char **text)
 {
     const unsigned char *next = (const unsigned char *)*text;
-    struct FontGsWrite *test;
+    struct FontGsRegisterWrite *test;
     int digit;
 
     if (next[1] == ';') {
@@ -1296,7 +1304,7 @@ int bg(FontDrawCursor *cursor, const char **text)
             if (digit >= '0') {
                 *text = (const char *)(next + 2);
                 cursor->effect = next[0] - '0';
-                test = xglFontAllocGifPacket((int *)cursor, 1);
+                test = xglFontAllocGifPacket(cursor, 1);
                 test->register_address = GS_TEST_1;
                 switch (cursor->effect) {
                 case 0:
@@ -1363,12 +1371,12 @@ int alpha(FontDrawCursor *cursor, const char **text)
         }
     }
     *text = next;
-    cursor->primitive_flags = values[0] + (values[1] << 2) + (values[2] << 4) + (values[3] << 6);
-    cursor->primitive_mode = values[4];
+    cursor->alpha_abcd = values[0] + (values[1] << 2) + (values[2] << 4) + (values[3] << 6);
+    cursor->alpha_fix = values[4];
     cursor->alpha = values[5];
-    packet = xglFontAllocGifPacket((int *)cursor, 1);
-    packet->primitive_flags = cursor->primitive_flags;
-    packet->primitive_mode = cursor->primitive_mode;
+    packet = xglFontAllocGifPacket(cursor, 1);
+    packet->alpha_abcd = cursor->alpha_abcd;
+    packet->alpha_fix = cursor->alpha_fix;
     packet->register_address = GS_ALPHA_1;
     return 1;
 }
@@ -1402,7 +1410,6 @@ int zoom(FontDrawCursor *cursor, const char **text)
     return 1;
 }
 
-unsigned short xglSRand(void);
 
 /*
  * Inline "xx" command: "N,value;" sets a font state default (0 line height, 1 default width,
@@ -1449,9 +1456,9 @@ int xx(FontDrawCursor *cursor, const char **text)
         D_008DAD00.horizontal_shift = value;
         break;
     case 5: {
-        int u;
-        int v;
-        struct FontGsWrite *clamp;
+        int horizontal_repeat;
+        int vertical_repeat;
+        struct FontGsRegisterWrite *clamp;
         long long horizontal_mode;
         unsigned short horizontal_mask;
         unsigned short horizontal_random;
@@ -1459,34 +1466,34 @@ int xx(FontDrawCursor *cursor, const char **text)
         unsigned short vertical_mask;
         unsigned short vertical_random;
 
-        if (!xglFontParseNumber(&next, &u)) {
+        if (!xglFontParseNumber(&next, &horizontal_repeat)) {
             return 0;
         }
         if ((unsigned char)next[-1] == ';') {
-            v = u;
-        } else if (!xglFontParseNumber(&next, &v)) {
+            vertical_repeat = horizontal_repeat;
+        } else if (!xglFontParseNumber(&next, &vertical_repeat)) {
             return 0;
         }
-        clamp = xglFontAllocGifPacket((int *)cursor, 1);
+        clamp = xglFontAllocGifPacket(cursor, 1);
         clamp->register_address = GS_CLAMP_1;
         horizontal_mode = 1;
         horizontal_random = 0;
         horizontal_mask = 0;
-        if (u != 0) {
+        if (horizontal_repeat != 0) {
             horizontal_mode = 3;
-            horizontal_mask = u ^ 0x3FF;
-            if (u & 0x80) {
-                horizontal_random = u & xglSRand();
+            horizontal_mask = horizontal_repeat ^ 0x3FF;
+            if (horizontal_repeat & 0x80) {
+                horizontal_random = horizontal_repeat & xglSRand();
             }
         }
         vertical_mode = 1;
         vertical_random = 0;
         vertical_mask = 0;
-        if (v != 0) {
+        if (vertical_repeat != 0) {
             vertical_mode = 3;
-            vertical_mask = v ^ 0x3FF;
-            if (v & 0x80) {
-                vertical_random = v & xglSRand();
+            vertical_mask = vertical_repeat ^ 0x3FF;
+            if (vertical_repeat & 0x80) {
+                vertical_random = vertical_repeat & xglSRand();
             }
         }
         clamp->value = horizontal_mode | (vertical_mode << 2) | ((long long)horizontal_mask << 4) |
@@ -1509,22 +1516,24 @@ int xx(FontDrawCursor *cursor, const char **text)
  */
 int ruby(FontDrawCursor *cursor, const char **text)
 {
-    const char *next;
+    const unsigned char *next;
     /* The cursor's address is taken before its first assignment and used for the first parser call:
      * every access to `next` is then a memory access of one kind, and the stores and the reloads
-     * after the calls share a register as in the original. */
-    const char **parse = &next;
+     * after the calls share a register as in the original. The cursor is read as bytes like in bg and
+     * han; xglFontParseNumber takes the const char ** of the inline command interface, hence the casts
+     * at its three calls. */
+    const char **parse = (const char **)&next;
     unsigned char flags;
     int width;
     int height;
     int offset;
 
-    next = *text;
+    next = (const unsigned char *)*text;
     flags = cursor->flags;
     next += 2;
-    switch (((const unsigned char *)next)[-2]) {
+    switch (next[-2]) {
     case 's':
-        if (((const unsigned char *)next)[-1] != ';') {
+        if (next[-1] != ';') {
             return 0;
         }
         if (flags & FONT_CURSOR_RUBY) {
@@ -1550,7 +1559,7 @@ int ruby(FontDrawCursor *cursor, const char **text)
             D_008DAD00.text_mode = mode;
             base = D_008DAD00.ruby_base;
             word = (unsigned char *)D_008DAD00.word_buffer;
-            while (base < (const unsigned char *)next - 7) {
+            while (base < next - 7) {
                 *word++ = *base++;
             }
             *word = 0;
@@ -1559,7 +1568,7 @@ int ruby(FontDrawCursor *cursor, const char **text)
             out[0] = FONT_OP_COMPACT;
             out[1] = 1;
             out += 2;
-            source = (const unsigned char *)next;
+            source = next;
             while (*source != 0) {
                 if (*source == '$') {
                     if (source[1] == 'r' && source[2] == 'u' && source[3] == 'b' && source[4] == 'y' &&
@@ -1595,7 +1604,7 @@ int ruby(FontDrawCursor *cursor, const char **text)
         flags |= FONT_CURSOR_COMPACT;
         break;
     case 'e':
-        if (((const unsigned char *)next)[-1] != ';') {
+        if (next[-1] != ';') {
             return 0;
         }
         if (flags & FONT_CURSOR_RUBY) {
@@ -1608,18 +1617,18 @@ int ruby(FontDrawCursor *cursor, const char **text)
         flags &= ~(FONT_CURSOR_RUBY | FONT_CURSOR_COMPACT);
         break;
     case 'b':
-        if (((const unsigned char *)next)[-1] != ';') {
+        if (next[-1] != ';') {
             return 0;
         }
         flags |= FONT_CURSOR_RUBY;
-        D_008DAD00.ruby_base = (const unsigned char *)next;
+        D_008DAD00.ruby_base = next;
         break;
     case 'z':
         next--;
         if (xglFontParseNumber(parse, &width)) {
-            if (((const unsigned char *)next)[-1] == ';') {
+            if (next[-1] == ';') {
                 height = width;
-            } else if (!xglFontParseNumber(&next, &height)) {
+            } else if (!xglFontParseNumber((const char **)&next, &height)) {
                 break;
             }
             D_008DAD00.compact_width = width;
@@ -1628,7 +1637,7 @@ int ruby(FontDrawCursor *cursor, const char **text)
         break;
     case 'y':
         next--;
-        if (xglFontParseNumber(&next, &offset)) {
+        if (xglFontParseNumber((const char **)&next, &offset)) {
             D_008DAD00.ruby_offset_y = offset;
         }
         break;
@@ -1636,7 +1645,7 @@ int ruby(FontDrawCursor *cursor, const char **text)
         return 0;
     }
     cursor->flags = flags;
-    *text = next;
+    *text = (const char *)next;
     return 1;
 }
 
@@ -1695,7 +1704,7 @@ void xglFontFlushSub(int texture_u, int texture_v, int size, int flags);
 #define FONT_ASCII_V_HIGH 0x2f80
 #define FONT_SYMBOL_V 0x2e80
 #define FONT_GLYPH_8X8 0x808
-#define FONT_DRAW_ASCII 0x10
+#define FONT_DRAW_DOUBLE_SIZE 0x10
 #define FONT_DRAW_COMPACT 0x20
 
 /* Inline mark command: draws symbol glyph `index` (0..63 from the low row, 64.. from the high row). */
@@ -1708,9 +1717,9 @@ int mark(FontDrawCursor *cursor, const char **text)
         return 0;
     }
     if ((unsigned int)index < 0x40) {
-        xglFontFlushSub((index & 0x3F) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+        xglFontFlushSub((index & 0x3F) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_DOUBLE_SIZE);
     } else {
-        xglFontFlushSub((index & 0x3F) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+        xglFontFlushSub((index & 0x3F) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_DOUBLE_SIZE);
     }
     *text = next;
     return 1;
@@ -1736,31 +1745,32 @@ int printf(const char *format, ...);
  */
 int xglFontInlineCommand(FontDrawCursor *cursor, unsigned char **text)
 {
-    unsigned char *next = *text + 1;
+    const char *next = (const char *)*text + 1;
     struct FontInlineCommand *command = fontInlineCommands;
     FontInlineHandler handler = 0;
     while (command->name != 0) {
         const char *name = command->name;
-        const char *scan = (const char *)next;
+        const char *scan = next;
 
         while (*name == *scan) {
             name++;
             scan++;
         }
         if (*name == 0) {
-            next = (unsigned char *)scan;
+            next = scan;
             handler = command->handler;
             break;
         }
         command++;
     }
     if (handler != 0) {
-        if (handler(cursor, (const char **)&next)) {
-            *text = next;
+        if (handler(cursor, &next)) {
+            *text = (unsigned char *)next;
             return 1;
         }
     } else {
-        printf(fontInlineErrorFormat, next[0], next[1], next[2], next[3]);
+        printf(fontInlineErrorFormat, (unsigned char)next[0], (unsigned char)next[1], (unsigned char)next[2],
+               (unsigned char)next[3]);
     }
     return 0;
 }
@@ -1786,9 +1796,6 @@ void xglFontResetPrintQueue(void)
     block->text_mode = 0;
     block->queue_cursor = (unsigned char *) slot;
 }
-
-/* The font drawing cursor resides at the base of EE scratchpad RAM. */
-#define SCRATCHPAD_BASE 0x70000000
 
 /* GIF tag fields, register descriptors and GS PRIM bits of the glyph packets (XS1 include/main/xgl_packet.h). */
 #define GIF_TAG_EOP 0x8000
@@ -1819,7 +1826,7 @@ void xglFontResetPrintQueue(void)
 #define FONT_STRIP_QWORDS 11
 /* Glyphs whose top-left corner lies beyond this (12.4 fixed point) are skipped when clipping. */
 #define FONT_CLIP_LIMIT 0xf000U
-/* xglFontFlushSub flags: the low bits pick the texture (bit 0: second CLUT), FONT_DRAW_ASCII doubles. */
+/* xglFontFlushSub flags: the low bits pick the texture (bit 0: second CLUT), FONT_DRAW_DOUBLE_SIZE doubles. */
 #define FONT_DRAW_ATTRIBUTE_MASK 15
 /* Widest texture span a glyph is drawn from. */
 #define FONT_TEXTURE_SPAN_MAX 320
@@ -1871,7 +1878,7 @@ void xglFontFlushSub(int texture_u, int texture_v, int size, int flags)
 
     texture_width = glyph_width * 16;
     texture_height = glyph_height * 16;
-    if (!D_008DAD00.debug_mode && (flags & FONT_DRAW_ASCII) && !(cursor->flags & FONT_CURSOR_WIDE_ALL)) {
+    if (!D_008DAD00.debug_mode && (flags & FONT_DRAW_DOUBLE_SIZE) && !(cursor->flags & FONT_CURSOR_WIDE_ALL)) {
         draw_width = texture_width * 2;
         draw_height = texture_height * 2;
     } else {
@@ -1898,9 +1905,12 @@ void xglFontFlushSub(int texture_u, int texture_v, int size, int flags)
     sprite->tag_high = FONT_SPRITE_TAG_HIGH;
     sprite->registers_low = FONT_SPRITE_TAG_REGS;
     sprite->registers_high = 0;
-    sprite->texture = 0x2a942bc20ULL |
-        ((!D_008DAD00.debug_mode) ? 0x2000000400000000ULL : 0x2000000000000000ULL) |
-        (((unsigned long long)((attributes & 1) + 0x3c00)) << 37);
+    /* TEX0: the 4-bit glyph texture at 0x3c20 (width 10, 1024x1024), its CLUT at 0x3c00 or the
+     * next one (attribute bit 0), CLUT load on; alpha from the texture (TCC) except in debug mode. */
+    sprite->texture = GS_SET_TEX0(0x3c20, 10, GS_PSMT4, 10, 10, 0, 0, 0, 0, 0, 0, 0) |
+        ((!D_008DAD00.debug_mode) ? GS_SET_TEX0(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1)
+                                  : GS_SET_TEX0(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)) |
+        GS_SET_TEX0(0, 0, 0, 0, 0, 0, 0, (attributes & 1) + 0x3c00, 0, 0, 0, 0);
     sprite->red = cursor->red;
     sprite->green = cursor->green;
     sprite->blue = cursor->blue;
@@ -2018,19 +2028,19 @@ void xglFontFlushSub(int texture_u, int texture_v, int size, int flags)
     }
 }
 
-/* Draws one hex digit (0..15) through xglFontFlushSub, at the glyph offset digit << 7. */
+/* Draws one hex digit (0..15): hex digit glyphs are 6x8 texels, 8 texels apart at FONT_ASCII_V_LOW. */
 void xglFontFlushSubHex(int digit)
 {
-    xglFontFlushSub(digit << 7, 0x2F00, 0x608, 0x10);
+    xglFontFlushSub(digit << 7, FONT_ASCII_V_LOW, (6 << 8) | 8, FONT_DRAW_DOUBLE_SIZE);
 }
 
 /*
- * EE scratchpad at 0x70000000: halfword slot 2 keeps the start x of the line, slot 4 is set back
+ * EE scratchpad at SCRATCHPAD_BASE: halfword slot 2 keeps the start x of the line, slot 4 is set back
  * to it and slot 5 (y) moves down by one line height.
  */
 void xglFontNewLine(void)
 {
-    unsigned short *scratchpad = (unsigned short *) 0x70000000;
+    unsigned short *scratchpad = (unsigned short *) SCRATCHPAD_BASE;
 
     scratchpad[4] = scratchpad[2];
     scratchpad[5] += FS.state.line_height;
@@ -2257,7 +2267,7 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
         case FONT_OP_RESET:
             cursor->effect = FONT_EFFECT_PLAIN;
             cursor->red = cursor->green = cursor->blue = FONT_COLOR_NEUTRAL;
-            cursor->primitive_flags = 0;
+            cursor->alpha_abcd = 0;
             cursor->scale_x = FONT_SCALE_ONE;
             cursor->alpha = FONT_ALPHA_NEUTRAL;
             cursor->scale_y = FONT_SCALE_ONE;
@@ -2293,10 +2303,10 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
             break;
         case FONT_OP_BLEND: {
             struct FontAlphaWrite *packet;
-            cursor->primitive_flags = text[1]; cursor->primitive_mode = text[2]; cursor->alpha = text[3];
-            packet = xglFontAllocGifPacket((int *) cursor, 1);
-            packet->primitive_flags = cursor->primitive_flags;
-            packet->primitive_mode = cursor->primitive_mode;
+            cursor->alpha_abcd = text[1]; cursor->alpha_fix = text[2]; cursor->alpha = text[3];
+            packet = xglFontAllocGifPacket(cursor, 1);
+            packet->alpha_abcd = cursor->alpha_abcd;
+            packet->alpha_fix = cursor->alpha_fix;
             packet->register_address = GS_ALPHA_1;
             text += 4;
             break;
@@ -2505,9 +2515,9 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
         case FONT_OP_GLYPH: {
             signed char character = text[1];
             if (character < 64) {
-                xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+                xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_DOUBLE_SIZE);
             } else {
-                xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+                xglFontFlushSub((character & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_DOUBLE_SIZE);
             }
             text += 2;
             break;
@@ -2550,11 +2560,11 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
                 xglFontNewLine();
                 text++;
             } else if (code < 0x40) {
-                xglFontFlushSub((opcode & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+                xglFontFlushSub((opcode & 63) << 7, FONT_ASCII_V_LOW, FONT_GLYPH_8X8, FONT_DRAW_DOUBLE_SIZE);
             } else if (code < 0x80) {
-                xglFontFlushSub((opcode & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+                xglFontFlushSub((opcode & 63) << 7, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_DOUBLE_SIZE);
             } else if (code < 0xa0) {
-                xglFontFlushSub(0x1f80, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_ASCII);
+                xglFontFlushSub(0x1f80, FONT_ASCII_V_HIGH, FONT_GLYPH_8X8, FONT_DRAW_DOUBLE_SIZE);
             } else if (cursor->flags & FONT_CURSOR_COMPACT) {
                 unsigned int glyph = xglFontGetDebugCell(high, low);
                 xglFontFlushSub((glyph >> 16) & 0x1f80, glyph & 0xffff, FONT_GLYPH_8X8, FONT_DRAW_COMPACT);
@@ -2661,24 +2671,35 @@ int xglFontGetAlnumGlyph(unsigned char high, unsigned char low)
     return -1;
 }
 
-/* Advance of character code in the window's proportional widths; the default width when the low byte is 0xFF. */
+/* xglFontGetProportionalSize's packed result: the glyph's left texel bound in
+ * the low byte, its right bound in the high byte (the caller draws right - left
+ * texels from left on). */
+#define FONT_BOUNDS(left, right) (((right) << 8) | (left))
+/* The fixed bounds while proportional_mode is set (XS1 computes a pair here). */
+#define FONT_FIXED_BOUNDS FONT_BOUNDS(6, 15)
+
+/*
+ * Bounds of glyph `code`, packed as FONT_BOUNDS. The widths table of the font
+ * image stores left + 1 and right - 1, so adding 0xFF restores both; a stored
+ * left of 0 (now 0xFF) means no entry and gives bounds 0 to default_width.
+ */
 int xglFontGetProportionalSize(int code)
 {
     struct FontStateFromWindow *state;
     struct FontImage *image;
-    int width;
+    int bounds;
 
     state = &D_008DAD00;
-    width = 0xF06;
+    bounds = FONT_FIXED_BOUNDS;
     if (state->proportional_mode == 0) {
-        width = 0xFFFF;
+        bounds = 0xFFFF;
         image = (struct FontImage *) state->window_image;
-        width = (image->proportional_widths[code] + 0xFF) & width;
-        if ((width & 0xFF) == 0xFF) {
-            width = state->default_width << 8;
+        bounds = (image->proportional_widths[code] + 0xFF) & bounds;
+        if ((bounds & 0xFF) == 0xFF) {
+            bounds = FONT_BOUNDS(0, state->default_width);
         }
     }
-    return width;
+    return bounds;
 }
 
 /* ASCII character to EUC-JP code, indexed by the raw character; a control character becomes a full-width space. */
@@ -2715,7 +2736,7 @@ void xglFontReloadTexture(FontDrawCursor *cursor, unsigned int request)
 {
     XglPacket *packet = cursor->packet;
     unsigned int *saved_direct_state;
-    struct FontGsWrite *test;
+    struct FontGsRegisterWrite *test;
 
     if (packet->directCode && (saved_direct_state = packet->directState)) {
         sceVif1PkCloseDirectHLCode(packet);
@@ -2733,7 +2754,7 @@ void xglFontReloadTexture(FontDrawCursor *cursor, unsigned int request)
     sceVif1PkCnt(cursor->packet, 0);
     sceVif1PkOpenDirectHLCode(cursor->packet, 0);
     if (D_008DAD00.debug_mode == 0) {
-        test = xglFontAllocGifPacket((int *)cursor, 1);
+        test = xglFontAllocGifPacket(cursor, 1);
         test->register_address = GS_TEST_1;
         switch (cursor->effect) {
         case 0:
@@ -2795,10 +2816,10 @@ void xglFontFlush(void)
     cursor->effect_red = 0;
     cursor->scale_x = FONT_SCALE_ONE;
     cursor->effect_green = 0;
-    cursor->primitive_flags = FONT_ALPHA_SOURCE_BLEND;
+    cursor->alpha_abcd = FONT_ALPHA_SOURCE_BLEND;
     cursor->alpha = GS_ALPHA_OPAQUE;
     cursor->effect_blue = 0;
-    cursor->primitive_mode = 0;
+    cursor->alpha_fix = 0;
     cursor->scale_y = FONT_SCALE_ONE;
     remaining = FONT_QUEUE_BUCKETS - 1;
     cursor->packet = xglPacketGetCurrent();
@@ -2827,9 +2848,9 @@ void xglFontFlush(void)
     xglFontResetPrintQueue();
 }
 
-int xglFontGetLoadAddress(void)
+void *xglFontGetLoadAddress(void)
 {
-    return (int) FS.state.window_image;
+    return FS.state.window_image;
 }
 
 unsigned short xglFontGetFlags(void)
