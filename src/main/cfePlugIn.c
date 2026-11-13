@@ -1,4 +1,6 @@
 #include "common.h"
+#include "shared.h"
+#include "quadword.h"
 #include "main/cfePlugIn.h"
 #include "main/control_entry.h"
 #include "main/tu022.h"
@@ -11,7 +13,26 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B0E8);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B230);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeRotateVectorXY);
+void xglMatrixStackUnit(void);
+void xglMatrixStackRotX(float angle);
+void xglMatrixStackRotY(float angle);
+void xglMatrixStackSave(Matrix4 matrix);
+void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
+extern const AlignedVector4 D_0068CD70;
+
+/* The vector D_0068CD70 rotated by angles[0] about X and angles[1] about Y. */
+void cfeRotateVectorXY(Vector4 *result, const float *angles)
+{
+    Matrix4 matrix;
+    AlignedVector4 vector = D_0068CD70;
+
+    xglMatrixStackUnit();
+    xglMatrixStackRotX(angles[0]);
+    xglMatrixStackRotY(angles[1]);
+    xglMatrixStackSave(matrix);
+    xglVectorMulMat(&vector, matrix, &vector);
+    QuadwordCopy(result, &vector);
+}
 
 /* Number of characters of `text` equal to `character`; 0 for no text. */
 int cfeStrLastCharPos(const char *text, char character)
