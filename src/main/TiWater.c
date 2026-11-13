@@ -7,6 +7,8 @@
 #include "TiWater.h"
 #include "main/gifState.h"
 #include "main/nml_model_set.h"
+#include "main/pad.h"
+#include "main/xgl_font.h"
 #include "gs.h"
 #include "main/tu093.h"
 
@@ -20,9 +22,83 @@ void tiWaterDebugReset(void) {
     tiWaterDebugIndex = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterDebugDrawParams);
+extern PadRecord PadData[];
+extern const char D_0068C860[];
+extern const char D_0068C878[];
+extern const char *tiWaterDebugLabels[];
+extern float *tiWaterDebugValues[];
+extern float tiWaterDebugSteps[];
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterDebugUpdate);
+/* Number of debug parameters the panel cycles through. */
+#define TI_WATER_DEBUG_PARAMS 12
+/* Parameters shown at once, and the line height. */
+#define TI_WATER_DEBUG_LINES 3
+#define TI_WATER_DEBUG_LINE_HEIGHT 9
+
+/* Draws the debug panel (the selected parameter and the next two, the selected one marked) and
+ * changes the selected value by its step: triangle adds, cross subtracts, held while select is
+ * held and repeated otherwise. */
+void tiWaterDebugDrawParams(void)
+{
+    unsigned int i;
+    unsigned int line;
+    unsigned short buttons;
+
+    line = 0;
+    xglFontDebugPrintf(0, 0, D_0068C860, tiWaterDebugIndex + 1, TI_WATER_DEBUG_PARAMS);
+    i = tiWaterDebugIndex;
+    for (; line < TI_WATER_DEBUG_LINES && i < TI_WATER_DEBUG_PARAMS; i++, line++) {
+        if (tiWaterDebugIndex == i) {
+            xglFontDebugPrintf(0, (line + 1) * TI_WATER_DEBUG_LINE_HEIGHT, D_0068C878);
+        }
+        xglFontDebugPrintf(10, (line + 1) * TI_WATER_DEBUG_LINE_HEIGHT, tiWaterDebugLabels[i], *tiWaterDebugValues[i]);
+    }
+    buttons = PadData[0].held;
+    if (!(buttons & PAD_SELECT)) {
+        buttons = PadData[0].repeated;
+    }
+    if (buttons & PAD_TRIANGLE) {
+        *tiWaterDebugValues[tiWaterDebugIndex] += tiWaterDebugSteps[tiWaterDebugIndex];
+    }
+    if (buttons & PAD_CROSS) {
+        *tiWaterDebugValues[tiWaterDebugIndex] -= tiWaterDebugSteps[tiWaterDebugIndex];
+    }
+}
+
+extern float tiWaterCx;
+extern float tiWaterCy;
+extern float tiWaterAlphaType;
+extern float tiWaterAlpha;
+extern float tiWaterDecrease;
+extern float tiWaterFbp;
+extern float tiWaterBlur;
+extern float tiWaterIntVals[4];
+void tiWaterDebugDrawParams(void);
+/* Debug panel step: up and down on pad 0 select the parameter (wrapping), the panel is drawn and
+ * every parameter is applied to the GIF state and the four model sub windows. */
+void tiWaterDebugUpdate(void)
+{
+    if (PadData[0].pressed & PAD_UP) {
+        if (--tiWaterDebugIndex < 0) {
+            tiWaterDebugIndex = TI_WATER_DEBUG_PARAMS - 1;
+        }
+    }
+    if (PadData[0].pressed & PAD_DOWN) {
+        if (++tiWaterDebugIndex >= TI_WATER_DEBUG_PARAMS) {
+            tiWaterDebugIndex = 0;
+        }
+    }
+    tiWaterDebugDrawParams();
+    gifStateSetCenter(tiWaterCx, tiWaterCy);
+    gifStateSetEffectAlpha(tiWaterAlphaType, tiWaterAlpha);
+    gifStateSetDecrease(tiWaterDecrease);
+    gifStateSetFbp(tiWaterFbp);
+    gifStateSetBlur(tiWaterBlur);
+    nmlModelUseSubWindow(0, (int) tiWaterIntVals[0]);
+    nmlModelUseSubWindow(1, (int) tiWaterIntVals[1]);
+    nmlModelUseSubWindow(2, (int) tiWaterIntVals[2]);
+    nmlModelUseSubWindow(3, (int) tiWaterIntVals[3]);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterRegisterSub);
 
