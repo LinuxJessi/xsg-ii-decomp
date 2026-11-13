@@ -293,11 +293,32 @@ void cfeSlotTableEvaluate(int sample_param)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_00249248);
+void seVolumeSet(int value, int flags);
 
-/* Updates one 0x50-byte sound record: the value at +0x40 moves toward the
-   target, and +0x44 holds the duration. */
-void func_00249248(CfeSndRecord *record, int target);
+/* Updates one sound record at `time`: samples its duration and value tracks and, when it has a
+ * duration, sets the volume to the new value over |old - new| / duration steps (at least 1). */
+void func_00249248(CfeSndRecord *record, int time)
+{
+    int old;
+    int value;
+    int steps;
+
+    if (record->durationTrack != 0) {
+        record->duration = (int) func_002508C8(record->durationTrack, time);
+    }
+    if (record->valueTrack != 0) {
+        old = record->value;
+        value = (int) func_002508C8(record->valueTrack, time);
+        record->value = value;
+        if (record->duration != 0) {
+            steps = (int) (__builtin_fabsf((float) (old - value)) / (float) record->duration);
+            if (steps == 0) {
+                steps = 1;
+            }
+            seVolumeSet(value, steps);
+        }
+    }
+}
 
 /* Sets the target of record 0. The argument's address is taken: the original
    keeps a frame for the call and does not tail-call func_00249248. */

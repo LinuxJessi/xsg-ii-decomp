@@ -5,6 +5,7 @@
 #include "main/control_entry.h"
 #include "main/tu022.h"
 #include "main/tu026.h"
+#include "main/tu051.h"
 #include "main/tu138.h"
 #include "main/sef.h"
 #include "main/xgl_cd.h"
@@ -71,7 +72,45 @@ void cfeMesUnescape(char *destination, const char *source)
     *destination = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeLoadResourceObject);
+typedef struct XenoActor XenoActor;
+XenoActor *XenoActorAlloc(void);
+void xglCullingMapSet(int map);
+extern unsigned char cfeResLoadAssertMsg[];
+extern unsigned char cfeAssertFile[];
+
+/* The resource block the cfe object loaders read. */
+typedef struct CfeResourceBlock {
+    int pack;
+    int effect;
+} CfeResourceBlock;
+
+/* Offset of the resource id inside the actor (a pointer-sized field XenoActor does not model). */
+#define CFE_ACTOR_RESOURCE_ID 0x798
+
+/* Loads resource `id` (waiting for the CD first), creates an actor for it with the block's pack and
+ * effect and sets the pack as the culling map. */
+XenoActor *cfeLoadResourceObject(int id)
+{
+    void *data;
+    CfeResourceBlock *resource;
+    XenoActor *actor;
+
+    data = 0;
+    do {
+    } while (xglCdServiceIfPending() != 0);
+    if (GameResLoadID(id, &data, 0, 0) == -1) {
+        assertFailed(cfeResLoadAssertMsg, cfeAssertFile, 283);
+    }
+    resource = data;
+    actor = XenoActorAlloc();
+    *(void **) ((char *) actor + CFE_ACTOR_RESOURCE_ID) = (void *) id;
+    actor->pack = resource->pack;
+    actor->effect = resource->effect;
+    if (resource->pack != 0) {
+        xglCullingMapSet(resource->pack);
+    }
+    return actor;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B6D8);
 
@@ -86,7 +125,6 @@ int func_A9F0A8(void);
 int func_A9F0C0(int, int);
 char *func_A9F238(int, int);
 char *strcpy(char *, const char *);
-extern unsigned char cfeAssertFile[];
 extern unsigned char D_0068CE20[];
 
 /* One 0x1B0-byte entry; word 0 is the pointer to its object. The rest of

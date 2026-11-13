@@ -11,7 +11,8 @@ typedef struct CfeSndRecord {
     char name[0x40];
     int value;    /* +0x40: moves toward the target */
     int duration; /* +0x44 */
-    unsigned char unmodeled_48[8];
+    int valueTrack;    /* +0x48: the track the value is sampled from */
+    int durationTrack; /* +0x4C: the track the duration is sampled from */
 } CfeSndRecord;
 
 /* Sound records in use: cfeSndRecordCount of them. */
