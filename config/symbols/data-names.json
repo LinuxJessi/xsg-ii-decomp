@@ -1091,7 +1091,10 @@
    "0x0069b310": "sefCircleAngleScale",
    "0x0046e0c0": "sefGlobalTransform",
    "0x00493b30": "sefGateIdList",
-   "0x00493b38": "sefDefaultGateIdList"
+   "0x00493b38": "sefDefaultGateIdList",
+   "0x0068d0c8": "cfeAssertFileTemp",
+   "0x0068d0d8": "cfeFileControlSourceName",
+   "0x0068d0f0": "cfeAssertFileSize"
   },
   "ov02": {
    "0x00645820": "sRender",

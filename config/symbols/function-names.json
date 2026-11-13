@@ -207,6 +207,7 @@
    "0x0023d8e8": "RgHeapIsInSelf",
    "0x00246d80": "nmlModelSetMulColor",
    "0x00246e08": "nmlModelUseSubWindow",
+   "0x0024f130": "cfeFileLogIndentSet",
    "0x00253b18": "svGetImageItem",
    "0x00253b38": "svImageListCreate",
    "0x00253bb0": "svImageListAlloc",

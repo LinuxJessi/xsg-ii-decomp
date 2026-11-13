@@ -6,9 +6,20 @@ typedef char *va_list;
 #define va_end(ap) ((void)0)
 
 int sceClose(int fd);
-void func_002AA7F0(int, int);
+void func_002AA7F0(char *destination, const char *source);
+void *memset(void *destination, int value, unsigned int size);
+int strlen(const char *text);
+void assertFailed(const char *message, const char *file, int line);
+int xglDebFileRead(const char *name, void *buffer);
+int xglDebFileWrite(const char *name, const void *buffer, int size);
 int vsprintf(char *buffer, const char *format, va_list args);
-extern int cfeFileTemp;
+/* pFileTemp: the text buffer the log lines are appended to. */
+extern char *cfeFileTemp;
+/* The assert texts "pFileTemp" and "size < MAX_OF_FILESIZE", and the source file name. */
+extern const char cfeAssertFileTemp[];
+extern const char cfeAssertFileSize[];
+extern const char cfeFileControlSourceName[];
+#define MAX_OF_FILESIZE 0x60000
 
 /* Closes a descriptor: a thin wrapper over sceClose. */
 void cfeFileClose(int fd) {
@@ -16,14 +27,27 @@ void cfeFileClose(int fd) {
 }
 
 /* Returns the pFileTemp buffer (cfeFileTemp). */
-int cfeFileTempGet(void) {
+char *cfeFileTempGet(void) {
     return cfeFileTemp;
 }
 
-/* Sets pFileTemp to the buffer in a0, clears a1 bytes of it and resets the log indent to 0. */
-INCLUDE_ASM("asm/main/nonmatchings/cfeFileControl", cfeFileTempInit);
-
 extern int cfeFileLogIndent;
+void cfeFileLogIndentSet(int indent);
+
+/* Sets pFileTemp to buffer, clears size bytes of it and resets the log indent to 0. */
+void cfeFileTempInit(char *buffer, int size)
+{
+    cfeFileTemp = buffer;
+    memset(buffer, 0, size);
+    cfeFileLogIndentSet(0);
+}
+
+/* Sets the log indent level. */
+void cfeFileLogIndentSet(int indent)
+{
+    cfeFileLogIndent = indent;
+}
+
 
 /* Adds `delta` to the log indent level (cfeFileLogIndent), never below 0. */
 void cfeFileLogIndentAdd(int delta) {
@@ -36,7 +60,8 @@ void cfeFileLogIndentAdd(int delta) {
     }
 }
 
-extern int cfeFileLogIndentStr;
+/* The indent string the log repeats per level. */
+extern const char *cfeFileLogIndentStr;
 
 /* Appends `count` copies of the indent string cfeFileLogIndentStr to pFileTemp. */
 void cfeFileLogWriteIndent(int count) {
@@ -60,17 +85,35 @@ void cfeFileLogf(const char *format, ...) {
     if (cfeFileTemp != 0) {
         vsprintf((char *) 0x70000000, format, args);
         cfeFileLogWriteIndent(cfeFileLogIndent);
-        func_002AA7F0(cfeFileTemp, 0x70000000);
+        func_002AA7F0(cfeFileTemp, (const char *) 0x70000000);
     }
     va_end(args);
 }
 
-/* Writes the NUL-terminated pFileTemp text to the file named by a0 (assert: pFileTemp is set). */
-INCLUDE_ASM("asm/main/nonmatchings/cfeFileControl", cfeFileTempWrite);
+/* Writes the NUL-terminated pFileTemp text to the file `name`. */
+int cfeFileTempWrite(const char *name)
+{
+    if (cfeFileTemp == 0) {
+        assertFailed(cfeAssertFileTemp, cfeFileControlSourceName, 140);
+    }
+    return xglDebFileWrite(name, cfeFileTemp, strlen(cfeFileTemp) + 1);
+}
 
-/* Reads the file named by a0 into pFileTemp and returns its size
-   (asserts: pFileTemp is set, size < MAX_OF_FILESIZE). */
-INCLUDE_ASM("asm/main/nonmatchings/cfeFileControl", cfeFileTempRead);
+/* Reads the file `name` into pFileTemp, stores the buffer in *buffer and returns the size. */
+int cfeFileTempRead(const char *name, char **buffer)
+{
+    int size;
+
+    if (cfeFileTemp == 0) {
+        assertFailed(cfeAssertFileTemp, cfeFileControlSourceName, 151);
+    }
+    size = xglDebFileRead(name, cfeFileTemp);
+    if (!(size < MAX_OF_FILESIZE)) {
+        assertFailed(cfeAssertFileSize, cfeFileControlSourceName, 154);
+    }
+    *buffer = cfeFileTemp;
+    return size;
+}
 
 extern const char D_0068D108[];
 
