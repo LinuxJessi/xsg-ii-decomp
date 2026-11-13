@@ -819,8 +819,7 @@ void xglRotTransPersN(Vector4 *destination, Matrix4 matrix, const Vector4 *sourc
 }
 
 void xglMatrixCopy();
-struct XglLightSet;
-void xglLightSetDefault(struct XglLightSet *lightSet);
+void xglLightSetDefault(XglLightSet *lightSet);
 extern Matrix4 xglIdentityMatrix;
 extern Matrix4 D_00645330;
 
@@ -1508,10 +1507,6 @@ void *memcpy(void *destination, const void *source, unsigned int size);
 void xglZeroQuadwords18(AlignedVector4 *dst);
 void xglDirectionFromAngles(Vector4 *destination, const Vector4 *source);
 
-/* A vector kept as a plain float[4] (like sceVu0FVECTOR); its w is element 3. Vector4 here changes the
- * address arithmetic of the w stores, so the casts to Vector4 * at the calls stay. */
-typedef float XglFVector[4];
-
 /* A loaded light pack file: it starts with the "lxy" tag and is registered in xglLightPackTable. */
 typedef struct XglLightPack {
     char tag[4];            /* 0x00: "lxy" */
@@ -1533,19 +1528,6 @@ typedef struct XglLightPackSlot {
 } XglLightPackSlot;
 
 static XglLightPackSlot xglLightPackTable[16];
-
-/* Light set built by xglLightPackBuildLightSet, cleared with xglZeroQuadwords18 (0x18 quadwords). */
-typedef struct XglLightSet {
-    XglFVector directions[6]; /* 0x000 */
-    Vector4 viewDirection;  /* 0x060 */
-    XglFVector colors[6];   /* 0x070 */
-    Vector4 ambientColor;       /* 0x0D0 */
-    Vector4 ambientColorLower;   /* 0x0E0 */
-    Vector4 forward;        /* 0x0F0 */
-    Vector4 reserved[2];    /* 0x100 */ 
-    XglFVector points[3];   /* 0x120 */
-    XglFVector pointDirections[3]; /* 0x150 */
-} XglLightSet;
 
 static XglLightSet xglLightSetDefaultCache;
 

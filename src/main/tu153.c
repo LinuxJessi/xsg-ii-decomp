@@ -1,10 +1,70 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu153", vu0RotateCurrentX);
+/* Multiplies the current matrix (vf26-vf29) by a rotation about X by angle (nothing for 0); the VU0
+ * micro routines at 0xE8 and 0x20 return the cosine and the sine of vf4x in vf1x. */
+void vu0RotateCurrentX(float angle)
+{
+    if (angle != 0.0f) {
+        __asm__ __volatile__(
+            "mfc1 $8, %0\n\t"
+            "qmtc2.ni $8, vf4\n\t"
+            "vcallms 0xE8\n\t"
+            "vmove.x vf5, vf1\n\t"
+            "qmtc2.ni $8, vf4\n\t"
+            "vcallms 0x20\n\t"
+            "vmove.x vf6, vf1\n\t"
+            "vmulax.xyzw ACC, vf27, vf5x\n\t"
+            "vmaddx.xyzw vf1, vf28, vf6x\n\t"
+            "vmulax.xyzw ACC, vf28, vf5x\n\t"
+            "vmsubx.xyzw vf28, vf27, vf6x\n\t"
+            "vmove.xyzw vf27, vf1"
+            : : "f"(angle) : "$8", "memory");
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu153", vu0RotateCurrentY);
+/* Multiplies the current matrix (vf26-vf29) by a rotation about Y by angle (nothing for 0); the VU0
+ * micro routines at 0xE8 and 0x20 return the cosine and the sine of vf4x in vf1x. */
+void vu0RotateCurrentY(float angle)
+{
+    if (angle != 0.0f) {
+        __asm__ __volatile__(
+            "mfc1 $8, %0\n\t"
+            "qmtc2.ni $8, vf4\n\t"
+            "vcallms 0xE8\n\t"
+            "vmove.x vf5, vf1\n\t"
+            "qmtc2.ni $8, vf4\n\t"
+            "vcallms 0x20\n\t"
+            "vmove.x vf6, vf1\n\t"
+            "vmulax.xyzw ACC, vf26, vf5x\n\t"
+            "vmsubx.xyzw vf1, vf28, vf6x\n\t"
+            "vmulax.xyzw ACC, vf28, vf5x\n\t"
+            "vmaddx.xyzw vf28, vf26, vf6x\n\t"
+            "vmove.xyzw vf26, vf1"
+            : : "f"(angle) : "$8", "memory");
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu153", vu0RotateCurrentZ);
+/* Multiplies the current matrix (vf26-vf29) by a rotation about Z by angle (nothing for 0); the VU0
+ * micro routines at 0xE8 and 0x20 return the cosine and the sine of vf4x in vf1x. */
+void vu0RotateCurrentZ(float angle)
+{
+    if (angle != 0.0f) {
+        __asm__ __volatile__(
+            "mfc1 $8, %0\n\t"
+            "qmtc2.ni $8, vf4\n\t"
+            "vcallms 0xE8\n\t"
+            "vmove.x vf5, vf1\n\t"
+            "qmtc2.ni $8, vf4\n\t"
+            "vcallms 0x20\n\t"
+            "vmove.x vf6, vf1\n\t"
+            "vmulax.xyzw ACC, vf26, vf5x\n\t"
+            "vmaddx.xyzw vf1, vf27, vf6x\n\t"
+            "vmulax.xyzw ACC, vf27, vf5x\n\t"
+            "vmsubx.xyzw vf27, vf26, vf6x\n\t"
+            "vmove.xyzw vf26, vf1"
+            : : "f"(angle) : "$8", "memory");
+    }
+}
 
 #include "shared.h"
 
