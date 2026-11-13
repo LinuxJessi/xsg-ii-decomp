@@ -3,6 +3,7 @@
 INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeNormalizeFixed2);
 
 #include "shared.h"
+#include "main/tu144.h"
 
 /*
  * A key of a time-keyed track. startTime (+4) is the key time; the tracks are
@@ -54,7 +55,15 @@ INCLUDE_ASM("asm/main/nonmatchings/tu145", func_0024FC90);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeChainUnwrapAngles);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackLerp);
+/* The angle at `time` between the keys `from` and `to`, interpolated linearly. */
+float cfeTrackLerp(CfeTrackNode *from, CfeTrackNode *to, float time)
+{
+    float t = (time - (float) from->startTime) / (float) (to->startTime - from->startTime);
+    float end = CFE_FIXED_TO_FLOAT(to->angle);
+    float start = CFE_FIXED_TO_FLOAT(from->angle);
+
+    return (end - start) * t + start;
+}
 
 extern f32 cfeTimeScale;
 

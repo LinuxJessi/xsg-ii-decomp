@@ -9,12 +9,10 @@
 #include "main/tu138.h"
 #include "main/sef.h"
 #include "main/tu144.h"
+#include "main/xenoActor.h"
 #include "main/xgl_cd.h"
 
 extern unsigned char cfeAssertFile[];
-
-/* An 8.8 fixed-point script value as a float. */
-#define CFE_FIXED_TO_FLOAT(value) ((float) ((value) / 256) + (float) ((value) % 256) * (1.0f / 256))
 
 CfeListNode *cfeListTail(CfeListNode *node);
 void func_0024FC90(CfeListNode *list);
@@ -173,6 +171,9 @@ extern unsigned char cfeResLoadAssertMsg[];
 typedef struct CfeResourceBlock {
     int pack;
     int effect;
+    int hierarchy;
+    int lookLink;
+    int slotTable;
 } CfeResourceBlock;
 
 /* Offset of the resource id inside the actor (a pointer-sized field XenoActor does not model). */
@@ -205,11 +206,6 @@ XenoActor *cfeLoadResourceObject(int id)
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B6D8);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeLoadActorObject);
-
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BA70);
-
-int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
 void XenoActorSetModeInSlot(void *, int, int);
 float XenoActorSetSelector(void *, int);
 int func_A9F0A8(void);
@@ -217,6 +213,65 @@ int func_A9F0C0(int, int);
 char *func_A9F238(int, int);
 char *strcpy(char *, const char *);
 extern unsigned char D_0068CE20[];
+extern unsigned char D_0068CDE8[];
+void *GameResBufferAlloc(int size);
+void *memset(void *, int, unsigned int);
+
+void XenoActorAllocMatrices(XenoActor *actor);
+
+/* Offset of the extra resource inside the actor (not modeled in XenoActor). */
+#define CFE_ACTOR_EXTRA_RESOURCE 0x610
+/* The hierarchy's word at +0x1C: set when it needs the shared resource. */
+#define CFE_HIERARCHY_SHARED 0x1C
+/* The shared resource the hierarchy loads (0x30041). */
+#define CFE_SHARED_RESOURCE_ID 0x30041
+
+/* Loads resource `id` as a full actor: pack, effect, hierarchy, slot table and look link from the
+ * block (draw mode 6). A hierarchy that needs it also gets the shared resource. The matrices are
+ * built and both channels start at 0. */
+XenoActor *cfeLoadActorObject(int id)
+{
+    void *data;
+    CfeResourceBlock *resource;
+    XenoActor *actor;
+    int pack;
+
+    data = 0;
+    do {
+    } while (xglCdServiceIfPending() != 0);
+    if (GameResLoadID(id, &data, 0, 0) == -1) {
+        assertFailed(cfeResLoadAssertMsg, cfeAssertFile, 346);
+    }
+    resource = data;
+    actor = XenoActorAlloc();
+    do {
+    } while (xglCdServiceIfPending() != 0);
+    pack = resource->pack;
+    actor->drawMode = 6;
+    actor->pack = pack;
+    *(void **) ((char *) actor + CFE_ACTOR_RESOURCE_ID) = (void *) id;
+    actor->effect = resource->effect;
+    actor->hierarchy = resource->hierarchy;
+    actor->slotTable = resource->slotTable;
+    actor->lookLink = resource->lookLink;
+    if (actor->hierarchy != 0 && *(int *) (actor->hierarchy + CFE_HIERARCHY_SHARED) != 0) {
+        do {
+        } while (xglCdServiceIfPending() != 0);
+        GameResLoadID(CFE_SHARED_RESOURCE_ID, &data, 0, 0);
+        *(void **) ((char *) actor + CFE_ACTOR_EXTRA_RESOURCE) = data;
+        XenoActorSetChannelValueB(actor, 0.0f);
+        XenoActorSetSelector(actor, 0);
+    }
+    XenoActorAllocMatrices(actor);
+    XenoActorSetChannelValue(actor, 0.0f);
+    XenoActorSetChannelValueB(actor, 0.0f);
+    XenoActorSetModeInSlot(actor, 0, 0);
+    return actor;
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BA70);
+
+int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
 
 /* One 0x1B0-byte entry; word 0 is the pointer to its object. The rest of
    the entry is not recovered. */
@@ -552,7 +607,6 @@ int setMesScr(void)
     return 1;
 }
 
-extern unsigned char D_0068CDE8[];
 
 int cfe_0024DE20(int handle)
 {

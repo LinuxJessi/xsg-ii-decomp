@@ -17,6 +17,9 @@ typedef struct CfeListNode {
     struct CfeListNode *next;        /* 0x20 */
 } CfeListNode;
 
+/* An 8.8 fixed-point key value as a float. */
+#define CFE_FIXED_TO_FLOAT(value) ((float) ((value) / 256) + (float) ((value) % 256) * (1.0f / 256))
+
 CfeListNode *func_0024F698(CfeListNode **list, int key, float value);
 CfeListNode *func_0024F730(CfeListNode **list, int key, float value);
 CfeListNode *func_0024F7C0(CfeListNode **list, int key, float value);
