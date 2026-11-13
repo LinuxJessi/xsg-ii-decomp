@@ -4,6 +4,7 @@
 #include "main/cfePlugIn.h"
 #include "main/tu022.h"
 #include "main/tu146.h"
+#include "main/xgl_2.h"
 #include "main/xgl_studio.h"
 
 int GameResBufferAlloc(int);
@@ -53,31 +54,33 @@ void cfeCommandTableInit(void) {
 
 INCLUDE_ASM("asm/main/nonmatchings/tu141", func_0024EB48);
 
-/* A row of cfeDirections: two pointers into the direction table at +0x10/+0x14. */
-typedef struct CfeDirectionRow {
+/* A row of cfeDirections: the direction and the colour of one light of cfeDirectionTable (row 0 has only
+ * the ambient colour). */
+typedef struct CfeLightRow {
     unsigned char unmodeled_00[0x10];
-    const Vector4 *first;       /* +0x10 */
-    const Vector4 *second;      /* +0x14 */
+    const float *direction;     /* +0x10 */
+    const float *color;         /* +0x14 */
     unsigned char unmodeled_18[0x28];
-} CfeDirectionRow;
+} CfeLightRow;
 
-extern CfeDirectionRow cfeDirections[4];
-extern Vector4 cfeDirectionTable[];
-void func_0024EB48(Vector4 *table);
+extern CfeLightRow cfeDirections[4];
+extern XglLightSet cfeDirectionTable;
+void func_0024EB48(XglLightSet *light);
 
-/* Builds the direction table, clears cfeDirections and points each row at its two directions. */
+/* Sets up the light set cfeDirectionTable, clears cfeDirections and points its rows at the ambient colour
+ * and at the direction and colour of lights 0 to 2. */
 void func_0024ECA0(void)
 {
-    func_0024EB48(cfeDirectionTable);
+    func_0024EB48(&cfeDirectionTable);
     memset(cfeDirections, 0, sizeof(cfeDirections));
-    cfeDirections[0].first = 0;
-    cfeDirections[0].second = &cfeDirectionTable[13];
-    cfeDirections[1].first = &cfeDirectionTable[0];
-    cfeDirections[1].second = &cfeDirectionTable[7];
-    cfeDirections[2].first = &cfeDirectionTable[1];
-    cfeDirections[2].second = &cfeDirectionTable[8];
-    cfeDirections[3].first = &cfeDirectionTable[2];
-    cfeDirections[3].second = &cfeDirectionTable[9];
+    cfeDirections[0].direction = 0;
+    cfeDirections[0].color = &cfeDirectionTable.ambientColor.x;
+    cfeDirections[1].direction = cfeDirectionTable.directions[0];
+    cfeDirections[1].color = cfeDirectionTable.colors[0];
+    cfeDirections[2].direction = cfeDirectionTable.directions[1];
+    cfeDirections[2].color = cfeDirectionTable.colors[1];
+    cfeDirections[3].direction = cfeDirectionTable.directions[2];
+    cfeDirections[3].color = cfeDirectionTable.colors[2];
 }
 
 extern int cfeGroupCount;
