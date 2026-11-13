@@ -2,6 +2,7 @@
 #include "main/sdv_033.h"
 #include "shared.h"
 #include "main/xgl_cd.h"
+#include "main/xgl_jpeg.h"
 #include "main/tu094.h"
 #include "gs.h"
 
@@ -76,7 +77,6 @@ void gameOverDrawOverlay(u64 fade_value)
 }
 
 void *memset(void *dest, int value, unsigned int count);
-void xglJpegDecode(void *request[]);
 extern u8 *WorkEnd;
 
 /*
@@ -88,7 +88,7 @@ u8 *gameOverLoadFile(const char *path, u8 *buffer)
 {
     u8 *base;
     u8 *read_target;
-    void *request[8];
+    JpegDecodeControl request;
 
     base = WorkEnd;
     if (buffer != 0) {
@@ -96,10 +96,10 @@ u8 *gameOverLoadFile(const char *path, u8 *buffer)
     }
     read_target = base + GAMEOVER_SCRATCH_OFFSET;
     xglCdReadFile(path, read_target, 0, 1);
-    memset(request, 0, sizeof(request));
-    request[0] = read_target;
-    request[1] = base;
-    xglJpegDecode(request);
+    memset(&request, 0, sizeof(request));
+    request.source = read_target;
+    request.destination = base;
+    xglJpegDecode(&request);
     return base;
 }
 

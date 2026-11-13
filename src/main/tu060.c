@@ -23,8 +23,8 @@ typedef struct McTestPadPort {
     unsigned short directionRepeated; /* +0x34 */
     unsigned short directionReleased;
     signed char sticks[4];
-    short stickX;
-    short stickY; /* +0x3C/+0x3E as pad.h */
+    short horizontalPressure;
+    short verticalPressure; /* +0x3C/+0x3E as pad.h */
     unsigned char pressures[8];
     unsigned char unmodeled_48[0x50 - 0x48];
     unsigned char actuators[2];
@@ -183,8 +183,8 @@ void func_001E9B28(void) {
             xglFontDebugHex(x + 16, 0x98, pad->sticksCentered[2], 2);
             xglFontDebugHex(x, 0xA0, pad->sticks[3], 2);
             xglFontDebugHex(x + 16, 0xA0, pad->sticksCentered[3], 2);
-            xglFontDebugHex(x, 0xA8, pad->stickX, 4);
-            xglFontDebugHex(x, 0xB0, pad->stickY, 4);
+            xglFontDebugHex(x, 0xA8, pad->horizontalPressure, 4);
+            xglFontDebugHex(x, 0xB0, pad->verticalPressure, 4);
             xglFontDebugHex(x, 0xB8, pad->pressures[0], 2);
             xglFontDebugHex(x + 16, 0xB8, pad->pressures[4], 2);
             xglFontDebugHex(x, 0xC0, pad->pressures[1], 2);
@@ -741,7 +741,7 @@ int xglHddCheck(void);
 int xglHddMcExist(struct HddExistRequest *request);
 int xglHddMcLoad(void *save);
 int xglHddMcSave(const struct HddSaveRequest *save);
-int xglHddMcCreate_001A5B80(struct HddCheckState *state);
+int xglHddMcCreate(struct HddCheckState *state);
 int sceMcSync(int mode, int *command, int *result);
 unsigned short xglSRand(void);
 void FlushCache(int mode);
@@ -1370,7 +1370,7 @@ void MemcardTest(void) {
                 hdd_create_request.status = work.file;
                 hdd_create_request.transfer = files;
                 hdd_create_request.dataSize = SAVE_DATA_SIZE;
-                printf("xglHddMcCreate():%d\n", xglHddMcCreate_001A5B80(&hdd_create_request));
+                printf("xglHddMcCreate():%d\n", xglHddMcCreate(&hdd_create_request));
                 state = MCTEST_STATE_HDD_SAVE_WRITE;
             }
             if (PadData.ports[0].pressed & PAD_CROSS) {

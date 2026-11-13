@@ -120,7 +120,6 @@ INCLUDE_ASM("asm/main/nonmatchings/srs", srsGetEffectFileKind);
 INCLUDE_ASM("asm/main/nonmatchings/srs", srsFormatEffectStem);
 
 void srsFormatEffectStem(int effectNo, char *buffer, int mode);
-int func_002AA5D8(char *destination, const char *format, ...);
 extern void *memset(void *destination, int value, unsigned int size);
 extern char srsEffectStemBuffer[];
 
@@ -200,7 +199,7 @@ char *srsGetEffectName(int effectNo)
     name = 0;
     if (effectNo > 0) {
         srsFormatEffectStem(effectNo, stem, 1);
-        func_002AA5D8(srsEsdNameBuffer, srsEsdPathFormat, stem);
+        sprintf(srsEsdNameBuffer, srsEsdPathFormat, stem);
         name = srsEsdNameBuffer;
     }
     return name;
@@ -218,7 +217,7 @@ char *srsGetEspName(int effectNo)
         return 0;
     }
     srsFormatEffectStem(effectNo, stem, 0);
-    func_002AA5D8(srsEspNameBuffer, srsEspPathFormat, stem);
+    sprintf(srsEspNameBuffer, srsEspPathFormat, stem);
     return srsEspNameBuffer;
 }
 

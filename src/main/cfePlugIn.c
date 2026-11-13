@@ -87,7 +87,7 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BD28);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BEF0);
 
-void func_002AA5D8(char *, unsigned char *, char *);
+void sprintf(char *, unsigned char *, char *);
 extern int D_0063A868[];
 extern unsigned char D_0068CE50[];
 
@@ -101,7 +101,7 @@ int cfe_0024C030(int handle)
     data = 0;
     slot = func_A9F0C0(handle, 1);
     text = func_A9F238(handle, func_A9F0C0(handle, 2));
-    func_002AA5D8(buffer, D_0068CE50, text);
+    sprintf(buffer, D_0068CE50, text);
     GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
