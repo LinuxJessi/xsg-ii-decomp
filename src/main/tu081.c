@@ -27,7 +27,7 @@ int func_A9F0A8(void);
 int func_A9F0C0(int value, int mode);
 int ptFindSlot(int value);
 void ptRefresh(void);
-void func_0022A7D8(int slot, int index);
+void ptSwapRosterEntries(int slot, int index);
 
 int ptSetPilot(int context)
 {
@@ -61,7 +61,7 @@ int ptSetPilot(int context)
     if (rosterIndex == -1) {
         return 0;
     }
-    func_0022A7D8(slot, rosterIndex);
+    ptSwapRosterEntries(slot, rosterIndex);
     ptRefresh();
     return 1;
 }
@@ -108,7 +108,7 @@ int umnReturn(int context)
 
 void ptSwapSlots(int a, int b);
 void ptRefreshCurrent(void);
-void func_0022BAF8(void);
+void ptLoadPartyModels(void);
 
 int ptSetArray(int context)
 {
@@ -136,7 +136,7 @@ int ptSetArray(int context)
             }
             ptSwapSlots(destSlot, srcSlot);
             ptRefresh();
-            func_0022BAF8();
+            ptLoadPartyModels();
             ptRefreshCurrent();
             return 1;
         }

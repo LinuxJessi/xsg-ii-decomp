@@ -2076,28 +2076,36 @@ extern unsigned char D_0069D610[];
 extern unsigned char D_0069D618[];
 extern void *D_003EB3C8[];
 
-/* Character info line: label, then (mode>0) the group name and (mode>=2) the slot
-   name; group>=3 and slot>=4 with mode 2 draws a single "none" segment instead. */
-void menuDrawCharInfo(int x, int y, int group, int slot, int mode)
-{
-    textDrawSegment(x, y, D_0068A600, 0);
-    if (group >= 3 && slot >= 4 && mode == 2) {
-        textDrawSegment(x + 6, y, D_0069D608, 0);
-        return;
-    }
-    textDrawSegment(x, y, D_0068A9B0, 0);
-    if (mode <= 0) {
-        return;
-    }
-    textDrawSegment(x + 6, y, D_0069D610, 0);
-    textDrawSegment(x + 0x30, y, D_003EB3C8[group], 0);
-    textDrawSegment(x + 0x3A, y, D_0068A9B0, 0);
-    if (mode >= 2) {
-        textDrawSegment(x + 0x40, y, D_0069D618, 0);
-        textDrawSegment(x + 0x66, y, D_003EB3C8[4 + slot], 0);
-        textDrawSegment(x + 0x76, y, D_0068A9B0, 0);
-    }
-}
+INCLUDE_ASM("asm/main/nonmatchings/tu101", menuDrawSpecialAttack);
+
+INCLUDE_ASM("asm/main/nonmatchings/tu101", menuDrawCommandInfo);
+
+INCLUDE_ASM("asm/main/nonmatchings/tu101", menuDrawPartnerInfo);
+
+INCLUDE_ASM("asm/main/nonmatchings/tu101", func_00222860);
+
+INCLUDE_ASM("asm/main/nonmatchings/tu101", menuDrawCopilotInfo);
+
+INCLUDE_ASM("asm/main/nonmatchings/tu101", menuDrawClassInfo);
+
+/* The context returned by ptGetMenuMember (defined in main/tu100). */
+struct ControlLimits {
+    unsigned char unmodeled_00[8];
+    int limit_a;
+    int limit_b;
+};
+
+struct ControlBuffer {
+    unsigned char header[4];
+    unsigned char cells[4][8];
+    unsigned char flags[2];
+};
+
+struct ControlContext {
+    unsigned char unmodeled_00[8];
+    struct ControlLimits *limits;
+    struct ControlBuffer *buffer;
+};
 
 /* A scrolling list cursor: selected row, row count and the blink flag. */
 typedef struct LicenseCursor {
@@ -2226,31 +2234,9 @@ typedef struct LicenseRecord {
     unsigned char unmodeled_05;
 } LicenseRecord;
 
-/* Admitted aligned(1) scalar: the gauge word sits at the unaligned offset 2 of the record. */
-typedef signed int UnalignedS32 __attribute__((aligned(1)));
-
-/* The character record returned by func_A8B490 (OV01). */
-typedef struct MenuPartyRecord {
-    unsigned char unmodeled_00[2];
-    UnalignedS32 gauge;                     /* 0x02 */
-    short value6;                           /* 0x06 */
-    short strength;                         /* 0x08: "Str" ("Pow" in split mode) */
-    short vitality;                         /* 0x0A: "Vit" ("Arm" in split mode) */
-    short etherAttack;                      /* 0x0C: "Eatk" */
-    short etherDefense;                     /* 0x0E: "Edef" */
-    signed char dexterity;                  /* 0x10: "Dex" */
-    signed char evasion;                    /* 0x11: "Eva" */
-    signed char agility;                    /* 0x12: "Agl" */
-    signed char level;                      /* 0x13 */
-    unsigned char unmodeled_14[0x48];
-    int value5C;                            /* 0x5C */
-    short value60;                          /* 0x60 */
-    unsigned char unmodeled_62[0x108 - 0x62]; /* menuDrawCharStats copies 0x108 bytes */
-} MenuPartyRecord;
-
-struct ControlContext *func_0022A560();
-int selectionCanOpenSlot(struct ControlContext *context, int group, int sub);
-int selectionCanTakeSub(struct ControlContext *context, int group, int slot, int sub);
+struct ControlContext *ptGetMenuMember();
+int func_00229EC0(struct ControlContext *context, int group, int sub);
+int func_00229F30(struct ControlContext *context, int group, int slot, int sub);
 void func_0021CEF8(int x, int y, int width, int height, void *text);
 void func_0021CC08(int, int, int, int);
 void menuDrawBorder(int x, int y, int width, int height, unsigned long long color);
@@ -3035,7 +3021,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
     int firstRow; /* first visible row; scrolls the highlight */
     int unlocked = 0;
     int markCount = 0;
-    struct ControlBuffer *board = func_0022A560()->buffer;
+    struct ControlBuffer *board = ptGetMenuMember()->buffer;
     LicenseCursor *cursor;
     int i;
     int rowStyle;
@@ -3081,7 +3067,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             }
             break;
         case 1:
-            if (selectionCanOpenSlot(func_0022A560(), groupCursor->index, i)
+            if (func_00229EC0(ptGetMenuMember(), groupCursor->index, i)
                 || ((board->header[groupCursor->index] >> i) & 1)) {
                 unlocked = 1;
             } else {
@@ -3093,7 +3079,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             }
             break;
         case 2:
-            if (selectionCanTakeSub(func_0022A560(), groupCursor->index, slotCursor->index, i)
+            if (func_00229F30(ptGetMenuMember(), groupCursor->index, slotCursor->index, i)
                 || ((board->cells[groupCursor->index][slotCursor->index] >> i) & 1)) {
                 unlocked = 1;
             } else {
@@ -3128,7 +3114,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
             if ((board->header[groupCursor->index] >> i) & 1) {
                 textDrawGlyphString(x + 0xBF, y + 0x66 + i * LICENSE_ROW_PITCH_COMPACT, D_0069D608, color);
             } else {
-                if (D_003EC0E8[groupCursor->index][i] > func_0022A560()->limits->limit_b) {
+                if (D_003EC0E8[groupCursor->index][i] > ptGetMenuMember()->limits->limit_b) {
                     fontObjSetOpacity(0x40);
                 } else {
                     fontObjResetOpacity();
@@ -3165,7 +3151,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
                         packetSubmitRequest(LICENSE_MARK_CMD, x + 0xCA, y + 0x66 + i * LICENSE_ROW_PITCH, 0x44);
                         fontObjResetColor();
                     } else {
-                        if (selectionGetValue(groupCursor->index, slotCursor->index, i) > func_0022A560()->limits->limit_a) {
+                        if (selectionGetValue(groupCursor->index, slotCursor->index, i) > ptGetMenuMember()->limits->limit_a) {
                             fontObjSetOpacity(0x40);
                         } else {
                             fontObjResetOpacity();
