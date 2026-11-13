@@ -103429,9 +103429,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A6D88",
+     "name": "fptodp",
      "size": 60,
-     "splat_name": "func_002A6D88",
+     "splat_name": "fptodp",
      "va": "0x002a6d88",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103447,18 +103447,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A7028",
+     "name": "dpadd",
      "size": 88,
-     "splat_name": "func_002A7028",
+     "splat_name": "dpadd",
      "va": "0x002a7028",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A7080",
+     "name": "dpsub",
      "size": 100,
-     "splat_name": "func_002A7080",
+     "splat_name": "dpsub",
      "va": "0x002a7080",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103519,9 +103519,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A76E8",
+     "name": "dptofp",
      "size": 84,
-     "splat_name": "func_002A76E8",
+     "splat_name": "dptofp",
      "va": "0x002a76e8",
      "name_basis": "address",
      "provenance": "estimated"

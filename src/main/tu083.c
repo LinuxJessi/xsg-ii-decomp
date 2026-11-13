@@ -720,10 +720,10 @@ void uwamonoMoveSelection(int step)
     seVoiceStartDefault(0x02000004);
 }
 
-int func_002A6D88(float value);
+int fptodp(float value);
 int func_002A7510(int a, int b);
-int func_002A7080(int a, int b);
-float func_002A76E8(int value);
+int dpsub(int a, int b);
+float dptofp(int value);
 
 typedef struct UwamonoBox {
     Vector4 min;
