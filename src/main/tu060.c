@@ -23,8 +23,8 @@ typedef struct McTestPadPort {
     unsigned short directionRepeated; /* +0x34 */
     unsigned short directionReleased;
     signed char sticks[4];
-    short stickX;
-    short stickY; /* +0x3C/+0x3E as pad.h */
+    short horizontalPressure;
+    short verticalPressure; /* +0x3C/+0x3E as pad.h */
     unsigned char pressures[8];
     unsigned char unmodeled_48[0x50 - 0x48];
     unsigned char actuators[2];
@@ -183,8 +183,8 @@ void func_001E9B28(void) {
             xglFontDebugHex(x + 16, 0x98, pad->sticksCentered[2], 2);
             xglFontDebugHex(x, 0xA0, pad->sticks[3], 2);
             xglFontDebugHex(x + 16, 0xA0, pad->sticksCentered[3], 2);
-            xglFontDebugHex(x, 0xA8, pad->stickX, 4);
-            xglFontDebugHex(x, 0xB0, pad->stickY, 4);
+            xglFontDebugHex(x, 0xA8, pad->horizontalPressure, 4);
+            xglFontDebugHex(x, 0xB0, pad->verticalPressure, 4);
             xglFontDebugHex(x, 0xB8, pad->pressures[0], 2);
             xglFontDebugHex(x + 16, 0xB8, pad->pressures[4], 2);
             xglFontDebugHex(x, 0xC0, pad->pressures[1], 2);

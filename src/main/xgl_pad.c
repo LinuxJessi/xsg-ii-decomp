@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/pad.h"
 
 /*
  * Controller record, 0x80 bytes per port (0x68 in XS1). The fields up to
@@ -7,9 +8,11 @@
  * writes +0x48 to +0x4d. The pressed halfword at +0x2a is also read by
  * xgl_hdd.c, the direction halfwords at +0x32/+0x34 by xgl_menu.c.
  */
-/* The 128-bit integer the R5900 stores with one sq (xglPadRead clears the
- * analog state group with it). */
-typedef unsigned int u128 __attribute__((mode(TI)));
+/* xglPadRead clears the analog group with `por $4,$0,$0; sq $4,0x30(pad)`:
+ * a C store of a 128-bit zero. QuadwordZero (`sq $0`) drops the por and
+ * changes the register allocation of the whole function, so the group is
+ * stored through this type, the name the other main files use for it. */
+typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
 typedef struct XglPadRecord {
     unsigned char packet[0x20];
@@ -48,7 +51,7 @@ typedef struct XglPadRecord {
             short horizontal_pressure;
             short vertical_pressure;
         };
-        u128 analog_state;              /* +0x30 */
+        XglQuadword analog_state;       /* +0x30 */
     };
     union {
         signed char pressure[8];
@@ -115,12 +118,7 @@ typedef struct XglPadRecord {
 #define PAD_ANALOG_CENTER 128
 #define PAD_FULL_PRESSURE 255
 
-/* Direction bits of the button word. */
-#define PAD_UP 0x1000
-#define PAD_RIGHT 0x2000
-#define PAD_DOWN 0x4000
-#define PAD_LEFT 0x8000
-#define PAD_REPEAT_MASK 0xf00c
+#define PAD_REPEAT_MASK (PAD_UP | PAD_RIGHT | PAD_DOWN | PAD_LEFT | PAD_L1 | PAD_R1)
 #define PAD_REPEAT_DELAY 8
 #define PAD_REPEAT_INTERVAL 1
 #define PAD_DEFAULT_DEAD_ZONE 64
@@ -225,8 +223,7 @@ void xglPadRead(void)
     unsigned char button_down;
     unsigned char direction_down;
     unsigned char direction_bits;
-    unsigned char *map;
-    int map_remaining;
+    int button_index;
     signed char vertical;
     signed char horizontal;
 
@@ -234,12 +231,17 @@ void xglPadRead(void)
         XglPadRecord *pad;
         int buttons;
         int directions;
-        /* One value serves both the 0x60 pressed-button word and the 0x50
-           first dead zone, matching the original register reuse. */
-        unsigned short shared_value;
-        /* One int holds the request-state reply of the mode setup and the
-           repeated-button word, matching the original register reuse. */
-        int result;
+        /* The 0x60 button word and the analog left-stick dead zone share one
+           local: the original keeps both in $18, and the button word must
+           still be in $18 when the direction bits are merged below. With two
+           locals the 0x60 word lands in $7, an extra move is scheduled into
+           the branch delay slot and the dead-zone tests are allocated
+           differently. */
+        unsigned short button_word_or_dead_zone;
+        /* The request-state reply of the mode setup and the repeated-button
+           word share one local as well. With two locals the repeat_mask load
+           at the end moves from $8 to $10 (three instructions differ). */
+        int request_state_or_repeated;
 
         pad = &PadData[port];
         buttons = 0;
@@ -286,8 +288,8 @@ void xglPadRead(void)
             }
             break;
         case PAD_SETUP_WAIT_MAIN_MODE:
-            result = scePadGetReqState(port, 0);
-            switch (result) {
+            request_state_or_repeated = scePadGetReqState(port, 0);
+            switch (request_state_or_repeated) {
             case 0:
                 pad->setup_state = PAD_SETUP_PROBE;
                 break;
@@ -324,8 +326,8 @@ void xglPadRead(void)
             }
             break;
         case PAD_SETUP_WAIT_PRESSURE:
-            result = scePadGetReqState(port, 0);
-            switch (result) {
+            request_state_or_repeated = scePadGetReqState(port, 0);
+            switch (request_state_or_repeated) {
             case 0:
                 pad->setup_state = PAD_SETUP_READY;
                 break;
@@ -387,14 +389,14 @@ void xglPadRead(void)
                 break;
             }
             case 0x60: {
-                shared_value = ~(pad->packet[3] + (pad->packet[2] << 8));
+                button_word_or_dead_zone = ~(pad->packet[3] + (pad->packet[2] << 8));
                 pad->position[0] = pad->packet[4] + pad->position[2];
                 pad->position[1] = pad->packet[6] + pad->position[3];
-                if ((shared_value & 0x6008) == 0x6008) {
+                if ((button_word_or_dead_zone & 0x6008) == 0x6008) {
                     pad->position[2] = -96 - pad->position[0];
                     pad->position[3] = 120 - pad->position[1];
                 }
-                buttons = shared_value;
+                buttons = button_word_or_dead_zone;
                 break;
             }
             case 0xe0:
@@ -416,7 +418,7 @@ void xglPadRead(void)
                 unsigned char fourth_axis_threshold;
                 int axis;
 
-                shared_value = pad->axis_dead_zone[0];
+                button_word_or_dead_zone = pad->axis_dead_zone[0];
                 axis = pad->packet[4] + PAD_ANALOG_CENTER;
                 pad->position[1] = pad->packet[5] + PAD_ANALOG_CENTER;
                 pad->position[2] = pad->packet[6] + PAD_ANALOG_CENTER;
@@ -433,8 +435,8 @@ void xglPadRead(void)
                 pad->pressure[7] = pad->packet[19];
                 pad->position[0] = axis;
                 pad->axis[0] = axis;
-                if (-shared_value < (signed char)axis &&
-                    (signed char)axis < shared_value)
+                if (-button_word_or_dead_zone < (signed char)axis &&
+                    (signed char)axis < button_word_or_dead_zone)
                     pad->axis[0] = 0;
                 first_vertical_position = pad->position[1];
                 second_axis_threshold = pad->axis_dead_zone[1];
@@ -463,70 +465,73 @@ void xglPadRead(void)
         }
         }
         if (pad->packet[1] != PAD_PACKET_ID_PRESSURE) {
+            /* No pressure bytes: derive full or zero pressure from the
+               digital bits. The packet bits are active-low, so each
+               *_released flag is nonzero while its button is up. */
             int maximum_pressure;
             int digital_horizontal;
             int digital_vertical;
-            int triangle;
-            int circle;
-            int cross;
-            int square;
-            int l1;
-            int r1;
-            int l2;
-            int r2;
+            int triangle_released;
+            int circle_released;
+            int cross_released;
+            int square_released;
+            int l1_released;
+            int r1_released;
+            int l2_released;
+            int r2_released;
             int first_buttons;
-            int up;
-            int right;
-            int down;
-            int left;
+            int up_released;
+            int right_released;
+            int down_released;
+            int left_released;
             int second_buttons;
 
             maximum_pressure = PAD_FULL_PRESSURE;
             first_buttons = pad->packet[2];
             second_buttons = pad->packet[3];
-            right = first_buttons & 0x20;
-            down = first_buttons & 0x40;
-            left = first_buttons & 0x80;
-            up = first_buttons & 0x10;
+            right_released = first_buttons & 0x20;
+            down_released = first_buttons & 0x40;
+            left_released = first_buttons & 0x80;
+            up_released = first_buttons & 0x10;
             digital_horizontal = maximum_pressure;
             digital_vertical = maximum_pressure;
-            if (right) {
+            if (right_released) {
                 digital_horizontal -= maximum_pressure;
             }
-            if (!left) {
+            if (!left_released) {
                 digital_horizontal -= maximum_pressure;
             }
-            r2 = second_buttons & 2;
-            triangle = second_buttons & 0x10;
-            circle = second_buttons & 0x20;
-            cross = second_buttons & 0x40;
-            square = second_buttons & 0x80;
-            l1 = second_buttons & 4;
-            r1 = second_buttons & 8;
-            l2 = second_buttons & 1;
-            triangle = triangle != 0;
-            circle = circle != 0;
-            cross = cross != 0;
-            square = square != 0;
-            l1 = l1 != 0;
-            r1 = r1 != 0;
-            r2 = r2 != 0;
-            if (down) {
+            r2_released = second_buttons & 2;
+            triangle_released = second_buttons & 0x10;
+            circle_released = second_buttons & 0x20;
+            cross_released = second_buttons & 0x40;
+            square_released = second_buttons & 0x80;
+            l1_released = second_buttons & 4;
+            r1_released = second_buttons & 8;
+            l2_released = second_buttons & 1;
+            triangle_released = triangle_released != 0;
+            circle_released = circle_released != 0;
+            cross_released = cross_released != 0;
+            square_released = square_released != 0;
+            l1_released = l1_released != 0;
+            r1_released = r1_released != 0;
+            r2_released = r2_released != 0;
+            if (down_released) {
                 digital_vertical -= maximum_pressure;
             }
-            if (!up) {
+            if (!up_released) {
                 digital_vertical -= maximum_pressure;
             }
             pad->horizontal_pressure = digital_horizontal;
             pad->vertical_pressure = digital_vertical;
-            pad->pressure[0] = triangle - 1;
-            pad->pressure[1] = circle - 1;
-            pad->pressure[2] = cross - 1;
-            pad->pressure[3] = square - 1;
-            pad->pressure[4] = l1 - 1;
-            pad->pressure[5] = r1 - 1;
-            pad->pressure[6] = l2 - 1;
-            pad->pressure[7] = r2 - 1;
+            pad->pressure[0] = triangle_released - 1;
+            pad->pressure[1] = circle_released - 1;
+            pad->pressure[2] = cross_released - 1;
+            pad->pressure[3] = square_released - 1;
+            pad->pressure[4] = l1_released - 1;
+            pad->pressure[5] = r1_released - 1;
+            pad->pressure[6] = l2_released - 1;
+            pad->pressure[7] = r2_released - 1;
         }
         directions = buttons;
         horizontal = pad->position[2];
@@ -547,15 +552,15 @@ void xglPadRead(void)
         buttons &= 0xff00;
         direction_bits = directions & 0xff;
         directions &= 0xff00;
-        for (map_remaining = 0; map_remaining < (int)sizeof(pad->button_map); ++map_remaining) {
+        for (button_index = 0; button_index < (int)sizeof(pad->button_map); ++button_index) {
             button_down = button_bits & 1;
             if (button_down) {
-                buttons = (buttons | pad->button_map[map_remaining]) & 0xffff;
+                buttons = (buttons | pad->button_map[button_index]) & 0xffff;
             }
             button_bits >>= 1;
             direction_down = direction_bits & 1;
             if (direction_down) {
-                directions = (directions | pad->button_map[map_remaining]) & 0xffff;
+                directions = (directions | pad->button_map[button_index]) & 0xffff;
             }
             direction_bits >>= 1;
         }
@@ -580,8 +585,8 @@ void xglPadRead(void)
                 repeat_count = pad->repeat_count;
                 if (pad->repeat_count > pad->repeat_interval) {
                     pad->direction_repeated = repeat;
-                    result = buttons & pad->repeat_mask;
-                    pad->repeated = result;
+                    request_state_or_repeated = buttons & pad->repeat_mask;
+                    pad->repeated = request_state_or_repeated;
                     repeat_count = 0;
                     pad->repeat_count = 0;
                 }
