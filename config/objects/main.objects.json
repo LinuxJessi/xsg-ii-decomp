@@ -66462,9 +66462,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002285C8",
+     "name": "ptReset",
      "size": 832,
-     "splat_name": "func_002285C8",
+     "splat_name": "ptReset",
      "va": "0x002285c8",
      "name_basis": "address",
      "provenance": "estimated"

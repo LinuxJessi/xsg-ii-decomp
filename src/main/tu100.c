@@ -69,7 +69,7 @@ struct ControlContext {
 };
 
 void fontObjInitGlobals();
-void func_002285C8();
+void ptReset();
 extern int D_0069D4DC;
 extern u8 D_0069D4E0;
 extern u8 *D_00645868[];
@@ -79,7 +79,7 @@ extern unsigned char xglCallbackQueueRun[];
 
 void menuSceneReset(void) {
     xglCdPendingReadsClear();
-    func_002285C8();
+    ptReset();
     selectionBuildKeyTable();
     func_00229898();
     xglTickReset();
