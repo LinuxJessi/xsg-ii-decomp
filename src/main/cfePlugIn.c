@@ -173,6 +173,15 @@ int cfe_0024BC10(int handle)
     return 1;
 }
 
+typedef struct CfeListNode CfeListNode;
+CfeListNode *func_0024F698(CfeListNode **list, int key, float value);
+CfeListNode *func_0024F730(CfeListNode **list, int key, float value);
+
+/* An 8.8 fixed-point script value as a float. */
+#define CFE_FIXED_TO_FLOAT(value) ((float) ((value) / 256) + (float) ((value) % 256) * (1.0f / 256))
+extern unsigned char D_0068CF10[];
+extern unsigned char D_0068CED0[];
+
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BD28);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BEF0);
@@ -228,26 +237,119 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C308);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C500);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C7B8);
+extern CfeListNode *D_00631A54[][108];
+
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_00631A54
+ * (the lists at +0x194 of each 0x1B0-byte entry of cfeEntries) to the 8.8 value, with flag 0x2 (func_0024F730) when
+ * `flagged` is set. */
+int cfe_0024C7B8(int handle)
+{
+    int index;
+    int sub;
+    int key;
+    int flagged;
+    int value;
+
+    if (func_A9F0A8() != 5) {
+        assertFailed(D_0068CED0, cfeAssertFile, 795);
+    }
+    index = func_A9F0C0(handle, 1);
+    sub = func_A9F0C0(handle, 2);
+    key = func_A9F0C0(handle, 3);
+    flagged = func_A9F0C0(handle, 4);
+    value = func_A9F0C0(handle, 5);
+    if (flagged != 0) {
+        func_0024F730(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+    } else {
+        func_0024F698(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C940);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024CB80);
+typedef struct XglCamera XglCamera;
+void xglStudioGetCamera(XglCamera **camera, int index);
+CfeListNode *func_0024B0E8(CfeListNode **list, int key, int mode, float value);
+CfeListNode *func_0024B230(CfeListNode **list, int key, int mode, float value);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024CCF8);
+/* The studio block (0x70 bytes, cleared by cfeStudioInit): the camera and its key lists. */
+typedef struct CfeStudioBlock {
+    XglCamera *camera;
+    CfeListNode *lists[27];
+} CfeStudioBlock;
+
+extern CfeStudioBlock D_006384C0;
+
+/* Script command (4 arguments): fetches the studio camera and sets key `key` of camera list `index`
+ * to the 8.8 value; lists 3 to 5 go through func_0024B230, the others through func_0024B0E8. */
+int cfe_0024CB80(int handle)
+{
+    int index;
+    int mode;
+    int key;
+    int value;
+
+    if (func_A9F0A8() != 4) {
+        assertFailed(D_0068CF10, cfeAssertFile, 856);
+    }
+    index = func_A9F0C0(handle, 1);
+    mode = func_A9F0C0(handle, 2);
+    key = func_A9F0C0(handle, 3);
+    value = func_A9F0C0(handle, 4);
+    xglStudioGetCamera(&D_006384C0.camera, 0);
+    if (index >= 3 && index < 6) {
+        func_0024B230(&D_006384C0.lists[index], key, mode, CFE_FIXED_TO_FLOAT(value));
+    } else {
+        func_0024B0E8(&D_006384C0.lists[index], key, mode, CFE_FIXED_TO_FLOAT(value));
+    }
+    return 1;
+}
+
+CfeListNode *func_0024F7C0(CfeListNode **list, int key, float value);
+CfeListNode *func_0024F860(CfeListNode **list, int key, float value);
+extern CfeListNode *D_0063857C[][32];
+
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063857C to the 8.8 value.
+ * Lists 3 to 5 hold angles (func_0024F860 / func_0024F7C0), the others plain values (func_0024F730 /
+ * func_0024F698); the flagged forms are used when `flagged` is set. */
+int cfe_0024CCF8(int handle)
+{
+    int index;
+    int sub;
+    int key;
+    int flagged;
+    int value;
+
+    if (func_A9F0A8() != 5) {
+        assertFailed(D_0068CED0, cfeAssertFile, 896);
+    }
+    index = func_A9F0C0(handle, 1);
+    sub = func_A9F0C0(handle, 2);
+    key = func_A9F0C0(handle, 3);
+    flagged = func_A9F0C0(handle, 4);
+    value = func_A9F0C0(handle, 5);
+    if (sub >= 3 && sub < 6) {
+        if (flagged != 0) {
+            func_0024F860(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        } else {
+            func_0024F7C0(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        }
+    } else {
+        if (flagged != 0) {
+            func_0024F730(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        } else {
+            func_0024F698(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        }
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024CF70);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024D1E8);
 
-typedef struct CfeListNode CfeListNode;
-CfeListNode *func_0024F698(CfeListNode **list, int key, float value);
-CfeListNode *func_0024F730(CfeListNode **list, int key, float value);
 extern CfeListNode *D_0063CDE0[];
-extern unsigned char D_0068CF10[];
-
-/* An 8.8 fixed-point script value as a float. */
-#define CFE_FIXED_TO_FLOAT(value) ((float) ((value) / 256) + (float) ((value) % 256) * (1.0f / 256))
 /* Script command (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
  * with flag 0x2 (func_0024F730) when `flagged` is set. */
 int cfe_0024D5E0(int handle)
@@ -272,11 +374,11 @@ int cfe_0024D5E0(int handle)
     return 1;
 }
 
-extern unsigned char D_0068CED0[];
 extern CfeListNode *D_0063ACB4[][140];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4 (140 per row) to the 8.8
- * value, with flag 0x2 (func_0024F730) when `flagged` is set. */
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4
+ * (140 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
+ * `flagged` is set. */
 int cfe_0024D738(int handle)
 {
     int index;
@@ -303,8 +405,9 @@ int cfe_0024D738(int handle)
 
 extern CfeListNode *D_0063CE0C[][6];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C (6 per row) to the 8.8
- * value, with flag 0x2 (func_0024F730) when `flagged` is set. */
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C
+ * (6 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
+ * `flagged` is set. */
 int cfe_0024D8C0(int handle)
 {
     int index;
@@ -331,8 +434,9 @@ int cfe_0024D8C0(int handle)
 
 extern CfeListNode *D_0063CE90[][20];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE90 (20 per row) to the 8.8
- * value, with flag 0x2 (func_0024F730) when `flagged` is set. */
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE90
+ * (20 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
+ * `flagged` is set. */
 int cfe_0024DA40(int handle)
 {
     int index;
