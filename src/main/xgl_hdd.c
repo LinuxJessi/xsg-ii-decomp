@@ -1,6 +1,9 @@
 #include "common.h"
 #include "shared.h"
+#include "main/pad.h"
 #include "main/tu012.h"
+#include "main/tu021.h"
+#include "main/tu093.h"
 #include "main/xgl_cd.h"
 #include "main/xgl_hdd.h"
 #include "main/control_entry.h"
@@ -202,7 +205,6 @@ int create_file(int card, int slot, const void *data, int size);
  * decide sound it plays (seVoiceStartDefault tag 1, id 2). */
 #define HDD_ERROR_WAIT_FRAMES 30
 #define HDD_ERROR_SE_DECIDE 0x01000002
-#define PAD_CIRCLE 0x0020
 /* xglHddMcCreate() */
 #define HDD_CREATE_ERR_MKDIR_ROOT (-10)
 #define HDD_CREATE_ERR_CLOSE_ROOT (-0x0c)
@@ -244,42 +246,24 @@ extern char parentDirEntryName[8];
 extern u8 HddActive;
 extern char mount_device[6];
 
-/* xglHddErrorScreen's view of the port 0 pad record (owned by xgl_pad.c):
- * only the newly-pressed button mask at +0x2a. */
-typedef struct HddPadRecord {
-    unsigned char unmodeled_00[0x2a];
-    unsigned short pressed;
-    unsigned char unmodeled_2c[0x80 - 0x2c];
-} HddPadRecord;
+/* The pad records of xgl_pad.c (0x80 bytes per port). */
+extern PadRecord PadData[2];
 
-extern HddPadRecord PadData[2];
-
-/* The render state's error-screen flag at +0x84, set while
- * xglHddErrorScreen owns the display. */
-typedef struct HddRenderState {
-    unsigned char unmodeled_00[0x84];
-    unsigned char errorScreenActive;
-} HddRenderState;
-
-extern HddRenderState sRender;
 /* The GIF packet xglHddErrorScreen sends before each frame (6 quadwords on
  * DMA channel 2), and the error message it prints. */
-extern u8 TestEnv_0[];
+extern u8 hddErrorScreenPacket[];
 extern char hddLoadErrorText[];
 /* "pfs0:/xenosaga.hdd", the installed copy of the disc file record, and
  * "xenosaga.00", the disc file whose record it must equal. */
 extern char hddcheck[];
 extern char cd_filename[];
 /* The error codes xglHddMcCreate returns (negated) for the xglHddMcCheckCore
- * results -1 to -4, and the "1G" size argument of the save partition. */
-extern unsigned char tbl_1[];
+ * results -1 to -4 (indexed by ~checkResult), and the "1G" size argument of
+ * the save partition. */
+extern unsigned char hddMcCheckErrorCodes[];
 extern unsigned char mcPartitionSize1G[];
 extern u8 *WorkEnd;
 
-void seVoiceStartDefault(int id);
-/* Fills the caller's 0x2c-byte disc file record, the directory record first
- * (tu022.c reads its lsn and size). */
-int xglCdCheckFile(const char *path, void *record);
 extern int sceIoctl2(int descriptor, int command, const void *input,
                      unsigned int input_size, void *output, unsigned int output_size);
 extern int sceMkdir(const char *path, int mode);
@@ -294,6 +278,8 @@ static int xglHddCheckCore(void) {
     return -1;
 }
 
+/* Runs xglHddCheckCore. A required reset starts activation 0x103 and reports
+ * HDD_NOT_READY (unreachable in this build, where the core always reports -1). */
 int xglHddCheck2(void)
 {
     int result = xglHddCheckCore();
@@ -305,6 +291,11 @@ int xglHddCheck2(void)
     return result;
 }
 
+/*
+ * Checks the HDD. A state of 3 shows the error screen first, and a required reset
+ * shows it and reactivates the HDD (the latter unreachable in this build, see
+ * xglHddCheckCore).
+ */
 int xglHddCheck(void)
 {
     int result;
@@ -325,13 +316,14 @@ int xglHddCheck(void)
     return result;
 }
 
+/* Shows the HDD load error text, and returns once Circle is pressed after the wait frames. */
 void xglHddErrorScreen(void)
 {
     int waitFrames = HDD_ERROR_WAIT_FRAMES;
 
     sRender.errorScreenActive = 1;
     for (;;) {
-        xglDmaDirectNormal(2, (u32)TestEnv_0, 6);
+        xglDmaDirectNormal(2, (u32)hddErrorScreenPacket, 6);
         xglFontPrint(48, 64, 0xffffff, hddLoadErrorText);
         if (waitFrames > 0) {
             waitFrames--;
@@ -721,6 +713,10 @@ int create_file(int card, int slot, const void *data, int size)
     return result;
 }
 
+/*
+ * Creates the save folder for state->status and writes its icon and payload files.
+ * Returns 0 or a negative failure code.
+ */
 int xglHddMcCreate(struct HddCheckState *state)
 {
     char *deviceName;
@@ -747,7 +743,7 @@ int xglHddMcCreate(struct HddCheckState *state)
     } else {
         checkResult = xglHddMcCheckCore(state);
         if (checkResult < 0) {
-            result = -(int)tbl_1[~checkResult];
+            result = -(int)hddMcCheckErrorCodes[~checkResult];
             xglHddMcUmount();
             return result;
         }
@@ -930,12 +926,13 @@ void xglHddInstallReadCB(int event, int value) {
 #define HDD_INSTALL_FAIL_UNMOUNT (-14)
 #define HDD_INSTALL_FAIL_REMOUNT (-15)
 
-/* The install image staged at the fixed work address: a size pair at +0x28
- * and +0x2c, and the 80-byte SYSTEM.CNF copy at +0x200. */
+/* The install image staged at the fixed work address: the offset and size of
+ * its last entry at +0x28 / +0x2c (their sum is the image size), and the
+ * 80-byte SYSTEM.CNF copy at +0x200. */
 struct HddInstallImage {
     unsigned char unmodeled_00[0x28];
-    int bodySize;
-    int tableSize;
+    int lastEntryOffset;
+    int lastEntrySize;
     unsigned char unmodeled_30[0x1d0];
     unsigned char systemCnf[HDD_SYSTEM_CNF_SIZE];
 };
@@ -960,7 +957,8 @@ extern char dvdname_2[];
  * SYSTEM.CNF) into a new 256 MB partition, adds 256 MB sub-partitions up to the
  * minimum size, formats and mounts it, copies the xenosaga.0N archives in 16 MB pieces and
  * writes the check file. Progress and failures go to callback (stages and
- * HDD_INSTALL_FAIL_* above). */
+ * HDD_INSTALL_FAIL_* above). Returns 0 on success, 1 when the copy was
+ * cancelled and -1 on failure. */
 int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *param)
 {
     struct HddInstallImage *image = (struct HddInstallImage *)HDD_INSTALL_IMAGE_ADDRESS;
@@ -987,6 +985,7 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
     context.status = 0;
     callback(HDD_INSTALL_STAGE_BEGIN, 0, param);
 
+    /* Read the install image, then copy SYSTEM.CNF into it. */
     if (xglCdReadFile(hddResourcePath, image, 0, 1) < 0) {
         callback(HDD_INSTALL_FAIL_RESOURCE, 0, param);
         return -1;
@@ -995,8 +994,9 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
     for (i = 0; i < HDD_SYSTEM_CNF_SIZE; i++) {
         image->systemCnf[i] = source[i];
     }
-    size = (image->bodySize + image->tableSize + HDD_SECTOR_SIZE - 1) & -HDD_SECTOR_SIZE;
+    size = (image->lastEntryOffset + image->lastEntrySize + HDD_SECTOR_SIZE - 1) & -HDD_SECTOR_SIZE;
 
+    /* Create the partition and extend it in 256M steps. */
     callback(HDD_INSTALL_STAGE_RESOURCE_READ, 0, param);
     sprintf(path, partitionSpecFormat, partitionname);
     partition = sceOpen(path, HDD_OPEN_READ_WRITE_CREATE);
@@ -1026,6 +1026,7 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
         return -1;
     }
 
+    /* Format and mount the new partition. */
     callback(HDD_INSTALL_STAGE_FORMAT, 0, param);
     formatSize = 0x2000;
     if ((result = sceFormat(pfsDevicePath, partitionname, &formatSize, 4)) < 0) {
@@ -1048,12 +1049,19 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
         return -1;
     }
 
+    /* Count the archive parts on the disc, then copy each part to the hard disk
+       in pieces of at most 16 MB. */
     archives = 0;
     dvdname_2[10] = '0';
     while ((size = xglCdGetFileSize(dvdname_2)) >= 0) {
         archives += (size + HDD_INSTALL_ARCHIVE_SIZE - 1) / HDD_INSTALL_ARCHIVE_SIZE;
         dvdname_2[10]++;
     }
+    /* Move the total piece count into the high half: context.base starts at
+       count << 16 and grows by one per piece, so the offset that
+       xglHddInstallReadCB reports (base * 0x10 plus sixteenths of the current
+       piece) carries the total in bits 20 and up and the progress in
+       sixteenths of a piece below them. */
     archives <<= 16;
 
     dvdname_2[10] = '0';
@@ -1092,6 +1100,7 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
         xglHddUninstall();
         return -1;
     }
+    /* Write the check file, then remount the partition read-only. */
     callback(HDD_INSTALL_STAGE_FINISH, 0, param);
     descriptor = sceOpen(hddcheck, HDD_OPEN_WRITE_CREATE_TRUNC, HDD_MODE_RW_FILE);
     if (descriptor < 0) {
@@ -1101,7 +1110,7 @@ int xglHddInstall(int (*callback)(int stage, int offset, void *param), void *par
         return -1;
     }
     callback(HDD_INSTALL_STAGE_FINISH, 1, param);
-    xglCdCheckFile(cd_filename, (unsigned int *)image);
+    xglCdCheckFile(cd_filename, image);
     result = sceWrite(descriptor, image, HDD_SECTOR_SIZE);
     if (result != HDD_SECTOR_SIZE) {
         callback(HDD_INSTALL_FAIL_CHECK_WRITE, result, param);
