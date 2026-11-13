@@ -87,7 +87,7 @@ void tiWaterSetEffectMode(void) {
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterSceneLoop);
 
 void pxySetDrawCallback(void (*callback)(void));
-void tiWaterRegisterSub(struct TiWaterSub *sub);
+int tiWaterRegisterSub(struct TiWaterSub *sub);
 void tiWaterStepSub(struct TiWaterSub *sub);
 extern void tiWaterDrawAll(void);
 

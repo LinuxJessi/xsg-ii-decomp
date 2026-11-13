@@ -9,8 +9,9 @@ struct TiWaterObject {
 
 /* Sub-object reached through TiWaterObject.sub_offset; its word at +0x08 gates the release path. */
 struct TiWaterSub {
-    unsigned char unmodeled_00[0x8];
-    int active;
+    int magic;                  /* +0x00: "WAT " */
+    unsigned char unmodeled_04[4];
+    unsigned int active;        /* +0x08: number of items */
 };
 
 #endif
