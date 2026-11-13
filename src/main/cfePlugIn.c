@@ -13,11 +13,42 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B230);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeRotateVectorXY);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeStrLastCharPos);
+/* Number of characters of `text` equal to `character`; 0 for no text. */
+int cfeStrLastCharPos(const char *text, char character)
+{
+    int count = 0;
+
+    if (text == 0) {
+        return 0;
+    }
+    while (*text != 0) {
+        if (*text == character) {
+            count++;
+        }
+        text++;
+    }
+    return count;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeMesLayoutText);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeMesUnescape);
+/* Copies a message, turning each "\\n" into a newline; another escaped character is dropped (its place
+ * is skipped). */
+void cfeMesUnescape(char *destination, const char *source)
+{
+    while (*source != 0) {
+        if (*source == '\\') {
+            if (source[1] == 'n') {
+                *destination = '\n';
+            }
+            source += 2;
+            destination++;
+        } else {
+            *destination++ = *source++;
+        }
+    }
+    *destination = 0;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeLoadResourceObject);
 

@@ -101,7 +101,15 @@ CfeListNode *func_0024F860(CfeListNode **list, int key, float value)
     return node;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu144", func_0024F8F8);
+/* Copies the flags and the value of `source` to the node of `key` (found or added), then updates the list. */
+void func_0024F8F8(CfeListNode **list, CfeListNode *source, int key)
+{
+    CfeListNode *node = cfeListFindOrAdd(list, key);
+
+    node->flags = source->flags;
+    node->value = source->value;
+    func_0024FC90(*list);
+}
 
 /* Removes the first node whose key is `key` from the list starting at `head`, frees it (cfeNodeRelease) and
    returns the list head (the next node when the head itself was the match). */

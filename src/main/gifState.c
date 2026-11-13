@@ -814,14 +814,26 @@ void gifStateSetAlphaFix(int fixedAlpha) {
     gifStateAddReg(GS_ALPHA_1, GS_SET_ALPHA(0, 1, 2, 1, fixedAlpha));
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateSetScissor);
+/* Sets the drawing scissor rectangle (SCISSOR_1). */
+void gifStateSetScissor(int minX, int minY, int maxX, int maxY)
+{
+    gifStateAddReg(GS_SCISSOR_1, GS_SET_SCISSOR(minX, maxX, minY, maxY));
+}
 
 /* GS ZBUF_1 at page 0 with the Z format code 0x31 in the PSM field. */
 void gifStateSetZBufFormat(void) {
     gifStateAddReg(GS_ZBUF_1, GS_SET_ZBUF(0, 0x31, 0));
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", nmlModelSetMulColor);
+#include "quadword.h"
+/* The colour the models are multiplied with. */
+extern AlignedVector4 D_00631690;
+
+/* Sets the model multiply colour (a quadword copy). */
+void nmlModelSetMulColor(Vector4 *color)
+{
+    QuadwordCopy(&D_00631690, color);
+}
 
 
 /* Sets the alpha type and the alpha value of the effect (gifStatus +0x0C/+0x10). */
