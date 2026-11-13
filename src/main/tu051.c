@@ -2562,7 +2562,7 @@ void uwamonoPlayerUpdate(void)
                 float y;
                 float angle;
                 float step;
-                int analog;
+                int pressure;
                 int digital;
 
                 if (gameWork.control & CONTROL_REPLAYED) {
@@ -2570,25 +2570,25 @@ void uwamonoPlayerUpdate(void)
                     stick_y = gameWork.replayStickY;
                     actor->status = gameWork.replayStatus;
                 } else {
-                    /* Analog stick and the pad's digital direction (scaled to stick range): the one with
+                    /* D-pad pressure and the pad's digital direction (scaled to the same range): the one with
                        the larger magnitude wins, opposite signs cancel. */
-                    analog = PadData.stickX;
+                    pressure = PadData.horizontalPressure;
                     digital = PadData.directionX * 2;
-                    if (analog != 0 && digital != 0 && (analog ^ digital) < 0) {
+                    if (pressure != 0 && digital != 0 && (pressure ^ digital) < 0) {
                         stick_x = 0;
-                    } else if (analog < 0 || digital < 0) {
-                        stick_x = MIN(analog, digital);
+                    } else if (pressure < 0 || digital < 0) {
+                        stick_x = MIN(pressure, digital);
                     } else {
-                        stick_x = MAX(analog, digital);
+                        stick_x = MAX(pressure, digital);
                     }
-                    analog = PadData.stickY;
+                    pressure = PadData.verticalPressure;
                     digital = PadData.directionY * 2;
-                    if (analog != 0 && digital != 0 && (analog ^ digital) < 0) {
+                    if (pressure != 0 && digital != 0 && (pressure ^ digital) < 0) {
                         stick_y = 0;
-                    } else if (analog < 0 || digital < 0) {
-                        stick_y = MIN(analog, digital);
+                    } else if (pressure < 0 || digital < 0) {
+                        stick_y = MIN(pressure, digital);
                     } else {
-                        stick_y = MAX(analog, digital);
+                        stick_y = MAX(pressure, digital);
                     }
                     gameWork.replayStickX = stick_x;
                     gameWork.replayStickY = stick_y;
