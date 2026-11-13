@@ -459,4 +459,32 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_0024A8C0);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeUpdateEntries);
+void xglMovieRewind(CfeEvalEntry *entry);
+void xglMoviePlay(CfeEvalEntry *entry);
+void func_0024A8C0(CfeEvalEntry *entry);
+
+/* Below this size an entry's scale counts as zero and the entry is skipped. */
+#define CFE_ENTRY_MIN_SCALE 0.05f
+/* Updates the entries: rewinds the movie of each entry with a result, then plays (unless
+ * `noPlay`) and draws every entry whose scale is not zero. */
+void cfeUpdateEntries(int noPlay)
+{
+    int i;
+
+    if (cfeEvalEntryCount != 0) {
+        for (i = 0; i < cfeEvalEntryCount; i++) {
+            if (cfeEvalEntries[i].result_int != 0) {
+                xglMovieRewind(&cfeEvalEntries[i]);
+            }
+        if (__builtin_fabsf(cfeEvalEntries[i].evaluated[2].x) < CFE_ENTRY_MIN_SCALE
+            || __builtin_fabsf(cfeEvalEntries[i].evaluated[2].y) < CFE_ENTRY_MIN_SCALE
+            || __builtin_fabsf(cfeEvalEntries[i].evaluated[2].z) < CFE_ENTRY_MIN_SCALE) {
+            continue;
+        }
+        if (noPlay == 0) {
+            xglMoviePlay(&cfeEvalEntries[i]);
+        }
+        func_0024A8C0(&cfeEvalEntries[i]);
+        }
+    }
+}
