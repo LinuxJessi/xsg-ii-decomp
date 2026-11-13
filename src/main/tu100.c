@@ -2660,13 +2660,13 @@ void countdownStart(void) {
     countdownActive = 1;
 }
 
-void func_002AA5D8(int *target, u8 *source, int value);
+void sprintf(int *target, u8 *source, int value);
 extern int D_0069E220;
 extern u8 D_0069D558[];
 
 /* Formats value as "%5d" into a shared buffer and returns that buffer. */
 int *func_00215598(int value) {
-    func_002AA5D8(&D_0069E220, D_0069D558, value);
+    sprintf(&D_0069E220, D_0069D558, value);
     return &D_0069E220;
 }
 
