@@ -14,7 +14,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeNormalizeFixed2);
 typedef struct CfeTrackNode {
     int flags;
     int startTime;
-    unsigned char unmodeled_0008[4];
+    int angle;                      /* +0x08: 8.8 fixed point */
     int firstDirection[2];
     int secondDirection[2];
     unsigned char unmodeled_001C[4];
@@ -70,9 +70,29 @@ INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackSample);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", func_002508C8);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackHasTime);
+/* 1 when a key of the track has startTime `time`. */
+int cfeTrackHasTime(CfeTrackNode *node, int time)
+{
+    for (; node != 0; node = node->next) {
+        if (node->startTime == time) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackAnyHasTime);
+/* 1 when any of the `count` tracks has a key at `time`. */
+int cfeTrackAnyHasTime(CfeTrackNode **tracks, int count, int time)
+{
+    int i;
+
+    for (i = 0; i < count; i++) {
+        if (cfeTrackHasTime(tracks[i], time)) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackFindTime);
 
@@ -97,9 +117,37 @@ int cfeTrackCount(CfeTrackNode *entry)
     return count;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250D88);
+/* Number of keys of the track with lower <= startTime <= upper. */
+int func_00250D88(CfeTrackNode *node, int lower, int upper)
+{
+    int count = 0;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackCountValueRuns);
+    for (; node != 0; node = node->next) {
+        if (node->startTime >= lower && node->startTime <= upper) {
+            count++;
+        }
+    }
+    return count;
+}
+
+/* Number of runs of equal angles along the track (1 for a track whose keys all share it, 0 for none). */
+int cfeTrackCountValueRuns(CfeTrackNode *node)
+{
+    int count = 0;
+    int value;
+
+    if (node != 0) {
+        value = node->angle;
+        count = 1;
+        for (; node != 0; node = node->next) {
+            if (node->angle != value) {
+                count++;
+                value = node->angle;
+            }
+        }
+    }
+    return count;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250E10);
 
