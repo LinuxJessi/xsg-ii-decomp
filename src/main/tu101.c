@@ -2413,7 +2413,7 @@ void menuDrawStatCompare(int x, int y, int value, int compare)
     fontObjResetColor();
 }
 
-extern unsigned char D_003EB290[];
+extern unsigned char menuPanelFrame[];
 extern unsigned char D_0069D638[];
 extern unsigned char D_0069D640[];
 extern unsigned char D_0069D648[];
@@ -2459,7 +2459,7 @@ void menuDrawCharStats(int x, int y, struct ControlContext *member, int item, in
         }
     }
     record = battleContextStateGet(member->id);
-    panelDrawNineSlice(D_003EB290, x, y, 0x56, 0x8B);
+    panelDrawNineSlice(menuPanelFrame, x, y, 0x56, 0x8B);
     if (ptState.splitMode == PARTY_SPLIT_ON) {
         textDrawGlyphString(x + 8, y + 0xA, D_0069D638, MENU_PARTY_TEXT_COLOR);
     } else {
@@ -2491,9 +2491,9 @@ void menuDrawCharStats(int x, int y, struct ControlContext *member, int item, in
     menuDrawStatCompare(x + 0x35, y + 0x76, record->etherDefense, D_006A5530.etherDefense);
     if (ptState.splitMode == PARTY_SPLIT_ON) {
         x -= 0x11;
-        panelDrawNineSlice(D_003EB290, x - 0xA3, y + 0x56, 0xAE, 0x35);
+        panelDrawNineSlice(menuPanelFrame, x - 0xA3, y + 0x56, 0xAE, 0x35);
     } else {
-        panelDrawNineSlice(D_003EB290, x - 0xA3, y + 0x56, 0x9D, 0x35);
+        panelDrawNineSlice(menuPanelFrame, x - 0xA3, y + 0x56, 0x9D, 0x35);
     }
     textDrawGlyphString(x - 0x9E, y + 0x60, D_0069D688, MENU_PARTY_TEXT_COLOR);
     textDrawGlyphString(x - 0x9E, y + 0x74, D_0068AA10, MENU_PARTY_TEXT_COLOR);
@@ -3163,7 +3163,7 @@ void menuDrawClassInfo(int x, int y)
     struct ControlContext *context = ptGetMenuMember();
 
     if (context != 0) {
-        panelDrawNineSlice(D_003EB290, x, y, 0xE5, 0x32);
+        panelDrawNineSlice(menuPanelFrame, x, y, 0xE5, 0x32);
         textDrawGlyphString(x + 0xA, y + 9, D_0068AAF8, MENU_PARTY_TEXT_COLOR);
         textDrawGlyphString(x + 0x53, y + 9, D_0069D680, MENU_PARTY_TEXT_COLOR);
         textDrawDecimal(x + 0x60, y + 9, context->buffer->flags[0] + 1, 3, MENU_PARTY_TEXT_COLOR);
@@ -3427,9 +3427,9 @@ void menuDrawConfig(int x, int y, LicenseCursor *cursor, unsigned char *items)
     int defaultY;
     int hiddenRow; /* cursor index for which this page draws no cursor */
 
-    panelDrawNineSlice(D_003EB290, x - 0x28, y, 0x15E, 0xC4);
+    panelDrawNineSlice(menuPanelFrame, x - 0x28, y, 0x15E, 0xC4);
     menuDrawTitledFrame(x - 0x24, y + 5, 0x156, 0xBA, D_0068AB28);
-    panelDrawNineSlice(D_003EB290, x - 0x28, y + 0xCE, 0x15E, 0x36);
+    panelDrawNineSlice(menuPanelFrame, x - 0x28, y + 0xCE, 0x15E, 0x36);
     menuDrawTitledFrame(x - 0x24, y + 0xD3, 0x156, 0x2C, D_0068AB38);
     D_0069E268[0] = SaveData.cursor_memory;
     D_0069E268[1] = SaveData.cursor_memory_alt;
@@ -3471,7 +3471,7 @@ extern unsigned char D_0068AB48[];
 /* Controller page: the pad picture with its shaded parts and the four button labels. */
 void menuDrawControllerConfig(void)
 {
-    panelDrawNineSlice(D_003EB290, 9, 0x5C, 0x1EE, 0x121);
+    panelDrawNineSlice(menuPanelFrame, 9, 0x5C, 0x1EE, 0x121);
     menuDrawTitledFrame(0xD, 0x61, 0x1E6, 0x117, D_0068AB48);
     packetSubmitRequest(0x2BF, 0, 0xAC, 0);
     packetSubmitRequest(0x2C0, 0, 0xAC, 1);
@@ -3833,7 +3833,7 @@ void menuDrawPartyPanel(MenuItem *item, struct ControlContext *member, int x, in
     case 0:
     case 1:
         if (item->flags & MENU_ITEM_ALT_FRAME) {
-            panelDrawNineSlice(D_003EB290, x, y, 0xE2, 0x2B);
+            panelDrawNineSlice(menuPanelFrame, x, y, 0xE2, 0x2B);
             packetSubmitRequest(0x121, x + 0xE, y + 4, 0x11);
             menuDrawLitIconMarked(x + 8, y + 7, status->memberIndex);
             textDrawGlyphString(x + 0x28, y + 7, status->text, MENU_PARTY_TEXT_COLOR);
@@ -3933,7 +3933,7 @@ void menuDrawPartyPanel(MenuItem *item, struct ControlContext *member, int x, in
     case 5:
     case 6:
         if (item->flags & MENU_ITEM_TALL) {
-            panelDrawNineSlice(D_003EB290, x, y + 0x19, 0xAF, 0x27);
+            panelDrawNineSlice(menuPanelFrame, x, y + 0x19, 0xAF, 0x27);
             if (item->flags & MENU_ITEM_ALT_FRAME) {
                 packetSubmitRequest(0x121, x + 0x2F, y + 4, 0x11);
             } else {
@@ -3972,7 +3972,7 @@ void menuDrawPartyPanel(MenuItem *item, struct ControlContext *member, int x, in
         }
         break;
     case 8:
-        panelDrawNineSlice(D_003EB290, x, y + 0x29, 0xAE, 0x27);
+        panelDrawNineSlice(menuPanelFrame, x, y + 0x29, 0xAE, 0x27);
         if (item->flags & MENU_ITEM_ALT_FRAME) {
             packetSubmitRequest(0x121, x + 0x2F, y + 4, 0x11);
             packetSubmitRequest(0x115, x + 0x38, y + 0x19, 0x11);

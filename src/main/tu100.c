@@ -2332,7 +2332,7 @@ void menuDrawEquipPage(ControlSlot *slot) {
     }
     x = D_006A5130[0].current_pair.x;
     y = D_006A5130[0].current_pair.y;
-    panelDrawNineSlice(D_003EB290, x, y, 0x77, 0x30);
+    panelDrawNineSlice(menuPanelFrame, x, y, 0x77, 0x30);
     menuDrawKindIcon(x + 0x18, y + 4, 3);
     menuDrawKindIcon(x + 0x18, y + 0x18, 2);
     if ((u8) slot->state == 6) {
@@ -2413,7 +2413,7 @@ void menuDrawExtraPage(void) {
         fontTrackSetTarget(&D_006A5110, 0x200, 0xFF);
     }
     fontTrackEase(&D_006A5110);
-    panelDrawNineSlice(D_003EB290, D_006A5110.current_pair.x, 0x149, 0xF0, 0x2B);
+    panelDrawNineSlice(menuPanelFrame, D_006A5110.current_pair.x, 0x149, 0xF0, 0x2B);
     menuDrawTitledFrame(D_006A5110.current_pair.x + 6, 0x14E, 0x6B, 0x21, D_0069D548);
     menuDrawPlayTime(D_006A5110.current_pair.x + 0x75, 0x14E);
     if (D_0069D50E != 0) {

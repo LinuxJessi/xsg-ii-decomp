@@ -605,7 +605,7 @@ void yg2PathDrawMainMenu(int opacity) {
     fontObjResetOpacity();
 }
 
-void func_0021B8C8(int x, int y, int unused, int mode);
+void textDrawDigitsZero(int x, int y, int unused, int mode);
 
 void yg2PathDrawPathGrid(int opacity)
 {
@@ -634,7 +634,7 @@ void yg2PathDrawPathGrid(int opacity)
             status = questFlags[i] & 3;
             if (status != 0) {
                 i++;
-                func_0021B8C8(x, y, i, 2);
+                textDrawDigitsZero(x, y, i, 2);
             } else {
                 i++;
             }
@@ -680,11 +680,256 @@ typedef struct YgCitizenFileRequest {
 
 void textDrawSegment(int, int, unsigned char *, int);
 void menuDrawShortOutlineFrame(int, int, int, int);
-extern int yg2PathScroll;
-extern int yg2PathQuestMessages;
-extern signed char D_0069E27A;
-extern unsigned char D_003EC958[];
-extern unsigned char D_0068B0E0[];
+void textDrawDigitsPair(int, int, int, int, int);
+void textDrawDigitsWideAlt(int, int, int, int);
+void func_0021CEE0(int, int, int, int);
+void menuDrawTitledFrameRed(int, int, int, int, unsigned char *);
+void renderSpriteClutAlpha(int, int, int, int, int, unsigned char);
+void renderSpriteClut(int, int, int, int, int);
+void sprintf(YgCitizenFileRequest *, unsigned char *, YgCitizenFileRequest *, int);
+void xglPacketTextureTrans(int);
+void fontObjBuildBaseVifPacket(void);
+extern unsigned char yg2PathPanelImage[];
+extern unsigned char *D_0069D880;
+extern unsigned char yg2PathTextHeader[];
+extern const YgCitizenFileRequest D_0068B090;
+extern const YgCitizenFileRequest D_0068B0A8[];
+extern unsigned char yg2PathPortraitFormat[];
+extern unsigned char D_0069D850[];
+extern unsigned char D_0069D858[];
+extern unsigned char D_0069D860[];
+extern unsigned char D_0069D868[];
+extern unsigned char D_0069D870[];
+extern unsigned char D_0069D878[];
+extern signed char D_003EC980[];
+extern unsigned char D_003EC930[];
+extern unsigned char D_0069D838[];
+extern unsigned char D_0068B038[];
+extern unsigned char D_0069D840[];
+extern unsigned char D_0069D848[];
+void menuDrawTitledFrameBlue(int, int, int, int, unsigned char *);
+
+/* Message page: the current path's quest message record and its
+   questFlags byte (low nibble: availability, bit 0x10: flag). */
+void yg2PathDrawMessagePage(int scroll)
+{
+  YgCitizenFileRequest fileRequest;
+  unsigned int fadeNext;
+  int questState;
+
+  fontObjSetOpacity(scroll);
+  panelDrawNineSlice(D_003EC930, 12, 15, 415, 89);
+  packetSubmitRequest(454, 32, 15, 1);
+  textDrawDigitsWideAlt(74, 15, yg2PathCurrentPath + 1, 2);
+  func_0021CEE0(24, 40, 391, 50);
+  menuDrawTitledFrameBlue(29, 47, 235, 37, D_0069D838);
+  menuDrawTitledFrameBlue(267, 47, 144, 37, D_0068B038);
+  panelDrawNineSlice(yg2PathPanelImage, 26, 109, 460, 250);
+  packetSubmitRequest(490, 53, 114, 1);
+  packetSubmitRequest(418, 34, 140, 1);
+  packetSubmitRequest(428, 462, 140, 0);
+  packetSubmitRequest(420, 462, 140, 1);
+  packetSubmitRequestEx(419, 50, 140, 412, 16, 1);
+  packetSubmitRequestEx(417, 34, 156, 16, 172, 1);
+  packetSubmitRequestEx(427, 462, 156, 16, 155, 0);
+  packetSubmitRequest(424, 34, 328, 0);
+  packetSubmitRequest(416, 34, 328, 1);
+  packetSubmitRequest(426, 462, 311, 0);
+  packetSubmitRequest(436, 320, 324, 0);
+  packetSubmitRequestEx(425, 50, 328, 270, 16, 0);
+  packetSubmitRequestEx(425, 352, 311, 110, 16, 0);
+  func_0021CEE0(54, 148, 130, 148);
+  func_0021CEE0(200, 148, 265, 137);
+  menuDrawTitledFrameRed(206, 155, 255, 123, D_0069D840);
+  menuDrawTitledFrameRed(44, 300, 150, 37, D_0069D848);
+  packetSubmitRequestEx(517, 208, 187, 249, 5, 1);
+  packetSubmitRequestEx(517, 208, 207, 249, 5, 1);
+  packetSubmitRequestEx(517, 208, 227, 249, 5, 1);
+  packetSubmitRequestEx(517, 208, 247, 249, 5, 1);
+  packetSubmitRequestEx(517, 208, 267, 249, 5, 1);
+  func_0021CEE0(215, 290, 240, 30);
+  packetSubmitRequest(531, 225, 298, 1);
+  fontObjSetColor(0x80000000ULL);
+  packetSubmitRequest(532, 225, 298, 4);
+  fontObjResetColor();
+  packetSubmitRequest(525, 258, 294, 1);
+  packetSubmitRequestEx(526, 266, 294, 168, 22, 1);
+  packetSubmitRequest(527, 434, 294, 1);
+  packetSubmitRequest(528, 258, 294, 0);
+  packetSubmitRequestEx(529, 266, 294, 168, 22, 0);
+  packetSubmitRequest(530, 434, 294, 0);
+
+  questState = questFlags[yg2PathCurrentPath] & YG2PATH_STATUS_MASK;
+  switch (questState) {
+  case YG2PATH_STATUS_MESSAGE3:
+    packetSubmitRequest(512, 229, 303, 0);
+    packetSubmitRequest(513, 222, 295, 1);
+    break;
+  case YG2PATH_STATUS_MESSAGE2:
+    packetSubmitRequest(507, 229, 303, 0);
+    packetSubmitRequest(508, 222, 295, 1);
+    break;
+  }
+  packetSubmitRequest(457, 1, 220, 1);
+  packetSubmitRequest(457, 488, 220, 1);
+  packetSubmitRequest(455, 1, 220, 1);
+  packetSubmitRequest(456, 488, 220, 1);
+  packetSubmitRequest(28, 372, 333, 64);
+  textDrawDigitsPair(416, 333, yg2PathCurrentPath + 1, 36, 2);
+  textDrawSegment(0, 0, yg2PathTextHeader, 0);
+  textDrawSegment(38, 59, ((YgQuestRecord *) yg2PathQuestMessages)[yg2PathCurrentPath].subject, 0);
+  textDrawSegment(276, 59, ((YgQuestRecord *) yg2PathQuestMessages)[yg2PathCurrentPath].location, 0);
+  textDrawSegment(59, 311, ((YgQuestRecord *) yg2PathQuestMessages)[yg2PathCurrentPath].client, 0);
+  packetSubmitRequestEx(757, 258, 294, 184, 22, 0x10000);
+  fontObjSetColor(0x80000000ULL);
+  packetSubmitRequest(721, 258, 294, 0x10004);
+  fontObjResetColor();
+
+  questState = questFlags[yg2PathCurrentPath] & YG2PATH_STATUS_MASK;
+  switch (questState) {
+  case YG2PATH_STATUS_MESSAGE:
+    packetSubmitRequest(723, 290, 294, 0x10001);
+    textDrawSegment(221, 169, ((YgQuestRecord *) yg2PathQuestMessages)[yg2PathCurrentPath].message, 0);
+    break;
+  case YG2PATH_STATUS_MESSAGE3:
+    packetSubmitRequest(722, 293, 294, 0x10001);
+    textDrawSegment(221, 169, ((YgQuestRecord *) yg2PathQuestMessages)[yg2PathCurrentPath].messageState3, 0);
+    yg2PathDrawNewMarker(340, 114, questFlags[yg2PathCurrentPath] & YG2PATH_FLAG_NEW);
+    break;
+  case YG2PATH_STATUS_MESSAGE2:
+    packetSubmitRequest(725, 292, 294, 0x10001);
+    textDrawSegment(221, 169, ((YgQuestRecord *) yg2PathQuestMessages)[yg2PathCurrentPath].messageState2, 0);
+    yg2PathDrawNewMarker(340, 114, questFlags[yg2PathCurrentPath] & YG2PATH_FLAG_NEW);
+    break;
+  }
+
+  if (yg2PathImageFade != 0 && xglCdServiceIfPending() == 0) {
+    xglPacketTextureTrans(D_0069D7DC);
+    renderSpriteClutAlpha(63, 159, 112, 127, 32, yg2PathImageFade);
+    xglPacketTextureTrans(yg2PathPortraitBuffer);
+    renderSpriteClut(63, 159, 112, 127, 32);
+    fontObjBuildBaseVifPacket();
+    fadeNext = yg2PathImageFade + 0x10;
+    if ((fadeNext & 0xFF) >= 0x81) {
+      yg2PathImageFade = -0x80;
+    } else {
+      yg2PathImageFade = fadeNext;
+    }
+    panelDrawNineSlice(yg2PathFrameImage, 63, 159, 112, 127);
+  } else if (xglCdServiceIfPending() == 0) {
+    if (D_003EC980[yg2PathCurrentPath] + 1 >= 10) {
+      fileRequest.first = D_0068B090.first;
+      fileRequest.second = D_0068B090.second;
+      fileRequest.third = D_0068B090.third;
+    } else {
+      fileRequest.first = D_0068B0A8[0].first;
+      fileRequest.second = D_0068B0A8[0].second;
+      fileRequest.third = D_0068B0A8[0].third;
+      fileRequest.fourth = D_0068B0A8[0].fourth;
+    }
+    sprintf(&fileRequest, yg2PathPortraitFormat, &fileRequest, D_003EC980[yg2PathCurrentPath] + 1);
+    ysegfReadFile((void **) &yg2PathPortraitBuffer, &fileRequest, 0, 1);
+    yg2PathImageFade = 0x10;
+  }
+  fontObjResetOpacity();
+}
+
+/* Citizen profile page. The record is copied field by field from one of two
+   template blocks: the 21-byte one carries the fourth byte, the 20-byte one does not. */
+void yg2PathDrawCitizenProfile(int scroll)
+{
+  YgCitizenFileRequest fileRequest;
+  unsigned int fadeNext;
+
+  fontObjSetOpacity(scroll);
+  panelDrawNineSlice(yg2PathPanelImage, 0x2F, 0x1B, 0x1A1, 0x148);
+  packetSubmitRequest(0x203, 0x4D, 0x1F, 1);
+  packetSubmitRequest(0x1C6, 0xD0, 0x20, 1);
+  textDrawDigitsWideAlt(0xFA, 0x20, yg2PathCurrentCitizen + 1, 2);
+  packetSubmitRequest(0x1A2, 0x37, 0x3A, 1);
+  packetSubmitRequest(0x1AC, 0x1B8, 0x3A, 0);
+  packetSubmitRequest(0x1A4, 0x1B8, 0x3A, 1);
+  packetSubmitRequestEx(0x1A3, 0x47, 0x3A, 0x171, 0x10, 1);
+  packetSubmitRequestEx(0x1A1, 0x37, 0x4A, 0x10, 0x8B, 1);
+  packetSubmitRequestEx(0x1AB, 0x1B8, 0x4A, 0x10, 0x7A, 0);
+  packetSubmitRequest(0x1A8, 0x37, 0xD5, 0);
+  packetSubmitRequest(0x1A0, 0x37, 0xD5, 1);
+  packetSubmitRequest(0x1AA, 0x1B8, 0xC4, 0);
+  packetSubmitRequest(0x1B4, 0x118, 0xD1, 0);
+  packetSubmitRequestEx(0x1A9, 0x47, 0xD5, 0xD1, 0x10, 0);
+  packetSubmitRequestEx(0x1A9, 0x138, 0xC4, 0x80, 0x10, 0);
+  func_0021CEE0(0x42, 0x45, 0x82, 0x94);
+  func_0021CEE0(0xCD, 0x45, 0xF1, 0x81);
+  menuDrawTitledFrameRed(0xD2, 0x4C, 0xE7, 0x73, D_0069D850);
+  packetSubmitRequestEx(0x205, 0xE6, 0x6D, 0xC6, 5, 1);
+  packetSubmitRequestEx(0x205, 0xE6, 0x85, 0xC6, 5, 1);
+  packetSubmitRequestEx(0x205, 0xE6, 0x9D, 0xC6, 5, 1);
+  packetSubmitRequestEx(0x205, 0xE6, 0xB5, 0xC6, 5, 1);
+  menuDrawShortOutlineFrame(0x37, 0xEA, 0x191, 0x6B);
+  menuDrawTitledFrameRed(0x42, 0xF7, 0x17B, 0x53, D_0069D858);
+  packetSubmitRequestEx(0x205, 0x44, 0x117, 0x177, 5, 1);
+  packetSubmitRequestEx(0x205, 0x44, 0x12B, 0x177, 5, 1);
+  packetSubmitRequestEx(0x205, 0x44, 0x13F, 0x177, 5, 1);
+  packetSubmitRequest(0x1C9, 0xE, 0xB2, 1);
+  packetSubmitRequest(0x1C9, 0x1DA, 0xB2, 1);
+  packetSubmitRequest(0x1C7, 0xE, 0xB2, 1);
+  packetSubmitRequest(0x1C8, 0x1DA, 0xB2, 1);
+  packetSubmitRequest(0x1C, 0x150, 0xD9, 0x40);
+  textDrawDigitsPair(0x17C, 0xD9, yg2PathCurrentCitizen + 1, 0x32, 2);
+  textDrawSegment(0, 0, yg2PathTextHeader, 0);
+  textDrawSegment(0xD9, 0x5A, D_0069D860, 0);
+  textDrawSegment(0xD9, 0x72, D_0069D868, 0);
+  textDrawSegment(0xD9, 0x8A, D_0069D870, 0);
+  textDrawSegment(0xD9, 0xA2, D_0069D878, 0);
+  if (citizenFlags[yg2PathCurrentCitizen] != 0) {
+    textDrawSegment(0x112, 0x5A, ((YgCitizenRecord *) yg2PathCitizenRecords)[yg2PathCurrentCitizen].name, 0);
+    textDrawSegment(0x112, 0x72, ((YgCitizenRecord *) yg2PathCitizenRecords)[yg2PathCurrentCitizen].sex, 0);
+    textDrawSegment(0x112, 0x8A, ((YgCitizenRecord *) yg2PathCitizenRecords)[yg2PathCurrentCitizen].age, 0);
+    textDrawSegment(0x112, 0xA2, ((YgCitizenRecord *) yg2PathCitizenRecords)[yg2PathCurrentCitizen].hobby, 0);
+    textDrawSegment(0x52, 0x105, ((YgCitizenRecord *) yg2PathCitizenRecords)[yg2PathCurrentCitizen].profile, 0);
+    if (yg2PathImageFade != 0 && xglCdServiceIfPending() == 0) {
+      xglPacketTextureTrans(D_0069D7DC);
+      renderSpriteClutAlpha(0x4B, 0x50, 0x70, 0x7F, 0x20, yg2PathImageFade);
+      xglPacketTextureTrans(yg2PathPortraitBuffer);
+      renderSpriteClut(0x4B, 0x50, 0x70, 0x7F, 0x20);
+      fontObjBuildBaseVifPacket();
+      fadeNext = yg2PathImageFade + 0x10;
+      if ((fadeNext & 0xFF) >= 0x81) {
+        yg2PathImageFade = -0x80;
+      } else {
+        yg2PathImageFade = fadeNext;
+      }
+      fontObjSetOpacity(yg2PathImageFade);
+      panelDrawNineSlice(yg2PathFrameImage, 0x4B, 0x50, 0x70, 0x7F);
+      fontObjSetOpacity(scroll);
+    } else if (xglCdServiceIfPending() == 0) {
+      if (yg2PathCurrentCitizen + 1 >= 10) {
+        fileRequest.first = D_0068B090.first;
+        fileRequest.second = D_0068B090.second;
+        fileRequest.third = D_0068B090.third;
+      } else {
+        fileRequest.first = D_0068B0A8[0].first;
+        fileRequest.second = D_0068B0A8[0].second;
+        fileRequest.third = D_0068B0A8[0].third;
+        fileRequest.fourth = D_0068B0A8[0].fourth;
+      }
+      sprintf(&fileRequest, yg2PathPortraitFormat, &fileRequest, yg2PathCurrentCitizen + 1);
+      ysegfReadFile((void **) &yg2PathPortraitBuffer, &fileRequest, 0, 1);
+      yg2PathImageFade = 0x10;
+    }
+  } else {
+    textDrawSegment(0x12C, 0x5A, D_0069D880, 0);
+    textDrawSegment(0x12C, 0x72, D_0069D880, 0);
+    textDrawSegment(0x12C, 0x8A, D_0069D880, 0);
+    textDrawSegment(0x12C, 0xA2, D_0069D880, 0);
+    packetSubmitRequest(0x1EB, 0x4B, 0x50, 0);
+    panelDrawNineSlice(yg2PathFrameImage, 0x4B, 0x50, 0x70, 0x7F);
+  }
+  fontObjResetOpacity();
+}
+
+extern signed char yg2PathDetailIndex;
+extern unsigned char yg2PathDetailTextHeader[];
 
 void yg2PathDrawPathDetail(void)
 {
