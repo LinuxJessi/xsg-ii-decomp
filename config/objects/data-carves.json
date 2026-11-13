@@ -88,6 +88,63 @@
     }
    ]
   },
+  "main/tu012": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068df60",
+      "0x0068df88"
+     ],
+     "generated": [
+      "0x0068df60",
+      "0x0068df88"
+     ],
+     "generated_by": [
+      "xglMcRequest"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068DF60"
+     ],
+     "also_referenced_by_c": [
+      "xglMcBasePath"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu012.o"
+     }
+    },
+    {
+     "range": [
+      "0x0068dfa0",
+      "0x0068e088"
+     ],
+     "generated": [
+      "0x0068dfa0",
+      "0x0068e084"
+     ],
+     "generated_by": [
+      "xglMcCreateStep",
+      "xglMcExecute",
+      "xglMcMain"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068DFA0",
+      "jtbl_0068DFD0",
+      "D_0068E010",
+      "jtbl_0068E020",
+      "jtbl_0068E050",
+      "jtbl_0068E070"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu012.o"
+     }
+    }
+   ]
+  },
   "main/tu019": {
    ".rodata": [
     {

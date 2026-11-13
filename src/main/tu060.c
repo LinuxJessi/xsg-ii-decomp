@@ -1,5 +1,6 @@
 #include "common.h"
 #include "main/pad.h"
+#include "main/tu012.h"
 
 /* One port of the pad record PadData, the full 0x80 bytes (xglPadRead
  * scales the port index by 128): the raw pad buffer, the decoded buttons
@@ -646,18 +647,6 @@ enum MemcardTestState {
     "\xA3\xC8\xA3\xC4\xA3\xC4\xA5\xBB\xA1\xBC\xA5\xD6\xA1\xA1\xB6\xF5\xA4\xAD\xCD\xC6\xCE\xCC\xA1\xA7" \
     "%5dKbyte"
 
-/* One request of the xglMc queue: the file number, its buffer and size, and
- * a callback the list and old-data scans call per entry (with the result,
- * and the entry bytes for the old-data check).  The callback is unprototyped
- * because the two callers differ: DebugCallbackLog takes the result only,
- * func_001EAB50 the result and the entry. */
-typedef struct McRequestParam {
-    int file;
-    void *data;
-    int size;
-    int (*callback)();
-} McRequestParam;
-
 typedef struct MemcardTestWork {
     int result;
     int check;
@@ -733,8 +722,6 @@ extern const char D_0069D0D8[];
  * (X1 names this static tbl_49). */
 extern unsigned char tbl_49[4];
 
-unsigned int xglMcMain(void);
-int xglMcRequest(int port, int command, McRequestParam *param, int *result);
 int xglMcEasySave(const char *path, const void *buffer, int size);
 void xglMcSetEntryNumbers(unsigned char *object, int value, const unsigned char *source);
 int xglHddCheck(void);
