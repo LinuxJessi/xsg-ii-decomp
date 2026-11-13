@@ -28,5 +28,17 @@ char *func_0024F418(char *text, int lines)
     return text;
 }
 
-/* Compares the text at a1 with the pattern at a0 up to a newline or a '%' wildcard: 0 on a match, nonzero otherwise. */
-INCLUDE_ASM("asm/main/nonmatchings/tu143", func_0024F480);
+/* Compares the text with the pattern up to the pattern's newline; a '%' in the pattern ends the
+ * comparison as a match. 0 on a match, nonzero otherwise. */
+int func_0024F480(const char *pattern, const char *text)
+{
+    int c;
+
+    for (; *pattern != '\n'; pattern++) {
+        c = *pattern;
+        if (c != *text++) {
+            return *pattern != '%';
+        }
+    }
+    return *pattern != *text;
+}

@@ -167,7 +167,35 @@ void cfeTrackShiftTimes(CfeTrackNode *track, int time, int delta)
     func_0024FC90(track);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250EF0);
+/* Moves every key from the first one at or after `time` back by `delta`, at most to one tick after the
+ * key before it, then updates the track. A zero delta changes nothing. */
+void func_00250EF0(CfeTrackNode *track, int time, int delta)
+{
+    CfeTrackNode *node = cfeTrackFindAtOrBefore(track, time);
+    CfeTrackNode *next;
+    int *start;
+    int gap;
+
+    if (node != 0) {
+        if (delta == 0) {
+            return;
+        }
+        if (node->prev != 0) {
+            /* Read through a pointer: the original loads startTime again here. */
+            start = &node->startTime;
+            gap = *start - node->prev->startTime - 1;
+            if (gap < delta) {
+                delta = gap;
+            }
+        }
+        while (node != 0) {
+            next = node->next;
+            node->startTime -= delta;
+            node = next;
+        }
+    }
+    func_0024FC90(track);
+}
 
 /* 1 when every key of the track has the same angle; 0 for an empty track. */
 int cfeTrackAllValuesEqual(CfeTrackNode *node)
