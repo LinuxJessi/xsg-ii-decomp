@@ -3979,7 +3979,8 @@ int menuEquipAssignStep(ControlSlot *slot) {
             if (ptGetMenuMember()->buffer->count < D_0069D504) {
                 if (D_0069D4E0 != 0) {
                     if (selectionFindIndex(ptGetMenuMember(), selectionPlainList[D_006A51C8[0].cursor]) == -1) {
-                        selectionTakePlainEntry(ptGetMenuMember(), D_006A51C8[0].cursor, ptGetMenuMember()->buffer->count);
+                        selectionTakePlainEntry(ptGetMenuMember(), D_006A51C8[0].cursor,
+                                                ptGetMenuMember()->buffer->count);
                     ptGetMenuMember()->buffer->count++;
                     D_006A51B0[0].capacity++;
                     seVoiceStartDefault(MENU_SE_CONFIRM);
@@ -3990,7 +3991,8 @@ int menuEquipAssignStep(ControlSlot *slot) {
                     }
                 } else {
                     if (selectionFindIndex(ptGetMenuMember(), D_006A52E0[D_006A51C8[0].cursor]) == -1) {
-                        selectionPlaceKey((struct SelectionContext *) ptGetMenuMember(), D_006A52E0[D_006A51C8[0].cursor], ptGetMenuMember()->buffer->count);
+                        selectionPlaceKey((struct SelectionContext *) ptGetMenuMember(),
+                                          D_006A52E0[D_006A51C8[0].cursor], ptGetMenuMember()->buffer->count);
                     ptGetMenuMember()->buffer->count++;
                     D_006A51B0[0].capacity++;
                     seVoiceStartDefault(MENU_SE_CONFIRM);
@@ -4001,7 +4003,8 @@ int menuEquipAssignStep(ControlSlot *slot) {
                     }
                 }
             }
-            if (D_0069D4E0 != 0 && selectionFindIndex(ptGetMenuMember(), selectionPlainList[D_006A51C8[0].cursor]) != -1) {
+            if (D_0069D4E0 != 0 && selectionFindIndex(ptGetMenuMember(),
+                                                      selectionPlainList[D_006A51C8[0].cursor]) != -1) {
                 seVoiceStartDefault(MENU_SE_REFUSE);
                 break;
             }
@@ -4057,7 +4060,8 @@ int menuEquipAssignStep(ControlSlot *slot) {
             selectionRebuildList();
             cursorBufferSetCapacity(D_006A51C8, selectionPlainCount);
         } else {
-            selectionPlaceKey((struct SelectionContext *) ptGetMenuMember(), D_006A52E0[D_006A51C8[0].cursor], D_006A51B0[0].cursor);
+            selectionPlaceKey((struct SelectionContext *) ptGetMenuMember(), D_006A52E0[D_006A51C8[0].cursor],
+                              D_006A51B0[0].cursor);
         }
         D_0069D4DC |= 1;
         slot->state = 4;
@@ -4123,7 +4127,8 @@ int menuEquipAssignStep(ControlSlot *slot) {
             ptGetMenuMember()->buffer->items[D_006A51B0[0].cursor] = 0;
             if (D_006A51B0[0].cursor < ptGetMenuMember()->buffer->count - 1) {
                 for (i = D_006A51B0[0].cursor + 1; i < ptGetMenuMember()->buffer->count; i++) {
-                    battleSlotSetByte(ptGetMenuMember()->kind, i - 1, selectionRecordTable[ptGetMenuMember()->buffer->items[i] * 6 + 1]);
+                    battleSlotSetByte(ptGetMenuMember()->kind, i - 1,
+                                      selectionRecordTable[ptGetMenuMember()->buffer->items[i] * 6 + 1]);
                     ptGetMenuMember()->buffer->items[i - 1] = ptGetMenuMember()->buffer->items[i];
                 }
                 battleSlotSetByte(ptGetMenuMember()->kind, i - 1, 0);
