@@ -272,7 +272,7 @@ extern struct BattleResultEntry *battleResultEntries;
 extern unsigned char D_0068B490[];
 extern const char battleResultCountFormat[];
 int dataBoxChk(int category, int id);
-int func_002AA5D8(unsigned char *dst, const char *format, int count, void *unit);
+int sprintf(unsigned char *dst, const char *format, int count, void *unit);
 unsigned char *func_00A9B7D8(int item, int arg);
 unsigned char *func_00A9B8D8(int item, int arg);
 unsigned char *func_00A9B950(int item, int arg);
@@ -312,7 +312,7 @@ void battleResultDrawEntries(int x, int y) {
         if (itemText != 0) {
             textDrawSegment(x + 0x14, y + i * RESULT_ROW_HEIGHT + 0x2A, itemText, 0);
         }
-        func_002AA5D8(countText, battleResultCountFormat, battleResultEntries[i].count, menuMainTxdEntry(BATTLE_RESULT_TXD_COUNT_UNIT));
+        sprintf(countText, battleResultCountFormat, battleResultEntries[i].count, menuMainTxdEntry(BATTLE_RESULT_TXD_COUNT_UNIT));
         textDrawSegment(x + 0xB6, y + i * RESULT_ROW_HEIGHT + 0x2A, countText, 0);
         if (battleResultEntries[i].highlight != 0) {
             highlighted = 1;

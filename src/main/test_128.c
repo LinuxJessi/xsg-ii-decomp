@@ -266,7 +266,7 @@ extern char D_0068BC18[];
 extern char D_0068BC40[];
 extern char D_0068BC50[];
 extern char D_0068BC80[];
-void func_002AA5D8(char *pDest, const char *pSrc, u32 count);
+int sprintf(char *destination, const char *format, ...);
 void func_002AB1A8(char *pDest, const char *pSrc, u32 count);
 
 void *RgHeapAllocById(u32 heapId, u32 size, const char *pSourceFile, int line)
@@ -308,7 +308,7 @@ void *RgHeapAllocById(u32 heapId, u32 size, const char *pSourceFile, int line)
         pBlock = pBlock->next;
     } while (pBlock != pFreeHead);
     if (pFit == 0) {
-        func_002AA5D8(buf, D_0068BBD0, heapId);
+        sprintf(buf, D_0068BBD0, heapId);
         RgHeapDump_sub(pHeap, buf, D_0068BAC0, 375);
         printf(D_0068BBE0, size, pSourceFile, line);
         return 0;
@@ -512,6 +512,7 @@ void RgHeapDumpBlock(struct RgHeap *pHeap, void *pPtr)
 }
 
 extern char D_0068BF40[];
+struct RgHeap *InstanceOfRgHeapById(u32 heapId);
 
 void RgHeapDumpById(u32 heapId)
 {
@@ -520,7 +521,7 @@ void RgHeapDumpById(u32 heapId)
 
     if (heapId < HEAP_MAX) {
         pHeap = InstanceOfRgHeapById(heapId);
-        func_002AA5D8(sourceFile, D_0068BF40, heapId);
+        sprintf(sourceFile, D_0068BF40, heapId);
         RgHeapDump_sub(pHeap, sourceFile, D_0068BAC0, 611);
     }
 }

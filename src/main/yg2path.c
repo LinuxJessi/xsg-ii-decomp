@@ -686,7 +686,7 @@ void func_0021CEE0(int, int, int, int);
 void func_0021D1B8(int, int, int, int, unsigned char *);
 void renderSpriteClutAlpha(int, int, int, int, int, unsigned char);
 void renderSpriteClut(int, int, int, int, int);
-void func_002AA5D8(YgCitizenFileRequest *, unsigned char *, YgCitizenFileRequest *, int);
+void sprintf(YgCitizenFileRequest *, unsigned char *, YgCitizenFileRequest *, int);
 void xglPacketTextureTrans(int);
 void fontObjBuildBaseVifPacket(void);
 extern unsigned char yg2PathPanelImage[];
@@ -827,7 +827,7 @@ void yg2PathDrawMessagePage(int scroll)
       fileRequest.third = D_0068B0A8[0].third;
       fileRequest.fourth = D_0068B0A8[0].fourth;
     }
-    func_002AA5D8(&fileRequest, yg2PathPortraitFormat, &fileRequest, D_003EC980[yg2PathCurrentPath] + 1);
+    sprintf(&fileRequest, yg2PathPortraitFormat, &fileRequest, D_003EC980[yg2PathCurrentPath] + 1);
     ysegfReadFile((void **) &yg2PathPortraitBuffer, &fileRequest, 0, 1);
     yg2PathImageFade = 0x10;
   }
@@ -913,7 +913,7 @@ void yg2PathDrawCitizenProfile(int scroll)
         fileRequest.third = D_0068B0A8[0].third;
         fileRequest.fourth = D_0068B0A8[0].fourth;
       }
-      func_002AA5D8(&fileRequest, yg2PathPortraitFormat, &fileRequest, yg2PathCurrentCitizen + 1);
+      sprintf(&fileRequest, yg2PathPortraitFormat, &fileRequest, yg2PathCurrentCitizen + 1);
       ysegfReadFile((void **) &yg2PathPortraitBuffer, &fileRequest, 0, 1);
       yg2PathImageFade = 0x10;
     }

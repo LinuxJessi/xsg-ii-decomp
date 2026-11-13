@@ -14,6 +14,8 @@ typedef struct RenderFrameState {
     unsigned char unmodeled_16[0x0A];
     unsigned short display_base;    /* +0x20: sRenderDisplayBase */
     unsigned short copy_base;       /* +0x22 */
+    unsigned char unmodeled_24[0x84 - 0x24];
+    unsigned char errorScreenActive; /* +0x84: set while xglHddErrorScreen owns the display */
 } RenderFrameState;
 
 extern RenderFrameState sRender;

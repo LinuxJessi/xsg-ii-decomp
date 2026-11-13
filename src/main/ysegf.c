@@ -584,7 +584,7 @@ extern unsigned char D_0068B420[];
 extern unsigned char D_0069D8E0[];
 extern unsigned char D_0069D8E8[];
 extern unsigned char D_0069D8F0[];
-void func_002AA5D8(void *dst, void *format, ...);
+void sprintf(void *dst, void *format, ...);
 void func_002AA7F0(void *dst, void *format);
 void textDrawDigitsPair(int x, int y, int value, int width, int digits);
 
@@ -639,9 +639,9 @@ void ysegfDrawItemPage(void)
     } else if (xglCdServiceIfPending() == 0) {
         int selected = ysegfSelectedIndex;
         if (selected < 10) {
-            func_002AA5D8(fileName, D_0069D8E0, D_0068B420, selected);
+            sprintf(fileName, D_0069D8E0, D_0068B420, selected);
         } else {
-            func_002AA5D8(fileName, D_0069D8E8, D_0068B420, selected);
+            sprintf(fileName, D_0069D8E8, D_0068B420, selected);
         }
         func_002AA7F0(fileName, D_0069D8F0);
         ysegfReadFile(&ysegfItemImage, fileName, 0, 1);

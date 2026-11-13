@@ -486,7 +486,7 @@ void grSetScissor(int x0, int y0, int x1, int y1);
 void grResetScissor(void);
 int textEncodeNewlines(unsigned char *text);
 /* sprintf-like: formats one integer value into buffer. */
-void func_002AA5D8(char *buffer, const char *format, int value);
+void sprintf(char *buffer, const char *format, int value);
 /* ov01: name of an item by kind (kind 2 and the others). */
 char *func_00A9B7D8(int item, int arg);
 char *func_00A9B8D8(int item, int arg);
@@ -615,7 +615,7 @@ void textDrawAll(void)
                         }
                         if (menu->values) {
                             valueX = x + columnWidth + ((menu->flags & CHOICE_VALUE_UNIT) == 0 ? -48 : -68);
-                            func_002AA5D8(buffer, D_0069D988, menu->values[i]);
+                            sprintf(buffer, D_0069D988, menu->values[i]);
                             textDrawSegment(0, 0, D_0069D990, 0);
                             textDrawSegment(0, 0, D_0068B5F8, 0);
                             textDrawSegment(valueX, y - 2, buffer, style);
@@ -675,14 +675,14 @@ void textDrawAll(void)
     textDrawSegment(0, 0, D_0068B628, 0);
 
     if (panel->hp >= 0) {
-        func_002AA5D8(buffer, D_0069D9E8, panel->hp);
+        sprintf(buffer, D_0069D9E8, panel->hp);
         textDrawSegment(x + 80, y + 16, buffer, 0);
     } else {
         textDrawSegment(x + 80, y + 16, D_0069D9F0, 0);
     }
     xglFontPrintDirectOT(FONT_COLOR_DEFAULT, D_0069D9F8);
     if (panel->maxHp >= 0) {
-        func_002AA5D8(buffer, D_0069DA00, panel->maxHp);
+        sprintf(buffer, D_0069DA00, panel->maxHp);
         xglFontPrintDirectOT(FONT_COLOR_DEFAULT, buffer);
     } else {
         xglFontPrintDirectOT(FONT_COLOR_DEFAULT, D_0069D9F0);
@@ -702,11 +702,11 @@ void textDrawAll(void)
         }
     }
 
-    func_002AA5D8(buffer, D_0069DA00, panel->exp);
+    sprintf(buffer, D_0069DA00, panel->exp);
     textDrawSegment(x + 88, y + 92, buffer, 0);
-    func_002AA5D8(buffer, D_0069DA00, panel->skillPoints);
+    sprintf(buffer, D_0069DA00, panel->skillPoints);
     textDrawSegment(x + 88, y + 116, buffer, 0);
-    func_002AA5D8(buffer, D_0069DA00, panel->classPoints);
+    sprintf(buffer, D_0069DA00, panel->classPoints);
     textDrawSegment(x + 88, y + 140, buffer, 0);
 
     if (panel->rareItem > 0) {
