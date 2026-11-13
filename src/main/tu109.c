@@ -993,8 +993,8 @@ int selectionTakeSub(SelectionHolder *holder, int group, int slot, int sub)
 }
 
 /* OV01 battleSlotFlagSet and battleSlotCodeSet (config/symbols/ov01.txt). */
-void battleSlotFlagSet(int key, unsigned char flag);
-void battleSlotCodeSet(int key, unsigned char code);
+void battleSlotFlagSet(int key, int flag);
+void battleSlotCodeSet(int key, int code);
 
 /* Applies the battle-slot flag or code of the record of (group, slot, sub) to holder's character
    and takes the sub (selectionTakeSub). */
