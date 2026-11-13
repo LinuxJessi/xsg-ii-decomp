@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/nml_model_set.h"
 #include "main/tu050.h"
+#include "main/get.h"
 #include "shared.h"
 #include "main/sdv_033.h"
 
@@ -211,10 +212,10 @@ typedef struct MapObjectRecord {
     float size;                 /* +0x338 */
     short motion;               /* +0x33C */
     u8 unmodeled_33e[2];
-    u8 moveCurve[2][0x80];      /* +0x340 */
+    float moveCurve[2][0x20];   /* +0x340 */
     short moveCurveType;        /* +0x440 */
     u8 unmodeled_442[2];
-    u8 turnCurve[2][0x80];      /* +0x444 */
+    float turnCurve[2][0x20];   /* +0x444 */
     short turnCurveType;        /* +0x544 */
     short parent;               /* +0x546 */
     short attached;             /* +0x548 */
@@ -280,7 +281,7 @@ void ladderInitTable(void);
 void mapLoadBlock(int blockId);
 unsigned short *mapFindBlockEntry(int id, int index);
 void xglCullingMapSet(MainObject *object);
-void xglJpegDecode(void *info);
+int xglJpegDecode(void *info);
 void sefReleaseOwnedRecords(int owner);
 
 /* A 0x12000-byte block copy of the map image. */
@@ -474,9 +475,6 @@ void GameDefocusReset(void)
     GameDefocusSet(0, 0, 0);
 }
 
-void Get_MiddlePoint(const float *start, const float *following, short point_index, short point_count, float *result);
-void func_00209458(const float *start, const float *following, short point_index, short point_count,
-                   void *curveStart, void *curveFollowing, short curveType, float *result);
 void XenoActorCheckMode(MapActor *actor, int expected_mode);
 
 /* Advances the move, turn, scale and fade steps of one map object by a frame.
@@ -490,12 +488,12 @@ int mapObjectAdvanceTweens(MapObjectRecord *record)
     }
     if (record->moveStep != -1) {
         if (record->moveCurveType == 0) {
-            Get_MiddlePoint(&record->moveFrom.vector.x, &record->moveTo.vector.x, record->moveStep,
-                            record->moveCount, &record->position.vector.x);
+            Get_MiddlePoint(&record->moveFrom.vector, &record->moveTo.vector, record->moveStep,
+                            record->moveCount, &record->position.vector);
         } else {
-            func_00209458(&record->moveFrom.vector.x, &record->moveTo.vector.x, record->moveStep,
+            Get_MiddlePoint_Curve(&record->moveFrom.vector, &record->moveTo.vector, record->moveStep,
                           record->moveCount, record->moveCurve[0], record->moveCurve[1],
-                          record->moveCurveType, &record->position.vector.x);
+                          record->moveCurveType, &record->position.vector);
         }
         record->moveStep = record->moveStep + 1;
         if (record->moveCount < record->moveStep) {
@@ -515,12 +513,12 @@ int mapObjectAdvanceTweens(MapObjectRecord *record)
     }
     if (record->turnStep != -1) {
         if (record->turnCurveType == 0) {
-            Get_MiddlePoint(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->turnStep,
-                            record->turnCount, &record->rotation.vector.x);
+            Get_MiddlePoint(&record->turnFrom.vector, &record->turnTo.vector, record->turnStep,
+                            record->turnCount, &record->rotation.vector);
         } else {
-            func_00209458(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->turnStep,
+            Get_MiddlePoint_Curve(&record->turnFrom.vector, &record->turnTo.vector, record->turnStep,
                           record->turnCount, record->turnCurve[0], record->turnCurve[1],
-                          record->turnCurveType, &record->rotation.vector.x);
+                          record->turnCurveType, &record->rotation.vector);
         }
         record->turnStep = record->turnStep + 1;
         if (record->turnCount < record->turnStep) {
@@ -772,7 +770,7 @@ void uwamonoChangePlayerModel(int value);
 void fadeStartIn(int frames);
 void uwamonoPlayFootEffects(int index);
 void uwamonoStartAreaBlend(int index);
-float func_0020A968(int index, Vector4 *position, int motion, int frame, int flags);
+float unduGetSlotHeight(int index, Vector4 *position, int motion, int frame, int flags);
 void uwamonoUpdateRecord(int index);
 float cursolGetByReduceSpeedAngleLoop(float current, float target, float speed);
 void mapObjectClearFlags(MapObjectRecord *record);
@@ -859,7 +857,7 @@ int DispMapObject(void)
             }
             if (mapObjectAdvanceTweens(record) == 1) {
                 if (record->flags & 0x08000000) {
-                    record->position.vector.y = func_0020A968(i, &record->actor->position, record->motions->id,
+                    record->position.vector.y = unduGetSlotHeight(i, &record->actor->position, record->motions->id,
                                                        record->motions->frame, 0);
                 }
                 actor->velocity.x = record->position.vector.x - actor->position.x;
@@ -1021,8 +1019,8 @@ int DispMapObject(void)
                 data = mapObjectResources[record->type + 2].data;
                 source = (MapModelHeader *) ((u8 *) data + data->headerOffset);
                 if (record->tiltStep != -1) {
-                    Get_MiddlePoint(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->tiltStep, record->tiltCount,
-                                    &record->tilt.vector.x);
+                    Get_MiddlePoint(&record->turnFrom.vector, &record->turnTo.vector, record->tiltStep, record->tiltCount,
+                                    &record->tilt.vector);
                     if (record->tiltCount < record->tiltStep) {
                         record->tiltStep = -1;
                     }
@@ -1085,12 +1083,12 @@ int DispMapObject(void)
             }
             if (record->moveStep != -1) {
                 if (record->moveCurveType == 0) {
-                    Get_MiddlePoint(&record->moveFrom.vector.x, &record->moveTo.vector.x, record->moveStep, record->moveCount,
-                                    &record->position.vector.x);
+                    Get_MiddlePoint(&record->moveFrom.vector, &record->moveTo.vector, record->moveStep, record->moveCount,
+                                    &record->position.vector);
                 } else {
-                    func_00209458(&record->moveFrom.vector.x, &record->moveTo.vector.x, record->moveStep, record->moveCount,
+                    Get_MiddlePoint_Curve(&record->moveFrom.vector, &record->moveTo.vector, record->moveStep, record->moveCount,
                                   record->moveCurve[0], record->moveCurve[1], record->moveCurveType,
-                                  &record->position.vector.x);
+                                  &record->position.vector);
                 }
                 record->moveStep++;
                 if (record->moveStep > record->moveCount) {
@@ -1099,12 +1097,12 @@ int DispMapObject(void)
             }
             if (record->turnStep != -1) {
                 if (record->turnCurveType == 0) {
-                    Get_MiddlePoint(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->turnStep, record->turnCount,
-                                    &record->rotation.vector.x);
+                    Get_MiddlePoint(&record->turnFrom.vector, &record->turnTo.vector, record->turnStep, record->turnCount,
+                                    &record->rotation.vector);
                 } else {
-                    func_00209458(&record->turnFrom.vector.x, &record->turnTo.vector.x, record->turnStep, record->turnCount,
+                    Get_MiddlePoint_Curve(&record->turnFrom.vector, &record->turnTo.vector, record->turnStep, record->turnCount,
                                   record->turnCurve[0], record->turnCurve[1], record->turnCurveType,
-                                  &record->rotation.vector.x);
+                                  &record->rotation.vector);
                 }
                 record->turnStep++;
                 if (record->turnStep > record->turnCount) {
@@ -1169,7 +1167,7 @@ int DispMapObject(void)
                 if (record->lookLink == -1) {
                     point = record->closedPosition.vector;
                 } else {
-                    Get_MiddlePoint(&record->closedPosition.vector.x, &uwamonoRecords[record->lookLink].closedPosition.vector.x, 1, 2, &point.x);
+                    Get_MiddlePoint(&record->closedPosition.vector, &uwamonoRecords[record->lookLink].closedPosition.vector, 1, 2, &point);
                 }
                 if (uwamonoRecords[uwamonoCurrentIndex].size * 5.0f
                     <= Get_Distance(&uwamonoRecords[uwamonoCurrentIndex].actor->position, &point)) {

@@ -43,8 +43,10 @@ typedef struct PadRecord {
     unsigned short directionPressed;  /* +0x32 */
     unsigned short directionRepeated; /* +0x34 */
     unsigned char unmodeled_36[6];
-    short stickX;                     /* +0x3C */
-    short stickY;                     /* +0x3E */
+    /* +0x3C/+0x3E: d-pad pressure (packet bytes 8-11, right minus left and
+       down minus up; xglPadRead). */
+    short horizontalPressure;         /* +0x3C */
+    short verticalPressure;           /* +0x3E */
     unsigned char unmodeled_40[0x26];
     signed char directionX;           /* +0x66 */
     signed char directionY;           /* +0x67 */

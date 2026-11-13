@@ -159,7 +159,7 @@ extern const char D_00688580[];
 extern const char D_00688590[];
 extern const char D_006885E0[];
 void *memset(void *destination, int value, unsigned int count);
-void xglJpegDecode(JpegDecodeRequest *request);
+int xglJpegDecode(JpegDecodeRequest *request);
 void xglRenderDrawFlipPk(XglPacket *packet);
 void func_001A37E0(int packed, const char *name, int option);
 void *func_001DF9F0(unsigned int *size);
