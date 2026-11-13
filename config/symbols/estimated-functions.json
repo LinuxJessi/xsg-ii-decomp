@@ -39936,7 +39936,7 @@
      2
     ],
     [
-     "func_00228F68",
+     "selectionEntryIsUseful",
      2264936,
      244,
      2
@@ -39948,13 +39948,13 @@
      2
     ],
     [
-     "func_00229088",
+     "selectionActiveMemberNeedsHp",
      2265224,
      168,
      2
     ],
     [
-     "func_00229130",
+     "selectionCountedMemberNeedsHpEp",
      2265392,
      192,
      2
@@ -39996,31 +39996,31 @@
      2
     ],
     [
-     "func_00229460",
+     "selectionMemberCapacity",
      2266208,
      80,
      2
     ],
     [
-     "func_002294B0",
+     "selectionPairRecordCount",
      2266288,
      200,
      2
     ],
     [
-     "func_00229578",
+     "selectionPairRecordAt",
      2266488,
      256,
      2
     ],
     [
-     "func_00229678",
+     "selectionCopilotRecordCount",
      2266744,
      212,
      2
     ],
     [
-     "func_00229750",
+     "selectionCopilotRecordAt",
      2266960,
      328,
      2
@@ -40056,13 +40056,13 @@
      2
     ],
     [
-     "func_00229978",
+     "selectionSubIsTaken",
      2267512,
      56,
      2
     ],
     [
-     "func_002299B0",
+     "selectionHolderHasEntry",
      2267568,
      140,
      2
@@ -40086,7 +40086,7 @@
      2
     ],
     [
-     "func_00229C60",
+     "selectionCollectEntries",
      2268256,
      420,
      2
@@ -40098,25 +40098,25 @@
      2
     ],
     [
-     "func_00229E68",
+     "selectionGroupIsComplete",
      2268776,
      84,
      2
     ],
     [
-     "func_00229EC0",
+     "selectionCanOpenSlot",
      2268864,
      108,
      2
     ],
     [
-     "func_00229F30",
+     "selectionCanTakeSub",
      2268976,
      168,
      2
     ],
     [
-     "func_00229FD8",
+     "selectionTakeSub",
      2269144,
      228,
      2

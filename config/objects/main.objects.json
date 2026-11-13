@@ -66705,9 +66705,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00228F68",
+     "name": "selectionEntryIsUseful",
      "size": 244,
-     "splat_name": "func_00228F68",
+     "splat_name": "selectionEntryIsUseful",
      "va": "0x00228f68",
      "name_basis": "address",
      "provenance": "estimated"
@@ -66723,18 +66723,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229088",
+     "name": "selectionActiveMemberNeedsHp",
      "size": 168,
-     "splat_name": "func_00229088",
+     "splat_name": "selectionActiveMemberNeedsHp",
      "va": "0x00229088",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229130",
+     "name": "selectionCountedMemberNeedsHpEp",
      "size": 192,
-     "splat_name": "func_00229130",
+     "splat_name": "selectionCountedMemberNeedsHpEp",
      "va": "0x00229130",
      "name_basis": "address",
      "provenance": "estimated"
@@ -66795,45 +66795,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229460",
+     "name": "selectionMemberCapacity",
      "size": 80,
-     "splat_name": "func_00229460",
+     "splat_name": "selectionMemberCapacity",
      "va": "0x00229460",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002294B0",
+     "name": "selectionPairRecordCount",
      "size": 200,
-     "splat_name": "func_002294B0",
+     "splat_name": "selectionPairRecordCount",
      "va": "0x002294b0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229578",
+     "name": "selectionPairRecordAt",
      "size": 256,
-     "splat_name": "func_00229578",
+     "splat_name": "selectionPairRecordAt",
      "va": "0x00229578",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229678",
+     "name": "selectionCopilotRecordCount",
      "size": 212,
-     "splat_name": "func_00229678",
+     "splat_name": "selectionCopilotRecordCount",
      "va": "0x00229678",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229750",
+     "name": "selectionCopilotRecordAt",
      "size": 328,
-     "splat_name": "func_00229750",
+     "splat_name": "selectionCopilotRecordAt",
      "va": "0x00229750",
      "name_basis": "address",
      "provenance": "estimated"
@@ -66885,18 +66885,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229978",
+     "name": "selectionSubIsTaken",
      "size": 56,
-     "splat_name": "func_00229978",
+     "splat_name": "selectionSubIsTaken",
      "va": "0x00229978",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002299B0",
+     "name": "selectionHolderHasEntry",
      "size": 140,
-     "splat_name": "func_002299B0",
+     "splat_name": "selectionHolderHasEntry",
      "va": "0x002299b0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -66930,9 +66930,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229C60",
+     "name": "selectionCollectEntries",
      "size": 420,
-     "splat_name": "func_00229C60",
+     "splat_name": "selectionCollectEntries",
      "va": "0x00229c60",
      "name_basis": "address",
      "provenance": "estimated"
@@ -66948,36 +66948,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229E68",
+     "name": "selectionGroupIsComplete",
      "size": 84,
-     "splat_name": "func_00229E68",
+     "splat_name": "selectionGroupIsComplete",
      "va": "0x00229e68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229EC0",
+     "name": "selectionCanOpenSlot",
      "size": 108,
-     "splat_name": "func_00229EC0",
+     "splat_name": "selectionCanOpenSlot",
      "va": "0x00229ec0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229F30",
+     "name": "selectionCanTakeSub",
      "size": 168,
-     "splat_name": "func_00229F30",
+     "splat_name": "selectionCanTakeSub",
      "va": "0x00229f30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00229FD8",
+     "name": "selectionTakeSub",
      "size": 228,
-     "splat_name": "func_00229FD8",
+     "splat_name": "selectionTakeSub",
      "va": "0x00229fd8",
      "name_basis": "address",
      "provenance": "estimated"
