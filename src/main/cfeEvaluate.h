@@ -66,7 +66,12 @@ typedef struct CfeEvalRecord {
 
 /* Table entry (stride 0x230) of cfeEntryEvaluate: three vectors, a result word and ten source handles. */
 typedef struct CfeEvalEntry {
-    unsigned char unmodeled_00[0x110];
+    unsigned char unmodeled_00[0x90];
+    void *data;                 /* +0x090: the movie file, read into a GameResBufferAlloc block */
+    int dataSize;               /* +0x094 */
+    unsigned char unmodeled_98[0x18];
+    void *frameBuffers[2];      /* +0x0B0: two GameResBufferAlloc blocks */
+    unsigned char unmodeled_b8[0x110 - 0xB8];
     Vector4 evaluated[3];
     unsigned char unmodeled_140[0xC0];
     int result_int;

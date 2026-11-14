@@ -169,6 +169,8 @@ typedef struct UwamonoObject {
 #define CONTROL_REPLAYED 0x10000
 #define CONTROL_SEARCHING 0x20000
 #define CONTROL_TOP_EXIT 0x20 /* reaching the top of a ladder moves on to the top state (tu075.c) */
+#define CONTROL_CFE_SCENE 0x200 /* set while a cut scene runs (cfePlugIn.c sets it at the start, clears it at the end) */
+#define CONTROL_CFE_NO_FADE 0x100000 /* set with it: events then start no fade-out (tu069.c) */
 #define CONTROL_SOFT_RESET 0x10000000 /* the soft-reset pad combo was pressed; Title will not start a game while it is set */
 
 extern UwamonoObject uwamonoRecords[];
