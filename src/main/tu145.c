@@ -160,7 +160,38 @@ int cfeTrackCountValueRuns(CfeTrackNode *node)
     return count;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250E10);
+/* Number of runs of equal angles among the keys with lower <= startTime <= upper (0 for none). */
+int func_00250E10(CfeTrackNode *node, int lower, int upper)
+{
+    int count;
+    int value;
+
+    if (node == 0) {
+        return 0;
+    }
+    while (node->startTime < lower) {
+        node = node->next;
+        if (node == 0) {
+            break;
+        }
+    }
+    if (node == 0) {
+        return 0;
+    }
+    value = node->angle;
+    count = 1;
+    while (node != 0) {
+        if (node->angle != value) {
+            count++;
+            value = node->angle;
+        }
+        node = node->next;
+        if (node == 0 || node->startTime > upper) {
+            break;
+        }
+    }
+    return count;
+}
 
 /* Moves every key from the first one at or after `time` by `delta`, then updates the track. */
 void cfeTrackShiftTimes(CfeTrackNode *track, int time, int delta)
