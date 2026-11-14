@@ -133,9 +133,12 @@ void func_0024EB48(XglLightSet *light)
     light->points[0][0] = light->points[0][1] = light->points[0][2] = light->points[0][3] = 0.0f;
     light->points[1][0] = light->points[1][1] = light->points[1][2] = light->points[1][3] = 0.0f;
     light->points[2][0] = light->points[2][1] = light->points[2][2] = light->points[2][3] = 0.0f;
-    light->pointDirections[0][0] = light->pointDirections[0][1] = light->pointDirections[0][2] = light->pointDirections[0][3] = 0.0f;
-    light->pointDirections[1][0] = light->pointDirections[1][1] = light->pointDirections[1][2] = light->pointDirections[1][3] = 0.0f;
-    light->pointDirections[2][0] = light->pointDirections[2][1] = light->pointDirections[2][2] = light->pointDirections[2][3] = 0.0f;
+    light->pointDirections[0][0] = light->pointDirections[0][1] = light->pointDirections[0][2]
+        = light->pointDirections[0][3] = 0.0f;
+    light->pointDirections[1][0] = light->pointDirections[1][1] = light->pointDirections[1][2]
+        = light->pointDirections[1][3] = 0.0f;
+    light->pointDirections[2][0] = light->pointDirections[2][1] = light->pointDirections[2][2]
+        = light->pointDirections[2][3] = 0.0f;
     /* nml_model_set.c types the light block as its own PxyShadowLight */
     pxySetDefaultLight((struct PxyShadowLight *) light);
 }
