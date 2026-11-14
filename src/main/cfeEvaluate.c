@@ -779,10 +779,14 @@ void func_00249518(int x, int y, Vector4 *angles, float *color0, float *color1)
                           SCREEN_X(line[1].x, line[1].z), SCREEN_Y(line[1].y, line[1].z),
                           near_color, far_color, 0xFFFFFF);
             mixed_color = 0;
-            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 0) + (1.0f - near_weight) * CHANNEL(far_color, 0));
-            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 8) + (1.0f - near_weight) * CHANNEL(far_color, 8)) << 8;
-            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 16) + (1.0f - near_weight) * CHANNEL(far_color, 16)) << 16;
-            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 24) + (1.0f - near_weight) * CHANNEL(far_color, 24)) << 24;
+            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 0)
+                                            + (1.0f - near_weight) * CHANNEL(far_color, 0));
+            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 8)
+                                            + (1.0f - near_weight) * CHANNEL(far_color, 8)) << 8;
+            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 16)
+                                            + (1.0f - near_weight) * CHANNEL(far_color, 16)) << 16;
+            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 24)
+                                            + (1.0f - near_weight) * CHANNEL(far_color, 24)) << 24;
             func_00249340(SCREEN_X(line[2].x, line[2].z), SCREEN_Y(line[2].y, line[2].z),
                           SCREEN_X(line[3].x, line[3].z), SCREEN_Y(line[3].y, line[3].z),
                           mixed_color, mixed_color, 0xFFFFFF);
