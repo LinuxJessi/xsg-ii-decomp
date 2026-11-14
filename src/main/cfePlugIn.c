@@ -340,6 +340,7 @@ extern unsigned char D_0068CED0[];
 
 extern int cfeCommandCount;
 extern CfeEvalCommand cfeCommands[];
+
 /* The initial scale of a command (1, 1, 1). */
 extern const AlignedVector4 D_0068CE40;
 
