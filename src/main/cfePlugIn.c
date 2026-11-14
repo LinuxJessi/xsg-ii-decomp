@@ -9,6 +9,7 @@
 #include "main/tu138.h"
 #include "main/sef.h"
 #include "main/tu144.h"
+#include "main/sdv_033.h"
 #include "main/xenoActor.h"
 #include "main/xgl_2.h"
 #include "main/xgl_cd.h"
@@ -465,7 +466,6 @@ int cfe_0024C7B8(int handle)
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C940);
 
-typedef struct XglCamera XglCamera;
 void xglStudioGetCamera(XglCamera **camera, int index);
 
 /* The studio block (0x70 bytes, cleared by cfeStudioInit): the camera and its key lists. */

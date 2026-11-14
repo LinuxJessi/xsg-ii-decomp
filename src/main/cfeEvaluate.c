@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "main/cfePlugIn.h"
 #include "main/sef.h"
+#include "main/sdv_033.h"
 #include "main/tu256.h"
 #include "gs.h"
 #include "main/tu045.h"
@@ -96,11 +97,11 @@ void xglCurMulScaleXYZ(const Vector4 *scale);
 
 /* Builds the record's matrix into dest_matrix: translation from evaluated[0], rotations from evaluated[1], scale from evaluated[2]. */
 void cfeRecordBuildMatrix(CfeEvalRecord *record, f32 dest_matrix[4][4]) {
-    xglCurSetTranslate(&record->evaluated[0]);
-    xglCurMulRotateZ(record->evaluated[1].z);
-    xglCurMulRotateY(record->evaluated[1].y);
-    xglCurMulRotateX(record->evaluated[1].x);
-    xglCurMulScaleXYZ(&record->evaluated[2]);
+    xglCurSetTranslate(&record->evaluated[0].vector);
+    xglCurMulRotateZ(record->evaluated[1].vector.z);
+    xglCurMulRotateY(record->evaluated[1].vector.y);
+    xglCurMulRotateX(record->evaluated[1].vector.x);
+    xglCurMulScaleXYZ(&record->evaluated[2].vector);
     xglCurMatrixGet(dest_matrix);
 }
 
@@ -109,31 +110,31 @@ f32 cfeTrackSample(int, int);
 /* Samples the nine sources of a record into its three vectors, then builds its matrix (cfeRecordBuildMatrix). */
 void cfeRecordEvaluate(CfeEvalRecord *record, f32 dest_matrix[4][4], int sample_param) {
     if (record->source[0] != 0) {
-        record->evaluated[0].x = cfeTrackSample(record->source[0], sample_param);
+        record->evaluated[0].vector.x = cfeTrackSample(record->source[0], sample_param);
     }
     if (record->source[1] != 0) {
-        record->evaluated[0].y = cfeTrackSample(record->source[1], sample_param);
+        record->evaluated[0].vector.y = cfeTrackSample(record->source[1], sample_param);
     }
     if (record->source[2] != 0) {
-        record->evaluated[0].z = cfeTrackSample(record->source[2], sample_param);
+        record->evaluated[0].vector.z = cfeTrackSample(record->source[2], sample_param);
     }
     if (record->source[3] != 0) {
-        record->evaluated[1].x = cfeTrackSample(record->source[3], sample_param);
+        record->evaluated[1].vector.x = cfeTrackSample(record->source[3], sample_param);
     }
     if (record->source[4] != 0) {
-        record->evaluated[1].y = cfeTrackSample(record->source[4], sample_param);
+        record->evaluated[1].vector.y = cfeTrackSample(record->source[4], sample_param);
     }
     if (record->source[5] != 0) {
-        record->evaluated[1].z = cfeTrackSample(record->source[5], sample_param);
+        record->evaluated[1].vector.z = cfeTrackSample(record->source[5], sample_param);
     }
     if (record->source[6] != 0) {
-        record->evaluated[2].x = cfeTrackSample(record->source[6], sample_param);
+        record->evaluated[2].vector.x = cfeTrackSample(record->source[6], sample_param);
     }
     if (record->source[7] != 0) {
-        record->evaluated[2].y = cfeTrackSample(record->source[7], sample_param);
+        record->evaluated[2].vector.y = cfeTrackSample(record->source[7], sample_param);
     }
     if (record->source[8] != 0) {
-        record->evaluated[2].z = cfeTrackSample(record->source[8], sample_param);
+        record->evaluated[2].vector.z = cfeTrackSample(record->source[8], sample_param);
     }
     cfeRecordBuildMatrix(record, dest_matrix);
 }

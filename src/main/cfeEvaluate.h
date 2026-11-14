@@ -51,10 +51,17 @@ typedef struct CfeEvalGlobal {
 } CfeEvalGlobal;
 
 /* Record written by cfeRecordEvaluate: three vectors of results and nine source handles. */
+/* A vector of a CfeEvalRecord. The original writes them through a union member (alias set 0): the
+ * record pointer is reloaded after every store. */
+typedef union CfeEvalVector {
+    Vector4 vector;
+} CfeEvalVector;
+
 typedef struct CfeEvalRecord {
-    Vector4 evaluated[3];
-    unsigned char unmodeled_30[0x20];
-    int source[9];
+    CfeEvalVector evaluated[3]; /* +0x00: position (w = 1), angles, scale */
+    CfeEvalVector initial[2];   /* +0x30: the position and angles the record starts from (func_0024B6D8) */
+    int source[9];              /* +0x50 */
+    unsigned char unmodeled_74[0x80 - 0x74];
 } CfeEvalRecord;
 
 /* Table entry (stride 0x230) of cfeEntryEvaluate: three vectors, a result word and ten source handles. */
