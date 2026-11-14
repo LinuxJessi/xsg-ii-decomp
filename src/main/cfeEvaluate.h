@@ -50,13 +50,13 @@ typedef struct CfeEvalGlobal {
     int source[8];
 } CfeEvalGlobal;
 
-/* Record written by cfeRecordEvaluate: three vectors of results and nine source handles. */
 /* A vector of a CfeEvalRecord. The original writes them through a union member (alias set 0): the
  * record pointer is reloaded after every store. */
 typedef union CfeEvalVector {
     Vector4 vector;
 } CfeEvalVector;
 
+/* Record written by cfeRecordEvaluate: three vectors of results, the starting position and angles and nine source handles. */
 typedef struct CfeEvalRecord {
     CfeEvalVector evaluated[3]; /* +0x00: position (w = 1), angles, scale */
     CfeEvalVector initial[2];   /* +0x30: the position and angles the record starts from (func_0024B6D8) */
@@ -66,14 +66,21 @@ typedef struct CfeEvalRecord {
 
 /* Table entry (stride 0x230) of cfeEntryEvaluate: three vectors, a result word and ten source handles. */
 typedef struct CfeEvalEntry {
-    unsigned char unmodeled_00[0x90];
+    /* +0x000..0x0CF: the movie handle xglMovieInfoInit / xglMovieOpen work on (XS1 MovieInfo). */
+    unsigned char unmodeled_00[0x4C];
+    int bufferQuads;            /* +0x04C: quadwords per frame buffer (each is allocated 16 * n + 0x20 bytes) */
+    unsigned char unmodeled_50[0x90 - 0x50];
     void *data;                 /* +0x090: the movie file, read into a GameResBufferAlloc block */
     int dataSize;               /* +0x094 */
-    unsigned char unmodeled_98[0x18];
+    unsigned char unmodeled_98[2];
+    unsigned char opened;       /* +0x09A */
+    unsigned char unmodeled_9b[0xB0 - 0x9B];
     void *frameBuffers[2];      /* +0x0B0: two GameResBufferAlloc blocks */
-    unsigned char unmodeled_b8[0x110 - 0xB8];
+    unsigned char unmodeled_b8[0xD0 - 0xB8];
+    char name[0x40];            /* +0x0D0: the movie file name */
     Vector4 evaluated[3];
-    unsigned char unmodeled_140[0xC0];
+    AlignedVector4 corners[4];  /* +0x140: the quad the entry is drawn with (cfeEvalEntriesInit) */
+    unsigned char unmodeled_180[0x80];
     int result_int;
     int source[10];
     unsigned char unmodeled_22c[4];

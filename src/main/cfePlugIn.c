@@ -473,7 +473,60 @@ int cfe_0024C030(int handle)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C0D8);
+void xglMovieInfoInit(void *movie);
+int xglMovieOpen(void *movie, const char *name);
+int xglCdGetFileSize(const char *name);
+extern int cfeEvalEntryCount;
+extern CfeEvalEntry cfeEvalEntries[];
+extern char D_0068CE68[];
+extern unsigned char D_0068CE80[];
+
+/* The block table of xgl_cd (res_get_path.c: CdSlot) as far as the free-slot walk reads it. */
+typedef struct CfeCdSlot {
+    void *buffer;
+    unsigned int size;
+    int owner;                  /* +0x08: -1 ends the walk */
+    void *tag;
+    void *value;
+} CfeCdSlot;
+
+extern CfeCdSlot xglCdSlotTable[];
+
+/* Entries of xglCdSlotTable the walk may visit. */
+#define CFE_CD_SLOT_LAST 0x7F
+
+/* Script command (1 argument): opens the movie named by argument 1 in the next entry of
+ * cfeEvalEntries: reads the file into a new block (walking the block table when the allocation
+ * fails), opens it and allocates its two frame buffers. */
+int cfe_0024C0D8(int handle)
+{
+    CfeEvalEntry *entry = &cfeEvalEntries[cfeEvalEntryCount];
+    unsigned int slot;
+
+    strcpy(entry->name, func_A9F238(handle, func_A9F0C0(handle, 1)));
+    xglMovieInfoInit(entry);
+    do {
+    } while (xglCdServiceIfPending() != 0);
+    entry->dataSize = xglCdGetFileSize(entry->name);
+    entry->data = GameResBufferAlloc(entry->dataSize);
+    if (entry->data == 0) {
+        /* An empty walk to the first unused slot; the result is not used. */
+        for (slot = 1; slot < CFE_CD_SLOT_LAST && xglCdSlotTable[slot + 1].owner != -1; slot++) {
+        }
+    }
+    do {
+    } while (xglCdServiceIfPending() != 0);
+    xglCdReadFile(entry->name, entry->data, 0, 1);
+    entry->opened = 1;
+    /* The original's assert macro also tests its message string D_0068CE68. */
+    if (xglMovieOpen(entry, 0) != 0 && D_0068CE68 != 0) {
+        assertFailed(D_0068CE80, cfeAssertFile, 604);
+    }
+    entry->frameBuffers[0] = GameResBufferAlloc(entry->bufferQuads * 16 + 0x20);
+    entry->frameBuffers[1] = GameResBufferAlloc(entry->bufferQuads * 16 + 0x20);
+    cfeEvalEntryCount++;
+    return 1;
+}
 
 int ldDev(void)
 {
