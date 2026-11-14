@@ -6,6 +6,7 @@
 #include "main/tu146.h"
 #include "main/xgl_2.h"
 #include "main/xgl_studio.h"
+#include "quadword.h"
 
 int GameResBufferAlloc(int);
 void cfeNodePoolSet(void *);
@@ -15,9 +16,50 @@ void cfeNodePoolInit(void) {
     cfeNodePoolClear();
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu141", cfeEvalRecordsInit);
-
 void *memset(void *, int, unsigned int);
+
+
+/* One 0x1B0-byte node of cfeEntries as cfeEvalRecordsInit sets it up. */
+typedef struct CfeNodeInit {
+    unsigned char unmodeled_000[0xD0];
+    AlignedVector4 vectorD0;    /* +0x0D0 */
+    AlignedVector4 vectorE0;    /* +0x0E0 */
+    unsigned char unmodeled_0f0[0x10C - 0xF0];
+    int parent;                 /* +0x10C: -1, no parent */
+    unsigned char unmodeled_110[4];
+    float scaleX;               /* +0x114 */
+    float scaleY;               /* +0x118 */
+    unsigned char unmodeled_11c[4];
+    int enabled;                /* +0x120 */
+    unsigned char unmodeled_124[0x1B0 - 0x124];
+} CfeNodeInit;
+
+/* Number of nodes in cfeEntries. */
+#define CFE_NODE_COUNT 64
+
+extern CfeNodeInit cfeEntries[];
+extern const AlignedVector4 D_0068D070;
+
+/* Clears the 64 nodes of cfeEntries and gives each the vector D_0068D070 at +0xD0 and +0xE0, no
+ * parent, scale 1 and the enabled flag. */
+void cfeEvalRecordsInit(void)
+{
+    AlignedVector4 initial = D_0068D070;
+    const AlignedVector4 *source;
+    int i;
+
+    memset(cfeEntries, 0, CFE_NODE_COUNT * sizeof(CfeNodeInit));
+    for (i = 0; i < CFE_NODE_COUNT; i++) {
+        source = &initial;
+        QuadwordCopy(&cfeEntries[i].vectorD0, source);
+        QuadwordCopy(&cfeEntries[i].vectorE0, source);
+        cfeEntries[i].parent = -1;
+        cfeEntries[i].scaleX = 1.0f;
+        cfeEntries[i].scaleY = 1.0f;
+        cfeEntries[i].enabled = 1;
+    }
+}
+
 int xglCameraSetPadPort(void *, int);
 void *xglStudioGetCamera2(int);
 void xglStudioInit(void);
@@ -189,7 +231,6 @@ void cfePlugInTextReset(void) {
     field[0] = 0;
 }
 
-int cfeEvalRecordsInit(void);
 int cfeEvalEntriesInit(void);
 
 /* Module init: calls two helpers, then each table initializer of this file in order. */
