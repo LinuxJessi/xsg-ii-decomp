@@ -266,7 +266,6 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutFT4STQ);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutSpr);
 
 void func_0012B4B8(XglPacket *packet);
-void sceVif1PkAddCode(XglPacket *packet, unsigned int code);
 
 void grPacketSend(GrPacket *packet)
 {
