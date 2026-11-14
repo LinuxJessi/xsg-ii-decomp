@@ -219,7 +219,7 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B6D8);
 
 void XenoActorSetModeInSlot(void *, int, int);
 float XenoActorSetSelector(void *, int);
-int func_A9F0A8(void);
+int func_A9F0A8(int handle);
 int func_A9F0C0(int, int);
 char *func_A9F238(int, int);
 char *strcpy(char *, const char *);
@@ -310,7 +310,7 @@ int cfe_0024BC10(int handle)
     unsigned char *object;
 
     data = 0;
-    if (func_A9F0A8() != 3) {
+    if (func_A9F0A8(handle) != 3) {
         assertFailed(D_0068CE20, cfeAssertFile, 430);
     }
     slot = func_A9F0C0(handle, 1);
@@ -403,7 +403,7 @@ int cfe_0024C7B8(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8() != 5) {
+    if (func_A9F0A8(handle) != 5) {
         assertFailed(D_0068CED0, cfeAssertFile, 795);
     }
     index = func_A9F0C0(handle, 1);
@@ -442,7 +442,7 @@ int cfe_0024CB80(int handle)
     int key;
     int value;
 
-    if (func_A9F0A8() != 4) {
+    if (func_A9F0A8(handle) != 4) {
         assertFailed(D_0068CF10, cfeAssertFile, 856);
     }
     index = func_A9F0C0(handle, 1);
@@ -471,7 +471,7 @@ int cfe_0024CCF8(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8() != 5) {
+    if (func_A9F0A8(handle) != 5) {
         assertFailed(D_0068CED0, cfeAssertFile, 896);
     }
     index = func_A9F0C0(handle, 1);
@@ -510,7 +510,7 @@ int cfe_0024D5E0(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8() != 4) {
+    if (func_A9F0A8(handle) != 4) {
         assertFailed(D_0068CF10, cfeAssertFile, 1021);
     }
     index = func_A9F0C0(handle, 1);
@@ -538,7 +538,7 @@ int cfe_0024D738(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8() != 5) {
+    if (func_A9F0A8(handle) != 5) {
         assertFailed(D_0068CED0, cfeAssertFile, 1047);
     }
     index = func_A9F0C0(handle, 1);
@@ -567,7 +567,7 @@ int cfe_0024D8C0(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8() != 5) {
+    if (func_A9F0A8(handle) != 5) {
         assertFailed(D_0068CED0, cfeAssertFile, 1073);
     }
     index = func_A9F0C0(handle, 1);
@@ -596,7 +596,7 @@ int cfe_0024DA40(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8() != 5) {
+    if (func_A9F0A8(handle) != 5) {
         assertFailed(D_0068CED0, cfeAssertFile, 1099);
     }
     index = func_A9F0C0(handle, 1);
@@ -614,7 +614,50 @@ int cfe_0024DA40(int handle)
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024DBC0);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024DC78);
+void cfeMesLayoutText(char *text);
+extern int cfePlugInRecordCount;
+
+/* One 0x44C-byte message record of D_006316B4 (cfe_0024DBC0 allocates them). */
+typedef struct CfeMessageRecord {
+    int first;                  /* +0x000: script argument 2 */
+    int second;                 /* +0x004: script argument 3 */
+    int third;                  /* +0x008: script argument 5 (5-argument form only) */
+    char text[0x400];           /* +0x00C */
+    char name[0x40];            /* +0x40C: script argument 4 (5-argument form), else empty */
+} CfeMessageRecord;
+
+extern CfeMessageRecord *D_006316B4;
+extern const char D_0068CF38[];
+
+/* Script command (3 or 5 arguments): fills the next message record with the unescaped, laid-out text
+ * of argument 1 and arguments 2 and 3; the 5-argument form also sets the name (argument 4) and the
+ * third value (argument 5). */
+int cfe_0024DC78(int handle)
+{
+    CfeMessageRecord *record = &D_006316B4[cfePlugInRecordCount];
+
+    if (func_A9F0A8(handle) == 3) {
+        memset(record->text, 0, sizeof(record->text));
+        cfeMesUnescape(record->text, func_A9F238(handle, func_A9F0C0(handle, 1)));
+        cfeMesLayoutText(record->text);
+        record->first = func_A9F0C0(handle, 2);
+        record->second = func_A9F0C0(handle, 3);
+        /* The empty name: the original copies the one byte of the empty string D_0068CF38 (an inlined
+         * strcpy). */
+        record->name[0] = D_0068CF38[0];
+        cfePlugInRecordCount++;
+    } else if (func_A9F0A8(handle) == 5) {
+        memset(record->text, 0, sizeof(record->text));
+        cfeMesUnescape(record->text, func_A9F238(handle, func_A9F0C0(handle, 1)));
+        cfeMesLayoutText(record->text);
+        record->first = func_A9F0C0(handle, 2);
+        record->second = func_A9F0C0(handle, 3);
+        cfeMesUnescape(record->name, func_A9F238(handle, func_A9F0C0(handle, 4)));
+        record->third = func_A9F0C0(handle, 5);
+        cfePlugInRecordCount++;
+    }
+    return 1;
+}
 
 int setMesScr(void)
 {
@@ -625,7 +668,7 @@ int setMesScr(void)
 int cfe_0024DE20(int handle)
 {
     int value;
-    if (func_A9F0A8() != 1) {
+    if (func_A9F0A8(handle) != 1) {
         assertFailed(D_0068CDE8, cfeAssertFile, 1201);
     }
     value = func_A9F0C0(handle, 1);
@@ -637,7 +680,7 @@ int cfe_0024DE20(int handle)
 int cfe_0024DE80(int handle)
 {
     int value;
-    if (func_A9F0A8() != 1) {
+    if (func_A9F0A8(handle) != 1) {
         assertFailed(D_0068CDE8, cfeAssertFile, 1217);
     }
     value = func_A9F0C0(handle, 1);
@@ -661,9 +704,9 @@ void cfeRunAndWait(int value, int id)
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024DF60);
 
 
-int cfe_0024E688(void)
+int cfe_0024E688(int handle)
 {
-    if (func_A9F0A8() != 1) {
+    if (func_A9F0A8(handle) != 1) {
         assertFailed(D_0068CDE8, cfeAssertFile, 1456);
     }
     sefReleaseOwnedRecords(-1);
@@ -675,7 +718,7 @@ void fadeStartOut(int);
 int cfe_0024E6D8(int handle)
 {
     int value;
-    if (func_A9F0A8() != 1) {
+    if (func_A9F0A8(handle) != 1) {
         assertFailed(D_0068CDE8, cfeAssertFile, 1475);
     }
     value = func_A9F0C0(handle, 1);
