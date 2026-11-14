@@ -88,7 +88,7 @@ void gifStateDrawCameraQuad(XglPacket *packet)
     xglCurMulRotateZ(camera->travel.rotation.z);
     xglCurMatrixGet(matrix);
     xglMatrixInverse(matrix, matrix);
-    xglVectorScale(&scaled, &gifStatus.blurDirection, gifStatus.blur);
+    xglVectorScale(&scaled, &gifStatus.mulColor, gifStatus.blur);
     xglVectorMulMat(&offset, matrix, &scaled);
     x = -offset.x;
     y = offset.y;
@@ -1129,13 +1129,10 @@ void gifStateSetZBufFormat(void) {
 }
 
 #include "quadword.h"
-/* The colour the models are multiplied with. */
-extern AlignedVector4 D_00631690;
-
 /* Sets the model multiply colour (a quadword copy). */
 void nmlModelSetMulColor(Vector4 *color)
 {
-    QuadwordCopy(&D_00631690, color);
+    QuadwordCopy(&gifStatus.mulColor, color);
 }
 
 
@@ -1158,10 +1155,8 @@ void gifStateSetCenter(int centerX, int centerY) {
     gifStatus.centerY = centerY;
 }
 
-extern int D_0063165C;
-
 void func_00246DD8(int value) {
-    D_0063165C = value;
+    gifStatus.depth = value;
 }
 
 extern int gifStateFbp;
