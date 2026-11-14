@@ -98,10 +98,10 @@ void tiWaterDebugUpdate(void)
     gifStateSetDecrease(tiWaterDecrease);
     gifStateSetFbp(tiWaterFbp);
     gifStateSetBlur(tiWaterBlur);
-    nmlModelUseSubWindow(0, (int) tiWaterIntVals[0]);
-    nmlModelUseSubWindow(1, (int) tiWaterIntVals[1]);
-    nmlModelUseSubWindow(2, (int) tiWaterIntVals[2]);
-    nmlModelUseSubWindow(3, (int) tiWaterIntVals[3]);
+    nmlModelUseSubWindow(0, tiWaterIntVals[0]);
+    nmlModelUseSubWindow(1, tiWaterIntVals[1]);
+    nmlModelUseSubWindow(2, tiWaterIntVals[2]);
+    nmlModelUseSubWindow(3, tiWaterIntVals[3]);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterRegisterSub);

@@ -9,8 +9,6 @@
 #include "main/xgl_2.h"
 #include "main/xgl_render.h"
 
-void nmlModelUseSubWindow(unsigned int index, int enabled);
-
 #define NML_WINDOW_COUNT 4
 
 extern int g_aSubWindow[NML_WINDOW_COUNT];

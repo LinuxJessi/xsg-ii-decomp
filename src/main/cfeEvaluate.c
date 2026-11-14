@@ -172,6 +172,13 @@ void cfeCommandReleaseRecords(CfeEvalCommand *command) {
 
 void func_002488F8(CfeEvalCommand *command);
 
+/* The actions of a command (CfeEvalCommand.action). */
+#define CFE_ACTION_NONE 0
+#define CFE_ACTION_SPAWN 1
+#define CFE_ACTION_SET_OWNER_FLAGS 2
+#define CFE_ACTION_RELEASE 3
+#define CFE_ACTION_RESPAWN 4
+
 /* Releases the command's records and spawns its effect again. */
 static inline void cfeCommandRespawn(CfeEvalCommand *command)
 {
@@ -220,18 +227,18 @@ void cfeCommandEvaluate(CfeEvalCommand *command, int time)
     if (command->actionTrack != 0) {
         command->action = (int) func_002508C8(command->actionTrack, time);
         switch (command->action) {
-        case 0:
+        case CFE_ACTION_NONE:
             break;
-        case 1:
+        case CFE_ACTION_SPAWN:
             func_002488F8(command);
             break;
-        case 2:
+        case CFE_ACTION_SET_OWNER_FLAGS:
             cfeCommandSetOwnerFlags(command);
             break;
-        case 3:
+        case CFE_ACTION_RELEASE:
             cfeCommandReleaseRecords(command);
             break;
-        case 4:
+        case CFE_ACTION_RESPAWN:
             cfeCommandRespawn(command);
             break;
         }

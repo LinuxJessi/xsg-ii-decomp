@@ -60,6 +60,7 @@ void func_00246DD8(int value);
 void gifStateClearModeValue(void);
 void gifStateSuppressDrawHook(void);
 void nmlModelEnableSubWindow0(void);
+void nmlModelUseSubWindow(unsigned int index, int enabled);
 void gifStateSetMode(int mode);
 void gifStateSetDecrease(f32 decrease);
 void gifStateSetCenter(int centerX, int centerY);

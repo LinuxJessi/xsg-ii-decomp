@@ -15,44 +15,55 @@
 
 extern unsigned char cfeAssertFile[];
 
+/* The modes of func_0024B0E8 / func_0024B230: set the key plain or flagged (0x2), or plain and mark the
+ * list's tail to reset its first (0x8), second (0x10) or both direction pairs (cfeEntryResetDirs). */
+#define CFE_KEY_MODE_PLAIN 0
+#define CFE_KEY_MODE_FLAGGED 1
+#define CFE_KEY_MODE_RESET_BOTH 2
+#define CFE_KEY_MODE_RESET_FIRST 3
+#define CFE_KEY_MODE_RESET_SECOND 4
+#define CFE_KEY_RESET_FIRST 0x8
+#define CFE_KEY_RESET_SECOND 0x10
+
 CfeListNode *cfeListTail(CfeListNode *node);
 void func_0024FC90(CfeListNode *list);
 extern unsigned char D_0068CD10[];
 
-/* Sets key `key` of the value list to `value` by mode: 0 plain (func_0024F698), 1 flagged (func_0024F730), 2 to 4
- * plain with flag 0x18, 0x8 or 0x10 on the list's tail, which is then updated (func_0024FC90). */
+/* Sets key `key` of the value list to `value` in a CFE_KEY_MODE_* mode: plain (func_0024F698) or
+ * flagged (func_0024F730), or plain with reset flags on the list's tail, which is then updated
+ * (func_0024FC90). */
 void func_0024B0E8(CfeListNode **list, int mode, int key, float value)
 {
     CfeListNode *tail;
 
     switch (mode) {
-    case 0:
+    case CFE_KEY_MODE_PLAIN:
         func_0024F698(list, key, value);
         break;
-    case 1:
+    case CFE_KEY_MODE_FLAGGED:
         func_0024F730(list, key, value);
         break;
-    case 2:
+    case CFE_KEY_MODE_RESET_BOTH:
         func_0024F698(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= 0x18;
+            tail->flags |= CFE_KEY_RESET_FIRST | CFE_KEY_RESET_SECOND;
             func_0024FC90(*list);
         }
         break;
-    case 3:
+    case CFE_KEY_MODE_RESET_FIRST:
         func_0024F698(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= 0x8;
+            tail->flags |= CFE_KEY_RESET_FIRST;
             func_0024FC90(*list);
         }
         break;
-    case 4:
+    case CFE_KEY_MODE_RESET_SECOND:
         func_0024F698(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= 0x10;
+            tail->flags |= CFE_KEY_RESET_SECOND;
             func_0024FC90(*list);
         }
         break;
@@ -62,40 +73,41 @@ void func_0024B0E8(CfeListNode **list, int mode, int key, float value)
     }
 }
 
-/* Sets key `key` of the angle list to `value` by mode: 0 plain (func_0024F7C0), 1 flagged (func_0024F860), 2 to 4
- * plain with flag 0x18, 0x8 or 0x10 on the list's tail, which is then updated (func_0024FC90). */
+/* Sets key `key` of the angle list to `value` in a CFE_KEY_MODE_* mode: plain (func_0024F7C0) or
+ * flagged (func_0024F860), or plain with reset flags on the list's tail, which is then updated
+ * (func_0024FC90). */
 void func_0024B230(CfeListNode **list, int mode, int key, float value)
 {
     CfeListNode *tail;
 
     switch (mode) {
-    case 0:
+    case CFE_KEY_MODE_PLAIN:
         func_0024F7C0(list, key, value);
         break;
-    case 1:
+    case CFE_KEY_MODE_FLAGGED:
         func_0024F860(list, key, value);
         break;
-    case 2:
+    case CFE_KEY_MODE_RESET_BOTH:
         func_0024F7C0(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= 0x18;
+            tail->flags |= CFE_KEY_RESET_FIRST | CFE_KEY_RESET_SECOND;
             func_0024FC90(*list);
         }
         break;
-    case 3:
+    case CFE_KEY_MODE_RESET_FIRST:
         func_0024F7C0(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= 0x8;
+            tail->flags |= CFE_KEY_RESET_FIRST;
             func_0024FC90(*list);
         }
         break;
-    case 4:
+    case CFE_KEY_MODE_RESET_SECOND:
         func_0024F7C0(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= 0x10;
+            tail->flags |= CFE_KEY_RESET_SECOND;
             func_0024FC90(*list);
         }
         break;
