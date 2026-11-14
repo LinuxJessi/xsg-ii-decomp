@@ -7,6 +7,7 @@
 #include "main/tu256.h"
 #include "gs.h"
 #include "main/tu045.h"
+#include "main/xgl_studio.h"
 
 f32 func_002508C8(int, int);
 
@@ -148,7 +149,122 @@ void cfeRecordEvaluate(CfeEvalRecord *record, f32 dest_matrix[4][4], int sample_
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeGroupTableEvaluate);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_00248390);
+void *memset(void *destination, int value, unsigned int size);
+
+/* The shake offsets of the camera: position x, y, z, then rotation x, y, z. */
+typedef struct CfeCameraOffset {
+    f32 position[3];
+    f32 rotation[3];
+} CfeCameraOffset;
+
+/* The studio block D_006384C0 (0x70 bytes) as the camera evaluation sees it: the camera, its key tracks
+ * (as track handles, see cfeTrackSample) and the camera shake. cfePlugIn.c sees the same block as the
+ * camera and 27 key lists (CfeStudioBlock). */
+typedef struct CfeCameraEval {
+    XglCamera *camera;          /* +0x00 */
+    int position[3];            /* +0x04: tracks of travel.position */
+    int rotation[3];            /* +0x10: tracks of travel.rotation */
+    int fov;                    /* +0x1C: track of travel.fov */
+    int shakeTrack[3];          /* +0x20: tracks of shakeOn, shakeFrames and shakeAmount */
+    int flags;                  /* +0x2C: CFE_CAMERA_HELD leaves the camera alone */
+    int shakeOn;                /* +0x30 */
+    int shakeFrames;            /* +0x34: frames from one shake offset to the next */
+    int shakeAmount;            /* +0x38: the largest offset in 1/1000 units (rotation 1/10000) */
+    int shakeCounter;           /* +0x3C: frames left to the next offset; -1 starts a new one */
+    CfeCameraOffset from;       /* +0x40 */
+    CfeCameraOffset to;         /* +0x58 */
+} CfeCameraEval;
+
+/* The original reads and writes the block through a union member, so its accesses carry alias set 0 (the
+ * camera pointer and the counter are read again after every camera store). */
+typedef union CfeStudioView {
+    CfeCameraEval eval;
+} CfeStudioView;
+
+extern CfeStudioView D_006384C0;
+/* -1.0f and 1.0f: the random sign of a shake offset. */
+extern f32 D_006318B0[2];
+
+/* The flag of CfeCameraEval.flags that stops the evaluation. */
+#define CFE_CAMERA_HELD 0x1
+/* The units of the shake amount for the position and the rotation. */
+#define CFE_SHAKE_POSITION_UNIT 0.001f
+#define CFE_SHAKE_ROTATION_UNIT 0.0001f
+
+/* Evaluates the studio camera at `time`: its position, rotation and field of view from their tracks, and
+ * the camera shake: while it is on, the camera moves from one random offset to the next over shakeFrames
+ * frames (the counter only runs when `paused` is 0); off, the offsets are cleared. Then moves the studio. */
+void func_00248390(int time, int paused)
+{
+    float blend;
+    float rest;
+
+    xglStudioGetCamera(&D_006384C0.eval.camera, 0);
+    if (D_006384C0.eval.flags & CFE_CAMERA_HELD) {
+        return;
+    }
+    if (D_006384C0.eval.position[0] != 0) {
+        D_006384C0.eval.camera->travel.position.x = cfeTrackSample(D_006384C0.eval.position[0], time);
+    }
+    if (D_006384C0.eval.position[1] != 0) {
+        D_006384C0.eval.camera->travel.position.y = cfeTrackSample(D_006384C0.eval.position[1], time);
+    }
+    if (D_006384C0.eval.position[2] != 0) {
+        D_006384C0.eval.camera->travel.position.z = cfeTrackSample(D_006384C0.eval.position[2], time);
+    }
+    if (D_006384C0.eval.rotation[0] != 0) {
+        D_006384C0.eval.camera->travel.rotation.x = cfeTrackSample(D_006384C0.eval.rotation[0], time);
+    }
+    if (D_006384C0.eval.rotation[1] != 0) {
+        D_006384C0.eval.camera->travel.rotation.y = cfeTrackSample(D_006384C0.eval.rotation[1], time);
+    }
+    if (D_006384C0.eval.rotation[2] != 0) {
+        D_006384C0.eval.camera->travel.rotation.z = cfeTrackSample(D_006384C0.eval.rotation[2], time);
+    }
+    if (D_006384C0.eval.fov != 0) {
+        D_006384C0.eval.camera->travel.fov = cfeTrackSample(D_006384C0.eval.fov, time);
+    }
+    if (D_006384C0.eval.shakeTrack[0] != 0) {
+        D_006384C0.eval.shakeOn = func_002508C8(D_006384C0.eval.shakeTrack[0], time);
+    }
+    if (D_006384C0.eval.shakeTrack[1] != 0) {
+        D_006384C0.eval.shakeFrames = func_002508C8(D_006384C0.eval.shakeTrack[1], time);
+    }
+    if (D_006384C0.eval.shakeTrack[2] != 0) {
+        D_006384C0.eval.shakeAmount = func_002508C8(D_006384C0.eval.shakeTrack[2], time);
+    }
+    if (D_006384C0.eval.shakeOn != 0 && D_006384C0.eval.shakeAmount != 0) {
+        if (D_006384C0.eval.shakeCounter < 0 && paused == 0) {
+            D_006384C0.eval.shakeCounter = D_006384C0.eval.shakeFrames;
+            D_006384C0.eval.from = D_006384C0.eval.to;
+            D_006384C0.eval.to.position[0] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.position[1] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.position[2] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.rotation[0] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.rotation[1] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.rotation[2] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT * D_006318B0[xglSRand() & 1];
+        }
+        blend = (float) D_006384C0.eval.shakeCounter / (float) (D_006384C0.eval.shakeFrames + 1);
+        if (1.0f < blend) {
+            blend = 1.0f;
+        }
+        rest = 1.0f - blend;
+        D_006384C0.eval.camera->travel.position.x += D_006384C0.eval.from.position[0] * blend + D_006384C0.eval.to.position[0] * rest;
+        D_006384C0.eval.camera->travel.position.y += D_006384C0.eval.from.position[1] * blend + D_006384C0.eval.to.position[1] * rest;
+        D_006384C0.eval.camera->travel.position.z += D_006384C0.eval.from.position[2] * blend + D_006384C0.eval.to.position[2] * rest;
+        D_006384C0.eval.camera->travel.rotation.x += D_006384C0.eval.from.rotation[0] * blend + D_006384C0.eval.to.rotation[0] * rest;
+        D_006384C0.eval.camera->travel.rotation.y += D_006384C0.eval.from.rotation[1] * blend + D_006384C0.eval.to.rotation[1] * rest;
+        D_006384C0.eval.camera->travel.rotation.z += D_006384C0.eval.from.rotation[2] * blend + D_006384C0.eval.to.rotation[2] * rest;
+        if (paused == 0) {
+            D_006384C0.eval.shakeCounter--;
+        }
+    } else {
+        D_006384C0.eval.shakeCounter = 0;
+        memset(&D_006384C0.eval.from, 0, sizeof(D_006384C0.eval.from));
+        memset(&D_006384C0.eval.to, 0, sizeof(D_006384C0.eval.to));
+    }
+    xglStudioMove();
+}
 
 /* The scale of a spawned effect; the original writes it through a union member (alias set 0). */
 typedef union CfeEffectScale {

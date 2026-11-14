@@ -18,6 +18,7 @@
 #include "main/tu093.h"
 #include "main/xenoActor.h"
 #include "main/xgl_font.h"
+#include "main/xgl_studio.h"
 #include "main/xgl_render.h"
 
 extern int tiWaterDebugMode;      /* debug panel mode, toggled by select in the scene loop */
@@ -338,7 +339,6 @@ void XenoActorSetMode(struct XenoActor *actor, int mode);
 void XenoActorDoit(void);
 void XenoActorDisp(void);
 void func_001BA68C(void);
-void xglStudioGetCamera(XglCamera **camera, int index);
 /* gifState.c defines it; sdv_183.c declares it with a float pointer, so it has no header prototype yet. */
 void nmlModelSetMulColor(Vector4 *color);
 extern int D_0064586C;
