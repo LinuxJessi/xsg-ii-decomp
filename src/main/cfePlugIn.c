@@ -221,8 +221,10 @@ void XenoActorAllocMatrices(XenoActor *actor);
 
 /* Offset of the extra resource inside the actor (not modeled in XenoActor). */
 #define CFE_ACTOR_EXTRA_RESOURCE 0x610
+
 /* The hierarchy's word at +0x1C: set when it needs the shared resource. */
 #define CFE_HIERARCHY_SHARED 0x1C
+
 /* The shared resource the hierarchy loads (0x30041). */
 #define CFE_SHARED_RESOURCE_ID 0x30041
 
@@ -487,6 +489,7 @@ INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024CF70);
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024D1E8);
 
 extern CfeListNode *D_0063CDE0[];
+
 /* Script command (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
  * with flag 0x2 (func_0024F730) when `flagged` is set. */
 int cfe_0024D5E0(int handle)

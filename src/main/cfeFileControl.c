@@ -15,6 +15,7 @@ int xglDebFileWrite(const char *name, const void *buffer, int size);
 int vsprintf(char *buffer, const char *format, va_list args);
 /* pFileTemp: the text buffer the log lines are appended to. */
 extern char *cfeFileTemp;
+
 /* The assert texts "pFileTemp" and "size < MAX_OF_FILESIZE", and the source file name. */
 extern const char cfeAssertFileTemp[];
 extern const char cfeAssertFileSize[];

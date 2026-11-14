@@ -20,6 +20,7 @@ extern int printf(const char *format, ...);
 extern int vsprintf(char *buffer, const char *format, va_list args);
 extern const char tracePrintFormat[8];
 extern PadRecord PadData;
+
 /* The reset message resetWaitForPad shows. */
 extern const char resetText[];
 

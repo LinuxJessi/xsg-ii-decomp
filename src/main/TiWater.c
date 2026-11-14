@@ -34,6 +34,7 @@ extern float tiWaterDebugSteps[];
 
 /* Number of debug parameters the panel cycles through. */
 #define TI_WATER_DEBUG_PARAMS 12
+
 /* Parameters shown at once, and the line height. */
 #define TI_WATER_DEBUG_LINES 3
 #define TI_WATER_DEBUG_LINE_HEIGHT 9
@@ -76,6 +77,7 @@ extern float tiWaterDecrease;
 extern float tiWaterFbp;
 extern float tiWaterBlur;
 extern float tiWaterIntVals[4];
+
 /* Debug panel step: up and down on pad 0 select the parameter (wrapping), the panel is drawn and
  * every parameter is applied to the GIF state and the four model sub windows. */
 void tiWaterDebugUpdate(void)
@@ -133,6 +135,7 @@ void gifStateFlush(void);
 void gifStateAddReg(int gifAddress, u64 gifData);
 void xglPacketInitVuStateArg(int mode);
 void tiWaterDrawItem(void *item);
+
 /* Draw callback: in pass 0, draws every registered table (CLAMP_1 and the state template first when
  * it has items, then each item) and empties the list; the packet state is reset afterwards. */
 void tiWaterDrawAll(int pass)

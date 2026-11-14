@@ -5,6 +5,7 @@
 extern AlignedXglLightSet D_006AF340;
 extern AlignedXglLightSet D_006AF4C0;
 extern AlignedXglLightSet D_006AF640;
+
 /* Defined in xgl_2.c; not in main/xgl_2.h because nml_model_set.c passes its own state record. */
 void xglLightSetDefault(XglLightSet *lightSet);
 

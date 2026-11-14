@@ -461,6 +461,7 @@ extern unsigned short sRenderDepthBase;
 #define CFE_GS_Q_ONE 0x3F800000
 #define CFE_GS_ORIGIN_X 0x7000
 #define CFE_GS_ORIGIN_Y 0x71C0
+
 /* GS primitive: line. */
 #define CFE_GS_PRIM_LINE 1
 
@@ -622,6 +623,7 @@ void func_0024A8C0(CfeEvalEntry *entry);
 
 /* Below this size an entry's scale counts as zero and the entry is skipped. */
 #define CFE_ENTRY_MIN_SCALE 0.05f
+
 /* Updates the entries: rewinds the movie of each entry with a result, then plays (unless
  * `noPlay`) and draws every entry whose scale is not zero. */
 void cfeUpdateEntries(int noPlay)
