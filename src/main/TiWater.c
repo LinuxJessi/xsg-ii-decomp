@@ -9,6 +9,7 @@
 #include "main/gifState.h"
 #include "main/nml_model_set.h"
 #include "main/pad.h"
+#include "main/sdv_033.h"
 #include "main/tu045.h"
 #include "main/tu093.h"
 #include "main/xgl_font.h"
@@ -106,16 +107,17 @@ void tiWaterDebugUpdate(void)
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterRegisterSub);
 
-typedef struct XglPacket XglPacket;
 XglPacket *xglPacketGetCurrent(void);
 void sceVif1PkCnt(XglPacket *packet, int flag);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, int flag);
 void sceVif1PkAddDataN(XglPacket *packet, void *data, int count);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
+/* The water state template sent by tiWaterSendStateTemplate, and its length for sceVif1PkAddDataN. */
 extern u64 D_00631220[];
+#define TI_WATER_STATE_TEMPLATE_COUNT 0x3C
 
 /* Sends the water state template: FRAME_1 at the frame buffer and TEX0_1 on the display buffer
- * (512 x 512, with alpha) are patched in, then the template (count 0x3C) goes out as direct data. */
+ * (512 x 512, with alpha) are patched in, then the template goes out as direct data. */
 void tiWaterSendStateTemplate(void)
 {
     XglPacket *packet = xglPacketGetCurrent();
@@ -124,7 +126,7 @@ void tiWaterSendStateTemplate(void)
     D_00631220[0x70 / 8] = GS_SET_TEX0(sRender.display_base << 5, 8, 0, 9, 9, 1, 0, 0, 0, 0, 0, 0);
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
-    sceVif1PkAddDataN(packet, D_00631220, 0x3C);
+    sceVif1PkAddDataN(packet, D_00631220, TI_WATER_STATE_TEMPLATE_COUNT);
     sceVif1PkCloseDirectHLCode(packet);
 }
 
