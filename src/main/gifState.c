@@ -977,7 +977,40 @@ void gifStateDisableEffect(void) {
     gifStateEffectHook = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", func_00246FF8);
+/* The camera-shake block of a map actor (+0x150) that func_00246FF8 sets up. */
+typedef struct GifShakeBlock {
+    unsigned char unmodeled_000[0x150];
+    float low;          /* +0x150 */
+    float high;         /* +0x154 */
+    float speed;        /* +0x158 */
+    int steps;          /* +0x15C */
+    int mode;           /* +0x160 */
+    unsigned char unmodeled_164[4];
+    float scale;        /* +0x168 */
+} GifShakeBlock;
+
+/* The colour of the white screen effect (RGB). */
+#define GIF_STATE_WHITE 0xFFFFFF
+
+/* Starts the white screen effect for an actor and sets its shake block. */
+void func_00246FF8(GifShakeBlock *block)
+{
+    func_00246DD8(GIF_STATE_WHITE);
+    gifStateSetCenter(0x100, 0xE0);
+    gifStateSetEffectAlpha(0, 100);
+    gifStateSetDecrease(0.006f);
+    gifStateSetFbp(1);
+    gifStateSetBlur(1);
+    nmlModelUseSubWindow(0, 0);
+    nmlModelUseSubWindow(1, 0);
+    gifStateSetMode(0);
+    block->low = -0.6f;
+    block->speed = 3.019999f;
+    block->high = 0.6f;
+    block->steps = 4;
+    block->scale = 1.0f;
+    block->mode = 3;
+}
 
 extern int gifStateDrawHookSuppressed;
 
