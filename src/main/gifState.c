@@ -48,8 +48,6 @@ void func_00243B58(XglPacket *packet) {
     sceVif1PkCloseDirectHLCode(packet);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawQuad);
-
 /* The halfword fields of sRender read by the frame effect. */
 typedef struct GifStateRender {
     unsigned char unmodeled_00[0x14];
@@ -68,7 +66,6 @@ extern int gifStateBlurDivisor;                      /* blur divisor of the alph
 extern int gifStateBlurOffset;                      /* blur offset in pixels */
 
 void gifStateAddReg(int gifAddress, u64 gifData);
-void gifStateDrawQuad(XglPacket *packet, int width, int height, int offsetX, int offsetY, int alpha);
 
 /* IEEE-754 1.0f as the raw Q word of RGBAQ. */
 #define GIF_STATE_ONE_BITS 0x3F800000
@@ -85,6 +82,27 @@ void gifStateDrawQuad(XglPacket *packet, int width, int height, int offsetX, int
 
 /* TEX0_1 of a 512x512 PSMCT32 page used as a texture. */
 #define GIF_STATE_TEX0(base) GS_SET_TEX0((base) << 5, 8, GS_PSMCT32, 9, 9, 1, 0, 0, 0, 0, 0, 0)
+
+/* Draws the work page as a textured sprite of width x height texels at (offsetX, offsetY), 256 x 224
+ * pixels in size, blended with the fixed alpha into the shown page. */
+void gifStateDrawQuad(XglPacket *packet, unsigned int width, unsigned int height, int offsetX, int offsetY, int alpha)
+{
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    gifStateReset();
+    gifStateAddReg(GS_TEXFLUSH, 0);
+    gifStateAddReg(GS_ALPHA_1, GS_SET_ALPHA(0, 2, 2, 1, alpha));
+    gifStateAddReg(GS_FRAME_1, GS_SET_FRAME(sRender.displayBase, 8, GS_PSMCT32, 0));
+    gifStateAddReg(GS_TEX0_1, GIF_STATE_TEX0(sRender.workBase));
+    gifStateAddReg(GS_RGBAQ, GS_SET_RGBAQ(0x7F, 0x7F, 0x7F, 0x7F, GIF_STATE_ONE_BITS));
+    gifStateAddReg(GS_PRIM, GS_SET_PRIM(6, 0, 1, 0, 1, 0, 1, 0, 0));
+    gifStateAddReg(GS_UV, GS_SET_UV(0, 0));
+    gifStateAddReg(GS_XYZF2, GIF_STATE_XY(offsetX, offsetY));
+    gifStateAddReg(GS_UV, GS_SET_UV(width << 4, height << 4));
+    gifStateAddReg(GS_XYZF2, GIF_STATE_XY(offsetX + 256, offsetY + 224));
+    gifStateFlush();
+    sceVif1PkCloseDirectHLCode(packet);
+}
 
 void gifStateDrawBlurFrame(XglPacket *packet)
 {
