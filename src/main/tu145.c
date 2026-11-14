@@ -80,15 +80,60 @@ float cfeTrackLerp(CfeTrackNode *from, CfeTrackNode *to, float time)
 
 extern f32 cfeTimeScale;
 
-/* Cubic in the time elapsed since the key (scaled by cfeTimeScale): coefficients[0..3], Horner form. */
-f32 cfeEntryEvalCubic(CfeTrackNode *entry, f32 *coefficients, f32 time)
+/* Cubic in the time elapsed since the key (scaled by cfeTimeScale): coefficients[0..3], Horner form. The time
+ * comes first: EABI passes it in $f12 either way, and this order gives the argument setup of its caller
+ * func_00250478. */
+f32 cfeEntryEvalCubic(f32 time, CfeTrackNode *entry, f32 *coefficients)
 {
     f32 elapsed = (time - (f32) entry->startTime) * cfeTimeScale;
 
     return (elapsed * ((elapsed * ((elapsed * coefficients[0]) + coefficients[1])) + coefficients[2])) + coefficients[3];
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250478);
+/* Fits the cubic through the Bezier points (x[i], y[i]) into coefficients[0..3] (tu259.c). */
+void func_00295260(f32 *coefficients, const f32 *x, const f32 *y);
+extern f32 D_006317B8;
+
+/* The angle at `time` on the Bezier curve between the keys `from` and `to`: from leaves along its second
+ * direction, to arrives along its first one (both normalized; a zero length counts as 1e-7). */
+float func_00250478(CfeTrackNode *from, CfeTrackNode *to, float time)
+{
+    f32 x[4];
+    f32 y[4];
+    f32 coefficients[4];
+    f32 arrive[2];
+    f32 leave[2];
+    float length;
+
+    leave[0] = CFE_FIXED_TO_FLOAT(from->secondDirection[0]);
+    leave[1] = CFE_FIXED_TO_FLOAT(from->secondDirection[1]);
+    length = __builtin_sqrtf(leave[0] * leave[0] + leave[1] * leave[1]);
+    if (length == 0.0f) {
+        length = 1e-07f;
+    }
+    length = 1.0f / length;
+    leave[0] *= length;
+    leave[1] *= length;
+    arrive[0] = CFE_FIXED_TO_FLOAT(to->firstDirection[0]);
+    arrive[1] = CFE_FIXED_TO_FLOAT(to->firstDirection[1]);
+    length = __builtin_sqrtf(arrive[0] * arrive[0] + arrive[1] * arrive[1]);
+    if (length == 0.0f) {
+        length = 1e-07f;
+    }
+    length = 1.0f / length;
+    arrive[0] *= length;
+    arrive[1] *= length;
+    y[0] = CFE_FIXED_TO_FLOAT(from->angle);
+    x[0] = from->startTime * D_006317B8;
+    x[1] = x[0] + leave[0];
+    y[1] = y[0] + leave[1];
+    x[3] = to->startTime * D_006317B8;
+    x[2] = x[3] - arrive[0];
+    y[3] = CFE_FIXED_TO_FLOAT(to->angle);
+    y[2] = y[3] - arrive[1];
+    func_00295260(coefficients, x, y);
+    return cfeEntryEvalCubic(time, from, coefficients);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackSample);
 
