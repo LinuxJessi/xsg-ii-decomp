@@ -6,15 +6,19 @@
 #include "common.h"
 #include "TiWater.h"
 #include "gs.h"
+#include "main/control_entry.h"
 #include "main/gifState.h"
 #include "main/nml_model_set.h"
 #include "main/pad.h"
 #include "main/sdv_033.h"
+#include "main/test_129.h"
+#include "main/tu026.h"
 #include "main/tu045.h"
 #include "main/tu051.h"
 #include "main/tu093.h"
 #include "main/xenoActor.h"
 #include "main/xgl_font.h"
+#include "main/xgl_render.h"
 
 extern int tiWaterDebugMode;      /* debug panel mode, toggled by select in the scene loop */
 extern int tiWaterDebugIndex;      /* selected debug parameter, 0..11 */
@@ -327,7 +331,135 @@ void tiWaterSetEffectMode(void) {
     gifStateSetMode((int) tiWaterEffectNum);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterSceneLoop);
+void tiWaterInitStudio(void);
+struct XenoActor *XenoActorAlloc(void);
+void XenoActorAllocMatrices(struct XenoActor *actor);
+void XenoActorSetMode(struct XenoActor *actor, int mode);
+void XenoActorDoit(void);
+void XenoActorDisp(void);
+void func_001BA68C(void);
+void xglStudioGetCamera(XglCamera **camera, int index);
+/* gifState.c defines it; sdv_183.c declares it with a float pointer, so it has no header prototype yet. */
+void nmlModelSetMulColor(Vector4 *color);
+extern int D_0064586C;
+extern const char D_0068C880[];
+extern const char D_0068C890[];
+extern const char D_0068C8A8[];
+extern const char D_0068C8D8[];
+extern const char D_0068C908[];
+extern const char D_0068C928[];
+extern const char D_0068C948[];
+extern const char D_0068C950[];
+extern const char D_0068C978[];
+extern const char D_0068C9A0[];
+extern const char D_0068C9C8[];
+extern const char D_0068C9F0[];
+extern const char D_0068CA20[];
+extern const char D_0068CA40[];
+extern const char D_0068CA60[];
+extern const char D_0068CA80[];
+extern const char D_0068CAA0[];
+extern const DoublewordAlignedVector4 D_0068CAD0;
+
+/* The test heap the scene files are loaded into. */
+#define TI_WATER_HEAP 0x1000000
+/* XenoActor drawFlags bit set on the source actor. */
+#define TI_WATER_SOURCE_DRAW_FLAG 0x800000
+/* Select held and start pressed end the scene. */
+#define TI_WATER_EXIT (PAD_SELECT | (PAD_START << 16))
+/* The landscape frame counts up to this and starts again. */
+#define TI_WATER_FRAMES 120.0f
+
+/* The water test scene: loads the landscape and the KOS-MOS source actor from the host, sets the GIF effect
+ * up from the debug parameters and runs the frame loop (L2 toggles the debug panel, circle applies the effect
+ * mode) until select is held with start pressed. */
+void tiWaterSceneLoop(void)
+{
+    DoublewordAlignedVector4 color;
+    int heap;
+    XglCamera *camera;
+    struct XenoActor *landscape;
+    struct XenoActor *kosmos;
+
+    heap = TI_WATER_HEAP;
+    tiWaterInitStudio();
+    XenoActorPoolInitDefault();
+    landscape = XenoActorAlloc();
+    if (landscape == 0) {
+        assertFailed(D_0068C880, D_0068C890, 578);
+    }
+    landscape->pack = testLoadFile(&heap, D_0068C8A8);
+    landscape->effect = testLoadFile(&heap, D_0068C8D8);
+    if (landscape->pack == 0) {
+        assertFailed(D_0068C908, D_0068C890, 581);
+    }
+    if (landscape->effect == 0) {
+        assertFailed(D_0068C928, D_0068C890, 582);
+    }
+    kosmos = XenoActorAlloc();
+    if (kosmos == 0) {
+        assertFailed(D_0068C948, D_0068C890, 585);
+    }
+    kosmos->pack = testLoadFile(&heap, D_0068C950);
+    kosmos->effect = testLoadFile(&heap, D_0068C978);
+    kosmos->hierarchy = testLoadFile(&heap, D_0068C9A0);
+    kosmos->slotTable = testLoadFile(&heap, D_0068C9C8);
+    kosmos->xapExt2 = testLoadFile(&heap, D_0068C9F0);
+    if (kosmos->pack == 0) {
+        assertFailed(D_0068CA20, D_0068C890, 596);
+    }
+    if (kosmos->effect == 0) {
+        assertFailed(D_0068CA40, D_0068C890, 597);
+    }
+    if (kosmos->hierarchy == 0) {
+        assertFailed(D_0068CA60, D_0068C890, 598);
+    }
+    if (kosmos->slotTable == 0) {
+        assertFailed(D_0068CA80, D_0068C890, 599);
+    }
+    if (kosmos->xapExt2 == 0) {
+        assertFailed(D_0068CAA0, D_0068C890, 600);
+    }
+    kosmos->drawFlags |= TI_WATER_SOURCE_DRAW_FLAG;
+    XenoActorAllocMatrices(kosmos);
+    XenoActorSetChannelValue(kosmos, 8.0f);
+    XenoActorSetMode(kosmos, 0);
+    tiWaterDebugReset();
+    gifStateSetCenter(tiWaterCx, tiWaterCy);
+    gifStateSetEffectAlpha(tiWaterAlphaType, tiWaterAlpha);
+    gifStateSetDecrease(tiWaterDecrease);
+    gifStateSetFbp(tiWaterFbp);
+    gifStateSetBlur(tiWaterBlur);
+    color = D_0068CAD0;
+    nmlModelSetMulColor(&color);
+    while ((PadData[0].heldAndPressed & TI_WATER_EXIT) != TI_WATER_EXIT) {
+        xglRenderClearFrame();
+        func_001BA68C();
+        if ((unsigned short) (PadData[0].pressed & PAD_L2)) {
+            if (++tiWaterDebugMode >= 2) {
+                tiWaterDebugMode = 0;
+            }
+        }
+        if (tiWaterDebugMode == 1) {
+            tiWaterDebugUpdate();
+        }
+        if (PadData[0].pressed & PAD_CIRCLE) {
+            tiWaterSetEffectMode();
+        }
+        landscape->frame += 1.0f;
+        if (TI_WATER_FRAMES <= landscape->frame) {
+            landscape->frame = 0.0f;
+        }
+        xglStudioGetCamera(&camera, 0);
+        XenoActorDoit();
+        XenoActorDisp();
+        tiWaterUpdateSource(kosmos);
+        xglSleep();
+    }
+    XenoActorReleaseAll();
+    xglRenderClearFrame();
+    D_0064586C = 0;
+}
 
 void pxySetDrawCallback(void (*callback)(int pass));
 int tiWaterRegisterSub(struct TiWaterSub *sub);

@@ -4,6 +4,7 @@
 #include "main/pad.h"
 #include "main/xgl_font.h"
 #include "main/control_entry.h"
+#include "main/test_129.h"
 
 /* Debug test menu layout: entry count, the origin and line height of the list, and the slide offset at rest. */
 #define TEST_MENU_ENTRY_COUNT 4
@@ -108,7 +109,7 @@ void testMenuRun(void)
 }
 
 /*
- * Reads a debug file into the next 16-byte aligned block of the test heap
+ * Reads the debug file name into the next 16-byte aligned block of the test heap
  * cursor (*bufferCursor) and returns its address, or 0 for an empty file.
  * The NULL check is the assert on pData at ../test.euc.c line 95.
  */

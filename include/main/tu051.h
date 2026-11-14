@@ -24,7 +24,7 @@ struct XenoActor {
     int drawMode;                           /* 0x0C4: 1 while attached as a part (uwamonoAttachPlayerParts) */
     unsigned char unmodeled_0c8[0x5CC - 0xC8];
     u32 flags;                              /* 0x5CC */
-    unsigned char unmodeled_5d0[4];
+    float frame;                            /* 0x5D0: the scene frame (tiWaterSceneLoop counts it to 120) */
     int mode;                               /* 0x5D4: the motion XenoActorCheckMode compares against */
     unsigned char unmodeled_5d8[4];
     int requested_mode;                     /* 0x5DC */
@@ -35,7 +35,9 @@ struct XenoActor {
     int hierarchy;                          /* 0x5F4: XenoActorAllocMatrices builds the matrices from it */
     unsigned char unmodeled_5f8[4];
     int slotTable;                          /* 0x5FC: XenoActorGetSlotRange's table */
-    unsigned char unmodeled_600[0x610 - 0x600];
+    unsigned char unmodeled_600[4];
+    int xapExt2;                            /* 0x604: rsrc[XAct_Rsrc_XAP_Ext2] (tiWaterSceneLoop assert) */
+    unsigned char unmodeled_608[0x610 - 0x608];
     void *sharedResource;                   /* 0x610: resource 0x30041, loaded when the hierarchy needs it */
     unsigned char unmodeled_614[0x618 - 0x614];
     int lookLink;                           /* 0x618 */
