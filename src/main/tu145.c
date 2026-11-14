@@ -66,7 +66,44 @@ void cfeEntryResetDirs(CfeTrackNode *entry)
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", func_0024FC90);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeChainUnwrapAngles);
+#define CFE_PI 3.1415927f
+#define CFE_TWO_PI 6.2831855f
+
+/* Makes the angles along the track continuous: each key's angle is moved by whole turns until it is within
+ * pi of the angle of the key before it. */
+void cfeChainUnwrapAngles(CfeTrackNode *node)
+{
+    CfeTrackNode *next;
+    CfeTrackNode *after;
+    float previous;
+    float current;
+    int whole;
+
+    if (node == 0) {
+        return;
+    }
+    next = node->next;
+    if (next == 0) {
+        return;
+    }
+    do {
+        current = CFE_FIXED_TO_FLOAT(next->angle);
+        previous = CFE_FIXED_TO_FLOAT(node->angle);
+        if (previous < current) {
+            while (__builtin_fabsf(current - previous) > CFE_PI) {
+                current -= CFE_TWO_PI;
+            }
+        } else {
+            while (__builtin_fabsf(current - previous) > CFE_PI) {
+                current += CFE_TWO_PI;
+            }
+        }
+        whole = (int) current;
+        next->angle = (whole << 8) + (int) ((current - (float) whole) * 256.0f);
+        node = next;
+        after = next->next;
+    } while ((next = after) != 0);
+}
 
 /* The angle at `time` between the keys `from` and `to`, interpolated linearly. */
 float cfeTrackLerp(CfeTrackNode *from, CfeTrackNode *to, float time)
