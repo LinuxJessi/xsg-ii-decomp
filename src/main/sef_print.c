@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "main/control_entry.h"
 #include "main/pad.h"
+#include "main/sef_print.h"
 #include "main/xgl_font.h"
 #include "main/xgl_render.h"
 

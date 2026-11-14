@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/sef.h"
+#include "main/sef_print.h"
 #include "main/tu155.h"
 
 
@@ -45,7 +46,9 @@ void func_00252E38(u32 mask) {
     svSceneFlags ^= mask;
 }
 
-/* The light set lightSetLogDump walks: directional lights, colours, shadow and point-light vectors. */
+/* The light set (XglLightSet, xgl_2.h) as lightSetLogDump walks it: runs of 7, 8, 3, 3 and 3 vectors
+ * that cross XglLightSet's field boundaries (the directions run includes viewDirection, the colours
+ * run the two ambient colours, the shadow run forward and reserved). */
 typedef struct LightSet {
     Vector4 direction[7];       /* +0x000 */
     Vector4 color[8];           /* +0x070 */
@@ -60,7 +63,6 @@ extern const char lightLogColorLabel[];
 extern const char lightLogShadowLabel[];
 extern const char lightLogPointPositionLabel[];
 extern const char lightLogPointColorLabel[];
-void logNoOp(const void *data, const char *format, ...);
 
 /* Logs every vector of the light set with its label and index (logNoOp does nothing in this build). */
 void lightSetLogDump(LightSet *lights)
