@@ -3,6 +3,8 @@
 #include "main/cfePlugIn.h"
 #include "main/sef.h"
 #include "main/tu256.h"
+#include "gs.h"
+#include "main/tu045.h"
 
 f32 func_002508C8(int, int);
 int cfeListHasItems(void *list);
@@ -451,7 +453,41 @@ void cfeSndSetTarget(int target)
   func_00249248(cfeSndRecords, *target_ref);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_00249340);
+void xglDirectQueueBegin(void);
+void xglDirectQueueDefer(int mode, int count);
+extern unsigned short sRenderDepthBase;
+
+/* RGBAQ q of 1.0 and the screen origin of the 12.4 vertex coordinates. */
+#define CFE_GS_Q_ONE 0x3F800000
+#define CFE_GS_ORIGIN_X 0x7000
+#define CFE_GS_ORIGIN_Y 0x71C0
+/* GS primitive: line. */
+#define CFE_GS_PRIM_LINE 1
+
+/* An RGBA colour word (red in the low byte) as an RGBAQ value with q = 1. */
+#define CFE_GS_RGBAQ(color) \
+    GS_SET_RGBAQ((color) & 0xFF, ((color) >> 8) & 0xFF, ((color) >> 16) & 0xFF, ((color) >> 24) & 0xFF, CFE_GS_Q_ONE)
+
+/* Queues a Gouraud-shaded line from (x0, y0) in colour0 to (x1, y1) in colour1 at `depth` (pixels,
+ * depth test GEQUAL), submitted deferred. */
+void func_00249340(int x0, int y0, int x1, int y1, unsigned int color0, unsigned int color1, unsigned int depth)
+{
+    u64 *p;
+    u64 *start;
+
+    xglDirectQueueBegin();
+    p = (u64 *) &xglDirectQueueBuffer[xglDirectQueueCount];
+    start = p;
+    GS_PUT(p, GS_TEST_1, GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2));
+    GS_PUT(p, GS_ZBUF_1, GS_SET_ZBUF(sRenderDepthBase, 1, 0));
+    GS_PUT(p, GS_PRIM, GS_SET_PRIM(CFE_GS_PRIM_LINE, 1, 0, 0, 0, 0, 0, 0, 0));
+    GS_PUT(p, GS_RGBAQ, CFE_GS_RGBAQ(color0));
+    GS_PUT(p, GS_XYZF2, GS_SET_XYZ((x0 << 4) + CFE_GS_ORIGIN_X, (y0 << 4) + CFE_GS_ORIGIN_Y, depth));
+    GS_PUT(p, GS_RGBAQ, CFE_GS_RGBAQ(color1));
+    GS_PUT(p, GS_XYZF2, GS_SET_XYZ((x1 << 4) + CFE_GS_ORIGIN_X, (y1 << 4) + CFE_GS_ORIGIN_Y, depth));
+    xglDirectQueueCount += ((u32) p - (u32) start) >> 4;
+    xglDirectQueueDefer(0, 10);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_00249518);
 
@@ -472,7 +508,6 @@ void xglMatrixStackMul(Matrix4 matrix);
 void xglMatrixStackSave(Matrix4 matrix);
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 void xglVectorInner(float *result, const Vector4 *left, const Vector4 *right);
-void func_00249340(int x0, int y0, int x1, int y1, unsigned int color0, unsigned int color1, unsigned int flags);
 
 /* A 0..1 float channel scaled to the 0..128 GS range. */
 #define COLOR_BYTE(f) ((unsigned int) ((f) * 128.0f) & 0xFF)
