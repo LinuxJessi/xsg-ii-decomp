@@ -17,6 +17,7 @@ typedef struct GifBreakPoint {
 typedef union GifFloat {
     f32 f;
     u32 u;
+    int i;                    /* GifBreakShard.fall: the frame count of the fall */
 } GifFloat;
 
 /* One qword of four GifFloat lanes (x, y, z, w). */
@@ -29,7 +30,7 @@ typedef struct GifBreakShard {
     GifQuad projected[24];    /* +0x180 */
     GifQuad center;           /* +0x300 */
     GifQuad spin;             /* +0x310 */
-    u8 unmodeled_320[0x10];
+    GifQuad angle;            /* +0x320: the rotation of the last frame */
     GifFloat speed;           /* +0x330 */
     GifFloat fall;            /* +0x334 */
     u8 unmodeled_338[0x8];

@@ -6,6 +6,8 @@
 #include "main/nml_model_set.h"
 #include "main/TiWater.h"
 #include "main/tu148.h"
+#include "main/tu255.h"
+#include "main/tu256.h"
 #include "main/xgl_2.h"
 #include "main/xgl_render.h"
 
@@ -522,12 +524,95 @@ void gifStateBuildBreakShards(GifBreakShard *shards, GifBreakPoint *points)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", func_00245728);
+#define GIF_BREAK_VERTICES 24
+
+/* Projection depth of the shards: a vertex at z is scaled by (z + depth) / depth. */
+#define GIF_BREAK_DEPTH 300.0f
+/* The part of the break (1 - ratio) over which the shards spin up. */
+#define GIF_BREAK_SPIN_UP 0.05f
+/* How fast the spin grows once a shard falls. */
+#define GIF_BREAK_SPIN_GROWTH 8.0f
+/* Above this ratio the falling shards speed up; below it they come back. */
+#define GIF_BREAK_TURN_RATIO 0.5f
+
+/* Moves one shard for the break ratio (1 down to 0). The shard spins up over the first part of the
+ * break and then keeps its angle; once 1 - ratio passes its speed it falls: the spin grows and the
+ * fall count goes up each frame while the ratio is above one half, below it the angle is reset and
+ * the count goes down again while sub-window 0 is on. Its vertices are rotated (X, then Y), projected
+ * and moved to its centre, sideways away from the screen middle by twice the squared fall count. */
+void func_00245728(GifBreakShard *shard, f32 ratio)
+{
+    Matrix4 matrix;
+    Vector4 angle;
+    float progress = 1.0f - ratio;
+    float depth;
+    int i;
+
+    if (shard->speed.f < progress) {
+        if (GIF_BREAK_TURN_RATIO < ratio) {
+            float scale = (progress - shard->speed.f) * GIF_BREAK_SPIN_GROWTH + 1.0f;
+
+            shard->angle[3].f = 1.0f;
+            angle.w = 1.0f;
+            shard->fall.i++;
+            angle.x = shard->angle[0].f = shard->spin[0].f * scale;
+            angle.y = shard->angle[1].f = shard->spin[1].f * scale;
+            angle.z = shard->angle[2].f = shard->spin[2].f * scale;
+        } else {
+            if (shard->fall.i > 0 && g_aSubWindow[0] != 0) {
+                shard->fall.i--;
+            }
+            angle.x = 0.0f;
+            angle.y = 0.0f;
+            angle.z = 0.0f;
+        }
+    } else if (GIF_BREAK_SPIN_UP < progress) {
+        angle.x = shard->angle[0].f;
+        angle.y = shard->angle[1].f;
+        angle.z = shard->angle[2].f;
+        angle.w = shard->angle[3].f;
+    } else {
+        float scale = progress / GIF_BREAK_SPIN_UP;
+
+        shard->angle[3].f = 1.0f;
+        angle.w = 1.0f;
+        angle.x = shard->angle[0].f = shard->spin[0].f * scale;
+        angle.y = shard->angle[1].f = shard->spin[1].f * scale;
+        angle.z = shard->angle[2].f = shard->spin[2].f * scale;
+    }
+    xglCurSetRotateX(angle.x);
+    xglCurMulRotateY(angle.y);
+    xglCurMatrixGet(matrix);
+    for (i = 0; i < GIF_BREAK_VERTICES; i++) {
+        /* A GifQuad has the layout of a Vector4. */
+        xglCurApplyVector((Vector4 *) shard->projected[i], (Vector4 *) shard->vertex[i]);
+        depth = (shard->projected[i][2].f + GIF_BREAK_DEPTH) / GIF_BREAK_DEPTH;
+        shard->projected[i][0].f *= depth;
+        shard->projected[i][1].f *= depth;
+    }
+    if (shard->fall.i != 0) {
+        if (GIF_STATE_WIDTH / 2 <= shard->center[0].f) {
+            for (i = 0; i < GIF_BREAK_VERTICES; i++) {
+                shard->projected[i][0].f += shard->center[0].f + (float) (shard->fall.i * shard->fall.i) * 2;
+                shard->projected[i][1].f += shard->center[1].f;
+            }
+        } else {
+            for (i = 0; i < GIF_BREAK_VERTICES; i++) {
+                shard->projected[i][0].f += shard->center[0].f - (float) (shard->fall.i * shard->fall.i) * 2;
+                shard->projected[i][1].f += shard->center[1].f;
+            }
+        }
+    } else {
+        for (i = 0; i < GIF_BREAK_VERTICES; i++) {
+            shard->projected[i][0].f += shard->center[0].f;
+            shard->projected[i][1].f += shard->center[1].f;
+        }
+    }
+}
 
 extern void (*gifStateEffectHook)(XglPacket *packet);
 
 #define GIF_BREAK_SHARDS 24
-#define GIF_BREAK_VERTICES 24
 
 extern GifBreakPoint gifBreakPoints[3];
 extern GifBreakShard gifBreakShards[GIF_BREAK_SHARDS];
