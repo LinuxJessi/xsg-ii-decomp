@@ -8,7 +8,8 @@
 struct XenoActor {
     unsigned char unmodeled_000[0x10];
     AlignedVector4 position;                /* 0x010 */
-    unsigned char unmodeled_020[0x20];
+    AlignedVector4 previousPosition;        /* 0x020: x and z before this frame's move (tiWaterUpdateSource) */
+    unsigned char unmodeled_030[0x10];
     AlignedVector4 velocity;                /* 0x040: this frame's movement */
     AlignedVector4 rotation;                /* 0x050: y is the facing angle */
     AlignedVector4 direction;               /* 0x060: y is the moving angle */

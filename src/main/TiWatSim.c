@@ -10,13 +10,6 @@
 #include "main/TiWatSim.h"
 #include "main/xgl_2.h"
 
-/* Same shape as TiWaterSub in main/TiWater.c (magic "WAT " at +0x00, count at +0x08). */
-typedef struct TiWatSimTable {
-    u8 unmodeled_00[0x08];
-    u32 count;
-    u8 unmodeled_0C[0x04];
-} TiWatSimTable;
-
 /* One normal vector. The original stores the normals through a union member, so its stores carry alias set 0. */
 typedef union TiWatSimNormal {
     Vector4 vector;

@@ -11,7 +11,9 @@
 #include "main/pad.h"
 #include "main/sdv_033.h"
 #include "main/tu045.h"
+#include "main/tu051.h"
 #include "main/tu093.h"
+#include "main/xenoActor.h"
 #include "main/xgl_font.h"
 
 extern int tiWaterDebugMode;      /* debug panel mode, toggled by select in the scene loop */
@@ -270,7 +272,37 @@ float tiWaterVectorAngle(float x, float y)
     return angle;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterUpdateSource);
+/* Source steps per unit of pad direction. */
+#define TI_WATER_SOURCE_STEP 0.001f
+/* PadRecord.directionBits: the bits of directionX and directionY. */
+#define TI_WATER_DIRECTION_MASK 0xFFFF000000000000ULL
+
+/* Moves the water source actor by the pad direction of port 0 (cross enables its channel). While a direction
+ * is held, it turns the actor towards it and disturbs every registered water table at the actor's position.
+ * Then stores the source position for the simulation. */
+void tiWaterUpdateSource(struct XenoActor *actor)
+{
+    int i;
+
+    actor->previousPosition.x = actor->position.x;
+    actor->previousPosition.z = actor->position.z;
+    actor->position.x += PadData[0].directionX * TI_WATER_SOURCE_STEP;
+    actor->position.z += PadData[0].directionY * TI_WATER_SOURCE_STEP;
+    if (PadData[0].held & PAD_CROSS) {
+        XenoActorEnableChannel(actor);
+    }
+    if (PadData[0].directionBits & TI_WATER_DIRECTION_MASK) {
+        actor->rotation.y = tiWaterVectorAngle(PadData[0].directionY, PadData[0].directionX);
+        for (i = 0; i < tiWaterSubCount; i++) {
+            /* TiWatSimTable is TiWatSim.c's view of a TiWaterSub. */
+            tiWatSimDisturbAll((TiWatSimTable *) tiWaterSubList[i], &actor->position);
+        }
+        /* The original computes the length of the direction here and drops it. */
+        (void) __builtin_sqrtf(PadData[0].directionY * PadData[0].directionY
+                               + PadData[0].directionX * PadData[0].directionX);
+    }
+    tiWatSimStoreSourcePos(&actor->position);
+}
 
 /* tu133.c defines it with the item only and passes $f12 on to tiWatSimAdvance. The step comes first
  * here: EABI uses the same registers either way, and this order gives the original's argument setup. */

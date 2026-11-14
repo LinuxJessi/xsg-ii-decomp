@@ -36,6 +36,16 @@ typedef struct TiWatSimItem {
     Matrix4 matrix;             /* +0xD0: the inverse of transform */
 } TiWatSimItem;
 
+/* A water table as TiWatSim.c reads it: the same shape as TiWaterSub in TiWater.h (magic "WAT " at +0x00,
+ * count at +0x08, the items from +0x10). */
+typedef struct TiWatSimTable {
+    u8 unmodeled_00[0x08];
+    u32 count;
+    u8 unmodeled_0C[0x04];
+} TiWatSimTable;
+
 void tiWatSimStepRain(TiWatSimItem *item);
+void tiWatSimDisturbAll(TiWatSimTable *table, Vector4 *pPos);
+void tiWatSimStoreSourcePos(const Vector4 *position);
 
 #endif /* INCLUDE_MAIN_TIWATSIM_H */
