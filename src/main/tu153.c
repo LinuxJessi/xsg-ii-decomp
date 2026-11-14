@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/tu152.h"
 
 /* Multiplies the current matrix (vf26-vf29) by a rotation about X by angle (nothing for 0); the VU0
  * micro routines at 0xE8 and 0x20 return the cosine and the sine of vf4x in vf1x. */
@@ -92,7 +93,6 @@ void vu0RotateCurrentZYX(Vector4 *angles)
     vu0RotateCurrentX(angles->x);
 }
 
-void vu0SetCurrentRotationY(f32 value);
 
 /* Sets the current matrix to a Y rotation, then rotates it by X and Z. */
 void vu0SetCurrentRotationYXZ(Vector4 *angles)

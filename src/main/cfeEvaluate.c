@@ -240,8 +240,6 @@ void cfeCommandEvaluate(CfeEvalCommand *command, int time)
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeCommandTableEvaluate);
 
-void cfeRotateVectorXY(Vector4 *result, const float *angles);
-
 /* A row of cfeDirections (0x40 bytes): the angles of a light direction, the vectors it drives and
  * the tracks they are sampled from. */
 typedef struct CfeDirectionRow {
