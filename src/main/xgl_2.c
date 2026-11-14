@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/nml_model_set.h"
 #include "main/sdv_033.h"
 #include "shared.h"
 #include "main/xgl_2.h"
@@ -1505,7 +1506,6 @@ void xglStudioLightReset(void *light)
 
 void *memcpy(void *destination, const void *source, unsigned int size);
 void xglZeroQuadwords18(AlignedVector4 *dst);
-void xglDirectionFromAngles(Vector4 *destination, const Vector4 *source);
 
 /* A loaded light pack file: it starts with the "lxy" tag and is registered in xglLightPackTable. */
 typedef struct XglLightPack {

@@ -52,7 +52,51 @@ void cfeCommandTableInit(void) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu141", func_0024EB48);
+/* pi / 2: the angle the unused lights 3 to 5 are given. */
+#define CFE_LIGHT_HALF_PI 1.5707964f
+
+#include "main/nml_model_set.h"
+
+/* Number of angle vectors turned into directions: directions[0..5] and viewDirection. */
+#define CFE_LIGHT_ANGLE_VECTORS 7
+
+/* Sets the light set the CFE preview uses: three directional lights given as angles (turned into
+ * directions here), ambient 0.2 and no point lights, then makes it the pxy default light. */
+void func_0024EB48(XglLightSet *light)
+{
+    Vector4 *direction;
+    int i;
+
+    light->colors[0][0] = light->colors[0][1] = light->colors[0][2] = 0.9f;
+    light->colors[1][0] = light->colors[1][1] = light->colors[1][2] = 0.0f;
+    light->colors[2][0] = light->colors[2][1] = light->colors[2][2] = 0.0f;
+    light->ambientColor.x = light->ambientColor.y = light->ambientColor.z = 0.2f;
+    light->ambientColorLower.x = light->ambientColorLower.y = light->ambientColorLower.z = 0.2f;
+    light->directions[3][0] = light->directions[4][0] = light->directions[5][0] = CFE_LIGHT_HALF_PI;
+    light->viewDirection.x = 0.0f;
+    light->directions[0][0] = 0.0f;
+    light->directions[0][1] = 0.0f;
+    light->directions[0][3] = 1.0f;
+    light->directions[1][0] = 0.0f;
+    light->directions[1][1] = 0.0f;
+    light->directions[1][3] = 1.0f;
+    light->directions[2][0] = 0.0f;
+    light->directions[2][1] = 0.0f;
+    light->directions[2][3] = 1.0f;
+    /* directions[0..5] and viewDirection are seven consecutive angle vectors */
+    direction = (Vector4 *) light->directions;
+    for (i = 0; i < CFE_LIGHT_ANGLE_VECTORS; i++, direction++) {
+        xglDirectionFromAngles(direction, direction);
+    }
+    light->points[0][0] = light->points[0][1] = light->points[0][2] = light->points[0][3] = 0.0f;
+    light->points[1][0] = light->points[1][1] = light->points[1][2] = light->points[1][3] = 0.0f;
+    light->points[2][0] = light->points[2][1] = light->points[2][2] = light->points[2][3] = 0.0f;
+    light->pointDirections[0][0] = light->pointDirections[0][1] = light->pointDirections[0][2] = light->pointDirections[0][3] = 0.0f;
+    light->pointDirections[1][0] = light->pointDirections[1][1] = light->pointDirections[1][2] = light->pointDirections[1][3] = 0.0f;
+    light->pointDirections[2][0] = light->pointDirections[2][1] = light->pointDirections[2][2] = light->pointDirections[2][3] = 0.0f;
+    /* nml_model_set.c types the light block as its own PxyShadowLight */
+    pxySetDefaultLight((struct PxyShadowLight *) light);
+}
 
 /* A row of cfeDirections: the direction and the colour of one light of cfeDirectionTable (row 0 has only
  * the ambient colour). */
@@ -65,7 +109,6 @@ typedef struct CfeLightRow {
 
 extern CfeLightRow cfeDirections[4];
 extern XglLightSet cfeDirectionTable;
-void func_0024EB48(XglLightSet *light);
 
 /* Sets up the light set cfeDirectionTable, clears cfeDirections and points its rows at the ambient colour
  * and at the direction and colour of lights 0 to 2. */
