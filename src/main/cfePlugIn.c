@@ -218,6 +218,22 @@ XenoActor *cfeLoadResourceObject(int id)
     return actor;
 }
 
+extern int cfeGroupCount;
+
+/* A group of cfeGroups (0xC0 bytes): an object, the part table of its pack with the part matrices and
+ * one evaluation record per part, and the key lists of the group's own values (+0x64). */
+typedef struct CfeGroup {
+    XenoActor *object;          /* +0x00 */
+    unsigned char *parts;       /* +0x04: the part table of the object's pack; +0x60 is the count */
+    Matrix4 *matrices;          /* +0x08: one per part */
+    CfeEvalRecord *records;     /* +0x0C: one per part */
+    unsigned char unmodeled_10[0x64 - 0x10];
+    CfeListNode *lists[4];      /* +0x64 */
+    unsigned char unmodeled_74[0xC0 - 0x74];
+} CfeGroup;
+
+extern CfeGroup cfeGroups[];
+
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B6D8);
 
 void XenoActorSetModeInSlot(void *, int, int);
@@ -613,7 +629,58 @@ int cfe_0024CF70(int handle)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024D1E8);
+/* Script command (6 or 5 arguments): sets key `key` of a list of group `group` to the 8.8 value. With
+ * 6 arguments the list is source `sub` of the record of part `part` (sources 3 to 5 hold angles),
+ * with 5 the group's own list `sub`; the flagged forms are used when `flagged` is set. */
+int cfe_0024D1E8(int handle)
+{
+    int group;
+    int part;
+    int sub;
+    int key;
+    int flagged;
+    int value;
+
+    if (func_A9F0A8(handle) == 6) {
+        group = func_A9F0C0(handle, 1);
+        part = func_A9F0C0(handle, 2);
+        sub = func_A9F0C0(handle, 3);
+        key = func_A9F0C0(handle, 4);
+        flagged = func_A9F0C0(handle, 5);
+        value = func_A9F0C0(handle, 6);
+        /* CfeEvalRecord.source holds the key lists as ints (cfeEvaluate.c samples them through int
+         * prototypes), hence the casts. */
+        if (sub >= 3 && sub < 6) {
+            if (flagged != 0) {
+                func_0024F860((CfeListNode **) &cfeGroups[group].records[part].source[sub], key,
+                              CFE_FIXED_TO_FLOAT(value));
+            } else {
+                func_0024F7C0((CfeListNode **) &cfeGroups[group].records[part].source[sub], key,
+                              CFE_FIXED_TO_FLOAT(value));
+            }
+        } else {
+            if (flagged != 0) {
+                func_0024F730((CfeListNode **) &cfeGroups[group].records[part].source[sub], key,
+                              CFE_FIXED_TO_FLOAT(value));
+            } else {
+                func_0024F698((CfeListNode **) &cfeGroups[group].records[part].source[sub], key,
+                              CFE_FIXED_TO_FLOAT(value));
+            }
+        }
+    } else {
+        group = func_A9F0C0(handle, 1);
+        sub = func_A9F0C0(handle, 2);
+        key = func_A9F0C0(handle, 3);
+        flagged = func_A9F0C0(handle, 4);
+        value = func_A9F0C0(handle, 5);
+        if (flagged != 0) {
+            func_0024F730(&cfeGroups[group].lists[sub], key, CFE_FIXED_TO_FLOAT(value));
+        } else {
+            func_0024F698(&cfeGroups[group].lists[sub], key, CFE_FIXED_TO_FLOAT(value));
+        }
+    }
+    return 1;
+}
 
 extern CfeListNode *D_0063CDE0[];
 
