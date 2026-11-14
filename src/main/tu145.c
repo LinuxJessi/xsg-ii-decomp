@@ -1,9 +1,23 @@
 #include "common.h"
-
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeNormalizeFixed2);
-
 #include "shared.h"
 #include "main/tu144.h"
+
+/* Normalizes the 2-D vector (*x, *y) in 8.8 fixed point (a zero length counts as 1e-6). The
+ * conversion back takes the whole part of the unscaled component times 1 / length, as the original
+ * does. */
+void cfeNormalizeFixed2(int *x, int *y)
+{
+    float fx = CFE_FIXED_TO_FLOAT(*x);
+    float fy = CFE_FIXED_TO_FLOAT(*y);
+    float length = __builtin_sqrtf(fx * fx + fy * fy);
+
+    if (length == 0.0f) {
+        length = 1e-06f;
+    }
+    length = 1.0f / length;
+    *x = (int) ((int) fx * length * 256.0f + (int) ((fx * length - (int) fx * length) * 256.0f));
+    *y = (int) ((int) fy * length * 256.0f + (int) ((fy * length - (int) fy * length) * 256.0f));
+}
 
 /*
  * A key of a time-keyed track. startTime (+4) is the key time; the tracks are
@@ -22,7 +36,6 @@ typedef struct CfeTrackNode {
     struct CfeTrackNode *next;
 } CfeTrackNode;
 
-void cfeNormalizeFixed2(int *x, int *y);
 void func_0024FC90(CfeTrackNode *track);
 CfeTrackNode *cfeTrackFindAtOrBefore(CfeTrackNode *node, int time);
 
