@@ -3,6 +3,7 @@
 #include "main/tu026.h"
 #include "main/pad.h"
 #include "main/xgl_font.h"
+#include "main/TiWater.h"
 #include "main/control_entry.h"
 #include "main/test_129.h"
 
@@ -22,7 +23,6 @@ extern int D_00631144;
 void xglCdLoadOverlay(int overlay);
 void xglFontSetStoredValue(int value);
 void glowRunScene(void);
-void tiWaterSceneLoop(void);
 void func_00A89428(void);
 
 int D_00631144 = 0x0068C728;
