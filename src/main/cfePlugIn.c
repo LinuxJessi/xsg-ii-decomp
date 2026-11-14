@@ -540,7 +540,42 @@ int cfe_0024CCF8(int handle)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024CF70);
+extern CfeListNode *D_0063A54C[][16];
+
+/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063A54C to the 8.8 value.
+ * Lists 3 to 5 hold angles (func_0024F860 / func_0024F7C0), the others plain values (func_0024F730 /
+ * func_0024F698); the flagged forms are used when `flagged` is set. */
+int cfe_0024CF70(int handle)
+{
+    int index;
+    int sub;
+    int key;
+    int flagged;
+    int value;
+
+    if (func_A9F0A8(handle) != 5) {
+        assertFailed(D_0068CED0, cfeAssertFile, 933);
+    }
+    index = func_A9F0C0(handle, 1);
+    sub = func_A9F0C0(handle, 2);
+    key = func_A9F0C0(handle, 3);
+    flagged = func_A9F0C0(handle, 4);
+    value = func_A9F0C0(handle, 5);
+    if (sub >= 3 && sub < 6) {
+        if (flagged != 0) {
+            func_0024F860(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        } else {
+            func_0024F7C0(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        }
+    } else {
+        if (flagged != 0) {
+            func_0024F730(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        } else {
+            func_0024F698(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        }
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024D1E8);
 
