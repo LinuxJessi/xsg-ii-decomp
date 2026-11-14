@@ -32,9 +32,65 @@ void cfeChainUnwrapAngles(CfeListNode *list);
 void func_0024FC90(CfeListNode *list);
 CfeListNode *cfeListFindOrAdd(CfeListNode **list, int key);
 
-/* Finds the node with key `key` in the sorted list at *list, or allocates and links one (cfeNodeAlloc);
-   a found node has its 0x8 and 0x10 flag bits cleared. */
-INCLUDE_ASM("asm/main/nonmatchings/tu144", cfeListFindOrAdd);
+/* Node flag bits that finding a node clears (their meaning is not recovered). */
+#define CFE_NODE_FLAG_8 0x8
+#define CFE_NODE_FLAG_10 0x10
+
+/* Finds the node with key `key` in the sorted list at *list, or allocates one (cfeNodeAlloc) and
+ * links it in key order; a found node has its flag bits 0x8 and 0x10 cleared. */
+CfeListNode *cfeListFindOrAdd(CfeListNode **list, int key)
+{
+    CfeListNode **link;
+    CfeListNode *prev;
+    CfeListNode *node;
+    CfeListNode *first;
+
+    if (*list != 0) {
+        prev = 0;
+        link = list;
+        do {
+            if (prev == 0 && key < (*link)->key) {
+                node = cfeNodeAlloc();
+                if (node == 0) {
+                    return 0;
+                }
+                node->key = key;
+                cfeListLink(prev, node, *link);
+                *list = node;
+                return node;
+            }
+            if ((*link)->key == key) {
+                (*link)->flags &= ~CFE_NODE_FLAG_8;
+                (*link)->flags &= ~CFE_NODE_FLAG_10;
+                return *link;
+            }
+            if ((*link)->next != 0 && (*link)->key < key && key < (*link)->next->key) {
+                node = cfeNodeAlloc();
+                if (node == 0) {
+                    return 0;
+                }
+                node->key = key;
+                cfeListLink(*link, node, (*link)->next);
+                return node;
+            }
+            prev = *link;
+            link = &prev->next;
+        } while (*link != 0);
+        node = cfeNodeAlloc();
+        if (node == 0) {
+            return 0;
+        }
+        node->key = key;
+        cfeListLink(prev, node, 0);
+        return node;
+    }
+    first = cfeNodeAlloc();
+    *list = first;
+    if (first != 0) {
+        first->key = key;
+    }
+    return first;
+}
 
 /* Sets the 8.8 fixed-point value of the key's node and clears flag 0x2, then updates the list. */
 CfeListNode *func_0024F698(CfeListNode **list, int key, float value)
