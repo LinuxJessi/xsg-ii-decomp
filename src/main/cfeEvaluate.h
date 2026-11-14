@@ -93,7 +93,12 @@ typedef struct CfeEvalEntry {
 } CfeEvalEntry;
 
 struct XenoActor;
-struct CfeFlagRecord;
+/* One sampled flag of a node (8 bytes, one per geometry of the actor's pack): the value and the track it is
+ * sampled from. The key commands address the track as track[column]; the script passes column 0. */
+typedef struct CfeFlagRecord {
+    int value;
+    int track[1];
+} CfeFlagRecord;
 
 /* One 0x1B0-byte entry of cfeEntries as its evaluation sees it: the actor it drives, the values it last set and
  * the tracks (handles, see cfeTrackSample) they come from. tu141.c (CfeNodeInit) and tu138.c see other parts. */

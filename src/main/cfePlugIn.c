@@ -716,7 +716,42 @@ int cfe_0024C7B8(int handle)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C940);
+extern unsigned char D_0068CEF0[];
+extern CfeNode cfeEntries[];
+
+/* Script command (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
+ * to the 8.8 value (flagged through func_0024F730 when `flagged` is set), then walks that track to its
+ * end. The record keeps its track as an int handle. */
+int cfe_0024C940(int handle)
+{
+    int entry;
+    int row;
+    int column;
+    int key;
+    int flagged;
+    int value;
+    CfeListNode *node;
+
+    if (func_A9F0A8(handle) != 6) {
+        assertFailed(D_0068CEF0, cfeAssertFile, 821);
+    }
+    entry = func_A9F0C0(handle, 1);
+    row = func_A9F0C0(handle, 2);
+    column = func_A9F0C0(handle, 3);
+    key = func_A9F0C0(handle, 4);
+    flagged = func_A9F0C0(handle, 5);
+    value = func_A9F0C0(handle, 6);
+    if (flagged != 0) {
+        func_0024F730((CfeListNode **) &cfeEntries[entry].records[row].track[column], key,
+                      CFE_FIXED_TO_FLOAT(value));
+    } else {
+        func_0024F698((CfeListNode **) &cfeEntries[entry].records[row].track[column], key,
+                      CFE_FIXED_TO_FLOAT(value));
+    }
+    for (node = (CfeListNode *) cfeEntries[entry].records[row].track[column]; node != 0; node = node->next) {
+    }
+    return 1;
+}
 
 
 /* The studio block (0x70 bytes, cleared by cfeStudioInit): the camera and its key lists. */
@@ -1118,7 +1153,6 @@ void seVolumeSet(int value, int flags);
 /* The running fade (nonzero while a fade is under way). */
 extern int fadeUpdateHook;
 extern PadRecord PadData[];
-extern CfeNode cfeEntries[];
 extern XglLightSet cfeDirectionTable;
 extern CfeEvalGlobal cfeEvalGlobal;
 

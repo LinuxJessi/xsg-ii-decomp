@@ -7,6 +7,7 @@
 #include "main/tu256.h"
 #include "gs.h"
 #include "main/tu045.h"
+#include "cfeEvaluate.h"
 #include "main/xgl_studio.h"
 #include "main/nml_model_set.h"
 #include "main/tu093.h"
@@ -14,12 +15,6 @@
 #include "main/xgl_2.h"
 
 f32 func_002508C8(int, int);
-
-/* One sampled flag: the value and the track it is sampled from (8 bytes). */
-typedef struct CfeFlagRecord {
-    int value;
-    int track;
-} CfeFlagRecord;
 
 /* The object whose flag words (+0x4C0) the records set; +0x5EC is its record list. */
 typedef struct CfeFlagOwner {
@@ -48,8 +43,8 @@ void cfeRecordSample(int time, CfeFlagOwner *owner, CfeFlagRecord *record, int i
 {
     int value;
 
-    if (record->track != 0) {
-        value = (int) func_002508C8(record->track, time);
+    if (record->track[0] != 0) {
+        value = (int) func_002508C8(record->track[0], time);
         record->value = value;
         if (value != 0) {
             owner->flags[index >> 5] |= 1 << (index & 0x1F);
@@ -74,7 +69,6 @@ void cfeRecordListSample(int time, CfeFlagOwner *owner, CfeFlagRecord *records)
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeEvaluateNode);
 
-#include "cfeEvaluate.h"
 
 void cfeEvaluateNode(void *, int);
 extern int cfeEntryCount;
