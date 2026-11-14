@@ -46,7 +46,8 @@ typedef struct GifStatusBlock {
     int centerY;
     int effectAlphaType;
     int effectAlpha;
-    u8 unmodeled_14[0xC];
+    int fbp;                    /* +0x14: gifStateFbp is this word */
+    u8 unmodeled_18[0x8];
     f32 ratio;
     f32 ratioStep;
     int fadeOut;
