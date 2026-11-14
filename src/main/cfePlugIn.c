@@ -795,11 +795,6 @@ int cfe_0024DA40(int handle)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024DBC0);
-
-void cfeMesLayoutText(char *text);
-extern int cfePlugInRecordCount;
-
 /* One 0x44C-byte message record of D_006316B4 (cfe_0024DBC0 allocates them). */
 typedef struct CfeMessageRecord {
     int first;                  /* +0x000: script argument 2 */
@@ -810,6 +805,32 @@ typedef struct CfeMessageRecord {
 } CfeMessageRecord;
 
 extern CfeMessageRecord *D_006316B4;
+extern unsigned char D_0068CF30[];
+
+/* Script command (1 argument): allocates and clears argument 1 message records for D_006316B4. */
+int cfe_0024DBC0(int handle)
+{
+    int count;
+    int size;
+
+    if (func_A9F0A8(handle) != 1) {
+        assertFailed(D_0068CDE8, cfeAssertFile, 1124);
+    }
+    count = func_A9F0C0(handle, 1);
+    size = count * sizeof(CfeMessageRecord);
+    if (count <= 0) {
+        return 1;
+    }
+    D_006316B4 = GameResBufferAlloc(size);
+    if (D_006316B4 == 0) {
+        assertFailed(D_0068CF30, cfeAssertFile, 1131);
+    }
+    memset(D_006316B4, 0, size);
+    return 1;
+}
+
+void cfeMesLayoutText(char *text);
+extern int cfePlugInRecordCount;
 extern const char D_0068CF38[];
 
 /* Script command (3 or 5 arguments): fills the next message record with the unescaped, laid-out text
