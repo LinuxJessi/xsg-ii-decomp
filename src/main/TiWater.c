@@ -478,7 +478,28 @@ void tiWaterObjectUpdate(struct TiWaterObject *obj, int stepMode) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterInitStudio);
+/* Starts the studio with its main camera, clears the camera's rotation and position, marks it active in
+ * state 2 and moves the studio. */
+void tiWaterInitStudio(void)
+{
+    XglCamera *camera;
+    XglCamera *current;
+
+    xglStudioInit();
+    xglStudioChange(0);
+    xglStudioMainCameraInit();
+    xglStudioGetCamera(&camera, 0);
+    camera->travel.rotation.x = 0.0f;
+    camera->travel.rotation.y = 0.0f;
+    camera->travel.rotation.z = 0.0f;
+    camera->travel.position.x = 0.0f;
+    camera->travel.position.y = 0.0f;
+    camera->travel.position.z = 0.0f;
+    current = camera;
+    current->active = 1;
+    current->state = 2;
+    xglStudioMove();
+}
 
 float cosf(float angle);
 float sinf(float angle);

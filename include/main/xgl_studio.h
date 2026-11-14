@@ -5,6 +5,8 @@
 
 struct XglCamera;
 
+void xglStudioInit(void);
+void xglStudioMainCameraInit(void);
 void xglStudioChange(int studio_index);
 void xglStudioGetCamera(struct XglCamera **camera, int camera_index);
 void xglStudioMove(void);
