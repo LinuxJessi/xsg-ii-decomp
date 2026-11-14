@@ -146,12 +146,6 @@ INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_002488F8);
 
 void sefSetOwnerFlags(int, int);
 
-/* Command word layout: page index above bit 12, a bank bit selected by the flag. */
-#define CFE_PAGE_SHIFT 0xC
-#define CFE_BANK_FLAGGED 0x20000000
-#define CFE_BANK_PLAIN 0x10000000
-#define CFE_OWNER_FLAGS 0x80
-
 /* Builds the command word from page_index and page_offset; the flag selects bank 0x20000000 or 0x10000000. */
 void cfeCommandSetOwnerFlags(CfeEvalCommand *command) {
     if (command->flag != 0) {

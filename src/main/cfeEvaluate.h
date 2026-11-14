@@ -26,6 +26,12 @@ typedef struct CfeEvalCommand {
     unsigned char unmodeled_7c[4];
 } CfeEvalCommand;
 
+/* Command word layout: page index above bit 12, a bank bit selected by the flag. */
+#define CFE_PAGE_SHIFT 0xC
+#define CFE_BANK_FLAGGED 0x20000000
+#define CFE_BANK_PLAIN 0x10000000
+#define CFE_OWNER_FLAGS 0x80
+
 /* One 0x18-byte slot of the table at cfeEvalSlots: three sources and their results. */
 typedef struct CfeEvalSlot {
     int result_int;

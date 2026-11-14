@@ -12,6 +12,8 @@
 #include "main/xenoActor.h"
 #include "main/xgl_2.h"
 #include "main/xgl_cd.h"
+#include "main/tu167.h"
+#include "cfeEvaluate.h"
 
 extern unsigned char cfeAssertFile[];
 
@@ -335,7 +337,49 @@ int cfe_0024BC10(int handle)
 extern unsigned char D_0068CF10[];
 extern unsigned char D_0068CED0[];
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BD28);
+extern int cfeCommandCount;
+extern CfeEvalCommand cfeCommands[];
+/* The initial scale of a command (1, 1, 1). */
+extern const AlignedVector4 D_0068CE40;
+
+/* Script command (2 or 3 arguments): starts the effect of the next command of cfeCommands (page index
+ * and offset; the 3-argument form also gives the bank flag) and sets the command's position and
+ * rotation to the origin and its scale to D_0068CE40. */
+int cfe_0024BD28(int handle)
+{
+    AlignedVector4 position;
+    AlignedVector4 rotation;
+    AlignedVector4 scale;
+    CfeEvalCommand *command;
+
+    memset(&position, 0, sizeof(position));
+    position.w = 1.0f;
+    memset(&rotation, 0, sizeof(rotation));
+    rotation.w = 1.0f;
+    scale = D_0068CE40;
+    command = &cfeCommands[cfeCommandCount];
+    if (func_A9F0A8(handle) == 2) {
+        command->page_index = func_A9F0C0(handle, 1);
+        command->page_offset = func_A9F0C0(handle, 2);
+        sefStartEffectKeyDefault(0, (command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN);
+    } else if (func_A9F0A8(handle) == 3) {
+        command->flag = func_A9F0C0(handle, 1);
+        command->page_index = func_A9F0C0(handle, 2);
+        command->page_offset = func_A9F0C0(handle, 3);
+        if (command->flag != 0) {
+            sefStartEffectKeyDefault(0, (command->page_index << CFE_PAGE_SHIFT) | command->page_offset
+                                     | CFE_BANK_FLAGGED);
+        } else {
+            sefStartEffectKeyDefault(0, (command->page_index << CFE_PAGE_SHIFT) | command->page_offset
+                                     | CFE_BANK_PLAIN);
+        }
+    }
+    QuadwordCopy(&command->position, &position);
+    QuadwordCopy(&command->rotation, &rotation);
+    QuadwordCopy(command->scale, &scale);
+    cfeCommandCount++;
+    return 1;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BEF0);
 
