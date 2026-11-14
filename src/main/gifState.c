@@ -30,8 +30,6 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawFadeQuad);
 void func_002439C8(void) {
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", func_002439D0);
-
 typedef struct XglPacket XglPacket;
 
 void gifStateReset(void);
@@ -39,14 +37,6 @@ void gifStateFlush(void);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 void sceVif1PkCnt(XglPacket *packet, int count);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, int count);
-
-void func_00243B58(XglPacket *packet) {
-    sceVif1PkCnt(packet, 0);
-    sceVif1PkOpenDirectHLCode(packet, 0);
-    gifStateReset();
-    gifStateFlush();
-    sceVif1PkCloseDirectHLCode(packet);
-}
 
 /* The halfword fields of sRender read by the frame effect. */
 typedef struct GifStateRender {
@@ -82,6 +72,36 @@ void gifStateAddReg(int gifAddress, u64 gifData);
 
 /* TEX0_1 of a 512x512 PSMCT32 page used as a texture. */
 #define GIF_STATE_TEX0(base) GS_SET_TEX0((base) << 5, 8, GS_PSMCT32, 9, 9, 1, 0, 0, 0, 0, 0, 0)
+
+/* Size in pixels of the area func_002439D0 copies. */
+extern int D_006315B4;
+extern int D_006315B8;
+
+/* Copies the D_006315B4 x D_006315B8 pixels at the origin of the shown page into the work page. */
+void func_002439D0(XglPacket *packet)
+{
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    gifStateReset();
+    gifStateAddReg(GS_FRAME_1, GIF_STATE_FRAME(sRender.workBase));
+    gifStateAddReg(GS_TEX0_1, GIF_STATE_TEX0(sRender.displayBase));
+    gifStateAddReg(GS_RGBAQ, GS_SET_RGBAQ(0x7F, 0x7F, 0x7F, 0x7F, GIF_STATE_ONE_BITS));
+    gifStateAddReg(GS_PRIM, GS_SET_PRIM(6, 0, 1, 0, 0, 0, 1, 0, 0));
+    gifStateAddReg(GS_UV, GS_SET_UV(0, 0));
+    gifStateAddReg(GS_XYZF2, GIF_STATE_XY(0, 0));
+    gifStateAddReg(GS_UV, GS_SET_UV(D_006315B4 << 4, D_006315B8 << 4));
+    gifStateAddReg(GS_XYZF2, GIF_STATE_XY(D_006315B4, D_006315B8));
+    gifStateFlush();
+    sceVif1PkCloseDirectHLCode(packet);
+}
+
+void func_00243B58(XglPacket *packet) {
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    gifStateReset();
+    gifStateFlush();
+    sceVif1PkCloseDirectHLCode(packet);
+}
 
 /* Draws the work page as a textured sprite of width x height texels at (offsetX, offsetY), 256 x 224
  * pixels in size, blended with the fixed alpha into the shown page. */
