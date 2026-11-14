@@ -142,7 +142,6 @@ void tiWaterSendStateTemplate(void)
     sceVif1PkCloseDirectHLCode(packet);
 }
 
-XglCamera *xglStudioSelectGetActiveCamera(int index);
 void tiWaterSendFrame(XglCamera *camera, Matrix4 transform);
 void tiWaterSendItemPair(float first, float second);
 void tiWaterSendDirection(XglCamera *camera, Matrix4 transform);

@@ -29,5 +29,7 @@ typedef XglLightSet AlignedXglLightSet __attribute__((aligned(16)));
 unsigned short xglSRand(void);
 void xglLightPackCacheInvalidate(void);
 void xglMatrixStackUnit(void);
+void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
+void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 
 #endif /* INCLUDE_MAIN_XGL_2_H */

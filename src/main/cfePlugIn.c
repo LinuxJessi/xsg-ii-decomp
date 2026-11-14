@@ -131,7 +131,6 @@ void func_0024B230(CfeListNode **list, int mode, int key, float value)
 void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackSave(Matrix4 matrix);
-void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 extern const AlignedVector4 D_0068CD70;
 
 /* The vector D_0068CD70 rotated by angles[0] about X and angles[1] about Y. */

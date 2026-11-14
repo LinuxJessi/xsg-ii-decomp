@@ -48,10 +48,13 @@ typedef struct GifStatusBlock {
     int effectAlphaType;
     int effectAlpha;
     int fbp;                    /* +0x14: gifStateFbp is this word */
-    u8 unmodeled_18[0x8];
+    int blur;                   /* +0x18: gifStateBlur is this word */
+    int depth;                  /* +0x1C: the Z of the camera quad (D_0063165C, set by func_00246DD8) */
     f32 ratio;
     f32 ratioStep;
     int fadeOut;
+    u8 unmodeled_2c[0x50 - 0x2C];
+    Vector4 blurDirection;      /* +0x50: scaled by blur into the camera quad offset (D_00631690) */
 } GifStatusBlock;
 
 extern GifStatusBlock gifStatus;

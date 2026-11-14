@@ -10,6 +10,24 @@
 #include "main/tu256.h"
 #include "main/xgl_2.h"
 #include "main/xgl_render.h"
+#include "main/sdv_033.h"
+#include "main/tu254.h"
+#include "main/xgl_studio.h"
+
+typedef struct XglPacket XglPacket;
+
+void gifStateReset(void);
+void gifStateFlush(void);
+void sceVif1PkCloseDirectHLCode(XglPacket *packet);
+void sceVif1PkCnt(XglPacket *packet, int count);
+void sceVif1PkOpenDirectHLCode(XglPacket *packet, int count);
+
+extern int gifStateOriginX;
+extern int gifStateOriginY;
+
+/* The 512x448 frame buffer in pixels. */
+#define GIF_STATE_WIDTH 512
+#define GIF_STATE_HEIGHT 448
 
 #define NML_WINDOW_COUNT 4
 
@@ -21,7 +39,115 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawRing);
 
 INCLUDE_ASM("asm/main/nonmatchings/gifState", func_002424D8);
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawCameraQuad);
+/* xgl_2.c defines it with its own Matrix struct; the callers pass a Matrix4. */
+void xglMatrixInverse(void *destination, void *source);
+void gifStateSetupContext(XglPacket *packet, signed char alphaFix);
+void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
+
+/* The camera quad packet on the scratchpad: the GIF tag, then four vertices of UV and XYZ2. */
+typedef struct GifCameraVertex {
+    u32 uv[4];
+    u32 xyz[4];
+} GifCameraVertex;
+
+typedef struct GifCameraPacket {
+    u32 tag[4];
+    GifCameraVertex vertex[4];
+} GifCameraPacket;
+
+#define GIF_CAMERA_PACKET ((GifCameraPacket *) 0x70000000)
+
+/* The GIF tag template of the camera quad (the vertex count is or-ed in). */
+extern u32 D_00631568[4];
+
+/* The far corner of the quad in pixels and texels. */
+#define GIF_CAMERA_RIGHT 511
+#define GIF_CAMERA_BOTTOM 447
+
+/* Draws the shown page again as a 512x448 sprite, offset on the screen by the blur direction turned into
+ * the active camera's view and scaled by the blur amount, with the effect alpha faded by the ratio; then
+ * lowers the ratio by its step. Nothing is drawn once the ratio is down to 0. */
+void gifStateDrawCameraQuad(XglPacket *packet)
+{
+    Vector4 scaled;
+    Vector4 offset;
+    Matrix4 matrix;
+    int corners[4][2];
+    XglCamera *camera = xglStudioSelectGetActiveCamera(0);
+    u32 *cursor;
+    u32 *gifTag = 0;
+    int x;
+    int y;
+
+    if (gifStatus.ratio <= 0.0f) {
+        return;
+    }
+    tiVu0LoadFixedMatrix();
+    xglCurMulRotateY(camera->travel.rotation.y);
+    xglCurMulRotateX(camera->travel.rotation.x);
+    xglCurMulRotateZ(camera->travel.rotation.z);
+    xglCurMatrixGet(matrix);
+    xglMatrixInverse(matrix, matrix);
+    xglVectorScale(&scaled, &gifStatus.blurDirection, gifStatus.blur);
+    xglVectorMulMat(&offset, matrix, &scaled);
+    x = -offset.x;
+    y = offset.y;
+    corners[0][0] = x;
+    corners[0][1] = y;
+    corners[1][0] = x;
+    corners[1][1] = y;
+    corners[2][0] = x;
+    corners[2][1] = y;
+    corners[3][0] = x;
+    corners[3][1] = y;
+    gifStateSetupContext(packet, gifStatus.ratio * gifStatus.effectAlpha);
+    cursor = GIF_CAMERA_PACKET->vertex[0].uv;
+    cursor[0] = 0;
+    cursor[1] = 0;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = ((gifStateOriginX + corners[0][0]) << 4) - 8;
+    cursor[5] = ((gifStateOriginY + corners[0][1]) << 4) - 9;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    cursor = GIF_CAMERA_PACKET->vertex[1].uv;
+    cursor[0] = GIF_CAMERA_RIGHT << 4;
+    cursor[1] = 0;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = ((gifStateOriginX + corners[1][0] + GIF_CAMERA_RIGHT) << 4) - 8;
+    cursor[5] = ((gifStateOriginY + corners[1][1]) << 4) - 9;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    cursor = GIF_CAMERA_PACKET->vertex[2].uv;
+    cursor[0] = 0;
+    cursor[1] = GIF_CAMERA_BOTTOM << 4;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = ((gifStateOriginX + corners[2][0]) << 4) - 8;
+    cursor[5] = ((gifStateOriginY + corners[2][1] + GIF_CAMERA_BOTTOM) << 4) - 9;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    cursor = GIF_CAMERA_PACKET->vertex[3].uv;
+    cursor[0] = GIF_CAMERA_RIGHT << 4;
+    cursor[1] = GIF_CAMERA_BOTTOM << 4;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = ((gifStateOriginX + corners[3][0] + GIF_CAMERA_RIGHT) << 4) - 8;
+    cursor[5] = ((gifStateOriginY + corners[3][1] + GIF_CAMERA_BOTTOM) << 4) - 9;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    gifTag = GIF_CAMERA_PACKET->tag;
+    gifTag[0] = D_00631568[0] | 4;
+    gifTag[1] = D_00631568[1];
+    gifTag[2] = D_00631568[2];
+    gifTag[3] = D_00631568[3];
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, GIF_CAMERA_PACKET, 9);
+    sceVif1PkCloseDirectHLCode(packet);
+    gifStatus.ratio -= gifStatus.ratioStep;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawJitterGrid);
 
@@ -29,14 +155,6 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawFadeQuad);
 
 void func_002439C8(void) {
 }
-
-typedef struct XglPacket XglPacket;
-
-void gifStateReset(void);
-void gifStateFlush(void);
-void sceVif1PkCloseDirectHLCode(XglPacket *packet);
-void sceVif1PkCnt(XglPacket *packet, int count);
-void sceVif1PkOpenDirectHLCode(XglPacket *packet, int count);
 
 /* The halfword fields of sRender read by the frame effect. */
 typedef struct GifStateRender {
@@ -50,8 +168,6 @@ typedef struct GifStateRender {
 } GifStateRender;
 
 extern GifStateRender sRender;
-extern int gifStateOriginX;
-extern int gifStateOriginY;
 extern int gifStateBlurDivisor;                      /* blur divisor of the alpha (3) */
 extern int gifStateBlurOffset;                      /* blur offset in pixels */
 
@@ -59,10 +175,6 @@ void gifStateAddReg(int gifAddress, u64 gifData);
 
 /* IEEE-754 1.0f as the raw Q word of RGBAQ. */
 #define GIF_STATE_ONE_BITS 0x3F800000
-
-/* The 512x448 frame buffer in pixels. */
-#define GIF_STATE_WIDTH 512
-#define GIF_STATE_HEIGHT 448
 
 /* XYZ2 of a sprite corner at (x, y) pixels from the GS origin. */
 #define GIF_STATE_XY(x, y) GS_SET_XYZ(((gifStateOriginX + (x)) << 4) - 8, ((gifStateOriginY + (y)) << 4) - 9, 0)

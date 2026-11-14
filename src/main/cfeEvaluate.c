@@ -681,7 +681,6 @@ void func_00249340(int x0, int y0, int x1, int y1, unsigned int color0, unsigned
     xglDirectQueueDefer(0, 10);
 }
 
-XglCamera *xglStudioSelectGetActiveCamera(int index);
 void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source);
 void func_00297580(Vector4 *quaternion, const Vector4 *from, const Vector4 *to);
 void XrgQuaternionToMatrix(Matrix4 matrix, const Vector4 *quaternion);
@@ -690,7 +689,6 @@ void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackMul(Matrix4 matrix);
 void xglMatrixStackSave(Matrix4 matrix);
-void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 void xglVectorInner(float *result, const Vector4 *left, const Vector4 *right);
 
 /* A 0..1 float channel scaled to the 0..128 GS range. */
