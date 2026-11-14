@@ -237,24 +237,36 @@ void func_00248390(int time, int paused)
         if (D_006384C0.eval.shakeCounter < 0 && paused == 0) {
             D_006384C0.eval.shakeCounter = D_006384C0.eval.shakeFrames;
             D_006384C0.eval.from = D_006384C0.eval.to;
-            D_006384C0.eval.to.position[0] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.position[1] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.position[2] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.rotation[0] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.rotation[1] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.rotation[2] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.position[0] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
+                                             * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.position[1] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
+                                             * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.position[2] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
+                                             * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.rotation[0] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
+                                             * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.rotation[1] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
+                                             * D_006318B0[xglSRand() & 1];
+            D_006384C0.eval.to.rotation[2] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
+                                             * D_006318B0[xglSRand() & 1];
         }
         blend = (float) D_006384C0.eval.shakeCounter / (float) (D_006384C0.eval.shakeFrames + 1);
         if (1.0f < blend) {
             blend = 1.0f;
         }
         rest = 1.0f - blend;
-        D_006384C0.eval.camera->travel.position.x += D_006384C0.eval.from.position[0] * blend + D_006384C0.eval.to.position[0] * rest;
-        D_006384C0.eval.camera->travel.position.y += D_006384C0.eval.from.position[1] * blend + D_006384C0.eval.to.position[1] * rest;
-        D_006384C0.eval.camera->travel.position.z += D_006384C0.eval.from.position[2] * blend + D_006384C0.eval.to.position[2] * rest;
-        D_006384C0.eval.camera->travel.rotation.x += D_006384C0.eval.from.rotation[0] * blend + D_006384C0.eval.to.rotation[0] * rest;
-        D_006384C0.eval.camera->travel.rotation.y += D_006384C0.eval.from.rotation[1] * blend + D_006384C0.eval.to.rotation[1] * rest;
-        D_006384C0.eval.camera->travel.rotation.z += D_006384C0.eval.from.rotation[2] * blend + D_006384C0.eval.to.rotation[2] * rest;
+        D_006384C0.eval.camera->travel.position.x
+            += D_006384C0.eval.from.position[0] * blend + D_006384C0.eval.to.position[0] * rest;
+        D_006384C0.eval.camera->travel.position.y
+            += D_006384C0.eval.from.position[1] * blend + D_006384C0.eval.to.position[1] * rest;
+        D_006384C0.eval.camera->travel.position.z
+            += D_006384C0.eval.from.position[2] * blend + D_006384C0.eval.to.position[2] * rest;
+        D_006384C0.eval.camera->travel.rotation.x
+            += D_006384C0.eval.from.rotation[0] * blend + D_006384C0.eval.to.rotation[0] * rest;
+        D_006384C0.eval.camera->travel.rotation.y
+            += D_006384C0.eval.from.rotation[1] * blend + D_006384C0.eval.to.rotation[1] * rest;
+        D_006384C0.eval.camera->travel.rotation.z
+            += D_006384C0.eval.from.rotation[2] * blend + D_006384C0.eval.to.rotation[2] * rest;
         if (paused == 0) {
             D_006384C0.eval.shakeCounter--;
         }

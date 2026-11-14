@@ -316,7 +316,8 @@ XenoActor *cfeLoadActorObject(int id)
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BA70);
 
-int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
+int GameResLoadName(char *name, void **data, unsigned int *size,
+                    void (*callback)(int index, void *buffer, unsigned int size, int value));
 
 /* One 0x1B0-byte entry; word 0 is the pointer to its object. The rest of
    the entry is not recovered. */

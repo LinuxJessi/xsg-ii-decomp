@@ -56,7 +56,8 @@ typedef union CfeEvalVector {
     Vector4 vector;
 } CfeEvalVector;
 
-/* Record written by cfeRecordEvaluate: three vectors of results, the starting position and angles and nine source handles. */
+/* Record written by cfeRecordEvaluate: three vectors of results, the starting position and angles and nine source
+ * handles. */
 typedef struct CfeEvalRecord {
     CfeEvalVector evaluated[3]; /* +0x00: position (w = 1), angles, scale */
     CfeEvalVector initial[2];   /* +0x30: the position and angles the record starts from (func_0024B6D8) */
