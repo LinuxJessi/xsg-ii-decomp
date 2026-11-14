@@ -17,7 +17,7 @@
 extern int tiWaterDebugMode;      /* debug panel mode, toggled by select in the scene loop */
 extern int tiWaterDebugIndex;      /* selected debug parameter, 0..11 */
 extern float tiWaterEffectNum;
-extern unsigned int tiWaterSubCount;
+extern int tiWaterSubCount;
 extern struct TiWaterSub *tiWaterSubList[];
 
 /* Resets the debug panel mode and its selected parameter to zero. */
