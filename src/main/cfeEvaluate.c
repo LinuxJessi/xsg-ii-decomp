@@ -11,6 +11,7 @@
 #include "main/nml_model_set.h"
 #include "main/tu093.h"
 #include "main/tu255.h"
+#include "main/xgl_2.h"
 
 f32 func_002508C8(int, int);
 
