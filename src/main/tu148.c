@@ -142,7 +142,6 @@ void msgUpdate(void)
 
 INCLUDE_ASM("asm/main/nonmatchings/tu148", msgUpdateTimed);
 
-int msgWindowCurrentStatus(void *);
 void msgQueueEntry(void *);
 
 /* Close the window, the choice and the panel. */
@@ -282,7 +281,6 @@ int msgChoiceTestFlags(void *choice, int mask);
 long long msgChoiceGetFrames(void *choice);
 void func_0027D9D8(void *choice, int step);
 void func_0027D9F0(void *choice, int step);
-void msgGameFlagClear(void);
 
 /* Polls the open choice: CIRCLE closes it and returns its frame count; left/right and up/down move the
  * selection. -1 while nothing is chosen or no choice is open. */

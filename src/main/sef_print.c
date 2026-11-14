@@ -1,6 +1,9 @@
 #include "common.h"
 #include "shared.h"
+#include "main/control_entry.h"
 #include "main/pad.h"
+#include "main/xgl_font.h"
+#include "main/xgl_render.h"
 
 extern u8 *buffer;
 
@@ -18,9 +21,6 @@ extern const char tracePrintFormat[8];
 extern PadRecord PadData;
 /* The reset message resetWaitForPad shows. */
 extern const char resetText[];
-void xglFontDebugPrintf(int x, int y, const char *format, ...);
-void xglRenderClearFrame(void);
-void xglSleep(void);
 
 /* Shows the reset message until SELECT and START are held together. */
 void resetWaitForPad(void)

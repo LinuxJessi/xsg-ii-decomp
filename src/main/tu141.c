@@ -147,8 +147,6 @@ void cfePlugInTextReset(void) {
 }
 
 int cfeEvalRecordsInit(void);
-void func_0024ECA0(void);
-void cfeEvalGlobalInit(void);
 int cfeEvalEntriesInit(void);
 
 /* Module init: calls two helpers, then each table initializer of this file in order. */

@@ -10,6 +10,7 @@
 #include "main/sef.h"
 #include "main/tu144.h"
 #include "main/xenoActor.h"
+#include "main/xgl_2.h"
 #include "main/xgl_cd.h"
 
 extern unsigned char cfeAssertFile[];
@@ -104,7 +105,6 @@ void func_0024B230(CfeListNode **list, int mode, int key, float value)
     }
 }
 
-void xglMatrixStackUnit(void);
 void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackSave(Matrix4 matrix);

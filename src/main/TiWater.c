@@ -5,13 +5,13 @@
  */
 #include "common.h"
 #include "TiWater.h"
+#include "gs.h"
 #include "main/gifState.h"
 #include "main/nml_model_set.h"
 #include "main/pad.h"
-#include "main/xgl_font.h"
-#include "gs.h"
-#include "main/tu093.h"
 #include "main/tu045.h"
+#include "main/tu093.h"
+#include "main/xgl_font.h"
 
 extern int tiWaterDebugMode;      /* debug panel mode, toggled by select in the scene loop */
 extern int tiWaterDebugIndex;      /* selected debug parameter, 0..11 */
@@ -76,7 +76,6 @@ extern float tiWaterDecrease;
 extern float tiWaterFbp;
 extern float tiWaterBlur;
 extern float tiWaterIntVals[4];
-void tiWaterDebugDrawParams(void);
 /* Debug panel step: up and down on pad 0 select the parameter (wrapping), the panel is drawn and
  * every parameter is applied to the GIF state and the four model sub windows. */
 void tiWaterDebugUpdate(void)
@@ -207,7 +206,6 @@ INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterSceneLoop);
 void pxySetDrawCallback(void (*callback)(int pass));
 int tiWaterRegisterSub(struct TiWaterSub *sub);
 void tiWaterStepSub(struct TiWaterSub *sub);
-void tiWaterDrawAll(int pass);
 
 /* Per-object update: registers the sub-table when it has items, steps it when stepMode is 0,
  * and installs the draw callback tiWaterDrawAll. */

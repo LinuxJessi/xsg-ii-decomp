@@ -68,10 +68,6 @@ void vu0RotateCurrentZ(float angle)
 
 #include "shared.h"
 
-void vu0RotateCurrentX(f32 value);
-void vu0RotateCurrentY(f32 value);
-void vu0RotateCurrentZ(f32 value);
-
 /* Euler rotation of the current matrix: X, then Y, then Z. */
 void vu0RotateCurrentXYZ(Vector4 *angles)
 {

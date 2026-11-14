@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/tu026.h"
 
 typedef char *va_list;
 
@@ -9,7 +10,6 @@ int sceClose(int fd);
 void func_002AA7F0(char *destination, const char *source);
 void *memset(void *destination, int value, unsigned int size);
 int strlen(const char *text);
-void assertFailed(const char *message, const char *file, int line);
 int xglDebFileRead(const char *name, void *buffer);
 int xglDebFileWrite(const char *name, const void *buffer, int size);
 int vsprintf(char *buffer, const char *format, va_list args);
