@@ -22,6 +22,7 @@
 #include "main/pad.h"
 #include "main/tu021.h"
 #include "main/xgl_font.h"
+#include "main/xgl_render.h"
 
 extern unsigned char cfeAssertFile[];
 
@@ -1308,7 +1309,84 @@ int cfe_0024E6D8(int handle)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024E738);
+int sceGsSyncPath(int mode, int timeout);
+void xglRenderCopyDisp2Draw(void);
+int GameResBlockFreeByBuffer(void *buffer);
+int GameResBlockFreeByOwner(int owner);
+void tiWindDisableAll(void);
+void resResetSlotTable(void);
+void resResetPathSlots(void);
+void func_001BA320(void);
+extern int cfeEvalEntryCount;
+extern CfeEvalEntry cfeEvalEntries[];
+extern int uwamonoCurrentIndex;
+extern UwamonoObject uwamonoRecords[];
+
+/* The record flag the cut-scene end clears on the current record. */
+#define CFE_RECORD_FLAG_2 0x2
+
+/* Script command: ends a cut scene. Stops both sound slots and the owned effects, copies the shown
+ * frame to the drawn one, clears the scene control bits and the current record's flag 0x2, frees the
+ * message records, the group and entry buffers, the collision, wind, actors and resource slots, and
+ * gives the player and part records new actors. */
+int cfe_0024E738(int handle)
+{
+    int i;
+    int current;
+
+    soundSlotStop(0);
+    soundSlotStop(1);
+    sefReleaseOwnedRecords(-1);
+    xglRenderClearDepth();
+    sceGsSyncPath(0, 0);
+    xglRenderCopyDisp2Draw();
+    xglSleep();
+    xglSleep();
+    xglRenderCopyDisp2Draw();
+    current = uwamonoCurrentIndex;
+    gameWork.control &= ~CONTROL_CFE_SCENE;
+    uwamonoRecords[current].flags &= ~CFE_RECORD_FLAG_2;
+    gameWork.control &= ~CONTROL_CFE_NO_FADE;
+    if (D_006316B4 != 0) {
+        GameResBlockFreeByBuffer(D_006316B4);
+        D_006316B4 = 0;
+    }
+    for (i = 0; i < cfeGroupCount; i++) {
+        if (cfeGroups[i].records != 0) {
+            GameResBlockFreeByBuffer(cfeGroups[i].records);
+        }
+        GameResBlockFreeByOwner(cfeGroups[i].object->kind);
+    }
+    cfeGroupCount = 0;
+    for (i = 0; i < cfeEvalEntryCount; i++) {
+        if (cfeEvalEntries[i].data != 0) {
+            GameResBlockFreeByBuffer(cfeEvalEntries[i].data);
+        }
+        if (cfeEvalEntries[i].frameBuffers[0] != 0) {
+            GameResBlockFreeByBuffer(cfeEvalEntries[i].frameBuffers[0]);
+        }
+        if (cfeEvalEntries[i].frameBuffers[1] != 0) {
+            GameResBlockFreeByBuffer(cfeEvalEntries[i].frameBuffers[1]);
+        }
+    }
+    cfeEvalEntryCount = 0;
+    tiGlobalCollClearHandle();
+    tiWindDisableAll();
+    XenoActorReleaseAll();
+    resResetSlotTable();
+    resResetPathSlots();
+    for (i = 0; i < CFE_RECORD_COUNT; i++) {
+        switch (uwamonoRecords[i].kind) {
+        case 4:
+        case 5:
+            uwamonoRecords[i].actor = XenoActorAlloc();
+            break;
+        }
+    }
+    xglFontLoad(1, 0);
+    func_001BA320();
+    return 1;
+}
 
 void func_A9CDB0(void *, void *);
 extern unsigned char D_006316B8[];
