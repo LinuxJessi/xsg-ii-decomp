@@ -232,4 +232,65 @@ INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterInitStudio);
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterCameraUpdate);
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterCameraUpdateFine);
+float cosf(float angle);
+float sinf(float angle);
+
+/* The fine camera steps: distance per frame and angle per frame. */
+#define TI_WATER_CAMERA_FINE_STEP 0.2f
+#define TI_WATER_CAMERA_FINE_TURN 0.02f
+/* Fine debug camera control on pad 0 (held buttons): the d-pad moves in the heading's plane, R2/R1
+ * move down/up, triangle/cross change the pitch and square/circle the heading (both kept in
+ * [0, 2 pi)). */
+void tiWaterCameraUpdateFine(XglCamera *camera)
+{
+    float step = TI_WATER_CAMERA_FINE_STEP;
+    float forward = cosf(camera->travel.rotation.y) * step;
+    float side = sinf(camera->travel.rotation.y) * step;
+
+    if (PadData[0].held & PAD_RIGHT) {
+        camera->travel.position.x += forward;
+        camera->travel.position.z -= side;
+    }
+    if (PadData[0].held & PAD_LEFT) {
+        camera->travel.position.x -= forward;
+        camera->travel.position.z += side;
+    }
+    if (PadData[0].held & PAD_UP) {
+        camera->travel.position.x -= side;
+        camera->travel.position.z -= forward;
+    }
+    if (PadData[0].held & PAD_DOWN) {
+        camera->travel.position.x += side;
+        camera->travel.position.z += forward;
+    }
+    if (PadData[0].held & PAD_R2) {
+        camera->travel.position.y -= step;
+    }
+    if (PadData[0].held & PAD_R1) {
+        camera->travel.position.y += step;
+    }
+    if (PadData[0].held & PAD_TRIANGLE) {
+        camera->travel.rotation.x += TI_WATER_CAMERA_FINE_TURN;
+        if (camera->travel.rotation.x > tiWaterTwoPi) {
+            camera->travel.rotation.x -= tiWaterTwoPi;
+        }
+    }
+    if (PadData[0].held & PAD_CROSS) {
+        camera->travel.rotation.x -= TI_WATER_CAMERA_FINE_TURN;
+        if (camera->travel.rotation.x < 0.0f) {
+            camera->travel.rotation.x += tiWaterTwoPi;
+        }
+    }
+    if (PadData[0].held & PAD_SQUARE) {
+        camera->travel.rotation.y += TI_WATER_CAMERA_FINE_TURN;
+        if (camera->travel.rotation.y > tiWaterTwoPi) {
+            camera->travel.rotation.y -= tiWaterTwoPi;
+        }
+    }
+    if (PadData[0].held & PAD_CIRCLE) {
+        camera->travel.rotation.y -= TI_WATER_CAMERA_FINE_TURN;
+        if (camera->travel.rotation.y < 0.0f) {
+            camera->travel.rotation.y += tiWaterTwoPi;
+        }
+    }
+}
