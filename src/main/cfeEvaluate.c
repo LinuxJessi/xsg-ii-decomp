@@ -686,8 +686,6 @@ void func_00249340(int x0, int y0, int x1, int y1, unsigned int color0, unsigned
     xglDirectQueueDefer(0, 10);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_00249518);
-
 XglCamera *xglStudioSelectGetActiveCamera(int index);
 void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source);
 void func_00297580(Vector4 *quaternion, const Vector4 *from, const Vector4 *to);
@@ -708,6 +706,99 @@ void xglVectorInner(float *result, const Vector4 *left, const Vector4 *right);
 #define SCREEN_Y(coord, depth) (y + 40 + (coord) * (distance + (depth)) / screen)
 /* One 8-bit channel of a packed RGBA colour. */
 #define CHANNEL(c, shift) (((c) >> (shift)) & 0xFF)
+
+/* Draws the orientation grid of a rotation: like cfeDrawDirectionGrid, with the grid turned by the angles
+ * (x, then y) instead of towards a direction vector. The direction of the angles is computed but not used. */
+void func_00249518(int x, int y, Vector4 *angles, float *color0, float *color1)
+{
+    Matrix4 view;
+    static const AlignedVector4 upAxis = { 0.0f, 1.0f, 0.0f, 1.0f };
+    static const AlignedVector4 frontAxis = { 0.0f, 0.0f, 1.0f, 1.0f };
+    AlignedVector4 up = upAxis;
+    AlignedVector4 front = frontAxis;
+    AlignedVector4 direction;
+    float facing;
+    XglCamera *camera;
+    unsigned int near_color;
+    unsigned int far_color;
+    unsigned int mixed_color;
+    float near_weight;
+    float grid_pos;
+    float distance;
+    float screen;
+
+    near_weight = 0.0f;
+    facing = 0.0f;
+    camera = xglStudioSelectGetActiveCamera(0);
+    distance = 300.0f;
+    screen = 450.0f;
+    near_color = 0;
+    if (color0 != 0) {
+        near_color = COLOR_BYTE(color0[0]) + (COLOR_BYTE(color0[1]) << 8) + (COLOR_BYTE(color0[2]) << 16) + 0x80000000;
+    }
+    if (color1 != 0) {
+        far_color = COLOR_BYTE(color1[0]) + (COLOR_BYTE(color1[1]) << 8) + (COLOR_BYTE(color1[2]) << 16) + 0x80000000;
+    } else {
+        far_color = near_color;
+    }
+    {
+        AlignedVector4 line[4];
+        AlignedVector4 tip;
+
+        xglDirectionFromAngles(&direction, angles);
+        xglMatrixStackUnit();
+        xglMatrixStackRotX(camera->travel.rotation.x);
+        xglMatrixStackRotY(-camera->travel.rotation.y);
+        xglMatrixStackRotX(-angles->x);
+        xglMatrixStackRotY(angles->y);
+        xglMatrixStackSave(view);
+        xglVectorMulMat(&up, view, &up);
+        xglVectorInner(&facing, &up, &front);
+        for (grid_pos = -60.0f; grid_pos <= 60.0f; grid_pos += 20.0f) {
+            line[0].x = grid_pos;
+            line[0].y = 0.0f;
+            line[0].z = 60.0f;
+            line[0].w = 1.0f;
+            line[1].x = grid_pos;
+            line[1].y = 0.0f;
+            line[1].z = -60.0f;
+            line[1].w = 1.0f;
+            line[2].x = 60.0f;
+            line[2].y = 0.0f;
+            line[2].z = grid_pos;
+            line[2].w = 1.0f;
+            line[3].x = -60.0f;
+            line[3].y = 0.0f;
+            line[3].z = grid_pos;
+            line[3].w = 1.0f;
+            xglVectorMulMat(&line[0], view, &line[0]);
+            xglVectorMulMat(&line[1], view, &line[1]);
+            xglVectorMulMat(&line[2], view, &line[2]);
+            xglVectorMulMat(&line[3], view, &line[3]);
+            func_00249340(SCREEN_X(line[0].x, line[0].z), SCREEN_Y(line[0].y, line[0].z),
+                          SCREEN_X(line[1].x, line[1].z), SCREEN_Y(line[1].y, line[1].z),
+                          near_color, far_color, 0xFFFFFF);
+            mixed_color = 0;
+            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 0) + (1.0f - near_weight) * CHANNEL(far_color, 0));
+            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 8) + (1.0f - near_weight) * CHANNEL(far_color, 8)) << 8;
+            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 16) + (1.0f - near_weight) * CHANNEL(far_color, 16)) << 16;
+            mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 24) + (1.0f - near_weight) * CHANNEL(far_color, 24)) << 24;
+            func_00249340(SCREEN_X(line[2].x, line[2].z), SCREEN_Y(line[2].y, line[2].z),
+                          SCREEN_X(line[3].x, line[3].z), SCREEN_Y(line[3].y, line[3].z),
+                          mixed_color, mixed_color, 0xFFFFFF);
+            near_weight += 0.1f;
+        }
+        tip.x = 0.0f;
+        tip.y = 0.0f;
+        tip.z = 70.0f;
+        tip.w = 1.0f;
+        xglVectorMulMat(&tip, view, &tip);
+        func_00249340(SCREEN_X(0.0f, tip.z), SCREEN_Y(0.0f, tip.z),
+                      SCREEN_X(tip.x, tip.z), SCREEN_Y(tip.y, tip.z),
+                      0x80FFFFFF, 0x80FFFFFF, 0xFFFFFF);
+    }
+}
+
 
 /* Draws the orientation grid of a direction vector: a 7x7 grid of lines in
    front of the active camera, shaded from color0 to color1, and a 70-unit

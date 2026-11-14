@@ -78555,38 +78555,21 @@
     {
      "range": [
       "0x0068d200",
-      "0x0068d220"
+      "0x0068d270"
      ],
      "generated": [
       "0x0068d200",
-      "0x0068d220"
-     ],
-     "generated_by": [
-      "cfeCommandEvaluate"
-     ],
-     "c_owned_symbols": [
-      "jtbl_0068D200"
-     ],
-     "also_referenced_by_c": [],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/cfeEvaluate.o"
-     }
-    },
-    {
-     "range": [
-      "0x0068d240",
-      "0x0068d270"
-     ],
-     "generated": [
-      "0x0068d240",
       "0x0068d270"
      ],
      "generated_by": [
-      "cfeDrawDirectionGrid"
+      "cfeCommandEvaluate",
+      "cfeDrawDirectionGrid",
+      "func_00249518"
      ],
      "c_owned_symbols": [
+      "jtbl_0068D200",
+      "D_0068D220",
+      "D_0068D230",
       "D_0068D240",
       "D_0068D250",
       "D_0068D260"
