@@ -84939,7 +84939,7 @@
    "path": "src/main/tu181.c",
    "scaffold_path": "scaffold/src/main/tu181.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -85036,7 +85036,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".lit4": "asm"
    },
    "sections": {
@@ -85076,6 +85076,17 @@
      "0x002674a0"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Source file created for the functions of this TU.",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu181.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87319,7 +87330,7 @@
    "path": "src/main/tu190.c",
    "scaffold_path": "scaffold/src/main/tu190.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -87398,7 +87409,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -87412,6 +87423,17 @@
      "0x00272088"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Source file created for the functions of this TU.",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu190.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87757,7 +87779,7 @@
    "path": "src/main/m_math_193.c",
    "scaffold_path": "scaffold/src/main/m_math_193.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -87890,7 +87912,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -87904,6 +87926,17 @@
      "0x00272928"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Source file created for the functions of this TU.",
+    "source": {
+     "kind": "file",
+     "path": "src/main/m_math_193.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -89439,7 +89472,7 @@
    "path": "src/main/tu203.c",
    "scaffold_path": "scaffold/src/main/tu203.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -89545,7 +89578,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".lit4": "asm",
     ".sdata": "asm",
     ".bss": "asm"
@@ -89635,6 +89668,17 @@
      "0x00274368"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Source file created for the functions of this TU.",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu203.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -89759,7 +89803,7 @@
    "path": "src/main/tu205.c",
    "scaffold_path": "scaffold/src/main/tu205.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -89838,7 +89882,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -89852,6 +89896,17 @@
      "0x00274738"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Source file created for the functions of this TU.",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu205.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
