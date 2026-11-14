@@ -21,6 +21,8 @@ void gifStateFlush(void);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 void sceVif1PkCnt(XglPacket *packet, int count);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, int count);
+void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
+void gifStateSetupContext(XglPacket *packet, signed char alphaFix);
 
 extern int gifStateOriginX;
 extern int gifStateOriginY;
@@ -41,8 +43,6 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", func_002424D8);
 
 /* xgl_2.c defines it with its own Matrix struct; the callers pass a Matrix4. */
 void xglMatrixInverse(void *destination, void *source);
-void gifStateSetupContext(XglPacket *packet, signed char alphaFix);
-void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 
 /* The camera quad packet on the scratchpad: the GIF tag, then four vertices of UV and XYZ2. */
 typedef struct GifCameraVertex {
@@ -151,7 +151,79 @@ void gifStateDrawCameraQuad(XglPacket *packet)
 
 INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawJitterGrid);
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawFadeQuad);
+
+/* The GIF tag template of the fade quad (the vertex count is or-ed in). */
+extern u32 D_006315A0[4];
+
+/* The far corner of the fade quad in pixels and texels. */
+#define GIF_FADE_RIGHT 511
+#define GIF_FADE_BOTTOM 447
+
+/* Draws the shown page again as a 512x448 sprite whose corners move by the sub-window offsets scaled by
+ * the ratio, with the effect alpha faded by the ratio; then lowers the ratio by its step. Nothing is
+ * drawn once the ratio is down to 0. */
+void gifStateDrawFadeQuad(XglPacket *packet)
+{
+    u32 *cursor;
+    u32 *gifTag = 0;
+    int count;
+
+    if (gifStatus.ratio <= 0.0f) {
+        return;
+    }
+    gifStateSetupContext(packet, gifStatus.ratio * gifStatus.effectAlpha);
+    cursor = (u32 *) 0x70000010;
+    count = 0;
+    cursor[0] = 0;
+    cursor[1] = 0;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = (gifStateOriginX + gifStatus.subWindow[0] * gifStatus.ratio) * 16.0f - 8.0f;
+    cursor[5] = (gifStateOriginY + gifStatus.subWindow[1] * gifStatus.ratio) * 16.0f - 9.0f;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    cursor += 8;
+    count++;
+    cursor[0] = GIF_FADE_RIGHT << 4;
+    cursor[1] = 0;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = (gifStateOriginX + GIF_FADE_RIGHT + gifStatus.subWindow[0] * gifStatus.ratio) * 16.0f - 8.0f;
+    cursor[5] = (gifStateOriginY + gifStatus.subWindow[1] * gifStatus.ratio) * 16.0f - 9.0f;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    cursor += 8;
+    count++;
+    cursor[0] = 0;
+    cursor[1] = GIF_FADE_BOTTOM << 4;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = (gifStateOriginX + gifStatus.subWindow[2] * gifStatus.ratio) * 16.0f - 8.0f;
+    cursor[5] = (gifStateOriginY + GIF_FADE_BOTTOM + gifStatus.subWindow[3] * gifStatus.ratio) * 16.0f - 9.0f;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    cursor += 8;
+    count++;
+    cursor[0] = GIF_FADE_RIGHT << 4;
+    cursor[1] = GIF_FADE_BOTTOM << 4;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = (gifStateOriginX + GIF_FADE_RIGHT + gifStatus.subWindow[2] * gifStatus.ratio) * 16.0f - 8.0f;
+    cursor[5] = (gifStateOriginY + GIF_FADE_BOTTOM + gifStatus.subWindow[3] * gifStatus.ratio) * 16.0f - 9.0f;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    count++;
+    gifTag = (u32 *) 0x70000000;
+    gifTag[0] = D_006315A0[0] | count;
+    gifTag[1] = D_006315A0[1];
+    gifTag[2] = D_006315A0[2];
+    gifTag[3] = D_006315A0[3];
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, gifTag, count * 2 + 1);
+    sceVif1PkCloseDirectHLCode(packet);
+    gifStatus.ratio -= gifStatus.ratioStep;
+}
 
 void func_002439C8(void) {
 }
@@ -732,7 +804,6 @@ extern char D_006315C8[8];
 extern u32 gifBreakGifTagTemplate[4];
 
 void *memset(void *dst, int value, unsigned int size);
-void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 
 /* Scratchpad RAM staging area of the shard packet. */
 #define GIF_SCRATCHPAD 0x70000000
@@ -974,7 +1045,7 @@ void gifStateEffectFrame(XglPacket *packet)
     gifStateFlush();
     sceVif1PkCloseDirectHLCode(packet);
 
-    if (0.5f < gifStatus.ratio || gifStatus.fadeOut != 0) {
+    if (0.5f < gifStatus.ratio || gifStatus.subWindow[0] != 0) {
         gifStatus.ratio -= gifStatus.ratioStep;
     }
 }
@@ -1013,7 +1084,6 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateAddReg);
 
 INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateAddRawQword);
 
-void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 XglPacket *xglPacketGetCurrent(void);
 
 /* Sends the queued pairs as one direct VIF transfer of count+1 quadwords (tag + pairs). */

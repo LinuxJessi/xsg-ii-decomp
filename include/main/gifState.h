@@ -52,8 +52,9 @@ typedef struct GifStatusBlock {
     int depth;                  /* +0x1C: the Z of the camera quad (D_0063165C, set by func_00246DD8) */
     f32 ratio;
     f32 ratioStep;
-    int fadeOut;
-    u8 unmodeled_2c[0x50 - 0x2C];
+    int subWindow[4];           /* +0x28: g_aSubWindow; word 0 is the flag gifStateEffectFrame tests,
+                                 * gifStateDrawFadeQuad moves its corners by all four */
+    u8 unmodeled_38[0x50 - 0x38];
     Vector4 blurDirection;      /* +0x50: scaled by blur into the camera quad offset (D_00631690) */
 } GifStatusBlock;
 
