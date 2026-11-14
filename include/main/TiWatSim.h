@@ -9,7 +9,11 @@ typedef struct TiWatSimItem {
     int cell_count;
     int cols;
     int rows;
-    u8 unmodeled_10[0x30];
+    Vector4 translate;          /* +0x10: the item transform is translate, rotate Y, scale */
+    u8 unmodeled_20[0x04];
+    float rotateY;              /* +0x24 */
+    u8 unmodeled_28[0x08];
+    Vector4 scale;              /* +0x30 */
     float grid_origin_x;
     u8 unmodeled_44[0x04];
     float grid_origin_z;
@@ -21,7 +25,8 @@ typedef struct TiWatSimItem {
     float drawPair[2];          /* +0x60: sent by tiWaterDrawItem (tiWaterSendItemPair) */
     float *height_buffer_a;
     float *height_buffer_b;
-    u8 unmodeled_70[0x08];
+    u32 height_offset_a;        /* +0x70: height_buffer_a as an offset from the table (tiWaterRegisterSub) */
+    u32 height_offset_b;        /* +0x74 */
     u32 mask_offset;
     u32 normals_offset;
     u8 unmodeled_80[0x04];
