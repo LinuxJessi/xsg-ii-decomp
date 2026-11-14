@@ -111,7 +111,43 @@ INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackFindAtOrBefore);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250BB8);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250C68);
+CfeTrackNode *func_00250BB8(CfeTrackNode *node, int time, int direction);
+
+/* The nearest key after `time` (direction > 0) or before it (otherwise) over `count` tracks, found
+ * per track with func_00250BB8; null when no track has one. */
+CfeTrackNode *func_00250C68(CfeTrackNode **tracks, int count, int time, int direction)
+{
+    CfeTrackNode *best = 0;
+    CfeTrackNode *node;
+    int i;
+
+    for (i = 0; i < count; i++) {
+        node = func_00250BB8(tracks[i], time, direction);
+        if (node == 0) {
+            continue;
+        }
+        if (best == 0) {
+            if (direction > 0) {
+                if (time < node->startTime) {
+                    best = node;
+                }
+            } else {
+                if (node->startTime < time) {
+                    best = node;
+                }
+            }
+        } else if (direction > 0) {
+            if (time < node->startTime && node->startTime < best->startTime) {
+                best = node;
+            }
+        } else {
+            if (node->startTime < time && best->startTime < node->startTime) {
+                best = node;
+            }
+        }
+    }
+    return best;
+}
 
 /* Number of keys from entry to the end of its track. */
 int cfeTrackCount(CfeTrackNode *entry)
