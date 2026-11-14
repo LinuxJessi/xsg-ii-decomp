@@ -228,6 +228,7 @@
  *   Vu0ApplyMatrix2XYZ(d, a, b, v)  d.xyz = b * (a * (v.xyz, 1)), d.w = v.w
  *   Vu0UnitMatrix(d)                m = identity
  *   Vu0SetOrigin(d)                 v = (0, 0, 0, 1)
+ *   Vu0MMathCopyPoint(d, v)         d = (v.xyz, 1) through vf1 (MMathEvalHermiteKeys)
  */
 
 #define Vu0ApplyMatrixXYZ(destination, matrix, vector) \
@@ -296,6 +297,15 @@
         "sqc2 vf3, 0(%0)\n" \
         : \
         : "r" (destination) \
+        : "memory")
+
+#define Vu0MMathCopyPoint(destination, source) \
+    __asm__ __volatile__( \
+        "lqc2 vf1, 0(%1)\n" \
+        "vmove.w vf1, vf0\n" \
+        "sqc2 vf1, 0(%0)\n" \
+        : \
+        : "r" (destination), "r" (source) \
         : "memory")
 
 #define Vu0SetOrigin(destination) \

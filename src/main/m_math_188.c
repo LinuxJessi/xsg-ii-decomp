@@ -1,20 +1,6 @@
 #include "common.h"
 #include "shared.h"
-
-typedef struct {
-    float x;
-    float y;
-    float z;
-    float w;
-} HermiteVector;
-
-float *MMathCalcHermite(float *destination, float parameter,
-                         HermiteVector *tangent_first, HermiteVector *tangent_second,
-                         HermiteVector *endpoint_first, HermiteVector *endpoint_second);
-
-void MMathCalcHermitePrm(HermiteVector *tangent_start, HermiteVector *tangent_end,
-                          const HermiteVector *point_prev, const HermiteVector *point_start,
-                          const HermiteVector *point_end, const HermiteVector *point_next);
+#include "main/m_math_188.h"
 
 /*
  * MMathCalcHermite: four-component cubic Hermite/Catmull-Rom evaluation at

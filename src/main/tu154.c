@@ -1,12 +1,76 @@
 #include "common.h"
+#include "shared.h"
+#include "vu0_macro.h"
+#include "main/m_math_188.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu154", MMathEvalHermiteKeys);
+/* A key of a Hermite track: the point, and the key time in the low half of w. A time of
+ * MMATH_HERMITE_END ends the track. */
+typedef union MMathHermiteKey {
+    HermiteVector point;
+    struct {
+        unsigned char unmodeled_00[0xC];
+        unsigned short time;
+    } key;
+} MMathHermiteKey;
+
+#define MMATH_HERMITE_END 0x400
+
+/* The point of the Hermite track `keys` at `time`: the origin without keys, the first or last key's
+ * point outside the keys (w = 1), else the Catmull-Rom curve between the two keys around `time`. */
+void MMathEvalHermiteKeys(Vector4 *result, MMathHermiteKey *keys, float time)
+{
+    HermiteVector tangent[2];
+    int frame;
+    int first;
+    int count;
+    int index;
+    int next;
+    int after;
+    int previous;
+    float parameter;
+    MMathHermiteKey *start = keys;
+
+    frame = time;
+    first = -1;
+    index = 0;
+    count = 0;
+    for (; keys[index].key.time != MMATH_HERMITE_END; index++) {
+        if (frame < keys[index].key.time) {
+            if (first < 0) {
+                first = index - 1;
+            }
+        }
+        count++;
+    }
+    if (count <= 0) {
+        Vu0SetOrigin(result);
+        return;
+    }
+    if (count == 1) {
+        Vu0MMathCopyPoint(result, start);
+        return;
+    }
+    if (frame < keys[0].key.time) {
+        count = 1;
+    }
+    if (first < 0 || first == count - 1) {
+        Vu0MMathCopyPoint(result, &keys[count - 1]);
+        return;
+    }
+    next = first + 1;
+    previous = first - (first != 0);
+    after = first < count - 2 ? first + 2 : next;
+    parameter = (time - keys[first].key.time) / (float) (keys[next].key.time - keys[first].key.time);
+    MMathCalcHermitePrm(&tangent[0], &tangent[1], &keys[previous].point, &keys[first].point,
+                        &keys[next].point, &keys[after].point);
+    MMathCalcHermite(&result->x, parameter, &tangent[0], &tangent[1], &keys[first].point, &keys[next].point);
+    result->w = 1.0f;
+}
 
 void func_00252838(void)
 {
 }
 
-#include "shared.h"
 Vector4 *MMathVectorCrossProduct(Vector4 *destination, const Vector4 *first, const Vector4 *second);
 float MMathVectorDotProduct(const Vector4 *first, const Vector4 *second);
 
