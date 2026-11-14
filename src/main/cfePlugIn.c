@@ -220,11 +220,21 @@ XenoActor *cfeLoadResourceObject(int id)
 
 extern int cfeGroupCount;
 
+/* The model pack of an object as the group and object commands read it (xenoActor.c: PxyHeader). */
+typedef struct CfePackHeader {
+    unsigned char unmodeled_00[0x60];
+    int geometryCount;          /* +0x60 */
+    unsigned char unmodeled_64[4];
+    int matrixOffset;           /* +0x68: bytes from the pack to its geometry matrices */
+    unsigned char unmodeled_6c[0xD0 - 0x6C];
+    int subPackOffset;          /* +0xD0: bytes from the pack to its part pack, 0 if none */
+} CfePackHeader;
+
 /* A group of cfeGroups (0xC0 bytes): an object, the part table of its pack with the part matrices and
  * one evaluation record per part, and the key lists of the group's own values (+0x64). */
 typedef struct CfeGroup {
     XenoActor *object;          /* +0x00 */
-    unsigned char *parts;       /* +0x04: the part table of the object's pack; +0x60 is the count */
+    CfePackHeader *parts;       /* +0x04: the part pack of the object's pack (one record per geometry) */
     Matrix4 *matrices;          /* +0x08: one per part */
     CfeEvalRecord *records;     /* +0x0C: one per part */
     unsigned char unmodeled_10[0x64 - 0x10];
@@ -399,7 +409,47 @@ int cfe_0024BD28(int handle)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BEF0);
+void func_0024B6D8(CfeGroup *group);
+
+/* Script command (1 argument): loads resource argument 1 as the object of the next group; when its
+ * pack has a part pack, the group gets it, its matrices and one cleared record per geometry. */
+int cfe_0024BEF0(int handle)
+{
+    CfeGroup *group;
+    XenoActor *object;
+    CfePackHeader *pack;
+    CfePackHeader *parts;
+    int offset;
+    CfeEvalRecord *records;
+
+    if (func_A9F0A8(handle) != 1) {
+        assertFailed(D_0068CDE8, cfeAssertFile, 502);
+    }
+    object = cfeLoadResourceObject(func_A9F0C0(handle, 1));
+    /* XenoActor keeps the pack as an int. */
+    pack = (CfePackHeader *) object->pack;
+    offset = pack->subPackOffset;
+    group = &cfeGroups[cfeGroupCount];
+    group->object = object;
+    /* subPackOffset is a byte offset from the pack. */
+    parts = (CfePackHeader *) ((unsigned char *) pack + offset);
+    if (offset != 0) {
+        group->parts = parts;
+        /* matrixOffset is a byte offset from the part pack. */
+        group->matrices = (Matrix4 *) ((unsigned char *) parts + parts->matrixOffset);
+        records = GameResBufferAlloc(parts->geometryCount * sizeof(CfeEvalRecord));
+        group = &cfeGroups[cfeGroupCount];
+        group->records = records;
+        memset(records, 0, group->parts->geometryCount * sizeof(CfeEvalRecord));
+    } else {
+        group->parts = 0;
+        group->matrices = 0;
+        group->records = 0;
+    }
+    func_0024B6D8(&cfeGroups[cfeGroupCount]);
+    cfeGroupCount++;
+    return 1;
+}
 
 void sprintf(char *, unsigned char *, char *);
 extern int D_0063A868[];
