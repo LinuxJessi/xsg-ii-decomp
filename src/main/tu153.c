@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/sef_164.h"
 #include "main/tu152.h"
 
 /* Multiplies the current matrix (vf26-vf29) by a rotation about X by angle (nothing for 0); the VU0
@@ -143,7 +144,71 @@ void func_00252518(void) {
 
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu153", vu0SetRotationFromDirection);
+
+/* Row 3 of the matrix, which holds the direction while the rotation is built: the zero test reads
+ * x and y as one doubleword. */
+typedef union Vu0Direction {
+    Vector4 vector;
+    struct {
+        unsigned long long xy;
+        int z;
+    } bits;
+} Vu0Direction;
+
+/* Sets matrix to the rotation that turns the Z axis towards `to` - `from` (Y rotation from the
+ * heading, then X from the pitch) and returns 1; for equal points it becomes the identity and the
+ * result is 0. Rows 2 and 3 hold the angles and the direction until the matrix is stored. */
+int vu0SetRotationFromDirection(Vector4 *matrix, Vector4 *to, Vector4 *from)
+{
+    Vu0Direction *direction = (Vu0Direction *) &matrix[3];
+    Vector4 *angles;
+    int result = 0;
+    int zero;
+    float length;
+    float pitch;
+
+    __asm__ __volatile__(
+        "lqc2 vf1, 0(%0)\n\t"
+        "lqc2 vf2, 0(%1)\n\t"
+        "vsub.xyz vf1, vf1, vf2\n\t"
+        "sqc2 vf1, 0(%2)"
+        : : "r"(to), "r"(from), "r"(direction) : "memory");
+    zero = (direction->bits.z | direction->bits.xy) == 0;
+    if (zero) {
+        __asm__ __volatile__(
+            "lqc2 vf26, 0(%0)\n\t"
+            "lqc2 vf27, 16(%0)\n\t"
+            "lqc2 vf28, 32(%0)\n\t"
+            "vmove.xyzw vf29, vf0"
+            : : "r"(vu0IdentityMatrix) : "memory");
+    } else {
+        pitch = -direction->vector.y;
+        angles = &matrix[2];
+        __asm__ __volatile__(
+            "lqc2 vf1, 0(%1)\n\t"
+            "vmul.xz vf1, vf1, vf1\n\t"
+            "vaddz.x vf1, vf1, vf1z\n\t"
+            "vsqrt Q, vf1x\n\t"
+            "sqc2 vf0, 0(%2)\n\t"
+            "vwaitq\n\t"
+            "vaddq.x vf1, vf0, Q\n\t"
+            "qmfc2.ni $8, vf1\n\t"
+            "mtc1 $8, %0"
+            : "=f"(length) : "r"(direction), "r"(angles) : "$8", "memory");
+        angles->x = srsAtan2(pitch, length);
+        angles->y = srsAtan2(direction->vector.x, direction->vector.z);
+        vu0SetCurrentRotationY(angles->y);
+        vu0RotateCurrentX(angles->x);
+        result = 1;
+    }
+    __asm__ __volatile__(
+        "sqc2 vf26, 0(%0)\n\t"
+        "sqc2 vf27, 16(%0)\n\t"
+        "sqc2 vf28, 32(%0)\n\t"
+        "sqc2 vf29, 48(%0)"
+        : : "r"(matrix) : "memory");
+    return result;
+}
 
 void MMathCalcDist(void *aux, int value);
 
