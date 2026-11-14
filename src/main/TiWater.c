@@ -272,7 +272,6 @@ float tiWaterVectorAngle(float x, float y)
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterUpdateSource);
 
-void tiWatSimStepRain(TiWatSimItem *item);
 /* tu133.c defines it with the item only and passes $f12 on to tiWatSimAdvance. The step comes first
  * here: EABI uses the same registers either way, and this order gives the original's argument setup. */
 void tiWatSimUpdate(float step, TiWatSimItem *item);

@@ -36,4 +36,6 @@ typedef struct TiWatSimItem {
     Matrix4 matrix;             /* +0xD0: the inverse of transform */
 } TiWatSimItem;
 
+void tiWatSimStepRain(TiWatSimItem *item);
+
 #endif /* INCLUDE_MAIN_TIWATSIM_H */
