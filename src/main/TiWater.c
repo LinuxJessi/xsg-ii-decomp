@@ -107,11 +107,15 @@ void tiWaterDebugUpdate(void)
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterRegisterSub);
 
+
 XglPacket *xglPacketGetCurrent(void);
 void sceVif1PkCnt(XglPacket *packet, int flag);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, int flag);
 void sceVif1PkAddDataN(XglPacket *packet, void *data, int count);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
+void gifStateReset(void);
+void gifStateFlush(void);
+void gifStateAddReg(int gifAddress, u64 gifData);
 
 /* The water state template sent by tiWaterSendStateTemplate, and its length for sceVif1PkAddDataN. */
 extern u64 D_00631220[];
@@ -131,13 +135,82 @@ void tiWaterSendStateTemplate(void)
     sceVif1PkCloseDirectHLCode(packet);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterDrawItem);
+XglCamera *xglStudioSelectGetActiveCamera(int index);
+void tiWaterSendFrame(XglCamera *camera, Matrix4 transform);
+void tiWaterSendItemPair(float first, float second);
+void tiWaterSendDirection(XglCamera *camera, Matrix4 transform);
+void tiWaterSendGrid(TiWatSimItem *item, void *program);
+void sceVif1PkAddCode(XglPacket *packet, unsigned int code);
 
-void gifStateReset(void);
-void gifStateFlush(void);
-void gifStateAddReg(int gifAddress, u64 gifData);
+/* VU1 microprogram entry points of the water drawing and the grid tables sent with them. */
+extern unsigned char D_688[];
+extern unsigned char D_7F0[];
+extern unsigned char D_9F0[];
+extern int D_00631310;
+extern unsigned char D_00631318[];
+extern unsigned char D_00631328[];
+
+/* VIF MSCAL: start the VU1 microprogram at the given address (in 8-byte units). */
+#define TI_WATER_VIF_MSCAL(address) (0x14000000 | ((unsigned int) (address) >> 3))
+
+/* Item flags: the two draw passes. */
+#define TI_WATER_ITEM_DRAW_SURFACE 0x4
+#define TI_WATER_ITEM_DRAW_DEPTH 0x2
+
+/* Draws one water item: sends its frame, values and direction, then for each enabled pass the GS state
+ * (clamp, frame on the display page, blend, the frame page as texture, Z test) and the VU1 program with
+ * the item's grid. */
+void tiWaterDrawItem(TiWatSimItem *item)
+{
+    XglPacket *packet = xglPacketGetCurrent();
+    XglCamera *camera = xglStudioSelectGetActiveCamera(0);
+
+    tiWaterSendFrame(camera, item->transform);
+    tiWaterSendItemPair(item->drawPair[0], item->drawPair[1]);
+    tiWaterSendDirection(camera, item->transform);
+    if (item->flags & TI_WATER_ITEM_DRAW_SURFACE) {
+        sceVif1PkCnt(packet, 0);
+        sceVif1PkOpenDirectHLCode(packet, 0);
+        gifStateAddReg(GS_CLAMP_1, GS_SET_CLAMP(GS_REGION_CLAMP, GS_REGION_CLAMP, 256, 510, 0, 222));
+        gifStateAddReg(GS_FBA_1, 1);
+        gifStateAddReg(GS_FRAME_1, GS_SET_FRAME(sRender.display_base, 8, 0, 0));
+        gifStateAddReg(GS_ALPHA_1, GS_SET_ALPHA(0, 1, 2, 1, 0x4F));
+        gifStateAddReg(GS_TEX0_1, GS_SET_TEX0(sRender.frame_base << 5, 8, 0, 9, 9, 0, 0, 0, 0, 0, 0, 0));
+        gifStateAddReg(GS_TEX1_1, GS_SET_TEX1(0, 0, 1, 1, 0, 0, 0));
+        gifStateAddReg(GS_TEST_1, GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2));
+        gifStateAddReg(GS_TEXFLUSH, 0);
+        gifStateAddReg(GS_ZBUF_1, GS_SET_ZBUF(0, 0x31, 0));
+        gifStateFlush();
+        sceVif1PkCloseDirectHLCode(packet);
+        sceVif1PkCnt(packet, 0);
+        sceVif1PkAddCode(packet, TI_WATER_VIF_MSCAL(D_688));
+        tiWaterSendGrid(item, D_00631318);
+    }
+    if (item->flags & TI_WATER_ITEM_DRAW_DEPTH) {
+        sceVif1PkCnt(packet, 0);
+        sceVif1PkOpenDirectHLCode(packet, 0);
+        gifStateAddReg(GS_CLAMP_1, GS_SET_CLAMP(GS_REGION_CLAMP, GS_REGION_CLAMP, 0, 254, 0, 222));
+        gifStateAddReg(GS_FBA_1, 1);
+        gifStateAddReg(GS_FRAME_1, GS_SET_FRAME(sRender.display_base, 8, 0, 0));
+        gifStateAddReg(GS_ALPHA_1, GS_SET_ALPHA(0, 2, 2, 1, 0x40));
+        gifStateAddReg(GS_TEX0_1, GS_SET_TEX0(sRender.frame_base << 5, 8, 0, 8, 8, 1, 0, 0, 0, 0, 0, 0));
+        gifStateAddReg(GS_TEX1_1, GS_SET_TEX1(0, 0, 1, 1, 0, 0, 0));
+        gifStateAddReg(GS_TEST_1, GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2));
+        gifStateAddReg(GS_TEXFLUSH, 0);
+        gifStateAddReg(GS_ZBUF_1, GS_SET_ZBUF(0, 0x31, 0));
+        gifStateFlush();
+        sceVif1PkCloseDirectHLCode(packet);
+        sceVif1PkCnt(packet, 0);
+        if (D_00631310 != 0) {
+            sceVif1PkAddCode(packet, TI_WATER_VIF_MSCAL(D_7F0));
+        } else {
+            sceVif1PkAddCode(packet, TI_WATER_VIF_MSCAL(D_9F0));
+        }
+        tiWaterSendGrid(item, D_00631328);
+    }
+}
+
 void xglPacketInitVuStateArg(int mode);
-void tiWaterDrawItem(TiWatSimItem *item);
 
 /* Draw callback: in pass 0, draws every registered table (CLAMP_1 and the state template first when
  * it has items, then each item) and empties the list; the packet state is reset afterwards. */
