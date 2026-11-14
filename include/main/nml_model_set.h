@@ -17,6 +17,8 @@ void nmlModelSetStencilAlpha(long long value);
 int func_001BBC74(void);
 void nmlModelSetDrawMatrix(void *matrix);
 void nmlModelSetStencil(int enabled);
+void pxyAddEntryFlagged(int key, void *data, int qwc, int flag);
+void pxyAddEntryFull(int key, void *data, int qwc, int flag, int state);
 void pxySetDefaultLight(struct PxyShadowLight *light);
 void xglDirectionFromAngles(Vector4 *direction, const Vector4 *rotation);
 

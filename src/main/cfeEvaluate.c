@@ -8,6 +8,9 @@
 #include "gs.h"
 #include "main/tu045.h"
 #include "main/xgl_studio.h"
+#include "main/nml_model_set.h"
+#include "main/tu093.h"
+#include "main/tu255.h"
 
 f32 func_002508C8(int, int);
 
@@ -99,7 +102,6 @@ int cfeEvaluateNodes(int sample_param)
     return result;
 }
 
-void xglCurMatrixGet(f32 matrix[4][4]);
 void xglCurSetTranslate(const Vector4 *vector);
 void xglCurMulScaleXYZ(const Vector4 *scale);
 
@@ -649,8 +651,6 @@ void cfeSndSetTarget(int target)
   func_00249248(cfeSndRecords, *target_ref);
 }
 
-void xglDirectQueueBegin(void);
-void xglDirectQueueDefer(int mode, int count);
 extern unsigned short sRenderDepthBase;
 
 /* RGBAQ q of 1.0 and the screen origin of the 12.4 vertex coordinates. */
@@ -688,13 +688,7 @@ void func_00249340(int x0, int y0, int x1, int y1, unsigned int color0, unsigned
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_00249518);
 
-typedef struct PxyCamera {
-    u8 unk00[0xA0];
-    float rotX; /* +0xA0 */
-    float rotY; /* +0xA4 */
-} PxyCamera;
-
-PxyCamera *xglStudioSelectGetActiveCamera(int index);
+XglCamera *xglStudioSelectGetActiveCamera(int index);
 void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source);
 void func_00297580(Vector4 *quaternion, const Vector4 *from, const Vector4 *to);
 void XrgQuaternionToMatrix(Matrix4 matrix, const Vector4 *quaternion);
@@ -726,7 +720,7 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
     Matrix4 rotation;
     AlignedVector4 normal;
     float facing;
-    PxyCamera *camera;
+    XglCamera *camera;
     unsigned int near_color;
     unsigned int far_color;
     unsigned int mixed_color;
@@ -760,8 +754,8 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
         func_00297580(&quaternion, &axis, &normal);
         XrgQuaternionToMatrix(rotation, &quaternion);
         xglMatrixStackUnit();
-        xglMatrixStackRotX(camera->rotX);
-        xglMatrixStackRotY(-camera->rotY);
+        xglMatrixStackRotX(camera->travel.rotation.x);
+        xglMatrixStackRotY(-camera->travel.rotation.y);
         xglMatrixStackMul(rotation);
         xglMatrixStackSave(view);
         xglVectorMulMat(&up, view, &up);
@@ -811,11 +805,148 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_0024A8C0);
+void _CurMatrixSet(Matrix4 matrix);
+void _CurSetViewScaleTrans(Vector4 *scale, Vector4 *translation);
+int _CurRotTransPersClipScreen(Vector4 *screen, const Vector4 *point);
+void xglVectorScaleXYZ(Vector4 *destination, const Vector4 *source, float scale);
+
+/* One scratchpad quadword: written as a vector, read back as raw GS words. */
+typedef union CfeMovieWord {
+    Vector4 vector;
+    int word[4];
+} CfeMovieWord;
+
+/* The scratchpad work area of the movie quad: the screen points (x, y, z words and q), the corners in the world
+ * and the texture coordinates (s, t, q). */
+typedef struct CfeMovieScratch {
+    CfeMovieWord screen[4];     /* +0x00 */
+    CfeMovieWord world[4];      /* +0x40 */
+    unsigned char unmodeled_80[0x20];
+    CfeMovieWord stq[4];        /* +0xA0 */
+} CfeMovieScratch;
+
+#define CFE_MOVIE_SCRATCH ((CfeMovieScratch *) 0x70000000)
+
+/* The image upload: VIF DIRECT (the quadword count is or-ed in), GIF tag EOP in word 0 and FLG IMAGE in word 1. */
+#define CFE_VIF_DIRECT 0x51000000
+#define CFE_GIF_TAG_EOP 0x8000
+#define CFE_GIF_TAG_IMAGE 0x08000000
+
+/* The texture coordinates stay this far inside the frame edges. */
+#define CFE_MOVIE_TOP 0.01f
+#define CFE_MOVIE_BOTTOM_INSET 0.005f
+
+/* Draws the movie frame of the entry on its quad: the corners are moved by the entry's translation, rotation
+ * and scale and projected (nothing is drawn if a corner is clipped), the frame is uploaded into the texture page
+ * and drawn as a textured strip whose alpha is the z of the entry's scale. */
+void func_0024A8C0(CfeEvalEntry *entry)
+{
+    u32 upload[8];
+    XglCamera *camera = xglStudioSelectGetActiveCamera(0);
+    void *frame;
+    CfeMovieScratch *scratch = CFE_MOVIE_SCRATCH;
+
+    if (entry->firstBuffer) {
+        frame = entry->frameBuffers[0];
+    } else {
+        frame = entry->frameBuffers[1];
+    }
+    xglCurSetTranslate(&entry->evaluated[0]);
+    xglCurMulRotateZ(entry->evaluated[1].z);
+    xglCurMulRotateY(entry->evaluated[1].y);
+    xglCurMulRotateX(entry->evaluated[1].x);
+    xglCurMulScaleXYZ(&entry->evaluated[2]);
+    xglCurApplyVector(&scratch->world[0].vector, &entry->corners[0]);
+    xglCurApplyVector(&scratch->world[1].vector, &entry->corners[1]);
+    xglCurApplyVector(&scratch->world[2].vector, &entry->corners[2]);
+    xglCurApplyVector(&scratch->world[3].vector, &entry->corners[3]);
+    scratch->stq[0].vector.x = 0.0f;
+    scratch->stq[0].vector.y = CFE_MOVIE_TOP;
+    scratch->stq[0].vector.z = 1.0f;
+    scratch->stq[1].vector.x = (float) entry->width / xglRoundUpPow2(entry->width);
+    scratch->stq[1].vector.y = CFE_MOVIE_TOP;
+    scratch->stq[1].vector.z = 1.0f;
+    scratch->stq[2].vector.x = 0.0f;
+    scratch->stq[2].vector.y = (float) entry->height / xglRoundUpPow2(entry->height) - CFE_MOVIE_BOTTOM_INSET;
+    scratch->stq[2].vector.z = 1.0f;
+    scratch->stq[3].vector.x = (float) entry->width / xglRoundUpPow2(entry->width);
+    scratch->stq[3].vector.y = (float) entry->height / xglRoundUpPow2(entry->height) - CFE_MOVIE_BOTTOM_INSET;
+    scratch->stq[3].vector.z = 1.0f;
+    _CurMatrixSet(camera->volume[0].viewMatrix);
+    _CurSetViewScaleTrans(&camera->screen.screenScale, &camera->screen.screenOffset);
+    if (_CurRotTransPersClipScreen(&scratch->screen[0].vector, &scratch->world[0].vector) != 0) {
+        return;
+    }
+    if (_CurRotTransPersClipScreen(&scratch->screen[1].vector, &scratch->world[1].vector) != 0) {
+        return;
+    }
+    if (_CurRotTransPersClipScreen(&scratch->screen[2].vector, &scratch->world[2].vector) != 0) {
+        return;
+    }
+    if (_CurRotTransPersClipScreen(&scratch->screen[3].vector, &scratch->world[3].vector) != 0) {
+        return;
+    }
+    xglVectorScaleXYZ(&scratch->stq[0].vector, &scratch->stq[0].vector,
+                      scratch->screen[0].vector.w);
+    xglVectorScaleXYZ(&scratch->stq[1].vector, &scratch->stq[1].vector,
+                      scratch->screen[1].vector.w);
+    xglVectorScaleXYZ(&scratch->stq[2].vector, &scratch->stq[2].vector,
+                      scratch->screen[2].vector.w);
+    xglVectorScaleXYZ(&scratch->stq[3].vector, &scratch->stq[3].vector,
+                      scratch->screen[3].vector.w);
+    upload[0] = 0;
+    upload[1] = 0;
+    upload[2] = 0;
+    upload[3] = CFE_VIF_DIRECT | 1;
+    upload[4] = CFE_GIF_TAG_EOP + entry->width * entry->height / 4;
+    upload[5] = CFE_GIF_TAG_IMAGE;
+    upload[6] = 0;
+    upload[7] = 0;
+    xglDirectQueueBegin();
+    xglDirectQueuePush(GS_TEXFLUSH, 0);
+    xglDirectQueuePush(GS_BITBLTBUF, GS_SET_BITBLTBUF(0, func_001D2E90(entry->width, 0), 0, sRender.frame_base_1 << 5,
+                                                      func_001D2E90(entry->width, 0), 0));
+    xglDirectQueuePush(GS_TRXPOS, 0);
+    xglDirectQueuePush(GS_TRXREG, GS_SET_TRXREG(entry->width, entry->height));
+    xglDirectQueuePush(GS_TRXDIR, 0);
+    xglDirectQueueDefer(0, 4);
+    pxyAddEntryFlagged(4, upload, 2, 0);
+    pxyAddEntryFull(5, frame, entry->width * entry->height / 4, 0, CFE_VIF_DIRECT | entry->width * entry->height / 4);
+    xglDirectQueueBegin();
+    xglDirectQueuePush(GS_TEXFLUSH, 0);
+    xglDirectQueuePush(GS_TEST_1, GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2));
+    xglDirectQueuePush(GS_CLAMP_1, 0);
+    xglDirectQueuePush(GS_ALPHA_1, GS_SET_ALPHA(0, 1, 0, 1, 0));
+    xglDirectQueuePush(GS_TEX1_1, GS_SET_TEX1(0, 0, 1, 1, 0, 0, 0));
+    xglDirectQueuePush(GS_TEX0_1, GS_SET_TEX0(sRender.frame_base_1 << 5, func_001D2E90(entry->width, 0), 0,
+                                              xglRoundUpLog2(entry->width), xglRoundUpLog2(entry->height), 1, 0, 0,
+                                              0, 0, 0, 1));
+    xglDirectQueuePush(GS_PRIM, GS_SET_PRIM(4, 1, 1, 0, 1, 0, 0, 0, 0));
+    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
+                                              scratch->stq[0].word[2]));
+    xglDirectQueuePush(GS_ST, scratch->stq[0].word[0] | (u64) scratch->stq[0].word[1] << 32);
+    xglDirectQueuePush(GS_XYZF2, GS_SET_XYZ(scratch->screen[0].word[0], scratch->screen[0].word[1],
+                                            scratch->screen[0].word[2]));
+    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
+                                              scratch->stq[1].word[2]));
+    xglDirectQueuePush(GS_ST, scratch->stq[1].word[0] | (u64) scratch->stq[1].word[1] << 32);
+    xglDirectQueuePush(GS_XYZF2, GS_SET_XYZ(scratch->screen[1].word[0], scratch->screen[1].word[1],
+                                            scratch->screen[1].word[2]));
+    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
+                                              scratch->stq[2].word[2]));
+    xglDirectQueuePush(GS_ST, scratch->stq[2].word[0] | (u64) scratch->stq[2].word[1] << 32);
+    xglDirectQueuePush(GS_XYZF2, GS_SET_XYZ(scratch->screen[2].word[0], scratch->screen[2].word[1],
+                                            scratch->screen[2].word[2]));
+    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
+                                              scratch->stq[3].word[2]));
+    xglDirectQueuePush(GS_ST, scratch->stq[3].word[0] | (u64) scratch->stq[3].word[1] << 32);
+    xglDirectQueuePush(GS_XYZF2, GS_SET_XYZ(scratch->screen[3].word[0], scratch->screen[3].word[1],
+                                            scratch->screen[3].word[2]));
+    xglDirectQueueDefer(0, 4);
+}
 
 void xglMovieRewind(CfeEvalEntry *entry);
 void xglMoviePlay(CfeEvalEntry *entry);
-void func_0024A8C0(CfeEvalEntry *entry);
 
 /* Below this size an entry's scale counts as zero and the entry is skipped. */
 #define CFE_ENTRY_MIN_SCALE 0.05f

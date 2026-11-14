@@ -68,7 +68,10 @@ typedef struct CfeEvalRecord {
 /* Table entry (stride 0x230) of cfeEntryEvaluate: three vectors, a result word and ten source handles. */
 typedef struct CfeEvalEntry {
     /* +0x000..0x0CF: the movie handle xglMovieInfoInit / xglMovieOpen work on (XS1 MovieInfo). */
-    unsigned char unmodeled_00[0x4C];
+    unsigned char unmodeled_00[0x40];
+    short width;                /* +0x040: the movie size in pixels */
+    short height;               /* +0x042 */
+    unsigned char unmodeled_44[0x4C - 0x44];
     int bufferQuads;            /* +0x04C: quadwords per frame buffer (each is allocated 16 * n + 0x20 bytes) */
     unsigned char unmodeled_50[0x90 - 0x50];
     void *data;                 /* +0x090: the movie file, read into a GameResBufferAlloc block */
@@ -77,7 +80,9 @@ typedef struct CfeEvalEntry {
     unsigned char opened;       /* +0x09A */
     unsigned char unmodeled_9b[0xB0 - 0x9B];
     void *frameBuffers[2];      /* +0x0B0: two GameResBufferAlloc blocks */
-    unsigned char unmodeled_b8[0xD0 - 0xB8];
+    unsigned char unmodeled_b8[0xC8 - 0xB8];
+    unsigned char firstBuffer;  /* +0x0C8: nonzero while frameBuffers[0] holds the frame to show, else [1] */
+    unsigned char unmodeled_c9[0xD0 - 0xC9];
     char name[0x40];            /* +0x0D0: the movie file name */
     Vector4 evaluated[3];
     AlignedVector4 corners[4];  /* +0x140: the quad the entry is drawn with (cfeEvalEntriesInit) */

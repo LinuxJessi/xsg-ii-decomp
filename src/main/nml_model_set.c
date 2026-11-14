@@ -3413,8 +3413,6 @@ void pxyPlayEntryGroupFiltered(int group, int filter) {
     }
 }
 
-void pxyAddEntryFull(int key, void *ptr, int a2, int a3, int a4);
-
 void pxyAddEntry(int key, int data, int qwc)
 {
     pxyAddEntryFull(key, data, qwc, 0, 0);
@@ -3424,7 +3422,7 @@ void pxyAddEntryWithState(int key, void *data, int qwc, int offset) {
     pxyAddEntryFull(key, data, qwc, 0, offset);
 }
 
-void pxyAddEntryFlagged(int key, int data, int qwc, int flag)
+void pxyAddEntryFlagged(int key, void *data, int qwc, int flag)
 {
     pxyAddEntryFull(key, data, qwc, flag, 0);
 }

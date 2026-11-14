@@ -943,7 +943,6 @@ void xglPacketUploadVu1Data(void *data, int count, int address)
     func_0012B770(packet);
 }
 
-void xglDirectQueueBegin(void);
 void xglPacketSelectDefaultMode(void);
 void xglDirectQueueFlush(void);
 float func_002A1D08(float x);
@@ -2170,10 +2169,8 @@ typedef struct PxyScreenVertex {
     float w; /* +0x0C */
 } PxyScreenVertex;
 
-
 int _CurRotTransPersClipScreen(PxyScreenVertex *position, Vector4 *world);
 
-#define GS_ST 0x02
 #define GS_SET_ST(s, t) ((u64)(s) | ((u64)(t) << 32))
 /* The bit pattern of a float, as the packet words carry it. */
 #define FLOAT_BITS(f) (*(s32 *) &(f))
