@@ -272,7 +272,23 @@ float tiWaterVectorAngle(float x, float y)
 
 INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterUpdateSource);
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterStepSub);
+void tiWatSimStepRain(TiWatSimItem *item);
+/* tu133.c defines it with the item only and passes $f12 on to tiWatSimAdvance. The step comes first
+ * here: EABI uses the same registers either way, and this order gives the original's argument setup. */
+void tiWatSimUpdate(float step, TiWatSimItem *item);
+
+/* Steps the rain and the simulation of every item of the sub-object. */
+void tiWaterStepSub(struct TiWaterSub *sub)
+{
+    TiWatSimItem *item = sub->items;
+    unsigned int i;
+
+    for (i = 0; i < sub->active; i++) {
+        tiWatSimStepRain(item);
+        tiWatSimUpdate(1.0f, item);
+        item++;
+    }
+}
 
 void tiWaterSetEffectMode(void) {
     func_00246AF8();
@@ -284,7 +300,6 @@ INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterSceneLoop);
 
 void pxySetDrawCallback(void (*callback)(int pass));
 int tiWaterRegisterSub(struct TiWaterSub *sub);
-void tiWaterStepSub(struct TiWaterSub *sub);
 
 /* Per-object update: registers the sub-table when it has items, steps it when stepMode is 0,
  * and installs the draw callback tiWaterDrawAll. */
