@@ -9,9 +9,6 @@
 #include "main/tu045.h"
 
 f32 func_002508C8(int, int);
-int cfeListHasItems(void *list);
-
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeListHasItems);
 
 /* One sampled flag: the value and the track it is sampled from (8 bytes). */
 typedef struct CfeFlagRecord {
@@ -30,6 +27,15 @@ typedef struct CfeFlagList {
     unsigned char unmodeled_00[0x60];
     int count;
 } CfeFlagList;
+
+/* 1 when the list exists and has items. */
+int cfeListHasItems(CfeFlagList *list)
+{
+    if (list != 0 && list->count != 0) {
+        return 1;
+    }
+    return 0;
+}
 
 /* Samples a flag record: its track at `time` into its value and into bit
  * `index` of the owner's flag words. */
@@ -289,7 +295,20 @@ void cfeCommandEvaluate(CfeEvalCommand *command, int time)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeCommandTableEvaluate);
+extern int cfeCommandCount;
+extern CfeEvalCommand cfeCommands[];
+
+/* Evaluates every command of cfeCommands at `time`. */
+void cfeCommandTableEvaluate(int time)
+{
+    int i;
+
+    if (cfeCommandCount != 0) {
+        for (i = 0; i < cfeCommandCount; i++) {
+            cfeCommandEvaluate(&cfeCommands[i], time);
+        }
+    }
+}
 
 /* A row of cfeDirections (0x40 bytes): the angles of a light direction, the vectors it drives and
  * the tracks they are sampled from. */
