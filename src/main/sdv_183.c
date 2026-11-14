@@ -508,7 +508,7 @@ INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecAlter);
 
 typedef struct XglPacket XglPacket;
 
-extern void func_0012B9A0(XglPacket *packet, u32 tag);
+extern void sceVif1PkAddCode(XglPacket *packet, u32 tag);
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
 
@@ -518,8 +518,8 @@ void sdvPacketFlushMscnt(void)
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
-    func_0012B9A0(packet, 0x17000000);
+    sceVif1PkAddCode(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x17000000);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026AFB0);

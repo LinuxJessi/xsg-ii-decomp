@@ -1133,7 +1133,7 @@ void xglPacketInitVuState(void)
 
 extern void sceVif1PkRef(XglPacket *packet, const void *environment, int count, int mode, int offset, int flags);
 u8 *xglPacketMicrocodeEntry(int mode);
-void func_0012B9A0(XglPacket *packet, u32 value);
+void sceVif1PkAddCode(XglPacket *packet, u32 value);
 
 void xglPacketSelectDefaultMode(void)
 {
@@ -1143,7 +1143,7 @@ void xglPacketSelectDefaultMode(void)
     xglPacketMode = 0;
     sceVif1PkRef(packet, xglPacketMicrocodeEntry(0), xglPacketMicrocodeEntry(1), 0, 0, 0);
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, (u32) xglPacketMicrocodeEntry(3) | 0x14000000);
+    sceVif1PkAddCode(packet, (u32) xglPacketMicrocodeEntry(3) | 0x14000000);
     xglDirectQueueCount = 0;
 }
 
@@ -1307,7 +1307,7 @@ void pxyUploadTextureSet(XglPacketTable *table, int index, int originX)
         while (i >= 0) {
             rec = &set->records[i];
             sceVif1PkCnt(packet, 0);
-            func_0012B9A0(packet, 0x11000000);
+            sceVif1PkAddCode(packet, 0x11000000);
             sceGsSetDefLoadImage(&block, (s16) ((u16) originX + rec->originX), (s16) xglPsmBufferWidth(512, 0), 0, 0, 0,
                           rec->extentA, rec->extentB);
             block.words[0] &= ~0x8000;
@@ -1372,8 +1372,8 @@ void xglDirectQueueFlush(void)
         xglDirectQueueBuffer[1].word[3] = 0;
         sceVif1PkRef(packet, xglDirectQueueBuffer, xglDirectQueueCount, 0, 0, 0);
         sceVif1PkCnt(packet, 0);
-        func_0012B9A0(packet, (u32) xglPacketMicrocodeEntry(3) | 0x14000000);
-        func_0012B9A0(packet, 0x17000000);
+        sceVif1PkAddCode(packet, (u32) xglPacketMicrocodeEntry(3) | 0x14000000);
+        sceVif1PkAddCode(packet, 0x17000000);
         xglPacketAddFlushE();
         sceVif1PkCnt(packet, 0);
     }
@@ -1399,8 +1399,8 @@ void xglDirectQueueFlushWide(void)
         xglDirectQueueBuffer[1].word[3] = 0;
         sceVif1PkRef(packet, xglDirectQueueBuffer, xglDirectQueueCount, 0, 0, 0);
         sceVif1PkCnt(packet, 0);
-        func_0012B9A0(packet, (u32) xglPacketMicrocodeEntry(4) | 0x14000000);
-        func_0012B9A0(packet, 0x17000000);
+        sceVif1PkAddCode(packet, (u32) xglPacketMicrocodeEntry(4) | 0x14000000);
+        sceVif1PkAddCode(packet, 0x17000000);
         xglPacketAddFlushE();
         sceVif1PkCnt(packet, 0);
     }
@@ -1501,7 +1501,7 @@ void pxyDrawPartData(void)
     packet = xglPacketGetCurrent();
     scratch = (PxyScratch *) 0x70000000;
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, (u32) xglPacketMicrocodeEntry(2) | 0x14000000);
+    sceVif1PkAddCode(packet, (u32) xglPacketMicrocodeEntry(2) | 0x14000000);
     sceVif1PkRef(packet, (u8 *) scratch->model->header + scratch->model->entries[scratch->channel->entryIndex].offset,
                  scratch->model->entries[scratch->channel->entryIndex].count, 0, 0, 0);
     xglPacketAddFlushE();
@@ -1514,7 +1514,7 @@ void xglPacketAddFlushEIrq(void)
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x91000000);
+    sceVif1PkAddCode(packet, 0x91000000);
 }
 
 /* Sets the current packet's count to 0 (sceVif1PkCnt), then adds VIF FLUSHE (0x11000000). */
@@ -1524,7 +1524,7 @@ void xglPacketAddFlushE(void)
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
 }
 
 void xglPacketAddRefOffset(const void *data, int count, int offset)
@@ -2288,7 +2288,7 @@ void nmlPacketSendCircleTexture(const void *indices, void *palette)
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
     sceGsSetDefLoadImage(image, (short)(sRenderTextureBase << 5), 1, 19, 0, 0, 64, 64);
     image[0] |= 0x8000;
     func_0012B7C0(packet, 0);

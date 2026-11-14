@@ -5,7 +5,7 @@
 
 /* One water simulation item (0x110 bytes) of a TiWaterSub table (src/main/TiWatSim.c, TiWater.c). */
 typedef struct TiWatSimItem {
-    u8 unmodeled_00[0x04];
+    u32 flags;                  /* +0x00: 0x2 and 0x4 select the two draw passes (tiWaterDrawItem), 0x100 set up */
     int cell_count;
     int cols;
     int rows;
@@ -17,7 +17,8 @@ typedef struct TiWatSimItem {
     float cell_spacing;
     u8 unmodeled_54[0x04];
     float drop_amount;
-    u8 unmodeled_5C[0x0C];
+    u8 unmodeled_5C[0x04];
+    float drawPair[2];          /* +0x60: sent by tiWaterDrawItem (tiWaterSendItemPair) */
     float *height_buffer_a;
     float *height_buffer_b;
     u8 unmodeled_70[0x08];
@@ -25,8 +26,9 @@ typedef struct TiWatSimItem {
     u32 normals_offset;
     u8 unmodeled_80[0x04];
     u8 *block;
-    u8 unmodeled_88[0x48];
-    Matrix4 matrix;
+    u8 unmodeled_88[0x08];
+    Matrix4 transform;          /* +0x90: translate, rotate Y, scale (tiWaterRegisterSub) */
+    Matrix4 matrix;             /* +0xD0: the inverse of transform */
 } TiWatSimItem;
 
 #endif /* INCLUDE_MAIN_TIWATSIM_H */

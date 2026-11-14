@@ -848,7 +848,7 @@ extern u16 sRenderDisplayBase;
 extern u32 D_006454C0[];
 extern u32 D_00645510[];
 void sceVif1PkCnt(XglPacket *packet, unsigned int count);
-void func_0012B9A0(XglPacket *packet, unsigned int tag);
+void sceVif1PkAddCode(XglPacket *packet, unsigned int tag);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, unsigned int count);
 void sceVif1PkAddDirectDataN(XglPacket *packet, void *data, unsigned int qwc);
 void func_0012B818(XglPacket *packet);
@@ -859,7 +859,7 @@ void xglPacketInterpolate(void) {
     u64 *scratch;
 
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
     sceVif1PkOpenDirectHLCode(packet, 0);
     sceVif1PkAddDirectDataN(packet, D_006454C0, 4);
     scratch = (u64 *)0x70000000;

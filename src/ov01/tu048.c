@@ -266,7 +266,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutFT4STQ);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu048", grPutSpr);
 
 void func_0012B4B8(XglPacket *packet);
-void func_0012B9A0(XglPacket *packet, unsigned int code);
+void sceVif1PkAddCode(XglPacket *packet, unsigned int code);
 
 void grPacketSend(GrPacket *packet)
 {
@@ -277,7 +277,7 @@ void grPacketSend(GrPacket *packet)
     }
     current_packet = xglPacketGetCurrent();
     sceVif1PkCnt(current_packet, 0);
-    func_0012B9A0(current_packet, VIF_CODE_FLUSH);
+    sceVif1PkAddCode(current_packet, VIF_CODE_FLUSH);
     sceVif1PkOpenDirectHLCode(current_packet, 0);
     sceVif1PkAddDirectDataN(current_packet, packet->data, packet->count);
     sceVif1PkCloseDirectHLCode(current_packet);

@@ -7939,9 +7939,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012B9A0",
+     "name": "sceVif1PkAddCode",
      "size": 20,
-     "splat_name": "func_0012B9A0",
+     "splat_name": "sceVif1PkAddCode",
      "va": "0x0012b9a0",
      "name_basis": "address",
      "provenance": "estimated"
