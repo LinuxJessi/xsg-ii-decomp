@@ -204,9 +204,52 @@ INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackFindTime);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackFindAtOrBefore);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", func_00250BB8);
+/* The key next to `time` in `direction` (1 = later, any other value = earlier): before the start the first
+ * key; at a key the one after it (later) or before it (earlier); between two keys the later or the earlier
+ * one; after the end the last key; null for an empty track. */
+CfeTrackNode *func_00250BB8(CfeTrackNode *node, int time, int direction)
+{
+    CfeTrackNode *found;
+    CfeTrackNode *next;
 
-CfeTrackNode *func_00250BB8(CfeTrackNode *node, int time, int direction);
+    found = 0;
+    if (node == 0) {
+        return 0;
+    }
+    if (direction != -1) {
+        direction = 1;
+    }
+    if (time < node->startTime) {
+        found = node;
+    }
+    while (node != 0 && found == 0) {
+        next = node->next;
+        if (node->startTime == time) {
+            if (direction == 1) {
+                found = next;
+            } else {
+                found = node->prev;
+            }
+            break;
+        }
+        if (next != 0) {
+            if (!(time < node->startTime) && time < next->startTime) {
+                if (direction == 1) {
+                    found = next;
+                } else {
+                    found = node;
+                }
+                break;
+            }
+        } else if (node->startTime < time) {
+            found = node;
+            break;
+        }
+        node = next;
+    }
+    return found;
+}
+
 
 /* The nearest key after `time` (direction > 0) or before it (otherwise) over `count` tracks, found
  * per track with func_00250BB8; null when no track has one. */
