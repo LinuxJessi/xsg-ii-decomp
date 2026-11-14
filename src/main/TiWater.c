@@ -134,7 +134,7 @@ void gifStateReset(void);
 void gifStateFlush(void);
 void gifStateAddReg(int gifAddress, u64 gifData);
 void xglPacketInitVuStateArg(int mode);
-void tiWaterDrawItem(void *item);
+void tiWaterDrawItem(TiWatSimItem *item);
 
 /* Draw callback: in pass 0, draws every registered table (CLAMP_1 and the state template first when
  * it has items, then each item) and empties the list; the packet state is reset afterwards. */
@@ -143,13 +143,13 @@ void tiWaterDrawAll(int pass)
     XglPacket *packet = xglPacketGetCurrent();
     unsigned int i;
     unsigned int j;
-    char *item;
+    TiWatSimItem *item;
 
     if (pass != 0) {
         return;
     }
     for (i = 0; i < tiWaterSubCount; i++) {
-        item = (char *) tiWaterSubList[i] + 0x10;
+        item = tiWaterSubList[i]->items;
         gifStateReset();
         if (tiWaterSubList[i]->active != 0) {
             sceVif1PkCnt(packet, 0);
@@ -161,7 +161,7 @@ void tiWaterDrawAll(int pass)
         }
         for (j = 0; j < tiWaterSubList[i]->active; j++) {
             tiWaterDrawItem(item);
-            item += 0x110;
+            item++;
         }
     }
     tiWaterSubCount = 0;

@@ -7,6 +7,7 @@
  */
 #include "common.h"
 #include "shared.h"
+#include "main/TiWatSim.h"
 #include "main/xgl_2.h"
 
 /* Same shape as TiWaterSub in main/TiWater.c (magic "WAT " at +0x00, count at +0x08). */
@@ -15,31 +16,6 @@ typedef struct TiWatSimTable {
     u32 count;
     u8 unmodeled_0C[0x04];
 } TiWatSimTable;
-
-typedef struct TiWatSimItem {
-    u8 unmodeled_00[0x04];
-    int cell_count;
-    int cols;
-    int rows;
-    u8 unmodeled_10[0x30];
-    float grid_origin_x;
-    u8 unmodeled_44[0x04];
-    float grid_origin_z;
-    u8 unmodeled_4C[0x04];
-    float cell_spacing;
-    u8 unmodeled_54[0x04];
-    float drop_amount;
-    u8 unmodeled_5C[0x0C];
-    float *height_buffer_a;
-    float *height_buffer_b;
-    u8 unmodeled_70[0x08];
-    u32 mask_offset;
-    u32 normals_offset;
-    u8 unmodeled_80[0x04];
-    u8 *block;
-    u8 unmodeled_88[0x48];
-    Matrix4 matrix;
-} TiWatSimItem;
 
 /* One normal vector. The original stores the normals through a union member, so its stores carry alias set 0. */
 typedef union TiWatSimNormal {
