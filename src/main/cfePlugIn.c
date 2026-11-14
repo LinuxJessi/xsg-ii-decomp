@@ -198,6 +198,9 @@ typedef struct CfeResourceBlock {
     int slotTable;
 } CfeResourceBlock;
 
+int GameResLoadID(int id, void **buffer, unsigned int *size,
+                  void (*callback)(int index, void *buffer, unsigned int size, int value));
+
 /* Loads resource `id` (waiting for the CD first), creates an actor for it with the block's pack and
  * effect and sets the pack as the culling map. */
 XenoActor *cfeLoadResourceObject(int id)
@@ -1127,6 +1130,8 @@ typedef struct CfeSaveData {
 extern CfeSaveData SaveData;
 extern const char D_0068CD88[];
 extern CfeEvalSlot cfeEvalSlots[3];
+int strcmp(const char *first, const char *second);
+
 /* Frames after the start of the cut scene before start can pause it, and the sound of pausing. */
 #define CFE_PAUSE_DELAY 31
 #define CFE_PAUSE_SOUND 0x2000011
