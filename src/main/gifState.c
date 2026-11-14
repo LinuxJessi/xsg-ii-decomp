@@ -524,7 +524,7 @@ void gifStateBuildBreakShards(GifBreakShard *shards, GifBreakPoint *points)
 
 INCLUDE_ASM("asm/main/nonmatchings/gifState", func_00245728);
 
-extern int gifStateEffectHook;
+extern void (*gifStateEffectHook)(XglPacket *packet);
 
 #define GIF_BREAK_SHARDS 24
 #define GIF_BREAK_VERTICES 24
@@ -940,13 +940,25 @@ void func_00246EB0(void) {
     msgStateReset();
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateEnableEffect);
+/* Starts the screen effect: full effect alpha, the decrease rate, frame buffer 1, the sub window off, the
+ * effect frame hook, state 5 and ratio 1, then shows the panel. */
+void gifStateEnableEffect(void)
+{
+    func_001BA6F4();
+    gifStateSetEffectAlpha(0, 0x80);
+    gifStateSetDecrease(0.01334f);
+    gifStateSetFbp(1);
+    nmlModelUseSubWindow(0, 0);
+    gifStatus.state = 5;
+    gifStatus.ratio = 1.0f;
+    gifStateEffectHook = gifStateEffectFrame;
+    msgPanelShow(0x151, 0x4E);
+}
 
 void nmlModelEnableSubWindow0(void) {
     nmlModelUseSubWindow(0U, 1);
 }
 
-extern int gifStateEffectHook;
 
 int gifStateEffectReady(void) {
     if (gifStateEffectHook != 0 && gifStatus.state == 5) {

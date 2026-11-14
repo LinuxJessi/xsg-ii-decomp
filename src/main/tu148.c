@@ -332,7 +332,6 @@ void msgPanelSetTimecode(int hours, int minutes, int seconds, int frames) {
     timecodeSetHmsf(msgPanel, hours, minutes, seconds, frames);
 }
 
-void msgPanelShow(int first, int second);
 
 /* Show the panel entry 0x151 in mode 8. */
 void func_00251B18(void) {
