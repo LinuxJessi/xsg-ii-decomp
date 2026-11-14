@@ -15,6 +15,8 @@
 #include "main/xgl_cd.h"
 #include "main/tu167.h"
 #include "cfeEvaluate.h"
+#include "main/tu148.h"
+#include "main/TiGlobalColl.h"
 
 extern unsigned char cfeAssertFile[];
 
@@ -551,7 +553,91 @@ int cfe_0024C278(int handle)
     return 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024C308);
+void xglFontLoad(int first, int second);
+void resUpdatePathSlot(int slot);
+void func_001A0920(void);
+void cfeInit(void);
+void tiGlobalCollClearHandle(void);
+void func_001B2724(void);
+void XenoActorRelease(struct XenoActor *actor);
+void fadeClear(void);
+XglCamera *xglStudioGetCamera2(int index);
+extern signed char pxyTickScaleDouble;
+extern int D_006316A8;
+extern int D_006316AC;
+extern int cfeEntryCount;
+
+/* gameWork as the scene end sees it: the control word at +0x08 (CONTROL_* in tu051.h). gameWork has no
+ * header type; tu069.c keeps its own view as well. */
+typedef struct CfeGameWork {
+    unsigned char unmodeled_00[8];
+    int control;
+} CfeGameWork;
+
+extern CfeGameWork gameWork;
+/* The position the parked record actors are moved to before they are released. */
+extern const AlignedVector4 D_0068CEA0;
+
+/* The uwamonoRecords entries and the two flags this command sets on every used record. */
+#define CFE_RECORD_COUNT 256
+#define CFE_RECORD_FLAG_400000 0x400000
+#define CFE_RECORD_FLAG_800000 0x800000
+
+/* Script command: ends the map scene for a cut scene. Waits for the CD, resets the messages, the
+ * font, the path slot and the sound levels, restarts the cut-scene state, releases the actors of the
+ * player and part records (moved to D_0068CEA0 first) and marks every used record, then frees all
+ * actors and resets the camera and the fade. */
+int cfe_0024C308(int handle)
+{
+    AlignedVector4 parked;
+    int i;
+
+    do {
+    } while (xglCdServiceIfPending() != 0);
+    msgResetAll();
+    xglFontLoad(0, 0);
+    resUpdatePathSlot(-3);
+    func_001A0920();
+    D_006316A8 = 0;
+    D_006316AC = 0;
+    soundSlotSetLevel(0, 0);
+    soundSlotSetLevel(1, 0);
+    cfeInit();
+    cfeEntryCount = 0;
+    tiGlobalCollClearHandle();
+    pxyTickScaleDouble = 0;
+    func_001B2724();
+    gameWork.control |= CONTROL_CFE_NO_FADE | CONTROL_CFE_SCENE;
+    for (i = 0; i < CFE_RECORD_COUNT; i++) {
+        switch (uwamonoRecords[i].kind) {
+        case 0:
+            break;
+        case 4:
+        case 5:
+            parked = D_0068CEA0;
+            QuadwordCopy(&uwamonoRecords[i].actor->position, &parked);
+            QuadwordCopy(&uwamonoRecords[i].position, &parked);
+            QuadwordCopy(&uwamonoRecords[i].moveFrom, &parked);
+            QuadwordCopy(&uwamonoRecords[i].moveTo, &parked);
+            XenoActorRelease(uwamonoRecords[i].actor);
+            uwamonoRecords[i].actor = 0;
+            /* fall through */
+        case 1:
+        case 2:
+        case 3:
+        case 6:
+        default:
+            uwamonoRecords[i].flags |= CFE_RECORD_FLAG_400000;
+            uwamonoRecords[i].flags |= CFE_RECORD_FLAG_800000;
+            break;
+        }
+    }
+    XenoActorReleaseAll();
+    XenoActorPoolInitDefault();
+    xglStudioGetCamera2(0)->state = 1;
+    fadeClear();
+    return 1;
+}
 
 /* The key lists at +0x130 of each 0x1B0-byte entry of cfeEntries. */
 extern CfeListNode *D_006319F0[][108];
