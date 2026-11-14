@@ -336,8 +336,6 @@ void tiWaterInitStudio(void);
 struct XenoActor *XenoActorAlloc(void);
 void XenoActorAllocMatrices(struct XenoActor *actor);
 void XenoActorSetMode(struct XenoActor *actor, int mode);
-void XenoActorDoit(void);
-void XenoActorDisp(void);
 void func_001BA68C(void);
 /* gifState.c defines it; sdv_183.c declares it with a float pointer, so it has no header prototype yet. */
 void nmlModelSetMulColor(Vector4 *color);

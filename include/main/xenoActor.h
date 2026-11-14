@@ -15,5 +15,9 @@ int XenoActorIsDone(struct XenoActor *actor);
 void XenoActorApplySourceValue(struct XenoActor *actor);
 void XenoActorSetPlayRange(struct XenoActor *actor, int start, int end);
 void XenoActorSetFirstWord(struct XenoActor *actor, int value);
+void XenoActorSetHoldFlag(void);
+void XenoActorClearHoldFlag(void);
+void XenoActorDoit(void);
+void XenoActorDisp(void);
 
 #endif /* INCLUDE_MAIN_XENOACTOR_H */

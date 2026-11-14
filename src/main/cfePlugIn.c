@@ -18,6 +18,10 @@
 #include "cfeEvaluate.h"
 #include "main/tu148.h"
 #include "main/TiGlobalColl.h"
+#include "main/nml_model_set.h"
+#include "main/pad.h"
+#include "main/tu021.h"
+#include "main/xgl_font.h"
 
 extern unsigned char cfeAssertFile[];
 
@@ -1082,20 +1086,199 @@ int cfe_0024DE80(int handle)
     return 1;
 }
 
-void adxSetSlotFile(int, int);
+void adxSetSlotFile(int slot, const char *file);
 int soundSlotStatus(int);
 
-void cfeRunAndWait(int value, int id)
+void cfeRunAndWait(const char *file, int id)
 {
     soundSlotSetLevel(id, 1);
     soundSlotSetVolume(id, -1, 0);
-    adxSetSlotFile(id, value);
+    adxSetSlotFile(id, file);
     while (soundSlotStatus(id) != 3) {
         xglSleep();
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024DF60);
+void func_0028B268(struct XenoActor *actor, Vector4 *target);
+void cfeDampDirOffset(struct XenoActor *actor, int offset);
+void xglClockSampleDayTime(void);
+void xglClockAccumulate(void);
+void pauseDrawScreen(void);
+void sefExecEffect(void);
+void func_0027C7D0(void);
+void func_0027BFD0(int slot, int kind, unsigned int value, int count);
+void fadeReset(void);
+void fadeStartIn(int frames);
+void xglFontPrintDirect(const char *text);
+void seVolumeSet(int value, int flags);
+/* The running fade (nonzero while a fade is under way). */
+extern int fadeUpdateHook;
+extern PadRecord PadData[];
+extern CfeNode cfeEntries[];
+extern XglLightSet cfeDirectionTable;
+extern CfeEvalGlobal cfeEvalGlobal;
+
+/* SaveData as the subtitles read it: +0x3A shows every subtitle (game_movie.c caption_all). */
+typedef struct CfeSaveData {
+    unsigned char unmodeled_00[0x3A];
+    unsigned char captionAll;
+} CfeSaveData;
+
+extern CfeSaveData SaveData;
+extern const char D_0068CD88[];
+extern CfeEvalSlot cfeEvalSlots[3];
+/* Frames after the start of the cut scene before start can pause it, and the sound of pausing. */
+#define CFE_PAUSE_DELAY 31
+#define CFE_PAUSE_SOUND 0x2000011
+/* Triangle while paused jumps this many frames ahead (past the end of any cut scene). */
+#define CFE_SKIP_FRAMES 30000
+/* The subtitle line: one line low on the screen, two or more lines higher up. */
+#define CFE_SUBTITLE_Y 370
+#define CFE_SUBTITLE_Y2 348
+#define CFE_SUBTITLE_COLOR 0xFFFFFF
+/* The slot value scale for func_0027BFD0; kinds 0x22 and 0x23 take 0.03 of it as kinds 0x1A and 0x1B. */
+#define CFE_SLOT_SCALE 16777215.0f
+#define CFE_SLOT_SHORT 0.03f
+
+
+/* Script command (1 argument): one frame of the cut scene at the time in argument 1. Start pauses and resumes
+ * (triangle while paused skips 30000 frames ahead), the cut scene is evaluated (camera, directions, nodes,
+ * groups, commands, entries, slots, sound) and drawn with its subtitles, and the time to continue with is
+ * returned: one frame later unless paused. */
+int cfe_0024DF60(int handle)
+{
+    CfeNode *entry;
+    int time;
+    int i;
+    int y;
+
+    if (func_A9F0A8(handle) != 1) {
+        assertFailed(D_0068CDE8, cfeAssertFile, 1250);
+    }
+    while (xglCdServiceIfPending() != 0) {
+    }
+    time = func_A9F0C0(handle, 1);
+    cfeRangeSetValue(time);
+    if (D_006316AC != 0) {
+        D_006316AC--;
+    }
+    if (cfeRangeGetValue() - cfeRangeGetMin() >= CFE_PAUSE_DELAY && fadeUpdateHook == 0
+        && (PadData[0].pressed & PAD_START)) {
+        D_006316AC = 2;
+        D_006316A8 = D_006316A8 == 0;
+        seVoiceStartDefault(CFE_PAUSE_SOUND);
+        if (D_006316A8 != 0) {
+            xglClockSampleDayTime();
+        }
+    }
+    if (cfePlugInRecordCount > 0 && time == cfeRangeGetMin() && strcmp(D_006316B4->name, D_0068CF38) != 0) {
+        cfeRunAndWait(D_006316B4->name, D_006316B4->third);
+    }
+    if (D_006316A8 == 0) {
+        func_00248390(time, 0);
+    }
+    cfeEvaluateDirections(time);
+    cfeGlobalEvaluate(time);
+    cfeEvaluateNodes(time);
+    cfeGroupTableEvaluate(time);
+    cfeCommandTableEvaluate(time);
+    cfeGlobalEvaluate(time);
+    cfeEntryTableEvaluate(time);
+    cfeSlotTableEvaluate(time);
+    cfeSndSetTarget(time);
+    /* PxyShadowLight is nml_model_set.c's view of the light set. */
+    pxySetDefaultLight((struct PxyShadowLight *) &cfeDirectionTable);
+    if (cfeEvalGlobal.result_int != 0) {
+        pxySetGlobalFogDist(cfeEvalGlobal.evaluated[1].x, cfeEvalGlobal.evaluated[1].y, cfeEvalGlobal.evaluated[1].z,
+                            cfeEvalGlobal.evaluated[1].w);
+        pxySetGlobalFogColor(&cfeEvalGlobal.evaluated[0]);
+    }
+    for (i = 0; i < cfeEntryCount; i++) {
+        entry = &cfeEntries[i];
+        if (entry->flags & CFE_NODE_SHOWN) {
+            func_0028B268(entry->actor, &entry->position);
+        }
+        cfeDampDirOffset(entry->actor, entry->dampOffset);
+    }
+    if (time == cfeRangeGetMin()) {
+        fadeReset();
+        fadeStartIn(30);
+    }
+    for (i = 0; i < cfePlugInRecordCount; i++) {
+        if (D_006316B4[i].first <= time && time < D_006316B4[i].second && D_006316B4[i].first == time
+            && strcmp(D_006316B4[i].name, D_0068CF38) != 0 && D_006316A8 == 0) {
+            soundSlotSetLevel(D_006316B4[i].third, 0);
+        }
+    }
+    for (i = 0; i < cfePlugInRecordCount; i++) {
+        if (D_006316B4[i].first <= time && time < D_006316B4[i].second
+            && (SaveData.captionAll != 0 || D_006316B4[i].text[0] == ' ')) {
+            y = CFE_SUBTITLE_Y;
+            if (cfeStrLastCharPos(D_006316B4[i].text, '\n') >= 2) {
+                y = CFE_SUBTITLE_Y2;
+            }
+            xglFontPrint(0, y, CFE_SUBTITLE_COLOR, D_0068CD88);
+            xglFontPrintDirect(D_006316B4[i].text);
+        }
+    }
+    if (D_006316A8 != 0) {
+        xglClockAccumulate();
+        func_0027C7D0();
+        XenoActorSetHoldFlag();
+        soundSlotSetLevel(0, 1);
+        soundSlotSetLevel(1, 1);
+        seSetMuted(1, 1);
+        pauseDrawScreen();
+        if ((PadData[0].pressed & PAD_TRIANGLE) && D_006316AC == 0) {
+            PadData[0].pressed &= ~PAD_TRIANGLE;
+            time += CFE_SKIP_FRAMES;
+            soundSlotStop(0);
+            soundSlotStop(1);
+            soundSlotSetLevel(0, 0);
+            soundSlotSetLevel(1, 0);
+            seSetMuted(1, 0);
+            seVolumeSet(0, 0);
+            seVoiceStartDefault(CFE_PAUSE_SOUND);
+            sefReleaseOwnedRecords(-1);
+            return time;
+        }
+    } else {
+        if (PadData[0].pressed & PAD_START) {
+            soundSlotSetLevel(0, 0);
+            soundSlotSetLevel(1, 0);
+            seSetMuted(1, 0);
+            XenoActorClearHoldFlag();
+        }
+        time++;
+    }
+    if (PadData[0].pressed & PAD_START) {
+        if ((PadData[0].held & PAD_SOFT_RESET_HELD) == PAD_SOFT_RESET_HELD) {
+            gameWork.control |= CONTROL_SOFT_RESET;
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        if ((unsigned int) (cfeEvalSlots[i].result_int - 1) < 2 && cfeEvalSlots[i].sample_int > 0) {
+            fadeClear();
+        }
+        if (cfeEvalSlots[i].result_int == 0x22) {
+            func_0027BFD0(i, 0x1A, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
+                          cfeEvalSlots[i].sample_int);
+        } else if (cfeEvalSlots[i].result_int == 0x23) {
+            func_0027BFD0(i, 0x1B, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
+                          cfeEvalSlots[i].sample_int);
+        } else {
+            func_0027BFD0(i, cfeEvalSlots[i].result_int, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE,
+                          cfeEvalSlots[i].sample_int);
+        }
+    }
+    cfeUpdateEntries(D_006316A8);
+    XenoActorDoit();
+    XenoActorDisp();
+    if (D_006316A8 == 0) {
+        sefExecEffect();
+    }
+    return time;
+}
 
 
 int cfe_0024E688(int handle)

@@ -20,6 +20,8 @@ void nmlModelSetStencil(int enabled);
 void pxyAddEntryFlagged(int key, void *data, int qwc, int flag);
 void pxyAddEntryFull(int key, void *data, int qwc, int flag, int state);
 void pxySetDefaultLight(struct PxyShadowLight *light);
+void pxySetGlobalFogDist(float fogNear, float fogFar, float fogMin, float fogMax);
+void pxySetGlobalFogColor(Vector4 *value);
 void xglDirectionFromAngles(Vector4 *direction, const Vector4 *rotation);
 
 #endif /* INCLUDE_MAIN_NML_MODEL_SET_H */

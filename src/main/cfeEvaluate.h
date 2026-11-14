@@ -92,4 +92,64 @@ typedef struct CfeEvalEntry {
     unsigned char unmodeled_22c[4];
 } CfeEvalEntry;
 
+struct XenoActor;
+struct CfeFlagRecord;
+
+/* One 0x1B0-byte entry of cfeEntries as its evaluation sees it: the actor it drives, the values it last set and
+ * the tracks (handles, see cfeTrackSample) they come from. tu141.c (CfeNodeInit) and tu138.c see other parts. */
+typedef struct CfeNode {
+    unsigned char unmodeled_000[0xC0];
+    struct XenoActor *actor;    /* +0x0C0 */
+    unsigned char unmodeled_0c4[0xE0 - 0xC4];
+    Vector4 position;           /* +0x0E0: the sampled offset, then in front of the actor */
+    int flags;                  /* +0x0F0: CFE_NODE_SHOWN */
+    int mode;                   /* +0x0F4 */
+    int selector;               /* +0x0F8 */
+    int slot;                   /* +0x0FC: the mode slot */
+    float channelValue;         /* +0x100 */
+    int playRange[2];           /* +0x104 */
+    int attachSlot;             /* +0x10C: the cfePlugInSlots entry the actor hangs on, negative for none */
+    int attachJoint;            /* +0x110 */
+    float speed[2];             /* +0x114: of the motion states A and B */
+    int dampOffset;             /* +0x11C: passed to cfeDampDirOffset every frame */
+    int firstWord;              /* +0x120 */
+    int drawMode;               /* +0x124 */
+    int translucent;            /* +0x128 */
+    int forceMode;              /* +0x12C: nonzero sets the mode again every time */
+    int transformTrack[9];      /* +0x130: position, rotation and scale of the actor */
+    int modeTrack;              /* +0x154 */
+    int selectorTrack;          /* +0x158 */
+    int slotTrack;              /* +0x15C */
+    int channelTrack;           /* +0x160 */
+    int playRangeTrack[2];      /* +0x164 */
+    int attachSlotTrack;        /* +0x16C */
+    int attachJointTrack;       /* +0x170 */
+    int speedTrack[2];          /* +0x174 */
+    int alphaTrack;             /* +0x17C */
+    int dampOffsetTrack;        /* +0x180 */
+    int firstWordTrack;         /* +0x184 */
+    int drawModeTrack;          /* +0x188 */
+    int translucentTrack;       /* +0x18C */
+    int forceModeTrack;         /* +0x190 */
+    int shownTrack;             /* +0x194 */
+    int positionTrack[3];       /* +0x198 */
+    struct CfeFlagRecord *records; /* +0x1A4: the flag records of the actor's list */
+    unsigned char unmodeled_1a8[0x1B0 - 0x1A8];
+} CfeNode;
+
+/* CfeNode.flags: the entry's actor follows its position. */
+#define CFE_NODE_SHOWN 0x1
+
+/* Functions of src/main/cfeEvaluate.c that cfePlugIn.c calls. */
+int cfeEvaluateNodes(int sample_param);
+void cfeGroupTableEvaluate(int time);
+void func_00248390(int time, int paused);
+void cfeCommandTableEvaluate(int time);
+void cfeEvaluateDirections(int time);
+void cfeGlobalEvaluate(int sample_param);
+int cfeEntryTableEvaluate(int sample_param);
+void cfeSlotTableEvaluate(int sample_param);
+void cfeSndSetTarget(int target);
+void cfeUpdateEntries(int noPlay);
+
 #endif /* MAIN_CFEEVALUATE_H */
