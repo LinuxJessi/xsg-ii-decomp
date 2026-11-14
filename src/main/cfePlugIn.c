@@ -176,9 +176,6 @@ typedef struct CfeResourceBlock {
     int slotTable;
 } CfeResourceBlock;
 
-/* Offset of the resource id inside the actor (a pointer-sized field XenoActor does not model). */
-#define CFE_ACTOR_RESOURCE_ID 0x798
-
 /* Loads resource `id` (waiting for the CD first), creates an actor for it with the block's pack and
  * effect and sets the pack as the culling map. */
 XenoActor *cfeLoadResourceObject(int id)
@@ -195,7 +192,9 @@ XenoActor *cfeLoadResourceObject(int id)
     }
     resource = data;
     actor = XenoActorAlloc();
-    *(void **) ((char *) actor + CFE_ACTOR_RESOURCE_ID) = (void *) id;
+    /* The id goes to XenoActor.kind as a pointer store: through the member (alias set 0) the pack load
+     * below cannot move above it as in the original (0.91, also with a local for the pack). */
+    *(void **) &actor->kind = (void *) id;
     actor->pack = resource->pack;
     actor->effect = resource->effect;
     if (resource->pack != 0) {
@@ -219,11 +218,11 @@ void *memset(void *, int, unsigned int);
 
 void XenoActorAllocMatrices(XenoActor *actor);
 
-/* Offset of the extra resource inside the actor (not modeled in XenoActor). */
-#define CFE_ACTOR_EXTRA_RESOURCE 0x610
-
-/* The hierarchy's word at +0x1C: set when it needs the shared resource. */
-#define CFE_HIERARCHY_SHARED 0x1C
+/* The head of an actor's hierarchy as cfeLoadActorObject reads it. */
+typedef struct CfeHierarchyHeader {
+    unsigned char unmodeled_00[0x1C];
+    int needsShared;            /* +0x1C: set when the hierarchy needs the shared resource */
+} CfeHierarchyHeader;
 
 /* The shared resource the hierarchy loads (0x30041). */
 #define CFE_SHARED_RESOURCE_ID 0x30041
@@ -251,16 +250,16 @@ XenoActor *cfeLoadActorObject(int id)
     pack = resource->pack;
     actor->drawMode = 6;
     actor->pack = pack;
-    *(void **) ((char *) actor + CFE_ACTOR_RESOURCE_ID) = (void *) id;
+    actor->kind = id;
     actor->effect = resource->effect;
     actor->hierarchy = resource->hierarchy;
     actor->slotTable = resource->slotTable;
     actor->lookLink = resource->lookLink;
-    if (actor->hierarchy != 0 && *(int *) (actor->hierarchy + CFE_HIERARCHY_SHARED) != 0) {
+    if (actor->hierarchy != 0 && ((CfeHierarchyHeader *) actor->hierarchy)->needsShared != 0) {
         do {
         } while (xglCdServiceIfPending() != 0);
         GameResLoadID(CFE_SHARED_RESOURCE_ID, &data, 0, 0);
-        *(void **) ((char *) actor + CFE_ACTOR_EXTRA_RESOURCE) = data;
+        actor->sharedResource = data;
         XenoActorSetChannelValueB(actor, 0.0f);
         XenoActorSetSelector(actor, 0);
     }

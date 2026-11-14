@@ -34,7 +34,9 @@ struct XenoActor {
     int hierarchy;                          /* 0x5F4: XenoActorAllocMatrices builds the matrices from it */
     unsigned char unmodeled_5f8[4];
     int slotTable;                          /* 0x5FC: XenoActorGetSlotRange's table */
-    unsigned char unmodeled_600[0x618 - 0x600];
+    unsigned char unmodeled_600[0x610 - 0x600];
+    void *sharedResource;                   /* 0x610: resource 0x30041, loaded when the hierarchy needs it */
+    unsigned char unmodeled_614[0x618 - 0x614];
     int lookLink;                           /* 0x618 */
     unsigned char unmodeled_61c[0x640 - 0x61C];
     int channel[4];                         /* 0x640: the tiMRPackage channel block (xenoActor.c handle640) */
