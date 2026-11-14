@@ -3,6 +3,7 @@
 #include "main/cfePlugIn.h"
 #include "main/sef.h"
 #include "main/sdv_033.h"
+#include "main/tu138.h"
 #include "main/tu256.h"
 #include "gs.h"
 #include "main/tu045.h"
@@ -143,7 +144,57 @@ INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeGroupTableEvaluate);
 
 INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_00248390);
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", func_002488F8);
+/* The scale of a spawned effect; the original writes it through a union member (alias set 0). */
+typedef union CfeEffectScale {
+    float element[3];
+} CfeEffectScale;
+
+/* The spawned effect record, as far as func_002488F8 writes it. */
+typedef struct CfeSpawnedEffect {
+    unsigned char unmodeled_00[0x20];
+    CfeEffectScale scale;       /* +0x20 */
+    unsigned char unmodeled_2c[0x44 - 0x2C];
+    int flags;                  /* +0x44 */
+} CfeSpawnedEffect;
+
+void sefClearOwnerFlags(unsigned int id, int flags);
+CfeSpawnedEffect *sefSpawnEffectRecordById(unsigned int id, Vector4 *position, Vector4 *rotation);
+void sefExecEffectSteps(CfeSpawnedEffect *effect, float frames, float steps);
+void sefSetRecordOwner(CfeSpawnedEffect *effect, void *owner);
+
+/* Spawns the command's effect (clearing its owner flags first), sets its scale, runs its first
+ * frames (one step per 15 frames) and, when the command names an owner entry, hands the effect
+ * to that entry's object. */
+void func_002488F8(CfeEvalCommand *command)
+{
+    CfeSpawnedEffect *effect;
+    unsigned char *entry;
+
+    if (command->flag != 0) {
+        sefClearOwnerFlags((command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_FLAGGED,
+                           CFE_OWNER_FLAGS);
+        effect = sefSpawnEffectRecordById((command->page_index << CFE_PAGE_SHIFT) | command->page_offset
+                                          | CFE_BANK_FLAGGED, &command->position, &command->rotation);
+    } else {
+        sefClearOwnerFlags((command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN,
+                           CFE_OWNER_FLAGS);
+        effect = sefSpawnEffectRecordById((command->page_index << CFE_PAGE_SHIFT) | command->page_offset
+                                          | CFE_BANK_PLAIN, &command->position, &command->rotation);
+    }
+    if (effect != 0) {
+        effect->scale.element[0] = command->scale[0];
+        effect->scale.element[1] = command->scale[1];
+        effect->scale.element[2] = command->scale[2];
+        sefExecEffectSteps(effect, command->frames, command->frames / 15 + 1);
+        effect->flags |= 0x10;
+    }
+    if (command->owner >= 0 && effect != 0) {
+        entry = cfeGetEntry(command->owner);
+        if (entry != 0) {
+            sefSetRecordOwner(effect, *(void **) (entry + 0xC0));
+        }
+    }
+}
 
 void sefSetOwnerFlags(int, int);
 
@@ -164,8 +215,6 @@ void cfeCommandReleaseRecords(CfeEvalCommand *command) {
     }
     sefReleaseOwnedRecords((command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN);
 }
-
-void func_002488F8(CfeEvalCommand *command);
 
 /* The actions of a command (CfeEvalCommand.action). */
 #define CFE_ACTION_NONE 0

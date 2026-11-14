@@ -3,6 +3,7 @@
 
 /* Functions of src/main/tu138.c that other files call. */
 
+void *cfeGetEntry(int index);
 void cfeRangeSetMax(int upper);
 void cfeRangeSetMin(int lower);
 
