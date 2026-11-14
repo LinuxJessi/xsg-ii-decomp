@@ -202,7 +202,34 @@ int cfeTrackAnyHasTime(CfeTrackNode **tracks, int count, int time)
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackFindTime);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackFindAtOrBefore);
+/* The first key when the track starts after `time`, the key exactly at `time`, else the first key
+ * after `time`; null when the track ends before it. */
+CfeTrackNode *cfeTrackFindAtOrBefore(CfeTrackNode *node, int time)
+{
+    CfeTrackNode *found;
+    CfeTrackNode *next;
+
+    found = 0;
+    if (node == 0) {
+        return 0;
+    }
+    if (time < node->startTime) {
+        found = node;
+    }
+    while (node != 0 && found == 0) {
+        next = node->next;
+        if (node->startTime == time) {
+            found = node;
+            break;
+        }
+        if (next != 0 && !(time < node->startTime) && time < next->startTime) {
+            found = next;
+            break;
+        }
+        node = next;
+    }
+    return found;
+}
 
 /* The key next to `time` in `direction` (1 = later, any other value = earlier): before the start the first
  * key; at a key the one after it (later) or before it (earlier); between two keys the later or the earlier
