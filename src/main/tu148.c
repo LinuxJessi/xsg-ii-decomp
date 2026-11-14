@@ -140,7 +140,22 @@ void msgUpdate(void)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu148", msgUpdateTimed);
+int func_0027DF58(void *choice);
+void func_0027DE28(void *choice);
+
+/* Runs msgUpdate unless the choice is in state 3, then counts the choice timer down and closes the choice
+ * when it runs out. */
+void msgUpdateTimed(void)
+{
+    if (func_0027DF58(msgChoice) != 3) {
+        msgUpdate();
+    }
+    if (msgChoiceTimer > 0) {
+        if (--msgChoiceTimer == 0) {
+            func_0027DE28(msgChoice);
+        }
+    }
+}
 
 void msgQueueEntry(void *);
 
@@ -155,7 +170,6 @@ void msgClose(void) {
 }
 
 int msgWindowAdvance(void *);
-void func_0027DE28(void *);
 
 /* Begin a message: reset the window and the choice, open slot 0. */
 void msgBegin(void) {
