@@ -267,6 +267,14 @@ typedef struct CfeResourceBlock {
 int GameResLoadID(int id, void **buffer, unsigned int *size,
                   void (*callback)(int index, void *buffer, unsigned int size, int value));
 
+/* XenoActor.kind (+0x798) as cfeLoadResourceObject writes it: a pointer-typed store outside tu051.h's
+ * one-member union (alias set 0), so the pack load after it may move above it as in the original. Through
+ * actor->kind (0.91) or an int view field (gate fails) it cannot. */
+typedef struct CfeActorKindView {
+    unsigned char unmodeled_000[0x798];
+    void *kind;
+} CfeActorKindView;
+
 /* Loads resource `id` (waiting for the CD first), creates an actor for it with the block's pack and
  * effect and sets the pack as the culling map. */
 XenoActor *cfeLoadResourceObject(int id)
@@ -283,9 +291,7 @@ XenoActor *cfeLoadResourceObject(int id)
     }
     resource = data;
     actor = XenoActorAlloc();
-    /* The id goes to XenoActor.kind as a pointer store: through the member (alias set 0) the pack load
-     * below cannot move above it as in the original (0.91, also with a local for the pack). */
-    *(void **) &actor->kind = (void *) id;
+    ((CfeActorKindView *) actor)->kind = (void *) id;
     actor->pack = resource->pack;
     actor->effect = resource->effect;
     if (resource->pack != 0) {
