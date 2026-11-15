@@ -183,7 +183,41 @@ float cfeTrackSample(CfeTrackNode *track, int time)
     return CFE_FIXED_TO_FLOAT(node->value);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", func_002508C8);
+/* Key flag: the track holds whole numbers, not 8.8 fixed-point values. */
+#define CFE_TRACK_INTEGER 0x4
+
+/* The value of the key in effect at `time` (the last key that starts at or before it, the first key before
+ * the start): as a whole number for integer tracks, else from 8.8 fixed point. */
+float func_002508C8(CfeTrackNode *track, int time)
+{
+    CfeTrackNode *node = track;
+    CfeTrackNode *next;
+
+    if (track->flags & CFE_TRACK_INTEGER) {
+        if (time < track->startTime) {
+            return (float) track->value;
+        }
+        while (node->next != 0) {
+            next = node->next;
+            if (!(time < node->startTime) && time < next->startTime) {
+                return (float) node->value;
+            }
+            node = next;
+        }
+        return (float) node->value;
+    }
+    if (time < track->startTime) {
+        return CFE_FIXED_TO_FLOAT(track->value);
+    }
+    while (node->next != 0) {
+        next = node->next;
+        if (!(time < node->startTime) && time < next->startTime) {
+            return CFE_FIXED_TO_FLOAT(node->value);
+        }
+        node = next;
+    }
+    return CFE_FIXED_TO_FLOAT(node->value);
+}
 
 /* 1 when a key of the track has startTime `time`. */
 int cfeTrackHasTime(CfeTrackNode *node, int time)
