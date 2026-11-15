@@ -5,6 +5,7 @@
 
 int xglDebFileSize(const char *name);
 int xglDebFileRead(const char *name, void *buffer);
-int xglDebFileWrite(const char *name, const void *buffer);
+/* cfeFileTempWrite passes the byte count of the text as size. */
+int xglDebFileWrite(const char *name, const void *buffer, int size);
 
 #endif /* INCLUDE_MAIN_TU005_H */
