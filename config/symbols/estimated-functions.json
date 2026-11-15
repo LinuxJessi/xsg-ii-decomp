@@ -43770,19 +43770,19 @@
      2
     ],
     [
-     "func_00253800",
+     "svDrawSendViewSetup",
      2439168,
      428,
      2
     ],
     [
-     "func_002539B0",
+     "svDrawSetState",
      2439600,
      116,
      2
     ],
     [
-     "func_00253A28",
+     "svDrawSubmitMode",
      2439720,
      240,
      2
@@ -43824,7 +43824,7 @@
      2
     ],
     [
-     "func_00253C70",
+     "svGetImageListItem",
      2440304,
      60,
      2
@@ -43842,7 +43842,7 @@
      2
     ],
     [
-     "func_00253F38",
+     "svGetTexturePageCount",
      2441016,
      152,
      2
@@ -43998,7 +43998,7 @@
      2
     ],
     [
-     "func_002551D0",
+     "svGetScriptEntry",
      2445776,
      332,
      2
@@ -44010,7 +44010,7 @@
      2
     ],
     [
-     "func_00255358",
+     "svSetZTestEnv",
      2446168,
      60,
      2
@@ -44028,19 +44028,19 @@
      2
     ],
     [
-     "func_002554F8",
+     "svDrawListAppendRecordC",
      2446584,
      336,
      2
     ],
     [
-     "func_00255648",
+     "svDrawListAppendRecordCPair",
      2446920,
      392,
      2
     ],
     [
-     "func_002557D0",
+     "svBuildItemMatrix",
      2447312,
      400,
      2
@@ -44076,49 +44076,49 @@
      2
     ],
     [
-     "func_00256218",
+     "svDrawPolygonItem",
      2449944,
      1184,
      2
     ],
     [
-     "func_002566B8",
+     "svDrawListAppendSlot",
      2451128,
      568,
      2
     ],
     [
-     "func_002568F0",
+     "svDrawListAppendRecordBPair",
      2451696,
      584,
      2
     ],
     [
-     "func_00256B38",
+     "svDrawListAppendRecordA",
      2452280,
      784,
      2
     ],
     [
-     "func_00256E48",
+     "svDrawListAppendRecordAPair",
      2453064,
      840,
      2
     ],
     [
-     "func_00257190",
+     "svDrawListAppendPart",
      2453904,
      424,
      2
     ],
     [
-     "func_00257338",
+     "svDrawListAppendStatePair",
      2454328,
      452,
      2
     ],
     [
-     "func_00257500",
+     "sefInitPartTransform",
      2454784,
      260,
      2
@@ -44148,25 +44148,25 @@
      2
     ],
     [
-     "func_002581A8",
+     "svDrawSortedImages",
      2458024,
      1176,
      2
     ],
     [
-     "func_00258640",
+     "svSortLineSlots",
      2459200,
      404,
      2
     ],
     [
-     "func_002587D8",
+     "svCollectSortedLines",
      2459608,
      408,
      2
     ],
     [
-     "func_00258970",
+     "svLoadDrawViewMatrix",
      2460016,
      68,
      2
@@ -44232,7 +44232,7 @@
      2
     ],
     [
-     "func_00259400",
+     "svDrawEffectRecords3D",
      2462720,
      232,
      2
@@ -44274,7 +44274,7 @@
      2
     ],
     [
-     "func_00259580",
+     "drawListAppendSlotHalves",
      2463104,
      48,
      2
@@ -44322,7 +44322,7 @@
      2
     ],
     [
-     "func_00259678",
+     "sefSumEntryCounts",
      2463352,
      172,
      2
@@ -44424,31 +44424,31 @@
      2
     ],
     [
-     "func_00259F78",
+     "sefGetSpeed",
      2465656,
      1036,
      2
     ],
     [
-     "func_0025A388",
+     "sefMoveParticle",
      2466696,
      436,
      2
     ],
     [
-     "func_0025A540",
+     "sefCalcLocalMatrix",
      2467136,
      840,
      2
     ],
     [
-     "func_0025A888",
+     "sefSetTransformRotation",
      2467976,
      228,
      2
     ],
     [
-     "func_0025A970",
+     "sefStepCurveTrack",
      2468208,
      432,
      2
@@ -44460,7 +44460,7 @@
      2
     ],
     [
-     "func_0025ABE0",
+     "sefExecLineLocalData",
      2468832,
      2276,
      2
@@ -44484,7 +44484,7 @@
      2
     ],
     [
-     "func_0025B628",
+     "sefInitLineData",
      2471464,
      1696,
      2
@@ -44502,25 +44502,25 @@
      2
     ],
     [
-     "func_0025BD68",
+     "sefAnalyzeAnim",
      2473320,
      876,
      2
     ],
     [
-     "func_0025C0D8",
+     "sefCreateParticle",
      2474200,
      1392,
      2
     ],
     [
-     "func_0025C648",
+     "sefExecLineGlobalData",
      2475592,
      1136,
      2
     ],
     [
-     "func_0025CAB8",
+     "sefExecLineData",
      2476728,
      1128,
      2
@@ -44556,7 +44556,7 @@
      2
     ],
     [
-     "func_0025D180",
+     "sefExecEffectData",
      2478464,
      1988,
      2
@@ -44640,7 +44640,7 @@
      2
     ],
     [
-     "func_0025E4C8",
+     "sefSpawnRecordChildren",
      2483400,
      308,
      2
@@ -44658,7 +44658,7 @@
      2
     ],
     [
-     "func_0025E678",
+     "sefLoadRequestBuffer",
      2483832,
      948,
      2
@@ -44670,7 +44670,7 @@
      2
     ],
     [
-     "func_0025EBE0",
+     "sefStepEffectRecords",
      2485216,
      1716,
      2
@@ -44700,7 +44700,7 @@
      2
     ],
     [
-     "func_0025F398",
+     "sefRegisterEntry",
      2487192,
      332,
      2
@@ -44712,7 +44712,7 @@
      2
     ],
     [
-     "func_0025F568",
+     "sefRebuildEntryTable",
      2487656,
      372,
      2
@@ -44760,19 +44760,19 @@
      2
     ],
     [
-     "func_0025F958",
+     "sefUpdateEntryTransforms",
      2488664,
      568,
      2
     ],
     [
-     "sefFindRecordById",
+     "sefFindEntryById",
      2489232,
      96,
      2
     ],
     [
-     "func_0025FBF0",
+     "sefGetEntryScale",
      2489328,
      120,
      2
@@ -44820,7 +44820,7 @@
      2
     ],
     [
-     "func_0025FFE8",
+     "sefAcquireHighSlot",
      2490344,
      144,
      2
@@ -44844,7 +44844,7 @@
      2
     ],
     [
-     "func_00260200",
+     "sefResetWorkTablesAll",
      2490880,
      244,
      2
@@ -44856,7 +44856,7 @@
      2
     ],
     [
-     "func_00260300",
+     "sefLoadEffect",
      2491136,
      80,
      2
@@ -44910,7 +44910,7 @@
      2
     ],
     [
-     "func_00260720",
+     "sefDrawEffect",
      2492192,
      140,
      2
@@ -44964,7 +44964,7 @@
      2
     ],
     [
-     "func_00260BD8",
+     "sefCreateDetachedEffect",
      2493400,
      328,
      2
@@ -44976,7 +44976,7 @@
      2
     ],
     [
-     "func_00260D38",
+     "sefResolveEffectAlias",
      2493752,
      108,
      2
@@ -44988,7 +44988,7 @@
      2
     ],
     [
-     "func_00260E20",
+     "sefStartEffectKey",
      2493984,
      200,
      2
@@ -45066,7 +45066,7 @@
      2
     ],
     [
-     "func_002613A0",
+     "sefReleaseUnitRecords",
      2495392,
      264,
      2
@@ -45198,7 +45198,7 @@
      2
     ],
     [
-     "func_00261A38",
+     "sefRandfUpperQuarter",
      2497080,
      80,
      2
@@ -45246,13 +45246,13 @@
      2
     ],
     [
-     "func_00261D50",
+     "sefFindRecordIndex",
      2497872,
      240,
      2
     ],
     [
-     "func_00261E40",
+     "sefCopyRecordSlotVector",
      2498112,
      108,
      2
@@ -45264,7 +45264,7 @@
      2
     ],
     [
-     "func_00261EF0",
+     "sefGetKindSlotVector",
      2498288,
      556,
      2
@@ -45282,13 +45282,13 @@
      2
     ],
     [
-     "func_00262358",
+     "sefGetKindMatrixSecondHalf",
      2499416,
      340,
      2
     ],
     [
-     "func_002624B0",
+     "sefTransformPartPoint",
      2499760,
      200,
      2
@@ -45360,13 +45360,13 @@
      2
     ],
     [
-     "func_002634C0",
+     "sefGetLaneStartPos",
      2503872,
      144,
      2
     ],
     [
-     "func_00263550",
+     "sefGetLaneTargetPos",
      2504016,
      144,
      2
@@ -45378,19 +45378,19 @@
      2
     ],
     [
-     "func_00263640",
+     "sefPlacePart",
      2504256,
      224,
      2
     ],
     [
-     "func_00263720",
+     "sefRefreshEntryRows",
      2504480,
      636,
      2
     ],
     [
-     "func_002639A0",
+     "sefAccumulateEntryInfluence",
      2505120,
      596,
      2
@@ -45528,13 +45528,13 @@
      2
     ],
     [
-     "func_00264848",
+     "sefOwnerPairInUse",
      2508872,
      124,
      2
     ],
     [
-     "func_002648C8",
+     "sefOwnerValueInUse",
      2509000,
      124,
      2
@@ -45552,7 +45552,7 @@
      2
     ],
     [
-     "func_00264A80",
+     "sefNoOwnerFlaggedRecords",
      2509440,
      160,
      2
@@ -45570,7 +45570,7 @@
      2
     ],
     [
-     "func_00264C28",
+     "sefCountMarkedEntries",
      2509864,
      76,
      2
@@ -45594,7 +45594,7 @@
      2
     ],
     [
-     "func_00264EE8",
+     "sefSetGateBlocks",
      2510568,
      608,
      2
@@ -45612,7 +45612,7 @@
      2
     ],
     [
-     "func_002652A8",
+     "sefSetGateDefault",
      2511528,
      84,
      2
@@ -45672,7 +45672,7 @@
      2
     ],
     [
-     "func_002657D8",
+     "sefGetEffectRecordsAfterScan",
      2512856,
      72,
      2

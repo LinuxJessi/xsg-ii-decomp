@@ -1158,7 +1158,7 @@ int uwamonoCanSeeRecord(UwamonoRecord *record)
 }
 
 void uwamonoCheckHeight(UwamonoRecord *record);
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 
 /* Copies the record position into its transform translation when the record is visible and the global gate is clear. */
 void uwamonoUpdateTransform(UwamonoRecord *record)
@@ -1167,7 +1167,7 @@ void uwamonoUpdateTransform(UwamonoRecord *record)
     UwamonoTransform *transform;
 
     flags = record->flags;
-    if ((flags & 2) && !(D_002B5D98[0] & 1)) {
+    if ((flags & 2) && !(gameLoopFlags[0] & 1)) {
         if ((flags & 8) && record->target == -1) {
             uwamonoCheckHeight(record);
         }

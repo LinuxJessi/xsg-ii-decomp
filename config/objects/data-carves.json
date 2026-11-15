@@ -7398,6 +7398,105 @@
     }
    ]
   },
+  "main/tu157": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b2b0",
+      "0x0069b2b4"
+     ],
+     "generated": [
+      "0x0069b2b0",
+      "0x0069b2b4"
+     ],
+     "generated_by": [
+      "svGetPrmFromName"
+     ],
+     "c_owned_symbols": [
+      "D_0069B2B0"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B2B4"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sv_get_image_item.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x0068c190",
+      "0x0068c1b8"
+     ],
+     "generated": [
+      "0x0068c190",
+      "0x0068c1b8"
+     ],
+     "generated_by": [
+      "svAnalyzeChunk"
+     ],
+     "c_owned_symbols": [
+      "$L127"
+     ],
+     "also_referenced_by_c": [
+      "svAlphaTestTable",
+      "D_0068C010",
+      "D_0068C030",
+      "D_0068C070",
+      "D_0068C0B0",
+      "D_0068C0F0",
+      "D_0068C130",
+      "D_0068C170",
+      "D_0068C180",
+      "D_0068C1B8",
+      "D_0068C1D0"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sv_get_image_item.o"
+     }
+    }
+   ],
+   ".sdata": [
+    {
+     "range": [
+      "0x0069db20",
+      "0x0069db3c"
+     ],
+     "generated": [
+      "0x0069db20",
+      "0x0069db3c"
+     ],
+     "generated_by": [
+      "svGetPrmFromName"
+     ],
+     "c_owned_symbols": [
+      "D_0069DB20",
+      "D_0069DB28",
+      "D_0069DB30",
+      "D_0069DB38"
+     ],
+     "also_referenced_by_c": [
+      "D_0069DAE4",
+      "svSortCount",
+      "_draw3D",
+      "svFogValue",
+      "svDrawStatePacket",
+      "D_0069DB3C",
+      "svVisibleEntryCount"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sv_get_image_item.o"
+     }
+    }
+   ]
+  },
   "main/tu164": {
    ".lit4": [
     {
@@ -7424,12 +7523,331 @@
       "D_0069B2D8"
      ],
      "also_referenced_by_c": [
+      "D_0069B2DC",
+      "D_0069B2E0"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sef.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b2e4",
+      "0x0069b2f0"
+     ],
+     "generated": [
+      "0x0069b2e4",
+      "0x0069b2f0"
+     ],
+     "generated_by": [
+      "sefInitLineData",
+      "sefAnalyzeAnim"
+     ],
+     "c_owned_symbols": [
+      "D_0069B2E4",
+      "D_0069B2E8",
+      "D_0069B2EC"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B2F0",
+      "D_0069B2F4",
+      "D_0069B2F8",
+      "D_0069B2FC",
+      "D_0069B300",
       "D_0069B304"
      ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": ".work/x2-readable-integration-20261105-main/out/sef_164/b.o"
+      "object": "build/main/build/c/sef.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b308",
+      "0x0069b30c"
+     ],
+     "generated": [
+      "0x0069b308",
+      "0x0069b30c"
+     ],
+     "generated_by": [
+      "sefUpdateEntryTransforms"
+     ],
+     "c_owned_symbols": [
+      "D_0069B308"
+     ],
+     "also_referenced_by_c": [
+      "sefTwoPi",
+      "sefCircleAngleScale",
+      "D_0069B314",
+      "D_0069B318"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sef.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b31c",
+      "0x0069b324"
+     ],
+     "generated": [
+      "0x0069b31c",
+      "0x0069b324"
+     ],
+     "generated_by": [
+      "sefSpawnEffect"
+     ],
+     "c_owned_symbols": [
+      "D_0069B31C",
+      "D_0069B320"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sef.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x0068c240",
+      "0x0068c250"
+     ],
+     "generated": [
+      "0x0068c240",
+      "0x0068c250"
+     ],
+     "generated_by": [
+      "sefExecLineData",
+      "sefStepEffectRecords"
+     ],
+     "c_owned_symbols": [
+      "D_0068C240",
+      "D_0068C248"
+     ],
+     "also_referenced_by_c": [
+      "sefDefaultOffset",
+      "D_0068C220",
+      "sefFallbackVectorsEven",
+      "sefFallbackVectorsOdd",
+      "D_0068C450",
+      "D_0068C460"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sef.o"
+     }
+    }
+   ],
+   ".sdata": [
+    {
+     "range": [
+      "0x0069db60",
+      "0x0069db64"
+     ],
+     "generated": [
+      "0x0069db60",
+      "0x0069db64"
+     ],
+     "generated_by": [
+      "sefStepEffectRecords",
+      "sefRebuildEntryTable",
+      "sefReleaseUnitRecords",
+      "sefOwnerPairInUse",
+      "sefOwnerValueInUse",
+      "sefNoOwnerFlaggedRecords",
+      "sefGetEffectRecordsAfterScan",
+      "sefAllocEffectRecord",
+      "sefAllocUnownedEffectRecord",
+      "sefApplyRecordMode",
+      "sefClearOwnerFlags",
+      "sefClearOwnerValueFlags",
+      "sefCollectEffectRecords",
+      "sefCountOwnerValue",
+      "sefDeleteWaitEffect",
+      "sefEffectRecordIsFree",
+      "sefFreeEffectRecord",
+      "sefInitEffectRecords",
+      "sefMatchEffectEntries",
+      "sefOnlyOwnerInUse",
+      "sefOwnerInUse",
+      "sefRegisterGroupCenter",
+      "sefReleaseEffectRecord",
+      "sefReleaseEntryRecords",
+      "sefReleaseOwnedRecords",
+      "sefReleaseRecordsByQuery",
+      "sefReleaseRecordsOfOwner",
+      "sefResetEffects",
+      "sefRestoreEffectRecords",
+      "sefSetOwnerFlags",
+      "sefStartWithDefaultMemory",
+      "sefStartWithMemory",
+      "sefUpdateGroupGate"
+     ],
+     "c_owned_symbols": [
+      "sefEffectRecordCount"
+     ],
+     "also_referenced_by_c": [
+      "D_0069DB48",
+      "sefVectorMode",
+      "sefEffectRecords",
+      "D_0069DB54",
+      "sefLineDataRecords",
+      "sefPtAllocatorState",
+      "sefLineDataCount",
+      "sefPtAllocCount",
+      "D_0069DB6C",
+      "sefParentLine",
+      "sefInitialized",
+      "D_0069DB78",
+      "D_0069DB80",
+      "D_0069DB82",
+      "D_0069DB84",
+      "sefClipTestDisabled",
+      "sefTimeScale"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sef.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069db8c",
+      "0x0069db90"
+     ],
+     "generated": [
+      "0x0069db8c",
+      "0x0069db90"
+     ],
+     "generated_by": [
+      "sefExecLineLocalData",
+      "sefExecLineData",
+      "sefStepEffectRecords",
+      "sefDestroyRecordEffects"
+     ],
+     "c_owned_symbols": [
+      "sefPointTimeScale"
+     ],
+     "also_referenced_by_c": [
+      "sefTrackTimeStep",
+      "sefStepScale",
+      "atanTbl_0",
+      "sefEffectRecordHead",
+      "D_0069DBA0",
+      "sefCurrentRecord",
+      "D_0069DBAC",
+      "D_0069DBB0",
+      "sefLinkedPoint",
+      "D_0069DBB8",
+      "sefFlagWord",
+      "sefCurrentOwner",
+      "sefRandSeed",
+      "sefNoiseReady",
+      "D_0069DBD0",
+      "D_0069DBD8"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sef.o"
+     }
+    }
+   ]
+  },
+  "main/tu177": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068c480",
+      "0x0068c4d0"
+     ],
+     "generated": [
+      "0x0068c480",
+      "0x0068c4d0"
+     ],
+     "generated_by": [
+      "srsFormatEffectStem",
+      "srsMakeFileName"
+     ],
+     "c_owned_symbols": [
+      "srsBadEffectNoFormat",
+      "srsEffectStemSubFormat",
+      "D_0068C4A8",
+      "D_0068C4B8"
+     ],
+     "also_referenced_by_c": [
+      "srsEsdPathFormat",
+      "srsEspPathFormat"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/srs.o"
+     }
+    },
+    {
+     "range": [
+      "0x0068c4f0",
+      "0x0068c510"
+     ],
+     "generated": [
+      "0x0068c4f0",
+      "0x0068c510"
+     ],
+     "generated_by": [
+      "srsCdReadCallback"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068C4F0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/srs.o"
+     }
+    }
+   ],
+   ".sdata": [
+    {
+     "range": [
+      "0x0069dc00",
+      "0x0069dc20"
+     ],
+     "generated": [
+      "0x0069dc00",
+      "0x0069dc1f"
+     ],
+     "generated_by": [
+      "srsAnalyzeEftNo",
+      "srsFormatEffectStem",
+      "srsMakeFileName"
+     ],
+     "c_owned_symbols": [
+      "srsEffectStemFormat",
+      "srsEspSuffix",
+      "srsEsdSuffix",
+      "D_0069DC18"
+     ],
+     "also_referenced_by_c": [
+      "srsLoadMode",
+      "srsEffectStamp"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/srs.o"
      }
     }
    ]

@@ -1,13 +1,15 @@
 #include "common.h"
+#include "shared.h"
 
 typedef unsigned int Quadword __attribute__((mode(TI)));
 
-/* The draw list at svDrawList (tu157 reads the same record as its draw-list cursor): entries is the base of
- * the 16-byte slots, a word at +0x4 that is written through its own symbol D_006B4C34, and end_index is the
- * number of slots queued so far. The slots between begin_index and end_index are the pending draw steps. */
+/* The draw list at svDrawList (sv_get_image_item.c has the same record as DrawList, with u8 *entries
+ * and begin_index after end_index): entries is the base of the 16-byte slots, flush_code is the word
+ * at +0x4 that func_002594E8 writes through its own symbol D_006B4C34, and end_index is the number
+ * of slots queued so far. */
 typedef struct DrawList {
     Quadword *entries;
-    int unmodeled_4;
+    int flush_code;
     int end_index;
 } DrawList;
 
@@ -54,7 +56,23 @@ void drawListAppendSlot(Quadword value)
     *slot = value;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu162", func_00259580);
+/* A slot seen as its two doublewords. */
+typedef union DrawSlot {
+    Quadword quad;
+    u64 halves[2];
+} DrawSlot;
+
+/* Appends one slot given as its two doublewords, the low one first. */
+void drawListAppendSlotHalves(u64 low, u64 high)
+{
+    DrawSlot *slot;
+
+    /* the slot is written through the DrawSlot union view (the halves are u64 stores); entries is a Quadword * */
+    slot = (DrawSlot *) &svDrawList.entries[svDrawList.end_index];
+    slot->halves[0] = low;
+    slot->halves[1] = high;
+    svDrawList.end_index = svDrawList.end_index + 1;
+}
 
 /* Appends four consecutive slots copied from src. */
 void drawListAppendFourSlots(const Quadword *src)
@@ -70,4 +88,8 @@ void drawListAppendFourSlots(const Quadword *src)
     dst[3] = src[3];
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu162", drawListAppendSlotCopy);
+/* Appends one slot copied from src. */
+void drawListAppendSlotCopy(const Quadword *src)
+{
+    svDrawList.entries[svDrawList.end_index++] = *src;
+}

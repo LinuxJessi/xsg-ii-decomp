@@ -4,7 +4,7 @@
 #include "main/tu022.h"
 #include "main/tu026.h"
 #include "main/tu138.h"
-#include "main/tu175.h"
+#include "main/sef.h"
 #include "main/xgl_cd.h"
 
 INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B0E8);

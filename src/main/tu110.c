@@ -1407,7 +1407,7 @@ u8 *ptGetStatusBlock(void) {
 }
 
 extern int talkResult;
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 
 int talk_0022D170(void) {
     int previous;
@@ -1417,7 +1417,7 @@ int talk_0022D170(void) {
     if (msgWindowBusy() != 0) {
         return -1;
     }
-    return (D_002B5D98[0] & 0x20000) ? -1 : previous;
+    return (gameLoopFlags[0] & 0x20000) ? -1 : previous;
 }
 
 int talk_0022D1C8(void) {

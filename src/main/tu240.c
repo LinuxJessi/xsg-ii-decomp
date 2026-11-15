@@ -64,7 +64,7 @@ void timecodeSetFlag04(TimecodeObject *timecode)
     }
 }
 
-/* Per-frame update, main 0x00285160. Returns at once unless the object is active and D_002B5D98 bit 0 is clear. */
+/* Per-frame update, main 0x00285160. Returns at once unless the object is active and gameLoopFlags bit 0 is clear. */
 INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeUpdate);
 
 /* Unconditional: elapsedFrames += increment. */

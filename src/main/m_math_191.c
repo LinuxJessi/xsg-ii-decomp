@@ -1,6 +1,6 @@
 #include "common.h"
 #include "shared.h"
-#include "main/sef_164.h"
+#include "main/sef.h"
 
 
 /* Heading in the XZ plane from first to second (MMathCalcDir in X1). The srsAtan2 result is

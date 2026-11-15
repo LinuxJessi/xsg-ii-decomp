@@ -846,6 +846,9 @@ HARDWARE_MACROS = {
     'QuadwordCopyT0': ('quadword.h', ('destination', 'source'), ('r', 'r'),
         ['lq $8, 0(%1)', 'sq $8, 0(%0)'],
         ('$8', 'memory')),
+    'QuadwordCopyA0': ('quadword.h', ('destination', 'source'), ('r', 'r'),
+        ['lq $4, 0(%1)', 'sq $4, 0(%0)'],
+        ('$4', 'memory')),
     'QuadwordCopyMatrixT0': ('quadword.h', ('destination', 'source'), ('r', 'r'),
         ['lq $8, 0(%1)', 'lq $9, 16(%1)', 'lq $10, 32(%1)', 'lq $11, 48(%1)', 'sq $8, 0(%0)', 'sq $9, 16(%0)', 'sq $10, 32(%0)', 'sq $11, 48(%0)'],
         ('$8', '$9', '$10', '$11', 'memory')),
@@ -1116,12 +1119,15 @@ def admission(cls, tu_class=None, *, unit=None, tu_id=None, function=None):
     if cls == 'ordinary':
         return match.ordinary_c
     if cls == 'hardware':
-        # User decision 2026-10-22: one COP1 load inside the original particle
-        # scale block, for this identity only. All other COP1 spelling and FPR
-        # clobbers keep the ordinary hardware refusal.
-        if (unit, tu_id, function) == ('main', 'main/tu211', 'sefCreateParticle'):
-            return (match.sef_particle_scale_native_ti_c if tu_class == 'native-ti'
-                    else match.sef_particle_scale_c)
+        # User decision 2026-11-13 (verbatim: "Si es asm de hardware, se deja el
+        # asm de hardware y ya. Igual con la mezcla MMI y COP2"): `match.hardware_c`
+        # admits the original's hardware inline asm -- COP2/VU0, MMI and COP1, mixed
+        # in one block, any FPR clobber, no "memory" clobber required -- for every
+        # function. That retires the identity-only routes of 2026-10-22
+        # (sefCreateParticle's COP1 load) and 2026-10-18 (the _WeightToGlobalVec /
+        # _WeightToGlobalPlaceVec MMI+COP2 transpose): the general route is wider
+        # than both. Register-asm bindings, empty asm statements and non-hardware
+        # (integer/control-flow) asm stay refused there.
         # User decision 2026-10-28: StartOfScan's hand-written VU0 setup block may
         # open with `lui $2,0x3e00` feeding `ctc2 $2,$vi21` (0.125f into I), for this
         # identity only; every other scalar line keeps the ordinary hardware refusal.
@@ -1133,12 +1139,6 @@ def admission(cls, tu_class=None, *, unit=None, tu_id=None, function=None):
         if (unit, tu_id, function) in XRG_CLIP_NOPS_IDENTITIES:
             return (match.xrg_clip_nops_native_ti_c if tu_class == 'native-ti'
                     else match.xrg_clip_nops_c)
-        # User decision 2026-10-18: compose the existing MMI and COP2 guards
-        # only for these two original NML identities, not for hardware generally.
-        if (unit, tu_id, function) in {
-                ('main', 'main/tu106', '_WeightToGlobalVec'),
-                ('main', 'main/tu108', '_WeightToGlobalPlaceVec')}:
-            return match.mmi_cop2_native_ti_c if tu_class == 'native-ti' else match.mmi_cop2_c
         return match.hardware_native_ti_c if tu_class == 'native-ti' else match.hardware_c
     if cls == 'runtime-verbatim':
         return match.runtime_verbatim_c
@@ -1151,8 +1151,9 @@ def admission(cls, tu_class=None, *, unit=None, tu_id=None, function=None):
         return match.gnu_nested_c
     if cls == 'ee-mmi':
         # Constrained inline EE MMI (user decision 2026-10-10, docs/ee-mmi.md): the closed MMI grammar
-        # for the inline blocks, ordinary (or native-TI) C for everything else. Not a precedent for
-        # non-MMI assembly; the COP2/VU route stays `hardware`.
+        # for the inline blocks, ordinary (or native-TI) C for everything else. Since the user
+        # decision of 2026-11-13 a block that grammar refuses falls back to the hardware grammar,
+        # so the original's MMI+COP2/COP1 mix is admitted here as well (`match._mmi_inline_spans`).
         return match.mmi_native_ti_c if tu_class == 'native-ti' else match.mmi_c
     if cls == 'ee-asm-leaf':
         # Original hand-written block-copy loop as C with asm (user decision 2026-10-10,

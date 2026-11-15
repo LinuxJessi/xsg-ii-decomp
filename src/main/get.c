@@ -218,7 +218,6 @@ void Get_Point_By_AngleLength(const Vector4 *source, Vector4 *destination,
     destination->w = source->w;
 }
 
-#include "main/tu051.h"
 
 
 /* Returns 1.0 when the 1-D spans [0x14, 0x14 + 0x584) of uwamonoRecords entries a and b overlap, else 0.0. */

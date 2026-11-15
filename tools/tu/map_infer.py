@@ -1376,14 +1376,20 @@ def attribute_data(unit, tus):
             for _, target, kind, _ in refs:
                 if kind == 'gp':
                     gp_owners[target].add(owner[i])
+    defined = {target: owner[unit.index[function]] for target, function, _ in DATA_OWNERS
+               if function in unit.index and unit.index[function] in owner}
     for target, who in users.items():
         ordinals = {owner[i] for i in who if i in owner}
+        if target in defined:
+            continue
         if len(ordinals) == 1 and all(i in owner for i in who):
             section = image.section_of(target)
             claims[section][next(iter(ordinals))].append(target)
         elif len(gp_owners.get(target, ())) == 1:
             section = image.section_of(target)
             claims[section][next(iter(gp_owners[target]))].append(target)
+    for target, ordinal in defined.items():
+        claims[image.section_of(target)][ordinal].append(target)
     section_order = {}
     for section, per_tu in claims.items():
         order = sorted(per_tu, key=lambda ordinal: min(per_tu[ordinal]))
@@ -1411,8 +1417,37 @@ def attribute_data(unit, tus):
     return section_order
 
 
+# Data a TU defines although other TUs read it too: (datum, a function of the defining TU, why). The
+# single-user rule of attribute_data cannot see these; compiler evidence can.
+DATA_OWNERS = [
+    (0x0069DB60, 0x002656E8,
+     'sefEffectRecordCount (.sdata, initial value 64) is defined in the file of sefRestoreEffectRecords: the '
+     'function is exact only when its file holds `int sefEffectRecordCount = 64;` (the cc1 gives a small-data '
+     'declaration with a non-zero initializer its type alias set, so the count reload stays independent of '
+     'the pointer and short field stores; with an extern declaration 34/60 words, with the definition 60/60 '
+     'and the other 25 functions of the file unchanged), user 2026-11-15 "si es necesario recuperar los '
+     'datos en C, hazlo". Since the 2026-11-15 merge that file is sef.c (old tu175 joined)'),
+    (0x0069DAD0, 0x00251E30,
+     'D_0069DAD0 (.sdata, int, zero) is read only by func_0025F958 of sef.c, but it sits before the "RESET" '
+     'text of sef_print.c (0x69DAD8) and before the whole .sdata of sv_get_image_item.c (0x69DAE4-0x69DB40), '
+     'whose objects both precede sef.o in link order; .sdata follows link order, so sef.c cannot define it. '
+     'It is given to sef_print.c, the object whose data it adjoins; sef.c reads it as an extern. Without '
+     'this the span of sef.c starts at 0x69DAD0 and its real run 0x69DB48-0x69DBE0 (sefEffectRecordCount, '
+     'D_0069DB8C, ...) falls into the piece of sv_get_image_item.c (2026-11-15)'),
+]
+
+
 # Inferred TU starts that are no object edge: (start, why). The TU joins the one before.
+# Joined cuts whose merged TU keeps the LATER TU's ordinal (and with it its id and file name) instead of the first
+# one's: merges published upstream by hand under the later name.
+JOINED_KEEPS_LATER_ORDINAL = {
+    0x0019F360,     # sce_ipu (tu015) into xgl_1_016 (tu016), upstream commit 9cc4558d
+}
+
 JOINED_CUTS = [
+    (0x0019F360,
+     'setD4_CHCR (0x19F300, the former one-function TU sce_ipu) is static in the movie file: upstream commit 9cc4558d '
+     'merged TU sce_ipu into xgl_1_016 (make_gstrans is the first function of the old cut); pulled 2026-11-15'),
     (0x001EAB08,
      'SoundTest (0x1EA2C8) and MemcardTest (0x1EAF88) both print the static menu cursor ">" at '
      '0x69D028, a static char[8] (X1 yajima_test.c menu_cursor), and X1 defines both in yajima_test.c; '
@@ -1450,6 +1485,43 @@ JOINED_CUTS = [
      'before use after the call and fills the triangle beqz at 0x23355C with lui a0); found matching '
      'ysegfRunMenu, 2026-11-13'),
     (0x002320B0, 'ysegf: inside the ysegfRunState..ysegfRunMenu span 0x231F78-0x2334C0 (see 0x232018)'),
+    # sv_get_image_item (old tu157-tu161), 2026-11-13, user order "la fusion antes de integrar": every cut
+    # here was a low-confidence model cut (X1 precision 0.19-0.27). X1 sv_get_image_item.c holds
+    # svLoadImageList, svAdd*, svAnalyzeChunk, svInitImageMapper, svDeleteImageMapper* and SGs* in this
+    # order; the externally called tu157 draw-list helpers (svSortAdd, svDrawList*) are called only from
+    # tu161, svImageListAlloc/Destroy (tu158) only from tu159, and tu160 calls svDeleteImageMapper.
+    (0x00253B18, 'sv_get_image_item: old tu158 joins tu157 (see the block comment)'),
+    (0x00254280, 'sv_get_image_item: old tu159 joins (see 0x253B18)'),
+    (0x00254AA0, 'sv_get_image_item: old tu160 joins (see 0x253B18)'),
+    (0x002551D0, 'sv_get_image_item: old tu161 joins (see 0x253B18)'),
+    # sef (old tu164-tu176), same order: low-confidence model cuts. sefMemZero (old tu169, X1 sef.c:1179)
+    # and sefMemFillWords are called only from tu164; eight tu170 functions (sefGetKindMatrix,
+    # sefResetObjects, ...) whose X1 counterparts (sefGetPoint, static sefGetCirclePos/SpherePos) live in
+    # sef.c, and the tu171-tu173 helpers, are called only from tu164, so the contiguous span is one file.
+    (0x0025FB90, 'sef: old tu165 joins tu164 (see the block comment)'),
+    (0x00260840, 'sef: old tu166 joins (see 0x25FB90)'),
+    (0x00260D38, 'sef: old tu167 joins (see 0x25FB90)'),
+    (0x002612B0, 'sef: old tu168 joins (see 0x25FB90)'),
+    (0x00261890, 'sef: old tu169 joins (see 0x25FB90)'),
+    (0x00261960, 'sef: old tu170 joins (see 0x25FB90)'),
+    (0x00263BF8, 'sef: old tu171 joins (see 0x25FB90)'),
+    # 0x263E68 and 0x2647E0 join again (2026-11-15, after cc1 fsv14). They had been restored as cuts on
+    # 2026-11-13/14 because sefSpawnEffect (0x263E88) and sefApplyRecordMode (0x264C78) match only when their
+    # callees sefStartEffectKeyDefault (0x260EE8) and sefReleaseEffectRecord (0x25DDE0) are not yet-compiled
+    # definitions at the call (reorg: bnez/bnel instead of the same-file form). A block-scope `extern`
+    # prototype in the caller gives the same code inside one file (verified: all 228 functions of the span
+    # byte-identical), and two facts require one file: (1) the .sdata run 0x69DB48-0x69DBE0 interleaves data
+    # used only by the old tu175 code (0x69DB6C, sefCurrentOwner 0x69DBC4) and only by the old tu172 code
+    # (sefFlagWord 0x69DBC0, 0x69DBD0, 0x69DBD8) with data used only by the sef code (0x69DB64-0x69DB74,
+    # sefRandSeed 0x69DBC8, sefNoiseReady 0x69DBCC), which separate objects cannot produce; (2) both
+    # sefRestoreEffectRecords (0x2656E8, old tu175) and func_0025EBE0 / func_0025CAB8 (sef) need the typed
+    # small-data definitions `int sefEffectRecordCount = 64;` / `float D_0069DB8C = 1.0f;` in their own file
+    # (reports/cc1-fsv14-typedkill.md).
+    (0x00263E68, 'sef: old tu172 joins (see the block comment above)'),
+    (0x00264418, 'sef: old tu173 joins (see 0x263E68)'),
+    (0x00264670, 'sef: old tu174 joins (see 0x263E68)'),
+    (0x002647E0, 'sef: old tu175 joins (see 0x263E68)'),
+    (0x00265300, 'sef: old tu176 joins (see 0x263E68)'),
 ]
 
 # Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).
@@ -1569,6 +1641,8 @@ def build_units(mean_functions, model_file, homologs, unit, zones, o0_homologs=N
             head['_indices'] = head['_indices'] + tu['_indices']
             head.setdefault('_merged', []).append(dict(ordinal=tu['ordinal'], start=hex32(unit.vas[tu['_indices'][0]]),
                                                        reason=tu['_merge']))
+            if unit.vas[tu['_indices'][0]] in JOINED_KEEPS_LATER_ORDINAL:
+                head['ordinal'] = tu['ordinal']
             continue
         merged.append(tu)
     return merged, stats

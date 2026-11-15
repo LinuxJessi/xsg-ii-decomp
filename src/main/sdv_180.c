@@ -23,13 +23,13 @@ int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
 
 #define SCRIPT_ADDRESS_NONE 0xFFFF    /* absent table entry or address */
 
-void func_0025EBE0(int);
+void sefStepEffectRecords(int);
 extern u16 sefGroupKey;
 
 void sefAdvanceGroupKey(void)
 {
     sefGroupKey += 1;
-    func_0025EBE0(0);
+    sefStepEffectRecords(0);
 }
 
 int scGetImmAdrImmIdx2(int base, unsigned short *table, int index)

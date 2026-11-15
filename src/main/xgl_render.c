@@ -1186,7 +1186,7 @@ void xglRenderGlobalFade(void)
 }
 
 void func_001CC4EC(void);
-void func_00260720(void);
+void sefDrawEffect(void);
 void pxyFlush(void);
 void pxyResetState(void);
 void gifStateUpdateDrawHook(void);
@@ -1210,7 +1210,7 @@ void xglRenderMove(void)
 
     func_001CC4EC();
     if (D_006458A4 == 0) {
-        func_00260720();
+        sefDrawEffect();
     }
     if (D_006458A4 == 0) {
         pxyFlush();

@@ -1513,7 +1513,7 @@ void seVoiceRecordAddAt(int voice, f32 *src)
     }
 }
 
-extern u32 D_002B5D98[];
+extern u32 gameLoopFlags[];
 u32 seVoicePanVolumeFromPosition(ResRecord *rec);
 
 void seVoiceRecordsUpdatePan(void)
@@ -1522,7 +1522,7 @@ void seVoiceRecordsUpdatePan(void)
     int j;
     u32 loudest;
 
-    if (D_002B5D98[0] & 0x20) {
+    if (gameLoopFlags[0] & 0x20) {
         return;
     }
     for (i = 0; i < SE_RECORD_COUNT; i++) {

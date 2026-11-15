@@ -284,7 +284,7 @@ void uwamonoSearchArcHit(int index, int other, int third)
 }
 
 extern u16 textOptionFlags[];
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 
 void uwamonoSearchFacingHit(int index, int other, int third)
 {
@@ -300,7 +300,7 @@ void uwamonoSearchFacingHit(int index, int other, int third)
     records = uwamonoRecords;
     record = &records[index];
     actor = record->actor;
-    if ((D_002B5D98[0] & 0x20000000) != 0) {
+    if ((gameLoopFlags[0] & 0x20000000) != 0) {
         return;
     }
     if ((textOptionFlags[0] & 0x20) == 0) {
@@ -347,7 +347,7 @@ void func_002079F0(int index, int other, int third)
 
     record = &records[index];
     actor = record->actor;
-    if ((D_002B5D98[0] & 0x20000000) != 0) {
+    if ((gameLoopFlags[0] & 0x20000000) != 0) {
         return;
     }
     if ((textOptionFlags[0] & 0x20) == 0) {

@@ -2,7 +2,7 @@
 #include "shared.h"
 #include "main/gifState.h"
 #include "main/sdv_183.h"
-#include "main/sef_169.h"
+#include "main/sef.h"
 #include "vu0_macro.h"
 
 void sdvClearSpecialWork(void);

@@ -2,7 +2,7 @@
  * OV01 original TU 46: 0x00a9f0a8..0x00a9ff80 (35 functions)
  */
 #include "common.h"
-#include "main/tu173.h"
+#include "main/sef.h"
 #include "ov01/tu022.h"
 #include "ov01/tu031.h"
 #include "ov01/tu041.h"
@@ -333,7 +333,7 @@ int unitParaSet(VmPluginContext *vm)
     return 1;
 }
 
-int func_00260300(int effectKey, int argOne);
+int sefLoadEffect(int effectKey, int argOne);
 
 /* The effect key packs the group above bit 12 and the effect index below it. */
 int loadEffect(VmPluginContext *vm)
@@ -347,7 +347,7 @@ int loadEffect(VmPluginContext *vm)
     }
     effectGroup = vmArgGet(vm, 1);
     effectIndex = vmArgGet(vm, 2);
-    func_00260300((effectGroup << 0xC) | effectIndex, effectGroup);
+    sefLoadEffect((effectGroup << 0xC) | effectIndex, effectGroup);
     return 1;
 }
 

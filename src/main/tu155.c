@@ -1,6 +1,6 @@
 #include "common.h"
 #include "shared.h"
-#include "main/sef_164.h"
+#include "main/sef.h"
 #include "main/tu155.h"
 
 
@@ -27,22 +27,22 @@ void vu0DirectionToAngles(Vector4 *angles, Vector4 *direction, int unusedArg2, i
 }
 
 /* Global flag word; sv_get_image_item_161 also reads it with masks. */
-extern u32 D_0069DAE0;
+extern u32 svSceneFlags;
 
 u32 func_00252E00(u32 mask) {
-    return D_0069DAE0 & mask;
+    return svSceneFlags & mask;
 }
 
 void func_00252E10(u32 mask) {
-    D_0069DAE0 |= mask;
+    svSceneFlags |= mask;
 }
 
 void func_00252E20(u32 mask) {
-    D_0069DAE0 &= ~mask;
+    svSceneFlags &= ~mask;
 }
 
 void func_00252E38(u32 mask) {
-    D_0069DAE0 ^= mask;
+    svSceneFlags ^= mask;
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu155", lightSetLogDump);

@@ -6,7 +6,7 @@
 #include "main/tu063.h"
 #include "main/tu077.h"
 #include "main/tu079.h"
-#include "main/tu173.h"
+#include "main/sef.h"
 #include "main/xgl_font.h"
 #include "ov01/tu009.h"
 #include "ov01/tu022.h"

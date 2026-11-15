@@ -568,7 +568,7 @@ typedef struct SefEffectRecord {
     short shown;                /* +0x6E: bit 1 of MapObjectRecord.flags, shifted down */
 } SefEffectRecord;
 
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 
 void mapObjectUpdateEffectTransform(MapObjectRecord *record)
 {
@@ -580,7 +580,7 @@ void mapObjectUpdateEffectTransform(MapObjectRecord *record)
         effect->shown = (record->flags >> 1) & 1;
         if (record->flags & MAP_OBJ_EFFECT_FOLLOW) { effect->flags |= SEF_FOLLOW; } else { effect->flags &= ~SEF_FOLLOW; }
     }
-    if ((D_002B5D98[0] & 1) == 0) {
+    if ((gameLoopFlags[0] & 1) == 0) {
         if (record->parent == -1 || record->attached != 1) {
             mapObjectAdvanceTweens(record);
         } else {

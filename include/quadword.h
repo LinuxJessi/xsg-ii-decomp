@@ -76,6 +76,21 @@
         : "r" (destination), "r" (source) \
         : "$8", "memory")
 
+/*
+ * Through the $4 (a0) scratch (user 2026-11-13: sibling of QuadwordCopy for the
+ * originals that copy through a0).
+ *
+ *   QuadwordCopyA0(d, v)  *d = *v
+ */
+
+#define QuadwordCopyA0(destination, source) \
+    __asm__ __volatile__( \
+        "lq $4, 0(%1)\n" \
+        "sq $4, 0(%0)\n" \
+        : \
+        : "r" (destination), "r" (source) \
+        : "$4", "memory")
+
 #define QuadwordCopyMatrixT0(destination, source) \
     __asm__ __volatile__( \
         "lq $8, 0(%1)\n" \

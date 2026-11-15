@@ -30,9 +30,9 @@ NOSIBCALL = 'ee-gcc2_96-nosibcall'
 NOSIBCALL_FLAGS = [['-O2', '-G0', '-fno-optimize-sibling-calls'],
                    ['-O2', '-G8', '-fno-optimize-sibling-calls']]
 # config/toolchains.json names it, and the profiles below are retired.
-GCC296_PAYLOAD = '.work/toolchains/ee-gcc2.96-realconv-lp7-fsv12-v1/bin'
+GCC296_PAYLOAD = '.work/toolchains/ee-gcc2.96-realconv-lp7-fsv14-v1/bin'
 GCC296_PAYLOAD_SHA256 = {
-    'cc1': '58a63b84ed4385101b1135a71919a2516f2d6c61b80258b5917ccd47bc56b1f4',
+    'cc1': '95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818',
     'cpp0': 'f6f6b598f39649edfe171d6da8c7f91d07f2b87c2aeeffffbc5f566bfb1a39a9',
     'ee-gcc': 'b8c284d16c9c0a0e8788e9522c46881e224ad01fa1c732aed43f821cc32f168b',
 }
@@ -1411,14 +1411,99 @@ def _cop2_match_line(line):
     return None
 
 
+# Original hardware inline assembly (user decision 2026-11-13, verbatim: "No hay
+# problema con crear una variante hermana en quadword. Además, qué es eso de
+# limitaciones de ee-vu-cop2? Si es asm de hardware, se deja el asm de hardware y
+# ya. Igual con la mezcla MMI y COP2"). When the original carries hardware inline
+# asm it stays inline asm inside readable C: every VU0 macro-mode/COP2
+# instruction (`lqc2`/`sqc2`, `qmfc2`/`qmtc2`/`cfc2`/`ctc2` with their `.i`/`.ni`
+# interlock spellings, `vcallms`, and every `v*` VU spelling such as `vminix`),
+# every EE MMI instruction (the P* family, `qfsrv`, the pipeline-1 `*1` forms,
+# the SA register moves, `lq`/`sq`) and every COP1 instruction (`mfc1`/`mtc1`,
+# `cfc1`/`ctc1`, `lwc1`/`swc1`, `li.s`, the `*.s` arithmetic, compares and
+# conversions), in any mix inside one block. The calibrated table above keeps
+# validating the spellings it knows (register ranges, lane masks, field
+# agreement); a line it does not know, or one of its narrow MMI idiom entries
+# refuses, is admitted when it is one of these hardware instructions with plain
+# register/immediate/memory operands. What stays refused: ordinary integer and
+# control-flow code (`addu`, `lw`, `sw` outside the calibrated store, branches
+# including `bc1t`/`bc2f`, labels, `.word` and every directive), symbols outside
+# the calibrated `%%hi`/`%%lo` groups, register-asm bindings and empty asm
+# statements (`hardware_c`). The whole-file gate stays the authority on bytes.
+_HW_REG = r'(?:[0-9]|[12][0-9]|3[01])'
+_HW_GPR = r'\$' + _HW_REG
+_HW_IMM = r'-?(?:0[xX][0-9a-fA-F]+|[0-9]+)'
+_HW_MEM_BASE = (r'(?:%[0-9]|' + _HW_GPR + r'|\$?vi' + _HW_REG + r'(?:\+\+)?|--\$?vi' + _HW_REG + r')')
+_HW_OPERAND = re.compile(
+    r'%[0-9]|' + _HW_GPR + r'|\$f' + _HW_REG +
+    r'|\$?vf' + _HW_REG + r'[xyzw]{0,4}|\$?vi' + _HW_REG +
+    r'|ACC[xyzw]{0,4}|[QIR]|' + _HW_IMM + r'(?:\.[0-9]+(?:[eE]-?[0-9]+)?)?' +
+    r'|(?:' + _HW_IMM + r'|%[0-9])?' + _WS + r'\(' + _WS + _HW_MEM_BASE + _WS + r'\)')
+_HW_LINE = re.compile(r'(?P<op>[a-z][a-z0-9]*(?:\.[a-z0-9]+)*)(?:[ \t]+(?P<args>\S.*?))?[ \t]*')
+_HW_COP2_OP = re.compile(r'lqc2|sqc2|(?:qmfc2|qmtc2|cfc2|ctc2)(?:\.n?i)?'
+                         r'|v[a-z][a-z0-9]*(?:\.[xyzw]{1,4})?')
+_HW_MMI_EXTRA = frozenset(('lq', 'sq', 'mfsa', 'mtsa', 'mtsab', 'mtsah'))
+_HW_COP1_OPS = frozenset(('mfc1', 'mtc1', 'cfc1', 'ctc1', 'lwc1', 'swc1'))
+_HW_COP1_OP = re.compile(r'(?:[a-z0-9]+\.)+s|cvt\.s\.w')
+# Calibrated entries whose refusal reflects the narrow evidence of one idiom
+# rather than a hardware constraint; a refused line of these kinds may still be
+# admitted as a hardware instruction. `gprstore`/`mmiload`/`mmishift` are
+# integer instructions and are never hardware.
+_HW_NARROW_KINDS = ('mmicmp', 'mmiext', 'mmiminmax', 'mmipack', 'gprquad')
+_HW_SCALAR_KINDS = ('gprstore', 'mmiload', 'mmishift')
+
+
+def _hardware_instruction(line):
+    """'cop2', 'mmi', 'cop1' or 'sync' for an admitted hardware instruction, else None."""
+    m = _HW_LINE.fullmatch(line)
+    if m is None:
+        return None
+    op = m.group('op')
+    if op in ('sync', 'sync.l', 'sync.p') and m.group('args') is None:
+        # The EE memory barrier next to the hardware it orders (e.g.
+        # `sync / vcallmsr $vi27`); on its own it stays the `ee-sync-barrier`
+        # statement, so it never makes a block hardware (`_hardware_line`).
+        return 'sync'
+    if _HW_COP2_OP.fullmatch(op):
+        kind = 'cop2'
+    elif op in _MMI_SIGNATURES or op in _HW_MMI_EXTRA:
+        kind = 'mmi'
+    elif op in _HW_COP1_OPS or _HW_COP1_OP.fullmatch(op):
+        kind = 'cop1'
+    else:
+        return None
+    args = m.group('args')
+    if args is not None:
+        for token in args.split(','):
+            if not _HW_OPERAND.fullmatch(token.strip(' \t')):
+                return None
+    return kind
+
+
+def _hardware_line(line):
+    """True when a (glue-stripped) block line is a hardware operation."""
+    found = _cop2_match_line(line)
+    if found is not None and found[0] not in _HW_SCALAR_KINDS and not found[2](found[1]):
+        return True
+    return _hardware_instruction(line) not in (None, 'sync')
+
+
 def _cop2_check_line(line):
     found = _cop2_match_line(line)
-    if found is None:
-        require(False, 'uncalibrated COP2 inline spelling: ' + line[:120])
-    name, m, check = found
-    err = check(m)
+    err = None
+    if found is not None:
+        name, m, check = found
+        err = check(m)
+        if not err:
+            return
+        if name not in _HW_NARROW_KINDS:
+            require(False, err + ' in COP2 inline: ' + line[:120])
+    if _hardware_instruction(line):
+        return
     if err:
         require(False, err + ' in COP2 inline: ' + line[:120])
+    require(False, 'not a hardware instruction (COP2/VU0, MMI or COP1) in hardware inline: '
+            + line[:120])
 
 
 def _cop2_check_operands(section, kind, allowed=None):
@@ -1453,20 +1538,31 @@ def _cop2_check_operands(section, kind, allowed=None):
     return constraints
 
 
+_HW_CLOBBER_FPR = re.compile(r'\$f(?:[0-9]|[12][0-9]|3[01])')
+
+
 def _cop2_check_clobbers(section, fprs=frozenset()):
-    """`fprs`: the FPRs this block loads with an admitted `li.s` (see
-    `_cop2_float_constant`); no other FPR may be clobbered."""
+    """The clobber list: `"memory"`, `"hi"`/`"lo"`, GPRs and FPRs.
+
+    User decision 2026-11-13: the original's hardware block is kept as written,
+    so any FPR may be clobbered (e.g. sefLerpPositionXyz's `$f6`) and the
+    `"memory"` clobber is no longer required -- a block without it is a bare
+    volatile ASM_OPERANDS for cc1, which is what some originals compiled
+    (sefRegisterGroupCenter, func_002624B0). `fprs` is kept for callers."""
+    del fprs
     seen = set()
     for item in _split_top(section, ','):
         stripped = item.strip(' \t\r\n')
+        if not stripped:
+            continue
         require(_COP2_CLOBBER_LIT.fullmatch(stripped),
                 'hardware clobbers must be single string literals')
         name = _literal_prefix(stripped)[0]
-        require(name == 'memory' or _COP2_CLOBBER_GPR.fullmatch(name) or name in fprs,
-                'uncalibrated hardware clobber: ' + name[:40])
+        require(name in ('memory', 'hi', 'lo') or _COP2_CLOBBER_GPR.fullmatch(name)
+                or _HW_CLOBBER_FPR.fullmatch(name),
+                'unknown hardware clobber: ' + name[:40])
         require(name not in seen, 'duplicate hardware clobber: ' + name[:40])
         seen.add(name)
-    require('memory' in seen, 'COP2 inline must declare a memory clobber')
     return seen
 
 
@@ -1547,13 +1643,18 @@ def _cop2_null_default(body, outputs, clobbers):
                     'the null-default idiom is admitted only as the first three lines of a '
                     'hardware block: ' + line[:120])
         return body
-    require(len(body) >= 4,
+    require(len(body) >= 3,
             'the null-default idiom needs its addiu/movz lines and a hardware operation after '
             'them: ' + body[0][:120])
     low = _NULL_DEFAULT_LO.fullmatch(body[1])
     require(low is not None,
             'the null-default idiom needs `addiu $N,$N,%%lo(symbol)` after its lui: ' + body[1][:120])
     move = _NULL_DEFAULT_MOVZ.fullmatch(body[2])
+    if move is None:
+        return _cop2_symbol_base(body, head, low, clobbers)
+    require(len(body) >= 4,
+            'the null-default idiom needs its addiu/movz lines and a hardware operation after '
+            'them: ' + body[0][:120])
     require(move is not None,
             'the null-default idiom needs `movz %N,$N,%N` after its addiu: ' + body[2][:120])
     reg = head.group('reg')
@@ -1597,6 +1698,40 @@ def _cop2_null_default(body, outputs, clobbers):
     for line in rest:
         require(not _NULL_DEFAULT_HI.fullmatch(line),
                 'one null-default idiom per hardware block: ' + line[:120])
+    return rest
+
+
+_SYMBOL_BASE_USE = re.compile(r'(?:lqc2|sqc2|lq|sq)' + _WS + r'\S+' + _SEP +
+                              r'(?:0[xX][0-9a-fA-F]+|[0-9]+)' + _WS + r'\(' + _WS +
+                              r'\$(?P<reg>[0-9]|[12][0-9]|3[01])' + _WS + r'\)')
+
+
+def _cop2_symbol_base(body, head, low, clobbers):
+    """The `%%hi`/`%%lo` address of a constant the block's quadword transfer reads.
+
+    User decision 2026-11-13 (hardware asm stays as written): func_002554F8
+    (main sv_get_image_item) opens its VU0 colour-clamp block with
+    `lui $2,%%hi(D_003ED640) / addiu $2,$2,%%lo(D_003ED640)` and reads the clamp
+    vector with `lqc2 vf3,0($2)`. The pair is the address operand of that
+    hardware load, admitted as one group: first two lines of the block, one
+    hard-coded scratch declared as a clobber, one symbol, and a later
+    `lqc2`/`sqc2`/`lq`/`sq` of the same block using that scratch as its base.
+    """
+    reg = head.group('reg')
+    require(low.group('reg') == reg and low.group('src') == reg,
+            'the %%hi/%%lo symbol address must stay in one scratch register: ' + body[1][:120])
+    require(head.group('sym') == low.group('sym'),
+            'the %%hi/%%lo symbol address must name one symbol, not %s and %s'
+            % (head.group('sym')[:40], low.group('sym')[:40]))
+    require('$' + reg in clobbers,
+            'the %%hi/%%lo symbol address scratch $%s must be declared as a clobber' % reg)
+    rest = body[2:]
+    require(any((_SYMBOL_BASE_USE.fullmatch(line) or {'reg': None})['reg'] == reg for line in rest),
+            'a %%hi/%%lo symbol address is admitted only as the base of a later '
+            'lqc2/sqc2/lq/sq of the same block: ' + body[0][:120])
+    for line in rest:
+        require(not _NULL_DEFAULT_HI.fullmatch(line),
+                'one %%hi/%%lo symbol group per hardware block: ' + line[:120])
     return rest
 
 
@@ -2133,9 +2268,13 @@ def _cop2_parse_construct(text, start, *, mmi_transpose=False, sef_particle_scal
     require(len(sections) <= 4, 'too many sections in hardware inline')
     decoded = _template_bodies(sections[0])
     require(decoded is not None, 'hardware template must be string literal(s)')
-    if _cop2_scheduling_barrier(sections, decoded):
-        _COP2_SPANS.append(dict(kind='sched_barrier', start=start))
-        return i + 1
+    # Empty asm statements -- the old instruction-free scheduling barrier
+    # `asm("" : : "f"(x))` included -- are forbidden (user 2026-10-16 and
+    # 2026-11-02, kept by the 2026-11-13 hardware decision): an empty template
+    # is no hardware operation. `_cop2_scheduling_barrier` is no longer reached.
+    require(decoded.strip(' \t\r\n'),
+            'empty asm statements are forbidden (asm("") / asm("" : : ...) liveness or '
+            'scheduling barriers): inline asm is admitted only for hardware instructions')
     lines = _cop2_template_lines(decoded)
     body = _cop2_delay_slot_filler(lines)
     outputs = _cop2_check_operands(sections[1], 'output') if len(sections) >= 2 else []
@@ -2144,12 +2283,14 @@ def _cop2_parse_construct(text, start, *, mmi_transpose=False, sef_particle_scal
     if _cop2_register_only_block(sections, body, operands):
         _COP2_SPANS.append(dict(kind='cop2', start=start))
         return i + 1
-    require(len(sections) >= 4, 'COP2 inline must declare a memory clobber')
-    if sef_particle_scale and any(re.match(r'lwc1(?:\s|$)', line) for line in lines):
+    # User decision 2026-11-13: a "memory" clobber is no longer required.
+    if (sef_particle_scale and len(sections) >= 4
+            and any(re.match(r'lwc1(?:\s|$)', line) for line in lines)):
         _sef_particle_scale_block(lines, outputs, inputs, sections[2], sections[3])
         _COP2_SPANS.append(dict(kind='cop2', sef_particle_scale=True, start=start))
         return i + 1
-    clobbers = _cop2_check_clobbers(sections[3], _cop2_float_constant_registers(body))
+    clobbers = (_cop2_check_clobbers(sections[3], _cop2_float_constant_registers(body))
+                if len(sections) >= 4 else set())
     if mmi_transpose:
         _mmi_cop2_transpose_block(body, outputs, inputs, clobbers)
         _COP2_SPANS.append(dict(kind='cop2', start=start))
@@ -2166,13 +2307,21 @@ def _cop2_parse_construct(text, start, *, mmi_transpose=False, sef_particle_scal
     for line in body:
         _cop2_check_line(line)
     _cop2_quadword_scratch(body, clobbers)
-    _cop2_block_scratch_reads(body)
-    _mmi_block_shape(body)
+    # User decision 2026-11-13: the block-local scratch-read rule
+    # (`_cop2_block_scratch_reads`) and the packed-widening dataflow shape
+    # (`_mmi_block_shape`) were limits of the narrow MMI admissions; the
+    # original's MMI and COP2 lines are now kept as written, in any mix. A block
+    # still has to perform at least one hardware instruction: integer glue
+    # alone is not hardware.
+    require(any(_hardware_line(line) for line in body) or i_immediate or clip_nops,
+            'a hardware inline block must perform at least one COP2/VU0, MMI or COP1 '
+            'instruction; integer code alone stays C')
     for ref in re.findall(r'%([0-9])', '\n'.join(lines)):
         require(int(ref) < operands, 'hardware operand reference out of range: %' + ref)
     _COP2_SPANS.append(dict(
         kind=('cop2' if any((_cop2_match_line(line) or ('',))[0]
                             not in ('', 'gprquad') + _MMI_KINDS + _MMI_ARITH_KINDS
+                            or _hardware_instruction(line) == 'cop2'
                             for line in body)
               else 'other'),
         vu0_i_immediate=i_immediate,
@@ -2223,6 +2372,16 @@ def _cop2_inline_spans(text, *, mmi_transpose=False, sef_particle_scale=False,
 _COP2_REG_BIND = re.compile(
     r'\bregister\b[^;{}()]{1,200}?\b(?P<kw>asm|__asm|__asm__)\s*\(\s*'
     r'"(?P<reg>\$(?:f?(?:[0-9]|[12][0-9]|3[01])))"\s*\)')
+
+
+def _refuse_register_bindings(text, label):
+    """Register-asm variable bindings stay forbidden (user 2026-10-16 and
+    2026-11-02; kept by the hardware decision of 2026-11-13). `text` has its
+    comments blanked and its literals kept."""
+    found = _COP2_REG_BIND.search(text)
+    require(found is None,
+            '%s: register-asm variable bindings (`register T x asm("$n")`) are forbidden: %s'
+            % (label, found.group(0)[:80] if found else ''))
 
 
 def _cop2_register_bindings(text):
@@ -2443,6 +2602,7 @@ def hardware_c(text, staged=None, headers=(), inner=None, *, mmi_transpose=False
         return ' ' if match[0].startswith(('/*', '//')) else match[0]
 
     masked = re.sub(tokens, replace, text, flags=re.S)
+    _refuse_register_bindings(masked, 'hardware C')
     spans = _cop2_inline_spans(masked, mmi_transpose=mmi_transpose,
                                sef_particle_scale=sef_particle_scale,
                                vu0_i_immediate=vu0_i_immediate,
@@ -2879,7 +3039,17 @@ def _mmi_inline_spans(text):
     for m in _COP2_FIND.finditer(text):
         if m.group(0) not in ('__asm__', '__asm', 'asm'):
             continue
-        end = _mmi_parse_construct(text, m.start())
+        try:
+            end = _mmi_parse_construct(text, m.start())
+        except ValueError as mmi_error:
+            # User decision 2026-11-13 ("Igual con la mezcla MMI y COP2"): a block
+            # the closed ee-mmi grammar refuses is still admitted when it is the
+            # original's hardware block -- MMI mixed with COP2/VU0 or COP1 -- under
+            # the hardware grammar (`_cop2_parse_construct`).
+            try:
+                end = _cop2_parse_construct(text, m.start())
+            except ValueError:
+                raise mmi_error from None
         if end is not None:
             found.append((m.start(), end))
     return found
@@ -2900,6 +3070,7 @@ def mmi_c(text, staged=None, headers=(), inner=None):
             'inline assembly cannot be supplied by a preprocessor directive')
     tokens = r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|/\*.*?\*/|//[^\n]*'
     masked = re.sub(tokens, lambda m: ' ' if m[0].startswith(('/*', '//')) else m[0], text, flags=re.S)
+    _refuse_register_bindings(masked, 'ee-mmi C')
     spans = _mmi_inline_spans(masked)
     chars = list(masked)
     for start, end in spans:

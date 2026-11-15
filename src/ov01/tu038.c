@@ -12,7 +12,7 @@
  */
 #include "common.h"
 #include "main/gifState.h"
-#include "main/tu173.h"
+#include "main/sef.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
 #include "ov01/tu009.h"

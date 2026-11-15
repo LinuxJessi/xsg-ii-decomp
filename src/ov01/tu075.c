@@ -1,6 +1,6 @@
 #include "common.h"
 #include "shared.h"
-#include "main/tu165.h"
+#include "main/sef.h"
 #include "main/tu197.h"
 #include "ov01/tu075.h"
 /* EE scratchpad RAM. */

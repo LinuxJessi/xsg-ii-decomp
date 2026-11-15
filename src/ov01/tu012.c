@@ -188,11 +188,11 @@ int unitIsDone(Ov01Owner *owner) {
     return XenoActorIsDone(owner->unit);
 }
 
-int func_00264A80(int key);
+int sefNoOwnerFlaggedRecords(int key);
 
 /* The key is keyHigh << 12 | keyLow; the unused first argument is kept for the calling convention. */
 int func_00A84D80(int unused, int keyHigh, int keyLow) {
-    return func_00264A80((keyHigh << 0xC) | keyLow) != 0;
+    return sefNoOwnerFlaggedRecords((keyHigh << 0xC) | keyLow) != 0;
 }
 
 /* Loads the snapshot vector from the table entry for id (three ints divided by 100) and records id in the motion. */

@@ -199,26 +199,10 @@ segments:
       - [0x133680, c, tu154]
       - [0x133D88, c, tu155]
       - [0x133F78, c, tu156]
-      - [0x1341C8, c, tu157]
-      - [0x134B18, c, sv_get_image_item_158]
-      - [0x135280, c, sv_get_image_item_159]
-      - [0x135AA0, c, tu160]
-      - [0x1361D0, c, sv_get_image_item_161]
+      - [0x1341C8, c, sv_get_image_item]
       - [0x13A4E8, c, tu162]
       - [0x13A628, c, tu163]
-      - [0x13A658, c, sef_164]
-      - [0x140B90, c, tu165]
-      - [0x141840, c, tu166]
-      - [0x141D38, c, tu167]
-      - [0x1422B0, c, tu168]
-      - [0x142890, c, sef_169]
-      - [0x142960, c, tu170]
-      - [0x144BF8, c, tu171]
-      - [0x144E68, c, tu172]
-      - [0x145418, c, tu173]
-      - [0x145670, c, tu174]
-      - [0x1457E0, c, tu175]
-      - [0x146300, c, tu176]
+      - [0x13A658, c, sef]
       - [0x146820, c, srs]
       - [0x1471B0, c, tu178]
       - [0x1479F0, c, tu179]
@@ -368,15 +352,8 @@ segments:
       - [0x2CDED0, data, tu127]
       - [0x2CE070, data, test_128]
       - [0x2CE460, data, tu154]
-      - [0x2CE490, data, tu157]
-      - [0x2CE5B0, data, tu160]
-      - [0x2CE5D0, data, sv_get_image_item_161]
-      - [0x34F940, data, sv_get_image_item_158]
-      - [0x352D90, data, sef_164]
-      - [0x352E60, data, tu165]
-      - [0x374A74, data, tu170]
-      - [0x374B30, data, tu175]
-      - [0x4C7380, data, tu176]
+      - [0x2CE490, data, sv_get_image_item]
+      - [0x352D90, data, sef]
       - [0x4C75C0, data, srs]
       - [0x4C76E0, data, tu178]
       - [0x4C7D00, data, tu185]
@@ -487,10 +464,8 @@ segments:
       - [0x56C9D8, rodata, tu127]
       - [0x56CA50, rodata, test_128]
       - [0x56CFD0, rodata, tu154]
-      - [0x56D010, rodata, sv_get_image_item_161]
-      - [0x56D190, rodata, sv_get_image_item_159]
-      - [0x56D240, rodata, sef_164]
-      - [0x56D450, rodata, tu166]
+      - [0x56CFF0, rodata, sv_get_image_item]
+      - [0x56D210, rodata, sef]
       - [0x56D480, rodata, srs]
       - [0x56D510, rodata, tu178]
       - [0x56D530, rodata, sdv_183]
@@ -590,11 +565,8 @@ segments:
       - [0x57C298, lit4, yg2path]
       - [0x57C2A4, lit4, ysegf]
       - [0x57C2A8, lit4, tu154]
-      - [0x57C2B0, lit4, sv_get_image_item_158]
-      - [0x57C2B4, lit4, sv_get_image_item_161]
-      - [0x57C2B8, lit4, sef_164]
-      - [0x57C30C, lit4, tu170]
-      - [0x57C31C, lit4, tu172]
+      - [0x57C2B0, lit4, sv_get_image_item]
+      - [0x57C2B8, lit4, sef]
       - [0x57C324, lit4, tu181]
       - [0x57C330, lit4, tu182]
       - [0x57C334, lit4, sdv_183]
@@ -665,16 +637,9 @@ segments:
       - [0x57EA10, sdata, tu126]
       - [0x57EA80, sdata, tu127]
       - [0x57EAA0, sdata, test_128]
-      - [0x57EAD0, sdata, sef_164]
-      - [0x57EAD8, sdata, sef_print]
-      - [0x57EAE4, sdata, sv_get_image_item_161]
-      - [0x57EB10, sdata, tu157]
-      - [0x57EB20, sdata, sv_get_image_item_158]
-      - [0x57EB6C, sdata, tu176]
-      - [0x57EB74, sdata, tu165]
-      - [0x57EBC0, sdata, tu174]
-      - [0x57EBC8, sdata, tu170]
-      - [0x57EBD0, sdata, tu172]
+      - [0x57EAD0, sdata, sef_print]
+      - [0x57EAE4, sdata, sv_get_image_item]
+      - [0x57EB48, sdata, sef]
       - [0x57EBE0, sdata, srs]
       - [0x57EC30, sdata, sdv_180]
       - [0x57EC38, sdata, sdv_183]
@@ -734,7 +699,8 @@ segments:
       - { type: sbss, vram: 0x0069E280, name: ysegf }
       - { type: sbss, vram: 0x0069E290, name: tu123 }
       - { type: sbss, vram: 0x0069E298, name: tu126 }
-      - { type: sbss, vram: 0x0069E2D8, name: sv_get_image_item_161 }
+      - { type: sbss, vram: 0x0069E2D8, name: sv_get_image_item }
+      - { type: sbss, vram: 0x0069E31C, name: sef }
       - { type: sbss, vram: 0x0069E320, name: srs }
       - { type: sbss, vram: 0x0069E324, name: sdv_180 }
       - { type: sbss, vram: 0x0069E32C, name: tu185 }
@@ -776,16 +742,9 @@ segments:
       - { type: bss, vram: 0x006ABFB8, name: tu127 }
       - { type: bss, vram: 0x006AC280, name: test_128 }
       - { type: bss, vram: 0x006AF4C0, name: tu156 }
-      - { type: bss, vram: 0x006AF7C0, name: sv_get_image_item_161 }
-      - { type: bss, vram: 0x006B4B90, name: tu157 }
+      - { type: bss, vram: 0x006AF7C0, name: sv_get_image_item }
       - { type: bss, vram: 0x006B4C34, name: tu162 }
-      - { type: bss, vram: 0x006DE840, name: sef_164 }
-      - { type: bss, vram: 0x00804930, name: tu165 }
-      - { type: bss, vram: 0x00804E80, name: tu170 }
-      - { type: bss, vram: 0x00804EC0, name: tu176 }
-      - { type: bss, vram: 0x008062C0, name: tu173 }
-      - { type: bss, vram: 0x00806350, name: tu174 }
-      - { type: bss, vram: 0x00807390, name: tu172 }
+      - { type: bss, vram: 0x006DE840, name: sef }
       - { type: bss, vram: 0x00807B90, name: srs }
       - { type: bss, vram: 0x00807EA0, name: tu182 }
       - { type: bss, vram: 0x00807EC0, name: sdv_183 }

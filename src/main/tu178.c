@@ -1,5 +1,5 @@
 #include "common.h"
-#include "main/sv_get_image_item_159.h"
+#include "main/sv_get_image_item.h"
 
 /* Loads an effect package file ("esp/cfdef.esp" when cfdef is set, else
  * "esp/default.esp") into the 0x28800-byte block of the first record of
@@ -48,6 +48,7 @@ void srsReleaseRecords(void)
 
 void *memset(void *s, int c, unsigned int n);
 void smFree(void *block);
+/* local view: the table as a pointer (the uses free its value and clear through its address); SrsTable would need casts here. */
 extern void *srsRecordTable;
 
 void srsReleaseEspFile(void)

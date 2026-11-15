@@ -1,7 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu050.h"
-#include "main/tu165.h"
+#include "main/sef.h"
 #include "main/xgl_flags.h"
 
 /* Script natives: argument count, n-th argument, nonzero when argument n is omitted, wrong-count error. */

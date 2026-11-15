@@ -2330,7 +2330,7 @@ void func_0029E690(void);
 /* Candidate target points and their reach (10 entries). */
 extern Vector4 D_0033EE00[];
 extern float D_0033EE90[];
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 float Get_Distance(const Vector4 *from, const Vector4 *to);
 int uwamonoTryClearTarget(int index, signed char threshold);
 int uwamonoFindNearbyTarget(int index);
@@ -2367,7 +2367,7 @@ void uwamonoPickTarget(short index)
         uwamonoUpdateTargetVector(index);
         return;
     }
-    if (D_002B5D98[0] & CONTROL_SCRIPTED) {
+    if (gameLoopFlags[0] & CONTROL_SCRIPTED) {
         uwamonoTryClearTarget(index, 0);
         return;
     }
