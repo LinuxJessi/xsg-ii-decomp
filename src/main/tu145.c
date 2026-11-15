@@ -153,7 +153,35 @@ float func_00250478(CfeTrackNode *from, CfeTrackNode *to, float time)
     return cfeEntryEvalCubic(time, from, coefficients);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", cfeTrackSample);
+/* Key flag: interpolate linearly to the next key (cfeTrackLerp) instead of by func_00250478. */
+#define CFE_TRACK_LINEAR 0x2
+
+/* The track's value at `time`: 0 without keys, the first key's value before it, the last key's value
+ * after the end, and in between the two surrounding keys interpolated (linearly with CFE_TRACK_LINEAR,
+ * else by func_00250478). */
+float cfeTrackSample(CfeTrackNode *track, int time)
+{
+    CfeTrackNode *node = track;
+    CfeTrackNode *next;
+
+    if (track == 0) {
+        return 0.0f;
+    }
+    if (time < track->startTime) {
+        return CFE_FIXED_TO_FLOAT(track->value);
+    }
+    while (node->next != 0) {
+        next = node->next;
+        if (time >= node->startTime && time < next->startTime) {
+            if (node->flags & CFE_TRACK_LINEAR) {
+                return cfeTrackLerp(node, next, time);
+            }
+            return func_00250478(node, next, time);
+        }
+        node = next;
+    }
+    return CFE_FIXED_TO_FLOAT(node->value);
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu145", func_002508C8);
 
