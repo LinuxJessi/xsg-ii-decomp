@@ -1266,6 +1266,7 @@ PROVIDE(dpmul = 0x002A70E8); /* libgcc */
 PROVIDE(dpdiv = 0x002A7398); /* libgcc */
 PROVIDE(dpcmp = 0x002A7510); /* libgcc */
 PROVIDE(litodp = 0x002A7560); /* libgcc */
+PROVIDE(dptoli = 0x002A7618); /* libgcc */
 PROVIDE(dptofp = 0x002A76E8); /* libgcc */
 PROVIDE(func_00A89428 = 0x00A89428); /* ov01, inside func_00A89340: testMenuCallbacks[0] */
 PROVIDE(func_00A920EC = 0x00A920EC); /* ov01, inside actStockRemoveStock: called by the text scale options */

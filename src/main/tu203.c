@@ -11,7 +11,18 @@ int func_00274100(int value)
     return -(magnitude << 4) - 8;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu203", func_00274130);
+double func_002A1DB0(double value); /* sqrt */
+
+/* Distance between two points, truncated to an integer: the float sum of squares goes through the
+ * soft-float double conversions (fptodp, the double sqrt, dptoli). */
+int func_00274130(Vector4 *from, Vector4 *to)
+{
+    float dx = to->x - from->x;
+    float dy = to->y - from->y;
+    float dz = to->z - from->z;
+
+    return func_002A1DB0(dx * dx + dy * dy + dz * dz);
+}
 
 extern int xglCosDegTableReady;
 extern float xglCosDegTable[];
