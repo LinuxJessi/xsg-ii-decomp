@@ -95,7 +95,15 @@ void sresDataMapping(void);
 
 /* Returns 1 when the effect key is of kind 1 (effect image) with an index in
  * 300..449, else 0. */
-INCLUDE_ASM("asm/main/nonmatchings/tu179", srsIsEffectImageKey);
+int srsIsEffectImageKey(int queryKey)
+{
+    if (((queryKey >> 28) & 0x3) == 1) {
+        if ((unsigned int)(((queryKey >> 12) & 0x3FF) - 300) < 150) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 int srsFileLoad(void *buffer, const char *name, int mode)
 {
@@ -106,4 +114,25 @@ int srsFileLoad(void *buffer, const char *name, int mode)
  * gives the kind (ce is 1, ee is 2, anything else 0), three decimal digits the
  * index and three the sub-number. Returns 0 when the index field comes out
  * negative. */
-INCLUDE_ASM("asm/main/nonmatchings/tu179", srsEffectKeyFromName);
+int srsEffectKeyFromName(signed char *name)
+{
+    int kind;
+    int index;
+
+    if (name == 0) {
+        return 0;
+    }
+    if (name[0] == 'p' && name[1] == 'e') {
+        kind = 0;
+    } else if (name[0] == 'c' && name[1] == 'e') {
+        kind = 1;
+    } else {
+        kind = (name[0] == 'e' && name[1] == 'e') ? 2 : 0;
+    }
+    index = (name[2] - '0') * 100 + (name[3] - '0') * 10 + (name[4] - '0');
+    if (index < 0) {
+        return 0;
+    }
+    return (kind << 28) | (index << 12) |
+           ((name[6] - '0') * 100 + (name[7] - '0') * 10 + (name[8] - '0'));
+}

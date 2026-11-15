@@ -53,13 +53,101 @@ short scGetImmNumIdx(short *table, int index)
     return table[index];
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_180", func_00266BC8);
+/* Script effect record returned through func_002551D0. */
+typedef struct SefScriptRecord {
+    unsigned char unmodeled_00[0x10];
+    short kind;                 /* 0x10: 0x3C..0x3F or 0x49 */
+    short operand;              /* 0x12: immediate offset, slot count or table index */
+    unsigned short offsets[1];  /* 0x14: offset table for kinds 0x3E and 0x3F */
+} SefScriptRecord;
 
-int func_00266BC8(int, int, int);
-
-int func_00266D40(int first, int second)
+/* Inline copy of scOfsToAdr below (written out in place, each lookup shares one
+ * register for the loaded and the resolved offset; the original keeps two). */
+static inline int sefOfsToAdr(int offset)
 {
-    return func_00266BC8(first, second, 0);
+    if (offset == SCRIPT_ADDRESS_NONE || offset == -1) {
+        offset = 0;
+    }
+    return offset;
+}
+
+int func_00261D50(void);
+SefScriptRecord **func_002551D0(int key);
+int srsGetEffectSlot(int effectKey);
+extern int D_0069DC20;
+extern int D_0069DC24;
+extern short *D_0069DC2C;
+
+#define SEF_OPERAND_WHOLE      0x4000    /* kind 0x3E: operand kept whole in D_0069DC24 */
+#define SEF_OPERAND_INDEX_MASK 0x3FFF    /* kind 0x3E: otherwise only these bits */
+
+/* Looks up the script record of key and resolves its offset by kind: 0x3C/0x3D
+ * immediate, 0x3E table entry index, 0x3F table entry srsGetEffectSlot(key);
+ * kind 0x49 publishes the operand address in D_0069DC2C instead. Returns the
+ * record and stores the offset in *offset_out, or returns 0.
+ * The dead store to value in the 0x49 branch keeps value live past the 0x3F
+ * lookup; without it gcc folds that lookup's loaded and resolved offsets into
+ * one register and the 0x3E/0x3F lookups are no longer merged. */
+SefScriptRecord *func_00266BC8(int key, int *offset_out, int index)
+{
+    SefScriptRecord **entry;
+    SefScriptRecord *record;
+    SefScriptRecord *found;
+    int value;
+    int offset;
+    int slot;
+    int kind;
+    int status;
+
+    status = func_00261D50();
+    *offset_out = 0;
+    D_0069DC2C = 0;
+    D_0069DC20 = 0;
+    if (status >= 0) {
+        entry = func_002551D0(key);
+        if (entry != 0) {
+            record = *entry;
+            offset = 0;
+            if (record != 0) {
+                D_0069DC20 = kind = record->kind;
+                if ((unsigned short)(record->kind - 0x3C) < 2) {
+                    value = (unsigned short)record->operand;
+                    offset = sefOfsToAdr(value);
+                } else if (kind == 0x3E) {
+                    slot = record->operand;
+                    if (!(slot & SEF_OPERAND_WHOLE)) {
+                        D_0069DC24 = slot & SEF_OPERAND_INDEX_MASK;
+                    } else {
+                        D_0069DC24 = slot;
+                    }
+                    value = record->offsets[index];
+                    offset = sefOfsToAdr(value);
+                } else if (kind == 0x3F) {
+                    slot = srsGetEffectSlot(key);
+                    if (slot < record->operand) {
+                        value = record->offsets[slot];
+                        offset = sefOfsToAdr(value);
+                    }
+                } else if (kind == 0x49) {
+                    value = 0;
+                    D_0069DC2C = &record->operand;
+                    return record;
+                }
+                found = 0;
+                if (offset != 0) {
+                    *offset_out = offset;
+                    found = record;
+                }
+                return found;
+            }
+        }
+    }
+    return 0;
+}
+
+SefScriptRecord *func_00266D40(int key, int *offset_out)
+{
+    return func_00266BC8(key, offset_out, 0);
 }
 
 int scOfsToAdr(int offset)
