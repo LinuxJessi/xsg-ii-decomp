@@ -1355,9 +1355,26 @@ void nmlModelSetSubWindowValue(u32 index, f32 value) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateSetMode);
+/* The draw function of an effect: called with the frame packet. */
+typedef void (*GifEffectDraw)(XglPacket *packet);
 
-extern int D_0064586C;
+/* The effect hook (xgl_render data) and the draw function of each effect mode. */
+extern GifEffectDraw D_0064586C;
+extern GifEffectDraw D_00631600[];
+
+/* The number of effect modes (entries of D_00631600). */
+#define GIF_EFFECT_COUNT 7
+
+/* Selects one of the seven GIF effects: its draw function becomes the effect hook, the state word and a
+ * full ratio. */
+void gifStateSetMode(int mode)
+{
+    if (mode < GIF_EFFECT_COUNT) {
+        gifStatus.state = mode;
+        D_0064586C = D_00631600[mode];
+        gifStatus.ratio = 1.0f;
+    }
+}
 
 void gifStateClearModeValue(void) {
     D_0064586C = 0;
