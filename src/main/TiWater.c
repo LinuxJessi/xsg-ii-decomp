@@ -338,7 +338,6 @@ void XenoActorSetMode(struct XenoActor *actor, int mode);
 void func_001BA68C(void);
 /* gifState.c defines it; sdv_183.c declares it with a float pointer, so it has no header prototype yet. */
 void nmlModelSetMulColor(Vector4 *color);
-extern int D_0064586C;
 extern const char D_0068C880[];
 extern const char D_0068C890[];
 extern const char D_0068C8A8[];

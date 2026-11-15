@@ -1355,11 +1355,7 @@ void nmlModelSetSubWindowValue(u32 index, f32 value) {
     }
 }
 
-/* The draw function of an effect: called with the frame packet. */
-typedef void (*GifEffectDraw)(XglPacket *packet);
-
-/* The effect hook (xgl_render data) and the draw function of each effect mode. */
-extern GifEffectDraw D_0064586C;
+/* The draw function of each effect mode. */
 extern GifEffectDraw D_00631600[];
 
 /* The number of effect modes (entries of D_00631600). */
