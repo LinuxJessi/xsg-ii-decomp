@@ -5,7 +5,7 @@
 
 Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
 Matrix4 *MMathRotateMatrixYX(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
-void MMathCalcAngle(Vector4 *out, const Vector4 *source, const Vector4 *target);
+Vector4 *MMathCalcAngle(Vector4 *out, const Vector4 *source, const Vector4 *target);
 
 /* out = matrix with rows 0..2 scaled by scale; row 3, the translation row, is copied unchanged. */
 Matrix4 *MMathScaleMatrixRotS(Matrix4 *out, const Matrix4 *matrix, float scale)
@@ -70,9 +70,29 @@ Matrix4 *MMathTranslateMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *tran
     return out;
 }
 
-/* MMathCalcLookAtMatrix (MMathCalcLookAtMatrix): pitch and yaw from source to target, the float argument as roll
- * (z of the angles), YXZ rotation over the identity; a non-null position argument goes to row 3. */
-INCLUDE_ASM("asm/main/nonmatchings/m_math_195", MMathCalcLookAtMatrix);
+Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
+
+/* Pitch and yaw from source to target, roll as z of the angles, YXZ rotation over the identity;
+ * a non-null position goes to row 3 with w = 1. */
+Matrix4 *MMathCalcLookAtMatrix(Matrix4 *out, const Vector4 *source, const Vector4 *target,
+                               const Vector4 *position, float roll)
+{
+    Vector4 angles;
+
+    MMathCalcAngle(&angles, source, target);
+    angles.z = roll;
+    MMathRotateMatrixYXZ(out, 0, &angles);
+    /* An early return: the nested if (position != 0) form swaps out and position between $16 and $17. */
+    if (position == 0) {
+        return out;
+    }
+    __asm__ __volatile__(
+        "lqc2 vf1, 0(%1)\n\t"
+        "vmove.w vf1, vf0\n\t"
+        "sqc2 vf1, 48(%0)"
+        : : "r"(out), "r"(position) : "memory");
+    return out;
+}
 
 /* out = matrix with its 3x3 block transposed; the fourth column is kept. */
 Matrix4 *MMathTransposeMatrix3(Matrix4 *out, const Matrix4 *matrix)

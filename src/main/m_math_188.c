@@ -94,7 +94,18 @@ void MMathCalcHermitePrm(HermiteVector *tangent_start, HermiteVector *tangent_en
 }
 
 /* Float vector times the degree-to-radian factor (no int conversion; the counterpart of MMathDeg2RadVectorI). */
-INCLUDE_ASM("asm/main/nonmatchings/m_math_188", MMathDeg2RadVector);
+void *MMathDeg2RadVector(void *destination, const Vector4 *source)
+{
+    __asm__ __volatile__(
+        "li.s $f8, 0.017453292\n"
+        "mfc1 $8, $f8\n"
+        "qmtc2 $8, vf1\n"
+        "lqc2 vf2, 0(%1)\n"
+        "vmulx.xyz vf2, vf2, vf1x\n"
+        "sqc2 vf2, 0(%0)\n"
+        : : "r"(destination), "r"(source) : "$8", "$f8", "memory");
+    return destination;
+}
 
 /* Int vector converted to float, times the degree-to-radian factor. */
 void *MMathDeg2RadVectorI(void *destination, const Vector4 *source)
@@ -112,7 +123,18 @@ void *MMathDeg2RadVectorI(void *destination, const Vector4 *source)
 }
 
 /* Float vector times the radian-to-degree factor (no int conversion; the counterpart of MMathRad2DegVectorI). */
-INCLUDE_ASM("asm/main/nonmatchings/m_math_188", MMathRad2DegVector);
+void *MMathRad2DegVector(void *destination, const Vector4 *source)
+{
+    __asm__ __volatile__(
+        "li.s $f8, 57.29578\n"
+        "mfc1 $8, $f8\n"
+        "qmtc2 $8, vf1\n"
+        "lqc2 vf2, 0(%1)\n"
+        "vmulx.xyz vf2, vf2, vf1x\n"
+        "sqc2 vf2, 0(%0)\n"
+        : : "r"(destination), "r"(source) : "$8", "$f8", "memory");
+    return destination;
+}
 
 /* Float vector times the radian-to-degree factor, converted to int. */
 void *MMathRad2DegVectorI(void *destination, const Vector4 *source)
