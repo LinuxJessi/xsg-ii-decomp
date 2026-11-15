@@ -122,7 +122,6 @@ void sceVif1PkAddDataN(XglPacket *packet, void *data, int count);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 void gifStateReset(void);
 void gifStateFlush(void);
-void gifStateAddReg(int gifAddress, u64 gifData);
 
 /* The water state template sent by tiWaterSendStateTemplate, and its length for sceVif1PkAddDataN. */
 extern u64 D_00631220[];

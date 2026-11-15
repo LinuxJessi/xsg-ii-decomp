@@ -3,6 +3,7 @@
 #include "main/control_entry.h"
 #include "main/xgl_render.h"
 #include "main/xgl_studio.h"
+#include "main/tu017.h"
 #include "main/tu021.h"
 #include "main/tu022.h"
 #include "main/tu024.h"
@@ -52,7 +53,6 @@ void xglGeometryInit(void);
 void xglPacketSystemInit(u32 buffer, u32 size, float rate);
 void xglRenderInit(void);
 void xglFontInitial(void);
-void xglMovieInit(void);
 
 /*
  * Reboots the IOP with IOPRP271, loads the SIF/CD/memory-card/pad/sound IOP

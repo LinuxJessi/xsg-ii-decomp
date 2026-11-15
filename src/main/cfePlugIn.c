@@ -3,6 +3,7 @@
 #include "quadword.h"
 #include "main/cfePlugIn.h"
 #include "main/control_entry.h"
+#include "main/tu017.h"
 #include "main/tu022.h"
 #include "main/tu026.h"
 #include "main/tu051.h"
@@ -549,7 +550,6 @@ int cfe_0024C030(int handle)
 
 void xglMovieInfoInit(void *movie);
 int xglMovieOpen(void *movie, const char *name);
-int xglCdGetFileSize(const char *name);
 extern int cfeEvalEntryCount;
 extern CfeEvalEntry cfeEvalEntries[];
 extern char D_0068CE68[];
@@ -627,7 +627,6 @@ int cfe_0024C278(int handle)
 
 void xglFontLoad(int first, int second);
 void resUpdatePathSlot(int slot);
-void func_001A0920(void);
 void cfeInit(void);
 void tiGlobalCollClearHandle(void);
 void func_001B2724(void);
@@ -669,7 +668,7 @@ int cfe_0024C308(int handle)
     msgResetAll();
     xglFontLoad(0, 0);
     resUpdatePathSlot(-3);
-    func_001A0920();
+    xglMovieInit();
     D_006316A8 = 0;
     D_006316AC = 0;
     soundSlotSetLevel(0, 0);
@@ -1202,7 +1201,6 @@ void func_0027BFD0(int slot, int kind, unsigned int value, int count);
 void fadeReset(void);
 void fadeStartIn(int frames);
 void xglFontPrintDirect(const char *text);
-void seVolumeSet(int value, int flags);
 /* The running fade (nonzero while a fade is under way). */
 extern int fadeUpdateHook;
 extern PadRecord PadData[];

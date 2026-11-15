@@ -383,7 +383,6 @@ extern GifStateRender sRender;
 extern int gifStateBlurDivisor;                      /* blur divisor of the alpha (3) */
 extern int gifStateBlurOffset;                      /* blur offset in pixels */
 
-void gifStateAddReg(int gifAddress, u64 gifData);
 
 /* IEEE-754 1.0f as the raw Q word of RGBAQ. */
 #define GIF_STATE_ONE_BITS 0x3F800000

@@ -3,6 +3,7 @@
 #include "main/cfePlugIn.h"
 #include "main/sef.h"
 #include "main/sdv_033.h"
+#include "main/tu021.h"
 #include "main/tu138.h"
 #include "main/tu256.h"
 #include "gs.h"
@@ -608,8 +609,6 @@ void cfeSlotTableEvaluate(int sample_param)
         cfeSlotEvaluate(&cfeEvalSlots[i], sample_param);
     }
 }
-
-void seVolumeSet(int value, int flags);
 
 /* Updates one sound record at `time`: samples its duration and value tracks and, when it has a
  * duration, sets the volume to the new value over |old - new| / duration steps (at least 1). */

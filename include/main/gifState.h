@@ -74,6 +74,7 @@ void gifStateEnableEffect(void);
 void gifStateSuppressDrawHook(void);
 void nmlModelEnableSubWindow0(void);
 void nmlModelUseSubWindow(unsigned int index, int enabled);
+void gifStateAddReg(int gifAddress, u64 gifData);
 void gifStateSetMode(int mode);
 void gifStateSetDecrease(f32 decrease);
 void gifStateSetCenter(int centerX, int centerY);
