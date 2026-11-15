@@ -297,28 +297,6 @@ XenoActor *cfeLoadResourceObject(int id)
 
 extern int cfeGroupCount;
 
-/* The model pack of an object as the group and object commands read it (xenoActor.c: PxyHeader). */
-typedef struct CfePackHeader {
-    unsigned char unmodeled_00[0x60];
-    int geometryCount;          /* +0x60 */
-    unsigned char unmodeled_64[4];
-    int matrixOffset;           /* +0x68: bytes from the pack to its geometry matrices */
-    unsigned char unmodeled_6c[0xD0 - 0x6C];
-    int subPackOffset;          /* +0xD0: bytes from the pack to its part pack, 0 if none */
-} CfePackHeader;
-
-/* A group of cfeGroups (0xC0 bytes): an object, the part table of its pack with the part matrices and
- * one evaluation record per part, and the key lists of the group's own values (+0x64). */
-typedef struct CfeGroup {
-    XenoActor *object;          /* +0x00 */
-    CfePackHeader *parts;       /* +0x04: the part pack of the object's pack (one record per geometry) */
-    Matrix4 *matrices;          /* +0x08: one per part */
-    CfeEvalRecord *records;     /* +0x0C: one per part */
-    unsigned char unmodeled_10[0x64 - 0x10];
-    CfeTrackNode *lists[4];      /* +0x64 */
-    unsigned char unmodeled_74[0xC0 - 0x74];
-} CfeGroup;
-
 extern CfeGroup cfeGroups[];
 
 float func_002A1DE0(float value);   /* asinf */
@@ -566,7 +544,6 @@ int cfe_0024BD28(int handle)
     return 1;
 }
 
-void func_0024B6D8(CfeGroup *group);
 
 /* Script command (1 argument): loads resource argument 1 as the object of the next group; when its
  * pack has a part pack, the group gets it, its matrices and one cleared record per geometry. */
@@ -1040,9 +1017,9 @@ int cfe_0024D1E8(int handle)
         flagged = func_A9F0C0(handle, 4);
         value = func_A9F0C0(handle, 5);
         if (flagged != 0) {
-            func_0024F730(&cfeGroups[group].lists[sub], key, CFE_FIXED_TO_FLOAT(value));
+            func_0024F730(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            func_0024F698(&cfeGroups[group].lists[sub], key, CFE_FIXED_TO_FLOAT(value));
+            func_0024F698(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     }
     return 1;

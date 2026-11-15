@@ -18,6 +18,7 @@
 #include "main/tu026.h"
 #include "main/tu051.h"
 #include "main/xenoActor.h"
+#include "main/TiGlobalColl.h"
 
 
 /* The object whose flag words (+0x4C0) the records set; +0x5EC is its record list. */
@@ -357,7 +358,53 @@ void cfeRecordEvaluate(CfeEvalRecord *record, f32 dest_matrix[4][4], int sample_
     cfeRecordBuildMatrix(record, dest_matrix);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeGroupTableEvaluate);
+void func_001BB3FC(Vector4 *value);
+void func_001BBBD8(void);
+
+extern int cfeGroupCount;
+extern CfeGroup cfeGroups[];
+
+/* Evaluates every group at `time`: its position from tracks 0..2, the light value from track 4 and the
+ * hidden flag from track 3 (hidden, or shown with its light applied and its collision set made current),
+ * then the records of all its parts into their matrices. */
+void cfeGroupTableEvaluate(int time)
+{
+    int i;
+    int j;
+
+    for (i = 0; i < cfeGroupCount; i++) {
+        if (cfeGroups[i].tracks[0] != 0) {
+            cfeGroups[i].position.x = cfeTrackSample(cfeGroups[i].tracks[0], time);
+        }
+        if (cfeGroups[i].tracks[1] != 0) {
+            cfeGroups[i].position.y = cfeTrackSample(cfeGroups[i].tracks[1], time);
+        }
+        if (cfeGroups[i].tracks[2] != 0) {
+            cfeGroups[i].position.z = cfeTrackSample(cfeGroups[i].tracks[2], time);
+        }
+        if (cfeGroups[i].tracks[4] != 0) {
+            cfeGroups[i].light = func_002508C8(cfeGroups[i].tracks[4], time);
+        }
+        if (cfeGroups[i].tracks[3] != 0) {
+            if ((int) func_002508C8(cfeGroups[i].tracks[3], time) != 0) {
+                cfeGroups[i].object->drawFlags |= CFE_ACTOR_HIDDEN;
+            } else {
+                if (cfeGroups[i].light != 0) {
+                    func_001BBBD8();
+                }
+                func_001BB3FC(&cfeGroups[i].position);
+                cfeGroups[i].object->drawFlags &= ~CFE_ACTOR_HIDDEN;
+                /* TiGlobalColl.c keeps the handle as an int. */
+                tiGlobalCollSetHandle((int) cfeGroups[i].collision);
+            }
+        }
+        if (cfeGroups[i].parts != 0) {
+            for (j = 0; j < cfeGroups[i].parts->geometryCount; j++) {
+                cfeRecordEvaluate(&cfeGroups[i].records[j], cfeGroups[i].matrices[j], time);
+            }
+        }
+    }
+}
 
 void *memset(void *destination, int value, unsigned int size);
 

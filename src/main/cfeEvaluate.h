@@ -70,6 +70,34 @@ typedef struct CfeEvalRecord {
     unsigned char unmodeled_74[0x80 - 0x74];
 } CfeEvalRecord;
 
+/* The model pack of an object as the group and object commands read it (xenoActor.c: PxyHeader). */
+typedef struct CfePackHeader {
+    unsigned char unmodeled_00[0x60];
+    int geometryCount;          /* +0x60 */
+    unsigned char unmodeled_64[4];
+    int matrixOffset;           /* +0x68: bytes from the pack to its geometry matrices */
+    unsigned char unmodeled_6c[0xD0 - 0x6C];
+    int subPackOffset;          /* +0xD0: bytes from the pack to its part pack, 0 if none */
+} CfePackHeader;
+
+/* A group of cfeGroups (0xC0 bytes, quadword aligned): an object, the part table of its pack with the part
+ * matrices and one evaluation record per part, and the group's own values with their tracks. */
+typedef struct CfeGroup {
+    struct XenoActor *object;   /* +0x00 */
+    CfePackHeader *parts;       /* +0x04: the part pack of the object's pack (one record per geometry) */
+    Matrix4 *matrices;          /* +0x08: one per part */
+    CfeEvalRecord *records;     /* +0x0C: one per part */
+    unsigned char unmodeled_10[0x50 - 0x10];
+    AlignedVector4 position;    /* +0x50: from tracks 0..2 */
+    int light;                  /* +0x60: from track 4 */
+    CfeTrackNode *tracks[5];    /* +0x64: position x, y, z, hidden, light */
+    unsigned char unmodeled_78[0xB8 - 0x78];
+    /* +0xB8: the collision set that is current while the group is shown. A pointer: its load is scheduled
+     * ahead of an int store in cfeGroupTableEvaluate. */
+    void *collision;
+    unsigned char unmodeled_bc[0xC0 - 0xBC];
+} CfeGroup;
+
 /* Table entry (stride 0x230) of cfeEntryEvaluate: three vectors, a result word and ten source handles. */
 typedef struct CfeEvalEntry {
     /* The movie work record (XS1 MovieInfo). The movie plays from memory: source is the file, read into a

@@ -230,11 +230,14 @@ void cfeEvalEntriesInit(void)
         QuadwordCopy(&cfeEvalEntries[i].corners[1], &source[1]);
         QuadwordCopy(&cfeEvalEntries[i].corners[2], &source[2]);
         QuadwordCopy(&cfeEvalEntries[i].corners[3], &source[3]);
-        cfeEvalEntries[i].evaluated[0].component[0] = cfeEvalEntries[i].evaluated[0].component[1] = cfeEvalEntries[i].evaluated[0].component[2] = 0.0f;
+        cfeEvalEntries[i].evaluated[0].component[0] = cfeEvalEntries[i].evaluated[0].component[1]
+            = cfeEvalEntries[i].evaluated[0].component[2] = 0.0f;
         cfeEvalEntries[i].evaluated[0].component[3] = 1.0f;
-        cfeEvalEntries[i].evaluated[1].component[0] = cfeEvalEntries[i].evaluated[1].component[1] = cfeEvalEntries[i].evaluated[1].component[2] = 0.0f;
+        cfeEvalEntries[i].evaluated[1].component[0] = cfeEvalEntries[i].evaluated[1].component[1]
+            = cfeEvalEntries[i].evaluated[1].component[2] = 0.0f;
         cfeEvalEntries[i].evaluated[1].component[3] = 1.0f;
-        cfeEvalEntries[i].evaluated[2].component[0] = cfeEvalEntries[i].evaluated[2].component[1] = cfeEvalEntries[i].evaluated[2].component[2] = 1.0f;
+        cfeEvalEntries[i].evaluated[2].component[0] = cfeEvalEntries[i].evaluated[2].component[1]
+            = cfeEvalEntries[i].evaluated[2].component[2] = 1.0f;
         cfeEvalEntries[i].evaluated[2].component[3] = 1.0f;
     }
 }
