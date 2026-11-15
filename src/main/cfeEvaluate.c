@@ -932,10 +932,10 @@ void func_0024A8C0(CfeEvalEntry *entry)
     void *frame;
     CfeMovieScratch *scratch = CFE_MOVIE_SCRATCH;
 
-    if (entry->firstBuffer) {
-        frame = entry->frameBuffers[0];
+    if (entry->movie.bufferIndex) {
+        frame = entry->movie.imageAddress[0];
     } else {
-        frame = entry->frameBuffers[1];
+        frame = entry->movie.imageAddress[1];
     }
     xglCurSetTranslate(&entry->evaluated[0]);
     xglCurMulRotateZ(entry->evaluated[1].z);
@@ -949,14 +949,16 @@ void func_0024A8C0(CfeEvalEntry *entry)
     scratch->stq[0].vector.x = 0.0f;
     scratch->stq[0].vector.y = CFE_MOVIE_TOP;
     scratch->stq[0].vector.z = 1.0f;
-    scratch->stq[1].vector.x = (float) entry->width / xglRoundUpPow2(entry->width);
+    scratch->stq[1].vector.x = (float) entry->movie.width / xglRoundUpPow2(entry->movie.width);
     scratch->stq[1].vector.y = CFE_MOVIE_TOP;
     scratch->stq[1].vector.z = 1.0f;
     scratch->stq[2].vector.x = 0.0f;
-    scratch->stq[2].vector.y = (float) entry->height / xglRoundUpPow2(entry->height) - CFE_MOVIE_BOTTOM_INSET;
+    scratch->stq[2].vector.y = (float) entry->movie.height / xglRoundUpPow2(entry->movie.height)
+                               - CFE_MOVIE_BOTTOM_INSET;
     scratch->stq[2].vector.z = 1.0f;
-    scratch->stq[3].vector.x = (float) entry->width / xglRoundUpPow2(entry->width);
-    scratch->stq[3].vector.y = (float) entry->height / xglRoundUpPow2(entry->height) - CFE_MOVIE_BOTTOM_INSET;
+    scratch->stq[3].vector.x = (float) entry->movie.width / xglRoundUpPow2(entry->movie.width);
+    scratch->stq[3].vector.y = (float) entry->movie.height / xglRoundUpPow2(entry->movie.height)
+                               - CFE_MOVIE_BOTTOM_INSET;
     scratch->stq[3].vector.z = 1.0f;
     _CurMatrixSet(camera->volume[0].viewMatrix);
     _CurSetViewScaleTrans(&camera->screen.screenScale, &camera->screen.screenOffset);
@@ -984,29 +986,31 @@ void func_0024A8C0(CfeEvalEntry *entry)
     upload[1] = 0;
     upload[2] = 0;
     upload[3] = CFE_VIF_DIRECT | 1;
-    upload[4] = CFE_GIF_TAG_EOP + entry->width * entry->height / 4;
+    upload[4] = CFE_GIF_TAG_EOP + entry->movie.width * entry->movie.height / 4;
     upload[5] = CFE_GIF_TAG_IMAGE;
     upload[6] = 0;
     upload[7] = 0;
     xglDirectQueueBegin();
     xglDirectQueuePush(GS_TEXFLUSH, 0);
-    xglDirectQueuePush(GS_BITBLTBUF, GS_SET_BITBLTBUF(0, func_001D2E90(entry->width, 0), 0, sRender.frame_base_1 << 5,
-                                                      func_001D2E90(entry->width, 0), 0));
+    xglDirectQueuePush(GS_BITBLTBUF, GS_SET_BITBLTBUF(0, func_001D2E90(entry->movie.width, 0), 0,
+                                                      sRender.frame_base_1 << 5,
+                                                      func_001D2E90(entry->movie.width, 0), 0));
     xglDirectQueuePush(GS_TRXPOS, 0);
-    xglDirectQueuePush(GS_TRXREG, GS_SET_TRXREG(entry->width, entry->height));
+    xglDirectQueuePush(GS_TRXREG, GS_SET_TRXREG(entry->movie.width, entry->movie.height));
     xglDirectQueuePush(GS_TRXDIR, 0);
     xglDirectQueueDefer(0, 4);
     pxyAddEntryFlagged(4, upload, 2, 0);
-    pxyAddEntryFull(5, frame, entry->width * entry->height / 4, 0, CFE_VIF_DIRECT | entry->width * entry->height / 4);
+    pxyAddEntryFull(5, frame, entry->movie.width * entry->movie.height / 4, 0,
+                    CFE_VIF_DIRECT | entry->movie.width * entry->movie.height / 4);
     xglDirectQueueBegin();
     xglDirectQueuePush(GS_TEXFLUSH, 0);
     xglDirectQueuePush(GS_TEST_1, GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2));
     xglDirectQueuePush(GS_CLAMP_1, 0);
     xglDirectQueuePush(GS_ALPHA_1, GS_SET_ALPHA(0, 1, 0, 1, 0));
     xglDirectQueuePush(GS_TEX1_1, GS_SET_TEX1(0, 0, 1, 1, 0, 0, 0));
-    xglDirectQueuePush(GS_TEX0_1, GS_SET_TEX0(sRender.frame_base_1 << 5, func_001D2E90(entry->width, 0), 0,
-                                              xglRoundUpLog2(entry->width), xglRoundUpLog2(entry->height), 1, 0, 0,
-                                              0, 0, 0, 1));
+    xglDirectQueuePush(GS_TEX0_1, GS_SET_TEX0(sRender.frame_base_1 << 5, func_001D2E90(entry->movie.width, 0), 0,
+                                              xglRoundUpLog2(entry->movie.width),
+                                              xglRoundUpLog2(entry->movie.height), 1, 0, 0, 0, 0, 0, 1));
     xglDirectQueuePush(GS_PRIM, GS_SET_PRIM(4, 1, 1, 0, 1, 0, 0, 0, 0));
     xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
                                               scratch->stq[0].word[2]));
@@ -1031,9 +1035,6 @@ void func_0024A8C0(CfeEvalEntry *entry)
     xglDirectQueueDefer(0, 4);
 }
 
-void xglMovieRewind(CfeEvalEntry *entry);
-void xglMoviePlay(CfeEvalEntry *entry);
-
 /* Below this size an entry's scale counts as zero and the entry is skipped. */
 #define CFE_ENTRY_MIN_SCALE 0.05f
 
@@ -1046,7 +1047,7 @@ void cfeUpdateEntries(int noPlay)
     if (cfeEvalEntryCount != 0) {
         for (i = 0; i < cfeEvalEntryCount; i++) {
             if (cfeEvalEntries[i].result_int != 0) {
-                xglMovieRewind(&cfeEvalEntries[i]);
+                xglMovieRewind(&cfeEvalEntries[i].movie);
             }
         if (__builtin_fabsf(cfeEvalEntries[i].evaluated[2].x) < CFE_ENTRY_MIN_SCALE
             || __builtin_fabsf(cfeEvalEntries[i].evaluated[2].y) < CFE_ENTRY_MIN_SCALE
@@ -1054,7 +1055,7 @@ void cfeUpdateEntries(int noPlay)
             continue;
         }
         if (noPlay == 0) {
-            xglMoviePlay(&cfeEvalEntries[i]);
+            xglMoviePlay(&cfeEvalEntries[i].movie);
         }
         func_0024A8C0(&cfeEvalEntries[i]);
         }

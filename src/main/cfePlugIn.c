@@ -548,8 +548,6 @@ int cfe_0024C030(int handle)
     return 1;
 }
 
-void xglMovieInfoInit(void *movie);
-int xglMovieOpen(void *movie, const char *name);
 extern int cfeEvalEntryCount;
 extern CfeEvalEntry cfeEvalEntries[];
 extern char D_0068CE68[];
@@ -578,26 +576,26 @@ int cfe_0024C0D8(int handle)
     unsigned int slot;
 
     strcpy(entry->name, func_A9F238(handle, func_A9F0C0(handle, 1)));
-    xglMovieInfoInit(entry);
+    xglMovieInfoInit(&entry->movie);
     do {
     } while (xglCdServiceIfPending() != 0);
-    entry->dataSize = xglCdGetFileSize(entry->name);
-    entry->data = GameResBufferAlloc(entry->dataSize);
-    if (entry->data == 0) {
+    entry->movie.sourceSize = xglCdGetFileSize(entry->name);
+    entry->movie.source = GameResBufferAlloc(entry->movie.sourceSize);
+    if (entry->movie.source == 0) {
         /* An empty walk to the first unused slot; the result is not used. */
         for (slot = 1; slot < CFE_CD_SLOT_LAST && xglCdSlotTable[slot + 1].owner != -1; slot++) {
         }
     }
     do {
     } while (xglCdServiceIfPending() != 0);
-    xglCdReadFile(entry->name, entry->data, 0, 1);
-    entry->opened = 1;
+    xglCdReadFile(entry->name, entry->movie.source, 0, 1);
+    entry->movie.loop = 1;
     /* The original's assert macro also tests its message string D_0068CE68. */
-    if (xglMovieOpen(entry, 0) != 0 && D_0068CE68 != 0) {
+    if (xglMovieOpen(&entry->movie, 0) != 0 && D_0068CE68 != 0) {
         assertFailed(D_0068CE80, cfeAssertFile, 604);
     }
-    entry->frameBuffers[0] = GameResBufferAlloc(entry->bufferQuads * 16 + 0x20);
-    entry->frameBuffers[1] = GameResBufferAlloc(entry->bufferQuads * 16 + 0x20);
+    entry->movie.imageAddress[0] = GameResBufferAlloc(entry->movie.imageQwords * 16 + 0x20);
+    entry->movie.imageAddress[1] = GameResBufferAlloc(entry->movie.imageQwords * 16 + 0x20);
     cfeEvalEntryCount++;
     return 1;
 }
@@ -1444,14 +1442,14 @@ int cfe_0024E738(int handle)
     }
     cfeGroupCount = 0;
     for (i = 0; i < cfeEvalEntryCount; i++) {
-        if (cfeEvalEntries[i].data != 0) {
-            GameResBlockFreeByBuffer(cfeEvalEntries[i].data);
+        if (cfeEvalEntries[i].movie.source != 0) {
+            GameResBlockFreeByBuffer(cfeEvalEntries[i].movie.source);
         }
-        if (cfeEvalEntries[i].frameBuffers[0] != 0) {
-            GameResBlockFreeByBuffer(cfeEvalEntries[i].frameBuffers[0]);
+        if (cfeEvalEntries[i].movie.imageAddress[0] != 0) {
+            GameResBlockFreeByBuffer(cfeEvalEntries[i].movie.imageAddress[0]);
         }
-        if (cfeEvalEntries[i].frameBuffers[1] != 0) {
-            GameResBlockFreeByBuffer(cfeEvalEntries[i].frameBuffers[1]);
+        if (cfeEvalEntries[i].movie.imageAddress[1] != 0) {
+            GameResBlockFreeByBuffer(cfeEvalEntries[i].movie.imageAddress[1]);
         }
     }
     cfeEvalEntryCount = 0;
