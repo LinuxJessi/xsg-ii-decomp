@@ -117,7 +117,8 @@ void func_00277720(Record *record, void *packet)
 }
 
 void *memset(void *destination, int value, unsigned int count);
-int animSampleSegment(f32 *out, void *seg, f32 position);
+typedef struct AnimSegment AnimSegment; /* defined in tu209.c */
+int animSampleSegment(f32 *out, AnimSegment *seg, f32 position);
 u64 xglColorLerp(u64 from, u64 to, f32 t);
 void animOffsetPoints(Vector4 *points, f32 dx, f32 dy);
 void recordProjectQuad(Vector4 *corners, RecordSource *source, void *params);

@@ -23,9 +23,9 @@ extern void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source
 
 void func_002746B8(Vector4 *v)
 {
-    Vector4 tmp = *v;
+    Vector4 source = *v;
 
-    xglVectorNormal_001A9200(v, &tmp);
+    xglVectorNormal_001A9200(v, &source);
 }
 
 /* GS ALPHA register value for a blend mode: 1 additive (Cs*As + Cd), 2 subtractive

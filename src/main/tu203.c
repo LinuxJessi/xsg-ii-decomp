@@ -17,14 +17,16 @@ extern int xglCosDegTableReady;
 extern float xglCosDegTable[];
 void xglCosDegTableInit(void);
 
-/* Cosine of an angle in degrees from the 10-degree table (built on first use). */
+/* Cosine of an angle in degrees from the 10-degree table (built on first use); the table is
+ * indexed by |degrees| % 360 rounded down to a 10-degree step. */
 float xglCosDeg(int degrees)
 {
     if (!xglCosDegTableReady) {
         xglCosDegTableInit();
         xglCosDegTableReady = 1;
     }
-    /* |degrees| taken in place: with a separate local gcc leaves the abs after the init call (bgez/negu). */
+    /* |degrees| taken in place: with a separate local gcc moves the abs after the init call
+     * (bgez/negu there instead of bltzl/negu at entry). */
     degrees = (degrees >= 0) ? degrees : -degrees;
     return xglCosDegTable[(degrees % 360) / 10];
 }
@@ -46,7 +48,8 @@ extern int xglSinDegTableReady;
 extern float xglSinDegTable[];
 void xglSinDegTableInit(void);
 
-/* Sine of an angle in degrees from the 10-degree table (built on first use). */
+/* Sine of |degrees| from the 10-degree table (built on first use): a negative angle returns the
+ * table entry of the positive angle, not its negated sine. */
 float xglSinDeg(int degrees)
 {
     if (!xglSinDegTableReady) {

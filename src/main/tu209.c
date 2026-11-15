@@ -62,19 +62,8 @@ f32 animLerp(f32 start, f32 end, f32 ratio)
     return ((end - start) * ratio) + start;
 }
 
-/*
- * One 0x10-byte entry of the object animOffsetPoints updates.  Only the x and
- * y words are evidenced by this function; the rest of the entry is untouched
- * here and stays unmodeled.
- */
-typedef struct AnimPoint {
-    f32 x;
-    f32 y;
-    unsigned char unmodeled_08[8];
-} AnimPoint;
-
-/* Offsets the x and y words of the object's four points by (dx, dy). */
-void animOffsetPoints(AnimPoint *points, f32 dx, f32 dy)
+/* Offsets x and y of four corners (func_002778D0's quad in tu208.c) by (dx, dy); z and w are untouched. */
+void animOffsetPoints(Vector4 *points, f32 dx, f32 dy)
 {
     points[0].y += dy;
     points[0].x += dx;
