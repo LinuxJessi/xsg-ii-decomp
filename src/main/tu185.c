@@ -369,11 +369,11 @@ void sefObjectClearFlags(ResourceSlot *slot, unsigned int mask) {
     }
 }
 
-void sefFreeSlotCells(void);
+void sefFreeSlotCells(ResourceSlot *slot);
 
 void sefReleaseCellSlot(ResourceSlot *slot) {
     if (slot != 0 && slot->body.handle != 0) {
-        sefFreeSlotCells();
+        sefFreeSlotCells(slot);
         smFreeHandle(slot->body.handle);
         memset(slot, 0, sizeof(ResourceSlot));
         slot->body.resetFlag = 1;
