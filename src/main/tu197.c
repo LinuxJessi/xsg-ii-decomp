@@ -61,7 +61,7 @@ typedef void (*MSeHook)(void);
 
 /* MEfCamParams in the ov01 link (config/symbols/ov01.txt); main still links it as D_0061B2C0. */
 extern MEfCameraParams D_0061B2C0;
-extern const char D_0068C6D8[];
+extern char D_0068C6D8[];
 XglCamera *xglStudioGetCamera2(int camera_index);
 void MMathRotateMatrixYXZ(Matrix4 matrix, int mode, const Vector4 *angles);
 void svForceImageMapper(unsigned int index);
@@ -153,7 +153,7 @@ void MSeObjProc(unsigned int mode) {
         }
         break;
     default:
-        MOutputDebugStringWarn((char *)D_0068C6D8, mode);
+        MOutputDebugStringWarn(D_0068C6D8, mode);
         break;
     }
 }

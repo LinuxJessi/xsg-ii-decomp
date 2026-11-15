@@ -1,20 +1,21 @@
 #include "common.h"
 #include "shared.h"
 
-/* Fade record: color is the value fadeSetColor/fadeReset set directly; current is what
- * fadeUpdate sends to xglRenderGlobalFadeSet every frame; start/target/delta drive the
- * per-frame interpolation (delta = (target - start) / totalFrames, added to current
- * each frame while active and skipAnimate is 0). */
+/* Fade record. fadeStartIn/fadeStartColorAlpha copy current into start, set target and
+ * delta = (target - start) / totalFrames (fadeDeltaVector) and install fadeUpdate as the hook.
+ * While active, fadeUpdate passes current to fadeApplyColor every frame and, unless skipAnimate
+ * is set, adds delta to current; when elapsed reaches totalFrames it copies target into current,
+ * applies it once more, clears active and the hook. fadeSetColor/fadeReset set color directly. */
 typedef struct FadeState {
     int active;         /* +0x00 */
-    Vector4 start;       /* +0x04 */
-    Vector4 current;      /* +0x14 */
-    Vector4 target;       /* +0x24 */
-    Vector4 color;        /* +0x34 */
-    Vector4 delta;         /* +0x44 */
-    int elapsed;         /* +0x54 */
-    int totalFrames;     /* +0x58 */
-    int skipAnimate;     /* +0x5C */
+    Vector4 start;      /* +0x04 */
+    Vector4 current;    /* +0x14 */
+    Vector4 target;     /* +0x24 */
+    Vector4 color;      /* +0x34 */
+    Vector4 delta;      /* +0x44 */
+    int elapsed;        /* +0x54 */
+    int totalFrames;    /* +0x58 */
+    int skipAnimate;    /* +0x5C */
 } FadeState;
 
 extern FadeState fadeState;

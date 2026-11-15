@@ -32,7 +32,7 @@ struct XenoActor {
     float shadowValue;      /* +0x158 */
     int shadowCount;        /* +0x15C */
     int state;              /* +0x160 */
-    float shadowValue2;     /* +0x164 */
+    unsigned char unmodeled_164[4];
     float shadowValue3;     /* +0x168 */
 };
 
@@ -135,6 +135,8 @@ typedef struct MSeRequest {
     unsigned char unmodeled_3c[0x40 - 0x3C];
 } MSeRequest;
 
+/* Clears a 0x40-byte request block: memset(buffer, 0, 0x40) (ov01 tu075.c). Every MSeRequest
+ * field the select path below leaves unassigned is therefore 0. */
 void func_00AAAEC8(void *buffer);
 void MSeFire(MSeRequest *request);
 
