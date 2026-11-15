@@ -45,7 +45,71 @@ void cfeEntryResetDirs(CfeTrackNode *entry)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu145", func_0024FC90);
+/* Sets the directions of every key of the track from its neighbours (flag 0x4 on the first key keeps them):
+ * both directions point along the time and angle step to the next key (first key), from the previous key
+ * (last key) or from the previous to the next key. Flag 0x2 gives a middle key a first direction from the
+ * previous key only, and makes it the previous key's second direction (also on the last key). A track of one
+ * key gets (1, 0). The reset flags of the three keys are applied after each step. */
+void func_0024FC90(CfeTrackNode *track)
+{
+    CfeTrackNode *prev = 0;
+    CfeTrackNode *node = track;
+    CfeTrackNode *next;
+
+    if (track != 0 && (track->flags & 4)) {
+        return;
+    }
+    while (node != 0) {
+        next = node->next;
+        if (prev == 0) {
+            if (next == 0) {
+                node->secondDirection[0] = 0x100;
+                node->secondDirection[1] = 0;
+                node->firstDirection[0] = 0x100;
+                node->firstDirection[1] = 0;
+            } else {
+                node->secondDirection[0] = (next->startTime - node->startTime) << 8;
+                node->secondDirection[1]
+                    = CFE_FLOAT_TO_FIXED(CFE_FIXED_TO_FLOAT(next->value) - CFE_FIXED_TO_FLOAT(node->value));
+                node->firstDirection[0] = node->secondDirection[0];
+                node->firstDirection[1] = node->secondDirection[1];
+                cfeEntryNormalizeDirs(node);
+            }
+        } else if (next == 0) {
+            node->secondDirection[0] = (node->startTime - prev->startTime) << 8;
+            node->secondDirection[1]
+                = CFE_FLOAT_TO_FIXED(CFE_FIXED_TO_FLOAT(node->value) - CFE_FIXED_TO_FLOAT(prev->value));
+            node->firstDirection[0] = node->secondDirection[0];
+            node->firstDirection[1] = node->secondDirection[1];
+            cfeEntryNormalizeDirs(node);
+            if (node->flags & 2) {
+                prev->secondDirection[0] = node->firstDirection[0];
+                prev->secondDirection[1] = node->firstDirection[1];
+            }
+        } else {
+            node->secondDirection[0] = (next->startTime - prev->startTime) << 8;
+            node->secondDirection[1]
+                = CFE_FLOAT_TO_FIXED((CFE_FIXED_TO_FLOAT(node->value) - CFE_FIXED_TO_FLOAT(prev->value))
+                                     + (CFE_FIXED_TO_FLOAT(next->value) - CFE_FIXED_TO_FLOAT(node->value)));
+            node->firstDirection[0] = node->secondDirection[0];
+            node->firstDirection[1] = node->secondDirection[1];
+            cfeEntryNormalizeDirs(node);
+            if (node->flags & 2) {
+                node->firstDirection[0] = (node->startTime - prev->startTime) << 8;
+                node->firstDirection[1]
+                    = CFE_FLOAT_TO_FIXED(CFE_FIXED_TO_FLOAT(node->value) - CFE_FIXED_TO_FLOAT(prev->value));
+                cfeEntryNormalizeDirs(node);
+                prev->secondDirection[0] = node->firstDirection[0];
+                prev->secondDirection[1] = node->firstDirection[1];
+            }
+        }
+        cfeEntryResetDirs(prev);
+        cfeEntryResetDirs(node);
+        cfeEntryResetDirs(next);
+        prev = node;
+        node = node->next;
+    }
+}
 
 #define CFE_PI 3.1415927f
 #define CFE_TWO_PI 6.2831855f
