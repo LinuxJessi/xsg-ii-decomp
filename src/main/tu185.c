@@ -1,6 +1,8 @@
 #include "common.h"
 #include "shared.h"
 #include "vu0_macro.h"
+#include "quadword.h"
+#include "gs.h"
 #include "main/sm_initilize.h"
 #include "main/tu185.h"
 
@@ -46,14 +48,42 @@ void sefPacketMscnt(void) {
     func_0012B9A0(packet, 0x17000000);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", sefPacketUnpackRef);
+extern void sceVif1PkRef(XglPacket *packet, const void *environment, int count, int mode, int offset, int flags);
+
+/* VIF UNPACK code: CMD 0x6C (V4-32, USN set), NUM = count in bits 16-23, the low word 0x8000
+ * fixed. packetSize (always 0x28 = sizeof(XglPacket) at every caller) is read nowhere here. */
+#define VIF_UNPACK_V4_32_USN 0x6C008000U
+
+void sefPacketUnpackRef(void *packet, int packetSize, int count, unsigned int value) {
+    const void *environment;
+    XglPacket *currentPacket;
+
+    environment = (const void *) ((unsigned int) packet & 0x0FFFFFFF);
+    currentPacket = xglPacketGetCurrent();
+    sefPacketMscnt();
+    ((u32 *) packet)[4] = value;
+    ((u32 *) packet)[3] = VIF_UNPACK_V4_32_USN | ((unsigned int) (count - 1) << 16);
+    sceVif1PkRef(currentPacket, environment, count, 0, 0, 0);
+}
 
 void func_0012B6E0(XglPacket *packet, int, int, int, int);
 void func_0012B770(XglPacket *packet);
 void func_0012BCE8(XglPacket *packet, const void *data, int count);
-extern unsigned char D_00881700[];
-extern unsigned char D_00881740[];
-extern unsigned char D_008817E0[];
+/* The VU packet at D_00881700: sefBuildVuPacket sends 0x11 quadwords from +0x00, 0xD from +0x40
+ * or 3 from +0xE0. */
+typedef struct SefVuPacket {
+    u64 program[8];           /* +0x00 */
+    Matrix4 modelViewMatrix;  /* +0x40: *sefViewMatrixPtr x the model matrix (func_0026C0A8) */
+    Matrix4 cameraMatrix;     /* +0x80: copy of D_00831610 (func_0026C0A8) */
+    u8 unmodeled_c0[0xe0 - 0xc0];
+    u64 tex0;                 /* +0xE0: A+D TEX0_1 value */
+    u64 tex0Register;         /* +0xE8: GS_TEX0_1 */
+    u64 alpha;                /* +0xF0: A+D ALPHA_1 value */
+    u64 alphaRegister;        /* +0xF8: GS_ALPHA_1 */
+    u8 unmodeled_100[0x110 - 0x100];
+} SefVuPacket;
+
+extern SefVuPacket D_00881700;
 extern unsigned char D_1F70[];
 extern unsigned char D_1FD0[];
 
@@ -64,7 +94,7 @@ void sefBuildVuPacket(int kind, int alternate) {
     sceVif1PkCnt(packet, 0);
     if (kind == 0) {
         func_0012B6E0(packet, 0x14, 0x6C, 4, 4);
-        func_0012BCE8(packet, D_00881700, 0x11);
+        func_0012BCE8(packet, &D_00881700, 0x11);
     } else {
         if (alternate != 0) {
             func_0012B9A0(packet, ((u32) D_1FD0 >> 3) | 0x14000000);
@@ -73,10 +103,10 @@ void sefBuildVuPacket(int kind, int alternate) {
         }
         if (kind == 1) {
             func_0012B6E0(packet, 0x18, 0x6C, 4, 4);
-            func_0012BCE8(packet, D_00881740, 0xD);
+            func_0012BCE8(packet, &D_00881700.modelViewMatrix, 0xD);
         } else {
             func_0012B6E0(packet, 0x22, 0x6C, 4, 4);
-            func_0012BCE8(packet, D_008817E0, 3);
+            func_0012BCE8(packet, &D_00881700.tex0, 3);
         }
     }
     func_0012B770(packet);
@@ -85,7 +115,43 @@ void sefBuildVuPacket(int kind, int alternate) {
 
 INCLUDE_ASM("asm/main/nonmatchings/tu185", sefBuildCameraPacket);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026C0A8);
+Matrix4 *MMathMulMatrix(Matrix4 *out, const Matrix4 *rhs, const Matrix4 *lhs);
+extern const Matrix4 *sefViewMatrixPtr;
+extern Matrix4 D_00831610;
+/* GS ALPHA_1 values: [0] 0x44 normal blend, [1] 0x48 additive (rodata, also read by sdvDrawAlter). */
+extern const u64 D_0068C5E8[];
+
+/*
+ * Fills the packet's model-view and camera matrices and its TEX0_1/ALPHA_1 A+D pairs: additive
+ * blending for the blend kinds and flag values tested below, normal blending otherwise. Each
+ * test keeps its own store, as the original's one block per test shows.
+ */
+void func_0026C0A8(u64 tex0, const Matrix4 *matrix, int blendKind, int flags) {
+    MMathMulMatrix(&D_00881700.modelViewMatrix, sefViewMatrixPtr, matrix);
+    QuadwordCopyMatrixT0(&D_00881700.cameraMatrix, &D_00831610);
+    D_00881700.tex0 = tex0;
+    D_00881700.tex0Register = GS_TEX0_1;
+    if (blendKind >= 3 && blendKind <= 4) {
+        D_00881700.alpha = D_0068C5E8[1];
+    } else if (blendKind >= 5 && blendKind <= 7) {
+        if (flags & 1) {
+            D_00881700.alpha = D_0068C5E8[0];
+        } else {
+            D_00881700.alpha = D_0068C5E8[1];
+        }
+    } else if (blendKind >= 11 && blendKind <= 13 && (flags == 0 || flags == 3)) {
+        D_00881700.alpha = D_0068C5E8[1];
+    } else if (blendKind >= 14 && blendKind <= 16 && flags < 2) {
+        D_00881700.alpha = D_0068C5E8[1];
+    } else if (blendKind >= 17 && blendKind <= 19 && flags == 2) {
+        D_00881700.alpha = D_0068C5E8[1];
+    } else if (blendKind == 20 && flags == 1) {
+        D_00881700.alpha = D_0068C5E8[1];
+    } else {
+        D_00881700.alpha = D_0068C5E8[0];
+    }
+    D_00881700.alphaRegister = GS_ALPHA_1;
+}
 
 extern int sefActiveCount;
 
@@ -105,8 +171,16 @@ typedef struct ResourceSlot {
     u8 unmodeled_44[0x104];
     int link;        /* +0x148: nonzero while the slot is linked */
     u8 unmodeled_14c[0x3c];
-    int handle;      /* +0x188: nonzero while the slot owns cells; also the value freed by smFreeHandle */
-    u8 unmodeled_18c[0x14];
+    /*
+     * +0x188: the address of this slot's cell-id table inside sefEntryPool, nonzero while
+     * the slot owns cells. Declared `int` before sefFreeSlotCells.s showed sefReleaseCellSlot's
+     * one other caller passing it straight to smFreeHandle(void *) with a pointer-from-integer
+     * warning (sefReleaseCellSlot, unchanged instructions either way).
+     */
+    void *handle;
+    int cellCountX;  /* +0x18C: with cellCountY, the cell-id table's element count (sefFreeSlotCells) */
+    int cellCountY;  /* +0x190 */
+    u8 unmodeled_194[0xc];
 } ResourceSlot;
 
 /* The table: a 0x40-byte header, then 192 slots. */
@@ -148,7 +222,20 @@ void sefSetSlotFlags(int key, int flagBits) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", sefClearSlotFlags);
+/* Clears flagBits in every active slot whose key matches; a negative key matches all. */
+void sefClearSlotFlags(int key, int flagBits) {
+    ResourceTable *table;
+    int index;
+    ResourceSlot *slot;
+
+    table = &sefResourceTable;
+    for (index = 0; index < 192; index++) {
+        slot = &table->slots[index];
+        if (slot->state != 0 && slot->link != 0 && (key < 0 || key == slot->key)) {
+            slot->flags &= ~flagBits;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu185", sefFreeSlotCells);
 
@@ -176,11 +263,11 @@ void sefObjectClearFlags(FlaggedObject *object, unsigned int mask) {
     }
 }
 
-void sefFreeSlotCells(void);
+void sefFreeSlotCells(ResourceSlot *slot);
 
 void sefReleaseCellSlot(ResourceSlot *slot) {
     if (slot != 0 && slot->handle != 0) {
-        sefFreeSlotCells();
+        sefFreeSlotCells(slot);
         smFreeHandle(slot->handle);
         memset(slot, 0, sizeof(ResourceSlot));
         slot->resetFlag = 1;
