@@ -39,7 +39,146 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateSetupContext);
 
 INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawRing);
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", func_002424D8);
+
+/* gameWork as the effect sees it: the control word at +0x08; bit 0 pauses the game. gameWork has no header
+ * type (tu069.c and cfePlugIn.c keep their own views). */
+typedef struct GifGameWork {
+    unsigned char unmodeled_00[8];
+    int control;
+} GifGameWork;
+
+extern GifGameWork gameWork;
+/* The smallest texture scale of the blur, 0.9 of the ratio. */
+extern f32 D_00631554;
+/* The texture scale of each edge point of the blur fan. */
+extern f32 D_00882310[512];
+/* The GIF tag template of the blur fan (the vertex count is or-ed in). */
+extern u32 D_00631558[4];
+
+#define GIF_GAME_PAUSED 0x1
+/* The edge points are this far apart at least. */
+#define GIF_BLUR_MIN_STEP 4
+
+/* Draws the shown page again as a triangle fan from the effect centre to points around the screen edge, every
+ * subWindow[0] pixels; each edge point samples the texture at a random scale between 0.9 and 1.0 of the ratio
+ * towards the centre, so the picture blurs radially. The scales are drawn anew and the ratio lowered by its
+ * step only while the game is not paused. Nothing is drawn while the ratio is 0. */
+void func_002424D8(XglPacket *packet)
+{
+    u32 *cursor;
+    u32 *tag = 0;
+    int k;
+    int count;
+    int step;
+    int pos;
+    float scale = 0.0f;
+
+    if (gifStatus.ratio == scale) {
+        return;
+    }
+    D_00631554 = gifStatus.ratio * 0.9f;
+    if (!(gameWork.control & GIF_GAME_PAUSED)) {
+        for (pos = 0; pos < 512; pos++) {
+            D_00882310[pos] = (xglSRand() % 10U) * 0.01f + D_00631554;
+        }
+    }
+    k = 0;
+    count = 1;
+    pos = 0;
+    gifStateSetupContext(packet, gifStatus.effectAlpha * gifStatus.ratio);
+    step = gifStatus.subWindow[0];
+    if (step < GIF_BLUR_MIN_STEP) {
+        step = GIF_BLUR_MIN_STEP;
+    }
+    cursor = (u32 *) 0x70000010;
+    cursor[0] = gifStatus.centerX << 4;
+    cursor[1] = gifStatus.centerY << 4;
+    cursor[2] = 0;
+    cursor[3] = 0;
+    cursor[4] = ((gifStateOriginX + gifStatus.centerX) << 4) - 8;
+    cursor[5] = ((gifStateOriginY + gifStatus.centerY) << 4) - 9;
+    cursor[6] = gifStatus.depth;
+    cursor[7] = 0;
+    cursor = (u32 *) 0x70000030;
+    do {
+        scale = D_00882310[k++];
+        cursor[0] = (gifStatus.centerX + (pos - gifStatus.centerX) * scale) * 16.0f;
+        cursor[1] = (gifStatus.centerY + (0 - gifStatus.centerY) * scale) * 16.0f;
+        cursor[2] = 0;
+        cursor[3] = 0;
+        count++;
+        cursor[4] = ((gifStateOriginX + pos) << 4) - 8;
+        pos += step;
+        cursor[5] = ((gifStateOriginY + 0) << 4) - 9;
+        cursor[6] = gifStatus.depth;
+        cursor[7] = 0;
+        cursor += 8;
+    } while (pos < GIF_STATE_WIDTH);
+    for (pos = 0; pos < GIF_STATE_HEIGHT; pos += step) {
+        scale = D_00882310[k++];
+        cursor[0] = (gifStatus.centerX + ((GIF_STATE_WIDTH - 1) - gifStatus.centerX) * scale) * 16.0f;
+        cursor[1] = (gifStatus.centerY + (pos - gifStatus.centerY) * scale) * 16.0f;
+        cursor[2] = 0;
+        cursor[3] = 0;
+        count++;
+        cursor[4] = ((gifStateOriginX + (GIF_STATE_WIDTH - 1)) << 4) - 8;
+        cursor[5] = ((gifStateOriginY + pos) << 4) - 9;
+        cursor[6] = gifStatus.depth;
+        cursor[7] = 0;
+        cursor += 8;
+    }
+    for (pos = GIF_STATE_WIDTH - 1; pos >= 0; pos -= step) {
+        scale = D_00882310[k++];
+        cursor[0] = (gifStatus.centerX + (pos - gifStatus.centerX) * scale) * 16.0f;
+        cursor[1] = (gifStatus.centerY + ((GIF_STATE_HEIGHT - 1) - gifStatus.centerY) * scale) * 16.0f;
+        cursor[2] = 0;
+        cursor[3] = 0;
+        count++;
+        cursor[4] = ((gifStateOriginX + pos) << 4) - 8;
+        cursor[5] = ((gifStateOriginY + (GIF_STATE_HEIGHT - 1)) << 4) - 9;
+        cursor[6] = gifStatus.depth;
+        cursor[7] = 0;
+        cursor += 8;
+    }
+    for (pos = GIF_STATE_HEIGHT - 1; pos >= 0; pos -= step) {
+        scale = D_00882310[k++];
+        cursor[0] = (gifStatus.centerX + (0 - gifStatus.centerX) * scale) * 16.0f;
+        cursor[1] = (gifStatus.centerY + (pos - gifStatus.centerY) * scale) * 16.0f;
+        cursor[2] = 0;
+        cursor[3] = 0;
+        count++;
+        cursor[4] = ((gifStateOriginX + 0) << 4) - 8;
+        cursor[5] = ((gifStateOriginY + pos) << 4) - 9;
+        cursor[6] = gifStatus.depth;
+        cursor[7] = 0;
+        cursor += 8;
+    }
+    count++;
+    tag = (u32 *) 0x70000000;
+    tag[0] = D_00631558[0] | count;
+    tag[1] = D_00631558[1];
+    tag[2] = D_00631558[2];
+    tag[3] = D_00631558[3];
+    tag += 4;
+    cursor[0] = tag[8];
+    cursor[1] = tag[9];
+    cursor[2] = tag[10];
+    cursor[3] = tag[11];
+    cursor[4] = tag[12];
+    cursor[5] = tag[13];
+    cursor[6] = tag[14];
+    cursor[7] = tag[15];
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, (void *) 0x70000000, count * 2 + 1);
+    sceVif1PkCloseDirectHLCode(packet);
+    if (!(gameWork.control & GIF_GAME_PAUSED)) {
+        gifStatus.ratio -= gifStatus.ratioStep;
+        if (gifStatus.ratio < 0.0f) {
+            gifStatus.ratio = 0.0f;
+        }
+    }
+}
 
 /* xgl_2.c defines it with its own Matrix struct; the callers pass a Matrix4. */
 void xglMatrixInverse(void *destination, void *source);
