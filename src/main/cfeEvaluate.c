@@ -549,7 +549,6 @@ typedef struct CfeSpawnedEffect {
 } CfeSpawnedEffect;
 
 void sefClearOwnerFlags(unsigned int id, int flags);
-CfeSpawnedEffect *sefSpawnEffectRecordById(unsigned int id, Vector4 *position, Vector4 *rotation);
 void sefExecEffectSteps(CfeSpawnedEffect *effect, float frames, float steps);
 void sefSetRecordOwner(CfeSpawnedEffect *effect, void *owner);
 
@@ -564,13 +563,15 @@ void func_002488F8(CfeEvalCommand *command)
     if (command->flag != 0) {
         sefClearOwnerFlags((command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_FLAGGED,
                            CFE_OWNER_FLAGS);
-        effect = sefSpawnEffectRecordById((command->page_index << CFE_PAGE_SHIFT) | command->page_offset
-                                          | CFE_BANK_FLAGGED, &command->position, &command->rotation);
+        effect = (CfeSpawnedEffect *) sefSpawnEffectRecordById(
+            (command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_FLAGGED, (int) &command->position,
+            (unsigned char *) &command->rotation);
     } else {
         sefClearOwnerFlags((command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN,
                            CFE_OWNER_FLAGS);
-        effect = sefSpawnEffectRecordById((command->page_index << CFE_PAGE_SHIFT) | command->page_offset
-                                          | CFE_BANK_PLAIN, &command->position, &command->rotation);
+        effect = (CfeSpawnedEffect *) sefSpawnEffectRecordById(
+            (command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN, (int) &command->position,
+            (unsigned char *) &command->rotation);
     }
     if (effect != 0) {
         effect->scale.element[0] = command->scale[0];
