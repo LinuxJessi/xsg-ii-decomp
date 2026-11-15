@@ -321,7 +321,54 @@ typedef struct CfeGroup {
 
 extern CfeGroup cfeGroups[];
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", func_0024B6D8);
+float func_002A1DE0(float value);   /* asinf */
+double func_002A1DB0(double value); /* sqrt */
+float atan2f(float y, float x);
+
+/* The record of part `index` with its address computed index first (index * size + records), as the
+ * original computes it for the two quadword copies below; `&group->records[index]` adds in the other
+ * order (addu operands swapped). */
+#define CFE_GROUP_RECORD(group, index) \
+    ((CfeEvalRecord *) ((index) * sizeof(CfeEvalRecord) + (int) (group)->records))
+
+/* Starts the records of every part of the group from the part's matrix: the position (w = 1), the Euler
+ * angles (x from the pitch row, y from the heading of the third row, z the roll, reflected across pi when the
+ * up row points down) and unit scale; both are kept as the initial values. */
+void func_0024B6D8(CfeGroup *group)
+{
+    float *matrix;
+    int i;
+
+    if (group->parts == 0) {
+        return;
+    }
+    for (i = 0; i < group->parts->geometryCount; i++) {
+        matrix = &group->matrices[i][0][0];
+        group->records[i].evaluated[0].vector.x = matrix[12];
+        group->records[i].evaluated[0].vector.y = matrix[13];
+        group->records[i].evaluated[0].vector.z = matrix[14];
+        group->records[i].evaluated[0].vector.w = 1.0f;
+        group->records[i].evaluated[1].vector.x = func_002A1DE0(matrix[9]);
+        group->records[i].evaluated[1].vector.y = atan2f(matrix[8], matrix[10]);
+        if (matrix[5] >= 0.0f) {
+            double sine = matrix[1];
+
+            group->records[i].evaluated[1].vector.z = func_002A1DE0(sine / func_002A1DB0(1.0f - matrix[9] * matrix[9]));
+        } else {
+            double sine = matrix[1];
+
+            group->records[i].evaluated[1].vector.z
+                = 3.1415927f - func_002A1DE0(sine / func_002A1DB0(1.0f - matrix[9] * matrix[9]));
+        }
+        group->records[i].evaluated[1].vector.w = 1.0f;
+        group->records[i].evaluated[2].vector.x = 1.0f;
+        group->records[i].evaluated[2].vector.y = 1.0f;
+        group->records[i].evaluated[2].vector.z = 1.0f;
+        group->records[i].evaluated[2].vector.w = 1.0f;
+        QuadwordCopy(&CFE_GROUP_RECORD(group, i)->initial[0], &CFE_GROUP_RECORD(group, i)->evaluated[0]);
+        QuadwordCopy(&CFE_GROUP_RECORD(group, i)->initial[1], &CFE_GROUP_RECORD(group, i)->evaluated[1]);
+    }
+}
 
 void XenoActorSetModeInSlot(void *, int, int);
 float XenoActorSetSelector(void *, int);
