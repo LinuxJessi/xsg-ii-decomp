@@ -202,7 +202,42 @@ void cfeEvalGlobalInit(void)
     cfeEvalGlobal.evaluated[1].w = 1.0f;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu141", cfeEvalEntriesInit);
+extern int cfeEvalEntryCount;
+extern CfeEvalEntry cfeEvalEntries[];
+
+/* The four corners every entry starts with (a unit quad around the origin). */
+typedef struct CfeEntryCorners {
+    AlignedVector4 corner[4];
+} CfeEntryCorners;
+
+extern const CfeEntryCorners D_0068D080;
+
+/* Number of entries in cfeEvalEntries. */
+#define CFE_EVAL_ENTRY_COUNT 16
+/* Clears the entries and starts each one with the unit quad of D_0068D080, the position and angles
+ * at the origin (w = 1) and unit scale. */
+void cfeEvalEntriesInit(void)
+{
+    CfeEntryCorners corners = D_0068D080;
+    AlignedVector4 *source;
+    int i;
+
+    cfeEvalEntryCount = 0;
+    memset(cfeEvalEntries, 0, CFE_EVAL_ENTRY_COUNT * sizeof(CfeEvalEntry));
+    for (i = 0; i < CFE_EVAL_ENTRY_COUNT; i++) {
+        source = corners.corner;
+        QuadwordCopy(&cfeEvalEntries[i].corners[0], &source[0]);
+        QuadwordCopy(&cfeEvalEntries[i].corners[1], &source[1]);
+        QuadwordCopy(&cfeEvalEntries[i].corners[2], &source[2]);
+        QuadwordCopy(&cfeEvalEntries[i].corners[3], &source[3]);
+        cfeEvalEntries[i].evaluated[0].component[0] = cfeEvalEntries[i].evaluated[0].component[1] = cfeEvalEntries[i].evaluated[0].component[2] = 0.0f;
+        cfeEvalEntries[i].evaluated[0].component[3] = 1.0f;
+        cfeEvalEntries[i].evaluated[1].component[0] = cfeEvalEntries[i].evaluated[1].component[1] = cfeEvalEntries[i].evaluated[1].component[2] = 0.0f;
+        cfeEvalEntries[i].evaluated[1].component[3] = 1.0f;
+        cfeEvalEntries[i].evaluated[2].component[0] = cfeEvalEntries[i].evaluated[2].component[1] = cfeEvalEntries[i].evaluated[2].component[2] = 1.0f;
+        cfeEvalEntries[i].evaluated[2].component[3] = 1.0f;
+    }
+}
 
 /* Resets the three CfeEvalSlot entries of cfeEvalSlots (cfeEvaluate.h): result 0, sample 0x80, sample_float 1.0. */
 extern unsigned char cfeEvalSlots[];
@@ -232,8 +267,6 @@ void cfePlugInTextReset(void) {
     field[-1] = 0x7F;
     field[0] = 0;
 }
-
-int cfeEvalEntriesInit(void);
 
 /* Module init: calls two helpers, then each table initializer of this file in order. */
 void cfeInit(void) {

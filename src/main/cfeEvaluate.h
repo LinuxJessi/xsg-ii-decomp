@@ -52,10 +52,13 @@ typedef struct CfeEvalGlobal {
     CfeTrackNode *source[8];
 } CfeEvalGlobal;
 
-/* A vector of a CfeEvalRecord. The original writes them through a union member (alias set 0): the
- * record pointer is reloaded after every store. */
+/* The vector of the cfe records and entries, with its components by name or by index. The original
+ * reaches it through a union: after every store the record pointer is loaded again (alias set 0), and
+ * cfeEvalEntriesInit addresses each component by index (every store has the whole offset in its address,
+ * so the loop walks one pointer at the last component). */
 typedef union CfeEvalVector {
     Vector4 vector;
+    float component[4];
 } CfeEvalVector;
 
 /* Record written by cfeRecordEvaluate: three vectors of results, the starting position and angles and nine source
@@ -74,7 +77,7 @@ typedef struct CfeEvalEntry {
      * bufferIndex is nonzero while imageAddress[0] holds the frame to show, else [1]. */
     XglMovieWork movie;         /* +0x000 */
     char name[0x40];            /* +0x0D0: the movie file name */
-    Vector4 evaluated[3];
+    CfeEvalVector evaluated[3]; /* +0x110: position, angles, scale */
     AlignedVector4 corners[4];  /* +0x140: the quad the entry is drawn with (cfeEvalEntriesInit) */
     unsigned char unmodeled_180[0x80];
     int result_int;

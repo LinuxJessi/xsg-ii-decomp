@@ -738,31 +738,31 @@ void cfeGlobalEvaluate(int sample_param)
 /* Samples the ten sources of one entry of cfeEvalEntries. */
 void cfeEntryEvaluate(CfeEvalEntry *entry, int sample_param) {
     if (entry->source[0] != 0) {
-        entry->evaluated[0].x = cfeTrackSample(entry->source[0], sample_param);
+        entry->evaluated[0].vector.x = cfeTrackSample(entry->source[0], sample_param);
     }
     if (entry->source[1] != 0) {
-        entry->evaluated[0].y = cfeTrackSample(entry->source[1], sample_param);
+        entry->evaluated[0].vector.y = cfeTrackSample(entry->source[1], sample_param);
     }
     if (entry->source[2] != 0) {
-        entry->evaluated[0].z = cfeTrackSample(entry->source[2], sample_param);
+        entry->evaluated[0].vector.z = cfeTrackSample(entry->source[2], sample_param);
     }
     if (entry->source[3] != 0) {
-        entry->evaluated[1].x = cfeTrackSample(entry->source[3], sample_param);
+        entry->evaluated[1].vector.x = cfeTrackSample(entry->source[3], sample_param);
     }
     if (entry->source[4] != 0) {
-        entry->evaluated[1].y = cfeTrackSample(entry->source[4], sample_param);
+        entry->evaluated[1].vector.y = cfeTrackSample(entry->source[4], sample_param);
     }
     if (entry->source[5] != 0) {
-        entry->evaluated[1].z = cfeTrackSample(entry->source[5], sample_param);
+        entry->evaluated[1].vector.z = cfeTrackSample(entry->source[5], sample_param);
     }
     if (entry->source[6] != 0) {
-        entry->evaluated[2].x = cfeTrackSample(entry->source[6], sample_param);
+        entry->evaluated[2].vector.x = cfeTrackSample(entry->source[6], sample_param);
     }
     if (entry->source[7] != 0) {
-        entry->evaluated[2].y = cfeTrackSample(entry->source[7], sample_param);
+        entry->evaluated[2].vector.y = cfeTrackSample(entry->source[7], sample_param);
     }
     if (entry->source[8] != 0) {
-        entry->evaluated[2].z = cfeTrackSample(entry->source[8], sample_param);
+        entry->evaluated[2].vector.z = cfeTrackSample(entry->source[8], sample_param);
     }
     if (entry->source[9] != 0) {
         entry->result_int = (int) cfeTrackSample(entry->source[9], sample_param);
@@ -1150,11 +1150,11 @@ void func_0024A8C0(CfeEvalEntry *entry)
     } else {
         frame = entry->movie.imageAddress[1];
     }
-    xglCurSetTranslate(&entry->evaluated[0]);
-    xglCurMulRotateZ(entry->evaluated[1].z);
-    xglCurMulRotateY(entry->evaluated[1].y);
-    xglCurMulRotateX(entry->evaluated[1].x);
-    xglCurMulScaleXYZ(&entry->evaluated[2]);
+    xglCurSetTranslate(&entry->evaluated[0].vector);
+    xglCurMulRotateZ(entry->evaluated[1].vector.z);
+    xglCurMulRotateY(entry->evaluated[1].vector.y);
+    xglCurMulRotateX(entry->evaluated[1].vector.x);
+    xglCurMulScaleXYZ(&entry->evaluated[2].vector);
     xglCurApplyVector(&scratch->world[0].vector, &entry->corners[0]);
     xglCurApplyVector(&scratch->world[1].vector, &entry->corners[1]);
     xglCurApplyVector(&scratch->world[2].vector, &entry->corners[2]);
@@ -1225,22 +1225,22 @@ void func_0024A8C0(CfeEvalEntry *entry)
                                               xglRoundUpLog2(entry->movie.width),
                                               xglRoundUpLog2(entry->movie.height), 1, 0, 0, 0, 0, 0, 1));
     xglDirectQueuePush(GS_PRIM, GS_SET_PRIM(4, 1, 1, 0, 1, 0, 0, 0, 0));
-    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
+    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].vector.z * 128.0f),
                                               scratch->stq[0].word[2]));
     xglDirectQueuePush(GS_ST, scratch->stq[0].word[0] | (u64) scratch->stq[0].word[1] << 32);
     xglDirectQueuePush(GS_XYZF2, GS_SET_XYZ(scratch->screen[0].word[0], scratch->screen[0].word[1],
                                             scratch->screen[0].word[2]));
-    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
+    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].vector.z * 128.0f),
                                               scratch->stq[1].word[2]));
     xglDirectQueuePush(GS_ST, scratch->stq[1].word[0] | (u64) scratch->stq[1].word[1] << 32);
     xglDirectQueuePush(GS_XYZF2, GS_SET_XYZ(scratch->screen[1].word[0], scratch->screen[1].word[1],
                                             scratch->screen[1].word[2]));
-    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
+    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].vector.z * 128.0f),
                                               scratch->stq[2].word[2]));
     xglDirectQueuePush(GS_ST, scratch->stq[2].word[0] | (u64) scratch->stq[2].word[1] << 32);
     xglDirectQueuePush(GS_XYZF2, GS_SET_XYZ(scratch->screen[2].word[0], scratch->screen[2].word[1],
                                             scratch->screen[2].word[2]));
-    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].z * 128.0f),
+    xglDirectQueuePush(GS_RGBAQ, GS_SET_RGBAQ(0x80, 0x80, 0x80, (int) (entry->evaluated[2].vector.z * 128.0f),
                                               scratch->stq[3].word[2]));
     xglDirectQueuePush(GS_ST, scratch->stq[3].word[0] | (u64) scratch->stq[3].word[1] << 32);
     xglDirectQueuePush(GS_XYZF2, GS_SET_XYZ(scratch->screen[3].word[0], scratch->screen[3].word[1],
@@ -1262,9 +1262,9 @@ void cfeUpdateEntries(int noPlay)
             if (cfeEvalEntries[i].result_int != 0) {
                 xglMovieRewind(&cfeEvalEntries[i].movie);
             }
-        if (__builtin_fabsf(cfeEvalEntries[i].evaluated[2].x) < CFE_ENTRY_MIN_SCALE
-            || __builtin_fabsf(cfeEvalEntries[i].evaluated[2].y) < CFE_ENTRY_MIN_SCALE
-            || __builtin_fabsf(cfeEvalEntries[i].evaluated[2].z) < CFE_ENTRY_MIN_SCALE) {
+        if (__builtin_fabsf(cfeEvalEntries[i].evaluated[2].vector.x) < CFE_ENTRY_MIN_SCALE
+            || __builtin_fabsf(cfeEvalEntries[i].evaluated[2].vector.y) < CFE_ENTRY_MIN_SCALE
+            || __builtin_fabsf(cfeEvalEntries[i].evaluated[2].vector.z) < CFE_ENTRY_MIN_SCALE) {
             continue;
         }
         if (noPlay == 0) {
