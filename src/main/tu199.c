@@ -1,9 +1,24 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu199", ColorSet);
-
 int func_A9F0A8(void *call);
 int func_A9F0C0(void *call, int index);
+void fadeSetColor(float red, float green, float blue);
+
+/* ColorSet: sets the fade colour from three script arguments (fadeSetColor). */
+int ColorSet(void *call) {
+    float color[3];
+    int i;
+
+    if (func_A9F0A8(call) != 3) {
+        return 0;
+    }
+    for (i = 0; i < 3; i++) {
+        color[i] = (float) func_A9F0C0(call, i + 1);
+    }
+    fadeSetColor(color[0], color[1], color[2]);
+    return 1;
+}
+
 void fadeStartIn(int frames);
 
 /* Fadein: the overlay alpha fades from 255 to 0 over the frame count (fadeStartIn). */
