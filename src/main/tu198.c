@@ -1,6 +1,41 @@
 #include "common.h"
+#include "shared.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu198", fadeReset);
+/* Fade record: color is the value fadeSetColor/fadeReset set directly; current is what
+ * fadeUpdate sends to xglRenderGlobalFadeSet every frame; start/target/delta drive the
+ * per-frame interpolation (delta = (target - start) / totalFrames, added to current
+ * each frame while active and skipAnimate is 0). */
+typedef struct FadeState {
+    int active;         /* +0x00 */
+    Vector4 start;       /* +0x04 */
+    Vector4 current;      /* +0x14 */
+    Vector4 target;       /* +0x24 */
+    Vector4 color;        /* +0x34 */
+    Vector4 delta;         /* +0x44 */
+    int elapsed;         /* +0x54 */
+    int totalFrames;     /* +0x58 */
+    int skipAnimate;     /* +0x5C */
+} FadeState;
+
+extern FadeState fadeState;
+extern int fadeUpdateHook[];
+void *memset(void *destination, int value, unsigned int count);
+void fadeApplyColor(float red, float green, float blue, float alpha);
+void xglRenderGlobalFadeReset(void);
+
+/* Resets the fade: black, fully opaque, no fade in progress. */
+void fadeReset(void)
+{
+    memset(&fadeState, 0, sizeof(fadeState));
+    fadeState.color.x = 0.0f;
+    fadeState.color.y = 0.0f;
+    fadeState.color.z = 0.0f;
+    fadeState.color.w = 255.0f;
+    fadeState.current = fadeState.color;
+    xglRenderGlobalFadeReset();
+    fadeApplyColor(fadeState.color.x, fadeState.color.y, fadeState.color.z, fadeState.color.w);
+    fadeUpdateHook[0] = 0;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu198", fadeUpdate);
 
@@ -14,12 +49,8 @@ INCLUDE_ASM("asm/main/nonmatchings/tu198", fadeStartColor);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu198", fadeStartColorAlpha);
 
-#include "shared.h"
-
-/* Fade record fadeState and per-frame hook fadeUpdateHook: see fadeUpdate. */
 void fadeStartIn(int frames);
 void xglRenderGlobalFadeSet(float x, float y, float z, float w);
-extern int fadeUpdateHook[];
 extern int D_0069DC88;
 
 /* Ends any fade: a zero-frame start, the update hook cleared, transparent black. */
