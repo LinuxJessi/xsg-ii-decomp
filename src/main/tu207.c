@@ -9,11 +9,77 @@ int xglIsInRange(int value, int lower, int upper)
   return lower <= value && value <= upper;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00274850);
+struct XglPacket;
 
+/* One 0x7C-byte record of recordBanks; a bank is ten of them (0x4D8 bytes). */
+typedef struct Record {
+    unsigned char type; /* +0x00: 0 unused, 1..21 picks the draw handler D_0063D758[type - 1] */
+    unsigned char unmodeled_01[3];
+    int params[30];     /* +0x04..+0x7C: parameter words of the type; func_00275710 sets the first ten */
+} Record;
+
+typedef struct RecordBank {
+    Record records[10];
+} RecordBank;
+
+/* Declared as bytes, as recordClearBank below reads it. func_00274850 and func_00275710 index it as bytes:
+ * through (RecordBank *) gcc emits addu base,offset instead of offset,base and, in func_00275710, merges
+ * the two record address computations the original keeps apart. */
+extern unsigned char recordBanks[];
+
+/* Local view of sRender (0x00645820; RenderFrameState in main/tu093.h does not model +0x3C): the
+ * render callback, called with the frame's packet (DefocusRenderState.callback in game_defocus.c). */
+typedef struct RecordRenderState {
+    unsigned char unmodeled_00[0x3C];
+    void (*callback)(struct XglPacket *packet);
+} RecordRenderState;
+
+extern RecordRenderState sRender;
+
+void func_00275830(struct XglPacket *packet);
+
+/* Installs func_00275830 as the render callback while any record is used, else removes it. The scan
+ * covers 30 banks although recordBanks holds 3 (0xE88 bytes), as the original does. */
+void func_00274850(void)
+{
+    int active;
+    int slot;
+    int bank;
+
+    active = 0;
+    for (slot = 0; slot < 10; slot++) {
+        for (bank = 0; bank < 30; bank++) {
+            if (recordBanks[bank * 0x4D8 + slot * 0x7C] != 0) {
+                active = 1;
+            }
+        }
+    }
+    if (active == 0) {
+        sRender.callback = 0;
+    } else {
+        sRender.callback = func_00275830;
+    }
+}
+
+void recordClear(void *record);
+extern int recordUpdatePaused;
+
+/* Fills bank bankIndex (0..2) with the record preset kind (0..24): clears its ten records, writes the
+ * preset's records (type and parameter words; the two-, three- and five-record presets fill records 0..4),
+ * then updates the render callback. The screen is 512 x 448. */
 INCLUDE_ASM("asm/main/nonmatchings/tu207", func_002748C8);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00275710);
+/* Sets record slotIndex of bank bankIndex to type with its ten parameters, then updates the render callback. */
+void func_00275710(int bankIndex, int slotIndex, int type, int *params)
+{
+    int i;
+
+    recordBanks[slotIndex * 0x7C + bankIndex * 0x4D8] = type;
+    for (i = 0; i < 10; i++) {
+        ((RecordBank *)recordBanks)[bankIndex].records[slotIndex].params[i] = params[i];
+    }
+    func_00274850();
+}
 
 void recordClear(void *record);
 extern unsigned char recordBanks[];
@@ -31,9 +97,70 @@ void recordClearBank(int bankIndex)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_002757F0);
+/* Clears the first three banks' records. */
+void func_002757F0(void)
+{
+    int bankIndex;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00275830);
+    bankIndex = 0;
+    do {
+        recordClearBank(bankIndex);
+        bankIndex += 1;
+    } while (bankIndex < 3);
+}
+
+void sceVif1PkCnt(struct XglPacket *, int);
+void sceVif1PkOpenDirectHLCode(struct XglPacket *, int);
+void sceVif1PkAddDirectDataN(struct XglPacket *, const void *, int);
+void sceVif1PkCloseDirectHLCode(struct XglPacket *);
+int func_00275968(void);
+extern int recordUpdatePaused;
+/* GIF data sent before (9 quadwords) and after (3 quadwords) the records are drawn. */
+extern const unsigned char D_0063D6C8[];
+extern const unsigned char D_0063D7B0[];
+/* Draw handlers of record types 1..21. */
+extern void (*D_0063D758[])(Record *record, struct XglPacket *packet);
+
+/* Draws every used record of the three banks between two fixed GIF blocks, then clears the banks and
+ * removes itself as the render callback. */
+void func_00275830(struct XglPacket *packet)
+{
+    RecordBank *bank;
+    Record *record;
+    int bankIndex;
+    int slot;
+    int type;
+
+    bank = (RecordBank *)recordBanks;
+    if (func_00275968() == 0) {
+        return;
+    }
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, D_0063D6C8, 9);
+    sceVif1PkCloseDirectHLCode(packet);
+    for (bankIndex = 0; bankIndex < 3; bankIndex++) {
+        record = bank->records;
+        for (slot = 0; slot < 10; slot++) {
+            type = record->type;
+            /* if (type < 22 && type != 0) gives beq with the slot filled from the call instead of beql */
+            switch (type) {
+            case 1 ... 21:
+                D_0063D758[type - 1](record, packet);
+                break;
+            }
+            record++;
+        }
+        bank++;
+    }
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, D_0063D7B0, 3);
+    sceVif1PkCloseDirectHLCode(packet);
+    func_002757F0();
+    recordUpdatePaused = 0;
+    sRender.callback = 0;
+}
 
 /* True if any of the 30 records (3 banks of 10) has a nonzero first byte. */
 int func_00275968(void)
