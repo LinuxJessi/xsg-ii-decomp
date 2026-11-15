@@ -7543,6 +7543,36 @@
     }
    ]
   },
+  "main/tu207": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068d698",
+      "0x0068d6c0"
+     ],
+     "generated": [
+      "0x0068d698",
+      "0x0068d6b8"
+     ],
+     "generated_by": [
+      "func_00275D30",
+      "func_00275E08"
+     ],
+     "c_owned_symbols": [
+      "D_0068D698",
+      "D_0068D6A0",
+      "D_0068D6A8",
+      "D_0068D6B0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu207.o"
+     }
+    }
+   ]
+  },
   "main/tu229": {
    ".rodata": [
     {
