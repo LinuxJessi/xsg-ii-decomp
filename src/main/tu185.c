@@ -352,7 +352,118 @@ INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026EDE8);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026F010);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026F250);
+/* One particle of sefEntryPool (0xA0 bytes), addressed by a 16-bit index. */
+typedef struct SefParticle {
+    float rotation[3][4];     /* +0x00: rows written by func_0026CEA8 */
+    unsigned char unmodeled_30[0x40 - 0x30];
+    int color[4];             /* +0x40: r, g, b, a */
+    float size[3];            /* +0x50 */
+    unsigned char unmodeled_5c[0x70 - 0x5C];
+    float lifetime;           /* +0x70: the particle dies once age reaches it */
+    float age;                /* +0x74: frames lived */
+    unsigned char unmodeled_78[0x80 - 0x78];
+    float work[4];            /* +0x80: per-effect values */
+    unsigned char unmodeled_90[0xA0 - 0x90];
+} SefParticle;
+
+/* One entry of sefEntryPool. The updates reach the particle through this
+ * union: a union access may alias anything, so the age is reloaded after the
+ * group's live count is stored, as in the original. */
+typedef union SefPoolEntry {
+    SefParticle particle;
+} SefPoolEntry;
+
+/* One 0x28-byte particle group of an effect. */
+typedef struct SefEffectGroup {
+    unsigned char unmodeled_00[0x8];
+    unsigned short *particles; /* +0x08: particle indices, 0 for a free entry */
+    float elapsed;             /* +0x0C: frames run; func_00270428 wraps it after 59.9 */
+    unsigned char unmodeled_10[0x1A - 0x10];
+    unsigned short liveCount;  /* +0x1A: live particles counted by the last update */
+    unsigned char unmodeled_1c[0x28 - 0x1C];
+} SefEffectGroup;
+
+/* The effect a group update receives (sefResourceTable + index * 0x1A0; the
+ * same record as FlaggedObject). */
+typedef struct SefEffect {
+    unsigned char unmodeled_000[0xC0];
+    SefEffectGroup groups[5];  /* +0x0C0 */
+    unsigned char unmodeled_188[0x18C - 0x188];
+    int particleCount;         /* +0x18C: entries of each group's particle list */
+    unsigned char unmodeled_190[0x194 - 0x190];
+    short kind;                /* +0x194: selects the group update in D_005E7A30 */
+} SefEffect;
+
+/* Group update of effect kinds 5-7 (D_005E7A30): ages the live particles,
+ * grows them and fades them out; odd groups also brighten. */
+void func_0026F250(SefEffect *effect, int groupIndex) {
+    SefEffectGroup *group;
+    SefPoolEntry *entry;
+    unsigned short index;
+    int i;
+
+    group = &effect->groups[groupIndex];
+    group->liveCount = 0;
+    for (i = 0; i < effect->particleCount; i++) {
+        index = group->particles[i];
+        if (index != 0) {
+            entry = &((SefPoolEntry *) sefEntryPool)[index];
+            if (entry->particle.age < entry->particle.lifetime) {
+                entry->particle.age = entry->particle.age + 1.0f;
+                group->liveCount++;
+                if (groupIndex & 1) {
+                    if (effect->kind == 5) {
+                        if (entry->particle.age <= 10.0f) {
+                            entry->particle.size[0] += 0.025f;
+                        } else {
+                            entry->particle.size[0] += 0.02f;
+                        }
+                    } else if (effect->kind == 6) {
+                        if (entry->particle.age <= 10.0f) {
+                            entry->particle.size[0] += 0.03f;
+                        } else {
+                            entry->particle.size[0] += 0.02f;
+                        }
+                    } else if (entry->particle.age <= 10.0f) {
+                        entry->particle.size[0] += 0.07f;
+                    } else {
+                        entry->particle.size[0] += 0.033f;
+                    }
+                    entry->particle.size[2] = entry->particle.size[1] = entry->particle.size[0];
+                    entry->particle.color[1] = entry->particle.color[2] = entry->particle.color[0] =
+                        entry->particle.color[0] + 1;
+                    if (entry->particle.age <= 10.0f) {
+                        entry->particle.color[3] += 25;
+                    } else if (entry->particle.age > 20.0f) {
+                        entry->particle.color[3] -= 12;
+                    }
+                    if (entry->particle.color[3] < 0) {
+                        entry->particle.color[3] = 0;
+                    }
+                } else {
+                    if (entry->particle.age <= 5.0f) {
+                        entry->particle.size[0] += 0.16f;
+                    } else {
+                        entry->particle.size[0] += 0.06f;
+                    }
+                    entry->particle.size[2] = entry->particle.size[1] = entry->particle.size[0];
+                    if (entry->particle.age >= 10.0f) {
+                        entry->particle.color[1] -= 2;
+                        entry->particle.color[2] -= 4;
+                        entry->particle.color[3] -= 6;
+                        if (entry->particle.color[3] < 0) {
+                            entry->particle.color[3] = 0;
+                        }
+                    }
+                }
+            } else {
+                entry->particle.lifetime = 0.0f;
+                group->particles[i] = 0;
+            }
+        }
+    }
+    group->elapsed += 1.0f;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026F4C8);
 
@@ -362,7 +473,73 @@ INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026FB88);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026FFE0);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_00270428);
+void func_0026CEA8(float matrix[3][4], float angle);
+
+/* Group update of effect kind 20 (D_005E7A30): group 1 shifts the colour and
+ * grows for 30 frames, group 2 turns 6 degrees a frame and pulses its size. */
+void func_00270428(SefEffect *effect, int groupIndex) {
+    SefEffectGroup *group;
+    SefPoolEntry *entry;
+    unsigned short index;
+    int i;
+
+    group = &effect->groups[groupIndex];
+    group->liveCount = 1;
+    for (i = 0; i < effect->particleCount; i++) {
+        index = group->particles[i];
+        if (index != 0) {
+            entry = &((SefPoolEntry *) sefEntryPool)[index];
+            if (entry->particle.age < entry->particle.lifetime) {
+                if (groupIndex == 1) {
+                    if (entry->particle.age <= 30.0f) {
+                        entry->particle.color[1] = 60 - (int) (entry->particle.age + entry->particle.age);
+                        entry->particle.color[0] = (int) (entry->particle.age * 1.667f) + 200;
+                        entry->particle.color[2] = (int) (entry->particle.age * 1.333f) + 40;
+                    }
+                    if (entry->particle.age <= 16.0f) {
+                        entry->particle.color[3] += 8;
+                    } else if (entry->particle.age <= 31.0f) {
+                        entry->particle.color[3] -= 8;
+                    }
+                    if (entry->particle.age <= 30.0f) {
+                        entry->particle.size[1] = entry->particle.size[2] = entry->particle.size[0] =
+                            entry->particle.size[0] + 0.0333f;
+                    }
+                }
+                if (groupIndex == 2) {
+                    entry->particle.work[0] -= 6.0f;
+                    func_0026CEA8(entry->particle.rotation, entry->particle.work[0] * 0.017453292f);
+                    if (entry->particle.age < 18.0f) {
+                        entry->particle.size[0] += 0.0222f;
+                    } else if (entry->particle.age < 22.0f) {
+                        entry->particle.size[0] += 0.025f;
+                    } else if (entry->particle.age < 25.0f) {
+                        entry->particle.size[0] -= 0.2f;
+                    } else if (entry->particle.age < 30.0f) {
+                        entry->particle.size[0] += 0.02f;
+                    } else if (entry->particle.age < 48.0f) {
+                        entry->particle.size[0] += 0.0222f;
+                    } else if (entry->particle.age < 52.0f) {
+                        entry->particle.size[0] += 0.025f;
+                    } else if (entry->particle.age < 55.0f) {
+                        entry->particle.size[0] -= 0.2f;
+                    } else if (entry->particle.age < 60.0f) {
+                        entry->particle.size[0] += 0.02f;
+                    }
+                    entry->particle.size[1] = entry->particle.size[0];
+                }
+                entry->particle.age = entry->particle.age + 1.0f;
+            } else {
+                entry->particle.lifetime = 0.0f;
+                group->particles[i] = 0;
+            }
+        }
+    }
+    group->elapsed += 1.0f;
+    if (group->elapsed > 59.9f) {
+        group->elapsed = 0.0f;
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/tu185", func_002707C0);
 
