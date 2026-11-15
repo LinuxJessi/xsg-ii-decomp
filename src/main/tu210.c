@@ -2,14 +2,31 @@
 
 #include "shared.h"
 
-/* The draw records of this file share a header (color at 0xC, z at 0x10, repeat count at 0x14); the words from
-   0x20 on depend on the primitive, so each drawing function below has its own view of them. */
-typedef struct OrbitRecord {
-    u8 unmodeled_00[0xC];
+/* One rectangle of a draw record: top, left, right, bottom. */
+typedef struct GsQueueRect {
+    int top;
+    int left;
+    int right;
+    int bottom;
+} GsQueueRect;
+
+/* The header every draw record starts with (the gsQueue functions read it; GsQueueContext in tu213.c and tu207.c
+   names the same words). */
+typedef struct GsQueueHeader {
+    unsigned char type;
+    unsigned char unmodeled_01[3];
+    int frame;
+    int tex0;
     int color;
-    u8 unmodeled_10[0x14 - 0x10];
-    int count;
-    u8 unmodeled_18[0x20 - 0x18];
+    int depth;                          /* 0x10: z of every vertex */
+    int count;                          /* 0x14: how many times the primitive is drawn */
+    int halveRgb;
+    int blendKind;
+} GsQueueHeader;
+
+/* Ring record (orbitDrawRing). */
+typedef struct GsQueueRing {
+    GsQueueHeader header;
     int endColor;
     int centerX;
     int centerY;
@@ -18,9 +35,58 @@ typedef struct OrbitRecord {
     int phaseSpeed;
     int segments;
     int amplitude;
-} OrbitRecord;
+} GsQueueRing;
 
-struct IntegerRecord;
+/* Quad record with preset positions and a texture rectangle (func_002783D0). */
+typedef struct GsQueuePresetQuad {
+    GsQueueHeader header;
+    int positionPreset;
+    unsigned char unmodeled_24[0x30 - 0x24];
+    GsQueueRect texture;
+} GsQueuePresetQuad;
+
+/* Quad record with a screen rectangle and preset texture coordinates (func_00278558). */
+typedef struct GsQueuePresetUvQuad {
+    GsQueueHeader header;
+    GsQueueRect screen;
+    int texturePreset;
+} GsQueuePresetUvQuad;
+
+/* Circle-of-sprites record (circleDrawSegments, func_002789C8). */
+typedef struct GsQueueCircle {
+    GsQueueHeader header;
+    GsQueueRect screen;
+    GsQueueRect texture;
+    int radiusStep;
+    int ringCount;
+    int endColor;
+    int startAngle;
+    int segments;
+    int centerDisabled;
+} GsQueueCircle;
+
+/* Grid record (gridDrawCells). */
+typedef struct GsQueueGrid {
+    GsQueueHeader header;
+    int endColor;
+    GsQueueRect screen;
+    int columns;
+    int rows;
+    unsigned char unmodeled_3c[0x68 - 0x3C];
+    int transformStart;
+    int transformEnd;
+} GsQueueGrid;
+
+/* The 0x7C-byte draw record: the header is shared, the words from 0x20 on depend on the primitive. Each drawing
+   function below takes the member of its primitive. */
+typedef union GsQueueRecord {
+    GsQueueHeader header;
+    GsQueueRing ring;
+    GsQueuePresetQuad presetQuad;
+    GsQueuePresetUvQuad presetUvQuad;
+    GsQueueCircle circle;
+    GsQueueGrid grid;
+} GsQueueRecord;
 
 extern int D_0069DDFC; /* wave phase in degrees, advanced by phaseSpeed on every orbitDrawRing call */
 extern float D_0069DE00; /* degrees to radians */
@@ -28,15 +94,15 @@ extern float D_0069DE00; /* degrees to radians */
 float sinf(float angle);
 float cosf(float angle);
 void gsQueueBeginTriStrip(void *context);
-int setPointFromRecord(Vector4 *destination, int x, int y, const struct IntegerRecord *record);
-void gsQueueAddColor(int packet, int color, void *context);
+int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueHeader *record);
+void gsQueueAddColor(int packet, int color, GsQueueHeader *context);
 void gsQueueAddKickVertex(int packet, Vector4 *vector, void *context);
 void gsQueueFlush(int packet);
 
 /* Draws a ring as a triangle strip, count times: the outer edge waves with sin(phase) by amplitude around radius,
    the inner edge stays at innerRadius. When endColor is set, the outer vertices get color and the inner ones
-   endColor. setPointFromRecord reads z from the same record through its IntegerRecord view. */
-void orbitDrawRing(OrbitRecord *record, int packet) {
+   endColor. setPointFromRecord takes z from the record's depth. */
+void orbitDrawRing(GsQueueRing *record, int packet) {
     Vector4 points[2];
     int pass;
     int color;
@@ -56,8 +122,8 @@ void orbitDrawRing(OrbitRecord *record, int packet) {
     float radians;
 
     phaseSpeed = record->phaseSpeed;
-    count = record->count;
-    color = record->color;
+    count = record->header.count;
+    color = record->header.color;
     endColor = record->endColor;
     centerX = record->centerX;
     centerY = record->centerY;
@@ -75,15 +141,15 @@ void orbitDrawRing(OrbitRecord *record, int packet) {
             ringRadius = (int) (radius + amplitude * sinf(phase * D_0069DE00));
             phase += 40;
             setPointFromRecord(&points[0], ringRadius * cosf(radians) + centerX, ringRadius * sinf(radians) + centerY,
-                               (const struct IntegerRecord *) record);
+                               &record->header);
             setPointFromRecord(&points[1], innerRadius * cosf(radians) + centerX, innerRadius * sinf(radians) + centerY,
-                               (const struct IntegerRecord *) record);
+                               &record->header);
             if (endColor != 0) {
-                gsQueueAddColor(packet, color, record);
+                gsQueueAddColor(packet, color, &record->header);
             }
             gsQueueAddKickVertex(packet, &points[0], record);
             if (endColor != 0) {
-                gsQueueAddColor(packet, endColor, record);
+                gsQueueAddColor(packet, endColor, &record->header);
             }
             gsQueueAddKickVertex(packet, &points[1], record);
         }
@@ -91,36 +157,16 @@ void orbitDrawRing(OrbitRecord *record, int packet) {
     gsQueueFlush(packet);
 }
 
-#include "shared.h"
+/* Stores a point: x and y from the arguments, z from the record's depth; returns that depth. */
+int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueHeader *record) {
+    int depth;
 
-typedef struct IntegerRecord {
-    u8 unmodeled_00[0x10];
-    int value;
-} IntegerRecord;
-
-/* Stores a point: x and y from the arguments, z from the record value; returns that value. */
-int setPointFromRecord(Vector4 *destination, int x, int y, const IntegerRecord *record) {
-    int value;
-
-    value = record->value;
+    depth = record->depth;
     destination->x = (float) x;
     destination->y = (float) y;
-    destination->z = (float) value;
-    return value;
+    destination->z = (float) depth;
+    return depth;
 }
-
-typedef struct TexturedQuadRecord {
-    u8 unmodeled_00[0x10];
-    int z;
-    int count;
-    u8 unmodeled_18[0x20 - 0x18];
-    int positionPreset;
-    u8 unmodeled_24[0x30 - 0x24];
-    int uvTop;
-    int uvLeft;
-    int uvRight;
-    int uvBottom;
-} TexturedQuadRecord;
 
 void func_0027A960(int preset, Vector4 *quad);
 void gsQueueAddTexturedVertex(int packet, Vector4 *position, Vector4 *uv, void *context);
@@ -128,7 +174,7 @@ void gsQueueAddTexturedKickVertex(int packet, Vector4 *position, Vector4 *uv, vo
 
 /* Draws one textured quad count times as a triangle strip: the positions are the preset quad of func_0027A960, the
    UVs come from the record's uv rectangle. */
-void func_002783D0(TexturedQuadRecord *record, int packet) {
+void func_002783D0(GsQueuePresetQuad *record, int packet) {
     Vector4 uvs[4];
     Vector4 positions[4];
     int z;
@@ -139,12 +185,12 @@ void func_002783D0(TexturedQuadRecord *record, int packet) {
     int count;
     int i;
 
-    z = record->z;
-    top = record->uvTop;
-    left = record->uvLeft;
-    right = record->uvRight;
-    bottom = record->uvBottom;
-    count = record->count;
+    z = record->header.depth;
+    top = record->texture.top;
+    left = record->texture.left;
+    right = record->texture.right;
+    bottom = record->texture.bottom;
+    count = record->header.count;
     func_0027A960(record->positionPreset, positions);
     uvs[0].y = (float) top;
     uvs[0].x = (float) left;
@@ -168,21 +214,9 @@ void func_002783D0(TexturedQuadRecord *record, int packet) {
     gsQueueFlush(packet);
 }
 
-typedef struct PresetUvQuadRecord {
-    u8 unmodeled_00[0x10];
-    int z;
-    int count;
-    u8 unmodeled_18[0x20 - 0x18];
-    int top;
-    int left;
-    int right;
-    int bottom;
-    int uvPreset;
-} PresetUvQuadRecord;
-
 /* As func_002783D0 with the roles swapped: the positions come from the record's rectangle, the UVs are the preset
    quad of func_0027A960. */
-void func_00278558(PresetUvQuadRecord *record, int packet) {
+void func_00278558(GsQueuePresetUvQuad *record, int packet) {
     Vector4 uvs[4];
     Vector4 positions[4];
     int z;
@@ -193,13 +227,13 @@ void func_00278558(PresetUvQuadRecord *record, int packet) {
     int count;
     int i;
 
-    z = record->z;
-    top = record->top;
-    left = record->left;
-    right = record->right;
-    bottom = record->bottom;
-    count = record->count;
-    func_0027A960(record->uvPreset, uvs);
+    z = record->header.depth;
+    top = record->screen.top;
+    left = record->screen.left;
+    right = record->screen.right;
+    bottom = record->screen.bottom;
+    count = record->header.count;
+    func_0027A960(record->texturePreset, uvs);
     positions[0].y = (float) top;
     positions[0].x = (float) left;
     positions[0].z = (float) z;
@@ -222,40 +256,17 @@ void func_00278558(PresetUvQuadRecord *record, int packet) {
     gsQueueFlush(packet);
 }
 
-typedef struct CircleRecord {
-    u8 unmodeled_00[0xC];
-    int color;
-    int z;
-    int count;
-    u8 unmodeled_18[0x20 - 0x18];
-    int top;
-    int left;
-    int right;
-    int bottom;
-    int uvTop;
-    int uvLeft;
-    int uvRight;
-    int uvBottom;
-    int radiusStep;
-    int ringCount;
-    int endColor;
-    int startAngle;
-    int segments;
-    int centerDisabled;
-} CircleRecord;
-
 float xglCosDeg(int degrees);
 float xglSinDeg(int degrees);
 void gsQueueBeginSprites(void *context);
-void func_002789C8(Vector4 *points, int x, int y, const CircleRecord *record);
-long xglColorLerp(float fraction, int from, int to);
+void func_002789C8(Vector4 *points, int x, int y, const GsQueueCircle *record);
+u64 xglColorLerp(u64 from, u64 to, float t);
 
-/*CIRCLE_BEGIN*/
 /* Draws rings of sprites around the record rectangle, count times: segments sprites per ring, ring (ring + 1) *
    radiusStep away from the centre along directions spaced 360 / segments degrees from startAngle, each ring coloured
    from color towards endColor when endColor is set; a centre sprite comes first unless centerDisabled. Nothing is drawn
    with 15 segments or more (the direction table holds 15). */
-void circleDrawSegments(CircleRecord *record, int packet) {
+void circleDrawSegments(GsQueueCircle *record, int packet) {
     float directions[15][2];
     Vector4 positions[2];
     Vector4 uvs[2];
@@ -278,13 +289,13 @@ void circleDrawSegments(CircleRecord *record, int packet) {
     float radius;
 
     angleStep = 0;
-    color = record->color;
+    color = record->header.color;
     segments = record->segments;
-    count = record->count;
-    uvTop = record->uvTop;
-    uvLeft = record->uvLeft;
-    uvRight = record->uvRight;
-    uvBottom = record->uvBottom;
+    count = record->header.count;
+    uvTop = record->texture.top;
+    uvLeft = record->texture.left;
+    uvRight = record->texture.right;
+    uvBottom = record->texture.bottom;
     radiusStep = record->radiusStep;
     ringCount = record->ringCount;
     endColor = record->endColor;
@@ -311,7 +322,8 @@ void circleDrawSegments(CircleRecord *record, int packet) {
             }
             for (ring = 0; ring < ringCount; ring++) {
                 if (endColor != 0) {
-                    gsQueueAddColor(packet, xglColorLerp((float) ring / (float) ringCount, color, endColor), record);
+                    gsQueueAddColor(packet, xglColorLerp(color, endColor, (float) ring / (float) ringCount),
+                                    &record->header);
                 }
                 for (segment = 0; segment < segments; segment++) {
                     radius = (float) (radiusStep * (ring + 1));
@@ -325,21 +337,20 @@ void circleDrawSegments(CircleRecord *record, int packet) {
         gsQueueFlush(packet);
     }
 }
-/*CIRCLE_END*/
 
 /* Sets the two corner points of a sprite: the record rectangle shifted by (x, y), z from the record. */
-void func_002789C8(Vector4 *points, int x, int y, const CircleRecord *record) {
+void func_002789C8(Vector4 *points, int x, int y, const GsQueueCircle *record) {
     int top;
     int left;
     int right;
     int bottom;
     int z;
 
-    bottom = record->bottom;
-    top = record->top;
-    left = record->left;
-    right = record->right;
-    z = record->z;
+    bottom = record->screen.bottom;
+    top = record->screen.top;
+    left = record->screen.left;
+    right = record->screen.right;
+    z = record->header.depth;
     points[0].x = (float) (left + x);
     points[0].y = (float) (top + y);
     points[1].x = (float) (right + x);
@@ -348,22 +359,6 @@ void func_002789C8(Vector4 *points, int x, int y, const CircleRecord *record) {
     points[1].z = (float) z;
 }
 
-typedef struct GridRecord {
-    u8 unmodeled_00[0xC];
-    int color;
-    u8 unmodeled_10[0x20 - 0x10];
-    int endColor;
-    int top;
-    int left;
-    int right;
-    int bottom;
-    int columns;
-    int rows;
-    u8 unmodeled_3C[0x68 - 0x3C];
-    int transformStart;
-    int transformEnd;
-} GridRecord;
-
 /* Results of func_00278FC8 for one grid cell. */
 enum {
     GRID_CELL_FLAT,
@@ -371,14 +366,14 @@ enum {
     GRID_CELL_HIDDEN
 };
 
-int func_00278FC8(Vector4 *transform, float x, float y, GridRecord *record);
+int func_00278FC8(Vector4 *transform, float x, float y, GsQueueGrid *record);
 void quadDrawRepeated(int packet, Vector4 *quad, void *context);
 void quadDrawTransformed(int packet, Vector4 *quad, void *context, Vector4 *transform);
 
 /* Draws the record rectangle as rows x columns cells. func_00278FC8 fills a transform for each cell from its corner:
    below transformStart the cell is drawn flat, past transformEnd it is skipped, in between it is drawn transformed;
    endColor, when set, colours the cells (lerped by transform.x for transformed ones). */
-void gridDrawCells(GridRecord *record, int packet) {
+void gridDrawCells(GsQueueGrid *record, int packet) {
     Vector4 quad[4];
     Vector4 transform;
     int color;
@@ -397,13 +392,13 @@ void gridDrawCells(GridRecord *record, int packet) {
     int column;
     int clip;
 
-    color = record->color;
+    color = record->header.color;
     columns = record->columns;
     endColor = record->endColor;
-    top = record->top;
-    left = record->left;
-    right = record->right;
-    bottom = record->bottom;
+    top = record->screen.top;
+    left = record->screen.left;
+    right = record->screen.right;
+    bottom = record->screen.bottom;
     rows = record->rows;
     transformStart = record->transformStart;
     transformEnd = record->transformEnd;
@@ -432,16 +427,16 @@ void gridDrawCells(GridRecord *record, int packet) {
                 switch (clip) {
                 case GRID_CELL_FLAT:
                     if (endColor != 0) {
-                        gsQueueAddColor(packet, color, record);
+                        gsQueueAddColor(packet, color, &record->header);
                     }
                     quadDrawRepeated(packet, quad, record);
                     break;
                 case GRID_CELL_TRANSFORMED:
                     if (endColor != 0) {
                         gsQueueAddColor(packet,
-                                        xglColorLerp(transform.x / (float) (transformEnd - transformStart),
-                                                     color, endColor),
-                                        record);
+                                        xglColorLerp(color, endColor,
+                                                     transform.x / (float) (transformEnd - transformStart)),
+                                        &record->header);
                     }
                     quadDrawTransformed(packet, quad, record, &transform);
                     break;
