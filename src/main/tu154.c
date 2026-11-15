@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "vu0_macro.h"
 #include "main/m_math_188.h"
+#include "main/tu192.h"
 
 /* A key of a Hermite track: the point, and the key time in the low half of w. A time of
  * MMATH_HERMITE_END ends the track. */
@@ -70,9 +71,6 @@ void MMathEvalHermiteKeys(Vector4 *result, MMathHermiteKey *keys, float time)
 void func_00252838(void)
 {
 }
-
-Vector4 *MMathVectorCrossProduct(Vector4 *destination, const Vector4 *first, const Vector4 *second);
-float MMathVectorDotProduct(const Vector4 *first, const Vector4 *second);
 
 /* 1 when origin lies inside the triangle first, second, third (seen along the triangle's normal): the normals
  * of the three edge triangles around origin all point the same way. */

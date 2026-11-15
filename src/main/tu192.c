@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu192.h"
 
 /* MMathVectorDotProduct (MMathVectorDotProduct): dot product of the xyz lanes, returned in $f0. */
 INCLUDE_ASM("asm/main/nonmatchings/tu192", MMathVectorDotProduct);
