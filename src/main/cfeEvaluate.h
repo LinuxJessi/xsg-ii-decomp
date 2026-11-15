@@ -84,13 +84,6 @@ typedef struct CfeEvalEntry {
 
 struct XenoActor;
 
-/* The channel value and the play range a node gives its actor's first motion state (laid out like
- * XenoMotionState from its value on). */
-typedef struct CfeNodeMotion {
-    float channelValue;
-    int playRange[2];
-} CfeNodeMotion;
-
 /* One sampled flag of a node (8 bytes, one per geometry of the actor's pack): the value and the track it is
  * sampled from. The key commands address the track as track[column]; the script passes column 0. */
 typedef struct CfeFlagRecord {
@@ -104,12 +97,14 @@ typedef struct CfeNode {
     unsigned char unmodeled_000[0xC0];
     struct XenoActor *actor;    /* +0x0C0 */
     unsigned char unmodeled_0c4[0xE0 - 0xC4];
-    Vector4 position;           /* +0x0E0: the sampled offset, then in front of the actor */
+    AlignedVector4 position;    /* +0x0E0: the sampled offset, then in front of the actor */
     int flags;                  /* +0x0F0: CFE_NODE_SHOWN */
     int mode;                   /* +0x0F4 */
     int selector;               /* +0x0F8 */
     int slot;                   /* +0x0FC: the mode slot */
-    CfeNodeMotion motion;       /* +0x100 */
+    float channelValue;         /* +0x100: the channel value of the actor's first motion state */
+    int playStart;              /* +0x104: the play range of that motion state */
+    int playEnd;                /* +0x108 */
     int attachSlot;             /* +0x10C: the cfePlugInSlots entry the actor hangs on, negative for none */
     int attachJoint;            /* +0x110 */
     float speed[2];             /* +0x114: of the motion states A and B */
