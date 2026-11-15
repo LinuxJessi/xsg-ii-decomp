@@ -5,6 +5,7 @@
 #include "main/gifState.h"
 #include "main/nml_model_set.h"
 #include "main/TiWater.h"
+#include "main/tu026.h"
 #include "main/tu148.h"
 #include "main/tu255.h"
 #include "main/tu256.h"
@@ -1204,7 +1205,17 @@ void func_00246AF8(void) {
  * The assert text "numPacket < (STATEPACKET_MAX - 1)" names both.
  */
 extern int gifStateNumPacket;
-extern u32 gifStatePacket[4];
+
+/* One quadword of gifStatePacket: a data/address pair (A+D) or four raw words (the tag). */
+typedef union GifStateQword {
+    struct {
+        u64 data;
+        u64 address;
+    } pair;
+    u32 word[4];
+} GifStateQword;
+
+extern GifStateQword gifStatePacket[];
 
 /* GIF tag words: end-of-packet flag in the low word, one register descriptor (NREG = 1) in word 1. */
 #define GIF_TAG_EOP 0x8000
@@ -1213,15 +1224,33 @@ extern u32 gifStatePacket[4];
 /* Empties the queue and writes the tag header: one register per loop, A+D descriptor. */
 void gifStateReset(void) {
     gifStateNumPacket = 0;
-    gifStatePacket[0] = GIF_TAG_EOP;
-    gifStatePacket[1] = GIF_TAG_NREG_1;
-    gifStatePacket[2] = GIF_AD;
-    gifStatePacket[3] = 0;
+    gifStatePacket[0].word[0] = GIF_TAG_EOP;
+    gifStatePacket[0].word[1] = GIF_TAG_NREG_1;
+    gifStatePacket[0].word[2] = GIF_AD;
+    gifStatePacket[0].word[3] = 0;
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateAddReg);
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateAddRawQword);
+/* The assert text and the file name of the packet queue asserts. */
+extern const char D_0068CB18[];
+extern const char D_0068CB40[];
+
+/* The assert bound: numPacket < (STATEPACKET_MAX - 1) quadwords after the tag. */
+#define GIF_STATE_PACKET_MAX 0x7F
+
+/* Queues four raw words as one quadword of gifStatePacket (asserts while the packet is not full). */
+void gifStateAddRawQword(u32 word0, u32 word1, u32 word2, u32 word3)
+{
+    if ((unsigned int) gifStateNumPacket >= GIF_STATE_PACKET_MAX) {
+        assertFailed(D_0068CB18, D_0068CB40, 50);
+    }
+    gifStateNumPacket++;
+    gifStatePacket[gifStateNumPacket].word[0] = word0;
+    gifStatePacket[gifStateNumPacket].word[1] = word1;
+    gifStatePacket[gifStateNumPacket].word[2] = word2;
+    gifStatePacket[gifStateNumPacket].word[3] = word3;
+}
 
 XglPacket *xglPacketGetCurrent(void);
 
@@ -1237,7 +1266,7 @@ void gifStateFlush(void) {
     tag = count | GIF_TAG_EOP;
     byteCount = (count * 0x10) + 0x10;
     if (count != 0) {
-        gifStatePacket[0] = tag;
+        gifStatePacket[0].word[0] = tag;
         sceVif1PkAddDirectDataN(packet, gifStatePacket, byteCount >> 4);
         gifStateNumPacket = 0;
     }
