@@ -34,12 +34,75 @@ void MOutputDebugStringWarn(char *value, ...)
     func_002AF028(MOutputDebugBuffer, ap);
 }
 
-/* Mersenne Twister (MT19937): seeding, then the tempered 32-bit output of genrand_int32. */
-INCLUDE_ASM("asm/main/nonmatchings/tu187", MMathRandomSeed);
+/*
+ * Mersenne Twister (MT19937): seeding, then the tempered 32-bit output of genrand_int32.
+ * Parameters: state words, twist offset, word halves, tempering masks.
+ */
+#define MT_STATE_WORDS 624
+#define MT_TWIST_OFFSET 397
+#define MT_UPPER_MASK 0x80000000
+#define MT_LOWER_MASK 0x7FFFFFFF
+#define MT_TEMPERING_MASK_B 0x9D2C5680
+#define MT_TEMPERING_MASK_C 0xEFC60000
 
-INCLUDE_ASM("asm/main/nonmatchings/tu187", MMathRandomNext);
+extern int MMathRandomIndex;
+extern int MMathRandomLastSeed;
+extern u32 MMathRandomState[MT_STATE_WORDS];
 
-u32 MMathRandomNext(void);
+/* init_genrand: a zero seed means the previous seed plus 0x1571. */
+void MMathRandomSeed(int seed)
+{
+    if (seed == 0)
+    {
+        seed = MMathRandomLastSeed + 0x1571;
+    }
+    MMathRandomLastSeed = seed;
+    MMathRandomState[0] = seed;
+    for (MMathRandomIndex = 1; MMathRandomIndex < MT_STATE_WORDS; MMathRandomIndex++)
+    {
+        MMathRandomState[MMathRandomIndex] =
+            1812433253UL * (MMathRandomState[MMathRandomIndex - 1] ^ (MMathRandomState[MMathRandomIndex - 1] >> 30))
+            + MMathRandomIndex;
+    }
+}
+
+extern u32 MMathRandomMag01[2];
+
+/* genrand_int32: regenerates the 624 words when they are used up, then tempers the next one. */
+u32 MMathRandomNext(void)
+{
+    u32 y;
+    int kk;
+
+    if (MMathRandomIndex >= MT_STATE_WORDS)
+    {
+        if (MMathRandomIndex == MT_STATE_WORDS + 1)
+        {
+            MMathRandomSeed(0);
+        }
+        for (kk = 0; kk < MT_STATE_WORDS - MT_TWIST_OFFSET; kk++)
+        {
+            y = (MMathRandomState[kk] & MT_UPPER_MASK) | (MMathRandomState[kk + 1] & MT_LOWER_MASK);
+            MMathRandomState[kk] = MMathRandomState[kk + MT_TWIST_OFFSET] ^ (y >> 1) ^ MMathRandomMag01[y & 1];
+        }
+        for (; kk < MT_STATE_WORDS - 1; kk++)
+        {
+            y = (MMathRandomState[kk] & MT_UPPER_MASK) | (MMathRandomState[kk + 1] & MT_LOWER_MASK);
+            MMathRandomState[kk] =
+                MMathRandomState[kk + (MT_TWIST_OFFSET - MT_STATE_WORDS)] ^ (y >> 1) ^ MMathRandomMag01[y & 1];
+        }
+        y = (MMathRandomState[MT_STATE_WORDS - 1] & MT_UPPER_MASK) | (MMathRandomState[0] & MT_LOWER_MASK);
+        MMathRandomState[MT_STATE_WORDS - 1] =
+            MMathRandomState[MT_TWIST_OFFSET - 1] ^ (y >> 1) ^ MMathRandomMag01[y & 1];
+        MMathRandomIndex = 0;
+    }
+    y = MMathRandomState[MMathRandomIndex++];
+    y ^= y >> 11;
+    y ^= (y << 7) & MT_TEMPERING_MASK_B;
+    y ^= (y << 15) & MT_TEMPERING_MASK_C;
+    y ^= y >> 18;
+    return y;
+}
 
 /* A random integer in [0, 2^31). */
 u32 MMathMakeRandomInt(void)
@@ -66,13 +129,70 @@ f32 MMathMakeRandomSigned(void)
 }
 
 /* A random angle in [0, 2*pi): the 32-bit output scaled by 2*pi / 2^32. */
-INCLUDE_ASM("asm/main/nonmatchings/tu187", MMathMakeRandom2PI);
+f32 MMathMakeRandom2PI(void)
+{
+    u32 bits;
+
+    bits = MMathRandomNext();
+    return (f32) bits * 1.462918e-09f;
+}
 
 /* A random angle in [-pi, pi). */
-INCLUDE_ASM("asm/main/nonmatchings/tu187", MMathMakeRandomPI);
+f32 MMathMakeRandomPI(void)
+{
+    u32 bits;
+
+    bits = MMathRandomNext();
+    return ((f32) bits * 1.462918e-09f) - 3.1415927f;
+}
+
+float func_002A1E10(float, float);
+extern float D_0069B4F0;
+extern float D_0069B4F4;
 
 /* Shortest signed difference second - first, wrapped into [-pi, pi]. */
-INCLUDE_ASM("asm/main/nonmatchings/tu187", MMathCalcRotNear);
+f32 MMathCalcRotNear(f32 first, f32 second)
+{
+    f32 twoPi;
+    f32 result;
+
+    twoPi = D_0069B4F0;
+    result = func_002A1E10(second - first, twoPi);
+    if (D_0069B4F4 < __builtin_fabsf(result))
+    {
+        if (result < 0.0f)
+        {
+            result = result + twoPi;
+        }
+        else
+        {
+            result = result - twoPi;
+        }
+    }
+    return result;
+}
+
+extern float D_0069B4F8;
+extern float D_0069B4FC;
 
 /* Difference second - first wrapped into the other half-turn (|difference| >= pi). */
-INCLUDE_ASM("asm/main/nonmatchings/tu187", MMathCalcRotFar);
+f32 MMathCalcRotFar(f32 first, f32 second)
+{
+    f32 twoPi;
+    f32 result;
+
+    twoPi = D_0069B4F8;
+    result = func_002A1E10(second - first, twoPi);
+    if (__builtin_fabsf(result) < D_0069B4FC)
+    {
+        if (result < 0.0f)
+        {
+            result = result + twoPi;
+        }
+        else
+        {
+            result = result - twoPi;
+        }
+    }
+    return result;
+}
