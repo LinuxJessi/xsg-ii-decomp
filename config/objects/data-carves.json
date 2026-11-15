@@ -7581,6 +7581,51 @@
    ".lit4": [
     {
      "range": [
+      "0x0069b3d4",
+      "0x0069b420"
+     ],
+     "generated": [
+      "0x0069b3d4",
+      "0x0069b420"
+     ],
+     "generated_by": [
+      "func_0026D8C8",
+      "func_0026DC18",
+      "func_0026DF30",
+      "func_0026E288",
+      "func_0026E5E0",
+      "func_0026EC48"
+     ],
+     "c_owned_symbols": [
+      "D_0069B3D4",
+      "D_0069B3D8",
+      "D_0069B3DC",
+      "D_0069B3E0",
+      "D_0069B3E4",
+      "D_0069B3E8",
+      "D_0069B3EC",
+      "D_0069B3F0",
+      "D_0069B3F4",
+      "D_0069B3F8",
+      "D_0069B3FC",
+      "D_0069B400",
+      "D_0069B404",
+      "D_0069B408",
+      "D_0069B40C",
+      "D_0069B410",
+      "D_0069B414",
+      "D_0069B418",
+      "D_0069B41C"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu185.o"
+     }
+    },
+    {
+     "range": [
       "0x0069b440",
       "0x0069b45c"
      ],
@@ -7610,14 +7655,15 @@
     {
      "range": [
       "0x0069b4b4",
-      "0x0069b4d8"
+      "0x0069b4e0"
      ],
      "generated": [
       "0x0069b4b4",
-      "0x0069b4d8"
+      "0x0069b4e0"
      ],
      "generated_by": [
-      "func_00270428"
+      "func_00270428",
+      "func_002707C0"
      ],
      "c_owned_symbols": [
       "D_0069B4B4",
@@ -7628,7 +7674,9 @@
       "D_0069B4C8",
       "D_0069B4CC",
       "D_0069B4D0",
-      "D_0069B4D4"
+      "D_0069B4D4",
+      "D_0069B4D8",
+      "D_0069B4DC"
      ],
      "also_referenced_by_c": [],
      "basis": {
