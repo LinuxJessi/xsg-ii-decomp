@@ -4,6 +4,7 @@
 #include "main/sdv_183.h"
 #include "main/sef_169.h"
 #include "main/tu051.h"
+#include "quadword.h"
 #include "vu0_macro.h"
 
 void sdvClearSpecialWork(void);
@@ -86,7 +87,8 @@ int func_002AA130(void); /* newlib rand() */
 int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
 short scGetImmNumIdx(short *table, int index);
 
-/* Picks one of the five cameras of table by weighted chance (weights in percent) and loads its four tracks. */
+/* Picks a camera of table by weighted chance (weights in percent) and loads its four tracks; table holds five
+   entries, all five are read, but only the first four can be picked. */
 int sdvSelectCamera(SdvCameraSchedule *schedule, int base, unsigned short *table)
 {
     int weights[5];
@@ -1114,10 +1116,10 @@ void sdvDrawSpecial(SdvSpecialOwner *special)
 typedef struct SdvAlterEvent {
     unsigned short time;          /* +0x00 */
     short life;                   /* +0x02 */
-    unsigned short mode;          /* +0x04 low nibble the mode, the high 12 bits the signed point count */
+    unsigned short mode;          /* +0x04 low nibble the mode, the high 12 bits (signed) the follow flag */
     unsigned short blend;         /* +0x06 */
     unsigned short rgba[4];       /* +0x08 the low byte of each */
-    short selector[2];            /* +0x10 */
+    short parts[2];               /* +0x10 */
     short maxSamples;             /* +0x14 */
     unsigned short shrink;        /* +0x16 */
     short imageFrames;            /* +0x18 */
@@ -1126,37 +1128,57 @@ typedef struct SdvAlterEvent {
     float width;                  /* +0x24 */
     float height;                 /* +0x28 */
     unsigned short spread;        /* +0x2C */
-    unsigned short rate;          /* +0x2E */
+    unsigned short spin;          /* +0x2E */
     unsigned short timeBase;      /* +0x30 */
     unsigned short timeStep;      /* +0x32 */
-    short angle;                  /* +0x34 milliradians */
+    short minDelta;               /* +0x34 scaled by D_0069B380 into the request's minDelta */
 } SdvAlterEvent;
 
-/* The 0x58-byte request an alter is created from; sdvScheduleAlter fills it from an event. */
+/* The actor an alter request points at: its local matrix at 0x100 (SefActor in sef_164.c). */
+typedef struct SefActor {
+    unsigned char unmodeled_000[0x100];
+    Matrix4 localMatrix;                /* +0x100 */
+} SefActor;
+
+/* The actor word of an sef request; the one-member union keeps the seven word copies in order. */
+typedef union SdvSefActorRef {
+    SefActor *actor;
+} SdvSefActorRef;
+
+/* The seven words of an sef request: sdvExecAlter copies them into the sef request buffer and hands them to func_0025E678. */
+typedef struct SdvSefRequest {
+    SdvSefActorRef target;              /* +0x00 */
+    int params[6];                      /* +0x04 */
+} SdvSefRequest;
+
+/*
+ * The 0x58-byte request an alter is created from: sdvScheduleAlter fills it from an event, sdvCreateAlter
+ * copies it into the record at +0xAD0 and sdvExecAlter/sdvDrawAlter read it there.
+ */
 typedef struct SdvAlterRequest {
     unsigned long long tex0[2];   /* +0x00 GS TEX0 of the two images */
-    int instance;                 /* +0x10 the effect instance the alter belongs to */
+    SdvSefRequest *sefRequest;    /* +0x10 the seven words sdvExecAlter copies into the sef request buffer */
     unsigned char rgba[4];        /* +0x14 */
     unsigned char unmodeled_18[4];
-    float length;                 /* +0x1C */
+    float length;                 /* +0x1C progress added over maxSamples points (each frame length / maxSamples) */
     unsigned char unmodeled_20[4];
     float imageFrames;            /* +0x24 */
-    float life;                   /* +0x28 */
+    float life;                   /* +0x28 frames left; 2048 never runs out */
     float width;                  /* +0x2C */
     float height;                 /* +0x30 */
-    float angle;                  /* +0x34 radians */
-    short selector[2];            /* +0x38 */
-    short maxSamples;             /* +0x3C */
-    unsigned short shrink;        /* +0x3E */
+    float minDelta;               /* +0x34 a shorter move keeps the previous delta */
+    short parts[2];               /* +0x38 sefGetPosition kinds; with follow set, parts[1] is the heading turn rate in 1/100 */
+    short maxSamples;             /* +0x3C points the record grows to: at most 64, 32 with follow set */
+    unsigned short shrink;        /* +0x3E frames taken per frame once the life is spent */
     unsigned short blend;         /* +0x40 */
     short imageCount;             /* +0x42 */
     unsigned short mode;          /* +0x44 */
     unsigned char unmodeled_46[2];
-    short layer;                  /* +0x48 */
-    short owner;                  /* +0x4A */
-    short pointCount;             /* +0x4C */
+    short layer;                  /* +0x48 sdvDrawAlters draws the records of one layer */
+    short owner;                  /* +0x4A index of the owning effect record; negative for none */
+    short follow;                 /* +0x4C nonzero: the record trails the part of parts[0] */
     unsigned short spread;        /* +0x4E */
-    unsigned short rate;          /* +0x50 */
+    unsigned short spin;          /* +0x50 degrees the point angles turn per frame */
     unsigned short timeBase;      /* +0x52 */
     unsigned short timeStep;      /* +0x54 */
     unsigned char unmodeled_56[2];
@@ -1179,14 +1201,14 @@ typedef struct SdvAlterImageItem {
 #define SDV_PSM_INDEXED 0x13
 #define SDV_PSM_DEFAULT 0x14
 
-/* The selector values whose alters fan out over a table of linked members. */
-#define SDV_SELECTOR_LINKED_A 0x61
-#define SDV_SELECTOR_LINKED_B 0x62
+/* The parts kinds whose alters fan out over a table of linked members. */
+#define SDV_PART_LINKED_A 0x61
+#define SDV_PART_LINKED_B 0x62
 
 int func_00267048(SdvSpecialOwner *special);
 int func_00266F68(SdvSpecialOwner *special);
 SdvAlterImageItem *func_00253C70(int layer, int imageIndex);
-/* tu170.c defines the parameter as unsigned char *; sdvScheduleAlter passes a member index (selector - 0x41). */
+/* tu170.c defines the parameter as unsigned char *; sdvScheduleAlter passes a member index (part kind - 0x41). */
 int sefGetLinkedFlag(int linkIndex);
 int sdvCreateAlter(SdvAlterRequest *request);
 extern unsigned short D_005E6D78[];
@@ -1197,24 +1219,44 @@ extern float D_0069B380;
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvScheduleAlter);
 
 
-/* The quadword at +0xD30 of an alter record: its halfwords hold the active flag and the serial.
- * The block is quadword-aligned (AlignedVector4); as a plain 2-aligned struct gcc builds the field
- * addresses differently in sdvKillAlter (func_0026A718 also addresses the block at +0xD30). */
-typedef union SdvAlterState {
-    AlignedVector4 quadword;
+/*
+ * The two 64-point rings of an alter record: one per sef part, or, when the record trails a part, the
+ * sampled anchors and the ring swung around them (sdvExecAlter).
+ */
+typedef union SdvAlterPoints {
+    AlignedVector4 byPart[2][64];
     struct {
-        unsigned char unmodeled_00[8];
-        unsigned short active;    /* +0x08 */
-        unsigned short unmodeled_0A;
-        short serial;             /* +0x0C */
-        unsigned short unmodeled_0E;
-    } fields;
-} SdvAlterState;
+        AlignedVector4 anchors[64];
+        AlignedVector4 ring[64];
+    } trail;
+} SdvAlterPoints;
 
-/* One alter record: 0xD40 bytes. */
+/*
+ * One alter record: 0xD40 bytes. The quadword members make the record 16-byte aligned, which is why
+ * gcc addresses +0xD38 as +0xD30 + 8 and +0xB18 as +0xB10 + 8.
+ */
 typedef struct SdvAlter {
-    unsigned char unmodeled_00[0xD30];
-    SdvAlterState state;      /* +0xD30 */
+    Matrix4 worldMatrix;                /* +0x000 */
+    Matrix4 matrix;                     /* +0x040 */
+    SdvAlterPoints points;              /* +0x080 */
+    AlignedVector4 quats[33];           /* +0x880 heading quaternions, newest first */
+    AlignedVector4 heading;             /* +0xA90 */
+    AlignedVector4 lastDelta;           /* +0xAA0 */
+    AlignedVector4 position;            /* +0xAB0 sdvCreateAlter stores the sefGetPosition result here (lq/sq) */
+    AlignedVector4 previousPosition;    /* +0xAC0 */
+    SdvAlterRequest request;            /* +0xAD0 */
+    float widths[64];                   /* +0xB28 */
+    float progress;                     /* +0xC28 */
+    float angles[32];                   /* +0xC2C */
+    unsigned char unmodeled_CAC[0xCB0 - 0xCAC];
+    float radii[32];                    /* +0xCB0 */
+    unsigned char unmodeled_D30[0xD34 - 0xD30];
+    short frame;                        /* +0xD34 */
+    unsigned short index;               /* +0xD36 the point written this frame, 0..63 */
+    unsigned short active;              /* +0xD38 */
+    unsigned short wrapped;             /* +0xD3A set once index has wrapped */
+    short serial;                       /* +0xD3C */
+    unsigned char unmodeled_D3E[0xD40 - 0xD3E];
 } SdvAlter;
 
 extern SdvAlter sdvAlterTable[49];
@@ -1241,17 +1283,78 @@ void sdvKillAlter(int id)
         int index = id & 0xFFFF;
         int serial = id >> 16;
 
-        if (sdvAlterTable[index].state.fields.active != 0 && sdvAlterTable[index].state.fields.serial == serial) {
+        if (sdvAlterTable[index].active != 0 && sdvAlterTable[index].serial == serial) {
             sdvDestroyAlter(&sdvAlterTable[index]);
         }
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026A718);
+/*
+ * Destroys every active alter record that belongs to owner; a negative owner destroys nothing.
+ * With "active != 0 && owner == owner" gcc reads owner through the active pointer (bnel slots);
+ * the owner test on a separate record pointer keeps the original's beq/bne.
+ */
+void func_0026A718(int owner)
+{
+    int i;
+
+    if (owner >= 0) {
+        for (i = 0; i < 49; i++) {
+            if (sdvAlterTable[i].active != 0) {
+                SdvAlter *alter = &sdvAlterTable[i];
+
+                if (alter->request.owner == owner) {
+                    sdvDestroyAlter(alter);
+                }
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026A7A0);
 
-/* Advances one alter (calls sdvDestroyAlter among others). */
+/* One effect record of sefGetEffectRecords (0xA70 bytes); only the flag word is read here. */
+typedef struct SefEffectRecord {
+    unsigned char unmodeled_000[0x44];
+    unsigned int flags;                 /* +0x44 bit 7: the effect is hidden */
+    unsigned char unmodeled_048[0xA70 - 0x48];
+} SefEffectRecord;
+
+#define SEF_RECORD_HIDDEN 0x80
+#define SDV_ALTER_LIFETIME_FOREVER 2048.0f
+#define SDV_ALTER_POINT_COUNT 64
+#define SDV_ALTER_RING_COUNT 32
+#define SDV_DEG_TO_RAD 0.017453292f
+
+void *sefGetEffectRecords(void);
+void sefMergeMatrixPos(Matrix4 *dest, Matrix4 *matrix, Vector4 *position);
+void xglMatrixInverse(Matrix4 *destination, Matrix4 *matrix);
+void *MMathMulMatrix(void *destination, const void *matrix, const void *source);
+Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
+float MMathCalcLength(const Vector4 *vector); /* the length returns in $f0 (sef_164.c declares it void where the value is unused) */
+void MMathQuatBetweenVectors(AlignedVector4 *quat, const AlignedVector4 *from, const AlignedVector4 *to);
+void func_0025E678(SefActor *actor, int, int, int, int, int, int, int);
+void func_0026A7A0(AlignedVector4 *out, AlignedVector4 *target, AlignedVector4 *current, float t);
+
+extern AlignedVector4 D_0068C530;   /* (0, 0, -1, 1) */
+extern AlignedVector4 D_0068C560;   /* (-1, -1, 1, 1) */
+
+/* VU0 sine (micro subroutine 0x20, as Vu0Sin) through the non-interlocking qmtc2.ni this function uses. */
+#define SDV_VU0_SIN(result, angle) \
+    __asm__ __volatile__( \
+        "mfc1 $8, %1\n" \
+        "qmtc2.ni $8, vf4\n" \
+        "vcallms 0x20\n" \
+        "qmfc2.i $8, vf1\n" \
+        "mtc1 $8, %0\n" \
+        : "=f" (result) \
+        : "f" (angle) \
+        : "$8", "memory")
+
+/*
+ * Advances one alter record by a frame: the lifetime and frame counters, the sef request, then either the
+ * trailing ring (follow) or the next point of each part; a spent record is destroyed.
+ */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecAlter);
 
 extern void func_0012B9A0(XglPacket *packet, u32 tag);
@@ -1268,7 +1371,48 @@ void sdvPacketFlushMscnt(void)
     func_0012B9A0(packet, 0x17000000);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026AFB0);
+/* A 128-bit quadword (one lq/sq), as the VIF1 packet writers take it. */
+typedef unsigned int Quadword __attribute__((mode(TI)));
+
+/* The header sdvDrawAlter puts in front of each strip it sends by reference: cleared as quadwords, then filled. */
+typedef union SdvStripHeader {
+    Quadword quad[3];
+    struct {
+        unsigned int unmodeled_00[3];
+        unsigned int unpack;           /* +0x0C VIF UNPACK code for the whole strip */
+        unsigned int primitiveCount;   /* +0x10 */
+        unsigned int strip;            /* +0x14 sdvDrawAlter passes 1 with its count / 2, else 0 with count / 3 */
+        unsigned int unmodeled_18[2];
+        unsigned short loopCount;      /* +0x20 ORed with the primitive count */
+    } layout;
+} SdvStripHeader;
+
+extern void sceVif1PkRef(XglPacket *packet, const void *environment,
+                         int count, int mode, int offset, int flags);
+
+/* Keeps the physical address of an EE pointer: DMA references take physical addresses. */
+#define SDV_PHYSICAL_ADDRESS_MASK 0x0FFFFFFF
+
+/*
+ * Clears and fills a strip header, then references its qwc quadwords (physical address) in the current packet.
+ * Masking the address inside the sceVif1PkRef call loads the mask after the calls instead of before them.
+ */
+void func_0026AFB0(SdvStripHeader *header, int unused, int qwc, int primitiveCount, int strip)
+{
+    XglPacket *packet;
+    void *physical;
+
+    physical = (void *)((unsigned int)header & SDV_PHYSICAL_ADDRESS_MASK);
+    packet = xglPacketGetCurrent();
+    sdvPacketFlushMscnt();
+    header->quad[0] = 0;
+    header->quad[1] = 0;
+    header->layout.unpack = ((qwc - 1) << 16) | 0x6C008000;
+    header->layout.primitiveCount = primitiveCount;
+    header->layout.strip = strip;
+    header->layout.loopCount |= primitiveCount;
+    sceVif1PkRef(packet, physical, qwc, 0, 0, 0);
+}
 
 /* Draws one alter's key frames into the packet from xglPacketGetCurrent (sdvDrawAlter). */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvDrawAlter);
@@ -1298,8 +1442,53 @@ void sdvDestroyAlters(void)
 }
 
 /* Runs every active alter record (sdvExecAlters). */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecAlters);
+void sdvExecAlters(void)
+{
+    int i;
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvDrawAlters);
+    for (i = 0; i < 49; i++) {
+        if (sdvAlterTable[i].active != 0) {
+            sdvExecAlter(&sdvAlterTable[i]);
+        }
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026BB78);
+void func_00258970(void);
+void svBuildDrawStatePacket(void);
+void sdvDrawAlter(SdvAlter *alter);
+
+/* Draws every active alter record of one layer; the draw state is set up before the first one. */
+void sdvDrawAlters(int layer)
+{
+    int i;
+    int stateBuilt = 0;
+
+    for (i = 0; i < 49; i++) {
+        if (sdvAlterTable[i].active != 0 && sdvAlterTable[i].request.layer == layer) {
+            if (!stateBuilt) {
+                stateBuilt = 1;
+                func_00258970();
+                svBuildDrawStatePacket();
+            }
+            sdvDrawAlter(&sdvAlterTable[i]);
+        }
+    }
+}
+
+/* Draws every active alter record that belongs to owner, like sdvDrawAlters. */
+void func_0026BB78(int owner)
+{
+    int i;
+    int stateBuilt = 0;
+
+    for (i = 0; i < 49; i++) {
+        if (sdvAlterTable[i].active != 0 && sdvAlterTable[i].request.owner == owner) {
+            if (!stateBuilt) {
+                stateBuilt = 1;
+                func_00258970();
+                svBuildDrawStatePacket();
+            }
+            sdvDrawAlter(&sdvAlterTable[i]);
+        }
+    }
+}
