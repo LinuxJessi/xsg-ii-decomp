@@ -165,7 +165,72 @@ int cfeStrLastCharPos(const char *text, char character)
     return count;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfeMesLayoutText);
+void *memset(void *destination, int value, unsigned int count);
+char *strcpy(char *destination, const char *source);
+char *func_002AA7F0(char *destination, const char *source);   /* strcat */
+extern const char D_0068CD80[];
+extern const char D_0068CD88[];
+
+/* The scratchpad, where each line is laid out before it is appended. */
+#define CFE_MES_SCRATCHPAD ((char *) 0x70000000)
+/* The size of the scratchpad line and of the laid-out text. */
+#define CFE_MES_BUFFER_SIZE 0x400
+/* A leading '@' indents the first line by one space. */
+#define CFE_MES_INDENT '@'
+/* Where the font settings string is printed and its colour. */
+#define CFE_MES_SETUP_Y 390
+#define CFE_MES_SETUP_COLOR 0xFFFFFF
+
+/* Lays the message text out line by line: each line gets a header byte of 1 and an x offset of
+ * minus half its width (0 becomes 1) in front of it, built on the scratchpad and appended to a local
+ * buffer, which then replaces the text. */
+void cfeMesLayoutText(char *text)
+{
+    char result[CFE_MES_BUFFER_SIZE];
+    char *start;
+    int indent = 0;
+    char *line;
+    char *destination;
+    int width;
+    int last;
+
+    start = text;
+    result[0] = D_0068CD80[0];
+    memset(result + 1, 0, sizeof(result) - 1);
+    xglFontGetStringWidth(D_0068CD88);
+    if (*start == CFE_MES_INDENT) {
+        indent = 1;
+        text = start + 1;
+    }
+    do {
+        destination = CFE_MES_SCRATCHPAD;
+        memset(CFE_MES_SCRATCHPAD, 0, CFE_MES_BUFFER_SIZE);
+        if (indent) {
+            CFE_MES_SCRATCHPAD[0] = ' ';
+            destination = CFE_MES_SCRATCHPAD + 1;
+            indent = 0;
+        }
+        line = destination;
+        destination = line + 2;
+        for (;;) {
+            *destination++ = *text++;
+            if (*text == '\n' || *text == 0) {
+                *destination = *text;
+                break;
+            }
+        }
+        xglFontPrint(0, CFE_MES_SETUP_Y, CFE_MES_SETUP_COLOR, D_0068CD88);
+        line[0] = 1;
+        width = xglFontGetStringWidth(line);
+        line[1] = -1 - width / 2;
+        if (line[1] == 0) {
+            line[1] = 1;
+        }
+        func_002AA7F0(result, CFE_MES_SCRATCHPAD);
+        last = *text++;
+    } while (last != 0);
+    strcpy(start, result);
+}
 
 /* Copies a message, turning each "\\n" into a newline; another escaped character is dropped (its place
  * is skipped). */
@@ -262,10 +327,8 @@ float XenoActorSetSelector(void *, int);
 int func_A9F0A8(int handle);
 int func_A9F0C0(int, int);
 char *func_A9F238(int, int);
-char *strcpy(char *, const char *);
 extern unsigned char D_0068CE20[];
 extern unsigned char D_0068CDE8[];
-void *memset(void *, int, unsigned int);
 
 void XenoActorAllocMatrices(XenoActor *actor);
 
@@ -1061,7 +1124,6 @@ int cfe_0024DBC0(int handle)
     return 1;
 }
 
-void cfeMesLayoutText(char *text);
 extern int cfePlugInRecordCount;
 extern const char D_0068CF38[];
 
