@@ -385,7 +385,42 @@ XenoActor *cfeLoadActorObject(int id)
     return actor;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfePlugIn", cfe_0024BA70);
+extern unsigned char D_0068CE08[];
+extern int cfeEntryCount;
+extern CfeNode cfeEntries[];
+
+/* Script command (1 argument): loads actor argument 1 into the next entry of cfeEntries, copies the play
+ * range of its first motion state, sets draw mode 6 and allocates a cleared record block of two words per
+ * pack geometry. */
+int cfe_0024BA70(int handle)
+{
+    XenoActor *actor;
+    CfePackHeader *pack;
+    void *block;
+
+    if (func_A9F0A8(handle) != 1) {
+        assertFailed(D_0068CDE8, cfeAssertFile, 394);
+    }
+    cfeEntries[cfeEntryCount].actor = cfeLoadActorObject(func_A9F0C0(handle, 1));
+    if (cfeEntries[cfeEntryCount].actor == 0) {
+        assertFailed(D_0068CE08, cfeAssertFile, 398);
+    }
+    actor = cfeEntries[cfeEntryCount].actor;
+    /* XenoActor keeps the pack as an int. */
+    pack = (CfePackHeader *) actor->pack;
+    cfeEntries[cfeEntryCount].playStart = actor->motion[0].range[0];
+    cfeEntries[cfeEntryCount].playEnd = actor->motion[0].range[1];
+    cfeEntries[cfeEntryCount].drawMode = 6;
+    if (pack != 0 && pack->geometryCount != 0) {
+        block = GameResBufferAlloc(pack->geometryCount * 8);
+        cfeEntries[cfeEntryCount].records = block;
+        memset(block, 0, pack->geometryCount * 8);
+    } else {
+        cfeEntries[cfeEntryCount].records = 0;
+    }
+    cfeEntryCount++;
+    return 1;
+}
 
 int GameResLoadName(char *name, void **data, unsigned int *size,
                     void (*callback)(int index, void *buffer, unsigned int size, int value));
