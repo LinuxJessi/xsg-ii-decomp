@@ -1208,10 +1208,7 @@ extern int gifStateNumPacket;
 
 /* One quadword of gifStatePacket: a data/address pair (A+D) or four raw words (the tag). */
 typedef union GifStateQword {
-    struct {
-        u64 data;
-        u64 address;
-    } pair;
+    u64 pair[2];                /* A+D: the data, then the register address */
     u32 word[4];
 } GifStateQword;
 
@@ -1230,14 +1227,24 @@ void gifStateReset(void) {
     gifStatePacket[0].word[3] = 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateAddReg);
-
 /* The assert text and the file name of the packet queue asserts. */
 extern const char D_0068CB18[];
 extern const char D_0068CB40[];
 
 /* The assert bound: numPacket < (STATEPACKET_MAX - 1) quadwords after the tag. */
 #define GIF_STATE_PACKET_MAX 0x7F
+
+/* Queues the A+D pair (gifAddress, gifData) as the next quadword of gifStatePacket (asserts while the
+ * packet is not full). */
+void gifStateAddReg(int gifAddress, u64 gifData)
+{
+    if ((unsigned int) gifStateNumPacket >= GIF_STATE_PACKET_MAX) {
+        assertFailed(D_0068CB18, D_0068CB40, 37);
+    }
+    gifStateNumPacket++;
+    gifStatePacket[gifStateNumPacket].pair[0] = gifData;
+    gifStatePacket[gifStateNumPacket].pair[1] = gifAddress;
+}
 
 /* Queues four raw words as one quadword of gifStatePacket (asserts while the packet is not full). */
 void gifStateAddRawQword(u32 word0, u32 word1, u32 word2, u32 word3)
@@ -1271,9 +1278,6 @@ void gifStateFlush(void) {
         gifStateNumPacket = 0;
     }
 }
-
-/* Queues one A+D pair: gifData goes to the GS register at address gifAddress. */
-void gifStateAddReg(int gifAddress, u64 gifData);
 
 /* GS TEXFLUSH with no data. */
 void gifStateTexFlush(void) {
