@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu144.h"
+#include "main/tu145.h"
 
 /* Normalizes the 2-D vector (*x, *y) in 8.8 fixed point (a zero length counts as 1e-6). The
  * conversion back takes the whole part of the unscaled component times 1 / length, as the original
@@ -19,25 +20,7 @@ void cfeNormalizeFixed2(int *x, int *y)
     *y = (int) ((int) fy * length * 256.0f + (int) ((fy * length - (int) fy * length) * 256.0f));
 }
 
-/*
- * A key of a time-keyed track. startTime (+4) is the key time; the tracks are
- * singly linked through next (+0x20) in increasing time. Each direction pair
- * is a 2-D unit vector in 8.8 fixed point, normalized by cfeEntryNormalizeDirs
- * and reset to (1, 0) by cfeEntryResetDirs. The word at +8 is an 8.8 angle
- * that cfeChainUnwrapAngles makes continuous along the chain.
- */
-typedef struct CfeTrackNode {
-    int flags;
-    int startTime;
-    int angle;                      /* +0x08: 8.8 fixed point */
-    int firstDirection[2];
-    int secondDirection[2];
-    struct CfeTrackNode *prev;      /* +0x1C */
-    struct CfeTrackNode *next;
-} CfeTrackNode;
 
-void func_0024FC90(CfeTrackNode *track);
-CfeTrackNode *cfeTrackFindAtOrBefore(CfeTrackNode *node, int time);
 
 /* Normalizes both direction pairs of the key (cfeNormalizeFixed2 on each). */
 void cfeEntryNormalizeDirs(CfeTrackNode *entry)
@@ -87,8 +70,8 @@ void cfeChainUnwrapAngles(CfeTrackNode *node)
         return;
     }
     do {
-        current = CFE_FIXED_TO_FLOAT(next->angle);
-        previous = CFE_FIXED_TO_FLOAT(node->angle);
+        current = CFE_FIXED_TO_FLOAT(next->value);
+        previous = CFE_FIXED_TO_FLOAT(node->value);
         if (previous < current) {
             while (__builtin_fabsf(current - previous) > CFE_PI) {
                 current -= CFE_TWO_PI;
@@ -99,7 +82,7 @@ void cfeChainUnwrapAngles(CfeTrackNode *node)
             }
         }
         whole = (int) current;
-        next->angle = (whole << 8) + (int) ((current - (float) whole) * 256.0f);
+        next->value = (whole << 8) + (int) ((current - (float) whole) * 256.0f);
         node = next;
         after = next->next;
     } while ((next = after) != 0);
@@ -109,8 +92,8 @@ void cfeChainUnwrapAngles(CfeTrackNode *node)
 float cfeTrackLerp(CfeTrackNode *from, CfeTrackNode *to, float time)
 {
     float t = (time - (float) from->startTime) / (float) (to->startTime - from->startTime);
-    float end = CFE_FIXED_TO_FLOAT(to->angle);
-    float start = CFE_FIXED_TO_FLOAT(from->angle);
+    float end = CFE_FIXED_TO_FLOAT(to->value);
+    float start = CFE_FIXED_TO_FLOAT(from->value);
 
     return (end - start) * t + start;
 }
@@ -160,13 +143,13 @@ float func_00250478(CfeTrackNode *from, CfeTrackNode *to, float time)
     length = 1.0f / length;
     arrive[0] *= length;
     arrive[1] *= length;
-    y[0] = CFE_FIXED_TO_FLOAT(from->angle);
+    y[0] = CFE_FIXED_TO_FLOAT(from->value);
     x[0] = from->startTime * D_006317B8;
     x[1] = x[0] + leave[0];
     y[1] = y[0] + leave[1];
     x[3] = to->startTime * D_006317B8;
     x[2] = x[3] - arrive[0];
-    y[3] = CFE_FIXED_TO_FLOAT(to->angle);
+    y[3] = CFE_FIXED_TO_FLOAT(to->value);
     y[2] = y[3] - arrive[1];
     func_00295260(coefficients, x, y);
     return cfeEntryEvalCubic(time, from, coefficients);
@@ -368,12 +351,12 @@ int cfeTrackCountValueRuns(CfeTrackNode *node)
     int value;
 
     if (node != 0) {
-        value = node->angle;
+        value = node->value;
         count = 1;
         for (; node != 0; node = node->next) {
-            if (node->angle != value) {
+            if (node->value != value) {
                 count++;
-                value = node->angle;
+                value = node->value;
             }
         }
     }
@@ -398,12 +381,12 @@ int func_00250E10(CfeTrackNode *node, int lower, int upper)
     if (node == 0) {
         return 0;
     }
-    value = node->angle;
+    value = node->value;
     count = 1;
     while (node != 0) {
-        if (node->angle != value) {
+        if (node->value != value) {
             count++;
-            value = node->angle;
+            value = node->value;
         }
         node = node->next;
         if (node == 0 || node->startTime > upper) {
@@ -467,10 +450,10 @@ int cfeTrackAllValuesEqual(CfeTrackNode *node)
         return 0;
     }
     /* Read through a pointer: the loop's first compare loads the angle again, as in the original. */
-    first = &node->angle;
+    first = &node->value;
     value = *first;
     for (; node != 0; node = node->next) {
-        if (node->angle != value) {
+        if (node->value != value) {
             return 0;
         }
     }

@@ -3,13 +3,12 @@
 #include "main/TiGlobalColl.h"
 #include "main/cfePlugIn.h"
 #include "main/tu022.h"
+#include "main/res_get_path.h"
 #include "main/tu146.h"
 #include "main/xgl_2.h"
 #include "main/xgl_studio.h"
 #include "quadword.h"
 
-int GameResBufferAlloc(int);
-void cfeNodePoolSet(void *);
 
 void cfeNodePoolInit(void) {
     cfeNodePoolSet(GameResBufferAlloc(0x48000));

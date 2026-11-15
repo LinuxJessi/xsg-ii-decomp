@@ -3,41 +3,19 @@
 
 extern void *memset(void *destination, int value, unsigned int count);
 
-/*
- * A node of the chain walked by cfeListTail, linked through the pointer
- * at +0x20; the other fields are not used by this allocation.
- */
-typedef struct CfeListNode {
-    unsigned char unmodeled_00[0x20];
-    struct CfeListNode *next;
-} CfeListNode;
-
-/*
- * One 0x30-byte node of the pool that cfeNodePool points to (6144 nodes). Its
- * first word is a flags word: bit 0 marks a node in use. cfeNodeAlloc
- * allocates the first free node, cfeNodeRelease (cfeNodeRelease) frees one and
- * cfeNodePoolCountInUse counts the nodes in use. The list links at +0x1C and +0x20
- * are used by the list helpers in tu144.
- */
-typedef struct CfePoolNode {
-    int flags;
-    unsigned char unmodeled_04[0x18];
-    struct CfePoolNode *prev;       /* +0x1C */
-    struct CfePoolNode *next;       /* +0x20 */
-    unsigned char unmodeled_24[0x0C];
-} CfePoolNode;
-
+/* cfeNodePool points to a table of CFE_POOL_NODE_COUNT track nodes. cfeNodeAlloc allocates the first free
+ * node, cfeNodeRelease frees one and cfeNodePoolCountInUse counts the nodes in use (flags bit 0). */
 #define CFE_POOL_NODE_COUNT 6144
 
-extern CfePoolNode *cfeNodePool;
+extern CfeTrackNode *cfeNodePool;
 
 /* Returns the last node of the chain that starts at node, or 0 for a null node. */
-CfeListNode *cfeListTail(CfeListNode *node)
+CfeTrackNode *cfeListTail(CfeTrackNode *node)
 {
-    CfeListNode *last = 0;
-    CfeListNode *next;
-    CfeListNode *current;
-    CfeListNode *following;
+    CfeTrackNode *last = 0;
+    CfeTrackNode *next;
+    CfeTrackNode *current;
+    CfeTrackNode *following;
 
     if (node != 0) {
         next = node->next;
@@ -55,24 +33,24 @@ CfeListNode *cfeListTail(CfeListNode *node)
 }
 
 /* Points the pool at a table of CFE_POOL_NODE_COUNT nodes (allocated by tu141 init). */
-void cfeNodePoolSet(CfePoolNode *records) {
+void cfeNodePoolSet(CfeTrackNode *records) {
     cfeNodePool = records;
 }
 
 /* Clears every node of the pool, freeing all of them. */
 void cfeNodePoolClear(void) {
-    memset(cfeNodePool, 0, CFE_POOL_NODE_COUNT * sizeof(CfePoolNode));
+    memset(cfeNodePool, 0, CFE_POOL_NODE_COUNT * sizeof(CfeTrackNode));
 }
 
 /* Allocates the first free pool node: clears it, unlinks it and marks it in use. Returns 0 when all
  * CFE_POOL_NODE_COUNT nodes are in use. */
-CfePoolNode *cfeNodeAlloc(void)
+CfeTrackNode *cfeNodeAlloc(void)
 {
     int i;
 
     for (i = 0; i < CFE_POOL_NODE_COUNT; i++) {
         if ((cfeNodePool[i].flags & 1) == 0) {
-            memset(&cfeNodePool[i], 0, sizeof(CfePoolNode));
+            memset(&cfeNodePool[i], 0, sizeof(CfeTrackNode));
             cfeNodePool[i].prev = 0;
             cfeNodePool[i].next = 0;
             cfeNodePool[i].flags |= 1;
@@ -83,7 +61,7 @@ CfePoolNode *cfeNodeAlloc(void)
 }
 
 /* Frees a pool node: clears its in-use bit (cfeNodeRelease). */
-void cfeNodeRelease(CfePoolNode *record) {
+void cfeNodeRelease(CfeTrackNode *record) {
     record->flags &= ~1;
 }
 
@@ -94,7 +72,7 @@ void cfeNodePoolReset(void) {
 
 /* Number of pool nodes in use (bit 0 set). */
 int cfeNodePoolCountInUse(void) {
-    CfePoolNode *record;
+    CfeTrackNode *record;
     int inUseCount;
     int index;
     int flags;

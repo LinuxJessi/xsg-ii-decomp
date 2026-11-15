@@ -9,6 +9,8 @@
 #include "main/tu138.h"
 #include "main/sef.h"
 #include "main/tu144.h"
+#include "main/tu145.h"
+#include "main/tu146.h"
 #include "main/sdv_033.h"
 #include "main/xenoActor.h"
 #include "main/xgl_2.h"
@@ -20,6 +22,7 @@
 #include "main/TiGlobalColl.h"
 #include "main/nml_model_set.h"
 #include "main/pad.h"
+#include "main/res_get_path.h"
 #include "main/tu021.h"
 #include "main/xgl_font.h"
 #include "main/xgl_render.h"
@@ -36,16 +39,14 @@ extern unsigned char cfeAssertFile[];
 #define CFE_KEY_RESET_FIRST 0x8
 #define CFE_KEY_RESET_SECOND 0x10
 
-CfeListNode *cfeListTail(CfeListNode *node);
-void func_0024FC90(CfeListNode *list);
 extern unsigned char D_0068CD10[];
 
 /* Sets key `key` of the value list to `value` in a CFE_KEY_MODE_* mode: plain (func_0024F698) or
  * flagged (func_0024F730), or plain with reset flags on the list's tail, which is then updated
  * (func_0024FC90). */
-void func_0024B0E8(CfeListNode **list, int mode, int key, float value)
+void func_0024B0E8(CfeTrackNode **list, int mode, int key, float value)
 {
-    CfeListNode *tail;
+    CfeTrackNode *tail;
 
     switch (mode) {
     case CFE_KEY_MODE_PLAIN:
@@ -87,9 +88,9 @@ void func_0024B0E8(CfeListNode **list, int mode, int key, float value)
 /* Sets key `key` of the angle list to `value` in a CFE_KEY_MODE_* mode: plain (func_0024F7C0) or
  * flagged (func_0024F860), or plain with reset flags on the list's tail, which is then updated
  * (func_0024FC90). */
-void func_0024B230(CfeListNode **list, int mode, int key, float value)
+void func_0024B230(CfeTrackNode **list, int mode, int key, float value)
 {
-    CfeListNode *tail;
+    CfeTrackNode *tail;
 
     switch (mode) {
     case CFE_KEY_MODE_PLAIN:
@@ -248,7 +249,7 @@ typedef struct CfeGroup {
     Matrix4 *matrices;          /* +0x08: one per part */
     CfeEvalRecord *records;     /* +0x0C: one per part */
     unsigned char unmodeled_10[0x64 - 0x10];
-    CfeListNode *lists[4];      /* +0x64 */
+    CfeTrackNode *lists[4];      /* +0x64 */
     unsigned char unmodeled_74[0xC0 - 0x74];
 } CfeGroup;
 
@@ -264,7 +265,6 @@ char *func_A9F238(int, int);
 char *strcpy(char *, const char *);
 extern unsigned char D_0068CE20[];
 extern unsigned char D_0068CDE8[];
-void *GameResBufferAlloc(int size);
 void *memset(void *, int, unsigned int);
 
 void XenoActorAllocMatrices(XenoActor *actor);
@@ -649,7 +649,7 @@ int cfe_0024C308(int handle)
 }
 
 /* The key lists at +0x130 of each 0x1B0-byte entry of cfeEntries. */
-extern CfeListNode *D_006319F0[][108];
+extern CfeTrackNode *D_006319F0[][108];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_006319F0 to the 8.8 value.
  * Lists 3 to 5 hold angles (func_0024F860 / func_0024F7C0), the others plain values (func_0024F730 /
@@ -686,7 +686,7 @@ int cfe_0024C500(int handle)
     return 1;
 }
 
-extern CfeListNode *D_00631A54[][108];
+extern CfeTrackNode *D_00631A54[][108];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_00631A54
  * (the lists at +0x194 of each 0x1B0-byte entry of cfeEntries) to the 8.8 value, with flag
@@ -729,7 +729,7 @@ int cfe_0024C940(int handle)
     int key;
     int flagged;
     int value;
-    CfeListNode *node;
+    CfeTrackNode *node;
 
     if (func_A9F0A8(handle) != 6) {
         assertFailed(D_0068CEF0, cfeAssertFile, 821);
@@ -741,13 +741,13 @@ int cfe_0024C940(int handle)
     flagged = func_A9F0C0(handle, 5);
     value = func_A9F0C0(handle, 6);
     if (flagged != 0) {
-        func_0024F730((CfeListNode **) &cfeEntries[entry].records[row].track[column], key,
+        func_0024F730((CfeTrackNode **) &cfeEntries[entry].records[row].track[column], key,
                       CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024F698((CfeListNode **) &cfeEntries[entry].records[row].track[column], key,
+        func_0024F698((CfeTrackNode **) &cfeEntries[entry].records[row].track[column], key,
                       CFE_FIXED_TO_FLOAT(value));
     }
-    for (node = (CfeListNode *) cfeEntries[entry].records[row].track[column]; node != 0; node = node->next) {
+    for (node = (CfeTrackNode *) cfeEntries[entry].records[row].track[column]; node != 0; node = node->next) {
     }
     return 1;
 }
@@ -756,7 +756,7 @@ int cfe_0024C940(int handle)
 /* The studio block (0x70 bytes, cleared by cfeStudioInit): the camera and its key lists. */
 typedef struct CfeStudioBlock {
     XglCamera *camera;
-    CfeListNode *lists[27];
+    CfeTrackNode *lists[27];
 } CfeStudioBlock;
 
 extern CfeStudioBlock D_006384C0;
@@ -787,7 +787,7 @@ int cfe_0024CB80(int handle)
     return 1;
 }
 
-extern CfeListNode *D_0063857C[][32];
+extern CfeTrackNode *D_0063857C[][32];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063857C to the 8.8 value.
  * Lists 3 to 5 hold angles (func_0024F860 / func_0024F7C0), the others plain values (func_0024F730 /
@@ -824,7 +824,7 @@ int cfe_0024CCF8(int handle)
     return 1;
 }
 
-extern CfeListNode *D_0063A54C[][16];
+extern CfeTrackNode *D_0063A54C[][16];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063A54C to the 8.8 value.
  * Lists 3 to 5 hold angles (func_0024F860 / func_0024F7C0), the others plain values (func_0024F730 /
@@ -884,18 +884,18 @@ int cfe_0024D1E8(int handle)
          * prototypes), hence the casts. */
         if (sub >= 3 && sub < 6) {
             if (flagged != 0) {
-                func_0024F860((CfeListNode **) &cfeGroups[group].records[part].source[sub], key,
+                func_0024F860((CfeTrackNode **) &cfeGroups[group].records[part].source[sub], key,
                               CFE_FIXED_TO_FLOAT(value));
             } else {
-                func_0024F7C0((CfeListNode **) &cfeGroups[group].records[part].source[sub], key,
+                func_0024F7C0((CfeTrackNode **) &cfeGroups[group].records[part].source[sub], key,
                               CFE_FIXED_TO_FLOAT(value));
             }
         } else {
             if (flagged != 0) {
-                func_0024F730((CfeListNode **) &cfeGroups[group].records[part].source[sub], key,
+                func_0024F730((CfeTrackNode **) &cfeGroups[group].records[part].source[sub], key,
                               CFE_FIXED_TO_FLOAT(value));
             } else {
-                func_0024F698((CfeListNode **) &cfeGroups[group].records[part].source[sub], key,
+                func_0024F698((CfeTrackNode **) &cfeGroups[group].records[part].source[sub], key,
                               CFE_FIXED_TO_FLOAT(value));
             }
         }
@@ -914,7 +914,7 @@ int cfe_0024D1E8(int handle)
     return 1;
 }
 
-extern CfeListNode *D_0063CDE0[];
+extern CfeTrackNode *D_0063CDE0[];
 
 /* Script command (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
  * with flag 0x2 (func_0024F730) when `flagged` is set. */
@@ -940,7 +940,7 @@ int cfe_0024D5E0(int handle)
     return 1;
 }
 
-extern CfeListNode *D_0063ACB4[][140];
+extern CfeTrackNode *D_0063ACB4[][140];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4
  * (140 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
@@ -969,7 +969,7 @@ int cfe_0024D738(int handle)
     return 1;
 }
 
-extern CfeListNode *D_0063CE0C[][6];
+extern CfeTrackNode *D_0063CE0C[][6];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C
  * (6 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
@@ -998,7 +998,7 @@ int cfe_0024D8C0(int handle)
     return 1;
 }
 
-extern CfeListNode *D_0063CE90[][20];
+extern CfeTrackNode *D_0063CE90[][20];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE90
  * (20 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
