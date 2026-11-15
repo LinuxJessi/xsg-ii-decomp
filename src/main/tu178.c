@@ -38,7 +38,8 @@ void srsMapPendingResources(void);
  * "esp/default.esp") into the buffer of record 0 of srsRecordTable, allocating
  * it on first use. When the buffer already holds the package with the same key
  * and reload is 0, only its image mapper is registered again; otherwise the
- * file is read again. */
+ * file is read again. A failed first read clears the key and falls through
+ * into that shared tail, so the file is read a second time. */
 void srsLoadEspFile(int reload, int cfdef)
 {
     const char *path;

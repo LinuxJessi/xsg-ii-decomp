@@ -63,7 +63,7 @@ typedef struct SefScriptRecord {
 
 /* Inline copy of scOfsToAdr below (written out in place, each lookup shares one
  * register for the loaded and the resolved offset; the original keeps two). */
-static inline int sefOfsToAdr(int offset)
+static inline int scOfsToAdrInline(int offset)
 {
     if (offset == SCRIPT_ADDRESS_NONE || offset == -1) {
         offset = 0;
@@ -112,7 +112,7 @@ SefScriptRecord *func_00266BC8(int key, int *offset_out, int index)
                 D_0069DC20 = kind = record->kind;
                 if ((unsigned short)(record->kind - 0x3C) < 2) {
                     value = (unsigned short)record->operand;
-                    offset = sefOfsToAdr(value);
+                    offset = scOfsToAdrInline(value);
                 } else if (kind == 0x3E) {
                     slot = record->operand;
                     if (!(slot & SEF_OPERAND_WHOLE)) {
@@ -121,12 +121,12 @@ SefScriptRecord *func_00266BC8(int key, int *offset_out, int index)
                         D_0069DC24 = slot;
                     }
                     value = record->offsets[index];
-                    offset = sefOfsToAdr(value);
+                    offset = scOfsToAdrInline(value);
                 } else if (kind == 0x3F) {
                     slot = srsGetEffectSlot(key);
                     if (slot < record->operand) {
                         value = record->offsets[slot];
-                        offset = sefOfsToAdr(value);
+                        offset = scOfsToAdrInline(value);
                     }
                 } else if (kind == 0x49) {
                     value = 0;
