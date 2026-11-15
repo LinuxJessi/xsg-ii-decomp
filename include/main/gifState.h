@@ -64,6 +64,7 @@ extern GifStatusBlock gifStatus;
 void func_00246AF8(void);
 void func_00246DD8(int value);
 void gifStateClearModeValue(void);
+void gifStateEnableEffect(void);
 void gifStateSuppressDrawHook(void);
 void nmlModelEnableSubWindow0(void);
 void nmlModelUseSubWindow(unsigned int index, int enabled);

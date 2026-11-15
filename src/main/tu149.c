@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/pad.h"
 #include "main/tu147.h"
+#include "main/tu149.h"
 
 extern PadRecord PadData[];
 

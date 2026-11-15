@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/tu116.h"
 #include "main/tu148.h"
+#include "main/tu149.h"
 #include "main/tu021.h"
 #include "shared.h"
 
@@ -10,7 +11,6 @@ int func_A9F0A8(void);
 int func_A9F0C0(int, int);
 void questFlagSet(int, int);
 int yg2PathGetCitizenFlag(u32);
-int msgPurchaseUpdate(void);
 int func_A9F140(int, int);
 int func_A9F238(int, int);
 void msgWindowOpenText(int);

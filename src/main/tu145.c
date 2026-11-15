@@ -20,8 +20,6 @@ void cfeNormalizeFixed2(int *x, int *y)
     *y = (int) ((int) fy * length * 256.0f + (int) ((fy * length - (int) fy * length) * 256.0f));
 }
 
-
-
 /* Normalizes both direction pairs of the key (cfeNormalizeFixed2 on each). */
 void cfeEntryNormalizeDirs(CfeTrackNode *entry)
 {

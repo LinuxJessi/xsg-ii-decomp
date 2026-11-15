@@ -5,6 +5,7 @@
 
 unsigned int msgWindowInUse(void);
 void msgChoiceOpen(int frame, int second);
+int msgChoicePoll(void);
 void * msgPollSelect(void);
 void msgPanelShow(int first, int second);
 void msgResetAll(void);

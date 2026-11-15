@@ -1,9 +1,8 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu114.h"
+#include "main/tu148.h"
 #include "main/xenoActor.h"
-
-int msgChoicePoll(void);
 
 typedef struct MapModeBlock {
     u8 unmodeled_0000[0x4084];
