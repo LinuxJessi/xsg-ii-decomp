@@ -255,7 +255,76 @@ long xglColorLerp(float fraction, int from, int to);
    radiusStep away from the centre along directions spaced 360 / segments degrees from startAngle, each ring coloured
    from color towards endColor when endColor is set; a centre sprite comes first unless centerDisabled. Nothing is drawn
    with 15 segments or more (the direction table holds 15). */
-INCLUDE_ASM("asm/main/nonmatchings/tu210", circleDrawSegments);
+void circleDrawSegments(CircleRecord *record, int packet) {
+    float directions[15][2];
+    Vector4 positions[2];
+    Vector4 uvs[2];
+    int color;
+    int segments;
+    int count;
+    int uvTop;
+    int uvLeft;
+    int uvRight;
+    int uvBottom;
+    int radiusStep;
+    int ringCount;
+    int endColor;
+    int startAngle;
+    int centerDisabled;
+    int angleStep;
+    int i;
+    int ring;
+    int segment;
+    float radius;
+
+    angleStep = 0;
+    color = record->color;
+    segments = record->segments;
+    count = record->count;
+    uvTop = record->uvTop;
+    uvLeft = record->uvLeft;
+    uvRight = record->uvRight;
+    uvBottom = record->uvBottom;
+    radiusStep = record->radiusStep;
+    ringCount = record->ringCount;
+    endColor = record->endColor;
+    startAngle = record->startAngle;
+    centerDisabled = record->centerDisabled;
+    if (segments < 15) {
+        uvs[0].x = (float) uvLeft;
+        uvs[0].y = (float) uvTop;
+        uvs[1].x = (float) uvRight;
+        uvs[1].y = (float) uvBottom;
+        if (segments != 0) {
+            angleStep = 360 / segments;
+        }
+        for (i = 0; i < segments; i++) {
+            directions[i][0] = xglCosDeg(startAngle + i * angleStep);
+            directions[i][1] = xglSinDeg(startAngle + i * angleStep);
+        }
+        gsQueueBeginSprites(record);
+        for (i = 0; i < count; i++) {
+            if (centerDisabled == 0) {
+                func_002789C8(positions, 0, 0, record);
+                gsQueueAddTexturedVertex(packet, &positions[0], &uvs[0], record);
+                gsQueueAddTexturedKickVertex(packet, &positions[1], &uvs[1], record);
+            }
+            for (ring = 0; ring < ringCount; ring++) {
+                if (endColor != 0) {
+                    gsQueueAddColor(packet, xglColorLerp((float) ring / (float) ringCount, color, endColor), record);
+                }
+                for (segment = 0; segment < segments; segment++) {
+                    radius = (float) (radiusStep * (ring + 1));
+                    func_002789C8(positions, (int) (radius * directions[segment][0]),
+                                  (int) (radius * directions[segment][1]), record);
+                    gsQueueAddTexturedVertex(packet, &positions[0], &uvs[0], record);
+                    gsQueueAddTexturedKickVertex(packet, &positions[1], &uvs[1], record);
+                }
+            }
+        }
+        gsQueueFlush(packet);
+    }
+}
 /*CIRCLE_END*/
 
 /* Sets the two corner points of a sprite: the record rectangle shifted by (x, y), z from the record. */
