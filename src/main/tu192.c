@@ -1,8 +1,9 @@
 #include "common.h"
 #include "shared.h"
 
-/* Dot product of the xyz lanes, returned in $f0. The product is written to lane x of a quadword
- * local: that local is the original's unused 16-byte frame. */
+/* Dot product of the xyz lanes, returned in $f0. The asm's float output stays in a register; it is
+ * bound to the x field of a Vector4 local only so the function keeps the original's 16-byte frame,
+ * which no instruction reads or writes. */
 float MMathVectorDotProduct(const Vector4 *first, const Vector4 *second)
 {
     Vector4 product;

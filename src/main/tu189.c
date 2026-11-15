@@ -21,7 +21,8 @@ void *MMathNormalizeVector2(void *destination, const Vector4 *source)
 }
 
 /* Vector length over x, y and z (VU0 square, sum, square root; the result is a float returned in $f0).
- * The length is written to lane x of a quadword local: that local is the original's unused 16-byte frame. */
+ * The asm's float output stays in a register; it is bound to the x field of a Vector4 local only so
+ * the function keeps the original's 16-byte frame, which no instruction reads or writes. */
 float MMathCalcLength(const Vector4 *vector)
 {
     Vector4 length;
