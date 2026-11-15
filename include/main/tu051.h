@@ -4,6 +4,16 @@
 #include "shared.h"
 
 /* Types used by the map object code (tu051.c, tu075.c); the actor is only partly recovered. */
+/* One motion state of the actor's TiMRPackage channel block (TiMRPackage.c's TiMRState, 0x50 bytes). */
+typedef struct XenoMotionState {
+    u32 flags;
+    float speed;                            /* +0x04: tiMRStateSetSpeed */
+    float frame;                            /* +0x08 */
+    float value;                            /* +0x0C: XenoActorSetChannelValue */
+    int range[2];                           /* +0x10: the play range (xenoActor.c names word 0 source_value) */
+    unsigned char unmodeled_18[0x50 - 0x18];
+} XenoMotionState;
+
 /* The XenoActor of a map object (xenoActor.c); only the fields used below. */
 struct XenoActor {
     unsigned char unmodeled_000[0x10];
@@ -22,13 +32,17 @@ struct XenoActor {
     int drawFlags;                          /* 0x0BC: 0x4 hides the actor, 0x08000000 draws it translucent */
     float alpha;                            /* 0x0C0 */
     int drawMode;                           /* 0x0C4: 1 while attached as a part (uwamonoAttachPlayerParts) */
-    unsigned char unmodeled_0c8[0x5CC - 0xC8];
+    unsigned char unmodeled_0c8[0x5A4 - 0xC8];
+    struct XenoActor *parent;               /* 0x5A4: the actor this one is attached to (XenoActorReleaseChild) */
+    unsigned char unmodeled_5a8[0x5CC - 0x5A8];
     u32 flags;                              /* 0x5CC */
     float frame;                            /* 0x5D0: the scene frame (tiWaterSceneLoop counts it to 120) */
     int mode;                               /* 0x5D4: the motion XenoActorCheckMode compares against */
     unsigned char unmodeled_5d8[4];
     int requested_mode;                     /* 0x5DC */
-    unsigned char unmodeled_5e0[0x5EC - 0x5E0];
+    unsigned char unmodeled_5e0[4];
+    int selector;                           /* 0x5E4: the last selector (xenoActor.c cachedSelector) */
+    unsigned char unmodeled_5e8[4];
     /* The model resources resPathSlotLoadID returns (uwamonoLoadPlayer copies them in). */
     int pack;                               /* 0x5EC: the model pack (xenoActor.c reads it as PxyHeader *) */
     int effect;                             /* 0x5F0 */
@@ -43,10 +57,8 @@ struct XenoActor {
     int lookLink;                           /* 0x618 */
     unsigned char unmodeled_61c[0x640 - 0x61C];
     int channel[4];                         /* 0x640: the tiMRPackage channel block (xenoActor.c handle640) */
-    unsigned char unmodeled_650[0x654 - 0x650];
-    float motionSpeed;                      /* 0x654 */
-    float motionFrame;                      /* 0x658 */
-    unsigned char unmodeled_65c[0x740 - 0x65C];
+    XenoMotionState motion[2];              /* 0x650, 0x6A0: the TiMRPackage states A and B of the channel block */
+    unsigned char unmodeled_6f0[0x740 - 0x6F0];
     unsigned char hitBuffer[8];             /* 0x740: the result block of mapMoveProbe */
     unsigned short hitFlags;                /* 0x748 */
     unsigned short groundFlags;             /* 0x74A: 0x10 while on a slope */
