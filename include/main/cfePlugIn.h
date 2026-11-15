@@ -3,6 +3,8 @@
 
 /* Functions of src/main/cfePlugIn.c that other files call. */
 
+#include "main/tu144.h"
+
 void cfeRegisterPlugIn(void);
 void cfeRotateVectorXY(Vector4 *result, const float *angles);
 
@@ -10,10 +12,10 @@ void cfeRotateVectorXY(Vector4 *result, const float *angles);
    fields sit at +0x40..+0x4C (cfeEvaluate.c's func_00249248 tweens them). */
 typedef struct CfeSndRecord {
     char name[0x40];
-    int value;    /* +0x40: moves toward the target */
-    int duration; /* +0x44 */
-    int valueTrack;    /* +0x48: the track the value is sampled from */
-    int durationTrack; /* +0x4C: the track the duration is sampled from */
+    int value;                   /* +0x40: moves toward the target */
+    int duration;                /* +0x44 */
+    CfeTrackNode *valueTrack;    /* +0x48: the track the value is sampled from */
+    CfeTrackNode *durationTrack; /* +0x4C: the track the duration is sampled from */
 } CfeSndRecord;
 
 /* Sound records in use: cfeSndRecordCount of them. */

@@ -8,13 +8,13 @@
 #include "gs.h"
 #include "main/tu045.h"
 #include "cfeEvaluate.h"
+#include "main/tu145.h"
 #include "main/xgl_studio.h"
 #include "main/nml_model_set.h"
 #include "main/tu093.h"
 #include "main/tu255.h"
 #include "main/xgl_2.h"
 
-f32 func_002508C8(int, int);
 
 /* The object whose flag words (+0x4C0) the records set; +0x5EC is its record list. */
 typedef struct CfeFlagOwner {
@@ -110,7 +110,6 @@ void cfeRecordBuildMatrix(CfeEvalRecord *record, f32 dest_matrix[4][4]) {
     xglCurMatrixGet(dest_matrix);
 }
 
-f32 cfeTrackSample(int, int);
 
 /* Samples the nine sources of a record into its three vectors, then builds its matrix (cfeRecordBuildMatrix). */
 void cfeRecordEvaluate(CfeEvalRecord *record, f32 dest_matrix[4][4], int sample_param) {
@@ -155,14 +154,14 @@ typedef struct CfeCameraOffset {
 } CfeCameraOffset;
 
 /* The studio block D_006384C0 (0x70 bytes) as the camera evaluation sees it: the camera, its key tracks
- * (as track handles, see cfeTrackSample) and the camera shake. cfePlugIn.c sees the same block as the
+ * and the camera shake. cfePlugIn.c sees the same block as the
  * camera and 27 key lists (CfeStudioBlock). */
 typedef struct CfeCameraEval {
     XglCamera *camera;          /* +0x00 */
-    int position[3];            /* +0x04: tracks of travel.position */
-    int rotation[3];            /* +0x10: tracks of travel.rotation */
-    int fov;                    /* +0x1C: track of travel.fov */
-    int shakeTrack[3];          /* +0x20: tracks of shakeOn, shakeFrames and shakeAmount */
+    CfeTrackNode *position[3];  /* +0x04: tracks of travel.position */
+    CfeTrackNode *rotation[3];  /* +0x10: tracks of travel.rotation */
+    CfeTrackNode *fov;          /* +0x1C: track of travel.fov */
+    CfeTrackNode *shakeTrack[3]; /* +0x20: tracks of shakeOn, shakeFrames and shakeAmount */
     int flags;                  /* +0x2C: CFE_CAMERA_HELD leaves the camera alone */
     int shakeOn;                /* +0x30 */
     int shakeFrames;            /* +0x34: frames from one shake offset to the next */
@@ -443,9 +442,9 @@ typedef struct CfeDirectionRow {
     Vector4 *direction;         /* +0x10: rotated from angles */
     Vector4 *color;             /* +0x14 */
     Vector4 *extra;             /* +0x18 */
-    int extraTracks[3];         /* +0x1C */
-    int angleTracks[3];         /* +0x28 */
-    int colorTracks[3];         /* +0x34 */
+    CfeTrackNode *extraTracks[3]; /* +0x1C */
+    CfeTrackNode *angleTracks[3]; /* +0x28 */
+    CfeTrackNode *colorTracks[3]; /* +0x34 */
 } CfeDirectionRow;
 
 extern CfeDirectionRow cfeDirections[4];

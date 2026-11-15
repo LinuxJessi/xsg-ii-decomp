@@ -783,7 +783,7 @@ extern CfeNode cfeEntries[];
 
 /* Script command (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
  * to the 8.8 value (flagged through func_0024F730 when `flagged` is set), then walks that track to its
- * end. The record keeps its track as an int handle. */
+ * end. */
 int cfe_0024C940(int handle)
 {
     int entry;
@@ -804,13 +804,11 @@ int cfe_0024C940(int handle)
     flagged = func_A9F0C0(handle, 5);
     value = func_A9F0C0(handle, 6);
     if (flagged != 0) {
-        func_0024F730((CfeTrackNode **) &cfeEntries[entry].records[row].track[column], key,
-                      CFE_FIXED_TO_FLOAT(value));
+        func_0024F730(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024F698((CfeTrackNode **) &cfeEntries[entry].records[row].track[column], key,
-                      CFE_FIXED_TO_FLOAT(value));
+        func_0024F698(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
     }
-    for (node = (CfeTrackNode *) cfeEntries[entry].records[row].track[column]; node != 0; node = node->next) {
+    for (node = cfeEntries[entry].records[row].track[column]; node != 0; node = node->next) {
     }
     return 1;
 }
@@ -943,23 +941,17 @@ int cfe_0024D1E8(int handle)
         key = func_A9F0C0(handle, 4);
         flagged = func_A9F0C0(handle, 5);
         value = func_A9F0C0(handle, 6);
-        /* CfeEvalRecord.source holds the key lists as ints (cfeEvaluate.c samples them through int
-         * prototypes), hence the casts. */
         if (sub >= 3 && sub < 6) {
             if (flagged != 0) {
-                func_0024F860((CfeTrackNode **) &cfeGroups[group].records[part].source[sub], key,
-                              CFE_FIXED_TO_FLOAT(value));
+                func_0024F860(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             } else {
-                func_0024F7C0((CfeTrackNode **) &cfeGroups[group].records[part].source[sub], key,
-                              CFE_FIXED_TO_FLOAT(value));
+                func_0024F7C0(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             }
         } else {
             if (flagged != 0) {
-                func_0024F730((CfeTrackNode **) &cfeGroups[group].records[part].source[sub], key,
-                              CFE_FIXED_TO_FLOAT(value));
+                func_0024F730(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             } else {
-                func_0024F698((CfeTrackNode **) &cfeGroups[group].records[part].source[sub], key,
-                              CFE_FIXED_TO_FLOAT(value));
+                func_0024F698(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             }
         }
     } else {

@@ -7,5 +7,7 @@
 
 void func_0024FC90(CfeTrackNode *track);
 void cfeChainUnwrapAngles(CfeTrackNode *node);
+float cfeTrackSample(CfeTrackNode *track, int time);
+float func_002508C8(CfeTrackNode *track, int time);
 
 #endif /* INCLUDE_MAIN_TU145_H */
