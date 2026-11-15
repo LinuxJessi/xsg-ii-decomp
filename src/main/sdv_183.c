@@ -3,6 +3,7 @@
 #include "main/gifState.h"
 #include "main/sdv_183.h"
 #include "main/sef_169.h"
+#include "main/tu051.h"
 #include "vu0_macro.h"
 
 void sdvClearSpecialWork(void);
@@ -66,19 +67,639 @@ typedef struct SdvSpecialWork {
 extern void *memset(void *dest, int value, unsigned int size);
 extern SdvSpecialWork sdvSpecialTable[32];
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvSelectCamera);
+/* One key track of a camera schedule; sdvProgressPrm reads its key table at +0x04. */
+typedef struct SdvScheduleChannel {
+    short keyIndex;           /* +0x00: the key func_002670C0 is at; sdvProgressPrm steps it onto the end marker */
+    unsigned char unmodeled_02[2];
+    void *keys;               /* +0x04 */
+} SdvScheduleChannel;
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvSetCameraParam);
+/* A camera schedule (sefEffectRecords + 0xA1C): the selected camera and four key tracks. */
+typedef struct SdvCameraSchedule {
+    int camera;                     /* +0x00 the selected camera's script address, 0 when none */
+    unsigned char unmodeled_04[3];
+    unsigned char unmodeled_07;     /* +0x07 cleared on selection; no reader found yet */
+    SdvScheduleChannel channels[4]; /* +0x08 */
+} SdvCameraSchedule;
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_00268010);
+int func_002AA130(void); /* newlib rand() */
+int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
+short scGetImmNumIdx(short *table, int index);
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvWrapAngle);
+/* Picks one of the five cameras of table by weighted chance (weights in percent) and loads its four tracks. */
+int sdvSelectCamera(SdvCameraSchedule *schedule, int base, unsigned short *table)
+{
+    int weights[5];
+    int cameras[5];
+    int roll;
+    int camera;
+    int total;
+    int i;
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_002680A8);
+    camera = 0;
+    roll = func_002AA130() % 100;
+    if (table == 0 || base == 0) {
+        return 0;
+    }
+    for (i = 0; i < 5; i++) {
+        cameras[i] = scGetImmAdrImmIdx2(base, table, i * 2);
+        weights[i] = scGetImmNumIdx((short *)table, i * 2 + 1);
+    }
+    total = 0;
+    for (i = 0; i < 4; i++) {
+        total += weights[i];
+        if (roll < total && cameras[i] != 0) {
+            camera = cameras[i];
+            break;
+        }
+    }
+    if (camera != 0) {
+        schedule->channels[0].keys = (void *)scGetImmAdrImmIdx2(base, (unsigned short *)camera, 0);
+        schedule->channels[1].keys = (void *)scGetImmAdrImmIdx2(base, (unsigned short *)camera, 1);
+        schedule->channels[2].keys = (void *)scGetImmAdrImmIdx2(base, (unsigned short *)camera, 2);
+        schedule->channels[3].keys = (void *)scGetImmAdrImmIdx2(base, (unsigned short *)camera, 3);
+    }
+    schedule->camera = camera;
+    schedule->unmodeled_07 = 0;
+    return camera;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvProgressPrm);
+/* A camera point request: sefGetPosition resolves offset (relative to object) into point. */
+typedef struct SdvCameraParam {
+    Vector4 point;      /* +0x00 */
+    /* A one-member union: with a plain Vector4 member gcc hoists the three angle loads of
+       sdvSetCameraParam above the offset stores; the original keeps load, store, load, store. */
+    union {
+        Vector4 vector;
+    } offset;           /* +0x10 */
+    int object;         /* +0x20 */
+    int part;           /* +0x24 */
+    unsigned char unmodeled_28[0x30 - 0x28];
+} SdvCameraParam;
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvScheduleCamera);
+/* The object scale record func_00257500 fills: scale at +0x50, used when +0x54 is set. */
+typedef struct SdvObjectScale {
+    unsigned char unmodeled_00[0x50];
+    float scale;        /* +0x50 */
+    short scaleSet;     /* +0x54 */
+} SdvObjectScale;
+
+#include "main/tu168.h"
+
+/* Returns its second argument. That parameter is int: declared short (as sv_get_image_item_161.c
+   does), a sll/sra pair extends kind before the call. */
+int func_00257500(int, int, int, int, int);
+void vu0SetCurrentRotationY(f32 value);
+void vu0RotateCurrentX(f32 value);
+void sefGetKindVector(Vector4 *destination, int object, int count, int kind);
+void sefGetPosition(Vector4 *destination, Vector4 *offset, int kind);
+extern SdvObjectScale D_0046E0C0;
+
+/* Camera kinds: the part (low bits, from 1) of one of the three request objects; the bare
+   kind takes part 1 and a height correction from the object's kind vector. */
+#define SDV_PART_OF_OBJECT0 0x40
+#define SDV_PART_OF_OBJECT2 0x80
+#define SDV_PART_OF_OBJECT1 0x100
+
+/* Builds a camera point from a key: angles (pitch, yaw, distance) orbit around the object that kind selects. */
+void sdvSetCameraParam(SdvCameraParam *camera, int kind, short *angles, int scaled, int mode)
+{
+    Vector4 orbit;
+    Vector4 vector;
+    int *objects;
+    Vector4 *offset;
+    float scale;
+    float radians;
+    int vectorKind;
+
+    vectorKind = -1;
+    objects = (int *)sefGetRequestBuffer();
+    scale = 1.0f;
+    memset(camera, 0, sizeof(*camera));
+    if (scaled != 0) {
+        func_00257500((int)&D_0046E0C0, kind, objects[0], objects[2], objects[1]);
+        if (D_0046E0C0.scaleSet != 0) {
+            scale = D_0046E0C0.scale;
+        }
+    }
+    mode &= 0xF;
+    camera->offset.vector.x = angles[0];
+    camera->offset.vector.y = angles[1];
+    camera->offset.vector.z = angles[2];
+    camera->offset.vector.w = 1.0f;
+    if (mode == 1) {
+        /* orbit = (0, 0, distance, 1) turned by yaw and pitch through the current matrix (vf26-vf29) */
+        __asm__ __volatile__("sqc2 vf0, 0(%1)" : "=m"(orbit) : "r"(&orbit));
+        orbit.z = camera->offset.vector.z * 0.01f;
+        radians = 0.017453292f;
+        vu0SetCurrentRotationY(camera->offset.vector.y * radians);
+        vu0RotateCurrentX(camera->offset.vector.x * radians);
+        __asm__ __volatile__("lqc2 vf1, 0(%0)" : : "r"(&orbit) : "memory");
+        __asm__ __volatile__(
+            "vmulax.xyzw ACC, vf26, vf1x\n"
+            "vmadday.xyzw ACC, vf27, vf1y\n"
+            "vmaddaz.xyzw ACC, vf28, vf1z\n"
+            "vmaddw.xyzw vf20, vf29, vf1w\n"
+            : : : "memory");
+        offset = &camera->offset.vector;
+        __asm__ __volatile__("sqc2 vf20, 0(%0)" : : "r"(offset) : "memory");
+    } else {
+        offset = &camera->offset.vector;
+        Vu0SefScaleVectorXYZNI(offset, offset, 0.01f);
+    }
+    if ((kind & SDV_PART_OF_OBJECT0) && kind != SDV_PART_OF_OBJECT0) {
+        camera->object = objects[0];
+        camera->part = kind - (SDV_PART_OF_OBJECT0 + 1);
+    } else if ((kind & SDV_PART_OF_OBJECT2) && kind != SDV_PART_OF_OBJECT2) {
+        camera->object = objects[2];
+        camera->part = kind - (SDV_PART_OF_OBJECT2 + 1);
+    } else if ((kind & SDV_PART_OF_OBJECT1) && kind != SDV_PART_OF_OBJECT1) {
+        camera->object = objects[1];
+        camera->part = kind - (SDV_PART_OF_OBJECT1 + 1);
+    } else if (kind == SDV_PART_OF_OBJECT0) {
+        camera->object = objects[0];
+        camera->part = 1;
+        kind = SDV_PART_OF_OBJECT0 + 2;
+        vectorKind = 1;
+    } else if (kind == SDV_PART_OF_OBJECT2) {
+        camera->object = objects[2];
+        camera->part = 1;
+        kind = SDV_PART_OF_OBJECT2 + 2;
+        vectorKind = 0;
+    } else if (kind == SDV_PART_OF_OBJECT1) {
+        camera->object = objects[1];
+        camera->part = 1;
+        kind = SDV_PART_OF_OBJECT1 + 2;
+        vectorKind = 5;
+    }
+    if (vectorKind >= 0) {
+        sefGetKindVector(&vector, camera->object, 1, vectorKind);
+        if (vector.y != 0.0f) {
+            camera->offset.vector.y -= 1.3f;
+        } else {
+            camera->offset.vector.y -= 7.8f;
+        }
+    }
+    Vu0SefScaleVectorXYZNI(offset, offset, scale);
+    sefGetPosition(&camera->point, offset, kind);
+}
+
+/* Triangle wave record of the camera shake (struct CameraWave of tu051.c, private there): value is the current
+   amplitude, step the amount it decays per cycle; period and phase are in frames, hold delays the decay,
+   remaining counts the cycles left. */
+struct CameraWave {
+    float value;                        /* +0x00 */
+    float step;                         /* +0x04 */
+    unsigned short period;              /* +0x08 */
+    unsigned short phase;               /* +0x0A */
+    unsigned short hold;                /* +0x0C */
+    unsigned short remaining;           /* +0x0E */
+};
+
+/* One of the four camera slots (0 look-at, 1 position and angles, 2 perspective, 3 roll): a timed transition
+   (struct CameraSlot of tu051.c, private there). */
+struct CameraSlot {
+    unsigned char unmodeled_00[2];
+    unsigned char blendMode;            /* +0x02 */
+    unsigned char easeMode;             /* +0x03 */
+    float progress;                     /* +0x04 */
+    float duration;                     /* +0x08: the transition's frames as a float; active when nonzero */
+    float fraction;                     /* +0x0C: the eased fraction of the transition, 1.0 when the frames were 0 */
+};
+
+/* The camera block of gameWork (struct CameraState in tu051.c, private there) from its flags word at +0xD0:
+   the 432 bytes cameraInit clears. The original addresses it through this symbol, so the field names of
+   CameraState are kept at their offsets minus 0xD0. */
+typedef struct SdvCameraWork {
+    unsigned short flags;               /* +0x00: bit CAMERA_FLAG_SLOTS_APPLIED (0x10) set by cameraApplySlots */
+    unsigned char unmodeled_02[0x20 - 0x02];
+    unsigned char shakeFlags;           /* +0x20: the wave mask of the current shake key */
+    unsigned char unmodeled_21[0x30 - 0x21];
+    struct CameraWave waves[3];         /* +0x30 */
+    float sway[4];                      /* +0x60 */
+    struct CameraSlot slot[4];          /* +0x70 */
+    int anchorIndex;                    /* +0xB0: the object the look-at follows, -1 for none */
+    short anchorSubIndex;               /* +0xB4: its part */
+    unsigned char unmodeled_B6[0xD0 - 0xB6];
+    float offsetX;                      /* +0xD0: the anchor offset */
+    float offsetY;
+    float offsetZ;
+    float offsetW;                      /* +0xDC: 1.0f */
+    unsigned char unmodeled_E0[0xF0 - 0xE0];
+    float positionX;                    /* +0xF0 */
+    float positionY;
+    float positionZ;
+    float perspective;                  /* +0xFC */
+    float lookAtX;                      /* +0x100 */
+    float lookAtY;
+    float lookAtZ;
+    float roll;                         /* +0x10C */
+    float pitch;                        /* +0x110 */
+    float yaw;                          /* +0x114 */
+    unsigned char unmodeled_118[4];
+    float distance;                     /* +0x11C */
+    float fromPositionX;                /* +0x120 */
+    float fromPositionY;
+    float fromPositionZ;
+    float fromPerspective;
+    float fromLookAtX;                  /* +0x130 */
+    float fromLookAtY;
+    float fromLookAtZ;
+    float fromRoll;
+    float fromPitch;                    /* +0x140 */
+    float fromYaw;
+    unsigned char unmodeled_148[4];
+    float fromDistance;                 /* +0x14C */
+    float toPositionX;                  /* +0x150 */
+    float toPositionY;
+    float toPositionZ;
+    float toPerspective;                /* +0x15C */
+    float toLookAtX;                    /* +0x160 */
+    float toLookAtY;
+    float toLookAtZ;
+    float toRoll;                       /* +0x16C */
+    float toPitch;                      /* +0x170 */
+    float toYaw;                        /* +0x174 */
+    unsigned char unmodeled_178[4];
+    float toDistance;                   /* +0x17C */
+    float fromOffsetX;                  /* +0x180 */
+    float fromOffsetY;
+    float fromOffsetZ;
+    float fromOffsetW;                  /* +0x18C: 1.0f */
+    Vector4 anchorOffset;               /* +0x190 */
+    float anchorBase[3];                /* +0x1A0 */
+    unsigned char unmodeled_1AC[4];
+} SdvCameraWork;
+
+extern SdvCameraWork D_002B5E60;
+
+/* Applies the slots, then clears CAMERA_FLAG_SLOTS_APPLIED so the next camera update re-blends. */
+void func_00268010(int slot_mask, int blend_mode, int ease_mode, int frames)
+{
+    unsigned short *flags = &D_002B5E60.flags;
+
+    cameraApplySlots(slot_mask, blend_mode, ease_mode, frames);
+    *flags &= ~0x10;
+}
+
+/* The angle unit's scale and full-circle range (no other spelling exists yet). */
+extern float D_0069B348;
+extern float D_0069B34C;
+
+/* Wraps angle into [0, D_0069B34C) by subtracting whole D_0069B34C-sized turns. */
+float sdvWrapAngle(float angle)
+{
+    float scale = D_0069B348;
+    float range = D_0069B34C;
+    int quotient;
+    float wrapped;
+
+    quotient = (int)(angle * scale) / 360;
+    wrapped = angle - (float)quotient * range;
+    if (wrapped < 0.0f) {
+        wrapped += range;
+    }
+    return wrapped;
+}
+
+/* Returns angle moved by whole turns to lie within half a turn of current (radians). */
+float func_002680A8(float angle, float current)
+{
+    float wrappedCurrent = sdvWrapAngle(current);
+    float delta = sdvWrapAngle(angle) - wrappedCurrent;
+    float degrees = __builtin_fabs(delta) * 57.29578f;
+
+    if (degrees == 0.0f) {
+        return current;
+    }
+    if ((int)degrees % 360 > 180) {
+        /* the other way round is shorter */
+        if (delta > 0.0f) {
+            return current - (6.2831855f - degrees * 0.017453292f);
+        }
+        return current + (6.2831855f - degrees * 0.017453292f);
+    }
+    return current + delta;
+}
+
+#include "main/sdv_033.h"
+
+/* The track kinds sdvScheduleCamera passes to sdvProgressPrm. */
+#define SDV_TRACK_POSITION 0
+#define SDV_TRACK_LOOK_AT 1
+#define SDV_TRACK_LENS 3
+#define SDV_TRACK_SHAKE 0x41
+
+/* The time a key table ends with, and the bit that makes a key's time a hold counted from the current frame. */
+#define SDV_KEY_TIME_END 0x400
+#define SDV_KEY_TIME_HOLD 0x1000
+
+/* The second halfword of a camera key: the ease and blend modes of the slot transition to it; the request log
+   copies it whole (the union: a struct copy comes out as two byte moves, the original copies the halfword). */
+typedef union SdvKeyModes {
+    short word;
+    struct {
+        unsigned char ease;             /* +0x02: the ease mode cameraSlotSetup stores */
+        signed char blend;              /* +0x03: the blend mode; nonzero also drives the angles from the positions */
+    } mode;
+} SdvKeyModes;
+
+/* A key of the look-at (kind 1) and position (kind 0) tracks: 8 halfwords. Every track's key starts with time. */
+typedef struct SdvCameraKey {
+    short time;                         /* +0x00: the key's frame, or a hold (SDV_KEY_TIME_HOLD) */
+    SdvKeyModes modes;                  /* +0x02 */
+    short mode;                         /* +0x04: sdvSetCameraParam's mode; bit 0x10 anchors to the object */
+    short scaled;                       /* +0x06 */
+    short angles[3];                    /* +0x08: pitch, yaw, distance */
+    short kind;                         /* +0x0E: the object and part the camera orbits */
+} SdvCameraKey;
+
+/* A key of the perspective and roll track (kind 3): 4 halfwords, both angles in degrees. */
+typedef struct SdvLensKey {
+    short time;
+    SdvKeyModes modes;
+    short perspective;                  /* +0x04 */
+    short roll;                         /* +0x06 */
+} SdvLensKey;
+
+/* A key of the shake track (kind 0x41): 6 halfwords; a negative mask ends the track. */
+typedef struct SdvShakeKey {
+    short time;
+    short waveMask;                     /* +0x02: bits 0-2 select the waves; its low byte becomes shakeFlags */
+    short amplitude;                    /* +0x04: degrees */
+    short period;                       /* +0x06 */
+    short hold;                         /* +0x08 */
+    short cycles;                       /* +0x0A */
+} SdvShakeKey;
+
+/* The last look-at and position keys applied: kind, scale flag and modes of each. */
+typedef struct SdvCameraKeyLog {
+    short lookAtKind;                   /* +0x00 */
+    short lookAtScaled;                 /* +0x02 */
+    short positionKind;                 /* +0x04 */
+    short positionScaled;               /* +0x06 */
+    SdvKeyModes lookAtModes;            /* +0x08 */
+    SdvKeyModes positionModes;          /* +0x0A */
+    unsigned char unmodeled_0C[0x28 - 0x0C];
+} SdvCameraKeyLog;
+
+extern SdvCameraKeyLog D_005E7A98;
+/* Minus the distance from the camera position to its look-at point. */
+extern float D_0069DC38;
+
+/* Finds the key of keys (keySize halfwords each) that frame reaches, counting channel->keyIndex up; returns
+   its index, or SDV_KEY_TIME_END when the table is over. */
+int func_002670C0(short *keys, SdvScheduleChannel *channel, int keySize, int frame);
+XglCamera *xglStudioGetActiveCamera(void);
+void cameraInit(void);
+/* Returns the distance between two points (tu153.c declares it void: the original reads $f0 here). */
+float MMathCalcDist(const Vector4 *from, const Vector4 *to);
+void cameraAnglesBetween(Vector4 *angles, const Vector4 *from, const Vector4 *to);
+
+/* Advances one track to frame: applies the key frame reaches (look-at, position, perspective and roll, or the
+   shake waves), then starts the slot transition to the next key; counts keyIndex past the table's end marker.
+   Returns the key index, SDV_KEY_TIME_END when the track is over.
+   The key after next is an integer sum with the key size first: with `(short *)next + keySize` (or
+   `(unsigned char *)next + keyBytes`) gcc emits `addu $2,$20,$3` for the original's `addu $2,$3,$20`. */
+int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame)
+{
+    SdvCameraParam param;
+    Vector4 angles;
+    SdvCameraWork *camera;
+    short *keys = channel->keys;
+    SdvCameraKey *key;
+    int keyBytes;                       /* a key's size in bytes */
+    SdvCameraKey *next;
+    SdvCameraKey *after;
+    SdvLensKey *lensKey;
+    SdvLensKey *lensNext;
+    SdvShakeKey *shakeKey;
+    unsigned int index;
+    int remaining;                      /* frames from key to next */
+    signed char blend;                  /* key's blend mode while applying it */
+    signed char blendMode;              /* key's blend and ease modes, read again for the slot transition */
+    unsigned char easeMode;
+    struct CameraWave *wave;
+    float value;
+    int bit;
+    int i;
+
+    index = func_002670C0(keys, channel, keySize, frame);
+    if (index < SDV_KEY_TIME_END) {
+        camera = &D_002B5E60;
+        key = (SdvCameraKey *)&keys[index * keySize];
+        keyBytes = keySize * sizeof(short);
+        next = (SdvCameraKey *)((unsigned char *)key + keyBytes);
+        remaining = next->time - key->time;
+        if (key->time & SDV_KEY_TIME_HOLD) {
+            if ((next->time & SDV_KEY_TIME_HOLD) == 0) {
+                remaining = next->time - frame + 1;
+            } else {
+                remaining = 0;
+            }
+        }
+        if (kind == SDV_TRACK_SHAKE) {
+            shakeKey = (SdvShakeKey *)key;
+            if (shakeKey->waveMask >= 0) {
+                camera->shakeFlags = shakeKey->waveMask;
+                for (i = 0; i < 3; i++) {
+                    bit = 1 << i;
+                    if (shakeKey->waveMask & bit) {
+                        if (bit & 1) {
+                            wave = &camera->waves[0];
+                        } else if (bit & 2) {
+                            wave = &camera->waves[1];
+                        } else if (bit & 4) {
+                            wave = &camera->waves[2];
+                        } else {
+                            wave = 0;
+                        }
+                        if (wave != 0) {
+                            value = (float)shakeKey->amplitude * 0.017453292f * 0.05f;
+                            wave->period = shakeKey->period;
+                            wave->hold = shakeKey->hold;
+                            wave->remaining = shakeKey->cycles;
+                            wave->value = value;
+                            if (shakeKey->cycles != 0) {
+                                wave->step = value / (float)shakeKey->cycles;
+                            } else {
+                                wave->step = 0.0f;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            blend = key->modes.mode.blend;
+            if (kind == SDV_TRACK_LOOK_AT) {
+                if (index == 0) {
+                    /* the first key resets the camera, keeping the studio camera's state */
+                    XglCamera *studio = xglStudioGetActiveCamera();
+                    unsigned int state = studio->state;
+
+                    if (state == 4) {
+                        cameraInit();
+                    }
+                    studio->state = state;
+                }
+                D_005E7A98.lookAtKind = key->kind;
+                D_005E7A98.lookAtScaled = key->scaled;
+                D_005E7A98.lookAtModes.word = key->modes.word;
+                sdvSetCameraParam(&param, key->kind, key->angles, key->scaled, key->mode);
+                camera->slot[0].duration = 0.0f;
+                camera->slot[0].progress = 0.0f;
+                camera->slot[0].fraction = 0.0f;
+                if ((key->mode & 0x10) && param.object != 0) {
+                    camera->anchorIndex = param.object;
+                    camera->anchorSubIndex = param.part;
+                    camera->lookAtX = param.point.x;
+                    camera->lookAtY = param.point.y;
+                    camera->lookAtZ = param.point.z;
+                    camera->offsetX = param.offset.vector.x;
+                    camera->offsetY = param.offset.vector.y;
+                    camera->offsetZ = param.offset.vector.z;
+                    camera->offsetW = 1.0f;
+                    camera->toLookAtX = param.point.x;
+                    camera->toLookAtY = param.point.y;
+                    camera->toLookAtZ = param.point.z;
+                    camera->fromOffsetX = param.offset.vector.x;
+                    camera->fromOffsetY = param.offset.vector.y;
+                    camera->fromOffsetZ = param.offset.vector.z;
+                    camera->fromOffsetW = 1.0f;
+                } else {
+                    camera->anchorIndex = -1;
+                    camera->lookAtX = param.point.x;
+                    camera->lookAtY = param.point.y;
+                    camera->lookAtZ = param.point.z;
+                    camera->toLookAtX = param.point.x;
+                    camera->toLookAtY = param.point.y;
+                    camera->toLookAtZ = param.point.z;
+                }
+            } else if (kind == SDV_TRACK_POSITION) {
+                D_005E7A98.positionKind = key->kind;
+                D_005E7A98.positionScaled = key->scaled;
+                D_005E7A98.positionModes.word = key->modes.word;
+                sdvSetCameraParam(&param, key->kind, key->angles, key->scaled, key->mode);
+                camera->slot[1].duration = 0.0f;
+                camera->slot[1].progress = 0.0f;
+                camera->positionX = param.point.x;
+                camera->positionY = param.point.y;
+                camera->positionZ = param.point.z;
+                camera->slot[1].fraction = 0.0f;
+                D_0069DC38 = -MMathCalcDist((Vector4 *)&camera->positionX, (Vector4 *)&camera->lookAtX);
+                if (blend != 0) {
+                    cameraAnglesBetween(&angles, (Vector4 *)&camera->lookAtX, (Vector4 *)&camera->positionX);
+                    camera->pitch = angles.x;
+                    camera->yaw = angles.y;
+                    camera->distance = angles.w;
+                } else {
+                    camera->pitch = 0.0f;
+                    camera->yaw = 0.0f;
+                    camera->distance = 0.0f;
+                }
+            } else if (kind == SDV_TRACK_LENS) {
+                lensKey = (SdvLensKey *)key;
+                camera->slot[2].duration = 0.0f;
+                camera->slot[2].progress = 0.0f;
+                camera->slot[2].fraction = 0.0f;
+                camera->slot[3].duration = 0.0f;
+                camera->slot[3].progress = 0.0f;
+                camera->slot[3].fraction = 0.0f;
+                camera->perspective = (float)lensKey->perspective * 0.017453292f;
+                camera->roll = (float)lensKey->roll * 0.017453292f;
+            }
+            if (remaining >= 2 && next->time < SDV_KEY_TIME_END) {
+                blendMode = key->modes.mode.blend;
+                easeMode = key->modes.mode.ease;
+                if (kind == SDV_TRACK_LOOK_AT) {
+                    sdvSetCameraParam(&param, next->kind, next->angles, key->scaled, next->mode);
+                    if ((next->mode & 0x10) && param.object != 0) {
+                        camera->toLookAtX = param.point.x;
+                        camera->toLookAtY = param.point.y;
+                        camera->toLookAtZ = param.point.z;
+                        camera->fromOffsetX = param.offset.vector.x;
+                        camera->fromOffsetY = param.offset.vector.y;
+                        camera->fromOffsetZ = param.offset.vector.z;
+                        camera->fromOffsetW = 1.0f;
+                    } else {
+                        camera->toLookAtX = param.point.x;
+                        camera->toLookAtY = param.point.y;
+                        camera->toLookAtZ = param.point.z;
+                        camera->anchorIndex = -1;
+                        func_00268010(1, blendMode, easeMode, remaining);
+                    }
+                } else if (kind == SDV_TRACK_POSITION) {
+                    sdvSetCameraParam(&param, next->kind, next->angles, key->scaled, next->mode);
+                    camera->toPositionX = param.point.x;
+                    camera->toPositionY = param.point.y;
+                    camera->toPositionZ = param.point.z;
+                    if (blendMode != 0) {
+                        cameraAnglesBetween(&angles, (Vector4 *)&camera->toLookAtX, (Vector4 *)&camera->toPositionX);
+                        camera->pitch = sdvWrapAngle(camera->pitch);
+                        camera->yaw = sdvWrapAngle(camera->yaw);
+                        camera->toPitch = func_002680A8(angles.x, camera->pitch);
+                        camera->toYaw = func_002680A8(angles.y, camera->yaw);
+                        camera->toDistance = angles.w;
+                    } else {
+                        camera->toPitch = 0.0f;
+                        camera->toYaw = 0.0f;
+                        camera->toDistance = 0.0f;
+                    }
+                    func_00268010(2, blendMode, easeMode, remaining);
+                } else if (kind == SDV_TRACK_LENS) {
+                    lensKey = (SdvLensKey *)key;
+                    lensNext = (SdvLensKey *)next;
+                    if (lensNext->perspective != lensKey->perspective) {
+                        camera->toPerspective = (float)lensNext->perspective * 0.017453292f;
+                        func_00268010(4, blendMode, easeMode, remaining);
+                    }
+                    if (lensNext->roll != lensKey->roll) {
+                        camera->toRoll = (float)lensNext->roll * 0.017453292f;
+                        func_00268010(8, blendMode, easeMode, remaining);
+                    }
+                }
+                after = (SdvCameraKey *)(keyBytes + (int)next);
+                if (after->time == SDV_KEY_TIME_END) {
+                    /* the key after next is the end marker: step onto it now */
+                    channel->keyIndex++;
+                }
+            }
+        }
+    }
+    return index;
+}
+
+extern s16 sefClipTestDisabled;
+
+/* Advances the four tracks of a schedule to frame; returns how many of tracks 0 and 1 finished. */
+int sdvScheduleCamera(SdvCameraSchedule *schedule, int frame)
+{
+    int finished = 0;
+
+    if (sefClipTestDisabled == 0) {
+        return 0;
+    }
+    if (schedule == 0 || schedule->camera == 0) {
+        return 0;
+    }
+    if (schedule->channels[1].keys != 0) {
+        if (sdvProgressPrm(1, &schedule->channels[1], 8, frame) == 0) {
+            finished++;
+        }
+    }
+    if (schedule->channels[0].keys != 0) {
+        if (sdvProgressPrm(0, &schedule->channels[0], 8, frame) == 0) {
+            finished++;
+        }
+    }
+    if (schedule->channels[2].keys != 0) {
+        sdvProgressPrm(3, &schedule->channels[2], 4, frame);
+    }
+    if (schedule->channels[3].keys != 0) {
+        sdvProgressPrm(0x41, &schedule->channels[3], 6, frame);
+    }
+    return finished;
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvTransOffset);
 
@@ -505,8 +1126,6 @@ INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026A7A0);
 
 /* Advances one alter (calls sdvDestroyAlter among others). */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecAlter);
-
-typedef struct XglPacket XglPacket;
 
 extern void func_0012B9A0(XglPacket *packet, u32 tag);
 extern void sceVif1PkCnt(XglPacket *packet, int count);
