@@ -97,7 +97,11 @@ typedef struct CfeNode {
     unsigned char unmodeled_000[0xC0];
     struct XenoActor *actor;    /* +0x0C0 */
     unsigned char unmodeled_0c4[0xE0 - 0xC4];
-    AlignedVector4 position;    /* +0x0E0: the sampled offset, then in front of the actor */
+    /* +0x0E0: the sampled offset, then in front of the actor. Reached through a union in the original:
+     * cfeEvaluateNode loads the actor pointer again after the store to position.x (alias set 0). */
+    union {
+        AlignedVector4 position;
+    };
     int flags;                  /* +0x0F0: CFE_NODE_SHOWN */
     int mode;                   /* +0x0F4 */
     int selector;               /* +0x0F8 */

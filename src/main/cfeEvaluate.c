@@ -15,6 +15,9 @@
 #include "main/tu093.h"
 #include "main/tu255.h"
 #include "main/xgl_2.h"
+#include "main/tu026.h"
+#include "main/tu051.h"
+#include "main/xenoActor.h"
 
 
 /* The object whose flag words (+0x4C0) the records set; +0x5EC is its record list. */
@@ -68,10 +71,220 @@ void cfeRecordListSample(int time, CfeFlagOwner *owner, CfeFlagRecord *records)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/cfeEvaluate", cfeEvaluateNode);
+void XenoActorSetModeInSlot(struct XenoActor *actor, int slot, int mode);
+float XenoActorSetSelector(struct XenoActor *actor, int selector);
+int XenoActorReleaseChild(struct XenoActor *parent, struct XenoActor *child);
+int XenoActorAppendChildOnJoint(struct XenoActor *parent, struct XenoActor *child, int joint);
+/* TiMRPackage.c takes its own view of the state (TiMRState). */
+void tiMRStateSetSpeed(XenoMotionState *state, float value);
+extern const char D_0068D140[];
+extern const char D_0068D180[];
+extern const char D_0068D198[];
+
+/* The 0x1B0-byte entries of cfePlugInSlots as the attachment reads them: word 0 is the parent actor. */
+typedef struct CfeNodeSlot {
+    struct XenoActor *object;
+    unsigned char unmodeled_004[0x1B0 - 4];
+} CfeNodeSlot;
+
+extern CfeNodeSlot cfePlugInSlots[];
 
 
-void cfeEvaluateNode(void *, int);
+/* XenoActor's vector at +0x90 as the node's scale tracks write it. The original reaches it through a
+ * union here: after a store to a component the node's actor pointer is loaded again (alias set 0).
+ * uwamonoPlayerUpdate needs the plain member of XenoActor, so the union is this file's view. */
+typedef struct CfeActorScale {
+    unsigned char unmodeled_000[0x90];
+    union {
+        AlignedVector4 scale;
+    };
+} CfeActorScale;
+
+/* XenoActor drawFlags: hidden, translucent and drawn with the alpha. */
+#define CFE_ACTOR_HIDDEN 0x4
+#define CFE_ACTOR_ALPHA 0x10000
+#define CFE_ACTOR_TRANSLUCENT 0x2000000
+
+/* Evaluates one entry of cfeEntries at `time`: every track that is set drives its value (the actor's transform,
+ * channel values, mode, selector, play range, speeds, draw state and attachment, the flag records and the entry
+ * position), and the entry position is moved from the world into the space in front of the actor. */
+void cfeEvaluateNode(void *data, int time)
+{
+    CfeNode *entry = data;
+    struct XenoActor *actor;
+    struct XenoActor *shown;
+    float alpha;
+    Vector4 offset;
+    int slot;
+    int changed;
+
+    if (entry->transformTrack[0] != 0) {
+        entry->actor->position.x = cfeTrackSample(entry->transformTrack[0], time);
+    }
+    if (entry->transformTrack[1] != 0) {
+        entry->actor->position.y = cfeTrackSample(entry->transformTrack[1], time);
+    }
+    if (entry->transformTrack[2] != 0) {
+        entry->actor->position.z = cfeTrackSample(entry->transformTrack[2], time);
+    }
+    if (entry->transformTrack[3] != 0) {
+        entry->actor->rotation.x = cfeTrackSample(entry->transformTrack[3], time);
+    }
+    if (entry->transformTrack[4] != 0) {
+        entry->actor->rotation.y = cfeTrackSample(entry->transformTrack[4], time);
+    }
+    if (entry->transformTrack[5] != 0) {
+        entry->actor->rotation.z = cfeTrackSample(entry->transformTrack[5], time);
+    }
+    if (entry->transformTrack[6] != 0) {
+        ((CfeActorScale *) entry->actor)->scale.x = cfeTrackSample(entry->transformTrack[6], time);
+    }
+    if (entry->transformTrack[7] != 0) {
+        ((CfeActorScale *) entry->actor)->scale.y = cfeTrackSample(entry->transformTrack[7], time);
+    }
+    if (entry->transformTrack[8] != 0) {
+        ((CfeActorScale *) entry->actor)->scale.z = cfeTrackSample(entry->transformTrack[8], time);
+    }
+    offset.x = entry->position.x - entry->actor->position.x;
+    offset.y = entry->position.y - entry->actor->position.y;
+    offset.z = entry->position.z - entry->actor->position.z;
+    entry->position.z = __builtin_sqrtf(offset.x * offset.x + offset.z * offset.z);
+    entry->position.y = offset.y;
+    entry->position.x = 0.0f;
+    xglCurSetRotateY(entry->actor->rotation.y);
+    xglCurApplyVector(&entry->position, &entry->position);
+    entry->position.x += entry->actor->position.x;
+    entry->position.y += entry->actor->position.y;
+    entry->position.z += entry->actor->position.z;
+    if (entry->channelTrack != 0) {
+        entry->channelValue = func_002508C8(entry->channelTrack, time);
+        XenoActorSetChannelValue(entry->actor, entry->channelValue);
+        XenoActorSetChannelValueB(entry->actor, entry->channelValue);
+    }
+    slot = entry->slot;
+    if (entry->slotTrack != 0) {
+        slot = func_002508C8(entry->slotTrack, time);
+    }
+    if (entry->speedTrack[0] != 0) {
+        entry->speed[0] = func_002508C8(entry->speedTrack[0], time);
+        tiMRStateSetSpeed(&entry->actor->motion[0], entry->speed[0]);
+    }
+    if (entry->speedTrack[1] != 0) {
+        entry->speed[1] = func_002508C8(entry->speedTrack[1], time);
+        tiMRStateSetSpeed(&entry->actor->motion[1], entry->speed[1]);
+    }
+    if (entry->forceModeTrack != 0) {
+        entry->forceMode = func_002508C8(entry->forceModeTrack, time);
+    }
+    if (entry->modeTrack != 0) {
+        entry->mode = func_002508C8(entry->modeTrack, time);
+        if (entry->actor->mode != entry->mode || slot != entry->slot || time == cfeRangeGetMin()
+            || entry->forceMode != 0) {
+            entry->slot = slot;
+            XenoActorEnableChannel(entry->actor);
+            XenoActorSetModeInSlot(entry->actor, entry->slot, entry->mode);
+            entry->playStart = entry->actor->motion[0].range[0];
+            entry->playEnd = entry->actor->motion[0].range[1];
+        }
+    }
+    changed = 0;
+    if (entry->playRangeTrack[0] != 0) {
+        entry->playStart = func_002508C8(entry->playRangeTrack[0], time);
+        changed = 1;
+    }
+    if (entry->playRangeTrack[1] != 0) {
+        entry->playEnd = func_002508C8(entry->playRangeTrack[1], time);
+        changed = 1;
+    }
+    if (changed) {
+        XenoActorSetPlayRange(entry->actor, entry->playStart, entry->playEnd);
+    }
+    if (entry->selectorTrack != 0) {
+        entry->selector = func_002508C8(entry->selectorTrack, time);
+        if (entry->actor->selector != entry->selector || time == cfeRangeGetMin()) {
+            XenoActorEnableChannelB(entry->actor);
+            XenoActorSetSelector(entry->actor, entry->selector);
+        }
+    }
+    if (entry->drawModeTrack != 0) {
+        entry->drawMode = func_002508C8(entry->drawModeTrack, time);
+        entry->actor->drawMode = entry->drawMode;
+    }
+    if (entry->translucentTrack != 0) {
+        entry->translucent = func_002508C8(entry->translucentTrack, time);
+    }
+    if (entry->translucent != 0) {
+        entry->actor->drawFlags |= CFE_ACTOR_TRANSLUCENT;
+    } else {
+        entry->actor->drawFlags &= ~CFE_ACTOR_TRANSLUCENT;
+    }
+    if (entry->alphaTrack != 0) {
+        alpha = cfeTrackSample(entry->alphaTrack, time);
+        actor = entry->actor;
+        actor->alpha = alpha;
+        if (alpha == 1.0f) {
+            actor->drawFlags &= ~CFE_ACTOR_ALPHA;
+        } else {
+            actor->drawFlags |= CFE_ACTOR_ALPHA;
+        }
+        shown = entry->actor;
+        if (shown->alpha <= 0.0f) {
+            shown->drawMode = 0;
+            shown->drawFlags |= CFE_ACTOR_HIDDEN;
+        } else {
+            shown->drawMode = entry->drawMode;
+            shown->drawFlags &= ~CFE_ACTOR_HIDDEN;
+        }
+    }
+    if (entry->attachSlotTrack != 0) {
+        entry->attachSlot = func_002508C8(entry->attachSlotTrack, time);
+    }
+    if (entry->attachJointTrack != 0) {
+        entry->attachJoint = func_002508C8(entry->attachJointTrack, time);
+    }
+    if (entry->attachSlot >= 0) {
+        if (entry->actor->parent != 0) {
+            if (XenoActorReleaseChild(entry->actor->parent, entry->actor) != 1) {
+                assertFailed(D_0068D140, D_0068D180, 393);
+            }
+        }
+        if (XenoActorAppendChildOnJoint(cfePlugInSlots[entry->attachSlot].object, entry->actor,
+                                        entry->attachJoint) != 1) {
+            assertFailed(D_0068D198, D_0068D180, 396);
+        }
+    } else if (entry->actor->parent != 0) {
+        if (XenoActorReleaseChild(entry->actor->parent, entry->actor) != 1) {
+            assertFailed(D_0068D140, D_0068D180, 402);
+        }
+    }
+    if (entry->dampOffsetTrack != 0) {
+        entry->dampOffset = func_002508C8(entry->dampOffsetTrack, time);
+    }
+    if (entry->firstWordTrack != 0) {
+        entry->firstWord = func_002508C8(entry->firstWordTrack, time);
+        XenoActorSetFirstWord(entry->actor, entry->firstWord);
+    }
+    /* CfeFlagOwner is this file's view of the actor (its flag words and record list). */
+    cfeRecordListSample(time, (CfeFlagOwner *) entry->actor, entry->records);
+    if (entry->shownTrack != 0) {
+        if (func_002508C8(entry->shownTrack, time) != 0.0f) {
+            entry->flags |= CFE_NODE_SHOWN;
+        } else {
+            entry->flags &= ~CFE_NODE_SHOWN;
+        }
+    }
+    if (entry->positionTrack[0] != 0) {
+        entry->position.x = cfeTrackSample(entry->positionTrack[0], time);
+    }
+    if (entry->positionTrack[1] != 0) {
+        entry->position.y = cfeTrackSample(entry->positionTrack[1], time);
+    }
+    if (entry->positionTrack[2] != 0) {
+        entry->position.z = cfeTrackSample(entry->positionTrack[2], time);
+    }
+}
+
+
 extern int cfeEntryCount;
 extern unsigned char cfeEntries[];
 
