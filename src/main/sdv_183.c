@@ -745,7 +745,17 @@ int sdvAllocSpecialWork(int kind)
 }
 
 /* Finds a free special record (index 1..31); 0 when none is free. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvFindFreeSpecialWork);
+int sdvFindFreeSpecialWork(void)
+{
+    int slot;
+
+    for (slot = 1; slot < 0x20; slot++) {
+        if (sdvSpecialTable[slot].table == 0) {
+            return slot;
+        }
+    }
+    return 0;
+}
 
 /* Clears the record of one special slot; slot 0 is kept. */
 void sdvClearSpecialRecord(int slot)
@@ -755,19 +765,32 @@ void sdvClearSpecialRecord(int slot)
     }
 }
 
+/* Bits of SdvSpecialWork.flags. */
+#define SDV_FLAG_ALPHA_TYPE 0x03
+#define SDV_FLAG_FBP_SHIFT 4
+#define SDV_FLAG_MODE_SET_SHIFT 6
+#define SDV_FLAG_MODE_SET (1 << SDV_FLAG_MODE_SET_SHIFT)
+
+/* The owner of a special: the sequence it runs (func_00267048 steps it), then its slot ids. */
+typedef struct SdvSpecialOwner {
+    short *script;            /* +0x00 the sequence table, 0 when none */
+    unsigned short time;      /* +0x04 */
+    signed char slotCount;    /* +0x06 */
+    signed char stride;       /* +0x07 halfwords per sequence entry */
+    signed char slotIds[6];   /* +0x08 */
+} SdvSpecialOwner;
+
+/* Frees the special slots listed by an object (count at +6, slot ids from +8). */
+/* Frees the special slots an owner lists; a screen-effect record (kinds 10-15) also clears the gifState mode value. */
+/* Frees the special slots an owner lists; a screen-effect record (kinds 10-15) also clears the gifState mode value. */
+/* Frees the special slots an owner lists; a screen-effect record (kinds 10-15) also clears the gifState mode value. */
+/* Frees the special slots an owner lists; a screen-effect record (kinds 10-15) also clears the gifState mode value. */
+/* Frees the special slots an owner lists; a screen-effect record (kinds 10-15) also clears the gifState mode value. */
 /* Frees the special slots listed by an object (count at +6, slot ids from +8). */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvFreeSpecialSlots);
 
 /* Runs one special: its sequence step, slot setup, then the keys of each slot. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecSpecial);
-
-/* The owner of a special: its slot count at +6 and the slot ids from +8. */
-typedef struct SdvSpecialOwner {
-    unsigned char unmodeled_00[6];
-    signed char slotCount;
-    unsigned char unmodeled_07;
-    signed char slotIds[6];
-} SdvSpecialOwner;
 
 /* D_0069DBAC value while a battle runs: the clip matrix is used and boxes stay square. */
 #define SDV_BATTLE_MODE 0x1012F003
@@ -775,12 +798,6 @@ typedef struct SdvSpecialOwner {
 /* The 512x448 screen in pixels. */
 #define SDV_SCREEN_WIDTH 0x200
 #define SDV_SCREEN_HEIGHT 0x1C0
-
-/* Bits of SdvSpecialWork.flags. */
-#define SDV_FLAG_ALPHA_TYPE 0x03
-#define SDV_FLAG_FBP_SHIFT 4
-#define SDV_FLAG_MODE_SET_SHIFT 6
-#define SDV_FLAG_MODE_SET (1 << SDV_FLAG_MODE_SET_SHIFT)
 
 /* Depth of a kind-6 key without a depth: the far plane. */
 #define SDV_DEPTH_FAR 0xFFFFF8
@@ -1093,14 +1110,114 @@ void sdvDrawSpecial(SdvSpecialOwner *special)
     }
 }
 
-/* Builds an alter request from a sequence entry, then creates it through sdvCreateAlter. */
+/* One alter event of an owner's sequence (stride halfwords long; the halfwords from +0x24 hold floats). */
+typedef struct SdvAlterEvent {
+    unsigned short time;          /* +0x00 */
+    short life;                   /* +0x02 */
+    unsigned short mode;          /* +0x04 low nibble the mode, the high 12 bits the signed point count */
+    unsigned short blend;         /* +0x06 */
+    unsigned short rgba[4];       /* +0x08 the low byte of each */
+    short selector[2];            /* +0x10 */
+    short maxSamples;             /* +0x14 */
+    unsigned short shrink;        /* +0x16 */
+    short imageFrames;            /* +0x18 */
+    short length;                 /* +0x1A */
+    short images[2][2];           /* +0x1C the primary and secondary image index of each pair */
+    float width;                  /* +0x24 */
+    float height;                 /* +0x28 */
+    unsigned short spread;        /* +0x2C */
+    unsigned short rate;          /* +0x2E */
+    unsigned short timeBase;      /* +0x30 */
+    unsigned short timeStep;      /* +0x32 */
+    short angle;                  /* +0x34 milliradians */
+} SdvAlterEvent;
+
+/* The 0x58-byte request an alter is created from; sdvScheduleAlter fills it from an event. */
+typedef struct SdvAlterRequest {
+    unsigned long long tex0[2];   /* +0x00 GS TEX0 of the two images */
+    int instance;                 /* +0x10 the effect instance the alter belongs to */
+    unsigned char rgba[4];        /* +0x14 */
+    unsigned char unmodeled_18[4];
+    float length;                 /* +0x1C */
+    unsigned char unmodeled_20[4];
+    float imageFrames;            /* +0x24 */
+    float life;                   /* +0x28 */
+    float width;                  /* +0x2C */
+    float height;                 /* +0x30 */
+    float angle;                  /* +0x34 radians */
+    short selector[2];            /* +0x38 */
+    short maxSamples;             /* +0x3C */
+    unsigned short shrink;        /* +0x3E */
+    unsigned short blend;         /* +0x40 */
+    short imageCount;             /* +0x42 */
+    unsigned short mode;          /* +0x44 */
+    unsigned char unmodeled_46[2];
+    short layer;                  /* +0x48 */
+    short owner;                  /* +0x4A */
+    short pointCount;             /* +0x4C */
+    unsigned short spread;        /* +0x4E */
+    unsigned short rate;          /* +0x50 */
+    unsigned short timeBase;      /* +0x52 */
+    unsigned short timeStep;      /* +0x54 */
+    unsigned char unmodeled_56[2];
+} SdvAlterRequest;
+
+/* One 0x24-byte image list item (the SvImageItem of sv_get_image_item_158.c): the fields the TEX0 packing reads. */
+typedef struct SdvAlterImageItem {
+    unsigned int textureWord;         /* +0x00 */
+    unsigned char unmodeled_04[14];
+    unsigned short bufferPointer;     /* +0x12 */
+    unsigned short format;            /* +0x14 */
+    unsigned short bufferWidth;       /* +0x16 */
+    unsigned char unmodeled_18[4];
+    unsigned short widthLog2;         /* +0x1C */
+    unsigned short heightLog2;        /* +0x1E */
+    unsigned char unmodeled_20[4];
+} SdvAlterImageItem;
+
+/* GS PSM values of the TEX0 word. */
+#define SDV_PSM_INDEXED 0x13
+#define SDV_PSM_DEFAULT 0x14
+
+/* The selector values whose alters fan out over a table of linked members. */
+#define SDV_SELECTOR_LINKED_A 0x61
+#define SDV_SELECTOR_LINKED_B 0x62
+
+int func_00267048(SdvSpecialOwner *special);
+int func_00266F68(SdvSpecialOwner *special);
+SdvAlterImageItem *func_00253C70(int layer, int imageIndex);
+/* tu170.c defines the parameter as unsigned char *; sdvScheduleAlter passes a member index (selector - 0x41). */
+int sefGetLinkedFlag(int linkIndex);
+int sdvCreateAlter(SdvAlterRequest *request);
+extern unsigned short D_005E6D78[];
+extern unsigned short D_005E6DB8[];
+extern float D_0069B380;
+
+/* Builds an alter request from each event the sequence steps onto, then creates it through sdvCreateAlter. */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvScheduleAlter);
 
 
-/* One alter record: 0xD40 bytes; the active halfword is at +0xD38, the serial at +0xD3C. */
+/* The quadword at +0xD30 of an alter record: its halfwords hold the active flag and the serial.
+ * The block is quadword-aligned (AlignedVector4); as a plain 2-aligned struct gcc builds the field
+ * addresses differently in sdvKillAlter (func_0026A718 also addresses the block at +0xD30). */
+typedef union SdvAlterState {
+    AlignedVector4 quadword;
+    struct {
+        unsigned char unmodeled_00[8];
+        unsigned short active;    /* +0x08 */
+        unsigned short unmodeled_0A;
+        short serial;             /* +0x0C */
+        unsigned short unmodeled_0E;
+    } fields;
+} SdvAlterState;
+
+/* One alter record: 0xD40 bytes. */
 typedef struct SdvAlter {
-    unsigned char unmodeled_00[0xD40];
+    unsigned char unmodeled_00[0xD30];
+    SdvAlterState state;      /* +0xD30 */
 } SdvAlter;
+
+extern SdvAlter sdvAlterTable[49];
 
 /* Zeroes one alter record (sdvInitAlter). */
 void sdvInitAlter(SdvAlter *alter)
@@ -1118,7 +1235,17 @@ void sdvDestroyAlter(SdvAlter *alter)
 }
 
 /* Kills alter id (index | serial << 16) when it is active and the serial matches. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvKillAlter);
+void sdvKillAlter(int id)
+{
+    if (id >= 0) {
+        int index = id & 0xFFFF;
+        int serial = id >> 16;
+
+        if (sdvAlterTable[index].state.fields.active != 0 && sdvAlterTable[index].state.fields.serial == serial) {
+            sdvDestroyAlter(&sdvAlterTable[index]);
+        }
+    }
+}
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026A718);
 
@@ -1145,8 +1272,6 @@ INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026AFB0);
 
 /* Draws one alter's key frames into the packet from xglPacketGetCurrent (sdvDrawAlter). */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvDrawAlter);
-
-extern SdvAlter sdvAlterTable[49];
 
 /* Zeroes all 49 alter records (sdvInitAlters). */
 void sdvInitAlters(void)
