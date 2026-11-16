@@ -129,7 +129,7 @@ void segAddrOnClearAll(void)
 }
 
 void *xglCdBufferReserve(int size);
-extern unsigned char D_0068B200[];
+extern const unsigned char D_0068B200[];
 extern unsigned char D_0069D8A0[];
 
 /* Allocates a buffer sized for the named CD file. The size comes from the
@@ -162,11 +162,28 @@ typedef struct YsegfTreasure {
     unsigned char explanation[121];  /* +0x30: explanation text (tagExplanation) */
 } YsegfTreasure;
 
-extern YsegfTreasure *ysegfTreasureTable;
-extern unsigned char D_0068B210[];
-extern unsigned char D_0068B220[];
-extern unsigned char D_0068B230[];
-extern unsigned char D_0068B240[];
+static YsegfSceneState *ysegfState;
+static YsegfTreasure *ysegfTreasureTable;
+static signed char ysegfSelectedIndex;
+static signed char ysegfScrollTop;
+static int ysegfExitFlag;
+static YsegfSceneState ysegfStateTable[2];
+static unsigned char ysegfEntryPos[72];
+static struct FontTrack ysegfListTrack;
+static unsigned char ysegfMenu[16];
+
+typedef struct TextWindow {
+    struct FontTrack track;
+    int width;
+    int fade;
+    unsigned char *text;
+} TextWindow;
+
+static TextWindow textWindow;
+extern const unsigned char D_0068B210[];
+extern const unsigned char D_0068B220[];
+extern const unsigned char D_0068B230[];
+extern const unsigned char D_0068B240[];
 extern unsigned char D_0069D8A8[];
 void *memset(void *dest, int value, unsigned int count);
 void *yg2PathReadTaggedText(void *source, void *tag, void *dest);
@@ -196,9 +213,6 @@ void ysegfLoadTreasure(void) {
     }
 }
 
-extern signed char ysegfSelectedIndex;
-extern signed char ysegfScrollTop;
-
 /* Clears the two signed cursor bytes of the item page. */
 void ysegfResetSelection(void)
 {
@@ -217,26 +231,21 @@ void ysegfDrawDetail(void);
 void ysegfUpdateDetail(void);
 void ysegfListLeaveNoop(void);
 void func_00233D50(void);
-extern struct FontTrack ysegfListTrack;
-extern unsigned char ysegfMenu[];
-extern unsigned char D_0068B258[];
-extern unsigned char D_0068B2C8[];
-extern unsigned char D_0068B2E8[];
-extern unsigned char D_0068B308[];
-extern unsigned char D_0068B328[];
-extern unsigned char D_0068B348[];
-extern unsigned char D_0068B358[];
+extern const unsigned char D_0068B258[];
+extern const unsigned char D_0068B2C8[];
+extern const unsigned char D_0068B2E8[];
+extern const unsigned char D_0068B308[];
+extern const unsigned char D_0068B328[];
+extern const unsigned char D_0068B348[];
+extern const unsigned char D_0068B358[];
 extern unsigned char ysegfItemFadeAlpha;
 extern unsigned char D_0069D8B0[];
 extern unsigned char D_0069D8B8[];
-extern unsigned char ysegfEntryPos[];
 extern void *ysegfDoorImage;
 extern void *ysegfItemImage;
 extern void *ysegfDoorAlpha;
 extern void *ysegfItemAlpha;
 
-extern YsegfSceneState ysegfStateTable[2];
-extern YsegfSceneState *ysegfState;
 
 /* Scene init: resets the menu and font state, loads the treasure data and the item and door images. */
 void ysegfInit(void)
@@ -374,11 +383,11 @@ void ysegfDrawFooter(void) {
     packetSubmitRequest(0x270, 0, 0x170, 1);
 }
 
-extern unsigned char D_003ECAD8[];
-extern unsigned char D_003ECAB0[];
-extern unsigned char D_0068B368[];
-extern unsigned char D_0068B3B0[];
-extern unsigned char D_0068B3C0[];
+extern int D_003ECAD8[];
+extern int D_003ECAB0[];
+extern const unsigned char D_0068B368[];
+extern const unsigned char D_0068B3B0[];
+extern const unsigned char D_0068B3C0[];
 extern unsigned char D_0069D8C8[];
 extern unsigned char D_0069D8D0[];
 extern unsigned char D_0069D8D8[];
@@ -565,15 +574,15 @@ void ysegfDrawItemNameFrame(int x, int y, int width, int unused_arg3, void *labe
     }
 }
 
-extern unsigned char D_003ECB00[];
-extern unsigned char D_0068B3D0[];
-extern unsigned char D_0068B3E0[];
-extern unsigned char D_0068B420[];
+extern int D_003ECB00[];
+extern const unsigned char D_0068B3D0[];
+extern const unsigned char D_0068B3E0[];
+extern const unsigned char D_0068B420[];
 extern unsigned char D_0069D8E0[];
 extern unsigned char D_0069D8E8[];
 extern unsigned char D_0069D8F0[];
 void sprintf(void *dst, void *format, ...);
-void func_002AA7F0(void *dst, void *format);
+void strcat(void *dst, void *format);
 void textDrawDigitsPair(int x, int y, int value, int width, int digits);
 
 /* Draws the item explanation page: the panel and labels, the selected item's
@@ -631,15 +640,14 @@ void ysegfDrawItemPage(void)
         } else {
             sprintf(fileName, D_0069D8E8, D_0068B420, selected);
         }
-        func_002AA7F0(fileName, D_0069D8F0);
+        strcat(fileName, D_0069D8F0);
         ysegfReadFile(&ysegfItemImage, fileName, 0, 1);
         ysegfItemFadeAlpha = 16;
     }
     fontObjBuildBaseVifPacket();
 }
 
-extern int ysegfExitFlag;
-extern unsigned char D_0068B438[];
+extern const unsigned char D_0068B438[];
 void soundRestart(void);
 void seVoiceStartDefault(int voice);
 void func_001BA68C(void);
@@ -753,8 +761,8 @@ void ysegfDrawList(void) {
 
 /* Update of the list page (scene 0): eases the entry positions toward their targets, UP/DOWN moves
    the selection, cross leaves the menu, circle opens the detail page when the entry flag is set. */
-extern float ysegfEntryEaseRate;
-extern unsigned char D_0068B448[];
+extern const float ysegfEntryEaseRate;
+extern const unsigned char D_0068B448[];
 
 void ysegfUpdatePage(void)
 {
@@ -927,3 +935,49 @@ void ysegfUpdateDetail(void) {
         seVoiceStartDefault(YSEGF_SE_CURSOR_MOVE);
     }
 }
+
+const unsigned char D_0068B200[16] = "../ysegf.euc.c";
+const unsigned char D_0068B210[16] = "Item:%s\n";
+const unsigned char D_0068B220[16] = "Locate:%s\n";
+const unsigned char D_0068B230[16] = "Expl:%s\n";
+const unsigned char D_0068B240[24] = "iwase\\Treasure.txt";
+const unsigned char D_0068B258[112] = "Scroll with the directional buttons or the left analog stick.\\nPress &03 for details. Press &04 to go back.";
+const unsigned char D_0068B2C8[32] = "iwase\\img\\item\\item00.xtx";
+const unsigned char D_0068B2E8[32] = "iwase\\img\\item\\item_alpha.xtx";
+const unsigned char D_0068B308[32] = "iwase\\img\\door\\doorimg.dat";
+const unsigned char D_0068B328[32] = "iwase\\img\\door\\door_alpha.xtx";
+const unsigned char D_0068B348[16] = "imgItemAlpha";
+const unsigned char D_0068B358[16] = "imgDoorAlpha";
+const unsigned char D_0068B368[72] = "$init;$bg2;$shadow+1,+3,000000;$colc0c0c0;$zoom12;\000\000\000\000\000\000NO  DATA";
+const unsigned char D_0068B3B0[16] = "Location";
+const unsigned char D_0068B3C0[16] = "Treasure";
+const unsigned char D_0068B3D0[16] = "Explanation";
+const unsigned char D_0068B3E0[64] = "$init;$bg2;$shadow+1,+3,000000;$colc0c0c0;$zoom12;$xx0,20;";
+const unsigned char D_0068B420[24] = "iwase\\img\\item\\item";
+const unsigned char D_0068B438[16] = "201_menu";
+const unsigned char D_0068B448[72] = "Use the L1 and R1 buttons to switch pages.\\nPress &04 to go back.";
+
+void * ysegfDoorImage = 0;
+void * ysegfItemImage = 0;
+void * ysegfDoorAlpha = 0;
+void * ysegfItemAlpha = 0;
+unsigned char ysegfItemFadeAlpha = 0;
+unsigned char D_0069D8A0[8] = "size";
+unsigned char D_0069D8A8[8] = "pBuf";
+unsigned char D_0069D8B0[8] = "imgItem";
+unsigned char D_0069D8B8[8] = "imgDoor";
+void *D_0069D8C0 = (void *) ((char *) D_0068B368 + 0x38);
+unsigned char D_0069D8C8[8] = "NO DATA";
+unsigned char D_0069D8D0[8] = "Address";
+unsigned char D_0069D8D8[8] = "Decoder";
+unsigned char D_0069D8E0[8] = "%s0%d";
+unsigned char D_0069D8E8[8] = "%s%d";
+unsigned char D_0069D8F0[8] = ".xtx";
+
+int D_003ECAB0[10] = { 0x25e, 0x25f, 0x260, 0x261, 0x21a, 0x262, 0x263, 0x264, 0x265, 0x0 };
+int D_003ECAD8[10] = { 0x258, 0x259, 0x25a, 0x219, 0x21a, 0x21b, 0x25b, 0x25c, 0x25d, 0x0 };
+int D_003ECB00[10] = { 0x21f, 0x220, 0x221, 0x219, 0x21a, 0x21b, 0x27c, 0x27d, 0x27e, 0x0 };
+struct FontDrawItem ysegfItemNameDraw = { .cell_index = 0, .x = 0, .y = 0, .offset_x = 0, .offset_y = 0, .size_w = 0, .size_h = 0, .flags = 0 };
+signed char segAddrOnFlags[YSEGF_ENTRY_COUNT] = { 0 };
+
+const float ysegfEntryEaseRate = 0.300000012f;

@@ -1,19 +1,106 @@
 #include "common.h"
 #include "shared.h"
 
-typedef float RgVector[4];
+void XrgOuterVector(Vector4 *destination, Vector4 *first, Vector4 *second);
+float XrgInnerVector(Vector4 *first, Vector4 *second);
 
-void XrgOuterVector(RgVector destination, RgVector first, RgVector second);
-float XrgInnerVector(RgVector first, RgVector second);
+/* Scales a quaternion to unit length into destination; a zero length is replaced by 1e-8f before the division. */
+void XrgQuaternionNormalize(Vector4 *destination, Vector4 *source)
+{
+    f32 length;
 
-INCLUDE_ASM("asm/main/nonmatchings/xrg_rand_int", XrgQuaternionNormalize);
+    length = __builtin_sqrtf(source->x * source->x + source->y * source->y + source->z * source->z + source->w * source->w);
+    if (length == 0.0f)
+    {
+        length = 0.00000001f;
+    }
+    length = 1.0f / length;
+    destination->x = source->x * length;
+    destination->y = source->y * length;
+    destination->z = source->z * length;
+    destination->w = source->w * length;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/xrg_rand_int", XrgEulerToQuaternion);
+#include "quadword.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/xrg_rand_int", XrgQuaternionToEuler);
+f32 cosf(f32);
+f32 sinf(f32);
+
+/* Quaternion from Euler angles (x, y, z in radians), halved; the product of the three axis rotations, normalised in place. */
+void XrgEulerToQuaternion(Vector4 *quaternion, Vector4 *euler)
+{
+    Vector4 half_angle;
+    Vector4 cosine;
+    Vector4 sine;
+    f32 cos_x_cos_z;
+    f32 cos_x_sin_z;
+    f32 sin_x_cos_z;
+    f32 sin_x_sin_z;
+
+    half_angle.y = euler->y / 2.0f;
+    half_angle.x = euler->x / 2.0f;
+    half_angle.z = euler->z / 2.0f;
+    cosine.x = cosf(half_angle.x);
+    cosine.y = cosf(half_angle.y);
+    cosine.z = cosf(half_angle.z);
+    sine.x = sinf(half_angle.x);
+    sine.y = sinf(half_angle.y);
+    sine.z = sinf(half_angle.z);
+    cos_x_cos_z = cosine.x * cosine.z;
+    cos_x_sin_z = cosine.x * sine.z;
+    sin_x_cos_z = sine.x * cosine.z;
+    sin_x_sin_z = sine.x * sine.z;
+    quaternion->x = cosine.y * sin_x_cos_z - sine.y * cos_x_sin_z;
+    quaternion->y = cosine.y * sin_x_sin_z - sine.y * cos_x_cos_z;
+    quaternion->z = cosine.y * cos_x_sin_z - sine.y * sin_x_cos_z;
+    quaternion->w = cosine.y * cos_x_cos_z - sine.y * sin_x_sin_z;
+    XrgQuaternionNormalize(quaternion, quaternion);
+}
+
+double fptodp(f32);
+double sqrt(double);
+double func_002A1D80(double, double);
+f32 dptofp(double);
+
+static inline f32 XrgArcTangent2(f32 y, f32 x)
+{
+    return dptofp(func_002A1D80(fptodp(y), fptodp(x)));
+}
+
+/* Euler angles (x, y, z in radians) from a quaternion, through its rotation matrix. */
+void XrgQuaternionToEuler(Vector4 *euler, Vector4 *quaternion)
+{
+    f32 matrix[3][3];
+    Vector4 cosine;
+    Vector4 sine;
+
+    matrix[0][0] = 1.0f - 2.0f * quaternion->y * quaternion->y - 2.0f * quaternion->z * quaternion->z;
+    matrix[1][0] = 2.0f * quaternion->x * quaternion->y + 2.0f * quaternion->w * quaternion->z;
+    matrix[2][0] = 2.0f * quaternion->x * quaternion->z - 2.0f * quaternion->w * quaternion->y;
+    sine.y = -matrix[2][0];
+    matrix[2][1] = 2.0f * quaternion->y * quaternion->z + 2.0f * quaternion->w * quaternion->x;
+    matrix[2][2] = 1.0f - 2.0f * quaternion->x * quaternion->x + 2.0f * quaternion->y * quaternion->y;
+    cosine.y = dptofp(sqrt(fptodp(1.0f - sine.y * sine.y)));
+    euler->y = XrgArcTangent2(sine.y, cosine.y);
+    if (sine.y != 1.0f && sine.y != -1.0f)
+    {
+        sine.x = matrix[2][1] / cosine.y;
+        cosine.x = matrix[2][2] / cosine.y;
+        euler->x = XrgArcTangent2(sine.x, cosine.x);
+        sine.z = matrix[1][0] / cosine.y;
+        cosine.z = matrix[0][0] / cosine.y;
+        euler->z = XrgArcTangent2(sine.z, cosine.z);
+    }
+    else
+    {
+        matrix[1][1] = 1.0f - 2.0f * quaternion->x * quaternion->x - 2.0f * quaternion->z * quaternion->z;
+        matrix[1][2] = 2.0f * quaternion->y * quaternion->z - 2.0f * quaternion->w * quaternion->x;
+        euler->x = XrgArcTangent2(-matrix[1][2], matrix[1][1]);
+        euler->z = dptofp(func_002A1D80(0.0, 1.0));
+    }
+}
 
 f32 func_002A1DC8(f32);
-f32 sinf(f32);
 
 /* Axis-angle from a quaternion: angle is twice the value func_002A1DC8 returns for w (an inverse cosine,
  * presumably acosf); the axis is xyz divided by sin(angle / 2), with a zero sine clamped to 1e-6. */
@@ -34,8 +121,6 @@ void XrgQuaternionToAxisAngle(Vector4 *axis_angle, Vector4 *quaternion)
     axis_angle->w = angle;
 }
 
-f32 cosf(f32);
-
 /* Quaternion from axis-angle: w = cos(angle / 2), xyz = axis * sin(angle / 2). */
 void XrgAxisAngleToQuaternion(Vector4 *quaternion, Vector4 *axis_angle)
 {
@@ -50,25 +135,96 @@ void XrgAxisAngleToQuaternion(Vector4 *quaternion, Vector4 *axis_angle)
     quaternion->z = axis_angle->z * sin_half_angle;
 }
 
-float XrgInnerVector(RgVector first, RgVector second)
+float XrgInnerVector(Vector4 *first, Vector4 *second)
 {
-    return first[0] * second[0] + first[1] * second[1] + first[2] * second[2];
+    return first->x * second->x + first->y * second->y + first->z * second->z;
 }
 
-void XrgOuterVector(RgVector destination, RgVector first, RgVector second)
+void XrgOuterVector(Vector4 *destination, Vector4 *first, Vector4 *second)
 {
-    destination[0] = first[1] * second[2] - first[2] * second[1];
-    destination[1] = first[2] * second[0] - first[0] * second[2];
-    destination[2] = first[0] * second[1] - first[1] * second[0];
+    destination->x = first->y * second->z - first->z * second->y;
+    destination->y = first->z * second->x - first->x * second->z;
+    destination->z = first->x * second->y - first->y * second->x;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/xrg_rand_int", func_00296CF0);
+void XrgScaleVector(f32 scale, Vector4 *destination, Vector4 *source);
 
-INCLUDE_ASM("asm/main/nonmatchings/xrg_rand_int", XrgQuaternionMultiply);
+void XrgQuaternionCombine(Vector4 *result, Vector4 *first, Vector4 *second)
+{
+    Vector4 scaled_first;
+    Vector4 scaled_second;
+    Vector4 cross;
+    Vector4 sum;
+    f32 dot;
 
-INCLUDE_ASM("asm/main/nonmatchings/xrg_rand_int", XrgQuaternionSlerp);
+    scaled_first = *first;
+    XrgScaleVector(first->w, &scaled_first, &scaled_first);
+    scaled_second = *second;
+    XrgScaleVector(second->w, &scaled_second, &scaled_second);
+    XrgOuterVector(&cross, second, first);
+    sum.x = scaled_first.x + scaled_second.x + cross.x;
+    sum.y = scaled_first.y + scaled_second.y + cross.y;
+    sum.z = scaled_first.z + scaled_second.z + cross.z;
+    sum.w = scaled_first.w + scaled_second.w + cross.w;
+    dot = XrgInnerVector(first, second);
+    {
+        f32 w = first->w * second->w - dot;
+        result->x = sum.x;
+        result->y = sum.y;
+        result->z = sum.z;
+        result->w = w;
+    }
+}
 
-void XrgQuaternionNormalize(Vector4 *destination, Vector4 *source);
+/* Hamilton product of two quaternions into result; both operands are copied before the first store, since result may alias one of them. */
+void XrgQuaternionMultiply(Vector4 *result, Vector4 *first, Vector4 *second)
+{
+    Vector4 a;
+    Vector4 b;
+
+    a = *first;
+    b = *second;
+    result->x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
+    result->y = a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x;
+    result->z = a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w;
+    result->w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
+}
+
+void xglVectorInner(float *result, const Vector4 *left, const Vector4 *right);
+
+void XrgQuaternionSlerp(Vector4 *result, Vector4 *from, Vector4 *to, f32 t)
+{
+    f32 dot;
+    f32 theta;
+    f32 to_weight;
+    f32 from_weight;
+    f32 inv_sin;
+
+    xglVectorInner(&dot, from, to);
+    if (dot > 0.99f)
+    {
+        QuadwordCopy(result, from);
+        return;
+    }
+    if (dot < -0.2f)
+    {
+        dot = -dot;
+        to->x = -to->x;
+        to->y = -to->y;
+        to->z = -to->z;
+        to->w = -to->w;
+    }
+    theta = func_002A1DC8(dot);
+    inv_sin = sinf(theta);
+    to_weight = sinf(theta * t);
+    from_weight = sinf(theta * (1.0f - t));
+    inv_sin = 1.0f / inv_sin;
+    result->x = (from->x * from_weight + to->x * to_weight) * inv_sin;
+    result->y = (from->y * from_weight + to->y * to_weight) * inv_sin;
+    result->z = (from->z * from_weight + to->z * to_weight) * inv_sin;
+    result->w = (from->w * from_weight + to->w * to_weight) * inv_sin;
+    XrgQuaternionNormalize(result, result);
+}
 
 /* Normalised linear interpolation: result = from + blend * (to - from) on all four components,
  * then renormalised by XrgQuaternionNormalize. */

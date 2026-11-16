@@ -1158,7 +1158,7 @@ int uwamonoCanSeeRecord(UwamonoRecord *record)
 }
 
 void uwamonoCheckHeight(UwamonoRecord *record);
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 
 /* Copies the record position into its transform translation when the record is visible and the global gate is clear. */
 void uwamonoUpdateTransform(UwamonoRecord *record)
@@ -1167,7 +1167,7 @@ void uwamonoUpdateTransform(UwamonoRecord *record)
     UwamonoTransform *transform;
 
     flags = record->flags;
-    if ((flags & 2) && !(D_002B5D98[0] & 1)) {
+    if ((flags & 2) && !(gameLoopFlags[0] & 1)) {
         if ((flags & 8) && record->target == -1) {
             uwamonoCheckHeight(record);
         }
@@ -1719,3 +1719,82 @@ void uwamonoProjectToScreen(int query, UwamonoScreenPos *position) {
     position->x = ((position->x >> 4) - 0x700) >> 1;
     position->y = ((position->y >> 4) - 0x720) >> 1;
 }
+
+/*
+ * .data, in address order. The record table of the uwamono system: 256 UwamonoRecord entries of 0x870 bytes
+ * at 0x33FDC0. Every other label below 0x3C6DC0 is a field offset of record 0 (uwamonoMoveRecords,
+ * uwamonoRotateRecords, uwamonoScaleRecords, progEffectTable, ...); the extern declarations above keep
+ * the code's stride and resolve through the linker.
+ */
+UwamonoRecord uwamonoRecords[256] = { 0 };
+unsigned char D_003C6DC0[131072] = { 0 };
+
+extern const char D_006896D0[];
+extern const char D_0069D210[];
+extern const char D_0069D208[];
+extern const char D_0069D200[];
+extern const char D_006896C0[];
+extern const char D_006896B0[];
+extern const char D_006896A0[];
+extern const char D_00689690[];
+extern const char D_00689680[];
+extern const char D_00689670[];
+extern const char D_00689660[];
+extern const char D_00689650[];
+extern const char D_0069D1F8[];
+extern const char D_00689640[];
+extern const char D_0069D1F0[];
+
+typedef struct ObjxNative {
+    const char *name;
+    void (*function)();
+} ObjxNative;
+
+void objxGetParam();
+void objxMove();
+void objxRotate();
+void objxScale();
+void objxTransparent();
+void objxOffsetPivot();
+void objxSetRotateTurn();
+void setStepMove();
+void setStepRotate();
+void objxEnableFlags();
+void objxDisableFlags();
+void objxSetParent();
+void objxSetPair();
+void objxChangeId();
+void objxFootId();
+
+ObjxNative objxNatives[16] = {
+    { D_006896D0, objxGetParam },
+    { D_0069D210, objxMove },
+    { D_0069D208, objxRotate },
+    { D_0069D200, objxScale },
+    { D_006896C0, objxTransparent },
+    { D_006896B0, objxOffsetPivot },
+    { D_006896A0, objxSetRotateTurn },
+    { D_00689690, setStepMove },
+    { D_00689680, setStepRotate },
+    { D_00689670, objxEnableFlags },
+    { D_00689660, objxDisableFlags },
+    { D_00689650, objxSetParent },
+    { D_0069D1F8, objxSetPair },
+    { D_00689640, objxChangeId },
+    { D_0069D1F0, objxFootId },
+    { 0, 0 },
+};
+
+const float D_0069B064 = 0.89999997615814209f;
+const float D_0069B07C = 0.0010000000474974513f;
+const float D_0069B080 = 0.0010000000474974513f;
+float D_0069B08C = 0.89999997615814209f;
+float D_0069B090 = 1.7999999523162842f;
+float D_0069B098 = 0.10000000149011612f;
+float D_0069B0B0 = 0.10000000149011612f;
+float D_0069B0B4 = 0.15000000596046448f;
+float D_0069B0B8 = 0.10000000149011612f;
+float D_0069B0BC = 0.20000000298023224f;
+float D_0069B0C0 = 0.20000000298023224f;
+float D_0069B0C4 = 2.1816616058349609f;
+float D_0069B0C8 = 0.87000000476837158f;

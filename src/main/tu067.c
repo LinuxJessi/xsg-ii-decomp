@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "main/cfePlugIn.h"
 #include "main/elevator.h"
+#include "main/gifState.h"
 #include "main/tu072.h"
 #include "main/tu074.h"
 #include "main/tu075.h"
@@ -10,6 +11,7 @@
 #include "main/tu082.h"
 #include "main/tu114.h"
 #include "main/xenoActor.h"
+#include "main/tu272.h"
 
 /* The XenoActor of a map object (xenoActor.c); only the fields this file touches. */
 struct XenoActor {
@@ -248,8 +250,8 @@ void func_001EF6A0(Vector4 *destination, int index)
     destination->w = 1.0f;
 }
 
-float func_002A1DE0(float value);   /* asinf */
-double func_002A1DB0(double value); /* sqrt */
+float asinf(float value);
+double sqrt(double value);
 float atan2f(float y, float x);
 
 /* Euler angles of the rotation rows of table entry index: x from the pitch row, y from the
@@ -262,13 +264,13 @@ void func_001EF6E0(Vector4 *angles, int index)
     if (entry->rotation[1][1] >= 0.0f) {
         double sine = entry->rotation[0][1];
 
-        roll = func_002A1DE0(sine / func_002A1DB0(1.0f - entry->rotation[2][1] * entry->rotation[2][1]));
+        roll = asinf(sine / sqrt(1.0f - entry->rotation[2][1] * entry->rotation[2][1]));
     } else {
         double sine = entry->rotation[0][1];
 
-        roll = 3.1415927f - func_002A1DE0(sine / func_002A1DB0(1.0f - entry->rotation[2][1] * entry->rotation[2][1]));
+        roll = 3.1415927f - asinf(sine / sqrt(1.0f - entry->rotation[2][1] * entry->rotation[2][1]));
     }
-    angles->x = func_002A1DE0(entry->rotation[2][1]);
+    angles->x = asinf(entry->rotation[2][1]);
     angles->y = atan2f(entry->rotation[2][0], entry->rotation[2][2]);
     angles->z = roll;
     angles->w = 1.0f;
@@ -864,13 +866,13 @@ int uwamonoSetTarget(int index, int target, short flag)
             if (uwamonoRecords[index].matrix[1][1] >= 0.0f) {
                 double sine = uwamonoRecords[index].matrix[0][1];
 
-                roll = func_002A1DE0(sine / func_002A1DB0(1.0f - uwamonoRecords[index].matrix[2][1] * uwamonoRecords[index].matrix[2][1]));
+                roll = asinf(sine / sqrt(1.0f - uwamonoRecords[index].matrix[2][1] * uwamonoRecords[index].matrix[2][1]));
             } else {
                 double sine = uwamonoRecords[index].matrix[0][1];
 
-                roll = 3.1415927f - func_002A1DE0(sine / func_002A1DB0(1.0f - uwamonoRecords[index].matrix[2][1] * uwamonoRecords[index].matrix[2][1]));
+                roll = 3.1415927f - asinf(sine / sqrt(1.0f - uwamonoRecords[index].matrix[2][1] * uwamonoRecords[index].matrix[2][1]));
             }
-            uwamonoRecords[index].rotation[0] = func_002A1DE0(uwamonoRecords[index].matrix[2][1]);
+            uwamonoRecords[index].rotation[0] = asinf(uwamonoRecords[index].matrix[2][1]);
             uwamonoRecords[index].rotation[1] = atan2f(uwamonoRecords[index].matrix[2][0], uwamonoRecords[index].matrix[2][2]);
             uwamonoRecords[index].rotation[2] = roll;
             uwamonoRecords[index].rotation[3] = 1.0f;
@@ -970,7 +972,6 @@ typedef struct UwamonoSlot {
     unsigned char unmodeled_08[0x870 - 8];
 } UwamonoSlot;
 
-int mapFindBlockEntry(int id, int index);
 extern UwamonoSlot uwamonoSlotTable[];
 
 /* Native "changeId": key, groundId: the map block 0x100 entry of the record's ground. */
@@ -989,7 +990,7 @@ int objxChangeId(int call)
     key = func_A9F0C0(call, 1);
     index = uwamonoFindIndexByShortKey((short) key);
     groundId = func_A9F0C0(call, 2);
-    ground = mapFindBlockEntry(0x100, groundId);
+    ground = (int)mapFindBlockEntry(0x100, groundId);
     slot = &uwamonoSlotTable[index];
     slot->actor->ground = ground;
     slot->state->groundId = groundId;
@@ -1132,11 +1133,9 @@ int runtimeSetLocater(int call)
     return 1;
 }
 
-void func_00246FF8(int value);
-
 int runtimeSetLastDan(void)
 {
-    func_00246FF8((int) uwamonoSlotTable[uwamonoCurrentIndex].actor);
+    gifStateStartWhiteShake(uwamonoSlotTable[uwamonoCurrentIndex].actor);
     return 1;
 }
 

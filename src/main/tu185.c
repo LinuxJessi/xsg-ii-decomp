@@ -194,14 +194,14 @@ typedef struct XglPacket XglPacket;
 
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
-void func_0012B9A0(XglPacket *packet, unsigned int tag);
+void sceVif1PkAddCode(XglPacket *packet, unsigned int tag);
 
 void sefPacketFlush(void) {
     XglPacket *packet;
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
 }
 
 void sefPacketMscnt(void) {
@@ -209,7 +209,7 @@ void sefPacketMscnt(void) {
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x17000000);
+    sceVif1PkAddCode(packet, 0x17000000);
 }
 
 extern void sceVif1PkRef(XglPacket *packet, const void *environment, int count, int mode, int offset, int flags);
@@ -269,9 +269,9 @@ void sefBuildVuPacket(int kind, int alternate) {
         func_0012BCE8(packet, &D_00881700, 0x11);
     } else {
         if (alternate != 0) {
-            func_0012B9A0(packet, ((u32) D_1FD0 >> 3) | 0x14000000);
+            sceVif1PkAddCode(packet, ((u32) D_1FD0 >> 3) | 0x14000000);
         } else {
-            func_0012B9A0(packet, ((u32) D_1F70 >> 3) | 0x14000000);
+            sceVif1PkAddCode(packet, ((u32) D_1F70 >> 3) | 0x14000000);
         }
         if (kind == 1) {
             func_0012B6E0(packet, 0x18, 0x6C, 4, 4);
@@ -282,19 +282,19 @@ void sefBuildVuPacket(int kind, int alternate) {
         }
     }
     func_0012B770(packet);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
 }
 
 Matrix4 *MMathMulMatrix(Matrix4 *out, const Matrix4 *rhs, const Matrix4 *lhs);
 extern const Matrix4 *sefViewMatrixPtr;
 extern Matrix4 D_00831610;
 XglCamera *xglStudioGetActiveCamera(void);
-extern Matrix4 D_00493B40;
+extern Matrix4 sefCameraMatrix[1];
 /* The unit quad (rodata). Declared without const: as a const object its loads cannot conflict with the packet stores,
  * and gcc then schedules the epilogue's ld $31 after the fourteen stores instead of before them (fd 53/70). */
 extern SefQuadCorners D_0068C610;
 
-/* Takes the active camera's view matrix (sefViewMatrixPtr) into the VU packet and D_00831610 (view x D_00493B40),
+/* Takes the active camera's view matrix (sefViewMatrixPtr) into the VU packet and D_00831610 (view x sefCameraMatrix),
  * and fills the packet's quad corners, GIF tags and depth test. The corners are copied as doublewords through the
  * union: as one struct assignment the tag stores go out before the epilogue's ld $31 (fd 55/70). */
 void sefBuildCameraPacket(void) {
@@ -303,7 +303,7 @@ void sefBuildCameraPacket(void) {
     camera = xglStudioGetActiveCamera();
     sefViewMatrixPtr = (const Matrix4 *) &camera->volume[0].viewMatrix;
     QuadwordCopyMatrixT0(&D_00881700.modelViewMatrix, sefViewMatrixPtr);
-    MMathMulMatrix(&D_00831610, sefViewMatrixPtr, (const Matrix4 *) &D_00493B40);
+    MMathMulMatrix(&D_00831610, sefViewMatrixPtr, (const Matrix4 *) sefCameraMatrix);
     D_00881700.stripTag = 0xD02A400000008001ULL;
     D_00881700.stripRegisters = 0x000512512512512EULL;
     D_00881700.settingsTag = 0x1000000000008003ULL;
@@ -1727,7 +1727,7 @@ void *sefGetResourceSlot(int index) {
     return (unsigned char *)&sefResourceTable + index * 0x1A0;
 }
 
-void func_00258970(void);
+void svLoadDrawViewMatrix(void);
 void svBuildDrawStatePacket(void);
 void func_00270CA0(ResourceSlot *slot, int emitterIndex);
 extern int D_0069E330;
@@ -1746,7 +1746,7 @@ void sefDrawResources(int count) {
         return;
     }
     D_0069E330 = -1;
-    func_00258970();
+    svLoadDrawViewMatrix();
     svBuildDrawStatePacket();
     sefBuildCameraPacket();
     sefBuildVuPacket(0, 0);

@@ -1,6 +1,6 @@
 #include "common.h"
 
-float func_002A1790(float ratio);
+float atanf(float ratio);
 
 /*
  * Angle of the vector (x, y) in radians: atan of y / x, then moved into the
@@ -15,7 +15,7 @@ float xglAtan2Angle(float x, float y)
     if (divisor == 0.0f) {
         divisor = 0.00001f;
     }
-    angle = func_002A1790(y / divisor);
+    angle = atanf(y / divisor);
     if (divisor > 0.0f) {
         if (angle < 0.0f) {
             angle += 6.2831855f;

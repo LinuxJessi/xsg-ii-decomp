@@ -1,7 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu050.h"
-#include "main/tu165.h"
+#include "main/sef.h"
 #include "main/xgl_flags.h"
 
 /* Script natives: argument count, n-th argument, nonzero when argument n is omitted, wrong-count error. */
@@ -634,3 +634,58 @@ int runtimeSystem(int call)
     }
     return 1;
 }
+
+const char D_00689790[16] = "setMapColor";
+
+const char D_006897A0[16] = "Vibration";
+
+const char D_006897B0[16] = "bgmsePos";
+
+const char D_006897C0[16] = "setLight";
+
+const char D_006897D0[16] = "mapChange";
+
+const char D_006897E0[16] = "changeRobo";
+
+const char D_006897F0[16] = "progEffect";
+
+const char D_00689800[16] = "GetAnalogR";
+
+const char D_00689810[16] = "TimeAttack";
+
+const char D_00689820[16] = "setPlayer";
+
+const char D_00689830[16] = "setLastDan";
+
+const char D_00689840[16] = "setElevator";
+
+const char D_00689850[16] = "setLocater";
+
+const char D_00689860[16] = "setNumber";
+
+const char D_00689870[24] = "disableDrawFlags";
+
+const char D_00689888[16] = "enableDrawFlags";
+
+const char D_00689898[16] = "readyEnepcData";
+
+const char D_006898A8[16] = "Algorithm";
+
+const char D_006898B8[16] = "setTogether";
+
+const char D_006898C8[16] = "defaultMotion";
+
+const char D_006898D8[16] = "setBattle";
+
+const char D_006898E8[16] = "setGroup";
+
+const char D_006898F8[16] = "motionFace";
+
+const char D_00689908[16] = "ExMotion";
+
+const char D_00689918[16] = "setParamsAll";
+
+const char D_00689928[24] = "setParams";
+
+unsigned char D_002B6820[2640] = { 0 };
+unsigned int D_002B7270[16] = { 0 };

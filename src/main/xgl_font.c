@@ -136,7 +136,7 @@ typedef struct FontQueueSlot {
 typedef union FontPrintQueueStorage {
     unsigned long long alignment;
     FontQueueSlot slots[FONT_QUEUE_BUCKETS];
-    unsigned char bytes[0x2860];
+    unsigned char bytes[0x2458];
 } FontPrintQueueStorage;
 
 typedef union FontImageStorage {
@@ -180,8 +180,7 @@ struct FontNumericCommand {
 };
 
 struct KanjiClutEnvironment {
-    unsigned char unmodeled_00[0xb0];
-    unsigned short code_by_character[32];
+    unsigned int words[44];
 };
 
 extern unsigned char spCodeParameterSizeTable[];
@@ -195,10 +194,7 @@ extern struct KanjiClutEnvironment KanjiClutEnv;
 extern unsigned char spcode_0[32];
 extern signed char tbl_7[];
 extern FontStateStorage FS;
-extern FontPrintQueueStorage fontPrintQueueBuffer;
-extern FontImageStorage FontImage;
 /* xglFontLoad reads the font texture files into this buffer (through D_008DAD00.window_image). */
-extern unsigned char fontTextureBuffer[];
 int xglFontCheckProportional(unsigned char row, int column);
 unsigned int hex2val(signed char digit);
 int xglFontGetStringWidth2(const char *text, int delimiter);
@@ -240,7 +236,9 @@ struct FontStateFromWindow {
     unsigned char *queue_cursor;
 };
 
-extern struct FontStateFromWindow D_008DAD00;
+static struct FontStateFromWindow D_008DAD00;
+static FontPrintQueueStorage fontPrintQueueBuffer;
+static unsigned char fontTextureBuffer[0x78800];
 
 /* The state block ends where the print-queue slot array begins. */
 #define FONT_STATE_BLOCK() ((struct FontStateFromWindow *) &fontPrintQueueBuffer - 1)
@@ -314,8 +312,8 @@ struct FontModePacket {
 
 extern struct FontModePacket ModeEnv[2];
 /* "font0.us" and "font1.us". */
-extern char fontTexture0Path[];
-extern char fontTexture1Path[];
+extern const char fontTexture0Path[];
+extern const char fontTexture1Path[];
 void xglFontPrintExtFunc(int ot, FontExtFunc function, void *argument);
 
 void xglFontDebugMode(int mode)
@@ -1736,7 +1734,7 @@ struct FontInlineCommand {
 /* ax ay az rx ry init save load col bg shadow alpha zoom xx ruby prop han mark */
 extern struct FontInlineCommand fontInlineCommands[];
 /* "[*error*:%c%c%c%c]\n" */
-extern char fontInlineErrorFormat[];
+const char fontInlineErrorFormat[24] = "[*error*:%c%c%c%c]\n";
 int printf(const char *format, ...);
 
 /*
@@ -1807,7 +1805,6 @@ void xglFontResetPrintQueue(void)
 #define GIF_REG_XYZ2 5
 #define GIF_REG_TEX0_1 6
 #define GS_PRIM_TRISTRIP 4
-#define GS_PRIM_SPRITE 6
 #define GS_PRIM_TME 0x10
 #define GS_PRIM_ABE 0x40
 #define GS_PRIM_FST 0x100
@@ -2594,7 +2591,7 @@ void xglFontFlushCore(FontDrawCursor *cursor, unsigned char *text)
 
 
 /* The kana cell codes of the debug font, one per EUC column (copied to the stack before use). */
-extern const unsigned char kanaFontCodeTable[96];
+extern const unsigned char kanaFontCodeTable[104];
 
 /* The glyph rows of the debug font texture: V of a glyph cell is its row << 23. */
 #define FONT_GLYPH_ROW(row) ((unsigned int)(row) << 23)
@@ -2650,6 +2647,22 @@ unsigned int xglFontGetDebugCell(unsigned char high, unsigned char low)
     }
     return cell;
 }
+
+const unsigned char kanaFontCodeTable[104] = {
+    0, 7, 17, 8, 18, 9, 19, 10,
+    20, 11, 21, 22, 86, 23, 87, 24,
+    88, 25, 89, 26, 90, 27, 91, 28,
+    92, 29, 93, 30, 94, 31, 95, 32,
+    96, 33, 97, 15, 34, 98, 35, 99,
+    36, 100, 37, 38, 39, 40, 41, 42,
+    106, 234, 43, 107, 235, 44, 108, 236,
+    45, 109, 237, 46, 110, 238, 47, 48,
+    49, 50, 51, 12, 52, 13, 53, 14,
+    54, 55, 56, 57, 58, 59, 0, 60,
+    0, 0, 6, 61, 83, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
 
 /* Glyph base per 32-code block of the EUC row 0xA3. */
 extern signed char fontAlnumGlyphBase[];
@@ -2905,3 +2918,97 @@ void xglFontInitial(void)
     D_008DAD00.compact_height = 16;
     D_008DAD00.ruby_offset_y = 2;
 }
+
+
+struct FontModePacket ModeEnv[2] = { { .vif_commands = { 0U, 0U, 0U, 1358954503U }, .gif_tag = { 1152921504606879750ULL, 14ULL }, .frame = { .value = 0ULL, .register_address = 76U, .register_address_high = 0U }, .state_registers = { { .value = 0ULL, .register_address = 24U, .register_address_high = 0U }, { .value = 62768919827382272ULL, .register_address = 64U, .register_address_high = 0U }, { .value = 4294967296ULL, .register_address = 78U, .register_address_high = 0U }, { .value = 196608ULL, .register_address = 71U, .register_address_high = 0U }, { .value = 0ULL, .register_address = 34U, .register_address_high = 0U } } }, { .vif_commands = { 0U, 0U, 0U, 1358954503U }, .gif_tag = { 1152921504606879750ULL, 14ULL }, .frame = { .value = 0ULL, .register_address = 76U, .register_address_high = 0U }, .state_registers = { { .value = 0ULL, .register_address = 24U, .register_address_high = 0U }, { .value = 62768919827382272ULL, .register_address = 64U, .register_address_high = 0U }, { .value = 4294967296ULL, .register_address = 78U, .register_address_high = 0U }, { .value = 196608ULL, .register_address = 71U, .register_address_high = 0U }, { .value = 0ULL, .register_address = 34U, .register_address_high = 0U } } } };
+unsigned short asciiEucTable[128] = { 0, 0, 21845, 32853, 43690, 32938, 65535, 33023, 0, 0, 21845, 32853, 43690, 32938, 65535, 33023, 43690, 32938, 43690, 32938, 43690, 32938, 43690, 32938, 65535, 33023, 65535, 33023, 65535, 33023, 65535, 33023, 41377, 41386, 41417, 41460, 41456, 41459, 41461, 41415, 41418, 41419, 41462, 41436, 41380, 41437, 41381, 41407, 41904, 41905, 41906, 41907, 41908, 41909, 41910, 41911, 41912, 41913, 41383, 41384, 41443, 41441, 41444, 41385, 41463, 41921, 41922, 41923, 41924, 41925, 41926, 41927, 41928, 41929, 41930, 41931, 41932, 41933, 41934, 41935, 41936, 41937, 41938, 41939, 41940, 41941, 41942, 41943, 41944, 41945, 41946, 41422, 41455, 41423, 41392, 41394, 41414, 41953, 41954, 41955, 41956, 41957, 41958, 41959, 41960, 41961, 41962, 41963, 41964, 41965, 41966, 41967, 41968, 41969, 41970, 41971, 41972, 41973, 41974, 41975, 41976, 41977, 41978, 41424, 41411, 41425, 41409, 41377 };
+struct KanjiClutEnvironment KanjiClutEnv = { { 0x00000000U, 0x00000000U, 0x00000000U, 0x5100000eU, 0x00000004U, 0x10000000U, 0x0000000eU, 0x00000000U, 0x00000000U, 0x00053c00U, 0x00000050U, 0x00000000U, 0x00000000U, 0x00000000U, 0x00000051U, 0x00000000U, 0x00000010U, 0x00000002U, 0x00000052U, 0x00000000U, 0x00000000U, 0x00000000U, 0x00000053U, 0x00000000U, 0x00008008U, 0x08000000U, 0x00000000U, 0x00000000U, 0x00000000U, 0x80555555U, 0x80aaaaaaU, 0x80ffffffU, 0x00000000U, 0x80555555U, 0x80aaaaaaU, 0x80ffffffU, 0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U, 0x80555555U, 0x80555555U, 0x80555555U, 0x80555555U } };
+unsigned char fontPairGlyphCodes[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+int D_0063E878[98] = { 5, 4, 7, 13, 12, 15, 14, 6, 6, 6, 10, 12, 5, 6, 4, 8, 11, 6, 12, 10, 12, 11, 11, 11, 11, 12, 5, 4, 13, 12, 12, 9, 19, 14, 10, 13, 14, 10, 9, 14, 13, 5, 7, 12, 10, 16, 13, 15, 11, 15, 12, 10, 12, 12, 13, 18, 14, 14, 12, 6, 8, 6, 10, 5, 8, 11, 11, 10, 11, 10, 9, 11, 10, 5, 6, 10, 4, 15, 11, 11, 11, 11, 7, 8, 8, 10, 10, 14, 10, 10, 10, 9, 5, 9, 15, 5, 0, 0 };
+unsigned int nearest_5[8] = { 32769U, 268435456U, 14U, 0U, 0U, 0U, 20U, 0U };
+unsigned int biliner_6[8] = { 32769U, 268435456U, 14U, 0U, 96U, 0U, 20U, 0U };
+unsigned char spcode_0[32] = { 0, 1, 1, 1, 1, 1, 3, 0, 255, 0, 0, 0, 3, 1, 5, 3, 5, 6, 2, 2, 0, 255, 4, 7, 1, 1, 0, 1, 0, 0, 0, 0 };
+unsigned int normal_2[16] = { 32771U, 268435456U, 14U, 0U, 0U, 0U, 20U, 0U, 458752U, 0U, 71U, 0U, 0U, 0U, 66U, 0U };
+
+const char fontTexture0Path[16] = "font0.us";
+const char fontTexture1Path[16] = "font1.us";
+
+extern char D_0069DE50[];
+extern char D_0069DE58[];
+extern char D_0069DE60[];
+extern char D_0069DE68[];
+extern char D_0069DE70[];
+extern char D_0069DE78[];
+extern char D_0069DE80[];
+extern char D_0069DE88[];
+extern char D_0069DE90[];
+extern char D_0069DE98[];
+extern char D_0069DEA0[];
+extern char D_0069DEA8[];
+extern char D_0069DEB0[];
+extern char D_0069DEB8[];
+extern char D_0069DEC0[];
+extern char D_0069DEC8[];
+extern char D_0069DED0[];
+extern char D_0069DED8[];
+struct FontInlineCommand fontInlineCommands[20] = {
+    { D_0069DED8, ax }, { D_0069DED0, ax }, { D_0069DEC8, ax }, { D_0069DEC0, rx }, { D_0069DEB8, rx },
+    { D_0069DEB0, init }, { D_0069DEA8, init }, { D_0069DEA0, init }, { D_0069DE98, col }, { D_0069DE90, bg },
+    { D_0069DE88, shadow }, { D_0069DE80, alpha }, { D_0069DE78, zoom }, { D_0069DE70, xx }, { D_0069DE68, ruby },
+    { D_0069DE60, han }, { D_0069DE58, han }, { D_0069DE50, mark }, { 0, 0 }, { 0, 0 }
+};
+unsigned int D_0063EB40[16] = {
+    32771, 0x10000000u, 14, 0, 0, 0, 20, 0,
+    0x70000u, 0, 71, 0, 0, 0, 66, 0
+};
+unsigned int D_0063EB80[8] = {
+    32769, 0x10000000u, 14, 0, 0x7000Du, 0, 71, 0
+};
+unsigned int D_0063EBA0[8] = {
+    32769, 0x10000000u, 14, 0, 0x70000u, 0, 71, 0
+};
+signed char fontAlnumGlyphBase[16] = {
+    -16, 10, 37, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+unsigned int KanjiTex0Env_8[28] = {
+    0, 0, 0x11000000u, 0x51000006u, 5, 0x10000000u, 14, 0,
+    0, 0, 63, 0, 0, 0x53C20u, 80, 0,
+    0, 0, 81, 0, 320, 192, 82, 0,
+    0, 0, 83, 0
+};
+unsigned int KanjiDrawEnv[36] = {
+    0, 0, 0, 0x51000008u, 32775, 0x10000000u, 14, 0,
+    0, 0, 63, 0, 0, 0, 66, 0,
+    0, 0, 20, 0, 5, 0, 8, 0,
+    0x31000000u, 0, 78, 0, 0, 0, 73, 0,
+    0, 0, 74, 0
+};
+unsigned int zbuf_14[24] = {
+    32773, 0x10000000u, 14, 0, 28672, 29184, 24, 0,
+    0x1FF0000u, 0x1BF0000u, 64, 0, 0x31000000u, 0, 78, 0,
+    0x70000u, 0, 71, 0, 0x80070u, 0, 76, 0
+};
+unsigned int test_15[8] = {
+    32769, 0x10000000u, 14, 0, 0, 0, 63, 0
+};
+unsigned char spCodeParameterSizeTable[8] = { 2, 2, 3, 2, 2, 0, 0, 0 };
+char D_0069DE50[8] = "mark";
+char D_0069DE58[8] = "han";
+char D_0069DE60[8] = "prop";
+char D_0069DE68[8] = "ruby";
+char D_0069DE70[8] = "xx";
+char D_0069DE78[8] = "zoom";
+char D_0069DE80[8] = "alpha";
+char D_0069DE88[8] = "shadow";
+char D_0069DE90[8] = "bg";
+char D_0069DE98[8] = "col";
+char D_0069DEA0[8] = "load";
+char D_0069DEA8[8] = "save";
+char D_0069DEB0[8] = "init";
+char D_0069DEB8[8] = "ry";
+char D_0069DEC0[8] = "rx";
+char D_0069DEC8[8] = "az";
+char D_0069DED0[8] = "ay";
+char D_0069DED8[8] = "ax";
+signed char fontOutlineDirections[4][2] = { { 0, -1 }, { -1, 0 }, { 1, 0 }, { 0, 1 } };

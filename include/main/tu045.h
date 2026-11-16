@@ -30,5 +30,11 @@ void xglPacketAddFlushEIrq(void);
 void xglPacketModeReset(void);
 void xglPacketSetMode3Flag(int value);
 void xglPacketSetMode4Flag(int value);
+int xglRoundUpPow2(int size);
+int xglRoundUpLog2(int size);
+int func_001D2E90(int size, int psm);
+void xglDirectQueueBegin(void);
+void xglDirectQueuePush(u64 address, u64 data);
+void xglDirectQueueDefer(int flag, int key);
 
 #endif /* INCLUDE_MAIN_TU045_H */

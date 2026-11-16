@@ -1461,7 +1461,7 @@ extern const char D_006893F0[];
 extern const char D_0069D128[];
 /* "OFF". */
 extern const char D_0069D130[];
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 
 /* Scratch memory of the tests. */
 void *GameResBufferAlloc(int size);
@@ -1495,7 +1495,7 @@ void MovieListTest(void) {
     sceClose(descriptor);
     DebugTextViewInit(&view, list);
     SaveData.caption_all = 2; /* the save default: every caption line shown */
-    D_002B5D98[0] = 0;
+    gameLoopFlags[0] = 0;
     func_001A4400(0);
     while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
         xglFontDebugPrintf(0, 0, D_006893C0);

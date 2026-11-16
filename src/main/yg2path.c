@@ -102,8 +102,16 @@ u8 yg2PathGetCitizenFlag(u32 index) {
     return 0;
 }
 
-extern signed char yg2PathCurrentPath;
-extern unsigned char yg2PathMessageRange[];
+static char *yg2PathQuestMessages;
+static char *yg2PathCitizenRecords;
+static unsigned char yg2PathMode;
+static signed char yg2PathDetailOpen;
+static signed char yg2PathDetailIndex;
+static signed char yg2PathMenuChoice;
+static signed char yg2PathCurrentPath;
+static signed char yg2PathCurrentCitizen;
+static float yg2PathCursorBox[4];
+static unsigned char yg2PathMessageRange[16];
 extern unsigned char D_0069D7F0[];
 extern unsigned char yg2PathNumberText[];
 extern unsigned char yg2PathDigitChars[];
@@ -128,11 +136,6 @@ void yg2PathClearProgress(void) {
 }
 
 void menuResetState(void *object);
-extern unsigned char yg2PathMode;
-extern signed char yg2PathDetailOpen;
-extern signed char yg2PathCurrentCitizen;
-extern signed char yg2PathMenuChoice;
-extern float yg2PathCursorBox[];
 
 /* Clears the path and citizen cursor state, then stores the position of the current path on its
    6-column grid (44-unit cells, odd rows shifted by 22) in the two float pairs at yg2PathCursorBox. */
@@ -168,7 +171,7 @@ void yg2PathSetModelMode(int mode) {
     }
 }
 
-int func_0024F480(unsigned char *pattern, char *text);
+int cfeTextCompareLine(unsigned char *pattern, char *text);
 void sjisToEuc(char *first, char *second);
 
 /* Reads the quoted field that follows the first line matching `pattern`:
@@ -181,7 +184,7 @@ char *yg2PathReadTaggedText(char *text, unsigned char *pattern, char *out)
     char *outPos;
     int quoteCh;
 
-    while (*text != (char) *pattern || func_0024F480(pattern, text) != 0) {
+    while (*text != (char) *pattern || cfeTextCompareLine(pattern, text) != 0) {
         text++;
     }
     while (*text != '"') {
@@ -237,17 +240,16 @@ void yg2PathWaitForLoad(void) {
     }
 }
 
-extern char *yg2PathQuestMessages;
-extern unsigned char D_0068AE10[];
-extern unsigned char D_0068AE20[];
-extern unsigned char D_0068AE30[];
-extern unsigned char D_0068AE40[];
-extern unsigned char D_0068AE50[];
-extern unsigned char D_0068AE60[];
-extern unsigned char D_0068AE70[];
-extern unsigned char D_0068AE80[];
-extern unsigned char D_0068AE90[];
-extern unsigned char yg2PathSourceName[];
+extern const unsigned char D_0068AE10[];
+extern const unsigned char D_0068AE20[];
+extern const unsigned char D_0068AE30[];
+extern const unsigned char D_0068AE40[];
+extern const unsigned char D_0068AE50[];
+extern const unsigned char D_0068AE60[];
+extern const unsigned char D_0068AE70[];
+extern const unsigned char D_0068AE80[];
+extern const unsigned char D_0068AE90[];
+extern const unsigned char yg2PathSourceName[];
 extern unsigned char D_0069D7F8[];
 int xglCdBufferReserve(long long size);
 void ysegfReadFile(void **buffer, void *name, int allocate, int mode);
@@ -290,11 +292,10 @@ void yg2PathLoadQuestMessages(void)
     }
 }
 
-extern char *yg2PathCitizenRecords;
-extern unsigned char D_0068AEC0[];
-extern unsigned char D_0068AED0[];
-extern unsigned char D_0068AEE0[];
-extern unsigned char D_0068AEF0[];
+extern const unsigned char D_0068AEC0[];
+extern const unsigned char D_0068AED0[];
+extern const unsigned char D_0068AEE0[];
+extern const unsigned char D_0068AEF0[];
 extern unsigned char D_0069D800[];
 extern unsigned char D_0069D808[];
 
@@ -361,15 +362,15 @@ typedef struct YgPathCamera {
     DoublewordVector4 position;      /* 0x0D0 */
 } YgPathCamera;
 
-extern unsigned char D_0068AF08[];
-extern unsigned char D_0068AF28[];
-extern unsigned char D_0068AF48[];
-extern unsigned char D_0068AF68[];
-extern unsigned char D_0068AF80[];
-extern unsigned char D_0068AFD8[];
-extern unsigned char D_0068AFF8[];
-extern unsigned char D_0068B008[];
-extern unsigned char D_0068B028[];
+extern const unsigned char D_0068AF08[];
+extern const unsigned char D_0068AF28[];
+extern const unsigned char D_0068AF48[];
+extern const unsigned char D_0068AF68[];
+extern const unsigned char D_0068AF80[];
+extern const unsigned char D_0068AFD8[];
+extern const unsigned char D_0068AFF8[];
+extern const unsigned char D_0068B008[];
+extern const unsigned char D_0068B028[];
 extern unsigned char D_0069D810[];
 extern unsigned char D_0069D818[];
 extern unsigned char D_0069D820[];
@@ -678,6 +679,14 @@ typedef struct YgCitizenFileRequest {
     unsigned char unmodeled_15[0x2B];
 } YgCitizenFileRequest;
 
+/* 24-byte file-name record: a u64 pair, an int and a flag byte (the scaffold items at 0x68B090 and 0x68B0A8). */
+typedef struct YgCitizenFileName {
+    unsigned long long first;
+    unsigned long long second;
+    int third;
+    unsigned char fourth;
+} YgCitizenFileName;
+
 void textDrawSegment(int, int, unsigned char *, int);
 void menuDrawShortOutlineFrame(int, int, int, int);
 void textDrawDigitsPair(int, int, int, int, int);
@@ -691,10 +700,10 @@ void xglPacketTextureTrans(int);
 void fontObjBuildBaseVifPacket(void);
 extern unsigned char yg2PathPanelImage[];
 extern unsigned char *D_0069D880;
-extern unsigned char yg2PathTextHeader[];
-extern const YgCitizenFileRequest D_0068B090;
-extern const YgCitizenFileRequest D_0068B0A8[];
-extern unsigned char yg2PathPortraitFormat[];
+extern const unsigned char yg2PathTextHeader[];
+extern const YgCitizenFileName D_0068B090;
+extern const YgCitizenFileName D_0068B0A8[];
+extern const unsigned char yg2PathPortraitFormat[];
 extern unsigned char D_0069D850[];
 extern unsigned char D_0069D858[];
 extern unsigned char D_0069D860[];
@@ -704,7 +713,7 @@ extern unsigned char D_0069D878[];
 extern signed char D_003EC980[];
 extern unsigned char D_003EC930[];
 extern unsigned char D_0069D838[];
-extern unsigned char D_0068B038[];
+extern const unsigned char D_0068B038[];
 extern unsigned char D_0069D840[];
 extern unsigned char D_0069D848[];
 void menuDrawTitledFrameBlue(int, int, int, int, unsigned char *);
@@ -928,8 +937,7 @@ void yg2PathDrawCitizenProfile(int scroll)
   fontObjResetOpacity();
 }
 
-extern signed char yg2PathDetailIndex;
-extern unsigned char yg2PathDetailTextHeader[];
+extern const unsigned char yg2PathDetailTextHeader[];
 
 void yg2PathDrawPathDetail(void)
 {
@@ -1014,8 +1022,8 @@ void yg2PathDrawFrame(void) {
 }
 
 extern PadRecord PadData[2];
-extern unsigned char D_0068B128[];
-extern unsigned char D_0068B178[];
+extern const unsigned char D_0068B128[];
+extern const unsigned char D_0068B178[];
 void seVoiceStartDefault(int voice);
 
 int yg2PathHandleMenuInput(void) {
@@ -1295,6 +1303,39 @@ void yg2PathUpdateCamera(int x, int y, int width, int height) {
     pxySetCameraEnable(3, 0);
 }
 
+/* Read-only text and struct-held file names of the TU, in address order (0x68AE10..0x68B1C0). */
+const unsigned char D_0068AE10[16] = "Subject:%s\n";
+const unsigned char D_0068AE20[16] = "Locate:%s\n";
+const unsigned char D_0068AE30[16] = "Client:%s\n";
+const unsigned char D_0068AE40[16] = "MesIPG:%s\n";
+const unsigned char D_0068AE50[16] = "MesSCD:%s\n";
+const unsigned char D_0068AE60[16] = "MesFLD:%s\n";
+const unsigned char D_0068AE70[16] = "UkunSCD:%s\n";
+const unsigned char D_0068AE80[16] = "UkunFLD:%s\n";
+const unsigned char D_0068AE90[24] = "iwase\\QuestMes.txt";
+const unsigned char yg2PathSourceName[24] = "../yg2path.euc.c";
+const unsigned char D_0068AEC0[16] = "Name:%s\n";
+const unsigned char D_0068AED0[16] = "Hobby:%s\n";
+const unsigned char D_0068AEE0[16] = "Profile:%s\n";
+const unsigned char D_0068AEF0[24] = "iwase\\Citizen.txt";
+const unsigned char D_0068AF08[32] = "model\\char\\citizen\\ukun00.pxy";
+const unsigned char D_0068AF28[32] = "model\\char\\citizen\\ukun00.txy";
+const unsigned char D_0068AF48[32] = "model\\char\\citizen\\ukun00.xhr";
+const unsigned char D_0068AF68[24] = "motion\\ukun00.xap";
+const unsigned char D_0068AF80[88] = "Look at your achievements. \242\366\\nPress &03 to view achievements.\\nPress &04 to go back.";
+const unsigned char D_0068AFD8[32] = "iwase\\img\\citizen\\c01.xtx";
+const unsigned char D_0068AFF8[16] = "imgCitizen";
+const unsigned char D_0068B008[32] = "iwase\\img\\citizen\\ctz_alpha.xtx";
+const unsigned char D_0068B028[16] = "imgCtzAlpha";
+const unsigned char D_0068B038[16] = "Location";
+const unsigned char yg2PathTextHeader[72] = "$init;$bg2;$shadow+1,+3,000000;$colc0c0c0;$zoom14;$han1;$prop1;$xx0,20;";
+const YgCitizenFileName D_0068B090 = { .first = 0x6d695c6573617769ULL, .second = 0x657a697469635c67ULL, .third = 6511726, .fourth = 0 };
+const YgCitizenFileName D_0068B0A8[1] = { { .first = 0x6d695c6573617769ULL, .second = 0x657a697469635c67ULL, .third = 811818094, .fourth = 0 } };
+const unsigned char yg2PathPortraitFormat[32] = "%s%d.xtx\000\000\000\000\000\000\000\000NO  DATA";
+const unsigned char yg2PathDetailTextHeader[72] = "$init;$bg2;$shadow+1,+3,000000;$colc0c0c0;$zoom16;$han1;$prop1;$xx0,20;";
+const unsigned char D_0068B128[80] = "Find out who you've met. \242\366\\nPress &03 to view profiles.\\nPress &04 to go back.";
+const unsigned char D_0068B178[72] = "Use the L1 and R1 buttons to switch pages.\\nPress &04 to go back.";
+
 void yg2PathEaseCursor(void) {
     double zero = 0.0;
     float cursorX = yg2PathCursorBox[0];
@@ -1323,6 +1364,8 @@ void yg2PathEaseCursor(void) {
     }
 }
 
+const unsigned char D_0068B1C8[24] = "201_menu";
+
 /* Partial view of gameWork: control at +0x8 (the bits are the CONTROL_* values of tu051.h). */
 typedef struct YgPathGameWork {
     unsigned char unmodeled_00[8];
@@ -1333,7 +1376,7 @@ extern YgPathGameWork gameWork;
 
 #define CONTROL_SOFT_RESET 0x10000000
 
-extern unsigned char D_0068B1C8[];
+extern const unsigned char D_0068B1C8[];
 void soundRestart(void);
 void yg2PathLoadScene(void);
 void func_001BA68C(void);
@@ -1432,3 +1475,139 @@ void yg2PathRun(void)
     } while (--frames >= 0);
     func_001E0E98();
 }
+
+int yg2PathScroll = 0;
+
+YgPathCamera *yg2PathCamera = 0;
+
+int yg2PathPortraitBuffer = 0;
+
+int D_0069D7DC = 0;
+
+unsigned char yg2PathFrameImage[80] = {
+    218, 1, 0, 0, 219, 1, 0, 0,
+    220, 1, 0, 0, 221, 1, 0, 0,
+    255, 255, 255, 255, 222, 1, 0, 0,
+    223, 1, 0, 0, 224, 1, 0, 0,
+    225, 1, 0, 0, 0, 0, 0, 0,
+    210, 1, 0, 0, 211, 1, 0, 0,
+    212, 1, 0, 0, 213, 1, 0, 0,
+    255, 255, 255, 255, 214, 1, 0, 0,
+    215, 1, 0, 0, 216, 1, 0, 0,
+    217, 1, 0, 0, 0, 0, 0, 0
+};
+unsigned char yg2PathFrameBorderImage[40] = {
+    202, 1, 0, 0, 203, 1, 0, 0,
+    204, 1, 0, 0, 205, 1, 0, 0,
+    255, 255, 255, 255, 206, 1, 0, 0,
+    207, 1, 0, 0, 208, 1, 0, 0,
+    209, 1, 0, 0, 0, 0, 0, 0
+};
+unsigned int D_003EB380[10] = {
+    261, 262, 263, 255, 256, 257, 265, 264,
+    265, 0
+};
+unsigned int menuIconKinds[8] = {
+    0xC40147u, 0x14F00C2u, 0xC60149u, 0x153014Du, 0x1510155u, 0x1430145u, 331, 0
+};
+unsigned int D_003EB3C8[12] = {
+    0x69D600u, 0x69D5F8u, 0x69D5F0u, 0x69D5E8u, 0x69D5E0u, 0x69D5D8u, 0x69D5D0u, 0x69D5C8u,
+    0x69D5C0u, 0x69D5B8u, 0x69D5B0u, 0x69D5A8u
+};
+unsigned int D_003EB3F8[] = { 0x1020401u, 0x5000006u };
+unsigned int D_003EB400[] = { 1, 21 };
+unsigned char D_003EB408[720] = {
+    116, 0, 0, 0, 1, 0, 0, 0,
+    45, 0, 0, 0, 203, 0, 0, 0,
+    1, 0, 0, 0, 69, 0, 0, 0,
+    34, 1, 0, 0, 1, 0, 0, 0,
+    238, 0, 0, 0, 125, 0, 0, 0,
+    1, 0, 0, 0, 252, 0, 0, 0,
+    174, 0, 0, 0, 1, 0, 0, 0,
+    10, 1, 0, 0, 223, 0, 0, 0,
+    1, 0, 0, 0, 24, 1, 0, 0,
+    16, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 0, 0,
+    21, 0, 0, 0, 116, 0, 0, 0,
+    1, 0, 0, 0, 45, 0, 0, 0,
+    203, 0, 0, 0, 1, 0, 0, 0,
+    69, 0, 0, 0, 34, 1, 0, 0,
+    1, 0, 0, 0, 238, 0, 0, 0,
+    125, 0, 0, 0, 1, 0, 0, 0,
+    252, 0, 0, 0, 182, 0, 0, 0,
+    1, 0, 0, 0, 10, 1, 0, 0,
+    239, 0, 0, 0, 1, 0, 0, 0,
+    24, 1, 0, 0, 40, 1, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 27, 0, 0, 0,
+    105, 0, 0, 0, 0, 0, 0, 0,
+    70, 0, 0, 0, 197, 0, 0, 0,
+    0, 0, 0, 0, 27, 0, 0, 0,
+    33, 1, 0, 0, 0, 0, 0, 0,
+    104, 255, 255, 255, 66, 1, 0, 0,
+    0, 0, 0, 0, 185, 254, 255, 255,
+    33, 1, 0, 0, 0, 0, 0, 0,
+    185, 254, 255, 255, 105, 0, 0, 0,
+    0, 0, 0, 0, 104, 255, 255, 255,
+    72, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 2, 0, 0, 0,
+    17, 0, 0, 0, 95, 0, 0, 0,
+    2, 0, 0, 0, 17, 0, 0, 0,
+    95, 0, 0, 0, 2, 0, 0, 0,
+    17, 0, 0, 0, 95, 0, 0, 0,
+    2, 0, 0, 0, 17, 0, 0, 0,
+    95, 0, 0, 0, 2, 0, 0, 0,
+    17, 0, 0, 0, 95, 0, 0, 0,
+    2, 0, 0, 0, 17, 0, 0, 0,
+    95, 0, 0, 0, 2, 0, 0, 0,
+    17, 0, 0, 0, 95, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 0, 17, 1, 0, 0,
+    95, 0, 0, 0, 1, 0, 0, 0,
+    17, 1, 0, 0, 137, 0, 0, 0,
+    1, 0, 0, 0, 17, 1, 0, 0,
+    179, 0, 0, 0, 1, 0, 0, 0,
+    17, 1, 0, 0, 227, 0, 0, 0,
+    1, 0, 0, 0, 17, 1, 0, 0,
+    11, 1, 0, 0, 1, 0, 0, 0,
+    17, 1, 0, 0, 51, 1, 0, 0,
+    1, 0, 0, 0, 17, 1, 0, 0,
+    91, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+unsigned int D_003EB6D8[13] = { 0 };
+
+float D_0069B2A0 = 3.14159203f;

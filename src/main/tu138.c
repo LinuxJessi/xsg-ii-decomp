@@ -19,7 +19,11 @@ void *cfeGetEntry(int index) {
     return entry;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu138", func_00247570);
+/* x + y in double precision, returned as float (the soft-float calls fptodp, dpadd, dptofp). */
+float func_00247570(float x, double y)
+{
+    return x + y;
+}
 
 extern int cfeRangeMin;
 extern int cfeRangeMax;

@@ -18,10 +18,10 @@
   "tools": {
     "ee-gcc2.96-realconv-lp7": {
       "role": "cc1 of every GCC 2.96-family compile contract (game and runtime C)",
-      "dir": "ee-gcc2.96-realconv-lp7-fsv12-v1/bin",
-      "version": "gcc 2.96-ee-001003-1 (cc1), locally patched: realconv + lp7 + fsv3 + fsv4 + fsv5 + fsv6 + fsv7 + fsv8 + fsv9 + fsv10 + fsv12",
+      "dir": "ee-gcc2.96-realconv-lp7-fsv14-v1/bin",
+      "version": "gcc 2.96-ee-001003-1 (cc1), locally patched: realconv + lp7 + fsv3 + fsv4 + fsv5 + fsv6 + fsv7 + fsv8 + fsv9 + fsv10 + fsv12 + fsv13 + fsv14",
       "files": {
-        "cc1": "58a63b84ed4385101b1135a71919a2516f2d6c61b80258b5917ccd47bc56b1f4",
+        "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
         "cpp0": "f6f6b598f39649edfe171d6da8c7f91d07f2b87c2aeeffffbc5f566bfb1a39a9",
         "ee-gcc": "b8c284d16c9c0a0e8788e9522c46881e224ad01fa1c732aed43f821cc32f168b"
       },
@@ -40,13 +40,13 @@
         },
         "rebuild": [
           "Download the base archive and check its SHA-256.",
-          "Extract lib/gcc-lib/ee/2.96-ee-001003-1/{cc1,cpp0} and bin/ee-gcc into <root>/ee-gcc2.96-realconv-lp7-fsv12-v1/bin/.",
+          "Extract lib/gcc-lib/ee/2.96-ee-001003-1/{cc1,cpp0} and bin/ee-gcc into <root>/ee-gcc2.96-realconv-lp7-fsv14-v1/bin/.",
           "cpp0 and ee-gcc are used unmodified.",
-          "Apply the patches below to cc1, in file-offset order (nine single-byte patches and twenty multi-byte patches: fsv1, fsv3, fsv4, fsv5, fsv6, fsv7, fsv8, fsv9, fsv10 and fsv12); the result must hash to the cc1 SHA-256 above."
+          "Apply the patches below to cc1, in file-offset order (nine single-byte patches and twenty-four multi-byte patches: fsv1, fsv3, fsv4, fsv5, fsv6, fsv7, fsv8, fsv9, fsv10, fsv12, fsv13 and fsv14; an entry whose offset repeats an earlier one patches the bytes that entry left); the result must hash to the cc1 SHA-256 above."
         ],
         "cc1_byte_patches": {
           "note": [
-            "Each entry patches the bytes of the extracted cc1 at `file_offset` (one byte, except the fsv1, fsv3 and fsv4 entries, the 86-byte fsv5 gen_extendqidi2 entry, the three fsv6 entries, the four fsv7 entries, the two fsv8 entries, the fsv9 entry, the two fsv10 entries and the two fsv12 entries, which replace the given hex strings).",
+            "Each entry patches the bytes of the extracted cc1 at `file_offset` (one byte, except the fsv1, fsv3 and fsv4 entries, the 86-byte fsv5 gen_extendqidi2 entry, the three fsv6 entries, the four fsv7 entries, the two fsv8 entries, the fsv9 entry, the two fsv10 entries, the two fsv12 entries, the two fsv13 entries and the two fsv14 entries, which replace the given hex strings).",
             "`old` must be the byte already there; `new` replaces it.",
             "The six `realconv` patches turn the six MASK_MIPS5900 conversion gates",
             "of the bundled e-type float code into unconditional jumps, so decimal",
@@ -141,6 +141,21 @@
             "and a CALL_INSN precedes the insn in its basic block; otherwise it runs the replaced prologue",
             "and jumps to 0x0819779e. Empirical surrogate, one positive case (main tu211 sefExecScheduler",
             "prologue); neutral on 673 TUs and the live tree.",
+            "The two `fsv13` patches (release ee-gcc2.96-realconv-lp7-fsv13-v1, user decision 2026-11-15,",
+            "reports/cc1-fsv13-smvaries.md) supersede fsv12 on top of it (\"smvaries\"): load_kills_store (gcse",
+            "store motion) pushes rtx_addr_varies_p at 0x080f67dd (file 0xae7dd); that push becomes a jump to a",
+            "34-byte cave over the dead tail of debug_rtx_find at 0x080d9336 (file 0x91336, right after the swu",
+            "cave). The cave pushes rtx_varies_p unless the load MEM (%edx) has mode class MODE_FLOAT,",
+            "rtx_addr_varies_p for a float load, and jumps back to 0x080f67e2. Empirical, one positive case",
+            "(X2 main svDrawImageItem); neutral on every C TU of X2 (3,491 functions) and X1 (5,959 functions).",
+            "The two `fsv14` patches (release ee-gcc2.96-realconv-lp7-fsv14-v1, user decision 2026-11-15,",
+            "reports/cc1-fsv14-typedkill.md) supersede fsv13 on top of it (\"typedkill\"): compute_transp calls",
+            "transp_dep2, a 79-byte function over the unreferenced debug_reg_vector at 0x08170508 (file 0x128508),",
+            "instead of transp_dep (call at 0x080f30e6, file 0xab0e6, the bytes the fsv7 entry left). transp_dep2",
+            "returns transp_dep's answer when it is a kill; otherwise, when the store MEM is in-struct, the load",
+            "address is a SYMBOL_REF and the load MEM has a non-zero alias set equal to the store's, it returns",
+            "canon_true_dependence with rtx_addr_varies_p (the FSF decision). Empirical, two positive cases (X2 main",
+            "sef func_0025EBE0 and func_0025CAB8); neutral on every C TU of X2 (3,491 functions) and X1 (5,959).",
             "Why this is a patched binary and not a published one (public-compiler hunt,",
             "2026-09-12, .work/attempts/tu-public-compiler-hunt/attempt-1/artifact.json):",
             "all 15 public ee-gcc* entries of the pinned decompme catalog revision were",
@@ -284,6 +299,15 @@
               "governs": "swu: an SImode, alias-set-0, MEM_IN_STRUCT_P store MEM is tested with rtx_varies_p, any other store with rtx_addr_varies_p"
             },
             {
+              "group": "fsv13",
+              "file_offset": 594742,
+              "old": "a18cfe230850e8c302f7ff31c0eb0ea170e223085053e82bffffff89d88b5dfc89ec",
+              "new": "0fb64a02833c8de0d8200802740a68cc950d08e994d4010068b0970d08e98ad40100",
+              "length": 34,
+              "function": "cave over the dead tail of debug_rtx_find (unreferenced), after the swu cave",
+              "governs": "smvaries: a store-motion load MEM whose mode class is not MODE_FLOAT is tested with rtx_varies_p, a float load with rtx_addr_varies_p"
+            },
+            {
               "group": "fsv1",
               "file_offset": 681544,
               "old": "8b451050ffd783c40485c075118b451450ffd783c40485c0740489d8eb2c",
@@ -329,6 +353,24 @@
               "governs": "call canon_true_dependence -> call transp_dep (0x081d5798); varies argument stays rtx_varies_p (fsv4)"
             },
             {
+              "group": "fsv14",
+              "file_offset": 700646,
+              "old": "e8ad260e00",
+              "new": "e81dd40700",
+              "length": 5,
+              "function": "compute_transp (gcse.c)",
+              "governs": "call transp_dep (0x081d5798) -> call transp_dep2 (0x08170508); patches the bytes left by the fsv7 entry at this offset"
+            },
+            {
+              "group": "fsv13",
+              "file_offset": 714717,
+              "old": "68b0970d08",
+              "new": "e9542bfeff",
+              "length": 5,
+              "function": "load_kills_store (gcse.c)",
+              "governs": "push $rtx_addr_varies_p -> jmp to the smvaries cave"
+            },
+            {
               "group": "fsv12",
               "file_offset": 1187596,
               "old": "5589e583ec085756538b45088945fc8b15a8e2240801c08945f80345fc8d3cc500000000803c3a000f841f010000807c3a01000f84ef0000008b55fc5289d08b1588e22408030598e224088b04825068f0b32108a1ace9230850e899f6edff680db42108a1ace9230850e889f6edffa1a8e2240831f683c4183b74380c7d2c89fb8d76008b4418088b04b050681ab42108a1ace9230850e85cf6edffa1a8e2240883c40c463b74180c7cd9681fb42108a1ace9230850e83df6edff6821b42108a1ace9230850e82df6edff8b15a8e224088b7df88b4dfc31f683c4108d04393b74c2147d318b45fc8d1c38c1e3038b441a108b04b050681ab42108a1ace9230850e8f2f5edff8b15a8e2240883c40c463b741a147ccf681fb42108a1ace9",
@@ -345,6 +387,15 @@
               "length": 82,
               "function": "debug_candidates (debugger-only host: cave)",
               "governs": "transp_org.S chk: per-insn origin test used by reg_global_origin"
+            },
+            {
+              "group": "fsv14",
+              "file_offset": 1213704,
+              "old": "5589e583ec145756538b45088b38c745fc00000000c745f800000000a1ace9230885ff0f84d7000000837f08000f84b60000008b55f88955fce9ab0000008b55f88b44d70c8b54d7108945f08955f4",
+              "new": "5589e5ff7518ff7514ff7510ff750cff7508e87952060083c41485c0752f8b55088b4d148b410480384c751ff642031074198b410c85c074123b420c750dc74518b0970d08c9e9b9e2f7ff31c0c9c3",
+              "length": 79,
+              "function": "debug_reg_vector (unreferenced: cave)",
+              "governs": "transp_dep2: transp_dep's decision; when it is transparent, an in-struct store kills a SYMBOL_REF load whose non-zero alias set equals the store's (canon_true_dependence with rtx_addr_varies_p)"
             },
             {
               "group": "fsv5",
@@ -436,7 +487,9 @@
             "realconv_lp7_fsv7_cc1": "2f6951a347682558ba64d9d2d286467ea881cb20695a7fb3c43d0a1b4f545046",
             "realconv_lp7_fsv8_cc1": "575db2bbef59132765136aa2525722501d717abe8381bf706645962af6c6188f",
             "realconv_lp7_fsv9_cc1": "e46cdd442e2f606d9633b3c025833d75fea299eb66167271f0d685972551c824",
-            "realconv_lp7_fsv10_cc1": "f9b0c7f4506f9aacea2b43602a6e5beedd97a74d42c1191dad195eb48dd72844"
+            "realconv_lp7_fsv10_cc1": "f9b0c7f4506f9aacea2b43602a6e5beedd97a74d42c1191dad195eb48dd72844",
+            "realconv_lp7_fsv12_cc1": "58a63b84ed4385101b1135a71919a2516f2d6c61b80258b5917ccd47bc56b1f4",
+            "realconv_lp7_fsv13_cc1": "e6cd0ed23b7f5b5766ea5fdabdcba47f7980146e8c4b766a8834d19e64a10dc6"
           }
         },
         "license": "GPL-2.0-or-later (GCC).  The published binary ships without corresponding source; no 2.96-ee-001003 source tree is available, so this is a license reference, not corresponding-source proof.",

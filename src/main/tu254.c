@@ -1,13 +1,71 @@
 #include "common.h"
 #include "main/tu254.h"
-
-/*
- * Builds the per-node list of the package from its HRC data: tiMRPackageFillNodes
- * (the second argument is the output buffer, stored at +0xEC of the package).
- */
-INCLUDE_ASM("asm/main/nonmatchings/tu254", tiMRPackageFillNodes);
-
 #include "shared.h"
+#include "quadword.h"
+
+/* Partial view of TiHrcData: the dynamics count at +0x20 and the offset of the dynamics records from the HRC data at +0x34. */
+typedef struct TiHrcDataView {
+    unsigned char unmodeled_00[0x20];
+    int dynamicsCount;
+    unsigned char unmodeled_24[0x34 - 0x24];
+    int dynamicsOffset;
+} TiHrcDataView;
+
+/* One dynamics record: 0xB0 bytes, then 16 bytes per vector counted by vectorCount. */
+typedef struct TiHrcDynamicsRecord {
+    unsigned char unmodeled_00[0x1C];
+    int vectorCount[3];
+    unsigned char unmodeled_28[0x80 - 0x28];
+    Vector4 rows[3];          /* +0x80..+0xB0: copied into each node */
+} TiHrcDynamicsRecord;
+
+/* One node of the package buffer (64 bytes). */
+typedef struct TiMRDynamicsNode {
+    Vector4 rows[3];          /* +0x00..+0x30 */
+    TiHrcDynamicsRecord *dynamics; /* +0x30 */
+    float weight;             /* +0x34: set to 1.0f */
+    unsigned char unmodeled_38[0x8];
+} TiMRDynamicsNode;
+
+/* Partial view of the package: the HRC data at +0xD0 and the node buffer at +0xEC. */
+typedef struct TiMRPackageNodes {
+    unsigned char unmodeled_00[0xD0];
+    TiHrcDataView *hrcData;
+    unsigned char unmodeled_d4[0x18];
+    TiMRDynamicsNode *nodes;
+} TiMRPackageNodes;
+
+/* Builds the per-node list of the package from its HRC data (the second argument is the output buffer, stored at +0xEC). */
+void tiMRPackageFillNodes(TiMRPackageNodes *pMRPackage, TiMRDynamicsNode *nodes) {
+    TiHrcDataView *hrc;
+    TiHrcDynamicsRecord *dynamics;
+    TiMRDynamicsNode *node;
+    unsigned int i;
+    Vector4 *vectorBlock;
+
+    pMRPackage->nodes = nodes;
+    if (nodes != 0) {
+        hrc = pMRPackage->hrcData;
+        i = 0;
+        dynamics = (TiHrcDynamicsRecord *) ((unsigned char *) hrc + hrc->dynamicsOffset);
+        if (hrc->dynamicsCount != 0) {
+            node = nodes;
+            do {
+                QuadwordCopy(&node->rows[1], &dynamics->rows[1]);
+                QuadwordCopy(&node->rows[0], &dynamics->rows[0]);
+                QuadwordCopy(&node->rows[2], &dynamics->rows[2]);
+                i++;
+                node->dynamics = dynamics;
+                node->weight = 1.0f;
+                node++;
+                vectorBlock = (Vector4 *) (dynamics + 1);
+                dynamics = (TiHrcDynamicsRecord *) (vectorBlock
+                    + (dynamics->vectorCount[0] + dynamics->vectorCount[1] + dynamics->vectorCount[2]));
+            } while (i < pMRPackage->hrcData->dynamicsCount);
+        }
+    }
+}
+
 #include "vu0_macro.h"
 
 /*
@@ -82,7 +140,7 @@ void xglMatrixCopy_00292EB8(Vector4 *destination, const Vector4 *source) {
 }
 
 /* A four-row matrix in data; its rows load into the resident VU0 matrix. */
-extern Vector4 D_00645FB0[4];
+extern Matrix4 D_00645FB0;
 
 /* Loads the data matrix D_00645FB0 into the VU0 current matrix (vf27..vf30). */
 void tiVu0LoadFixedMatrix(void) {

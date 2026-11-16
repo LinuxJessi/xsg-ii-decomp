@@ -23,13 +23,13 @@ int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
 
 #define SCRIPT_ADDRESS_NONE 0xFFFF    /* absent table entry or address */
 
-void func_0025EBE0(int);
+void sefStepEffectRecords(int);
 extern u16 sefGroupKey;
 
 void sefAdvanceGroupKey(void)
 {
     sefGroupKey += 1;
-    func_0025EBE0(0);
+    sefStepEffectRecords(0);
 }
 
 int scGetImmAdrImmIdx2(int base, unsigned short *table, int index)
@@ -53,7 +53,7 @@ short scGetImmNumIdx(short *table, int index)
     return table[index];
 }
 
-/* Script effect record returned through func_002551D0. */
+/* Script effect record returned through svGetScriptEntry. */
 typedef struct SefScriptRecord {
     unsigned char unmodeled_00[0x10];
     short kind;                 /* 0x10: 0x3C..0x3F or 0x49 */
@@ -72,8 +72,8 @@ static inline int scOfsToAdrInline(int offset)
 }
 
 /* Takes the effect id in a0 (tu170 0x00261D5C daddu $16,$4,$0, then srsAnalyzeEftNo(effectId, ...)). */
-int func_00261D50(int effectId);
-SefScriptRecord **func_002551D0(int key);
+int sefFindRecordIndex(int effectId);
+SefScriptRecord **svGetScriptEntry(int key);
 int srsGetEffectSlot(int effectKey);
 extern int D_0069DC20;
 extern int D_0069DC24;
@@ -100,12 +100,12 @@ SefScriptRecord *scGetKeyRecord(int key, int *offset_out, int index)
     int kind;
     int status;
 
-    status = func_00261D50(key);
+    status = sefFindRecordIndex(key);
     *offset_out = 0;
     D_0069DC2C = 0;
     D_0069DC20 = 0;
     if (status >= 0) {
-        entry = func_002551D0(key);
+        entry = svGetScriptEntry(key);
         if (entry != 0) {
             record = *entry;
             offset = 0;

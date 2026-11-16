@@ -2,6 +2,16 @@
 #include "main/tu097.h"
 #include "main/tu110.h"
 
+/* Text strings of the save and config screens, in address order (read by the draw helpers below). */
+const char D_0068B640[56] = "$init;$bg0;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
+const char D_0068B678[16] = "Saving...";
+const char D_0068B688[16] = "  Select";
+const char D_0068B698[64] = "$init;$bg2;$shadow+1,+3,000000;$zoom12;$han1;$prop1;$colc0c0c0;";
+const char D_0068B6D8[16] = "$zoom12,13;";
+const char D_0068B6E8[40] = "$col407080;$bg3;$shadow+1,+1,000000;";
+const char D_0068B710[16] = "$colc0c0c0;";
+
+
 /* xglMcRequest commands (its second argument), numbered as in src/main/tu060.c. */
 enum {
     MC_REQ_FREE_SPACE = 1,
@@ -51,8 +61,6 @@ enum {
 
 extern int saveProgressFrame;
 extern int saveProgressTotal;
-extern char D_0068B640[];
-extern char D_0068B678[];
 void packetSubmitRequest(int command, int first, int second, int flags);
 void packetSubmitRequestEx(int command, int first, int second, int third, int fourth, int fifth);
 void xglDirectQueueBegin(void);
@@ -132,7 +140,29 @@ enum {
 /* The save slots on the card: the table saveSlotTable holds this many records. */
 #define SAVE_SLOT_COUNT 20
 
-extern SaveSlot *saveSlotTable;
+/* The thumbnail block of a save image (0x1000 bytes at SaveData + 0x174). */
+typedef struct SaveThumbnail {
+    unsigned char pixels[0x1000];
+} SaveThumbnail;
+
+/* Small statics of the save screen in .sbss, in layout order (the object's .sbss order is this file order). */
+static unsigned char *saveSlotRows;
+static short mcPortResult[4];
+static unsigned char *saveScanBuffer;
+static unsigned char *cardDataBuffer;
+static SaveThumbnail *saveThumbnailBuffer;
+static int *saveTextTable;
+static SaveSlot *saveSlotTable;
+static signed char D_0069E2BC;
+static unsigned char D_0069E2BD;
+static signed char configState;
+static signed char configCursor;
+static short D_0069E2C0;
+static signed char saveTextMaxima[6];
+static unsigned char D_0069E2CE;
+static unsigned char configFadeStep;
+static signed short D_0069E2D0[2];
+
 
 void saveSlotsDeactivateAll(void) {
     SaveSlot *record;
@@ -169,7 +199,6 @@ void saveSlotsPendingToEmpty(void) {
     }
 }
 
-extern int *saveTextTable;
 void *txdTableEntry(int *table, int index);
 
 typedef struct SaveTextEntry {
@@ -212,7 +241,7 @@ void saveSlotSetTexts(int slot, int value)
 }
 
 extern unsigned char *D_0069DA2C;
-extern unsigned char D_006ABEC0[0x40];
+static unsigned char D_006ABEC0[0x40];
 
 /* Label text buffer size: the bytes written to D_006ABEC0 are capped at this count (an SJIS lead byte copies its
  * trail byte too). */
@@ -416,9 +445,6 @@ void panelDrawNineSlice(void *image, int x, int y, int width, int height);
 void menuDrawTitledFrame(int x, int y, int width, int height, void *image);
 void menuDrawShortOutlineFrame(int x, int y, int width, int height);
 extern unsigned char menuPanelFrame[];
-extern unsigned char D_0068B688[];
-extern unsigned char D_0068B698[];
-extern unsigned char D_0068B6D8[];
 
 /* Draws one option item at (origin_x, origin_y): its label, then the image for the toggle (0x208 when the
  * toggle is clear, 0x209 when it is set), and advances the animation step while it is non-zero. */
@@ -512,8 +538,7 @@ typedef struct SaveSlotRow {
 } SaveSlotRow;
 
 extern unsigned char saveListScroll;
-extern unsigned char *saveSlotRows;
-extern int saveCursor[];
+static int saveCursor[6];
 
 /* Lays out the 20 slot rows: the cursor row (saveCursor[0]) gets 0xC, the three rows from `band` get 0x1E,
  * every other row 0x200. */
@@ -559,10 +584,13 @@ typedef struct SaveMessageRange {
     unsigned char unmodeled_04[0x0C];
 } SaveMessageRange;
 
-extern SaveMessageRange saveMessageRange;
-extern struct FontTrack saveSlotListTrack;
-extern struct FontTrack saveMessagePanelTrack;
-extern signed char saveHeaderText[];
+/* Statics of the save screen in .bss, in layout order (inner labels such as D_006ABF20 are fields of these). */
+static struct FontTrack saveSlotListTrack;
+static SaveMessageRange saveMessageRange;
+static struct FontTrack saveMessagePanelTrack;
+static unsigned char saveCardRequestResult[16];
+static signed char saveHeaderText[32];
+static SaveItem saveUiOptionItem[1];
 extern unsigned char saveIsLoad;
 extern unsigned char savePort;
 extern signed char saveSlotIndex;
@@ -576,7 +604,6 @@ typedef struct SaveUiStateByte {
 extern signed char saveMessageState;
 extern signed char D_0069DA1E;
 extern unsigned char D_0069DA50[];
-extern SaveItem saveUiOptionItem[];
 void msgRangeSetText(SaveMessageRange *range, void *text);
 
 /* Sets the save-screen mode (0, 2, 3 or 4; other values only reach the tail). Mode 2 keeps the three-row band
@@ -668,7 +695,6 @@ void saveUiSetMode(unsigned char mode)
 }
 
 extern unsigned char saveCardBusy;
-extern short mcPortResult[3];
 void menuResetState(SaveMessageRange *range);
 void *xglCdSectorAlloc(int size);
 int xglPadSetRepeat(int a, int b, int c, int d);
@@ -761,6 +787,7 @@ typedef struct DirectDataBlock {
     u64 frame_reg_40;
     unsigned char unmodeled_48[0x60 - 0x48];
     u32 ref_count;
+    unsigned char unmodeled_64[0x70 - 0x64];
 } DirectDataBlock;
 
 extern DirectDataBlock saveThumbnailDirect;
@@ -876,10 +903,8 @@ void menuDrawLitIcon();
 void playTimeClamp(PlayClock *clock);
 void xglClockUInt2DayTime(void *time, unsigned int seconds);
 MemberRecordView *ptMemberRecordFindById(int id);
-extern unsigned char D_003ECD08[];
-extern unsigned char D_003ECD30[];
-extern unsigned char D_0068B6E8[];
-extern unsigned char D_0068B710[];
+extern int D_003ECD08[];
+extern int D_003ECD30[];
 extern unsigned char D_0069DA58[];
 extern unsigned char D_0069DA60[];
 extern unsigned char D_0069DA68[];
@@ -1401,7 +1426,6 @@ extern int D_006ABF20[];
 extern int D_006ABF24[];
 extern int D_0069DA18;
 extern int D_0069DA78;
-extern unsigned char *saveScanBuffer;
 
 /* Memory-card request blocks of the save screen (xglMcRequest reads them by address). SaveMcEntryBlock is the entry
  * count and entry list of MC_REQ_CREATE; SaveMcRequest is the file, data and size of LOAD and SAVE; SaveMcScanRequest
@@ -1586,11 +1610,6 @@ int saveSlotListUpdate(void)
     return 0;
 }
 
-/* The thumbnail block of a save image (0x1000 bytes at SaveData + 0x174). */
-typedef struct SaveThumbnail {
-    unsigned char pixels[0x1000];
-} SaveThumbnail;
-
 /* The leading part of the save image at SaveData that the save screen reads: the menu bytes at 0x28, 0x29 and
  * 0x3A, the play clock at 0x68 and the thumbnail at 0x174. */
 typedef struct SaveStage {
@@ -1608,8 +1627,6 @@ typedef struct SaveStage {
 extern SaveStage SaveData;
 extern SaveThumbnail D_0063F9B4;
 extern unsigned char D_006ABFB0[];
-extern unsigned char *cardDataBuffer;
-extern SaveThumbnail *saveThumbnailBuffer;
 void saveWriteImage(void);
 void xglMcSetEntryNumbers(void *entries, int count, PlayClock *time);
 
@@ -1874,7 +1891,7 @@ unsigned int saveThumbnailEncode(int quality, void *output_buffer)
 }
 
 
-/* ClearEnv (0x006457C0): the GS clear colour words (same view as src/main/tu100.c). */
+/* ClearEnv: the GS clear colour words (same view as src/main/tu100.c). */
 typedef struct ClearEnvColor {
     u8 unmodeled_00[0x20];
     u32 color_r;                    /* 0x20 */
@@ -1894,8 +1911,8 @@ typedef struct GameWorkView {
 
 extern GameWorkView gameWork;
 extern int (*saveUiUpdateTable[])(void);
-extern char D_0068B7D8[];
-extern char D_0068B7E8[];
+const char D_0068B7D8[16] = "carddata.bin";
+const char D_0068B7E8[24] = "yosikawa\\Location.txd";
 int func_001BA68C(void);
 void func_001BA6F4(void);
 void func_0012A510(int arg);
@@ -2074,15 +2091,6 @@ int saveScreenRun(int entryMode)
     return 1;
 }
 
-extern signed char D_0069E2BC;
-extern unsigned char D_0069E2BD;
-extern signed char configState;
-extern signed char configCursor;
-extern short D_0069E2C0;
-extern unsigned char D_0069E2CE;
-extern unsigned char configFadeStep;
-extern signed short D_0069E2D0[2];
-extern signed char saveTextMaxima[6];
 
 void saveTextStateReset(void)
 {
@@ -2107,9 +2115,11 @@ void saveTextStateReset(void)
     configFadeStep = 0;
 }
 
-extern unsigned char D_0068B800[];
-extern unsigned char D_0068B810[];
-extern unsigned char D_0068B858[];
+const char D_0068B800[16] = "  Configuration";
+const char D_0068B810[72] = "$init;$bg2;$shadow+1,+3,000000;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
+const char D_0068B858[24] = "$zoom13;";
+
+const char D_0068B960[120] = "\xa5" "\xe1" "\xa5" "\xa4" "\xa5" "\xf3" "\xa5" "\xe1" "\xa5" "\xcb" "\xa5" "\xe5" "\xa1" "\xbc" "\x00" "\x00" "\xa5" "\xed" "\xa5" "\xdc" "\xa5" "\xe1" "\xa5" "\xcb" "\xa5" "\xe5" "\xa1" "\xbc" "\x00" "\x00" "\x00" "\x00" "\xa5" "\xbb" "\xa1" "\xbc" "\xa5" "\xd6" "\xa1" "\xca" "\xa3" "\xd2" "\xa3" "\xb2" "\xa4" "\xc7" "\xa5" "\xed" "\xa1" "\xbc" "\xa5" "\xc9" "\x00" "\x00" "\x00" "\x00" "\xa4" "\xc6" "\xa4" "\xaf" "\xa4" "\xb9" "\xa4" "\xc1" "\xa4" "\xe3" "\x00" "\x00" "\x00" "\x00" "\x00" "\x00" "\xa5" "\xd0" "\xa5" "\xc8" "\xa5" "\xeb" "\xa5" "\xa6" "\xa5" "\xa3" "\xa5" "\xf3" "\x00" "\x00" "\x00" "\x00" "\xa5" "\xd0" "\xa5" "\xc8" "\xa5" "\xeb" "\xc1" "\xaa" "\xc2" "\xf2" "\x00" "\x00" "\x00" "\x00" "\x00" "\x00" "\xa5" "\xa2" "\xa5" "\xca" "\xa5" "\xe9" "\xa5" "\xa4" "\xa5" "\xba" "";
 int textDrawLines(int, int, void *, int);
 void msgRangeDrawRevealed(SaveMessageRange *, int, int);
 void menuDrawKindIcon(int x, int y, int index);
@@ -2703,3 +2713,84 @@ void configScreenRun(void)
     xglPadSetRepeat(0, PAD_L1 | PAD_R1 | PAD_UP | PAD_DOWN | PAD_LEFT | PAD_RIGHT, 8, 1);
     pxyTickScaleDoubleOverride(0);
 }
+
+/* Save-screen flags and indexes (small data, read through $gp), in address order. */
+
+/* Slot panel layouts of the save slot detail: the two panel texture-index tables. */
+/* Save text index table: id, first and second text index of each entry (saveTextIndexTable, 0x3ECC30). */
+SaveTextEntry saveTextIndexTable[54] = {
+    { 1010, 1, 18 }, { 1070, 1, 19 }, { 1210, 2, 20 }, { 1250, 2, 21 },
+    { 1280, 2, 22 }, { 1520, 3, 23 }, { 2010, 4, 24 }, { 2070, 5, 25 },
+    { 2110, 6, 26 }, { 2150, 6, 27 }, { 2170, 6, 28 }, { 2210, 79, 29 },
+    { 2250, 79, 30 }, { 2270, 79, 31 }, { 2540, 7, 32 }, { 3030, 8, 33 },
+    { 3080, 8, 34 }, { 3130, 71, 35 }, { 3190, 71, 36 }, { 3410, 9, 37 },
+    { 3440, 9, 38 }, { 3470, 9, 39 }, { 3480, 9, 40 }, { 3530, 9, 41 },
+    { 3540, 9, 42 }, { 4020, 10, 43 }, { 4310, 11, 44 }, { 4350, 11, 45 },
+    { 4370, 11, 46 }, { 4610, 12, 47 }, { 4640, 12, 48 }, { 4650, 12, 49 },
+    { 4720, 12, 50 }, { 5040, 13, 51 }, { 5070, 13, 52 }, { 5110, 13, 53 },
+    { 5170, 13, 54 }, { 5510, 14, 55 }, { 5540, 14, 56 }, { 5710, 15, 57 },
+    { 5730, 15, 58 }, { 5760, 15, 59 }, { 5920, 16, 60 }, { 5950, 17, 61 },
+    { 7011, 62, 67 }, { 8070, 63, 68 }, { 7039, 64, 69 }, { 8060, 65, 70 },
+    { 7057, 66, 0 }, { 1040, 1, 73 }, { 1910, 72, 74 }, { 1610, 78, 75 },
+    { 5310, 76, 77 }, { 0, 0, 0 } };
+
+int D_003ECD08[10] = { 606, 607, 608, 609, 538, 610, 611, 612, 613, 0 };
+int D_003ECD30[12] = { 600, 601, 602, 537, 538, 539, 603, 604, 605, 0, 0, 0 };
+
+DirectDataBlock saveThumbnailDirect = {
+    { 0x0, 0x0, 0x0, 0x51000006, 0x4, 0x10000000, 0xE },
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x38, 0x08, 0x00, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x51, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    0x0ULL,
+    { 0x52, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x53, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    0x7000,
+    { 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+void (*saveUiDrawTable[6])(void) = {
+    saveUiDraw,
+    0,
+    0,
+    saveUiOptionDraw,
+    0,
+    0
+};
+unsigned char D_003ECDE8[16] = "$zoom12,13;";
+int (*saveUiUpdateTable[6])(void) = {
+    saveMenuUpdate,
+    0,
+    saveSlotListUpdate,
+    saveSlotTransferUpdate,
+    saveUiPollButtons,
+    0
+};
+unsigned long long saveThumbnailDma[24] = {
+    0, 0x5100000B00000000UL, 0xA08B400000008001UL, 0xE53531EEEEUL, 0x30000UL, 71, 96, 20,
+    0, 76, 0, 6, 0x8000000080UL, 0x8000000080UL, 0, 0,
+    0x71F700006FF8UL, 0xFFFFFFFFUL, 0x1C0000002000UL, 0, 0x76C700007578UL, 0xFFFFFFFFUL, 0, 63
+};
+
+/* Small data (.sdata) of the save screen, in address order. */
+unsigned char saveIsLoad = 0;
+unsigned char savePort = 0;
+signed char saveSlotIndex = 0;
+unsigned char saveUiMode = 0;
+unsigned char saveUiState = 0;
+unsigned char saveListScroll = 0;
+unsigned char saveCardBusy = 0;
+int D_0069DA18 = 0;
+signed char saveMessageState = 0;
+signed char D_0069DA1D = 0;
+signed char D_0069DA1E = 0;
+int saveProgressFrame = 0;
+int saveProgressTotal = 0;
+unsigned int D_0069DA28 = 0xa6a1;
+unsigned char *D_0069DA2C = (unsigned char *) &D_0069DA28;
+unsigned char D_0069DA30[8] = { 0x82, 0x4f, 0, 0, 0, 0, 0, 0 };
+unsigned char D_0069DA38[8] = { 0xa3, 0xb0, 0, 0, 0, 0, 0, 0 };
+unsigned char D_0069DA40[8] = { 0x23, 0x23, 0, 0, 0, 0, 0, 0 };
+unsigned char D_0069DA48[8] = { 0x31, 0x32, 0, 0, 0, 0, 0, 0 };
+unsigned char D_0069DA50[8] = { 0x20, 0x2f, 0x20, 0, 0, 0, 0, 0 };
+unsigned char D_0069DA58[8] = { 0x2f, 0x20, 0x4c, 0x76, 0x20, 0, 0, 0 };
+unsigned char D_0069DA60[8] = { 0x54, 0x69, 0x6d, 0x65, 0x20, 0x20, 0x2f, 0 };
+unsigned char D_0069DA68[8] = { 0x3a, 0, 0, 0, 0, 0, 0, 0 };
+unsigned char D_0069DA70[8] = { 0x4e, 0x4f, 0x20, 0x44, 0x41, 0x54, 0x41, 0 };
+int D_0069DA78 = 0;

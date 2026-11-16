@@ -15,7 +15,7 @@ int scriptLoadByNumber(int *slot, int number) {
 }
 
 int func_002A9350(int size);
-void func_002AA7F0(char *destination, char *source);
+void strcat(char *destination, char *source);
 int sbLinkImage(int buffer);
 extern const char D_0068D5C8[];
 char *strcpy(char *, const char *);
@@ -31,7 +31,7 @@ int scriptReadFile(int *slot, char *fileName) {
     while (*slot == 0) {
     }
     strcpy(path, hostPath);
-    func_002AA7F0(path, fileName);
+    strcat(path, fileName);
     xglDebFileRead(path, (void *) *slot);
     status = sbLinkImage(*slot);
     if (status != 0) {

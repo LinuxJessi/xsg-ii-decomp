@@ -8,6 +8,7 @@
 
 #define GS_PRIM 0x00
 #define GS_RGBAQ 0x01
+#define GS_ST 0x02
 #define GS_UV 0x03
 #define GS_XYZF2 0x04
 /* XYZ2 register: a vertex without the fog value, 12.4 fixed point around the 2048 origin. */
@@ -36,6 +37,13 @@
 #define GIF_AD 0x0E
 /* GIF tag of one A+D pair (NLOOP 1, EOP set, NREG 1): its register list is GIF_AD. */
 #define GIF_TAG_ONE_AD_EOP 0x1000000000008001ULL
+/* GIFtag EOP bit (bit 15 of the NLOOP/EOP word). */
+#define GIF_TAG_EOP 0x8000
+/* GIFtag REGS values (one nibble per register) of the packets game code builds: RGBAQ/ST/XYZ2
+ * as in the TiDrawJoint tags, RGBAQ + four XYZ2 and RGBAQ + four ST/XYZ2 pairs as in the shadows. */
+#define GIF_REGS_RGBAQ_ST_XYZ2 0x521
+#define GIF_REGS_RGBAQ_XYZ2_X4 0x055551ee
+#define GIF_REGS_RGBAQ_ST_XYZ2_X4 0x252521ee
 
 /* Appends one A+D register write (value, then register address) at the u64 cursor p. */
 #define GS_PUT(p, reg, value) ((p)[0] = (value), (p)[1] = (reg), (p) += 2)

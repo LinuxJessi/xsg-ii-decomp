@@ -3,6 +3,7 @@
 #include "main/control_entry.h"
 #include "main/xgl_render.h"
 #include "main/xgl_studio.h"
+#include "main/tu017.h"
 #include "main/tu021.h"
 #include "main/tu022.h"
 #include "main/tu024.h"
@@ -52,7 +53,6 @@ void xglGeometryInit(void);
 void xglPacketSystemInit(u32 buffer, u32 size, float rate);
 void xglRenderInit(void);
 void xglFontInitial(void);
-void xglMovieInit(void);
 
 /*
  * Reboots the IOP with IOPRP271, loads the SIF/CD/memory-card/pad/sound IOP
@@ -108,6 +108,7 @@ unsigned int Title(void);
 extern int mainParamArgc;
 extern char **mainParamArgv;
 extern const char soundEffectBankName[];
+extern signed char uwamonoDrawDisabled;
 
 /* Title's result: the low 24 bits are the entry address of the chosen screen, the top byte its overlay. */
 #define TITLE_ENTRY_MASK 0xFFFFFF
@@ -182,3 +183,35 @@ void xglTimer0Reset(int mode) {
     *T0_COUNT = 0;
     *T0_MODE = mode + T0_MODE_CUE;
 }
+
+const char iopRebootImagePath[32] = "cdrom0:\\IOP\\IOPRP271.IMG;1";
+
+const char adxiModuleName[16] = "cri_adxi";
+
+const char adxiModuleArgs[16] = "spucore=1";
+
+const char korgModuleName[16] = "korgivag";
+
+const char korgModuleArgs[48] = "vag=256\000key=256\000prg=64\000sbf=128\000seq=64\000ply=16";
+
+char sio2manModuleName[8] = "sio2man";
+
+char mcmanModuleName[8] = "mcman";
+
+char mcservModuleName[8] = "mcserv";
+
+char padmanModuleName[8] = "padman";
+
+char cdvdstmModuleName[8] = "cdvdstm";
+
+char libsdModuleName[8] = "libsd";
+
+const char soundEffectBankName[8] = "SYS_SE";
+
+u8 *WorkEnd = 0;
+
+int mainParamArgc = 0;
+
+char **mainParamArgv = 0;
+
+signed char uwamonoDrawDisabled = 1;

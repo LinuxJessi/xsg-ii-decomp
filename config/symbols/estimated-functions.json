@@ -10266,7 +10266,7 @@
      2
     ],
     [
-     "func_0012B9A0",
+     "sceVif1PkAddCode",
      1227168,
      20,
      2
@@ -42054,7 +42054,7 @@
      2
     ],
     [
-     "func_002424D8",
+     "gifStateDrawRadialBlur",
      2368728,
      1984,
      2
@@ -42084,7 +42084,7 @@
      2
     ],
     [
-     "func_002439D0",
+     "gifStateCopyDisplayToWork",
      2374096,
      388,
      2
@@ -42114,7 +42114,7 @@
      2
     ],
     [
-     "func_00245728",
+     "gifBreakShardUpdate",
      2381608,
      804,
      2
@@ -42276,7 +42276,7 @@
      2
     ],
     [
-     "func_00246FF8",
+     "gifStateStartWhiteShake",
      2387960,
      212,
      2
@@ -42426,13 +42426,13 @@
      2
     ],
     [
-     "func_00248390",
+     "cfeCameraEvaluate",
      2392976,
      1384,
      2
     ],
     [
-     "func_002488F8",
+     "cfeCommandSpawn",
      2394360,
      356,
      2
@@ -42498,7 +42498,7 @@
      2
     ],
     [
-     "func_00249248",
+     "cfeSndRecordEvaluate",
      2396744,
      204,
      2
@@ -42510,13 +42510,13 @@
      2
     ],
     [
-     "func_00249340",
+     "cfeDrawLine",
      2396992,
      468,
      2
     ],
     [
-     "func_00249518",
+     "cfeDrawRotationGrid",
      2397464,
      2484,
      2
@@ -42528,7 +42528,7 @@
      2
     ],
     [
-     "func_0024A8C0",
+     "cfeEntryDrawMovie",
      2402496,
      1804,
      2
@@ -42540,13 +42540,13 @@
      2
     ],
     [
-     "func_0024B0E8",
+     "cfeListSetKeyMode",
      2404584,
      328,
      2
     ],
     [
-     "func_0024B230",
+     "cfeListSetAngleKeyMode",
      2404912,
      328,
      2
@@ -42558,7 +42558,7 @@
      2
     ],
     [
-     "cfeStrLastCharPos",
+     "cfeStrCountChar",
      2405368,
      88,
      2
@@ -42582,7 +42582,7 @@
      2
     ],
     [
-     "func_0024B6D8",
+     "cfeMapInitRecords",
      2406104,
      572,
      2
@@ -42804,13 +42804,13 @@
      2
     ],
     [
-     "func_0024EB48",
+     "cfeLightSetInit",
      2419528,
      344,
      2
     ],
     [
-     "func_0024ECA0",
+     "cfeLightRowsInit",
      2419872,
      132,
      2
@@ -42896,7 +42896,13 @@
     [
      "cfeFileTempInit",
      2420992,
-     60,
+     44,
+     2
+    ],
+    [
+     "cfeFileLogIndentSet",
+     2421040,
+     12,
      2
     ],
     [
@@ -42948,13 +42954,13 @@
      2
     ],
     [
-     "func_0024F418",
+     "cfeTextNextLine",
      2421784,
      100,
      2
     ],
     [
-     "func_0024F480",
+     "cfeTextCompareLine",
      2421888,
      112,
      2
@@ -42978,31 +42984,31 @@
      2
     ],
     [
-     "func_0024F698",
+     "cfeListSetValue",
      2422424,
      148,
      2
     ],
     [
-     "func_0024F730",
+     "cfeListSetValueLinear",
      2422576,
      144,
      2
     ],
     [
-     "func_0024F7C0",
+     "cfeListSetAngle",
      2422720,
      156,
      2
     ],
     [
-     "func_0024F860",
+     "cfeListSetAngleLinear",
      2422880,
      152,
      2
     ],
     [
-     "func_0024F8F8",
+     "cfeListCopyKey",
      2423032,
      72,
      2
@@ -43038,7 +43044,7 @@
      2
     ],
     [
-     "func_0024FC90",
+     "cfeTrackUpdateDirections",
      2423952,
      1340,
      2
@@ -43062,7 +43068,7 @@
      2
     ],
     [
-     "func_00250478",
+     "cfeTrackBezier",
      2425976,
      840,
      2
@@ -43074,7 +43080,7 @@
      2
     ],
     [
-     "func_002508C8",
+     "cfeTrackSampleStep",
      2427080,
      348,
      2
@@ -43098,19 +43104,19 @@
      2
     ],
     [
-     "cfeTrackFindAtOrBefore",
+     "cfeTrackFindAtOrAfter",
      2427704,
      128,
      2
     ],
     [
-     "func_00250BB8",
+     "cfeTrackFindNeighbor",
      2427832,
      176,
      2
     ],
     [
-     "func_00250C68",
+     "cfeTracksFindNearest",
      2428008,
      240,
      2
@@ -43122,7 +43128,7 @@
      2
     ],
     [
-     "func_00250D88",
+     "cfeTrackCountInRange",
      2428296,
      60,
      2
@@ -43134,7 +43140,7 @@
      2
     ],
     [
-     "func_00250E10",
+     "cfeTrackCountValueRunsInRange",
      2428432,
      116,
      2
@@ -43146,7 +43152,7 @@
      2
     ],
     [
-     "func_00250EF0",
+     "cfeTrackShiftTimesBack",
      2428656,
      160,
      2
@@ -43632,7 +43638,7 @@
      2
     ],
     [
-     "func_00252840",
+     "MMathPointInTriangle",
      2435136,
      252,
      2
@@ -43770,19 +43776,19 @@
      2
     ],
     [
-     "func_00253800",
+     "svDrawSendViewSetup",
      2439168,
      428,
      2
     ],
     [
-     "func_002539B0",
+     "svDrawSetState",
      2439600,
      116,
      2
     ],
     [
-     "func_00253A28",
+     "svDrawSubmitMode",
      2439720,
      240,
      2
@@ -43824,7 +43830,7 @@
      2
     ],
     [
-     "func_00253C70",
+     "svGetImageListItem",
      2440304,
      60,
      2
@@ -43842,7 +43848,7 @@
      2
     ],
     [
-     "func_00253F38",
+     "svGetTexturePageCount",
      2441016,
      152,
      2
@@ -43998,7 +44004,7 @@
      2
     ],
     [
-     "func_002551D0",
+     "svGetScriptEntry",
      2445776,
      332,
      2
@@ -44010,7 +44016,7 @@
      2
     ],
     [
-     "func_00255358",
+     "svSetZTestEnv",
      2446168,
      60,
      2
@@ -44028,19 +44034,19 @@
      2
     ],
     [
-     "func_002554F8",
+     "svDrawListAppendRecordC",
      2446584,
      336,
      2
     ],
     [
-     "func_00255648",
+     "svDrawListAppendRecordCPair",
      2446920,
      392,
      2
     ],
     [
-     "func_002557D0",
+     "svBuildItemMatrix",
      2447312,
      400,
      2
@@ -44076,49 +44082,49 @@
      2
     ],
     [
-     "func_00256218",
+     "svDrawPolygonItem",
      2449944,
      1184,
      2
     ],
     [
-     "func_002566B8",
+     "svDrawListAppendSlot",
      2451128,
      568,
      2
     ],
     [
-     "func_002568F0",
+     "svDrawListAppendRecordBPair",
      2451696,
      584,
      2
     ],
     [
-     "func_00256B38",
+     "svDrawListAppendRecordA",
      2452280,
      784,
      2
     ],
     [
-     "func_00256E48",
+     "svDrawListAppendRecordAPair",
      2453064,
      840,
      2
     ],
     [
-     "func_00257190",
+     "svDrawListAppendPart",
      2453904,
      424,
      2
     ],
     [
-     "func_00257338",
+     "svDrawListAppendStatePair",
      2454328,
      452,
      2
     ],
     [
-     "func_00257500",
+     "sefInitPartTransform",
      2454784,
      260,
      2
@@ -44148,25 +44154,25 @@
      2
     ],
     [
-     "func_002581A8",
+     "svDrawSortedImages",
      2458024,
      1176,
      2
     ],
     [
-     "func_00258640",
+     "svSortLineSlots",
      2459200,
      404,
      2
     ],
     [
-     "func_002587D8",
+     "svCollectSortedLines",
      2459608,
      408,
      2
     ],
     [
-     "func_00258970",
+     "svLoadDrawViewMatrix",
      2460016,
      68,
      2
@@ -44232,7 +44238,7 @@
      2
     ],
     [
-     "func_00259400",
+     "svDrawEffectRecords3D",
      2462720,
      232,
      2
@@ -44274,7 +44280,7 @@
      2
     ],
     [
-     "func_00259580",
+     "drawListAppendSlotHalves",
      2463104,
      48,
      2
@@ -44322,7 +44328,7 @@
      2
     ],
     [
-     "func_00259678",
+     "sefSumEntryCounts",
      2463352,
      172,
      2
@@ -44424,31 +44430,31 @@
      2
     ],
     [
-     "func_00259F78",
+     "sefGetSpeed",
      2465656,
      1036,
      2
     ],
     [
-     "func_0025A388",
+     "sefMoveParticle",
      2466696,
      436,
      2
     ],
     [
-     "func_0025A540",
+     "sefCalcLocalMatrix",
      2467136,
      840,
      2
     ],
     [
-     "func_0025A888",
+     "sefSetTransformRotation",
      2467976,
      228,
      2
     ],
     [
-     "func_0025A970",
+     "sefStepCurveTrack",
      2468208,
      432,
      2
@@ -44460,7 +44466,7 @@
      2
     ],
     [
-     "func_0025ABE0",
+     "sefExecLineLocalData",
      2468832,
      2276,
      2
@@ -44484,7 +44490,7 @@
      2
     ],
     [
-     "func_0025B628",
+     "sefInitLineData",
      2471464,
      1696,
      2
@@ -44502,25 +44508,25 @@
      2
     ],
     [
-     "func_0025BD68",
+     "sefAnalyzeAnim",
      2473320,
      876,
      2
     ],
     [
-     "func_0025C0D8",
+     "sefCreateParticle",
      2474200,
      1392,
      2
     ],
     [
-     "func_0025C648",
+     "sefExecLineGlobalData",
      2475592,
      1136,
      2
     ],
     [
-     "func_0025CAB8",
+     "sefExecLineData",
      2476728,
      1128,
      2
@@ -44556,7 +44562,7 @@
      2
     ],
     [
-     "func_0025D180",
+     "sefExecEffectData",
      2478464,
      1988,
      2
@@ -44640,7 +44646,7 @@
      2
     ],
     [
-     "func_0025E4C8",
+     "sefSpawnRecordChildren",
      2483400,
      308,
      2
@@ -44658,7 +44664,7 @@
      2
     ],
     [
-     "func_0025E678",
+     "sefLoadRequestBuffer",
      2483832,
      948,
      2
@@ -44670,7 +44676,7 @@
      2
     ],
     [
-     "func_0025EBE0",
+     "sefStepEffectRecords",
      2485216,
      1716,
      2
@@ -44700,7 +44706,7 @@
      2
     ],
     [
-     "func_0025F398",
+     "sefRegisterEntry",
      2487192,
      332,
      2
@@ -44712,7 +44718,7 @@
      2
     ],
     [
-     "func_0025F568",
+     "sefRebuildEntryTable",
      2487656,
      372,
      2
@@ -44760,19 +44766,19 @@
      2
     ],
     [
-     "func_0025F958",
+     "sefUpdateEntryTransforms",
      2488664,
      568,
      2
     ],
     [
-     "sefFindRecordById",
+     "sefFindEntryById",
      2489232,
      96,
      2
     ],
     [
-     "func_0025FBF0",
+     "sefGetEntryScale",
      2489328,
      120,
      2
@@ -44820,7 +44826,7 @@
      2
     ],
     [
-     "func_0025FFE8",
+     "sefAcquireHighSlot",
      2490344,
      144,
      2
@@ -44844,7 +44850,7 @@
      2
     ],
     [
-     "func_00260200",
+     "sefResetWorkTablesAll",
      2490880,
      244,
      2
@@ -44856,7 +44862,7 @@
      2
     ],
     [
-     "func_00260300",
+     "sefLoadEffect",
      2491136,
      80,
      2
@@ -44910,7 +44916,7 @@
      2
     ],
     [
-     "func_00260720",
+     "sefDrawEffect",
      2492192,
      140,
      2
@@ -44964,7 +44970,7 @@
      2
     ],
     [
-     "func_00260BD8",
+     "sefCreateDetachedEffect",
      2493400,
      328,
      2
@@ -44976,7 +44982,7 @@
      2
     ],
     [
-     "func_00260D38",
+     "sefResolveEffectAlias",
      2493752,
      108,
      2
@@ -44988,7 +44994,7 @@
      2
     ],
     [
-     "func_00260E20",
+     "sefStartEffectKey",
      2493984,
      200,
      2
@@ -45066,7 +45072,7 @@
      2
     ],
     [
-     "func_002613A0",
+     "sefReleaseUnitRecords",
      2495392,
      264,
      2
@@ -45198,7 +45204,7 @@
      2
     ],
     [
-     "func_00261A38",
+     "sefRandfUpperQuarter",
      2497080,
      80,
      2
@@ -45246,13 +45252,13 @@
      2
     ],
     [
-     "func_00261D50",
+     "sefFindRecordIndex",
      2497872,
      240,
      2
     ],
     [
-     "func_00261E40",
+     "sefCopyRecordSlotVector",
      2498112,
      108,
      2
@@ -45264,7 +45270,7 @@
      2
     ],
     [
-     "func_00261EF0",
+     "sefGetKindSlotVector",
      2498288,
      556,
      2
@@ -45282,13 +45288,13 @@
      2
     ],
     [
-     "func_00262358",
+     "sefGetKindMatrixSecondHalf",
      2499416,
      340,
      2
     ],
     [
-     "func_002624B0",
+     "sefTransformPartPoint",
      2499760,
      200,
      2
@@ -45360,13 +45366,13 @@
      2
     ],
     [
-     "func_002634C0",
+     "sefGetLaneStartPos",
      2503872,
      144,
      2
     ],
     [
-     "func_00263550",
+     "sefGetLaneTargetPos",
      2504016,
      144,
      2
@@ -45378,19 +45384,19 @@
      2
     ],
     [
-     "func_00263640",
+     "sefPlacePart",
      2504256,
      224,
      2
     ],
     [
-     "func_00263720",
+     "sefRefreshEntryRows",
      2504480,
      636,
      2
     ],
     [
-     "func_002639A0",
+     "sefAccumulateEntryInfluence",
      2505120,
      596,
      2
@@ -45528,13 +45534,13 @@
      2
     ],
     [
-     "func_00264848",
+     "sefOwnerPairInUse",
      2508872,
      124,
      2
     ],
     [
-     "func_002648C8",
+     "sefOwnerValueInUse",
      2509000,
      124,
      2
@@ -45552,7 +45558,7 @@
      2
     ],
     [
-     "func_00264A80",
+     "sefNoOwnerFlaggedRecords",
      2509440,
      160,
      2
@@ -45570,7 +45576,7 @@
      2
     ],
     [
-     "func_00264C28",
+     "sefCountMarkedEntries",
      2509864,
      76,
      2
@@ -45594,7 +45600,7 @@
      2
     ],
     [
-     "func_00264EE8",
+     "sefSetGateBlocks",
      2510568,
      608,
      2
@@ -45612,7 +45618,7 @@
      2
     ],
     [
-     "func_002652A8",
+     "sefSetGateDefault",
      2511528,
      84,
      2
@@ -45672,7 +45678,7 @@
      2
     ],
     [
-     "func_002657D8",
+     "sefGetEffectRecordsAfterScan",
      2512856,
      72,
      2
@@ -50328,7 +50334,7 @@
      2
     ],
     [
-     "func_0028D890",
+     "tiMotionAimTarget",
      2676880,
      1212,
      2
@@ -50352,19 +50358,19 @@
      2
     ],
     [
-     "func_002900F8",
+     "tiMotionSolveSkipNodesOld",
      2687224,
      1052,
      2
     ],
     [
-     "func_00290518",
+     "tiMotionSolveSkipNodes",
      2688280,
      1052,
      2
     ],
     [
-     "func_00290938",
+     "tiMotionChainDynamics",
      2689336,
      380,
      2
@@ -50388,31 +50394,31 @@
      2
     ],
     [
-     "func_00291010",
+     "tiMotionSolveLocatorOutOfLine",
      2691088,
      488,
      2
     ],
     [
-     "func_002911F8",
+     "tiMotionSolveJointOutOfLine",
      2691576,
      636,
      2
     ],
     [
-     "func_00291478",
+     "tiMotionSolveFace",
      2692216,
      776,
      2
     ],
     [
-     "func_00291780",
+     "tiMotionSolveDynamicsOutOfLine",
      2692992,
      572,
      2
     ],
     [
-     "func_002919C0",
+     "tiMotionSolveDynamicsOldOutOfLine",
      2693568,
      584,
      2
@@ -50466,7 +50472,7 @@
      2
     ],
     [
-     "func_00291FD0",
+     "tiMRPackageSetPamFrame",
      2695120,
      76,
      2
@@ -50568,7 +50574,7 @@
      2
     ],
     [
-     "func_00292638",
+     "tiMRPackageAdvanceAUnwrapped",
      2696760,
      368,
      2
@@ -50580,7 +50586,7 @@
      2
     ],
     [
-     "func_002928C8",
+     "tiMRPackageAdvanceBUnwrapped",
      2697416,
      280,
      2
@@ -50784,13 +50790,13 @@
      2
     ],
     [
-     "func_00293420",
+     "xacGetKeyPayloadA",
      2700320,
      156,
      2
     ],
     [
-     "func_002934C0",
+     "xacGetKeyPayloadB",
      2700480,
      156,
      2
@@ -50838,7 +50844,7 @@
      2
     ],
     [
-     "func_002945C8",
+     "xacEvalTransDynamicsNoWeight",
      2704840,
      636,
      2
@@ -50862,25 +50868,25 @@
      2
     ],
     [
-     "func_00294AE0",
+     "xacEvalJointCurves9",
      2706144,
      268,
      2
     ],
     [
-     "func_00294BF0",
+     "xacReadWindDirCurves",
      2706416,
      348,
      2
     ],
     [
-     "func_00294D50",
+     "xacReadWindPointCurves",
      2706768,
      348,
      2
     ],
     [
-     "func_00294EB0",
+     "xacReadJointCurves12Padded",
      2707120,
      348,
      2
@@ -50898,7 +50904,7 @@
      2
     ],
     [
-     "func_00295260",
+     "xacBuildCubicSegment",
      2708064,
      392,
      2
@@ -50910,13 +50916,13 @@
      2
     ],
     [
-     "func_00295438",
+     "xacGetKeyPairB",
      2708536,
      76,
      2
     ],
     [
-     "func_00295488",
+     "xacEvalCubicKeys",
      2708616,
      308,
      2
@@ -50928,19 +50934,19 @@
      2
     ],
     [
-     "func_00295610",
+     "xacEvalLinearKeys",
      2709008,
      196,
      2
     ],
     [
-     "func_002956D8",
+     "tiDrawJointSetGifTag",
      2709208,
      168,
      2
     ],
     [
-     "func_00295780",
+     "tiDrawJointScreenPoints",
      2709376,
      152,
      2
@@ -50970,13 +50976,13 @@
      2
     ],
     [
-     "func_00295CF8",
+     "tiDrawJointOrientMesh",
      2710776,
      496,
      2
     ],
     [
-     "func_00295EE8",
+     "tiDrawJointDrawLists",
      2711272,
      1752,
      2
@@ -51042,7 +51048,7 @@
      2
     ],
     [
-     "func_00296CF0",
+     "XrgQuaternionCombine",
      2714864,
      324,
      2
@@ -51078,13 +51084,13 @@
      2
     ],
     [
-     "func_00297580",
+     "XrgQuaternionFromVectors",
      2717056,
      356,
      2
     ],
     [
-     "func_002976E8",
+     "tiDynamicsNodeIntegrate",
      2717416,
      332,
      2
@@ -51096,37 +51102,37 @@
      2
     ],
     [
-     "func_002978C8",
+     "tiDynamicsNodePullToTarget",
      2717896,
      180,
      2
     ],
     [
-     "func_00297980",
+     "tiDynamicsNodeConstrainNormal",
      2718080,
      284,
      2
     ],
     [
-     "func_00297AA0",
+     "tiMatrixNormalizeRows",
      2718368,
      236,
      2
     ],
     [
-     "func_00297B90",
+     "tiDynamicsNodeSolvePalette",
      2718608,
      360,
      2
     ],
     [
-     "func_00297CF8",
+     "tiDynamicsNodeStep",
      2718968,
      164,
      2
     ],
     [
-     "func_00297DA0",
+     "tiDynamicsNodeSolveNext",
      2719136,
      132,
      2
@@ -51138,7 +51144,7 @@
      2
     ],
     [
-     "func_00297F48",
+     "tiWindSolveCellPairs",
      2719560,
      364,
      2
@@ -51360,13 +51366,13 @@
      2
     ],
     [
-     "func_0029A6D0",
+     "tiMRPackageGetNodeMatrix",
      2729680,
      688,
      2
     ],
     [
-     "func_0029A980",
+     "tiMRPackageGetNodePoint",
      2730368,
      340,
      2
@@ -51396,7 +51402,7 @@
      2
     ],
     [
-     "func_0029AEE8",
+     "tiDynamicsCollClampAbovePlane",
      2731752,
      332,
      2
@@ -51438,7 +51444,7 @@
      2
     ],
     [
-     "func_0029B860",
+     "tiDynamicsCollSolveMatrixPair",
      2734176,
      492,
      2
@@ -51504,7 +51510,7 @@
      2
     ],
     [
-     "func_0029C288",
+     "mapHeadingXZ",
      2736776,
      364,
      2
@@ -51516,7 +51522,7 @@
      2
     ],
     [
-     "func_0029C438",
+     "mapStoreEdgePlanes",
      2737208,
      32,
      2
@@ -51564,7 +51570,7 @@
      2
     ],
     [
-     "func_0029C960",
+     "mapPushOutOfKeepOff",
      2738528,
      956,
      2
@@ -51588,31 +51594,31 @@
      2
     ],
     [
-     "func_0029CF78",
+     "mapCrossingBlocked",
      2740088,
      316,
      2
     ],
     [
-     "func_0029D0B8",
+     "mapStepRecord",
      2740408,
      676,
      2
     ],
     [
-     "func_0029D360",
+     "mapMoveAlongWalls",
      2741088,
      1772,
      2
     ],
     [
-     "func_0029DA50",
+     "mapWalkSegment",
      2742864,
      172,
      2
     ],
     [
-     "func_0029DB00",
+     "mapCommitProbeHit",
      2743040,
      256,
      2
@@ -51636,7 +51642,7 @@
      2
     ],
     [
-     "func_0029DEF8",
+     "mapPushOutByRadius",
      2744056,
      1064,
      2
@@ -51666,7 +51672,7 @@
      2
     ],
     [
-     "func_0029E6A0",
+     "mapBuildScanNode",
      2746016,
      1224,
      2
@@ -52134,7 +52140,7 @@
      2
     ],
     [
-     "func_002A1790",
+     "atanf",
      2758544,
      668,
      2
@@ -52182,7 +52188,7 @@
      2
     ],
     [
-     "func_002A1DB0",
+     "sqrt",
      2760112,
      20,
      2
@@ -52194,7 +52200,7 @@
      2
     ],
     [
-     "func_002A1DE0",
+     "asinf",
      2760160,
      20,
      2
@@ -52404,7 +52410,7 @@
      2
     ],
     [
-     "func_002A6D88",
+     "fptodp",
      2780552,
      60,
      2
@@ -52416,13 +52422,13 @@
      2
     ],
     [
-     "func_002A7028",
+     "dpadd",
      2781224,
      88,
      2
     ],
     [
-     "func_002A7080",
+     "dpsub",
      2781312,
      100,
      2
@@ -52464,7 +52470,7 @@
      2
     ],
     [
-     "func_002A76E8",
+     "dptofp",
      2782952,
      84,
      2
@@ -52836,7 +52842,7 @@
      2
     ],
     [
-     "func_002AA7F0",
+     "strcat",
      2795504,
      300,
      2

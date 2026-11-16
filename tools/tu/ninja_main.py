@@ -552,6 +552,13 @@ def main(argv=None):
                 if csec:
                     # one run of a split section: pinned at its original address
                     out.append(f". = 0x{int(p['start'], 16) - S[sec].addr:X}; /* pin: C run {p['piece']} */")
+                elif prev_c and not after_padding:
+                    # A whole C section after another C piece (Xenosaga II data pass, 2026-11-15): the
+                    # original gap between two objects is the next object's alignment, and a C section
+                    # whose first datum is typed with a smaller alignment than the original's would slide
+                    # into it. Pinned like a scaffold piece after a C piece; mapcheck still bounds the gap
+                    # by the alignment of the pinned address and the whole-file comparison decides.
+                    out.append(f". = 0x{int(p['start'], 16) - S[sec].addr:X}; /* pin: C piece {p['piece']} after a C-owned piece */")
                 out.append(f"{piece_sym(n, csec or sec)} = .;")
                 out.append(f"{c_link(n)}({csec or sec});")
                 prev_c = True

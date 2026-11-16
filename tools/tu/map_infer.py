@@ -50,6 +50,9 @@ OUT_OF_SCOPE = -99.0
 OVERLAYS = (('ov01', 'OV01.OVL', 'annotations/overlays/ov01_annotations.csv'),
             ('ov02', 'OV02.OVL', 'annotations/overlays/ov02_annotations.csv'))
 # Checked by map_infer.py generate: no library zone calls game code, except crt0 to main.
+# The game zone ends at 0x29f000, not at func_0029F008: the C of the last game object (tu273) is exactly
+# the 0x960 bytes of its five functions, so the eight zero bytes before 0x29f008 open the Sony library
+# zone (x2-c17 publication, 2026-11-16).
 MAIN_ZONES = (
     dict(start=0x120000, end=0x138298, cls='sce_sdk', stem='sce_sdk_low',
          evidence='crt0 and Sony libraries: sce* and libpad strings, no calls into game code, except crt0 to main'),
@@ -57,13 +60,17 @@ MAIN_ZONES = (
          evidence='KORG EE client: [KORGEVAG] string, RPC stubs over one client block at 0x69e148'),
     dict(start=0x13b7a0, end=0x194638, cls='middleware', stem='cri_sofdec', families={'cri': 1},
          evidence='CRI ADX and Sofdec: mwPly, SFH and ADXRT strings, no calls into game code'),
-    dict(start=0x194638, end=0x29f008, cls='game', stem='game', evidence='from InitializeSystem to the last caller of game code'),
-    dict(start=0x29f008, end=0x2a1578, cls='sce_sdk', stem='sce_sdk_high', evidence='Sony libraries by earlier study; no calls into game code'),
+    dict(start=0x194638, end=0x29f000, cls='game', stem='game', evidence='from InitializeSystem to the last caller of game code'),
+    dict(start=0x29f000, end=0x2a1578, cls='sce_sdk', stem='sce_sdk_high', evidence='Sony libraries by earlier study; no calls into game code'),
     dict(start=0x2a1578, end=0x2b3740, cls='runtime_library', stem='runtime', evidence='C runtime by earlier study; no calls into game code'),
 )
 # Code built without optimization: every function opens a $fp frame, functions are not aligned
 # to 8, and C compiled with -O0 reproduces its bytes (reports/x2-compiler-calibration.md).
 MAIN_O0_ZONES = ((0x1a75a8, 0x1d5440),)
+# Function entries the bytes do not state (no jal, no prologue, no taken address), keyed by image file name.
+# cfeFileLogIndentSet (0x24F130) is reached only by the tail jump of cfeFileTempInit; the published C defines it as
+# its own function (cfeFileControl.c, upstream 7ffbd0d0), so the function table must start one there.
+KNOWN_STARTS = {'SLUS_208.92': {0x24F130}}
 FP_FROM_SP = 0x03a0f02d           # daddu $fp, $sp, $zero
 LOG_ODDS_EDGES = (-3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5)
 
@@ -224,7 +231,7 @@ def follows_function_end(image, va):
 
 def collect_starts(image):
     """Entries the bytes state outright: jal targets, opened frames, taken addresses in data."""
-    starts = {image.text_start}
+    starts = {image.text_start} | KNOWN_STARTS.get(image.path.name, set())
     tables = {}
     for va in range(image.text_start, image.text_end, 4):
         word = image.word(va)
@@ -1376,14 +1383,29 @@ def attribute_data(unit, tus):
             for _, target, kind, _ in refs:
                 if kind == 'gp':
                     gp_owners[target].add(owner[i])
+    defined = {target: owner[unit.index[function]] for target, function, _ in DATA_OWNERS
+               if function in unit.index and unit.index[function] in owner}
+    # One object that several TUs reach through different inner addresses: every referenced address inside
+    # it, and its first byte, belong to the TU that defines it.
+    for low, high, function, _ in DATA_OBJECT_OWNERS:
+        if function in unit.index and unit.index[function] in owner:
+            ordinal = owner[unit.index[function]]
+            defined[low] = ordinal
+            for target in users:
+                if low <= target < high:
+                    defined[target] = ordinal
     for target, who in users.items():
         ordinals = {owner[i] for i in who if i in owner}
+        if target in defined:
+            continue
         if len(ordinals) == 1 and all(i in owner for i in who):
             section = image.section_of(target)
             claims[section][next(iter(ordinals))].append(target)
         elif len(gp_owners.get(target, ())) == 1:
             section = image.section_of(target)
             claims[section][next(iter(gp_owners[target]))].append(target)
+    for target, ordinal in defined.items():
+        claims[image.section_of(target)][ordinal].append(target)
     section_order = {}
     for section, per_tu in claims.items():
         order = sorted(per_tu, key=lambda ordinal: min(per_tu[ordinal]))
@@ -1411,8 +1433,87 @@ def attribute_data(unit, tus):
     return section_order
 
 
+# Data a TU defines although other TUs read it too: (datum, a function of the defining TU, why). The
+# single-user rule of attribute_data cannot see these; compiler evidence can.
+DATA_OWNERS = [
+    (0x0069DB60, 0x002656E8,
+     'sefEffectRecordCount (.sdata, initial value 64) is defined in the file of sefRestoreEffectRecords: the '
+     'function is exact only when its file holds `int sefEffectRecordCount = 64;` (the cc1 gives a small-data '
+     'declaration with a non-zero initializer its type alias set, so the count reload stays independent of '
+     'the pointer and short field stores; with an extern declaration 34/60 words, with the definition 60/60 '
+     'and the other 25 functions of the file unchanged), user 2026-11-15 "si es necesario recuperar los '
+     'datos en C, hazlo". Since the 2026-11-15 merge that file is sef.c (old tu175 joined)'),
+    (0x0069DAD0, 0x00251E30,
+     'D_0069DAD0 (.sdata, int, zero) is read only by func_0025F958 of sef.c, but it sits before the "RESET" '
+     'text of sef_print.c (0x69DAD8) and before the whole .sdata of sv_get_image_item.c (0x69DAE4-0x69DB40), '
+     'whose objects both precede sef.o in link order; .sdata follows link order, so sef.c cannot define it. '
+     'It is given to sef_print.c, the object whose data it adjoins; sef.c reads it as an extern. Without '
+     'this the span of sef.c starts at 0x69DAD0 and its real run 0x69DB48-0x69DBE0 (sefEffectRecordCount, '
+     'D_0069DB8C, ...) falls into the piece of sv_get_image_item.c (2026-11-15)'),
+]
+
+
+# Objects that span addresses the single-user rule gives to several TUs: (first byte, end, a function of the
+# defining TU, why). Xenosaga II has no symbol table, so a code reference to `object.field` or `table[i].field`
+# is a label inside the object, and the single-user rule hands that label to whichever TU reads the field.
+# Found while moving the data of the code-complete TUs to C (2026-11-15/16): a C object must start at its first
+# byte and cannot be split between two objects.
+DATA_OBJECT_OWNERS = [
+    (0x0033FDC0, 0x003C6DC0, 0x001FFC90,
+     'uwamonoRecords: 256 records of 0x870 bytes (0x33FDC0-0x3C6DC0, .data, zero). Every label in it is a field '
+     'offset of record 0 used as an array base with stride 0x870 (0x3400F8 = +0x338 in tu110, uwamonoMoveRecords '
+     '= +0x440, progEffectTable = +0x638 in init_uwamono_sys, +0x4..+0x334 in tu083). It lies between the data of '
+     'tu083 and init_uwamono_sys in link order; given to init_uwamono_sys (include/main/tu051.h: "see '
+     'init_uwamono_sys.c"), whose reset functions clear its columns'),
+    (0x00644F18, 0x00644F48, 0x001A3FA8,
+     'soundCtrl: the 0x30-byte SoundControl of include/main/tu022.h (song number +3, default volumes +6, the two '
+     'slots +0x10 = soundSlots). The labels +0..+3 went to tu021, +4..+0xB to tu071 and +0xC.. to tu022; the '
+     'struct starts 8-aligned at 0x644F18 and the slots array cannot start a section at 0x644F24'),
+    (0x003EC608, 0x003EC668, 0x0022A560,
+     'ptState: the 0x60-byte party state at 0x3EC608 (PartyState of tu110.c, the party module). Its head had '
+     'gone to tu108 (saveDataSetDefaults reads it) and its last 12 bytes (ptSplitMode +0x54 .. +0x5C) to tu081, '
+     'whose own first object is the 8-aligned selectionWindowList at 0x3EC668; the data before it '
+     '(0x3EC458...) is already read only by tu110'),
+    (0x006B4C30, 0x006B4C40, 0x002531C8,
+     'svDrawList (sv_get_image_item.c): DrawList is 16 bytes at 0x6B4C30; func_002594E8 of tu162 writes its word '
+     '+4 through its own label, so the single-user rule had started the .bss of tu162 at 0x6B4C34'),
+    (0x0069D7E0, 0x0069D7E4, 0x0022DEF8,
+     'the .sdata of tu115 starts at 0x69D7E0: its 8-byte arrays (0x69D7F0...) are 8-aligned in the object, so the '
+     'object starts 8-aligned and the int at 0x69D7E0 (yg2PathImageFade, read only by yg2path) is its first datum'),
+    (0x006A5A80, 0x006A5AF8, 0x00228520,
+     'the 120-byte .bss object at 0x6A5A80: tu101 reads its first word, tu108 the rest through 0x6A5A84; one '
+     'object, first of the .bss of tu108 (16-aligned start)'),
+    (0x0068E158, 0x0068E178, 0x001A3248,
+     '"sound\\vsf\\" and "sound\\smf\\" (.rodata 0x68E158, 0x68E168): the initializers of the .sdata pointers '
+     'seBankDirectory / seMidiDirectory of tu021, emitted by that file before its other strings; no code names '
+     'them, so they had stayed in the tail of the piece before (xgl_jpeg)'),
+    (0x0069DF78, 0x0069DF80, 0x001A01D8,
+     '"movie\\" (.sdata 0x69DF78, 7 bytes): the initializer of the pointer moviePathPrefix (0x69DF80) of tu017, '
+     'emitted right before it; it had stayed in the tail of the item before (xglMcWildcardName of tu012)'),
+    (0x002B7BB0, 0x002B7C88, 0x001D74E0,
+     'mapObjectResources: 27 pairs of 8 bytes (0x2B7BB0-0x2B7C88, zero) that tu050 indexes; tya_draw_gauge reads '
+     'words of it through its own labels (0x2B7BBC, 0x2B7BC0), so the single-user rule had cut it after 12 bytes'),
+    (0x0068E1B8, 0x0068E1C8, 0x001A3FA8,
+     'the string at 0x68E1B8 (.rodata): the initializer of the .sdata pointer adxPathPrefix (0x69DF90) of tu022, '
+     'first string of that file; it had been the tail of the .rodata of tu021'),
+]
+
 # Inferred TU starts that are no object edge: (start, why). The TU joins the one before.
+# Joined cuts whose merged TU keeps the LATER TU's ordinal (and with it its id and file name) instead of the first
+# one's: merges published upstream by hand under the later name.
+JOINED_KEEPS_LATER_ORDINAL = {
+    0x0019F360,     # sce_ipu (tu015) into xgl_1_016 (tu016), upstream commit 9cc4558d
+}
+
 JOINED_CUTS = [
+    (0x00292C40,
+     'tiMRPackageSetTableAndEntryA (0x292CA0) is exact only when tiMRPackageSetTableA (0x2920C8, TiMRPackage.c) is an '
+     'already compiled definition of the same file (reorg nothrow: beqz, not beqzl); the merged TiMRPackage.c + old '
+     'tu253 compiles all 31 functions byte-identical at their VAs. The cut had log-odds -2.03 (X1 band precision '
+     '0.23) and splits the SelectEntryA/SelectEntryB twins of the A/B setters. User 2026-11-16'),
+    (0x0019F360,
+     'setD4_CHCR (0x19F300, the former one-function TU sce_ipu) is static in the movie file: upstream commit 9cc4558d '
+     'merged TU sce_ipu into xgl_1_016 (make_gstrans is the first function of the old cut); pulled 2026-11-15'),
     (0x001EAB08,
      'SoundTest (0x1EA2C8) and MemcardTest (0x1EAF88) both print the static menu cursor ">" at '
      '0x69D028, a static char[8] (X1 yajima_test.c menu_cursor), and X1 defines both in yajima_test.c; '
@@ -1450,6 +1551,43 @@ JOINED_CUTS = [
      'before use after the call and fills the triangle beqz at 0x23355C with lui a0); found matching '
      'ysegfRunMenu, 2026-11-13'),
     (0x002320B0, 'ysegf: inside the ysegfRunState..ysegfRunMenu span 0x231F78-0x2334C0 (see 0x232018)'),
+    # sv_get_image_item (old tu157-tu161), 2026-11-13, user order "la fusion antes de integrar": every cut
+    # here was a low-confidence model cut (X1 precision 0.19-0.27). X1 sv_get_image_item.c holds
+    # svLoadImageList, svAdd*, svAnalyzeChunk, svInitImageMapper, svDeleteImageMapper* and SGs* in this
+    # order; the externally called tu157 draw-list helpers (svSortAdd, svDrawList*) are called only from
+    # tu161, svImageListAlloc/Destroy (tu158) only from tu159, and tu160 calls svDeleteImageMapper.
+    (0x00253B18, 'sv_get_image_item: old tu158 joins tu157 (see the block comment)'),
+    (0x00254280, 'sv_get_image_item: old tu159 joins (see 0x253B18)'),
+    (0x00254AA0, 'sv_get_image_item: old tu160 joins (see 0x253B18)'),
+    (0x002551D0, 'sv_get_image_item: old tu161 joins (see 0x253B18)'),
+    # sef (old tu164-tu176), same order: low-confidence model cuts. sefMemZero (old tu169, X1 sef.c:1179)
+    # and sefMemFillWords are called only from tu164; eight tu170 functions (sefGetKindMatrix,
+    # sefResetObjects, ...) whose X1 counterparts (sefGetPoint, static sefGetCirclePos/SpherePos) live in
+    # sef.c, and the tu171-tu173 helpers, are called only from tu164, so the contiguous span is one file.
+    (0x0025FB90, 'sef: old tu165 joins tu164 (see the block comment)'),
+    (0x00260840, 'sef: old tu166 joins (see 0x25FB90)'),
+    (0x00260D38, 'sef: old tu167 joins (see 0x25FB90)'),
+    (0x002612B0, 'sef: old tu168 joins (see 0x25FB90)'),
+    (0x00261890, 'sef: old tu169 joins (see 0x25FB90)'),
+    (0x00261960, 'sef: old tu170 joins (see 0x25FB90)'),
+    (0x00263BF8, 'sef: old tu171 joins (see 0x25FB90)'),
+    # 0x263E68 and 0x2647E0 join again (2026-11-15, after cc1 fsv14). They had been restored as cuts on
+    # 2026-11-13/14 because sefSpawnEffect (0x263E88) and sefApplyRecordMode (0x264C78) match only when their
+    # callees sefStartEffectKeyDefault (0x260EE8) and sefReleaseEffectRecord (0x25DDE0) are not yet-compiled
+    # definitions at the call (reorg: bnez/bnel instead of the same-file form). A block-scope `extern`
+    # prototype in the caller gives the same code inside one file (verified: all 228 functions of the span
+    # byte-identical), and two facts require one file: (1) the .sdata run 0x69DB48-0x69DBE0 interleaves data
+    # used only by the old tu175 code (0x69DB6C, sefCurrentOwner 0x69DBC4) and only by the old tu172 code
+    # (sefFlagWord 0x69DBC0, 0x69DBD0, 0x69DBD8) with data used only by the sef code (0x69DB64-0x69DB74,
+    # sefRandSeed 0x69DBC8, sefNoiseReady 0x69DBCC), which separate objects cannot produce; (2) both
+    # sefRestoreEffectRecords (0x2656E8, old tu175) and func_0025EBE0 / func_0025CAB8 (sef) need the typed
+    # small-data definitions `int sefEffectRecordCount = 64;` / `float D_0069DB8C = 1.0f;` in their own file
+    # (reports/cc1-fsv14-typedkill.md).
+    (0x00263E68, 'sef: old tu172 joins (see the block comment above)'),
+    (0x00264418, 'sef: old tu173 joins (see 0x263E68)'),
+    (0x00264670, 'sef: old tu174 joins (see 0x263E68)'),
+    (0x002647E0, 'sef: old tu175 joins (see 0x263E68)'),
+    (0x00265300, 'sef: old tu176 joins (see 0x263E68)'),
 ]
 
 # Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).
@@ -1462,9 +1600,9 @@ MOVED_CUTS = [
      '-O0 static-copy tail: AddXYZ/SubXYZ 0x1CCA30-0x1CCAA0 are called only by nml_model_set, so tu045 starts '
      'at func_001CCAA0, user 2026-11-08'),
     (0x00249248, 0x0024B0E8,
-     'func_00249518 and func_00249ED0 initialize vectors at 0x68D220-0x68D26F, right after the jump table '
+     'cfeDrawRotationGrid and func_00249ED0 initialize vectors at 0x68D220-0x68D26F, right after the jump table '
      'of cfeCommandEvaluate (0x68D200) in one increasing .rodata run, while the next file starts its '
-     '.rodata (0x68CD10, below) with func_0024B0E8; the functions between use no .rodata, so they stay '
+     '.rodata (0x68CD10, below) with cfeListSetKeyMode; the functions between use no .rodata, so they stay '
      'with cfeEvaluate. Found matching func_00249ED0; a string-free extension of rodata_order_breaks '
      'held on X1 (13/13) but gave false cuts on X2 at file-scope tables (0x68F0D0), user 2026-11-08'),
     (0x0020CE30, 0x0020CE40,
@@ -1569,6 +1707,8 @@ def build_units(mean_functions, model_file, homologs, unit, zones, o0_homologs=N
             head['_indices'] = head['_indices'] + tu['_indices']
             head.setdefault('_merged', []).append(dict(ordinal=tu['ordinal'], start=hex32(unit.vas[tu['_indices'][0]]),
                                                        reason=tu['_merge']))
+            if unit.vas[tu['_indices'][0]] in JOINED_KEEPS_LATER_ORDINAL:
+                head['ordinal'] = tu['ordinal']
             continue
         merged.append(tu)
     return merged, stats
@@ -1580,7 +1720,8 @@ def render_main_tu(unit, tu, names, homologs, model_file):
     zone = tu['_zone']
     first = unit.functions[indices[0]]
     last = unit.functions[indices[-1]]
-    start = max(first['va'], zone['start']) if tu['ordinal'] else zone['start']
+    # A coarse library record covers its whole zone, including bytes before its first function.
+    start = max(first['va'], zone['start']) if tu['ordinal'] and zone['cls'] == 'game' else zone['start']
     next_va = tu.get('_next_start', last['end'])
     end = next_va
     in_game = zone['cls'] == 'game'

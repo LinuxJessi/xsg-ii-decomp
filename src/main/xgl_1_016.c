@@ -313,8 +313,8 @@ int sceIpuSync(int mode, int timeout);
 int sceGsSyncPath(int mode, int timeout);
 int myDmaDirectFromIPU(u32 address, u32 count);
 /* "frame drop\n" and "ipu time out:%d\n" */
-extern const char frameDropMessage[];
-extern const char ipuTimeoutMessage[];
+const char frameDropMessage[16] = "frame drop\n";
+const char ipuTimeoutMessage[24] = "ipu time out:%d\n";
 
 /*
  * Decodes one movie frame: restarts the IPU feed when its DMA has stopped, checks the stream ring,

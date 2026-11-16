@@ -69,9 +69,9 @@ extern int (*battleResultStats)[4];
 extern unsigned char menuPanelFrame[];
 extern unsigned char battleResultScoreDashes[];
 extern unsigned char battleResultSignedDashes[];
-extern unsigned char battleResultTextSetup[];
-extern unsigned char battleResultClearTimeLabel[];
-extern unsigned char battleResultTimeTemplate[];
+extern const unsigned char battleResultTextSetup[];
+extern const unsigned char battleResultClearTimeLabel[];
+extern const unsigned char battleResultTimeTemplate[];
 extern unsigned char battleResultTitle[];
 extern int battleResultState;
 extern int battleResultStateTimer;
@@ -269,7 +269,7 @@ extern struct BattleResultEntry *battleResultEntries;
 /* Pixels between entry rows in the list. */
 #define RESULT_ROW_HEIGHT 0x14
 
-extern unsigned char D_0068B490[];
+extern const unsigned char D_0068B490[];
 extern const char battleResultCountFormat[];
 int dataBoxChk(int category, int id);
 int sprintf(unsigned char *dst, const char *format, int count, void *unit);
@@ -741,3 +741,28 @@ void battleResultScene(void)
         }
     }
 }
+
+const unsigned char D_0068B490[16] = "$han1;$prop1;";
+const unsigned char battleResultTextSetup[64] = "$init;$bg2;$shadow+1,+3,000000;$zoom13;$han1;$prop1;$colc0c0c0;";
+const unsigned char battleResultClearTimeLabel[16] = "ClearTime";
+const unsigned char battleResultTimeTemplate[16] = "/      :      :";
+const char D_0068B500[16] = "EXPLANATION";
+int battleResultState = 0;
+int battleResultStateTimer = 0;
+int battleResultScoreMax = 0;
+int battleResultMemberCount = 0;
+ResultRow *battleResultRows = 0;
+struct BattleResultEntry *battleResultEntries = 0;
+int battleResultEntryCount = 0;
+int (*battleResultStats)[4] = 0;
+int battleResultClearFrames = 0;
+signed char D_0069D91C = 0;
+unsigned char battleResultScoreDashes[8] = "-----";
+unsigned char battleResultSignedDashes[8] = "------";
+const char battleResultCountFormat[8] = "%d%s";
+unsigned char battleResultTitle[8] = "RESULT";
+char D_0069D940[8] = "STATUS";
+unsigned int D_0069D948[2] = { 0 };
+char D_0069D950[8] = "W ETHER";
+char D_0069D958[8] = "SPECIAL";
+char D_0069D960[8] = "DOUBLE";

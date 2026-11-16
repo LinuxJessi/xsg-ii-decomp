@@ -441,9 +441,6 @@ typedef struct XglRenderState {
     u32 render_status;                  /* +0x48 */
     u32 frame_delta;                    /* +0x4c */
     u32 frame_count;                    /* +0x50 */
-    u32 frame_status;                   /* +0x54 */
-    unsigned char scene_disabled;       /* +0x58 */
-    unsigned char unmodeled_59[3];
 } XglRenderState;
 
 extern GsDrawPacket DrawEnv;
@@ -867,7 +864,7 @@ extern u64 D_00645770;
 extern u64 D_00645778;
 extern u64 D_00645780;
 extern u64 D_00645788;
-extern u64 D_00645790;
+extern u64 D_00645790[6];
 extern s16 cameraScreenWidth;
 extern s16 cameraScreenHeight;
 
@@ -875,7 +872,7 @@ void xglRenderDispEnvInit(void) {
     func_00129D40(&DispEnv, sRenderPsm, cameraScreenWidth, cameraScreenHeight, 0, 0);
     DispEnv.flags &= ~2;
     DispEnv.flags &= ~0x40;
-    D_00645790 = D_00645758;
+    D_00645790[0] = D_00645758;
     D_00645768 = D_00645750;
     D_00645770 = D_00645758;
     D_00645778 = 0;
@@ -883,7 +880,7 @@ void xglRenderDispEnvInit(void) {
     D_00645788 = 0;
 }
 
-extern u64 D_00645798;
+extern u64 D_00645798[];
 extern u16 D_00645830;
 void func_0012A0B8(GsDispEnv *env);
 
@@ -1186,7 +1183,7 @@ void xglRenderGlobalFade(void)
 }
 
 void func_001CC4EC(void);
-void func_00260720(void);
+void sefDrawEffect(void);
 void pxyFlush(void);
 void pxyResetState(void);
 void gifStateUpdateDrawHook(void);
@@ -1210,7 +1207,7 @@ void xglRenderMove(void)
 
     func_001CC4EC();
     if (D_006458A4 == 0) {
-        func_00260720();
+        sefDrawEffect();
     }
     if (D_006458A4 == 0) {
         pxyFlush();
@@ -1264,3 +1261,27 @@ void xglRenderFrame(void) {
     soundApplySettings();
     xglPadRead();
 }
+
+/* xgl_render's .data, 0x645580-0x645874, in address order. */
+XglRenderReso asDispReso[RENDER_COUNT_RESO] = {
+    { 0x31, 0x0, 640, 448 },
+    { 0x31, 0x0, 512, 448 },
+    { 0x31, 0x0, 448, 448 },
+    { 0x31, 0x0, 384, 448 },
+    { 0x31, 0x0, 320, 448 },
+    { 0x31, 0x0, 256, 448 }
+};
+XglRenderVram asVramBase[RENDER_COUNT_RESO] = {
+    { 0x0, { 0x8C, 0x118, 0x1A4 }, 0x8C, 0x118, 0x1A4, { 0x230, 0x2BC, 0x1A4, 0x1C4, 0x1E4 } },
+    { 0x0, { 0x70, 0xE0, 0x150 }, 0x70, 0xE0, 0x150, { 0x1C0, 0x230, 0x1C0, 0x1E0, 0x200 } },
+    { 0x0, { 0x62, 0xC4, 0x126 }, 0x62, 0xC4, 0x126, { 0x188, 0x1EA, 0x188, 0x1A8, 0x1C8 } },
+    { 0x0, { 0x54, 0xA8, 0xFC }, 0x54, 0xA8, 0xFC, { 0x150, 0x1A4, 0x1A4, 0x1C4, 0x1E4 } },
+    { 0x0, { 0x46, 0x8C, 0xD2 }, 0x46, 0x8C, 0xD2, { 0x118, 0x15E, 0x1A4, 0x1C4, 0x1E4 } },
+    { 0x0, { 0x38, 0x70, 0xA8 }, 0x38, 0x70, 0xA8, { 0xE0, 0x118, 0x150, 0x170, 0x190 } }
+};
+GsDrawPacket DrawEnv = { 0 };
+GsDispEnv DispEnv = { 0 };
+/* Six doublewords after DispEnv (0x645790-0x6457C0); D_00645798 is the second. */
+u64 D_00645790[6] = { 0 };
+GsClearPacket ClearEnv = { 0 };
+XglRenderState sRender = { 0 };

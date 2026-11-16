@@ -1,15 +1,10 @@
 #include "common.h"
 #include "main/get.h"
 
-/* Script native "atan": two centi-unit arguments, atan2f of them scaled by the float at D_0069B00C. */
+/* Script native "atan": two centi-unit arguments, atan2f of them scaled by 10000. */
 extern float sinf(float angle);
 extern float cosf(float angle);
 extern float atan2f(float y, float x);
-extern float D_0069B00C;
-extern float D_0069B010;
-extern float D_0069B014;
-extern float D_0069B018;
-extern float D_0069B01C;
 int func_A9F0A8(void);
 void func_A9CC70(int context, int value);
 int func_A9F0C0(int context, int value);
@@ -27,10 +22,10 @@ int mathAtan(int context)
     centiScale = 100.0f;
     y = (float)func_A9F0C0(context, 1) / centiScale;
     x = func_A9F0C0(context, 2);
-    return (int)(atan2f(y, (float)x / centiScale) * D_0069B00C);
+    return (int)(atan2f(y, (float)x / centiScale) * 10000.0f);
 }
 
-/* Script native "math.sin": one argument in centi-degrees; returns sin(angle) * D_0069B014 (10000). */
+/* Script native "math.sin": one argument in centi-degrees; returns sin(angle) * 10000 (float literal). */
 int math_001FC398(int context)
 {
     int angle_centideg;
@@ -40,10 +35,10 @@ int math_001FC398(int context)
         return 0;
     }
     angle_centideg = func_A9F0C0(context, 1);
-    return (int)(sinf((((float)angle_centideg / 100.0f) / 180.0f) * D_0069B010) * D_0069B014);
+    return (int)(sinf((((float)angle_centideg / 100.0f) / 180.0f) * 3.14159274f) * 10000.0f);
 }
 
-/* Script native "math.cos": one argument in centi-degrees; returns cos(angle) * D_0069B01C (10000). */
+/* Script native "math.cos": one argument in centi-degrees; returns cos(angle) * 10000 (float literal). */
 int math_001FC438(int context)
 {
     int angle_centideg;
@@ -53,7 +48,7 @@ int math_001FC438(int context)
         return 0;
     }
     angle_centideg = func_A9F0C0(context, 1);
-    return (int)(cosf((((float)angle_centideg / 100.0f) / 180.0f) * D_0069B018) * D_0069B01C);
+    return (int)(cosf((((float)angle_centideg / 100.0f) / 180.0f) * 3.14159274f) * 10000.0f);
 }
 
 /* Script native "math.random": two arguments, min and max, passed to Get_Rnd. */

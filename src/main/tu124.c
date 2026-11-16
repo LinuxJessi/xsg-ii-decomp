@@ -68,7 +68,7 @@ typedef struct ChoiceMenuRecord {
     unsigned int style_value;
 } ChoiceMenuRecord;
 
-extern ChoiceMenuRecord choiceMenuSlots[];
+static ChoiceMenuRecord choiceMenuSlots[CHOICE_MENU_SLOTS];
 
 /* Clears both choice menu slots: the layout words, the lists, the flags and the unmodeled words, the track, and the
  * cursor (capacity 0, unit size 1, mode 0); phase and kind are cleared last. */
@@ -94,11 +94,11 @@ void choiceMenuResetAll(void)
     }
 }
 
-extern int textStyleTable[];
+extern int textStyleTable;
 int choiceMenuIsOpen(int index);
 
 /* Opens choice menu slot index: the layout words x, y, width and height, the flags word (bit 0 set, bit 1 clear),
- * style_index with its style word textStyleTable[style_index] (0 for style 0), and the item, value and item flag
+ * style_index with its style word (&textStyleTable)[style_index] (0 for style 0), and the item, value and item flag
  * lists. The cursor is initialised with unit_size, capacity = the item count and offset 0; the slot starts in kind 2
  * (opening). Returns 1 when the slot was opened, 0 when index is not 0 or 1 or the slot is already open. */
 int choiceMenuOpen(unsigned int index, int x, int y, int width, int height, int style_index, unsigned char unit_size,
@@ -120,7 +120,7 @@ int choiceMenuOpen(unsigned int index, int x, int y, int width, int height, int 
         choiceMenuSlots[index].itemFlags = itemFlags;
         choiceMenuSlots[index].flags = (flags & ~CHOICE_FLAG_NO_RESULT) | CHOICE_FLAG_ACTIVE;
         if (style_index) {
-            choiceMenuSlots[index].style_value = textStyleTable[style_index];
+            choiceMenuSlots[index].style_value = (&textStyleTable)[style_index];
         } else {
             choiceMenuSlots[index].style_value = 0;
         }
@@ -185,7 +185,7 @@ int choiceMenuOpenFromRequest(unsigned int index, ChoiceMenuRequest *request)
     choiceMenuSlots[index].values = request->values;
     choiceMenuSlots[index].itemFlags = request->itemFlags;
     if (request->style_index != 0) {
-        choiceMenuSlots[index].style_value = textStyleTable[request->style_index];
+        choiceMenuSlots[index].style_value = (&textStyleTable)[request->style_index];
     } else {
         choiceMenuSlots[index].style_value = 0;
     }
@@ -415,7 +415,7 @@ typedef struct TextEntry {
     unsigned char unmodeled_22[2];
 } TextEntry;
 
-extern TextEntry textEntryPool[];
+static TextEntry textEntryPool[TEXT_ENTRY_POOL_SIZE];
 
 /* Clears all four entries of the text entry pool. */
 void textEntryPoolReset(void)
@@ -437,7 +437,7 @@ void textEntryPoolReset(void)
 }
 
 /* Allocates a text entry: the first free entry (state 0), else the first removed one (state 3). It stores x, y,
- * width, height, pages, style_index and the style word textStyleTable[style_index] (0 for
+ * width, height, pages, style_index and the style word (&textStyleTable)[style_index] (0 for
  * style 0), starts the entry in state 2 and returns it; returns 0 when no entry is free or removed. */
 TextEntry *textEntryAlloc(int x, int y, int width, int height, signed char style_index, unsigned char **pages)
 {
@@ -466,7 +466,7 @@ TextEntry *textEntryAlloc(int x, int y, int width, int height, signed char style
         entry->pages = pages;
         entry->style_index = style_index;
         if (style_index != 0) {
-            entry->word_1c.style_value = textStyleTable[style_index];
+            entry->word_1c.style_value = (&textStyleTable)[style_index];
         } else {
             entry->word_1c.style_value = 0;
         }
@@ -512,3 +512,21 @@ u8 textEntryPlayVoice(TextEntry *entry)
     }
     return entry->atLastPage;
 }
+
+extern char D_0069D940[];
+extern char D_0069D950[];
+extern char D_0069D958[];
+extern char D_0069D960[];
+extern char D_0069D968[];
+extern char D_0069D970[];
+extern unsigned int D_0069D948[];
+extern const char D_0068B500[];
+int textStyleTable = 0x00000000;
+int textStyleTable_1 = (int) D_0069D970;
+int textStyleTable_2 = (int) D_0069D968;
+int textStyleTable_3 = (int) D_0069D960;
+int textStyleTable_4 = (int) D_0069D958;
+int textStyleTable_5 = (int) D_0069D950;
+int textStyleTable_6 = (int) D_0069D948;
+int textStyleTable_7 = (int) D_0069D940;
+int textStyleTable_8 = (int) D_0068B500;

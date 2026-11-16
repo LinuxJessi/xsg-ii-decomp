@@ -2,7 +2,7 @@
 #include "shared.h"
 #include "main/gifState.h"
 #include "main/sdv_183.h"
-#include "main/sef_169.h"
+#include "main/sef.h"
 #include "main/tu051.h"
 #include "vu0_macro.h"
 
@@ -138,23 +138,23 @@ typedef struct SdvCameraParam {
     unsigned char unmodeled_28[0x30 - 0x28];
 } SdvCameraParam;
 
-/* The object scale record func_00257500 fills: scale at +0x50, used when +0x54 is set. */
-typedef struct SdvObjectScale {
-    unsigned char unmodeled_00[0x50];
-    float scale;        /* +0x50 */
-    short scaleSet;     /* +0x54 */
-} SdvObjectScale;
+/* sefGlobalTransform as sef.c spells it: sefInitPartTransform fills it; scale is used when scaled is set. */
+typedef struct SefGlobalTransform {
+    Matrix4 matrix;                                  /* +0x000 */
+    Vector4 position;                                /* +0x040 */
+    float scale;                                     /* +0x050 */
+    short scaled;                                    /* +0x054 */
+} SefGlobalTransform;
 
-#include "main/tu168.h"
 
-/* Returns its second argument. That parameter is int: declared short (as sv_get_image_item_161.c
-   does), a sll/sra pair extends kind before the call. */
-int func_00257500(int, int, int, int, int);
+/* Returns its second argument. kind is int: declared short, a sll/sra pair extends it before the call. */
+struct SefPartTransform;
+int sefInitPartTransform(struct SefPartTransform *part, int kind, int scaleKey40, int scaleKey80, int scaleKey100);
 void vu0SetCurrentRotationY(f32 value);
 void vu0RotateCurrentX(f32 value);
 void sefGetKindVector(Vector4 *destination, int object, int count, int kind);
 void sefGetPosition(Vector4 *destination, Vector4 *offset, int kind);
-extern SdvObjectScale D_0046E0C0;
+extern SefGlobalTransform sefGlobalTransform;
 
 /* Camera kinds: the part (low bits, from 1) of one of the three request objects; the bare
    kind takes part 1 and a height correction from the object's kind vector. */
@@ -178,9 +178,9 @@ void sdvSetCameraParam(SdvCameraParam *camera, int kind, short *angles, int scal
     scale = 1.0f;
     memset(camera, 0, sizeof(*camera));
     if (scaled != 0) {
-        func_00257500((int)&D_0046E0C0, kind, objects[0], objects[2], objects[1]);
-        if (D_0046E0C0.scaleSet != 0) {
-            scale = D_0046E0C0.scale;
+        sefInitPartTransform((struct SefPartTransform *)&sefGlobalTransform, kind, objects[0], objects[2], objects[1]);
+        if (sefGlobalTransform.scaled != 0) {
+            scale = sefGlobalTransform.scale;
         }
     }
     mode &= 0xF;
@@ -808,7 +808,6 @@ int sdvTransOffset(int *screen, int *offset, int part, int depth, float *scale, 
 void nmlModelUseSubWindow(unsigned int index, int enabled);
 void *MMathNormalizeVector2(void *destination, const void *source);
 void sefApplyPartTransform(float *destination, float *source, int part);
-void nmlModelSetMulColor(float *color);
 
 #define SDV_SET_COLOR(rgba, source) \
     ((rgba).channel.red = (source)->color[0], \
@@ -820,6 +819,7 @@ void nmlModelSetMulColor(float *color);
 typedef union SdvScale {
     float f[4];
     unsigned int word[4];
+    Vector4 vector;
 } SdvScale;
 
 /* Normalizes a vector in place. */
@@ -1099,7 +1099,7 @@ void sdvDrawSpecial(SdvSpecialOwner *special)
                 scale.f[3] = 1.0f;
                 sdvNormalize(scale.f);
                 sefApplyPartTransform(vector, vector, record->table->part);
-                nmlModelSetMulColor(vector);
+                nmlModelSetMulColor(&scale.vector);
             }
             break;
         }
@@ -1108,7 +1108,7 @@ void sdvDrawSpecial(SdvSpecialOwner *special)
 }
 
 /* The seven words of an sef request: sdvExecAlter copies them into the sef request buffer and hands them to
-   func_0025E678. */
+   sefLoadRequestBuffer. */
 typedef struct SdvSefRequest {
     struct SefActor *actor;             /* +0x00 the SefActor of sef_164.c */
     int params[6];                      /* +0x04 */
@@ -1242,7 +1242,7 @@ INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026A7A0);
  */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecAlter);
 
-extern void func_0012B9A0(XglPacket *packet, u32 tag);
+extern void sceVif1PkAddCode(XglPacket *packet, u32 tag);
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
 
@@ -1252,8 +1252,8 @@ void sdvPacketFlushMscnt(void)
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
-    func_0012B9A0(packet, 0x17000000);
+    sceVif1PkAddCode(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x17000000);
 }
 
 /* A 128-bit quadword (one lq/sq), as the VIF1 packet writers take it. */
@@ -1341,7 +1341,7 @@ void sdvExecAlters(void)
     }
 }
 
-void func_00258970(void);
+void svLoadDrawViewMatrix(void);
 void svBuildDrawStatePacket(void);
 void sdvDrawAlter(SdvAlter *alter);
 
@@ -1355,7 +1355,7 @@ void sdvDrawAlters(int layer)
         if (sdvAlterTable[i].active != 0 && sdvAlterTable[i].request.layer == layer) {
             if (!stateBuilt) {
                 stateBuilt = 1;
-                func_00258970();
+                svLoadDrawViewMatrix();
                 svBuildDrawStatePacket();
             }
             sdvDrawAlter(&sdvAlterTable[i]);
@@ -1373,7 +1373,7 @@ void sdvDrawOwnerAlters(int owner)
         if (sdvAlterTable[i].active != 0 && sdvAlterTable[i].request.owner == owner) {
             if (!stateBuilt) {
                 stateBuilt = 1;
-                func_00258970();
+                svLoadDrawViewMatrix();
                 svBuildDrawStatePacket();
             }
             sdvDrawAlter(&sdvAlterTable[i]);

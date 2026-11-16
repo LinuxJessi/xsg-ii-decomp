@@ -4,6 +4,12 @@
 #include "main/TiXacAnimCurve.h"
 #include "main/tu026.h"
 
+/* Scale floor of tiGlobalCollClampScale and the share of the scale it takes from the accumulator. */
+#define TI_GLOBAL_COLL_MIN_SCALE 0.03f
+#define TI_GLOBAL_COLL_SCALE_LOSS_FRACTION 0.2f
+/* Level from which tiGlobalCollEvalSubobject takes the second sub-object routine. */
+#define TI_GLOBAL_COLL_LEVEL_LIMIT 1.5f
+
 /* Offsets used by the functions of this unit; gaps are not modeled. */
 typedef struct TiGlobalCollObject {
     unsigned char unmodeled_00[0x04];
@@ -20,12 +26,11 @@ void tiGlobalCollClampScale(TiGlobalCollObject *obj) {
     f32 previousScale;
 
     previousScale = obj->scale;
-    if (previousScale < 0.03f) {
-        obj->scale = 0.03f;
-        obj->accumulated -= previousScale * 0.2f;
+    if (previousScale < TI_GLOBAL_COLL_MIN_SCALE) {
+        obj->scale = TI_GLOBAL_COLL_MIN_SCALE;
+        obj->accumulated -= previousScale * TI_GLOBAL_COLL_SCALE_LOSS_FRACTION;
     }
 }
-
 
 void tiGlobalCollClearHandle(void) {
     tiGlobalCollSetHandle(0);
@@ -43,28 +48,201 @@ int tiGlobalCollGetHandle(void) {
     return tiGlobalCollHandle;
 }
 
-/* Pushes the body (context: 0x10 position, 0x20 velocity) out of each sphere of
- * the handle's list (count +0x30, entries of 0x20 at +0x3c: radius +0x0, centre +0x10).
- * pNode is not read by the body. */
-INCLUDE_ASM("asm/main/nonmatchings/TiGlobalColl", tiGlobalCollPushOutSpheres);
+/* Collision set named by the handle: three entry counts (+0x30, +0x34, +0x38), then
+ * the offsets from the set to their entry arrays (+0x3c, +0x40, +0x44). */
+typedef struct {
+    unsigned char unmodeled_00[0x30];
+    u32 sphereCount;            /* +0x30 */
+    u32 planeCount;             /* +0x34 */
+    u32 cylinderCount;          /* +0x38 */
+    int sphereEntriesOffset;    /* +0x3c */
+    int planeEntriesOffset;     /* +0x40 */
+    int cylinderEntriesOffset;  /* +0x44 */
+} TiGlobalCollSet;
 
-/* Clamps the body above each plane of the handle's list (count +0x34, entries of
- * 0x80 at +0x40, matrix +0x40). */
-INCLUDE_ASM("asm/main/nonmatchings/TiGlobalColl", tiGlobalCollClampAbovePlanes);
+/* 0x20-byte sphere entry: the radius is at +0x0 and the centre at +0x10. */
+typedef struct {
+    float radius;               /* +0x00 */
+    unsigned char unmodeled_04[12];
+    Vector4 centre;             /* +0x10 */
+} TiGlobalCollSphere;
 
-/* Pushes the body out of each cylinder of the handle's list (count +0x38, entries of
- * 0x90 at +0x44: radius +0x0, half height +0x4, matrices +0x10 and +0x50). */
-INCLUDE_ASM("asm/main/nonmatchings/TiGlobalColl", tiGlobalCollPushOutCylinders);
+/* One body vector, kept as a union so that stores through it carry alias set 0. */
+typedef union TiGlobalCollVector {
+    Vector4 vector;
+} TiGlobalCollVector;
+
+/* Body context: the position is at +0x10 and the velocity at +0x20 (their w is not read). */
+typedef struct {
+    unsigned char unmodeled_00[0x10];
+    Vector4 position;           /* +0x10 */
+    Vector4 velocity;           /* +0x20 */
+} TiGlobalCollBody;
+
+/* The same body as tiGlobalCollPushOutSpheres sees it: its vectors are written through a
+ * union member, so those stores carry alias set 0 and kill the loads of the set's counts. */
+typedef struct {
+    unsigned char unmodeled_00[0x10];
+    TiGlobalCollVector position;  /* +0x10 */
+    TiGlobalCollVector velocity;  /* +0x20 */
+} TiGlobalCollSphereBody;
+
+/* Pushes the body out of each sphere of the handle's list. Inside a sphere the body
+ * is moved to the surface along the unit direction from the centre, and its velocity
+ * gains the push scaled by the penetration depth. */
+void tiGlobalCollPushOutSpheres(TiGlobalCollSet *set, void *pNode, void *context) {
+    TiGlobalCollSphere *sphere;
+    TiGlobalCollSphereBody *body;
+    Vector4 offset;
+    float lengthSquared;
+    float depth;
+    float distance;
+    u32 sphereIndex;
+
+    body = context;
+    sphere = (TiGlobalCollSphere *) ((unsigned char *) set + set->sphereEntriesOffset);
+    sphereIndex = 0;
+    if (set->sphereCount != 0) {
+        do {
+            offset.x = body->position.vector.x - sphere->centre.x;
+            offset.y = body->position.vector.y - sphere->centre.y;
+            offset.z = body->position.vector.z - sphere->centre.z;
+            if (__builtin_fabsf(offset.x) < sphere->radius) {
+                if (__builtin_fabsf(offset.y) < sphere->radius) {
+                    if (__builtin_fabsf(offset.z) < sphere->radius) {
+                        lengthSquared = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
+                        distance = __builtin_sqrtf(lengthSquared);
+                        if (distance == 0.0f) {
+                            distance = 0.000001f;
+                        }
+                        if (distance < sphere->radius) {
+                            depth = sphere->radius - distance;
+                            distance = 1.0f / distance;
+                            offset.x = offset.x * distance;
+                            offset.y = offset.y * distance;
+                            offset.z = offset.z * distance;
+                            body->velocity.vector.x = body->velocity.vector.x + offset.x * sphere->radius * depth;
+                            body->velocity.vector.y = body->velocity.vector.y + offset.y * sphere->radius * depth;
+                            body->velocity.vector.z = body->velocity.vector.z + offset.z * sphere->radius * depth;
+                            body->position.vector.x = offset.x * sphere->radius + sphere->centre.x;
+                            body->position.vector.y = offset.y * sphere->radius + sphere->centre.y;
+                            body->position.vector.z = offset.z * sphere->radius + sphere->centre.z;
+                        }
+                    }
+                }
+            }
+            sphere++;
+            sphereIndex++;
+        } while (sphereIndex < set->sphereCount);
+    }
+}
+
+/* 0x80-byte plane entry: toWorld maps a clamped point back out of the plane space,
+ * toLocal takes the position into it. */
+typedef struct {
+    Matrix4 toWorld;            /* +0x00 */
+    Matrix4 toLocal;            /* +0x40 */
+} TiGlobalCollPlane;
+
+void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
+
+/* Clamps the body above each plane of the handle's set: the position is taken into
+ * the plane space with toLocal, and a point below the plane (local y < 0) is moved
+ * onto it and mapped back with toWorld. */
+void tiGlobalCollClampAbovePlanes(int handle, void *pNode, void *context) {
+    TiGlobalCollSet *set;
+    TiGlobalCollPlane *plane;
+    TiGlobalCollBody *body;
+    Vector4 localPoint;
+    u32 planeIndex;
+
+    body = context;
+    set = (TiGlobalCollSet *) handle;
+    plane = (TiGlobalCollPlane *) ((unsigned char *) set + set->planeEntriesOffset);
+    planeIndex = 0;
+    if (set->planeCount != 0) {
+        do {
+            localPoint.x = body->position.x;
+            localPoint.y = body->position.y;
+            localPoint.z = body->position.z;
+            localPoint.w = 1.0f;
+            xglVectorMulMat(&localPoint, plane->toLocal, &localPoint);
+            if (localPoint.y < 0.0f) {
+                localPoint.y = 0.0f;
+                if (localPoint.x == 0.0f && localPoint.z == 0.0f) {
+                    localPoint.x = 0.0001f;
+                }
+                xglVectorMulMat(&localPoint, plane->toWorld, &localPoint);
+                body->position.x = localPoint.x;
+                body->position.y = localPoint.y;
+                body->position.z = localPoint.z;
+            }
+            plane++;
+            planeIndex++;
+        } while (planeIndex < set->planeCount);
+    }
+}
+
+/* 0x90-byte cylinder entry: toWorld (+0x10) maps the pushed point back, toLocal (+0x50)
+ * takes the position into the cylinder space. */
+typedef struct {
+    float radius;               /* +0x00 */
+    float halfHeight;           /* +0x04 */
+    unsigned char unmodeled_08[8];
+    Matrix4 toWorld;            /* +0x10 */
+    Matrix4 toLocal;            /* +0x50 */
+} TiGlobalCollCylinder;
+
+/* Pushes the body out of each cylinder of the handle's set: the position is taken into
+ * the cylinder space with toLocal; inside the radius and half height, its horizontal
+ * distance is pulled back to the radius and the point is mapped back with toWorld. */
+void tiGlobalCollPushOutCylinders(int handle, void *pNode, void *context) {
+    TiGlobalCollSet *set;
+    TiGlobalCollCylinder *cylinder;
+    TiGlobalCollBody *body;
+    Vector4 localPoint;
+    float radialDistance;
+    u32 cylinderIndex;
+
+    body = context;
+    set = (TiGlobalCollSet *) handle;
+    cylinder = (TiGlobalCollCylinder *) ((unsigned char *) set + set->cylinderEntriesOffset);
+    cylinderIndex = 0;
+    if (set->cylinderCount != 0) {
+        do {
+            localPoint.x = body->position.x;
+            localPoint.y = body->position.y;
+            localPoint.z = body->position.z;
+            localPoint.w = 1.0f;
+            xglVectorMulMat(&localPoint, cylinder->toLocal, &localPoint);
+            if (__builtin_fabsf(localPoint.y) < cylinder->halfHeight) {
+                radialDistance = localPoint.x;
+                radialDistance = radialDistance * localPoint.x;
+                radialDistance = radialDistance + localPoint.z * localPoint.z;
+                radialDistance = __builtin_sqrtf(radialDistance);
+                if (radialDistance < cylinder->radius) {
+                    if (radialDistance == 0.0f) {
+                        radialDistance = 0.0000001f;
+                    }
+                    radialDistance = 1.0f / radialDistance;
+                    localPoint.x = localPoint.x * radialDistance * cylinder->radius;
+                    localPoint.z = localPoint.z * radialDistance * cylinder->radius;
+                    xglVectorMulMat(&localPoint, cylinder->toWorld, &localPoint);
+                    body->position.x = localPoint.x;
+                    body->position.y = localPoint.y;
+                    body->position.z = localPoint.z;
+                }
+            }
+            cylinder++;
+            cylinderIndex++;
+        } while (cylinderIndex < set->cylinderCount);
+    }
+}
 
 /* assert expression "pNode" */
 extern char tiGlobalCollAssertExpr[];
 /* assert file "../TiGlobalColl.euc.c" */
 extern char tiGlobalCollSourceFile[];
-int tiGlobalCollGetHandle(void);
-void tiGlobalCollPushOutSpheres(int handle, void *pNode, void *context);
-void tiGlobalCollClampAbovePlanes(int handle, void *pNode, void *context);
-void tiGlobalCollPushOutCylinders(int handle, void *pNode, void *context);
-
 /* Solves one body (context, a pointer in the asm) against
  * the shapes of the current handle: spheres, planes, then cylinders. */
 void tiGlobalCollSolveBody(void *pNode, void *context) {
@@ -75,22 +253,20 @@ void tiGlobalCollSolveBody(void *pNode, void *context) {
         assertFailed(tiGlobalCollAssertExpr, tiGlobalCollSourceFile, 138);
     }
     if (handle != 0) {
-        tiGlobalCollPushOutSpheres(handle, pNode, context);
+        tiGlobalCollPushOutSpheres((TiGlobalCollSet *) handle, pNode, context);
         tiGlobalCollClampAbovePlanes(handle, pNode, context);
         tiGlobalCollPushOutCylinders(handle, pNode, context);
     }
 }
 
-void func_00294EB0(int handle, void **subobjectPtr, f32 amount);
-
 /* Chooses the sub-object routine by obj->level: below 1.5f or not. */
-void tiGlobalCollEvalSubobject(int handle, TiGlobalCollObject *obj, f32 amount) {
-    void *subobjectPtr;
+void tiGlobalCollEvalSubobject(f32 *values, TiGlobalCollObject *obj, f32 amount) {
+    u8 *subobjectPtr;
 
     subobjectPtr = &obj->subobject;
-    if (obj->level < 1.5f) {
-        func_00294EB0(handle, &subobjectPtr, amount);
+    if (obj->level < TI_GLOBAL_COLL_LEVEL_LIMIT) {
+        xacReadJointCurves12Padded(values, &subobjectPtr, amount);
         return;
     }
-    xacReadJointCurves15(handle, &subobjectPtr, amount);
+    xacReadJointCurves15(values, &subobjectPtr, amount);
 }

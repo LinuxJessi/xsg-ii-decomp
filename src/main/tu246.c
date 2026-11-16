@@ -1,12 +1,12 @@
 #include "common.h"
 #include "main/xgl_font.h"
 
+static int xglFontWidthSum;
+static unsigned char **xglFontWidthValues;
+static int xglFontWidthIndex;
 extern int xglFontWidthBase;
 extern int xglFontWidthReady;
-extern int xglFontWidthSum;
-extern int xglFontWidthIndex;
-extern unsigned char **xglFontWidthValues;
-extern unsigned char D_0068D590[];
+extern const unsigned char D_0068D590[];
 extern unsigned char xglFontWidthFormat[];
 extern unsigned char xglFontPropTag[];
 extern unsigned char xglFontWidthPlaceholder[];
@@ -78,3 +78,17 @@ int xglFontWidthGetSum(void)
 {
     return xglFontWidthSum;
 }
+
+const unsigned char D_0068D590[40] = "\013\031\002\r\002$xx0,30;$rubyz23,21;$rubyy-2;";
+
+int xglFontWidthBase = 0;
+
+int xglFontWidthReady = 0;
+
+unsigned char xglFontWidthFormat[8] = "%s%s%s";
+
+unsigned char xglFontPropTag[8] = "$prop1;";
+
+unsigned char xglFontWidthPlaceholder[8] = "%s";
+
+unsigned char xglFontWidthValueFormat[4] = "%d";

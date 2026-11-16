@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu192.h"
 
 /* Dot product of the xyz lanes, returned in $f0. The asm's float output stays in a register; it is
  * bound to the x field of a Vector4 local only so the function keeps the original's 16-byte frame,

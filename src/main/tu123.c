@@ -10,7 +10,7 @@
 #define TEXT_WINDOW_FRAME_WIDTH 24
 
 /* Scratch string the width routine measures: 0x19 0x03 (the font escape), the character, then the terminator. */
-extern char xglFontScratchString[5];
+static char xglFontScratchString[8];
 /* Scale of the markup width, 16 is 1.0; set by the $zoom and $init codes. */
 extern int xglFontZoom;
 

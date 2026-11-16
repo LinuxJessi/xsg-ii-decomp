@@ -23,7 +23,7 @@ void uwamonoGetSectorEnds(Vector4 *source, UwamonoSector *sector) {
     func_00202E60(source, &rightEnd, 3);
 }
 
-extern const char D_00689F00[];
+const char D_00689F00[32] = "\265\367\316\245\272\271 = %8f, %8f";
 int Check_CrossingOver(const Vector4 *first_start, const Vector4 *first_end,
                        const Vector4 *second_start, const Vector4 *second_end);
 void Get_MiddlePoint(const float *start, const float *following,
@@ -237,3 +237,7 @@ void vibrationStepFade(void) {
         PadData[VIBRATION_VALUE_BYTE] = gameWork.currentValue + fadeStep;
     }
 }
+
+/* The word stored by func_00208B50 and the rest of the 860-byte block that follows it; only
+ * index 0 is used by this TU, the other words are zero in the original. Element type is a guess. */
+int D_002B60C4[215] = { 0 };

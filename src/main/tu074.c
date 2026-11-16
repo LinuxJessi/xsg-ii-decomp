@@ -97,7 +97,7 @@ int disableDrawFlags(int source)
     return 1;
 }
 
-extern unsigned char D_003E6F58[];
+extern void *D_003E6F58[];
 extern unsigned char D_0069D308[];
 void func_A9CDB0(void *, void *);
 
@@ -693,3 +693,329 @@ int setCollisionScale(int source)
     }
     return 1;
 }
+
+/* Native names of the uwamono module's natives, in address order (read by uwamonoRegisterNatives). */
+
+
+/* Native table of the enepc module: name string address, function pointer pairs (last pair null). */
+void AngleMode();
+void CamLock();
+void GetCamAng();
+void GetCamPos();
+void GetRefAng();
+void HandShake();
+void MoveBank();
+void MoveBankStop();
+void MoveCamMode();
+void MoveCamStop();
+void MovePers();
+void MovePersStop();
+void MoveRefStop();
+void OffsCamAng();
+void OffsCamPos();
+void RefLock();
+void Resigne();
+void SetCamAct();
+void SetCamAct2();
+void SetCamAct2R();
+void SetCamAct3();
+void SetCamActR();
+void SetRefActR();
+void SetRefCamAct3R();
+void SetRefCamActR();
+void WaitMoveCam();
+void WaitMoveRef();
+void cameraCfBattleCam();
+void cameraCfCamId();
+void cameraCfHokan();
+void cameraCfLock();
+void cameraCfRangeMode();
+void cameraCfRotRange();
+void cameraCfSelectChg();
+void cameraCfSet();
+void cameraGetRefPos();
+void cameraMode();
+void cameraMove();
+void cameraMoveRefMode();
+void cameraPosReset();
+void cameraSetBank();
+void cameraSetCamAng();
+void cameraSetCamPos();
+void cameraSetPers();
+void cameraSetRefAct();
+void cameraSetRefAng();
+void cameraSetRefPos();
+void cameraShake();
+void cfChange();
+void cfNorth();
+void enepcAlgorithm();
+void enepcDefaultMotion();
+void enepcEnableDrawFlags();
+void enepcEncount();
+void enepcExMotion();
+void enepcExtra();
+void enepcLookAt();
+void enepcMotion();
+void enepcReadyEnepcData();
+void enepcSetBattle();
+void enepcSetParams();
+void enepcSetParamsAll();
+void enepcSetSe();
+void enepcSetTogether();
+void ladderSetEntrance();
+void ladderSetLadder();
+void motionFace();
+void setGroup();
+void talkReset();
+
+extern const char D_00689870[];
+extern const char D_00689888[];
+extern const char D_00689898[];
+extern const char D_006898A8[];
+extern const char D_006898B8[];
+extern const char D_006898C8[];
+extern const char D_006898D8[];
+extern const char D_006898E8[];
+extern const char D_006898F8[];
+extern const char D_00689908[];
+extern const char D_00689918[];
+extern const char D_00689928[];
+extern const char D_00689A60[];
+extern const char D_00689A70[];
+extern const char D_00689A80[];
+extern const char D_00689A90[];
+extern const char D_00689AA0[];
+extern const char D_00689AB0[];
+extern const char D_00689AC0[];
+extern const char D_00689AD0[];
+extern const char D_00689AE0[];
+extern const char D_00689AF0[];
+extern const char D_00689B00[];
+extern const char D_00689B10[];
+extern const char D_00689B20[];
+extern const char D_00689B30[];
+extern const char D_00689B40[];
+extern const char D_00689B50[];
+extern const char D_00689B60[];
+extern const char D_00689B70[];
+extern const char D_00689B80[];
+extern const char D_00689B90[];
+extern const char D_00689BA0[];
+extern const char D_00689BB0[];
+extern const char D_00689BC0[];
+extern const char D_00689BD0[];
+extern const char D_00689BE0[];
+extern const char D_00689BF0[];
+extern const char D_00689C00[];
+extern const char D_00689C10[];
+extern const char D_00689C20[];
+extern const char D_00689C30[];
+extern const char D_00689C40[];
+extern const char D_00689C50[];
+extern const char D_00689C60[];
+extern const char D_00689C70[];
+extern const char D_00689C80[];
+extern const char D_00689C90[];
+extern const char D_00689CA0[];
+extern const char D_00689CB0[];
+extern const char D_00689CC0[];
+extern const char D_0069D2D8[];
+extern const char D_0069D2E0[];
+extern const char D_0069D2E8[];
+extern const char D_0069D2F0[];
+extern const char D_0069D2F8[];
+extern const char D_0069D300[];
+extern unsigned char D_0069D328[];
+extern unsigned char D_0069D330[];
+extern unsigned char D_0069D338[];
+extern unsigned char D_0069D340[];
+extern unsigned char D_0069D348[];
+extern unsigned char D_0069D350[];
+extern unsigned char D_0069D358[];
+extern unsigned char D_0069D360[];
+extern unsigned char D_0069D368[];
+extern unsigned char D_0069D370[];
+extern unsigned char D_0069D378[];
+extern unsigned char D_0069D380[];
+extern unsigned char D_0069D388[];
+
+void *D_003E6F58[38] = {
+    (void *) D_00689928,
+    enepcSetParams,
+    (void *) D_00689918,
+    enepcSetParamsAll,
+    (void *) D_0069D300,
+    enepcExtra,
+    (void *) D_0069D2F8,
+    enepcMotion,
+    (void *) D_00689908,
+    enepcExMotion,
+    (void *) D_006898F8,
+    motionFace,
+    (void *) D_0069D2F0,
+    enepcLookAt,
+    (void *) D_0069D2E8,
+    enepcEncount,
+    (void *) D_0069D2E0,
+    Resigne,
+    (void *) D_006898E8,
+    setGroup,
+    (void *) D_006898D8,
+    enepcSetBattle,
+    (void *) D_0069D2D8,
+    enepcSetSe,
+    (void *) D_006898C8,
+    enepcDefaultMotion,
+    (void *) D_006898B8,
+    enepcSetTogether,
+    (void *) D_006898A8,
+    enepcAlgorithm,
+    (void *) D_00689898,
+    enepcReadyEnepcData,
+    (void *) D_00689888,
+    enepcEnableDrawFlags,
+    (void *) D_00689870,
+    disableDrawFlags,
+    0,
+    0
+};
+
+/* Native table of the uwamono module. */
+void *uwamonoNativeTable[12] = {
+    (void *) "setDoorAll",
+    uwamonoSetDoorAll,
+    (void *) "setKowaremonoAll",
+    uwamonoSetKowaremonoAll,
+    (void *) "SendSignal",
+    uwamonoSendSignal,
+    (void *) "setCollisionSize",
+    uwamonoSetCollisionSize,
+    (void *) "setCollisionScale",
+    setCollisionScale,
+    0,
+    0
+};
+
+/* Native table of the ladder module. */
+void *ladderNatives[8] = {
+    (void *) D_00689A70,
+    ladderSetLadder,
+    (void *) D_00689A60,
+    ladderSetEntrance,
+    0,
+    0,
+    0,
+    0
+};
+
+/* Camera reference position: x = 0, y = 0, z = -10, w = 1. */
+Vector4 D_003E7040 = { 0.0f, 0.0f, -10.0f, 1.0f };
+
+/* Native table of the camera module. */
+void *cameraNatives[102] = {
+    (void *) D_0069D388,
+    talkReset,
+    (void *) D_0069D380,
+    cameraMode,
+    (void *) D_00689CC0,
+    AngleMode,
+    (void *) D_00689CB0,
+    cameraPosReset,
+    (void *) D_0069D378,
+    cameraCfSet,
+    (void *) D_00689CA0,
+    cfChange,
+    (void *) D_00689C90,
+    cameraCfRotRange,
+    (void *) D_00689C80,
+    cameraCfRangeMode,
+    (void *) D_0069D370,
+    cameraCfCamId,
+    (void *) D_0069D368,
+    cameraCfLock,
+    (void *) D_00689C70,
+    cameraCfSelectChg,
+    (void *) D_0069D360,
+    cameraCfHokan,
+    (void *) D_00689C60,
+    cameraCfBattleCam,
+    (void *) D_0069D358,
+    cfNorth,
+    (void *) D_00689C50,
+    cameraSetRefPos,
+    (void *) D_00689C40,
+    cameraSetRefAct,
+    (void *) D_00689C30,
+    SetRefActR,
+    (void *) D_00689C20,
+    cameraSetRefAng,
+    (void *) D_0069D350,
+    RefLock,
+    (void *) D_00689C10,
+    SetRefCamActR,
+    (void *) D_00689C00,
+    SetRefCamAct3R,
+    (void *) D_00689BF0,
+    cameraSetCamPos,
+    (void *) D_00689BE0,
+    cameraSetCamAng,
+    (void *) D_00689BD0,
+    SetCamAct,
+    (void *) D_00689BC0,
+    SetCamActR,
+    (void *) D_00689BB0,
+    SetCamAct2,
+    (void *) D_00689BA0,
+    SetCamAct2R,
+    (void *) D_00689B90,
+    SetCamAct3,
+    (void *) D_00689B80,
+    OffsCamPos,
+    (void *) D_00689B70,
+    OffsCamAng,
+    (void *) D_0069D348,
+    CamLock,
+    (void *) D_00689B60,
+    cameraMoveRefMode,
+    (void *) D_00689B50,
+    MoveCamMode,
+    (void *) D_0069D340,
+    cameraMove,
+    (void *) D_00689B40,
+    WaitMoveRef,
+    (void *) D_00689B30,
+    WaitMoveCam,
+    (void *) D_00689B20,
+    MoveRefStop,
+    (void *) D_00689B10,
+    MoveCamStop,
+    (void *) D_00689B00,
+    MovePersStop,
+    (void *) D_00689AF0,
+    MoveBankStop,
+    (void *) D_0069D338,
+    cameraShake,
+    (void *) D_00689AE0,
+    HandShake,
+    (void *) D_0069D330,
+    cameraSetBank,
+    (void *) D_0069D328,
+    cameraSetPers,
+    (void *) D_00689AD0,
+    MoveBank,
+    (void *) D_00689AC0,
+    MovePers,
+    (void *) D_00689AB0,
+    cameraGetRefPos,
+    (void *) D_00689AA0,
+    GetRefAng,
+    (void *) D_00689A90,
+    GetCamPos,
+    (void *) D_00689A80,
+    GetCamAng,
+    0,
+    0
+};
+
+/* Module name of the enepc natives. */
+unsigned char D_0069D308[8] = "enepc";

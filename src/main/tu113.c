@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/tu116.h"
 #include "main/tu148.h"
+#include "main/tu149.h"
 #include "main/tu021.h"
 #include "shared.h"
 
@@ -10,7 +11,6 @@ int func_A9F0A8(void);
 int func_A9F0C0(int, int);
 void questFlagSet(int, int);
 int yg2PathGetCitizenFlag(u32);
-int msgPurchaseUpdate(void);
 int func_A9F140(int, int);
 int func_A9F238(int, int);
 void msgWindowOpenText(int);
@@ -24,9 +24,9 @@ void msgWindowSetScriptText(unsigned char *);
 void msgWindowSetSlot(int, int);
 int msgSlotCurrent(void);
 void msgSlotSet(int, int);
-extern unsigned char segAddrOnFoundText[];
-extern unsigned char segAddrOnDoorText[];
-extern unsigned char segAddrOnDecodedText[];
+extern const unsigned char segAddrOnFoundText[40];
+extern const unsigned char segAddrOnDoorText[56];
+extern const unsigned char segAddrOnDecodedText[32];
 
 /* Message kinds of seg.addrOn, the native's second argument: the address was found, written on a door, or decoded. */
 enum SegAddrMessage {
@@ -251,3 +251,39 @@ int slotWinOpen(int ctx, int *error_flag)
     }
     return 1;
 }
+
+const unsigned char segAddrOnFoundText[40] = "You found Segment Address No. %d!";
+
+const unsigned char segAddrOnDoorText[56] = "\"Segment Address No. %d\" is written on the door.";
+
+const unsigned char segAddrOnDecodedText[32] = "Segment Address No. %d decoded!";
+
+const char D_0068AD10[24] = "slotWinGetResult";
+
+const char D_0068AD28[16] = "slotWinOpen";
+
+const char D_0068AD38[24] = "menuDeptGetResult";
+
+const char D_0068AD50[16] = "menuDeptQuest";
+
+const char D_0068AD60[16] = "menuGetResult";
+
+const char D_0068AD70[16] = "menuAddItem";
+
+const char D_0068AD80[16] = "isDispMsg";
+
+const char D_0068AD90[16] = "disableFlags";
+
+const char D_0068ADA0[16] = "enableFlags";
+
+const char D_0068ADB0[16] = "winClose";
+
+const char D_0068ADC0[16] = "getCitizenFlag";
+
+const char D_0068ADD0[16] = "setCitizenFlag";
+
+const char D_0068ADE0[16] = "getQuestFlag";
+
+const char D_0068ADF0[16] = "setQuestFlag";
+
+const char D_0068AE00[16] = "getAddrOn";

@@ -26,8 +26,11 @@ typedef struct McQueueEntry {
     unsigned char unmodeled_18[8];
 } McQueueEntry;
 
-extern McQueueEntry xglMcQueue[];
-extern unsigned char xglMcQueueEnd;
+static unsigned char xglCdServiceActive;
+static unsigned char loaded_overlay;
+static unsigned char xglMcQueueTop;
+static unsigned char xglMcQueueEnd;
+static McQueueEntry xglMcQueue[16];
 
 /* Queues a memory-card request (the parameters are copied for the commands that use them),
  * clears *result and runs one step of xglMcMain. */
@@ -96,15 +99,14 @@ typedef struct XglMcState {
     McIconSys icon;                 /* +0xA0: icon.sys contents kept by the create request */
 } XglMcState;
 
-extern XglMcState xglMcState;
+static XglMcState xglMcState;
 /* xglMcState.card_status.combined (+0x04) under its own data label. xglMcGetState and the final
  * return of xglMcMain read it through this label; the early return of xglMcMain (no card operation
  * finished, the queue empty) reads the field. Both were checked: the label in the early return
  * changes four bytes, the field in the final return shortens the function. */
 extern int xglMcStatusWord[];
-extern unsigned char xglMcQueueTop;
 extern char xglMcWildcardName[];
-extern char xglMcBasePath[];
+extern const char xglMcBasePath[];
 
 /* Returns the status word of the card state (+0x04 of xglMcState). */
 int xglMcGetState(void)
@@ -170,7 +172,7 @@ void xglMcSetEntryNumbers(unsigned char *object, int value, const unsigned char 
 #define MC_PATH_NAME_COUNT 6
 
 /* File names of selectors 1..5: /icon.sys, /system.ico, /copy.ico, /delete.ico, /dummy.bin. */
-extern const char *xglMcFileNames[MC_PATH_NAME_COUNT];
+extern const char *xglMcFileNames[9];
 
 /* Builds the full path in xglMcState.full_path: base, then the card number as two digits ("*" for
  * MC_CARD_ANY, nothing for MC_CARD_NONE), then by selector the path so far once more, one of the
@@ -271,6 +273,8 @@ int sceMcOpen(int port, int slot, const char *name, int mode);
 extern char *xglMcBasePaths[];
 int sceMcFormat(int port, int slot);
 int sceMcUnformat(int port, int slot);
+
+const char xglMcBasePath[24] = "/BASLUS-20892Xeno2";
 
 /* Starts the queued request: the SDK call for the command and the state xglMcMain then follows. */
 void xglMcExecute(McQueueEntry *request)
@@ -956,3 +960,17 @@ int xglMcMain(void)
     }
     return xglMcStatusWord[0];
 }
+
+extern unsigned char D_0063F74A[];
+
+char *xglMcBasePaths[4] = { (char *) D_0063F74A + 0x36, (char *) D_0063F74A + 0x4E, (char *) D_0063F74A + 0x66, 0 };
+char D_0063F7D0[16] = "/icon.sys";
+char D_0063F7E0[16] = "/system.ico";
+char D_0063F7F0[16] = "/copy.ico";
+char D_0063F800[16] = "/delete.ico";
+char D_0063F810[12] = "/dummy.bin";
+const char *xglMcFileNames[9] = { 0, D_0063F7D0, D_0063F7E0, D_0063F7F0, D_0063F800, D_0063F810, 0, 0, 0 };
+unsigned char SaveData[41] = { 0 };
+unsigned char D_0063F869[15] = { 0 };
+
+char xglMcWildcardName[8] = "*";

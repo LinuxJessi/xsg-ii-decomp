@@ -1,6 +1,6 @@
 #include "common.h"
 #include "shared.h"
-#include "main/tu168.h"
+#include "main/sef.h"
 #include "vu0_macro.h"
 
 /* A key sequence: keys holds rows of stride halfwords, the first of each row being the frame

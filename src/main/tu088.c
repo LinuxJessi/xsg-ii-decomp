@@ -40,8 +40,19 @@ typedef struct FootStepEntry {
     int falling[4];
 } FootStepEntry;
 
-extern FootStepEntry footStepTable[];
-extern unsigned char D_003E7AA8[];
+typedef struct FootStepTable {
+    FootStepEntry entries[FOOT_STEP_TABLE_COUNT];
+    unsigned int tailEntries[30];
+} FootStepTable;
+
+extern FootStepTable footStepTable;
+/* Float view of a word: entry 0 of D_003E7AA8 is the denormal 0x00000020, which the compiler flushes if written as a float. */
+typedef union FloatWord {
+    unsigned int bits;
+    float value;
+} FloatWord;
+
+extern FloatWord D_003E7AA8[];
 
 void uwamonoPlayFootEffects(int index)
 {
@@ -80,7 +91,7 @@ void uwamonoPlayFootEffects(int index)
     if (record->key <= 0x6FFFF) {
         tableIndex = -1;
         for (i = 0; i < FOOT_STEP_TABLE_COUNT; i++) {
-            if (footStepTable[i].key == record->key) {
+            if (footStepTable.entries[i].key == record->key) {
                 tableIndex = i;
                 break;
             }
@@ -106,7 +117,7 @@ void uwamonoPlayFootEffects(int index)
         case 1:
             if (tableIndex != -1) {
                 for (i = 0; i < 4; i++) {
-                    if (previousFrame < footStepTable[tableIndex].rising[i] && currentFrame >= footStepTable[tableIndex].rising[i]) {
+                    if (previousFrame < footStepTable.entries[tableIndex].rising[i] && currentFrame >= footStepTable.entries[tableIndex].rising[i]) {
                         soundCue = soundBank;
                         stepped = 1;
                         effectId = FOOT_EFFECT_FIRST + i % 2;
@@ -146,7 +157,7 @@ void uwamonoPlayFootEffects(int index)
         case 2:
             if (tableIndex != -1) {
                 for (i = 0; i < 4; i++) {
-                    if (previousFrame < footStepTable[tableIndex].falling[i] && currentFrame >= footStepTable[tableIndex].falling[i]) {
+                    if (previousFrame < footStepTable.entries[tableIndex].falling[i] && currentFrame >= footStepTable.entries[tableIndex].falling[i]) {
                         soundCue = soundBank;
                         stepped = 1;
                         effectId = FOOT_EFFECT_FIRST + i % 2;
@@ -206,7 +217,7 @@ skipFlag:
         }
         if (!(actor->drawFlags & 0x10000000) && !(record->flags & 0x4000) && effectId != -1) {
             effect = sefSpawnEffectRecordById((effectId << 0xC) | surfaceKind | 0x10000000, 0, 0);
-            if ((unsigned int)(surfaceKind - 10) < 10U && (surfaceLevel = *(float *)(D_003E7AA8 + surfaceKind * 4)) != -1000.0f) {
+            if ((unsigned int)(surfaceKind - 10) < 10U && (surfaceLevel = D_003E7AA8[surfaceKind].value) != -1000.0f) {
                 if (effect != 0) {
                     *(float *)((unsigned char *)effect + 0xA5C) = surfaceLevel;
                 }
@@ -253,7 +264,6 @@ void uwamonoSendEvent(int slot, int first, int second)
     }
 }
 
-extern float D_0069B140;
 int unduCheckAngle(f32 a, f32 b, f32 c);
 
 void uwamonoSearchArcHit(int index, int other, int third)
@@ -274,7 +284,7 @@ void uwamonoSearchArcHit(int index, int other, int third)
     if (hit != 0) {
         thirdRecord = &records[third];
         thirdWidth = thirdRecord->turnTo.x;
-        if (!(thirdWidth < D_0069B140)
+        if (!(thirdWidth < 6.28f)
             || unduCheckAngle(actor->direction.y,
                               records[other].turnFrom.x - thirdWidth * 0.5f,
                               records[other].turnFrom.x + thirdWidth * 0.5f) != 0) {
@@ -284,7 +294,7 @@ void uwamonoSearchArcHit(int index, int other, int third)
 }
 
 extern u16 textOptionFlags[];
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 
 void uwamonoSearchFacingHit(int index, int other, int third)
 {
@@ -300,7 +310,7 @@ void uwamonoSearchFacingHit(int index, int other, int third)
     records = uwamonoRecords;
     record = &records[index];
     actor = record->actor;
-    if ((D_002B5D98[0] & 0x20000000) != 0) {
+    if ((gameLoopFlags[0] & 0x20000000) != 0) {
         return;
     }
     if ((textOptionFlags[0] & 0x20) == 0) {
@@ -347,7 +357,7 @@ void func_002079F0(int index, int other, int third)
 
     record = &records[index];
     actor = record->actor;
-    if ((D_002B5D98[0] & 0x20000000) != 0) {
+    if ((gameLoopFlags[0] & 0x20000000) != 0) {
         return;
     }
     if ((textOptionFlags[0] & 0x20) == 0) {
@@ -563,3 +573,89 @@ void uwamonoSelectTarget(int index) {
     *(int *)actor->unmodeled_790 = candidate;
     xglFontDebugPrintf(8, 128, "\xa5\xed\xa5\xb1\xa1\xbc\xa5\xbf = %3d,%3d", candidate, linkedIndex);
 }
+
+short D_0069D454 = 0;
+unsigned char D_0069D456 = 0;
+int padDebugSector = 0;
+
+int padDebugCount = 0;
+
+FootStepTable footStepTable = {
+    {
+        { 0x18004, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x18008, { 14, 28, -1, -1 }, { 4, 14, -1, -1 } },
+        { 0x1800A, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x1800B, { 5, 28, -1, -1 }, { 3, 15, -1, -1 } },
+        { 0x1800C, { 0, 3, 9, 13 }, { 1, 4, 7, 10 } },
+        { 0x1802B, { 22, 44, -1, -1 }, { 22, 44, -1, -1 } },
+        { 0x1803C, { 5, 28, -1, -1 }, { 3, 15, -1, -1 } },
+        { 0x18031, { 14, 28, -1, -1 }, { 4, 14, -1, -1 } },
+        { 0x18052, { -1, -1, -1, -1 }, { 0, 10, -1, -1 } },
+        { 0x18003, { 7, 31, -1, -1 }, { 2, 14, -1, -1 } },
+        { 0x18009, { 22, 44, -1, -1 }, { 22, 44, -1, -1 } },
+        { 0x1801E, { 10, 30, -1, -1 }, { 11, 23, -1, -1 } },
+        { 0x18028, { 22, 44, -1, -1 }, { 22, 44, -1, -1 } },
+        { 0x1802C, { 22, 44, -1, -1 }, { 22, 44, -1, -1 } },
+        { 0x18032, { 8, 31, -1, -1 }, { 15, 31, -1, -1 } },
+        { 0x18034, { 8, 31, -1, -1 }, { 15, 31, -1, -1 } },
+        { 0x18036, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x18017, { 15, 41, -1, -1 }, { 9, 21, -1, -1 } },
+        { 0x18019, { 17, 42, -1, -1 }, { 10, 28, -1, -1 } },
+        { 0x18001, { 3, 22, -1, -1 }, { 4, 16, -1, -1 } },
+        { 0x18006, { 6, 24, -1, -1 }, { 3, 14, -1, -1 } },
+        { 0x1802E, { 15, 30, -1, -1 }, { 2, 12, -1, -1 } },
+        { 0x18037, { 19, 37, -1, -1 }, { 6, 17, -1, -1 } },
+        { 0x18025, { 18, 35, -1, -1 }, { 10, 19, -1, -1 } },
+        { 0x1802F, { 18, 35, -1, -1 }, { 10, 19, -1, -1 } },
+        { 0x18011, { 20, 39, -1, -1 }, { 12, 23, -1, -1 } },
+        { 0x18039, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x1803B, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x1803E, { 8, 18, 24, 35 }, { 4, 6, 13, 15 } },
+        { 0x18040, { 18, 35, -1, -1 }, { 2, 14, -1, -1 } },
+        { 0x18042, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x18043, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x18044, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x18046, { 19, 41, -1, -1 }, { 3, 15, -1, -1 } },
+        { 0x18047, { 14, 27, -1, -1 }, { 5, 16, -1, -1 } },
+        { 0x1804A, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x1804B, { 18, 35, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x1803D, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x18045, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x18048, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x1804D, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x1804E, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x1803A, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } },
+        { 0x18024, { -1, -1, -1, -1 }, { -1, -1, -1, -1 } }
+    },
+    {
+        0x10026U, 0x1U, 0x10U, 0x8000000U, 0x10026U, 0x1U, 0x20U, 0x8000000U,
+        0x10026U, 0x2U, 0x10U, 0x8000000U, 0x10026U, 0x2U, 0x20U, 0x8000000U,
+        0x10023U, 0x1U, 0x10U, 0x8000000U, 0x10023U, 0x1U, 0x20U, 0x8000000U,
+        0x10023U, 0x2U, 0x10U, 0x8000000U, 0x10023U, 0x2U
+    }
+};
+
+FloatWord D_003E7AA8[20] = {
+    { 0x00000020u },
+    { 0x01000000u },
+    { 0x00000000u },
+    { 0x00000000u },
+    { 0x00000000u },
+    { 0x00000000u },
+    { 0x00000000u },
+    { 0x00000000u },
+    { 0x00000000u },
+    { 0x00000000u },
+    { 0x3F000000u },
+    { 0xC47A0000u },
+    { 0xC08CCCCDu },
+    { 0xC15CCCCDu },
+    { 0xC0266666u },
+    { 0xBF000000u },
+    { 0x3E99999Au },
+    { 0x3727C5ACu },
+    { 0xC0B66666u },
+    { 0xC47A0000u }
+};
+
+int uwamonoEventIds[8] = { 0 };

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
-#include "main/sef_164.h"
+#include "main/sef.h"
+#include "main/sef_print.h"
 #include "main/tu155.h"
 
 
@@ -27,22 +28,60 @@ void vu0DirectionToAngles(Vector4 *angles, Vector4 *direction, int unusedArg2, i
 }
 
 /* Global flag word; sv_get_image_item_161 also reads it with masks. */
-extern u32 D_0069DAE0;
+extern u32 svSceneFlags;
 
 u32 func_00252E00(u32 mask) {
-    return D_0069DAE0 & mask;
+    return svSceneFlags & mask;
 }
 
 void func_00252E10(u32 mask) {
-    D_0069DAE0 |= mask;
+    svSceneFlags |= mask;
 }
 
 void func_00252E20(u32 mask) {
-    D_0069DAE0 &= ~mask;
+    svSceneFlags &= ~mask;
 }
 
 void func_00252E38(u32 mask) {
-    D_0069DAE0 ^= mask;
+    svSceneFlags ^= mask;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu155", lightSetLogDump);
+/* The light set (XglLightSet, xgl_2.h) as lightSetLogDump walks it: runs of 7, 8, 3, 3 and 3 vectors
+ * that cross XglLightSet's field boundaries (the directions run includes viewDirection, the colours
+ * run the two ambient colours, the shadow run forward and reserved). */
+typedef struct LightSet {
+    Vector4 direction[7];       /* +0x000 */
+    Vector4 color[8];           /* +0x070 */
+    Vector4 shadow[3];          /* +0x0F0 */
+    Vector4 pointPosition[3];   /* +0x120 */
+    Vector4 pointColor[3];      /* +0x150 */
+} LightSet;
+
+/* "sDir", "sCol", "sSha", "sPntP", "sPntC" */
+extern const char lightLogDirectionLabel[];
+extern const char lightLogColorLabel[];
+extern const char lightLogShadowLabel[];
+extern const char lightLogPointPositionLabel[];
+extern const char lightLogPointColorLabel[];
+
+/* Logs every vector of the light set with its label and index (logNoOp does nothing in this build). */
+void lightSetLogDump(LightSet *lights)
+{
+    int i;
+
+    for (i = 0; i < 7; i++) {
+        logNoOp(&lights->direction[i], lightLogDirectionLabel, i);
+    }
+    for (i = 0; i < 8; i++) {
+        logNoOp(&lights->color[i], lightLogColorLabel, i);
+    }
+    for (i = 0; i < 3; i++) {
+        logNoOp(&lights->shadow[i], lightLogShadowLabel, i);
+    }
+    for (i = 0; i < 3; i++) {
+        logNoOp(&lights->pointPosition[i], lightLogPointPositionLabel, i);
+    }
+    for (i = 0; i < 3; i++) {
+        logNoOp(&lights->pointColor[i], lightLogPointColorLabel, i);
+    }
+}

@@ -7,39 +7,8 @@
  */
 #include "common.h"
 #include "shared.h"
+#include "main/TiWatSim.h"
 #include "main/xgl_2.h"
-
-/* Same shape as TiWaterSub in main/TiWater.c (magic "WAT " at +0x00, count at +0x08). */
-typedef struct TiWatSimTable {
-    u8 unmodeled_00[0x08];
-    u32 count;
-    u8 unmodeled_0C[0x04];
-} TiWatSimTable;
-
-typedef struct TiWatSimItem {
-    u8 unmodeled_00[0x04];
-    int cell_count;
-    int cols;
-    int rows;
-    u8 unmodeled_10[0x30];
-    float grid_origin_x;
-    u8 unmodeled_44[0x04];
-    float grid_origin_z;
-    u8 unmodeled_4C[0x04];
-    float cell_spacing;
-    u8 unmodeled_54[0x04];
-    float drop_amount;
-    u8 unmodeled_5C[0x0C];
-    float *height_buffer_a;
-    float *height_buffer_b;
-    u8 unmodeled_70[0x08];
-    u32 mask_offset;
-    u32 normals_offset;
-    u8 unmodeled_80[0x04];
-    u8 *block;
-    u8 unmodeled_88[0x48];
-    Matrix4 matrix;
-} TiWatSimItem;
 
 /* One normal vector. The original stores the normals through a union member, so its stores carry alias set 0. */
 typedef union TiWatSimNormal {
@@ -55,8 +24,8 @@ typedef struct TiWatSimPad {
 
 extern TiWatSimPad PadData;
 /* Cell under the pad cursor: row and column in the item grid. */
-u32 tiWatSimCursorRow;
-u32 tiWatSimCursorCol;
+static u32 tiWatSimCursorRow;
+static u32 tiWatSimCursorCol;
 
 /* Steers the cursor cell with the pad, then lowers its height in buffer A by drop_amount.
  * Pad bits (include/main/pad.h): held PAD_SELECT (0x100) enables the cursor, a fresh press of
@@ -172,9 +141,9 @@ void tiWatSimStepRain(TiWatSimItem *item)
 #include "main/tu026.h"
 #define NULL ((void *) 0)
 
-extern char D_0068D118[];
-extern char D_0068D138[];
-extern char D_0068D120[];
+extern const char D_0068D118[];
+extern const char D_0068D138[];
+extern const char D_0068D120[];
 
 /* Pushes the height buffer down at the grid cell under pPos: the cell loses drop_amount, its four neighbours half of it. */
 void tiWatSimDisturbAt(TiWatSimItem *item, Vector4 *pPos)
@@ -220,13 +189,13 @@ void tiWatSimDisturbAt(TiWatSimItem *item, Vector4 *pPos)
 }
 
 /* Disturbs every item of the table at the position pointed to by pPos. */
-void tiWatSimDisturbAll(TiWatSimTable *table, Vector4 *pPos)
+void tiWatSimDisturbAll(TiWaterSub *table, Vector4 *pPos)
 {
     TiWatSimItem *item;
     u32 i;
 
-    item = (TiWatSimItem *) (table + 1);
-    for (i = 0; i < table->count; i++) {
+    item = table->items;
+    for (i = 0; i < table->active; i++) {
         tiWatSimDisturbAt(item, pPos);
         item++;
     }
@@ -248,13 +217,13 @@ void tiWatSimRandomizeItem(TiWatSimItem *item, int range)
 }
 
 /* Randomizes every item of the table with the same range. */
-void tiWatSimRandomizeAll(TiWatSimTable *table, int range)
+void tiWatSimRandomizeAll(TiWaterSub *table, int range)
 {
     TiWatSimItem *item;
     u32 i;
 
-    item = (TiWatSimItem *) (table + 1);
-    for (i = 0; i < table->count; i++) {
+    item = table->items;
+    for (i = 0; i < table->active; i++) {
         tiWatSimRandomizeItem(item, range);
         item++;
     }
@@ -293,3 +262,20 @@ u32 tiWatSimAlloc(u32 *cursor, u32 size)
     *cursor = old + size;
     return old;
 }
+
+const char D_0068D118[8] = "pWater";
+
+const char D_0068D120[24] = "../TiWatSim.euc.c";
+
+const char D_0068D138[8] = "pPos";
+
+Vector4 tiWatSimSourcePos = { .x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f };
+
+Vector4 D_00631860 = { .x = 5.0f, .y = 0.0f, .z = 5.0f, .w = 1.0f };
+
+Vector4 D_00631870 = { .x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 0.0f };
+
+int tiWatSimRainCountdown = 0;
+int D_00631884 = 0;
+int D_00631888 = 0;
+int D_0063188C = 0;

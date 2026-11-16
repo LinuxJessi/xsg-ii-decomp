@@ -1134,11 +1134,33 @@ def function_inventory(root, tus, inputs, metadata, declarations=None):
                 statistics={u: dict(s) for u, s in statistics.items()}, remaining=remaining)
 
 
-def objdiff_scope(root, tus, report, unit, code_complete):
-    """Select original game owners from a pinned native objdiff report."""
+def objdiff_scope(root, tus, report, unit, code_complete, ledger_complete=False, only_tus=None):
+    """Select original game owners from a pinned native objdiff report, or from the per-TU ledger."""
     require(not code_complete or report, '--code-complete requires --objdiff-report')
     selected = {k for k, t in tus.items() if unit is None or t['unit'] == unit}
     evidence = dict(unit=unit, code_complete=code_complete)
+    if ledger_complete:
+        # X2 has no local objdiff binary: a TU is code complete when its ledger record (config/tu/<unit>/<tu>.json,
+        # written by tools/tu_ledger.py from the published source) lists every function as C. The whole-file gate,
+        # not this selector, proves that code.
+        require(not code_complete, '--ledger-complete and --code-complete are alternatives')
+        owners, skipped = {}, {}
+        for key in sorted(selected):
+            if only_tus is not None and key not in only_tus:
+                continue
+            flags = (tus[key].get('contract') or {}).get('flags')
+            if flags not in (['-O2', '-G0'], ['-O2', '-G8']):
+                skipped[key] = 'compile contract %s: the automatic probe supports -O2 only' % ' '.join(flags or [])
+                continue
+            path = root / 'config' / 'tu' / (key + '.json')
+            if not path.is_file():
+                continue
+            functions = read_json(path).get('functions') or []
+            if functions and all(f.get('state') == 'c' for f in functions):
+                owners[key] = dict(functions=len(functions), ledger=str(path.relative_to(root)), ledger_sha256=sha(path))
+        evidence.update(ledger_complete=True, owners=owners, skipped_contracts=skipped,
+                        only_tus=sorted(only_tus) if only_tus is not None else None)
+        return set(owners), evidence
     if not code_complete:
         return selected, evidence
     document = read_json(report)
@@ -1204,7 +1226,7 @@ def compiler_sizeof(root, tu, ctype):
     try:
         tus = {t['id']: t for t in read_json(root / 'config/tu-build.json')['tus']}
         source = (root / tus[tu]['path']).resolve()
-        cc = root / '.work/toolchains/ee-gcc2.96-realconv-lp7-fsv12-v1/bin'
+        cc = root / '.work/toolchains/ee-gcc2.96-realconv-lp7-fsv14-v1/bin'
         with tempfile.TemporaryDirectory() as folder:
             probe = Path(folder) / ('sizeof_' + source.name)
             probe.write_text(source.read_text(errors='surrogateescape') +
@@ -1286,11 +1308,11 @@ def grouped_storage(selected, indexes, aliases, pieces, root, inputs, binary):
 
 
 def build_plan(root, inventory=None, unit=None, objdiff_report=None, code_complete=False,
-               all_scaffold=False):
+               all_scaffold=False, ledger_complete=False, only_tus=None):
     manifest = read_json(root / 'config/tu-build.json')
     tus = {t['id']: t for t in manifest['tus'] if t.get('in_scope') and t['unit'] in UNITS
            and (unit is None or t['unit'] == unit)}
-    selected_owners, scope = objdiff_scope(root, tus, objdiff_report, unit, code_complete)
+    selected_owners, scope = objdiff_scope(root, tus, objdiff_report, unit, code_complete, ledger_complete, only_tus)
     scope.update(all_scaffold=all_scaffold, selected_tus=sorted(selected_owners))
     require(not (all_scaffold and inventory), '--all-scaffold cannot use a reachable-only inventory')
     include_closures = {}
@@ -1898,6 +1920,9 @@ def main(argv=None):
     p.add_argument('--objdiff-report', type=Path, help='pin a native objdiff JSON report')
     p.add_argument('--code-complete', action='store_true', help='select report owners with nonempty code at exactly 100 percent')
     p.add_argument('--all-scaffold', action='store_true', help='include unreferenced mapped DATA and visible deferred items')
+    p.add_argument('--tus', help='with --ledger-complete: restrict the selection to these TU ids (comma separated)')
+    p.add_argument('--ledger-complete', action='store_true',
+                   help='select owners whose per-TU ledger record lists every function as C (no objdiff report needed)')
     p.add_argument('--output', type=Path)
     for name in ('resources', 'prepare', 'check'):
         p = commands.add_parser(name)
@@ -1919,7 +1944,8 @@ def main(argv=None):
         print(json.dumps(integrate(args.plan.resolve(), args.candidates.resolve(), args.output.resolve(), lease)))
     elif args.command == 'plan':
         result = build_plan(root, args.inventory, args.unit, args.objdiff_report,
-                            args.code_complete, args.all_scaffold)
+                            args.code_complete, args.all_scaffold, args.ledger_complete,
+                            set(args.tus.split(',')) if args.tus else None)
         if args.output:
             lease.json(args.output, result)
         print(json.dumps(dict(counts=result['counts'], total=len(result['locations']),

@@ -80,12 +80,12 @@ int printf(const char *format, ...);
 char *strcpy(char *destination, const char *source);
 void func_A9229C(int, void *);
 void RgHeapDump_sub(struct RgHeap *pHeap, const char *pComment, const char *pSourceFile, int line);
-extern char D_0068BA50[];
-extern char D_0068BA78[];
-extern char D_0068BA90[];
-extern char D_0068BAB0[];
-extern char D_0068BAC0[];
-extern char D_0068BAD0[];
+extern const char D_0068BA50[];
+extern const char D_0068BA78[];
+extern const char D_0068BA90[];
+extern const char D_0068BAB0[];
+extern const char D_0068BAC0[];
+extern const char D_0068BAD0[];
 
 /*
  * Heap assertion handler: prints the failed expression with its call site,
@@ -179,8 +179,8 @@ int _IsCollectMagicString(struct RgHeapBlock *pBlock)
     return 1;
 }
 
-extern char D_0068BAF8[];
-extern char D_0068BB10[];
+extern const char D_0068BAF8[];
+extern const char D_0068BB10[];
 
 struct RgHeapBlock *_SetHeapHead(struct RgHeapBlock *pBlock, u32 size)
 {
@@ -217,9 +217,10 @@ void _MergeBlocks(struct RgHeapBlock *pHead)
 }
 
 /* InstanceOfRgHeapById: the heap heapId (0x20 bytes apart); its 0x800-byte arena is set up by the first call, tracked by a halfword flag per id. */
-extern unsigned char heapInstances[HEAP_MAX][0x20];
-extern unsigned char heapArenas[HEAP_MAX][HEAP_ARENA_SIZE];
-extern short heapInitFlags[HEAP_MAX];
+static unsigned char heapInstances[HEAP_MAX][0x20];
+static unsigned char heapArenas[HEAP_MAX][HEAP_ARENA_SIZE];
+static unsigned char D_006AF340[384];
+extern short heapInitFlags[8];
 void InitRgHeap(struct RgHeap *pHeap, void *pMemory, int size);
 
 struct RgHeap *InstanceOfRgHeapById(u32 heapId)
@@ -236,7 +237,7 @@ void ClearRgHeap(struct RgHeap *pHeap)
     pHeap->freeHead = _SetHeapHead(pHeap->top, pHeap->size);
 }
 
-extern char D_0068BB38[];
+extern const char D_0068BB38[];
 extern char D_0069DAB0[];
 void *memset(void *destination, int value, unsigned int count);
 
@@ -256,16 +257,16 @@ void InitRgHeap(struct RgHeap *pHeap, void *pMemory, int size)
     pHeap->mapStride = 0x100;
 }
 
-extern char D_0068BB50[];
-extern char D_0068BB78[];
-extern char D_0068BB88[];
-extern char D_0068BBA0[];
-extern char D_0068BBD0[];
-extern char D_0068BBE0[];
-extern char D_0068BC18[];
-extern char D_0068BC40[];
-extern char D_0068BC50[];
-extern char D_0068BC80[];
+extern const char D_0068BB50[];
+extern const char D_0068BB78[];
+extern const char D_0068BB88[];
+extern const char D_0068BBA0[];
+extern const char D_0068BBD0[];
+extern const char D_0068BBE0[];
+extern const char D_0068BC18[];
+extern const char D_0068BC40[];
+extern const char D_0068BC50[];
+extern const char D_0068BC80[];
 int sprintf(char *destination, const char *format, ...);
 void func_002AB1A8(char *pDest, const char *pSrc, u32 count);
 
@@ -356,15 +357,15 @@ void *RgHeapAllocById(u32 heapId, u32 size, const char *pSourceFile, int line)
     return pPayload;
 }
 
-extern char D_0068BC98[];
-extern char D_0068BCA8[];
-extern char D_0068BCB8[];
-extern char D_0068BCD8[];
-extern char D_0068BCE8[];
-extern char D_0068BD28[];
-extern char D_0068BD48[];
-extern char D_0068BD80[];
-extern char D_0068BDB0[];
+extern const char D_0068BC98[];
+extern const char D_0068BCA8[];
+extern const char D_0068BCB8[];
+extern const char D_0068BCD8[];
+extern const char D_0068BCE8[];
+extern const char D_0068BD28[];
+extern const char D_0068BD48[];
+extern const char D_0068BD80[];
+extern const char D_0068BDB0[];
 int RgHeapIsInSelf(struct RgHeap *pHeap, void *pPtr);
 
 void RgHeapFree(void *pPtr, const char *pSourceFile, int line)
@@ -460,12 +461,12 @@ int RgHeapIsInvalidMemory(struct RgHeap *pHeap, void *pPtr)
     return RgHeapIsInSelf(pHeap, pBlock) == 0;
 }
 
-extern char D_0068BDE0[];
-extern char D_0068BE08[];
-extern char D_0068BE28[];
-extern char D_0068BE50[];
-extern char D_0068BE70[];
-extern char D_0068BE98[];
+extern const char D_0068BDE0[];
+extern const char D_0068BE08[];
+extern const char D_0068BE28[];
+extern const char D_0068BE50[];
+extern const char D_0068BE70[];
+extern const char D_0068BE98[];
 
 void RgHeapDump_sub(struct RgHeap *pHeap, const char *pComment, const char *pSourceFile, int line)
 {
@@ -490,11 +491,11 @@ void RgHeapDump_sub(struct RgHeap *pHeap, const char *pComment, const char *pSou
     }
 }
 
-extern char D_0068BEC8[];
-extern char D_0068BEE0[];
-extern char D_0068BEF0[];
-extern char D_0068BF08[];
-extern char D_0068BF20[];
+extern const char D_0068BEC8[];
+extern const char D_0068BEE0[];
+extern const char D_0068BEF0[];
+extern const char D_0068BF08[];
+extern const char D_0068BF20[];
 
 void RgHeapDumpBlock(struct RgHeap *pHeap, void *pPtr)
 {
@@ -511,7 +512,7 @@ void RgHeapDumpBlock(struct RgHeap *pHeap, void *pPtr)
     printf(D_0068BF20, pHeap);
 }
 
-extern char D_0068BF40[];
+extern const char D_0068BF40[];
 struct RgHeap *InstanceOfRgHeapById(u32 heapId);
 
 void RgHeapDumpById(u32 heapId)
@@ -652,7 +653,13 @@ struct HeapWindowRow {
     unsigned char unmodeled_38[0x18];
 };
 
-extern struct HeapWindowRow heapWindowAllocRowTemplate;
+/* A 0xa0-byte template: the HeapWindowRow the code copies, then 0x50 more bytes. */
+struct HeapWindowRowTemplate {
+    struct HeapWindowRow row;
+    unsigned char unmodeled_50[0x50];
+};
+
+extern struct HeapWindowRowTemplate heapWindowAllocRowTemplate;
 void func_A923D8(int window, struct HeapWindowRow *pRow);
 
 /*
@@ -662,13 +669,13 @@ void func_A923D8(int window, struct HeapWindowRow *pRow);
  */
 void heapWindowAddAllocRows(int window)
 {
-    struct HeapWindowRow row = heapWindowAllocRowTemplate;
+    struct HeapWindowRow row = heapWindowAllocRowTemplate.row;
     struct RgHeap *pHeap = InstanceOfRgHeapById(0);
     struct RgHeapBlock *pBlock = pHeap->allocHead;
 
     if (pBlock != 0) {
         do {
-            row = heapWindowAllocRowTemplate;
+            row = heapWindowAllocRowTemplate.row;
             row.pModuleName = &pBlock->module[1];
             row.pLine = &pBlock->line;
             func_A923D8(window, &row);
@@ -696,9 +703,10 @@ struct WindowCreateParam {
 };
 
 extern char *heapWindowTitles[];
-extern char heapWindowIdAssertText[];
-extern struct HeapWindowRow heapWindowRowTemplate;
+extern const char heapWindowIdAssertText[];
+extern struct HeapWindowRowTemplate heapWindowRowTemplate;
 extern char D_0069DAB8[8];
+extern char D_0069DAC8[8];
 int func_A917D4(int parentWindow, const char *pName);
 void func_A91668(int window);
 int func_A92704(struct WindowCreateParam *pParam, int parentWindow);
@@ -732,7 +740,7 @@ void heapWindowCreate(int parentWindow)
     param.height = HEAP_WINDOW_HEIGHT;
     strcpy(param.name, heapWindowTitles[nId]);
     window = func_A92704(&param, parentWindow);
-    row = heapWindowRowTemplate;
+    row = heapWindowRowTemplate.row;
     row.pModuleName = D_0069DAB8;
     row.heap.pHeap = InstanceOfRgHeapById(nId);
     func_A923D8(window, &row);
@@ -769,9 +777,9 @@ extern char heapWindowTitleHeap2[];
 extern char heapWindowTitleHeap3[];
 extern char heapWindowTitleSystem[];
 extern char heapWindowTitleMatrix[];
-extern char D_003ED280[];
-extern struct HeapWindowRow heapOverviewRowTemplate;
-extern char D_0068BF70[];
+extern unsigned char D_003ED280[];
+extern struct HeapWindowRowTemplate heapOverviewRowTemplate;
+extern const char D_0068BF70[];
 void func_AB847C(const char *pText, int window);
 
 void heapOverviewWindowOpen(int parentWindow)
@@ -792,27 +800,27 @@ void heapOverviewWindowOpen(int parentWindow)
     strcpy(param.name, heapOverviewTitle);
     window = func_A92704(&param, parentWindow);
     func_A9229C(window, D_003ED280);
-    row = heapOverviewRowTemplate;
+    row = heapOverviewRowTemplate.row;
     row.pModuleName = heapWindowTitleHeap0;
     row.heap.heapId = 0;
     func_A923D8(window, &row);
-    row = heapOverviewRowTemplate;
+    row = heapOverviewRowTemplate.row;
     row.pModuleName = heapWindowTitleHeap1;
     row.heap.heapId = 1;
     func_A923D8(window, &row);
-    row = heapOverviewRowTemplate;
+    row = heapOverviewRowTemplate.row;
     row.pModuleName = heapWindowTitleHeap2;
     row.heap.heapId = 2;
     func_A923D8(window, &row);
-    row = heapOverviewRowTemplate;
+    row = heapOverviewRowTemplate.row;
     row.pModuleName = heapWindowTitleHeap3;
     row.heap.heapId = 3;
     func_A923D8(window, &row);
-    row = heapOverviewRowTemplate;
+    row = heapOverviewRowTemplate.row;
     row.pModuleName = heapWindowTitleSystem;
     row.heap.heapId = 4;
     func_A923D8(window, &row);
-    row = heapOverviewRowTemplate;
+    row = heapOverviewRowTemplate.row;
     row.pModuleName = heapWindowTitleMatrix;
     row.heap.heapId = 5;
     func_A923D8(window, &row);
@@ -832,3 +840,124 @@ void func_0023E950(int value)
 {
     func_00A82EEC(value, 0, 0, 0, 0);
 }
+
+const char D_0068BA50[40] = "-------- Heap Assert %s ---------\n\000\000\000\000\000\000";
+
+const char D_0068BA78[24] = "%s (in %s at %d)\n\n\000\000\000\000\000\000";
+
+const char D_0068BA90[32] = "heap = %p top = %p size = %d\n\n\000\000";
+
+const char D_0068BAB0[16] = "heap-dump\000\000\000\000\000\000\000";
+
+const char D_0068BAC0[16] = "../test.euc.c\000\000\000";
+
+const char D_0068BAD0[40] = "heap = NIL\n\000\000\000\000\000gAMe sHoW 2001.10.15\000\000\000\000";
+
+const char D_0068BAF8[24] = "HEAD_SIZE < nBlockSize\000\000";
+
+const char D_0068BB10[40] = "make block\000\000\000\000\000\000(HEAD_SIZE & 0xf) == 0\000\000";
+
+const char D_0068BB38[24] = "(nBufSize & 0xf) == 0\000\000\000";
+
+const char D_0068BB50[40] = "size <= 0 error allocated at %s,%d\000\000\000\000\000\000";
+
+const char D_0068BB78[16] = "(pHeap != NIL)\000\000";
+
+const char D_0068BB88[24] = "alloc-entry-heap-ptr\000\000\000\000";
+
+const char D_0068BBA0[48] = "there is no heap for allocation at %s,%d\000\000\000\000\000\000\000\000";
+
+const char D_0068BBD0[16] = "no heap %d\n\000\000\000\000\000";
+
+const char D_0068BBE0[56] = "too big size (%d) of allocation\nat %s,%d\nfrom data heap\000";
+
+const char D_0068BC18[40] = "(nMatchBlockSiz >= nNeedBlockSiz)\000\000\000\000\000\000\000";
+
+const char D_0068BC40[16] = "block align\000\000\000\000\000";
+
+const char D_0068BC50[48] = "(((int)(u_char*)pAlloc + HEAD_SIZE) & 0xf) == 0\000";
+
+const char D_0068BC80[24] = "not aligned block\000\000\000\000\000\000\000";
+
+const char D_0068BC98[16] = "pHeap != NIL\000\000\000\000";
+
+const char D_0068BCA8[16] = "free entry\000\000\000\000\000\000";
+
+const char D_0068BCB8[32] = "free NIL address at %s,%d\000\000\000\000\000\000\000";
+
+const char D_0068BCD8[16] = "heap error\000\000\000\000\000\000";
+
+const char D_0068BCE8[64] = "%p is already free at %s,%d\n(MAYBE allocated at %s,%d !\?)\000\000\000\000\000\000\000";
+
+const char D_0068BD28[32] = "not allocated %p free at %s,%d\000\000";
+
+const char D_0068BD48[56] = "heap block is destroyed or not in heap %p free at %s,%d\000";
+
+const char D_0068BD80[48] = "%s is not in %p HEAP memory area\nfree at %s %d\000\000";
+
+const char D_0068BDB0[48] = "alloc list node 1 && free block is not this\000\000\000\000\000";
+
+const char D_0068BDE0[40] = "\n\n---------------------------------\n\000\000\000\000";
+
+const char D_0068BE08[32] = "HEAD DUMP %p from %s %d\n\000\000\000\000\000\000\000\000";
+
+const char D_0068BE28[40] = "***** FREE MAP top %p (comment %s)\n\000\000\000\000\000";
+
+const char D_0068BE50[32] = "%p : size = %x(%d) next:%p\n\000\000\000\000\000";
+
+const char D_0068BE70[40] = "***** ALLOC MAP top %p (comment %s)\n\000\000\000\000";
+
+const char D_0068BE98[48] = "%p : size = %x(%d) next:%p allocated at %s,%d\n\000\000";
+
+const char D_0068BEC8[24] = "------------ dump %p\n\000\000\000";
+
+const char D_0068BEE0[16] = "pre %p next %p\n\000";
+
+const char D_0068BEF0[24] = "size %d mark %d\n\000\000\000\000\000\000\000\000";
+
+const char D_0068BF08[24] = "module '%s' line %d\n\000\000\000\000";
+
+const char D_0068BF20[32] = "  this block is not in heap %p\n\000";
+
+const char D_0068BF40[16] = "heapId %d\000\000\000\000\000\000\000";
+
+const char heapWindowIdAssertText[32] = "nId>=0 && nId < HEAP_MAX\000\000\000\000\000\000\000\000";
+
+const char D_0068BF70[32] = "window close not %d\000\000\000\000\000\000\000\000\000\000\000\000\000";
+
+const float vu0IdentityMatrix[16] = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+
+short heapInitFlags[8] = { 0 };
+
+char heapWindowAllocTitle[16] = "\245\341\245\342\245\352\263\316\312\335\260\314\303\326\000\000";
+
+char heapWindowTitleHeap0[24] = "\245\341\245\342\245\352\243\260\307\333\303\326\276\365\266\267\000\000\000\000\000\000\000\000";
+
+char heapWindowTitleHeap1[24] = "\245\341\245\342\245\352\243\261\307\333\303\326\276\365\266\267\000\000\000\000\000\000\000\000";
+
+char heapWindowTitleHeap2[24] = "\245\341\245\342\245\352\243\262\307\333\303\326\276\365\266\267\000\000\000\000\000\000\000\000";
+
+char heapWindowTitleHeap3[24] = "\245\341\245\342\245\352\243\263\307\333\303\326\276\365\266\267\000\000\000\000\000\000\000\000";
+
+char heapWindowTitleSystem[24] = "\245\267\245\271\245\306\245\340\307\333\303\326\276\365\266\267\000\000\000\000\000\000\000\000";
+
+char heapWindowTitleMatrix[24] = "\245\336\245\310\245\352\245\257\245\271\307\333\303\326\276\365\266\267\000\000\000\000\000\000";
+
+char *heapWindowTitles[8] = { heapWindowTitleHeap0, heapWindowTitleHeap1, heapWindowTitleHeap2, heapWindowTitleHeap3, heapWindowTitleSystem, heapWindowTitleMatrix, 0, 0 };
+
+struct HeapWindowRowTemplate heapWindowAllocRowTemplate = { 0, 0, (char *)D_0069DAB8, (u16 *)D_0069DAC8, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+unsigned char D_003ED1E0[160] = { 0, 0, 0, 0, 0, 0, 0, 0, 192, 218, 105, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 248, 226, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+unsigned char D_003ED280[160] = { 0, 0, 0, 0, 0, 0, 0, 0, 128, 208, 62, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 72, 226, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+struct HeapWindowRowTemplate heapOverviewRowTemplate = { 0, 0, (char *)heapWindowTitleHeap0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 224, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+struct HeapWindowRowTemplate heapWindowRowTemplate = { (void *)textScaleApplyOptions, (void *)heapWindowPaintMap, (char *)heapWindowTitleHeap0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+unsigned char *heapMagicStringPtr = (unsigned char *)(D_0068BAD0 + 0x10);
+char D_0069DAA8[8] = "init-1";
+char D_0069DAB0[8] = "init-2\000\000";
+
+char D_0069DAB8[8] = "\000\000\000\000\000\000\000\000";
+
+char heapOverviewTitle[8] = "\245\341\245\342\245\352\000\000";
+
+char D_0069DAC8[8] = "\000\000\000\000\000\000\000\000";

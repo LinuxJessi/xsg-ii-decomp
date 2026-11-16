@@ -24,6 +24,7 @@ typedef struct MoviePlayerRecord {
 
 /* Functions of src/main/tu017.c that other files call. */
 
+void xglMovieInit(void);
 void moviePlayerInit(void);
 int moviePlayerStartFile(MoviePlayerRecord *player, const char *name);
 int moviePlayerUpdate(MoviePlayerRecord *player);

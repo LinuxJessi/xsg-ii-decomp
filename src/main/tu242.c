@@ -217,7 +217,7 @@ int textRemainingWidth(int end, int value)
 }
 
 char *textLineStart(char *text);
-int func_002AA7F0();
+int strcat();
 int func_002AAE40();
 int xglFontGetStringWidth();
 extern unsigned char textPropTag[];
@@ -230,8 +230,8 @@ int textLineWidth(int end) {
 
     start = (int) textLineStart((char *) end);
     *scratch = 0;
-    func_002AA7F0(scratch, textPropTag);
-    func_002AA7F0(scratch, D_0069DD58);
+    strcat(scratch, textPropTag);
+    strcat(scratch, D_0069DD58);
     func_002AAE40(scratch, start, end - start + 1);
     return xglFontGetStringWidth(scratch);
 }

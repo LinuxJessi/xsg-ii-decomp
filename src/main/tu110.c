@@ -73,6 +73,7 @@ typedef struct PartyState {
      * slot index, or in split mode an index over back slots 7-9 followed by
      * the second roster. */
     unsigned char menuSlot;
+    unsigned char unmodeled_5B[5];  /* up to the 0x60-byte object (ptState's last fields are not modeled) */
 } PartyState;
 
 extern PartyState ptState;
@@ -813,7 +814,7 @@ typedef struct PartyStatusBlock {
 } PartyStatusBlock;
 
 void *memset(void *dest, int value, unsigned int size);
-extern PartyStatusBlock ptStatusBlock;
+static PartyStatusBlock ptStatusBlock;
 
 void ptResetStatusBlock(void)
 {
@@ -1380,13 +1381,13 @@ void padApplySaveSettings(void)
     tyaSetDisplayOffset(SaveData.displayOffsetX, SaveData.displayOffsetY);
 }
 
-extern u8 menuMainTxdBuffer[];
+static u8 menuMainTxdBuffer[16384];
 
 void *menuMainTxdEntry(int index) {
     return (void *)txdTableEntry(menuMainTxdBuffer, index);
 }
 
-extern u8 menuTutorialTxdBuffer[];
+static u8 menuTutorialTxdBuffer[8192];
 
 void *menuTutorialTxdEntry(int index) {
     return (void *)txdTableEntry(menuTutorialTxdBuffer, index);
@@ -1407,7 +1408,7 @@ u8 *ptGetStatusBlock(void) {
 }
 
 extern int talkResult;
-extern int D_002B5D98[];
+extern int gameLoopFlags[];
 
 int talk_0022D170(void) {
     int previous;
@@ -1417,10 +1418,125 @@ int talk_0022D170(void) {
     if (msgWindowBusy() != 0) {
         return -1;
     }
-    return (D_002B5D98[0] & 0x20000) ? -1 : previous;
+    return (gameLoopFlags[0] & 0x20000) ? -1 : previous;
 }
 
 int talk_0022D1C8(void) {
     talkResult = -1;
     return 1;
 }
+
+/* Four bytes before msgStyleReset that no function in this TU reads (zero in the original). */
+unsigned char D_0069D75C[4] = { 0 };
+
+/* Style reset record used by msgRangeDraw and msgRangeDrawRevealed (tu101.c). */
+unsigned char msgStyleReset[8] = { 0x0f, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00 };
+
+/* Data of main/tu110, in address order. D_003EC474 is the element at +12 of D_003EC468. */
+int D_003EC458[4] = {
+    65552, 65546, 65538, 65574
+};
+
+int D_003EC468[10] = {
+    65571, 65564, 65558, 65553, 65547, 65541, 65575, 65571, 65565, 65560
+};
+
+int D_003EC490[4] = {
+    65554, 81922, 81923, 81925
+};
+
+int D_003EC4A0[8] = {
+    31, 87, 43, 22, 0, 43, 31, 22
+};
+
+FlagCombination D_003EC4C0[82] = {
+    { 1, 1, 1, 1 },
+    { 2, 2, 2, 2 },
+    { 3, 3, 3, 3 },
+    { 1, 1, 1, 2 },
+    { 1, 1, 1, 3 },
+    { 1, 1, 2, 1 },
+    { 1, 1, 2, 2 },
+    { 1, 1, 2, 3 },
+    { 1, 1, 3, 1 },
+    { 1, 1, 3, 2 },
+    { 1, 1, 3, 3 },
+    { 1, 2, 1, 1 },
+    { 1, 2, 1, 2 },
+    { 1, 2, 1, 3 },
+    { 1, 2, 2, 1 },
+    { 1, 2, 2, 2 },
+    { 1, 2, 2, 3 },
+    { 1, 2, 3, 1 },
+    { 1, 2, 3, 2 },
+    { 1, 2, 3, 3 },
+    { 1, 3, 1, 1 },
+    { 1, 3, 1, 2 },
+    { 1, 3, 1, 3 },
+    { 1, 3, 2, 1 },
+    { 1, 3, 2, 2 },
+    { 1, 3, 2, 3 },
+    { 1, 3, 3, 1 },
+    { 1, 3, 3, 2 },
+    { 1, 3, 3, 3 },
+    { 2, 1, 1, 1 },
+    { 2, 1, 1, 2 },
+    { 2, 1, 1, 3 },
+    { 2, 1, 2, 1 },
+    { 2, 1, 2, 2 },
+    { 2, 1, 2, 3 },
+    { 2, 1, 3, 1 },
+    { 2, 1, 3, 2 },
+    { 2, 1, 3, 3 },
+    { 2, 2, 1, 1 },
+    { 2, 2, 1, 2 },
+    { 2, 2, 1, 3 },
+    { 2, 2, 2, 1 },
+    { 2, 2, 2, 3 },
+    { 2, 2, 3, 1 },
+    { 2, 2, 3, 2 },
+    { 2, 2, 3, 3 },
+    { 2, 3, 1, 1 },
+    { 2, 3, 1, 2 },
+    { 2, 3, 1, 3 },
+    { 2, 3, 2, 1 },
+    { 2, 3, 2, 2 },
+    { 2, 3, 2, 3 },
+    { 2, 3, 3, 1 },
+    { 2, 3, 3, 2 },
+    { 2, 3, 3, 3 },
+    { 3, 1, 1, 1 },
+    { 3, 1, 1, 2 },
+    { 3, 1, 1, 3 },
+    { 3, 1, 2, 1 },
+    { 3, 1, 2, 2 },
+    { 3, 1, 2, 3 },
+    { 3, 1, 3, 1 },
+    { 3, 1, 3, 2 },
+    { 3, 1, 3, 3 },
+    { 3, 2, 1, 1 },
+    { 3, 2, 1, 2 },
+    { 3, 2, 1, 3 },
+    { 3, 2, 2, 1 },
+    { 3, 2, 2, 2 },
+    { 3, 2, 2, 3 },
+    { 3, 2, 3, 1 },
+    { 3, 2, 3, 2 },
+    { 3, 2, 3, 3 },
+    { 3, 3, 1, 1 },
+    { 3, 3, 1, 2 },
+    { 3, 3, 1, 3 },
+    { 3, 3, 2, 1 },
+    { 3, 3, 2, 2 },
+    { 3, 3, 2, 3 },
+    { 3, 3, 3, 1 },
+    { 3, 3, 3, 2 },
+    { 0, 0, 0, 0 }
+};
+
+/* PartyState ptState (0x60 bytes): the labels D_003EC60C..D_003EC664 and ptSplitMode are its fields. */
+PartyState ptState = { 0 };
+
+unsigned char selectionWindowList[256] = { 0 };
+
+unsigned char selectionPlainList[256] = { 0 };

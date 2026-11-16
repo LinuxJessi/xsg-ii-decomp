@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/nml_model_set.h"
 #include "main/sdv_033.h"
 #include "shared.h"
 #include "main/xgl_2.h"
@@ -67,7 +68,7 @@ void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackRotZ(float angle);
 void xglMatrixStackSave(Matrix4 matrix);
-float func_002A1DE0(float value);
+float asinf(float value);
 float atan2f(float y, float x);
 
 void xglEulerFromRotation(Vector4 *euler, Vector4 *rotation)
@@ -84,7 +85,7 @@ void xglEulerFromRotation(Vector4 *euler, Vector4 *rotation)
         matrix[2][2] < 0.0001f && -0.0001f < matrix[2][2]) {
         *euler = *rotation;
     } else {
-        euler->x = -func_002A1DE0(matrix[2][1]);
+        euler->x = -asinf(matrix[2][1]);
         euler->y = atan2f(matrix[2][0], matrix[2][2]);
         euler->z = atan2f(matrix[0][1], matrix[1][1]);
     }
@@ -219,12 +220,6 @@ extern void xglMatrixStackSave(float matrix[4][4]);
 void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
-
-typedef union Matrix {
-    float elements[16];
-    Matrix4 rows;
-    XglQuadword quadwords[4];
-} Matrix;
 
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix,
                      const Vector4 *vector);
@@ -819,8 +814,7 @@ void xglRotTransPersN(Vector4 *destination, Matrix4 matrix, const Vector4 *sourc
 }
 
 void xglMatrixCopy();
-struct XglLightSet;
-void xglLightSetDefault(struct XglLightSet *lightSet);
+void xglLightSetDefault(XglLightSet *lightSet);
 extern Matrix4 xglIdentityMatrix;
 extern Matrix4 D_00645330;
 
@@ -1506,26 +1500,30 @@ void xglStudioLightReset(void *light)
 
 void *memcpy(void *destination, const void *source, unsigned int size);
 void xglZeroQuadwords18(AlignedVector4 *dst);
-void xglDirectionFromAngles(Vector4 *destination, const Vector4 *source);
 
-/* A vector kept as a plain float[4] (like sceVu0FVECTOR); its w is element 3. Vector4 here changes the
- * address arithmetic of the w stores, so the casts to Vector4 * at the calls stay. */
-typedef float XglFVector[4];
+/* A loaded light pack file: it starts with the "lxy" tag and is registered in xglLightPackTable. */
+typedef struct XglLightPack {
+    char tag[4];            /* 0x00: "lxy" */
+    u8 unk04[0xC];
+    char name[0x20];        /* 0x10 */
+    int entryCount;         /* 0x30 */
+    u8 unk34[8];
+    int keyOffset;          /* 0x3C */
+    u8 unk40[0xB0];
+    int entryOffsets[1];    /* 0xF0 */
+} XglLightPack;
 
-/* Light set built by xglLightPackBuildLightSet, cleared with xglZeroQuadwords18 (0x18 quadwords). */
-typedef struct XglLightSet {
-    XglFVector directions[6]; /* 0x000 */
-    Vector4 viewDirection;  /* 0x060 */
-    XglFVector colors[6];   /* 0x070 */
-    Vector4 ambientColor;       /* 0x0D0 */
-    Vector4 ambientColorLower;   /* 0x0E0 */
-    Vector4 forward;        /* 0x0F0 */
-    Vector4 reserved[2];    /* 0x100 */ 
-    XglFVector points[3];   /* 0x120 */
-    XglFVector pointDirections[3]; /* 0x150 */
-} XglLightSet;
+/* One slot of the 16-entry light pack table at 0x0095A410 in this TU's .bss (no symbol). */
+typedef struct XglLightPackSlot {
+    XglLightPack *pack;      /* 0x00 */
+    int refs;               /* 0x04 */
+    u32 unk08;
+    u32 unk0C;
+} XglLightPackSlot;
 
-extern XglLightSet xglLightSetDefaultCache;
+static XglLightPackSlot xglLightPackTable[16];
+
+static XglLightSet xglLightSetDefaultCache;
 
 void xglLightSetDefault(XglLightSet *lightSet)
 {
@@ -1552,12 +1550,18 @@ void xglLightSetDefault(XglLightSet *lightSet)
         for (i = 0; i < 7; i++) {
             xglDirectionFromAngles((Vector4 *)lightSet + i, (Vector4 *)lightSet + i);
         }
-        lightSet->points[0][0] = lightSet->points[0][1] = lightSet->points[0][2] = lightSet->points[0][3] = 0.0f;
-        lightSet->points[1][0] = lightSet->points[1][1] = lightSet->points[1][2] = lightSet->points[1][3] = 0.0f;
-        lightSet->points[2][0] = lightSet->points[2][1] = lightSet->points[2][2] = lightSet->points[2][3] = 0.0f;
-        lightSet->pointDirections[0][0] = lightSet->pointDirections[0][1] = lightSet->pointDirections[0][2] = lightSet->pointDirections[0][3] = 0.0f;
-        lightSet->pointDirections[1][0] = lightSet->pointDirections[1][1] = lightSet->pointDirections[1][2] = lightSet->pointDirections[1][3] = 0.0f;
-        lightSet->pointDirections[2][0] = lightSet->pointDirections[2][1] = lightSet->pointDirections[2][2] = lightSet->pointDirections[2][3] = 0.0f;
+        lightSet->pointPositions[0][0] = lightSet->pointPositions[0][1] = lightSet->pointPositions[0][2]
+            = lightSet->pointPositions[0][3] = 0.0f;
+        lightSet->pointPositions[1][0] = lightSet->pointPositions[1][1] = lightSet->pointPositions[1][2]
+            = lightSet->pointPositions[1][3] = 0.0f;
+        lightSet->pointPositions[2][0] = lightSet->pointPositions[2][1] = lightSet->pointPositions[2][2]
+            = lightSet->pointPositions[2][3] = 0.0f;
+        lightSet->pointColors[0][0] = lightSet->pointColors[0][1] = lightSet->pointColors[0][2]
+            = lightSet->pointColors[0][3] = 0.0f;
+        lightSet->pointColors[1][0] = lightSet->pointColors[1][1] = lightSet->pointColors[1][2]
+            = lightSet->pointColors[1][3] = 0.0f;
+        lightSet->pointColors[2][0] = lightSet->pointColors[2][1] = lightSet->pointColors[2][2]
+            = lightSet->pointColors[2][3] = 0.0f;
         {
             register Vector4 *src = (Vector4 *)lightSet;
             register void *saved = &xglLightSetDefaultCache;
@@ -1575,27 +1579,6 @@ void xglLightSetDefault(XglLightSet *lightSet)
     xglMotionCacheValid = 0;
 }
 
-/* A loaded light pack file: it starts with the "lxy" tag and is registered in xglLightPackTable. */
-typedef struct XglLightPack {
-    char tag[4];            /* 0x00: "lxy" */
-    u8 unk04[0xC];
-    char name[0x20];        /* 0x10 */
-    int entryCount;         /* 0x30 */
-    u8 unk34[8];
-    int keyOffset;          /* 0x3C */
-    u8 unk40[0xB0];
-    int entryOffsets[1];    /* 0xF0 */
-} XglLightPack;
-
-/* One slot of the 16-entry light pack table at 0x0095A410 in this TU's .bss (no symbol). */
-typedef struct XglLightPackSlot {
-    XglLightPack *pack;      /* 0x00 */
-    int refs;               /* 0x04 */
-    u32 unk08;
-    u32 unk0C;
-} XglLightPackSlot;
-
-extern XglLightPackSlot xglLightPackTable[16];
 
 void xglLightPackTableInit(void)
 {
@@ -1928,7 +1911,7 @@ int xglLightConeColor(Vector4 *result, Vector4 *direction, XglLightKey *key, Vec
     }
 #define XGL_MOTION_TYPE_COUNT 19
 
-extern u64 D_0068E570;
+extern const u64 D_0068E570[2];
 extern u64 D_0068E578;
 float xglPointLength(Vector4 *from, Vector4 *to);
 
@@ -1971,7 +1954,7 @@ int xglLightConeColor(Vector4 *color, Vector4 *lightDirection, XglLightKey *key,
     xglMatrixStackMulVector(lightDirection, lightDirection);
 
     if (lightDirection->y > 1.0f || lightDirection->y < -1.0f) {
-        edgePoint.words[0] = D_0068E570;
+        edgePoint.words[0] = D_0068E570[0];
         edgePoint.words[1] = D_0068E578;
         if (lightDirection->y < -1.0f) {
             edgePoint.vector.y = -1.0f;
@@ -2015,7 +1998,7 @@ int xglLightConeColor(Vector4 *color, Vector4 *lightDirection, XglLightKey *key,
     return 0;
 }
 
-extern Vector4 xglMotionCache[];
+static Vector4 xglMotionCache[1];
 
 void *xglLightPackCacheGet(void)
 {
@@ -2148,9 +2131,10 @@ void xglLightPackBuildLightSet(XglLightPack *pack, XglLightSet *lightSet, Vector
                 switch (entry->type) {
                 case 19:
                     if (pointCount < 3) {
-                        xglVectorCopy((Vector4 *)lightSet->points[pointCount], &key->position);
-                        xglVectorScale((Vector4 *)lightSet->pointDirections[pointCount], &key->color, key->intensity * 128.0f);
-                        lightSet->points[pointCount][3] = 1.0f;
+                        xglVectorCopy((Vector4 *)lightSet->pointPositions[pointCount], &key->position);
+                        xglVectorScale((Vector4 *)lightSet->pointColors[pointCount], &key->color,
+                            key->intensity * 128.0f);
+                        lightSet->pointPositions[pointCount][3] = 1.0f;
                         pointCount++;
                     }
                     break;
@@ -2239,16 +2223,7 @@ void xglLightPackEvaluateAll(float time)
     }
 }
 
-extern u64 D_0068E610;
-extern u64 D_0068E618;
-extern u64 D_0068E620;
-extern u64 D_0068E628;
-extern u64 D_0068E630;
-extern u64 D_0068E638;
-extern u64 D_0068E640;
-extern u64 D_0068E648;
-extern u64 D_0068E650;
-extern u64 D_0068E658;
+extern const u64 D_0068E610[10];
 void xglMatrixStackScale(const Vector4 *vector);
 void xglMatrixStackTrans(const Vector4 *vector);
 
@@ -2264,16 +2239,16 @@ void xglLightPackDebugBox(XglLightKey *key)
     DoublewordVector4 spareVector1;
     DoublewordVector4 spareVector2;
 
-    point0.words[0] = D_0068E610;
-    point0.words[1] = D_0068E618;
-    point1.words[0] = D_0068E620;
-    point1.words[1] = D_0068E628;
-    point2.words[0] = D_0068E630;
-    point2.words[1] = D_0068E638;
-    point3.words[0] = D_0068E640;
-    point3.words[1] = D_0068E648;
-    point4.words[0] = D_0068E650;
-    point4.words[1] = D_0068E658;
+    point0.words[0] = D_0068E610[0];
+    point0.words[1] = D_0068E610[1];
+    point1.words[0] = D_0068E610[2];
+    point1.words[1] = D_0068E610[3];
+    point2.words[0] = D_0068E610[4];
+    point2.words[1] = D_0068E610[5];
+    point3.words[0] = D_0068E610[6];
+    point3.words[1] = D_0068E610[7];
+    point4.words[0] = D_0068E610[8];
+    point4.words[1] = D_0068E610[9];
     xglMatrixStackUnit();
     xglMatrixStackTrans(key);
     xglMatrixStackRotZ(key->rotation.z);
@@ -2392,14 +2367,7 @@ void xglLightPackDebugMarker(struct XglLightKeyView *key)
 
 /* The 0x0068E660 table: four Vector4 (x, y, z, w) copied as eight doublewords. Each word keeps its own
  * scaffold label, so the copies reference the same symbols as the original. */
-extern u64 D_0068E660;
-extern u64 D_0068E668;
-extern u64 D_0068E670;
-extern u64 D_0068E678;
-extern u64 D_0068E680;
-extern u64 D_0068E688;
-extern u64 D_0068E690;
-extern u64 D_0068E698;
+extern const u64 D_0068E660[8];
 
 void xglLightPackDebugDirectional(XglLightKey *key)
 {
@@ -2411,14 +2379,14 @@ void xglLightPackDebugDirectional(XglLightKey *key)
     DoublewordVector4 spareVector0;
     DoublewordVector4 spareVector1;
 
-    point0.words[0] = D_0068E660;
-    point0.words[1] = D_0068E668;
-    point1.words[0] = D_0068E670;
-    point1.words[1] = D_0068E678;
-    point2.words[0] = D_0068E680;
-    point2.words[1] = D_0068E688;
-    point3.words[0] = D_0068E690;
-    point3.words[1] = D_0068E698;
+    point0.words[0] = D_0068E660[0];
+    point0.words[1] = D_0068E660[1];
+    point1.words[0] = D_0068E660[2];
+    point1.words[1] = D_0068E660[3];
+    point2.words[0] = D_0068E660[4];
+    point2.words[1] = D_0068E660[5];
+    point3.words[0] = D_0068E660[6];
+    point3.words[1] = D_0068E660[7];
     /* scaled[] is stored and never read in the original. */
     scaled[0] = key->color.x * 128.0f * key->intensity;
     scaled[1] = key->color.y * 128.0f * key->intensity;
@@ -2451,10 +2419,7 @@ void xglLightPackDebugPoint(struct XglLightKeyView *key)
     copy.w = key->extentY;
 }
 
-extern u64 D_0068E6A0;
-extern u64 D_0068E6A8;
-extern u64 D_0068E6B0;
-extern u64 D_0068E6B8;
+extern const u64 D_0068E6A0[4];
 
 void xglLightPackDebugCone(XglLightKey *key)
 {
@@ -2517,10 +2482,10 @@ void xglLightPackDebugCone(XglLightKey *key)
     register unsigned int tby7;
     register unsigned int tby8;
 
-    point0.words[0] = D_0068E6A0;
-    point0.words[1] = D_0068E6A8;
-    point1.words[0] = D_0068E6B0;
-    point1.words[1] = D_0068E6B8;
+    point0.words[0] = D_0068E6A0[0];
+    point0.words[1] = D_0068E6A0[1];
+    point1.words[0] = D_0068E6A0[2];
+    point1.words[1] = D_0068E6A0[3];
     radius = 1.0f;
     point0.vector.y = (1.0f / key->extent.z) * key->extent.y + 1.0f;
     point1.vector.y = -1.0f - (1.0f / key->extent.z) * key->extent.y;
@@ -2631,12 +2596,7 @@ void xglLightPackDebugCone(XglLightKey *key)
 }
 
 /* The 0x0068E6C0 table: three Vector4 copied as six doublewords, one scaffold label per word. */
-extern u64 D_0068E6C0;
-extern u64 D_0068E6C8;
-extern u64 D_0068E6D0;
-extern u64 D_0068E6D8;
-extern u64 D_0068E6E0;
-extern u64 D_0068E6E8;
+extern const u64 D_0068E6C0[6];
 
 void xglLightPackDebugAxis(XglLightKey *key)
 {
@@ -2651,12 +2611,12 @@ void xglLightPackDebugAxis(XglLightKey *key)
 
     /* The count is stored inside the call: the original loads it after the buffer address. */
     memset(&zero, 0, (size = 16, size));
-    point0.words[0] = D_0068E6C0;
-    point0.words[1] = D_0068E6C8;
-    point1.words[0] = D_0068E6D0;
-    point1.words[1] = D_0068E6D8;
-    point2.words[0] = D_0068E6E0;
-    point2.words[1] = D_0068E6E8;
+    point0.words[0] = D_0068E6C0[0];
+    point0.words[1] = D_0068E6C0[1];
+    point1.words[0] = D_0068E6C0[2];
+    point1.words[1] = D_0068E6C0[3];
+    point2.words[0] = D_0068E6C0[4];
+    point2.words[1] = D_0068E6C0[5];
     scaled[0] = key->color.x * 128.0f * key->intensity;
     scaled[1] = key->color.y * 128.0f * key->intensity;
     scaled[2] = key->color.z * 128.0f * key->intensity;
@@ -2782,3 +2742,63 @@ void xglZeroQuadwords18(register AlignedVector4 *dst)
         : "r" (dst)
         : "memory");
 }
+
+Matrix4 xglIdentityMatrix = { { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+
+Matrix4 D_00645330 = { { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+
+Vector4 D_00645370 = { .x = 0.08f, .y = 14000.0f, .z = 0.0f, .w = 0.0f };
+
+Vector4 D_00645380 = { 1.0f, 1.0f, 1.0f, 100.0f };
+Vector4 D_00645390 = { 0.0f, 0.0f, 0.0f, 1.0f };
+Vector4 D_006453A0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+Vector4 D_006453B0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+Vector4 D_006453C0 = { 0.0f, 1.0f, 4.0f, 1.0f };
+Vector4 D_006453D0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+Vector4 D_006453E0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+Vector4 D_006453F0 = { 0.0f, 1.0f, 0.0f, 1.0f };
+Vector4 D_00645400 = { 0.0f, 1.0f, 0.0f, 1.0f };
+Vector4 D_00645410 = { 0.0f, 0.0f, 0.0f, 1.0f };
+Vector4 D_00645420 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+signed char aaiVertexIndex[32] = { 0, 2, 4, 1, 0, 5, 0, 1, 2, 3, 1, 7, 2, 3, 6, 4, 6, 5 };
+
+unsigned int D_00645450[12] = {
+    0, 0, 0, 0x51000006, 32769, 0x50000000, 0xEEEEE, 0,
+    0, 0, 63, 0
+};
+
+u64 D_00645480[4] = { 0x0000000000000000ULL, 0x0000000000000050ULL, 0x0000000000000000ULL, 0x0000000000000051ULL };
+u64 D_006454A0[4] = { 0x0000000000000000ULL, 0x0000000000000052ULL, 0x0000000000000000ULL, 0x0000000000000053ULL };
+
+unsigned int D_006454C0[20] = {
+    32769, 0xB0AB4000, 0x31EEEEEE, 1333, 0, 0, 63, 0,
+    0x7FC00A, 1788, 8, 0, 96, 0, 20, 0,
+    0, 0, 6, 0
+};
+
+unsigned int D_00645510[28] = {
+    0x31001, 0, 71, 0, 100, 64, 66, 0,
+    128, 128, 128, 128, 0, 16, 0, 0,
+    28664, 29175, 0, 0, 8192, 7184, 0, 0,
+    36856, 36343, 0, 0
+};
+
+const u64 D_0068E570[2] = { 0x3F80000000000000ULL, 0x3F80000000000000ULL };
+
+const u64 D_0068E610[10] = {
+    0x3F8000003F800000ULL, 0x3F80000000000000ULL, 0xBF8000003F800000ULL, 0x3F80000000000000ULL, 0xBF800000BF800000ULL, 0x3F80000000000000ULL, 0x3F800000BF800000ULL, 0x3F80000000000000ULL,
+    0, 0x3F800000BF800000ULL
+};
+
+const u64 D_0068E660[8] = {
+    0, 0x3F8000003F800000ULL, 0, 0x3F800000BF800000ULL, 0x3DCCCCCDULL, 0x3F800000BE99999AULL, 0xBDCCCCCDULL, 0x3F800000BE99999AULL
+};
+
+const u64 D_0068E6A0[4] = {
+    0x3F80000000000000ULL, 0x3F80000000000000ULL, 0xBF80000000000000ULL, 0x3F80000000000000ULL
+};
+
+const u64 D_0068E6C0[6] = {
+    0, 0x3F800000BF800000ULL, 0x3E99999AULL, 0x3F80000000000000ULL, 0xBE99999AULL, 0x3F80000000000000ULL
+};

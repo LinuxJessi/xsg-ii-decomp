@@ -70,10 +70,7 @@ float I2F(int value);
 #define XGL_MENU_SPRITE_ROW_MARK 0x3000
 
 /* Functions and data used by other translation units. */
-extern const char darkRedTextFormat[];
 
-extern const char dimTextFormat[];
-extern const char plainTextFormat[];
 
 void xglMenuInitial(void);
 
@@ -109,13 +106,10 @@ static void xglMenuDrawType1(XglMenuEntry *entry,
                              XglMenuDrawContext *context);
 
 /* Text: {color #800000}%s */
-extern const char darkRedTextFormat[8];
 
 /* Text: {color #303030}%s */
-extern const char dimTextFormat[8];
 
 /* Text: {reset}%s */
-extern const char plainTextFormat[4];
 
 /* Opens a menu from `params` in `slot`, or in the first inactive slot when `slot` is
  * XGL_MENU_SLOT_ANY. Returns the slot used, or -1 when no slot is free. */
@@ -198,13 +192,13 @@ static void xglMenuDrawType1Sub(XglMenuEntry *entry,
         row = &node->rows[row_index];
         if (row_index == node->selected_item) {
             xglFontDebugPrintf(context->x, context->y,
-                               darkRedTextFormat, row->text);
+                               "\x0c\x80\x00\x00%s", row->text);
         } else if (row->next.node == (XglMenuNode *)-1) {
             xglFontDebugPrintf(context->x, context->y,
-                               dimTextFormat, row->text);
+                               "\x0c" "000%s", row->text);
         } else {
             xglFontDebugPrintf(context->x, context->y,
-                               plainTextFormat, row->text);
+                               "\x0b%s", row->text);
         }
 
         context->y += list->row_offsets[level];
@@ -374,3 +368,6 @@ void xglMenuInitial(void)
         menutbl[i].active = 0;
     }
 }
+
+XglMenuEntry menutbl[MENU_TABLE_COUNT] = { 0 };
+unsigned short monthday[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31 };

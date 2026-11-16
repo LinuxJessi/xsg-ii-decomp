@@ -19,8 +19,7 @@ void mapObjectFaceActive(void *object);
 /* func_A9F140's type of a string argument. */
 #define SCRIPT_ARG_STRING 3
 
-/* "NULL": the entry that ends a script string list. */
-extern const char D_0069D778[];
+/* "NULL" is the entry that ends a script string list. */
 
 /* Script native talk.smsg (table 0x3ec878): begins a message. Argument 1 is one
  * string, or a list of strings ended by "NULL", for the window text; arguments 2
@@ -37,7 +36,7 @@ int smsg(int ctx)
     if ((unsigned char)func_A9F140(ctx, 1) != SCRIPT_ARG_STRING) {
         list = func_A9F298(ctx, func_A9F0C0(ctx, 1));
         msgBegin();
-        for (index = 0; strcmp(D_0069D778, func_A9F238(ctx, list[index])) != 0; index++) {
+        for (index = 0; strcmp("NULL", func_A9F238(ctx, list[index])) != 0; index++) {
             msgWindowSetScriptText((int)func_A9F238(ctx, list[index]));
         }
     } else {
@@ -83,7 +82,7 @@ int msgDtl(int ctx)
     if ((unsigned char)func_A9F140(ctx, 2) != SCRIPT_ARG_STRING) {
         list = func_A9F298(ctx, func_A9F0C0(ctx, 2));
         msgBegin();
-        for (index = 0; strcmp(D_0069D778, func_A9F238(ctx, list[index])) != 0; index++) {
+        for (index = 0; strcmp("NULL", func_A9F238(ctx, list[index])) != 0; index++) {
             msgWindowSetScriptText((int)func_A9F238(ctx, list[index]));
         }
     } else {
@@ -100,3 +99,16 @@ int msgDtl(int ctx)
     mapObjectFaceActive(object);
     return 1;
 }
+
+/* Names of script natives (.sdata, address order). The native tables of tu114.c point at them; no code of this
+ * file does. */
+char D_0069D780[8] = "wait";
+char D_0069D788[8] = "resume";
+char D_0069D790[8] = "msgDtl";
+char D_0069D798[8] = "smsg";
+char D_0069D7A0[8] = "reset";
+char D_0069D7A8[8] = "check";
+char D_0069D7B0[8] = "addrOn";
+char D_0069D7B8[8] = "talk";
+char D_0069D7C0[8] = "g2path";
+char D_0069D7C8[8] = "seg";

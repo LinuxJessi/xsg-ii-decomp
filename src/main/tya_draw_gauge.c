@@ -3,6 +3,34 @@
 #include "debug_break.h"
 #include "shared.h"
 
+extern unsigned char D_002B7BC0[];
+extern unsigned char D_002B7C88[];
+extern unsigned char D_002B7CA8[];
+extern unsigned char D_002B7CC8[];
+extern unsigned char cameraCfSlots[];
+extern unsigned char cameraSlotTable[];
+extern unsigned short uwamonoAttachIdTable[];
+extern unsigned int uwamonoKeyRangeTable[];
+extern float D_002B9C98[];
+extern unsigned int D_002B9CA8[];
+extern unsigned char uwamonoProbeTemplate[];
+extern void *D_002B9CF8[];
+extern void *D_002B9DE0[];
+extern void *D_002B9F48[];
+extern void *D_002BA0A8[];
+extern void *D_002BA1C8[];
+extern void *D_002BA218[];
+extern void *D_002BA2A0[];
+extern void *D_002BA3E8[];
+extern void *D_002BA538[];
+extern void *D_002BA5B8[];
+extern void *D_002BAB60[];
+extern void *D_002BAC68[];
+extern void *D_002BAC90[];
+extern void *D_002BB1A8[];
+extern unsigned int xglCdFileGroups[];
+extern int xglCdXapGroups[];
+
 #define NULL ((void *) 0)
 
 /* Gauge geometry (in pixels) and the filled / unfilled colours. */
@@ -319,7 +347,7 @@ extern int uwamonoCurrentIndex;
 extern UwamonoState D_002BD600[];
 extern SceneWork gameWork;
 extern unsigned char D_003C6DC0[];      /* the scene file buffer */
-extern char D_006895C0[];               /* "sc0000.sb": the digits are rewritten */
+extern const char D_006895C0[];         /* "sc0000.sb": the digits are rewritten */
 extern const char D_0069D1D0[];         /* "cf\\%s" */
 extern const char D_006895D0[];         /* "cf\\xx\\%sl" */
 extern int uwamonoEventIds[];
@@ -643,3 +671,37 @@ void uwamonoResetRecords(int index, signed char mode)
     }
     enepcParamSets = NULL;
 }
+
+const char D_0069D1D0[8] = "cf\\%s";
+struct EnepcParamSet *enepcParamSets = NULL;
+int D_0069D1DC = 0;
+int uwamonoEventTable = 0;
+unsigned char D_0069D1E4[12] = { 0 };
+const char D_0069D1F0[8] = "footId";
+const char D_0069D1F8[8] = "setPair";
+const char D_0069D200[8] = "scale";
+const char D_0069D208[8] = "rotate";
+const char D_0069D210[8] = "move";
+
+const char D_006895C0[16] = "sc0000.sb";
+const char D_006895D0[16] = "cf\\xx\\%sl";
+
+/* .data of this TU after the uwamono tables: address order. */
+TyaGaugePacket D_002BD570 = {
+    { 0, 0, 0, 0x51000008u },
+    { 32769, 0x70034000u, 0x551551Eu, 0 },
+    { 0x70000u, 0, 71, 0 },
+    { 128, 192, 128, 128 },
+    { { 0, 0, 0xFFFFFFFFu, 0 }, { 0, 0, 0xFFFFFFFFu, 0 } },
+    { 64, 64, 64, 128 },
+    { { 0, 0, 0xFFFFFFFFu, 0 }, { 0, 0, 0xFFFFFFFFu, 0 } }
+};
+
+/* 32 UwamonoState blocks of 0x40C0 bytes (tu085/tu086 read them). */
+UwamonoState D_002BD600[32] = { 0 };
+
+/* Nine Vector4 entries; tu073.c and tu051.c read them (as float[][4] and Vector4[]). */
+float D_0033EE00[9][4] = { 0 };
+
+/* Ten radii of D_0033EE90 are cleared here; the 12th float is padding in this layout. */
+float D_0033EE90[12] = { 0 };

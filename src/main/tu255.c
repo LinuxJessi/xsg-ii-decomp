@@ -1,14 +1,15 @@
 #include "common.h"
 #include "shared.h"
 #include "vu0_macro.h"
+#include "main/tu255.h"
 
 /* Sets the VU0 current matrix (vf27-vf30) from a 4x4 matrix. */
-void xglCurMatrixSet(f32 matrix[4][4]) {
+void xglCurMatrixSet(Matrix4 matrix) {
     Vu0SetCurrentMatrix(matrix);
 }
 
 /* Current matrix = matrix * current matrix: the four rows of matrix are multiplied by vf27-vf30 and the product is kept in vf27-vf30. */
-void xglCurMatrixMul(f32 matrix[4][4]) {
+void xglCurMatrixMul(Matrix4 matrix) {
     __asm__ __volatile__(
         "lqc2 vf2, 0(%0)\n\t"
         "lqc2 vf3, 16(%0)\n\t"
@@ -41,7 +42,7 @@ void xglCurMatrixMul(f32 matrix[4][4]) {
 }
 
 /* Stores the VU0 current matrix (vf27-vf30) into matrix. */
-void xglCurMatrixGet(f32 matrix[4][4]) {
+void xglCurMatrixGet(Matrix4 matrix) {
     Vu0GetCurrentMatrix(matrix);
 }
 
@@ -64,12 +65,23 @@ void xglCurApplyVector(Vector4 *destination, const Vector4 *vector) {
 void func_00292FB8(void) {
 }
 
-/* Builds an X-axis rotation in xglRotMatrixX (cos at [1][1] and [2][2], sin at [1][2], -sin at [2][1]) and makes it the current matrix. */
-INCLUDE_ASM("asm/main/nonmatchings/tu255", xglCurSetRotateX);
-
 f32 cosf(f32);
 f32 sinf(f32);
-extern f32 xglRotMatrixY[4][4];
+extern Matrix4 xglRotMatrixX;
+
+/* Builds an X-axis rotation in xglRotMatrixX (cos at [1][1] and [2][2], sin at [1][2], -sin at [2][1]) and makes it the current matrix. */
+void xglCurSetRotateX(f32 angle) {
+    f32 cosine = cosf(angle);
+    f32 sine = sinf(angle);
+
+    xglRotMatrixX[1][1] = cosine;
+    xglRotMatrixX[1][2] = sine;
+    xglRotMatrixX[2][1] = -sine;
+    xglRotMatrixX[2][2] = cosine;
+    xglCurMatrixSet(xglRotMatrixX);
+}
+
+extern Matrix4 xglRotMatrixY;
 
 /* Builds a Y-axis rotation in xglRotMatrixY (cos at [0][0] and [2][2], sin at [2][0], -sin at [0][2]) and makes it the current matrix. */
 void xglCurSetRotateY(f32 angle) {
@@ -83,7 +95,7 @@ void xglCurSetRotateY(f32 angle) {
     xglCurMatrixSet(xglRotMatrixY);
 }
 
-extern f32 xglRotMatrixZ[4][4];
+extern Matrix4 xglRotMatrixZ;
 
 /* Builds a Z-axis rotation in xglRotMatrixZ (cos at [0][0] and [1][1], sin at [0][1], -sin at [1][0]) and makes it the current matrix. */
 void xglCurSetRotateZ(f32 angle) {
@@ -97,7 +109,7 @@ void xglCurSetRotateZ(f32 angle) {
     xglCurMatrixSet(xglRotMatrixZ);
 }
 
-extern f32 xglTranslateMatrix[4][4];
+extern Matrix4 xglTranslateMatrix;
 
 /* Translation matrix in xglTranslateMatrix (x, y, z in row 3), made the current matrix. */
 void xglCurSetTranslate(const Vector4 *vector) {
@@ -107,7 +119,7 @@ void xglCurSetTranslate(const Vector4 *vector) {
     xglCurMatrixSet(xglTranslateMatrix);
 }
 
-extern f32 xglScaleMatrix[4][4];
+extern Matrix4 xglScaleMatrix;
 
 /* Uniform scale matrix in xglScaleMatrix (scale on the diagonal), made the current matrix. */
 void xglCurSetScale(f32 scale) {
@@ -117,7 +129,7 @@ void xglCurSetScale(f32 scale) {
     xglCurMatrixSet(xglScaleMatrix);
 }
 
-extern f32 xglScaleXYZMatrix[4][4];
+extern Matrix4 xglScaleXYZMatrix;
 
 /* Per-axis scale matrix in xglScaleXYZMatrix (scale.x, scale.y, scale.z on the diagonal), made the current matrix. */
 void xglCurSetScaleXYZ(const Vector4 *scale) {

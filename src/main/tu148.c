@@ -53,7 +53,7 @@ void msgResetAll(void) {
 int msgSlotTestCurrent(int mask);
 
 void func_002512B0(void) {
-    if (msgSlotTestCurrent(4) == 0) {
+    if (msgSlotTestCurrent(MSG_SLOT_KEEP_GAME_FLAG) == 0) {
         msgGameFlagClear();
     }
 }
@@ -87,9 +87,9 @@ int msgSlotTest(int index, int mask) {
 
 int msgWindowTestCurrentFlags(void *, int);
 
-/* Nonzero while the window reports busy (flag mask 0x16). */
+/* Nonzero while the window reports busy (MSG_WINDOW_BUSY). */
 int msgWindowBusy(void) {
-    return msgWindowTestCurrentFlags(msgWindow, 0x16);
+    return msgWindowTestCurrentFlags(msgWindow, MSG_WINDOW_BUSY);
 }
 
 int func_0027D378(unsigned char *);
@@ -103,11 +103,62 @@ int msgSlotCurrent(void) {
     return msgSlotIndex;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu148", msgUpdate);
+void msgWindowSeekToWindowEnd(void *window);
+int msgWindowRunCurrentValue(void *window, int value);
+void func_0027D438(void *window);
+void msgWindowUpdateCurrent(void *window);
+int msgWindowCurrentStatus(void *window);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu148", msgUpdateTimed);
+/* One step of the open message (nothing while the window status is 2): CIRCLE finishes the window's text,
+ * shows the next page or closes the slot; CROSS closes a slot that allows it while the window is not
+ * locked. */
+void msgUpdate(void)
+{
+    if (msgSlotCurrent() < 0) {
+        return;
+    }
+    if (msgWindowCurrentStatus(msgWindow) == 2) {
+        return;
+    }
+    if ((PadData[0].pressed & PAD_CIRCLE) && msgSlotTestCurrent(MSG_SLOT_NO_CIRCLE) == 0) {
+        if (msgWindowTestCurrentFlags(msgWindow, MSG_WINDOW_TYPING) == 1) {
+            msgWindowSeekToWindowEnd(msgWindow);
+        } else if (msgWindowHasMore()) {
+            if (msgWindowBusy() == 0) {
+                msgWindowRunCurrentValue(msgWindow, 1);
+                func_0027D438(msgWindow);
+            }
+        } else if (msgWindowInUse() == 1 && msgWindowBusy() == 0) {
+            func_002512B0();
+            msgWindowUpdateCurrent(msgWindow);
+            msgSlotIndex--;
+        }
+    }
+    if (msgSlotTestCurrent(MSG_SLOT_CROSS_CLOSES) && msgWindowTestCurrentFlags(msgWindow, MSG_WINDOW_LOCKED) == 0
+        && (PadData[0].pressed & PAD_CROSS)) {
+        func_002512B0();
+        msgWindowUpdateCurrent(msgWindow);
+        msgSlotIndex--;
+    }
+}
 
-int msgWindowCurrentStatus(void *);
+int func_0027DF58(void *choice);
+void func_0027DE28(void *choice);
+
+/* Runs msgUpdate unless the choice is in state 3, then counts the choice timer down and closes the choice
+ * when it runs out. */
+void msgUpdateTimed(void)
+{
+    if (func_0027DF58(msgChoice) != 3) {
+        msgUpdate();
+    }
+    if (msgChoiceTimer > 0) {
+        if (--msgChoiceTimer == 0) {
+            func_0027DE28(msgChoice);
+        }
+    }
+}
+
 void msgQueueEntry(void *);
 
 /* Close the window, the choice and the panel. */
@@ -121,7 +172,6 @@ void msgClose(void) {
 }
 
 int msgWindowAdvance(void *);
-void func_0027DE28(void *);
 
 /* Begin a message: reset the window and the choice, open slot 0. */
 void msgBegin(void) {
@@ -243,7 +293,44 @@ void msgChoiceOpen(int frame, int second) {
     msgChoiceSetIndex(msgChoice, second);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu148", msgChoicePoll);
+int msgChoiceTestFlags(void *choice, int mask);
+long long msgChoiceGetFrames(void *choice);
+void func_0027D9D8(void *choice, int step);
+void func_0027D9F0(void *choice, int step);
+
+/* Polls the open choice: CIRCLE closes it and returns its frame count; left/right and up/down move the
+ * selection. -1 while no choice is open or while one of the choice bits 0x300 (not recovered) is set. */
+int msgChoicePoll(void)
+{
+    int frames;
+
+    if (msgChoiceTestFlags(msgChoice, MSG_CHOICE_OPEN) == 0) {
+        return -1;
+    }
+    if (msgChoiceTestFlags(msgChoice, 0x300) != 0) {
+        return -1;
+    }
+    if (PadData[0].pressed & PAD_CIRCLE) {
+        frames = msgChoiceGetFrames(msgChoice);
+        func_0027DE28(msgChoice);
+        msgWindowRunAll(msgWindow);
+        msgGameFlagClear();
+        return frames;
+    }
+    if (PadData[0].directionRepeated & PAD_LEFT) {
+        func_0027D9D8(msgChoice, 1);
+    }
+    if (PadData[0].directionRepeated & PAD_RIGHT) {
+        func_0027D9D8(msgChoice, -1);
+    }
+    if (PadData[0].directionRepeated & PAD_UP) {
+        func_0027D9F0(msgChoice, 1);
+    }
+    if (PadData[0].directionRepeated & PAD_DOWN) {
+        func_0027D9F0(msgChoice, -1);
+    }
+    return -1;
+}
 
 void func_00251B18(void);
 void timecodeStartAtHms(void *, int, int, int);
@@ -261,7 +348,6 @@ void msgPanelSetTimecode(int hours, int minutes, int seconds, int frames) {
     timecodeSetHmsf(msgPanel, hours, minutes, seconds, frames);
 }
 
-void msgPanelShow(int first, int second);
 
 /* Show the panel entry 0x151 in mode 8. */
 void func_00251B18(void) {

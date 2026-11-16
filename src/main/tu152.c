@@ -1,5 +1,7 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu152.h"
+#include "vu0_macro.h"
 
 /* Current matrix = current x M, M given by four rows (vf26-vf29 are the current matrix). */
 void vu0CurMatrixMulRight(Vector4 *rows) {
@@ -44,8 +46,77 @@ void vu0CurMatrixMulRight3(Vector4 *rows) {
     __asm__ __volatile__("vmaddw.xyzw vf28, vf0, vf28w" : : : "memory");
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu152", vu0SetCurrentRotationX);
+/* Sets the current matrix (vf26-vf29) to a rotation about X by angle; 0 gives the identity. The VU0
+ * micro routines at 0xE8 and 0x20 return the cosine and the sine of vf4x in vf1x. */
+void vu0SetCurrentRotationX(float angle)
+{
+    if (angle == 0.0f) {
+        Vu0SetCurrentIdentity(vu0IdentityMatrix);
+        return;
+    }
+    __asm__ __volatile__(
+        "mfc1 $8, %1\n\t"
+        "lqc2 vf26, 0(%0)\n\t"
+        "vmove.xyzw vf29, vf0\n\t"
+        "vsub.xyzw vf27, vf0, vf0\n\t"
+        "vsub.xyzw vf28, vf0, vf0\n\t"
+        "qmtc2.ni $8, vf4\n\t"
+        "vcallms 0xE8\n\t"
+        "vaddx.y vf27, vf0, vf1x\n\t"
+        "vaddx.z vf28, vf0, vf1x\n\t"
+        "qmtc2.ni $8, vf4\n\t"
+        "vcallms 0x20\n\t"
+        "vaddx.z vf27, vf0, vf1x\n\t"
+        "vsubx.y vf28, vf0, vf1x"
+        : : "r"(vu0IdentityMatrix), "f"(angle) : "$8", "memory");
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu152", vu0SetCurrentRotationY);
+/* Sets the current matrix (vf26-vf29) to a rotation about Y by angle; 0 gives the identity. The VU0
+ * micro routines at 0xE8 and 0x20 return the cosine and the sine of vf4x in vf1x. */
+void vu0SetCurrentRotationY(float angle)
+{
+    if (angle == 0.0f) {
+        Vu0SetCurrentIdentity(vu0IdentityMatrix);
+        return;
+    }
+    __asm__ __volatile__(
+        "mfc1 $8, %1\n\t"
+        "lqc2 vf27, 16(%0)\n\t"
+        "vmove.xyzw vf29, vf0\n\t"
+        "vsub.xyzw vf26, vf0, vf0\n\t"
+        "vsub.xyzw vf28, vf0, vf0\n\t"
+        "qmtc2.ni $8, vf4\n\t"
+        "vcallms 0xE8\n\t"
+        "vaddx.x vf26, vf0, vf1x\n\t"
+        "vaddx.z vf28, vf0, vf1x\n\t"
+        "qmtc2.ni $8, vf4\n\t"
+        "vcallms 0x20\n\t"
+        "vsubx.z vf26, vf0, vf1x\n\t"
+        "vaddx.x vf28, vf0, vf1x"
+        : : "r"(vu0IdentityMatrix), "f"(angle) : "$8", "memory");
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu152", vu0SetCurrentRotationZ);
+/* Sets the current matrix (vf26-vf29) to a rotation about Z by angle; 0 gives the identity. The VU0
+ * micro routines at 0xE8 and 0x20 return the cosine and the sine of vf4x in vf1x. */
+void vu0SetCurrentRotationZ(float angle)
+{
+    if (angle == 0.0f) {
+        Vu0SetCurrentIdentity(vu0IdentityMatrix);
+        return;
+    }
+    __asm__ __volatile__(
+        "mfc1 $8, %1\n\t"
+        "lqc2 vf28, 32(%0)\n\t"
+        "vmove.xyzw vf29, vf0\n\t"
+        "vsub.xyzw vf26, vf0, vf0\n\t"
+        "vsub.xyzw vf27, vf0, vf0\n\t"
+        "qmtc2.ni $8, vf4\n\t"
+        "vcallms 0xE8\n\t"
+        "vaddx.x vf26, vf0, vf1x\n\t"
+        "vaddx.y vf27, vf0, vf1x\n\t"
+        "qmtc2.ni $8, vf4\n\t"
+        "vcallms 0x20\n\t"
+        "vaddx.y vf26, vf0, vf1x\n\t"
+        "vsubx.x vf27, vf0, vf1x"
+        : : "r"(vu0IdentityMatrix), "f"(angle) : "$8", "memory");
+}

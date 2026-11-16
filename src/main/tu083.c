@@ -2,6 +2,21 @@
 #include "shared.h"
 #include "main/tu051.h"
 
+extern short D_0033FDC2;
+extern int D_0033FDC4[];
+extern int D_0033FDD0;
+extern int D_0033FDD4;
+extern int D_0033FDD8[];
+extern int D_0033FE00[];
+extern int D_0033FE10;
+extern int D_0033FE14;
+extern int D_0033FE18[];
+extern unsigned char D_0033FE30[];
+extern unsigned char D_00340020[];
+extern int D_003400B0[];
+extern int uwamonoSlotTable;
+extern int uwamonoStateSlots;
+
 /* uwamono records (tu051.c has the same kinds and states): kind 0 free, 1 talks, 2 searched. */
 #define UWAMONO_RECORD_COUNT 256
 #define UWAMONO_POINT_COUNT 16
@@ -705,10 +720,10 @@ void uwamonoMoveSelection(int step)
     seVoiceStartDefault(0x02000004);
 }
 
-int func_002A6D88(float value);
+int fptodp(float value);
 int func_002A7510(int a, int b);
-int func_002A7080(int a, int b);
-float func_002A76E8(int value);
+int dpsub(int a, int b);
+float dptofp(int value);
 
 typedef struct UwamonoBox {
     Vector4 min;
@@ -719,7 +734,7 @@ typedef struct UwamonoCellBits {
     unsigned char bit[9];
 } UwamonoCellBits;
 
-extern UwamonoCellBits uwamonoCellBitTable;
+extern const UwamonoCellBits uwamonoCellBitTable;
 
 int uwamonoIsActorInCells(int index)
 {
@@ -843,6 +858,7 @@ int uwamonoFindEntry(int key)
 
 /* Angle codes are in 4096ths of a turn. */
 extern float D_0069B030;
+float D_0069B030 = 6.28318548f;
 
 /* Writes the position of the row `key` to out (w = 1) and returns its angle; -1.0f when the table is empty. */
 float uwamonoGetEntryPose(int key, float *out)
@@ -956,6 +972,10 @@ void func_001F0750(int index, Vector4 *point, int time);
 void uwamonoRestoreRecord(int index);
 
 /* Sets the pose and the pair mode of record `index`, then hands its partner the saved position and a move. */
+/* Pair-move constants (read by uwamonoStartPairMove). */
+float D_0069B034 = -2.09439516f;
+float D_0069B038 = 0.400000006f;
+
 void uwamonoStartPairMove(int index, int mode, int duration)
 {
     UwamonoRecord *record = &((UwamonoRecord *) uwamonoRecords)[index];
@@ -1247,7 +1267,7 @@ void func_A9C888(int id);
 void selectionBlockFill(void);
 void msgChoiceShowPair(char *text, int count);
 void uwamonoSendEvent(int a, int b, int c);
-void func_002AA7F0(char *a, char *b);
+void strcat(char *a, char *b);
 
 void uwamonoUpdateCountdowns(void)
 {
@@ -1351,7 +1371,7 @@ void uwamonoUpdateCountdowns(void)
             strcpy(message, text);
             {
                 extern char D_0069D420[8];
-                func_002AA7F0(message, D_0069D420);
+                strcat(message, D_0069D420);
             }
             repeat = D_003E7270[0];
             strcpy(D_003E7270, message);
@@ -1374,6 +1394,10 @@ extern int D_002B5DA8[];
 void sefSpawnEffectById(int effectId, Vector4 *position, Vector4 *outVector, Vector4 *scale, int count, float radius);
 void vibrationStartFade(unsigned char targetValue, unsigned char currentValue, int framesTotal);
 void uwamonoAddPoint(Vector4 *position, int key, float value);
+
+/* Partner scale constants (read by uwamonoTriggerRecord). */
+float D_0069B05C = 0.400000006f;
+float D_0069B060 = 0.400000006f;
 
 void uwamonoTriggerRecord(int index)
 {
@@ -1615,3 +1639,19 @@ int func_001FFB70(void)
     }
     return -1;
 }
+
+/* Strings and zero buffers of the countdown text (.sdata, in address order). */
+char D_0069D420[8] = "\244\362" "00" "\270\304";
+char D_0069D428[8] = { 0 };
+char D_0069D430[8] = "%8f";
+
+/* 16 records of the point table, all zero at startup. */
+UwamonoPoint uwamonoPoints[UWAMONO_POINT_COUNT] = { 0 };
+
+const UwamonoCellBits uwamonoCellBitTable = { { 0, 1, 2, 3, 0, 4, 5, 6, 7 } };
+
+/* Ladder table: 0x0D00 bytes of zero at startup (208-byte records; see LadderSlot in tu075/tu076). */
+unsigned char ladderSlots[3328] = { 0 };
+/* Zero data after the ladder table (.data, address order). The types are guesses from the sizes; */
+/* uwamonoRecords (0x33FDC0) is declared by include/main/tu051.h and is not defined here.       */
+

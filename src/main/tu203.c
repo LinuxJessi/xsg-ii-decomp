@@ -14,7 +14,7 @@ int xglRoundCoord(int value)
     return -(magnitude << 4) - 8;
 }
 
-double func_002A1DB0(double value); /* sqrt */
+double sqrt(double value); /* sqrt */
 
 /* Distance between two points, truncated to an integer: the float sum of squares goes through the
  * soft-float double conversions (fptodp, the double sqrt, dptoli). */
@@ -24,7 +24,7 @@ int xglPointDistanceInt(Vector4 *from, Vector4 *to)
     float dy = to->y - from->y;
     float dz = to->z - from->z;
 
-    return func_002A1DB0(dx * dx + dy * dy + dz * dz);
+    return sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 extern int xglCosDegTableReady;

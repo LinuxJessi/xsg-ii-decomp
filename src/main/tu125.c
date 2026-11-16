@@ -1,7 +1,32 @@
 #include "common.h"
 
 extern unsigned char textMarkerFound;
-extern unsigned char *textMarkerPtrs[];
+
+/* The ANALYZE panel with the stats of the analysed enemy. */
+typedef struct AnalyzePanel {
+    int x;
+    int y;
+    unsigned char tick;
+    unsigned char state;
+    unsigned char unmodeled_0a[2];
+    int hp;                /* +0x0C negative when unknown */
+    int maxHp;
+    int unmodeled_14[2];
+    int exp;
+    int skillPoints;
+    int classPoints;
+    int rareItem;          /* +0x28 0 none, negative unknown */
+    int item;
+    signed char attackType;
+    unsigned char attributes;
+    signed char rareItemKind;
+    signed char itemKind;
+} AnalyzePanel;
+
+/* The ANALYZE panel block; the 52-byte struct is followed by padding up to the pointer table. */
+static AnalyzePanel textBlock;
+/* Page-marker positions recorded by textMarkerScan (16 entries). */
+static unsigned char *textMarkerPtrs[16];
 
 #define PAGE_MARKER_LEAD 0xA1
 #define PAGE_MARKER_TRAIL 0xFC
@@ -159,31 +184,10 @@ typedef struct ChoiceMenu {
     char *title;
 } ChoiceMenu;
 
-/* The ANALYZE panel with the stats of the analysed enemy. */
-typedef struct AnalyzePanel {
-    int x;
-    int y;
-    unsigned char tick;
-    unsigned char state;
-    unsigned char unmodeled_0a[2];
-    int hp;                /* +0x0C negative when unknown */
-    int maxHp;
-    int unmodeled_14[2];
-    int exp;
-    int skillPoints;
-    int classPoints;
-    int rareItem;          /* +0x28 0 none, negative unknown */
-    int item;
-    signed char attackType;
-    unsigned char attributes;
-    signed char rareItemKind;
-    signed char itemKind;
-} AnalyzePanel;
 
 extern TextWindow textWindow;
 extern TextEntry textEntryPool[TEXT_ENTRY_POOL_SIZE];
 extern ChoiceMenu choiceMenuSlots[CHOICE_MENU_SLOTS];
-extern AnalyzePanel textBlock;
 
 /* Advances one text entry: state 2 ticks in, state 1 pages through its text, state 3 ticks out. */
 void textEntryUpdate(TextEntry *entry)
@@ -256,8 +260,8 @@ typedef struct TextDrawPair {
     int second;
 } TextDrawPair;
 
-extern TextDrawPair textCodeUv9[];
-extern TextDrawPair textCodeUv16[];
+TextDrawPair textCodeUv9[7] = { { .first = 440, .second = 130 }, { .first = 464, .second = 130 }, { .first = 488, .second = 130 }, { .first = 440, .second = 172 }, { .first = 464, .second = 172 }, { .first = 488, .second = 172 }, { .first = 440, .second = 214 } };
+TextDrawPair textCodeUv16[15] = { { .first = 632, .second = 172 }, { .first = 668, .second = 172 }, { .first = 668, .second = 155 }, { .first = 704, .second = 155 }, { .first = 632, .second = 104 }, { .first = 668, .second = 104 }, { .first = 704, .second = 104 }, { .first = 632, .second = 121 }, { .first = 668, .second = 121 }, { .first = 704, .second = 121 }, { .first = 632, .second = 138 }, { .first = 668, .second = 138 }, { .first = 704, .second = 138 }, { .first = 632, .second = 155 }, { .first = 0, .second = 0 } };
 
 /* Draws one inline control code of a text line at (x, y) and returns how far the line advances. */
 int textDrawControlCode(int x, int y, int code)
@@ -452,12 +456,12 @@ void textDrawString(int x, int y, unsigned char *text)
     textDrawSegment(cursorX, y, lineStart, 4);
 }
 
-extern char D_0068B588[];
-extern char D_0068B5B8[];
-extern char D_0068B5F8[];
-extern char D_0068B608[];
-extern char D_0068B618[];
-extern char D_0068B628[];
+const char D_0068B588[48] = "$init;$bg2;$shadow+1,+3,000000;$han1;$prop1;";
+const char D_0068B5B8[64] = "$init;$bg2;$shadow+1,+3,000000;$han1;$prop1;$xx3,0;$colc0c0c0;";
+const char D_0068B5F8[16] = "$zoom8,16;";
+const char D_0068B608[16] = "$zoom16;";
+const char D_0068B618[16] = "$colc0c0c0;";
+const char D_0068B628[24] = "$prop1;$zoom12,16;";
 extern char D_0069D948[];
 extern char D_0069D968[];
 extern char D_0069D988[];
@@ -816,3 +820,30 @@ void textUpdate(void)
     xglCallbackQueueAdd((int)textDrawAll);
     xglTickIncrement();
 }
+
+char D_0069D968[8] = "ITEM";
+char D_0069D970[8] = "ETHER";
+int xglFontZoom = TEXT_FONT_ZOOM;
+unsigned char textMarkerFound = 0;
+/* Two page-marker bytes and a zero, then textLineHeight (the byte at +3, not 8-aligned). */
+unsigned char D_0069D980[3] = { PAGE_MARKER_LEAD, PAGE_MARKER_TRAIL, 0x00 };
+unsigned char textLineHeight = TEXT_LINE_HEIGHT_DEFAULT;
+
+/* .sdata strings of textDrawAll (D_0069D988..D_0069DA08); the leading items stay scaffold. */
+char D_0069D988[8] = "%3d";
+char D_0069D990[8] = "$prop0;";
+char D_0069D998[8] = "$prop1;";
+char D_0069D9A0[8] = "\241\363";
+char D_0069D9A8[8] = "ANALYZE";
+char D_0069D9B0[8] = "HP";
+char D_0069D9B8[8] = "W.ATK.";
+char D_0069D9C0[8] = "W.ATR.";
+char D_0069D9C8[8] = "EXP";
+char D_0069D9D0[8] = "S.Pt";
+char D_0069D9D8[8] = "C.Pt";
+char D_0069D9E0[8] = "RARE";
+char D_0069D9E8[8] = "%6d";
+char D_0069D9F0[8] = "\077\077\077\077";
+char D_0069D9F8[8] = "/";
+char D_0069DA00[8] = "%d";
+char D_0069DA08[8] = "----";

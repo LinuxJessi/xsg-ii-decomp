@@ -96,7 +96,7 @@ void dataFaceFileLoad(void) {
 }
 
 char *strcpy(char *, const char *);
-char *func_002AA7F0(char *, char *);
+char *strcat(char *, char *);
 void dataFileBufLoad(struct DataFileRecord *file_record, int path, int size);
 extern char *dataBattleSeName;
 extern char *dataVoiceDirPath;
@@ -108,12 +108,12 @@ extern char dataPathBuf[];
 void dataBattleSeLoad(void)
 {
     strcpy(dataPathBuf, dataVoiceDirPath);
-    func_002AA7F0(dataPathBuf, dataBattleSeName);
-    func_002AA7F0(dataPathBuf, dataPrjExt);
+    strcat(dataPathBuf, dataBattleSeName);
+    strcat(dataPathBuf, dataPrjExt);
     dataFileBufLoad(&dataBattleSeRecords.prj, dataPathBuf, 0x800);
     strcpy(dataPathBuf, dataVoiceDirPath);
-    func_002AA7F0(dataPathBuf, dataBattleSeName);
-    func_002AA7F0(dataPathBuf, dataVsfExt);
+    strcat(dataPathBuf, dataBattleSeName);
+    strcat(dataPathBuf, dataVsfExt);
     dataFileBufLoad(&dataBattleSeRecords.vsf, dataPathBuf, 0x1E800);
 }
 
@@ -147,17 +147,17 @@ int dataUnitFilesLoad(char *table, char *name, int index, int value)
     int total;
 
     strcpy(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataEpfExt);
+    strcat(dataPathBuf, dataEpfExt);
     table_entry = table + index * 0x30;
     total = dataFileSlotLoad(table_entry + 0x34, dataPathBuf, table, value);
     strcpy(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataXhrExt);
+    strcat(dataPathBuf, dataXhrExt);
     total += dataFileSlotLoad(table_entry + 0x28, dataPathBuf, table, value);
     strcpy(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataTxyExt);
+    strcat(dataPathBuf, dataTxyExt);
     total += dataFileSlotLoad(table_entry + 0x1C, dataPathBuf, table, value);
     strcpy(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataPxyExt);
+    strcat(dataPathBuf, dataPxyExt);
     return total + dataFileSlotLoad(table_entry + 0x10, dataPathBuf, table, value);
 }
 
@@ -168,8 +168,8 @@ int dataMotFileLoad(char *table, char *name, int index, int value)
 {
     char **table_ref = &table;
     strcpy(dataPathBuf, dataMotDirPath);
-    func_002AA7F0(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataXapExt);
+    strcat(dataPathBuf, name);
+    strcat(dataPathBuf, dataXapExt);
     return dataFileSlotLoad(*table_ref + index * 0x18 + 0xD0, dataPathBuf, *table_ref, value);
 }
 
@@ -183,12 +183,12 @@ int dataVoiceFilesLoad(DataVoiceBlock *block, char *name, int flag)
         voice_buffer = ov01HeapAlloc(block->prj_size + block->vsf_size);
     }
     strcpy(dataPathBuf, dataVoiceDirPath);
-    func_002AA7F0(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataPrjExt);
+    strcat(dataPathBuf, name);
+    strcat(dataPathBuf, dataPrjExt);
     prj_loaded = dataFileSlotLoad(block->prj_slot, dataPathBuf, &voice_buffer, flag);
     strcpy(dataPathBuf, dataVoiceDirPath);
-    func_002AA7F0(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataVsfExt);
+    strcat(dataPathBuf, name);
+    strcat(dataPathBuf, dataVsfExt);
     return prj_loaded + dataFileSlotLoad(block->vsf_slot, dataPathBuf, &voice_buffer, flag);
 }
 
@@ -226,13 +226,13 @@ int dataMapFileLoad(char *table, char *name, int index, int value)
     int first_loaded;
 
     strcpy(dataPathBuf, dataMapDirPath);
-    func_002AA7F0(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataPxyExt);
+    strcat(dataPathBuf, name);
+    strcat(dataPathBuf, dataPxyExt);
     table_entry = table + index * 0x18;
     first_loaded = dataFileSlotLoad(table_entry + 0xC, dataPathBuf, table, value);
     strcpy(dataPathBuf, dataMapDirPath);
-    func_002AA7F0(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataTxyExt);
+    strcat(dataPathBuf, name);
+    strcat(dataPathBuf, dataTxyExt);
     return first_loaded + dataFileSlotLoad(table_entry + 0x18, dataPathBuf, table, value);
 }
 
@@ -242,17 +242,17 @@ int dataEntryFilesLoad(char *table, char *name, int index, int value)
     int total;
 
     strcpy(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataEpfExt);
+    strcat(dataPathBuf, dataEpfExt);
     table_entry = table + index * 0x30;
     total = dataFileSlotLoad(table_entry + 0x2C, dataPathBuf, table, value);
     strcpy(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataXhrExt);
+    strcat(dataPathBuf, dataXhrExt);
     total += dataFileSlotLoad(table_entry + 0x20, dataPathBuf, table, value);
     strcpy(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataTxyExt);
+    strcat(dataPathBuf, dataTxyExt);
     total += dataFileSlotLoad(table_entry + 0x14, dataPathBuf, table, value);
     strcpy(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataPxyExt);
+    strcat(dataPathBuf, dataPxyExt);
     return total + dataFileSlotLoad(table_entry + 0x08, dataPathBuf, table, value);
 }
 
@@ -260,8 +260,8 @@ void dataMotSlotLoad(char *table, char *name, int index, int value)
 {
     char **table_ref = &table;
     strcpy(dataPathBuf, dataMotDirPath);
-    func_002AA7F0(dataPathBuf, name);
-    func_002AA7F0(dataPathBuf, dataXapExt);
+    strcat(dataPathBuf, name);
+    strcat(dataPathBuf, dataXapExt);
     dataFileSlotLoad(*table_ref + index * 0xC + 0x38, dataPathBuf, *table_ref, value);
 }
 
@@ -391,7 +391,7 @@ struct DataEntry *dataModelEntryLoad(int table_index) {
     entry = dataEntryBlockGet();
     strcpy(dataEntryPathBuf, dataModelDirPath);
     table_text = dataModelNameGet(table_index);
-    func_002AA7F0(dataEntryPathBuf, table_text);
+    strcat(dataEntryPathBuf, table_text);
     entry->index = table_index;
     dataEntryFilesLoad(entry, dataEntryPathBuf, 0, 0);
     dataEntryFilesLoad(entry, dataEntryPathBuf, 0, 1);
