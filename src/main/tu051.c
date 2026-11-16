@@ -2286,7 +2286,6 @@ int uwamonoFindSelected(void);
 void uwamonoSendEvent(int kind, int id, int value);
 void uwamonoTriggerRecord(int index);
 void uwamonoReleaseHandles(void);
-void XenoActorSetSelector(struct XenoActor *actor, int selector);
 float atan2f(float y, float x);
 float func_002A1B30(float value);
 float Get_Decimal_Surplus_for_Radius(float angle);

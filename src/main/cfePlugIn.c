@@ -39,6 +39,7 @@ extern unsigned char cfeAssertFile[];
 #define CFE_KEY_RESET_FIRST 0x8
 #define CFE_KEY_RESET_SECOND 0x10
 
+/* The text "0" of the default cases' assert(0). */
 extern unsigned char cfeAssertZero[];
 
 /* Sets key `key` of the value list to `value` in a CFE_KEY_MODE_* mode: plain (cfeListSetValue) or
@@ -353,8 +354,6 @@ void cfeMapInitRecords(CfeGroup *group)
     }
 }
 
-void XenoActorSetModeInSlot(void *, int, int);
-float XenoActorSetSelector(void *, int);
 int VM_PLUGIN_CNT_GET(int handle);
 int vmArgGet(int, int);
 char *vmKeyedEntryGet(int, int);
@@ -419,7 +418,7 @@ extern unsigned char cfeActorAssert[];
 extern int cfeEntryCount;
 extern CfeNode cfeEntries[];
 
-/* Script command (1 argument): loads actor argument 1 into the next entry of cfeEntries, copies the play
+/* Script command `cfe.ldAt` (1 argument): loads actor argument 1 into the next entry of cfeEntries, copies the play
  * range of its first motion state, sets draw mode 6 and allocates a cleared record block of two words per
  * pack geometry. */
 int cfe_0024BA70(int handle)
@@ -510,7 +509,7 @@ extern CfeEvalCommand cfeCommands[];
 /* The initial scale of a command (1, 1, 1). */
 extern const AlignedVector4 cfeUnitScale;
 
-/* Script command (2 or 3 arguments): starts the effect of the next command of cfeCommands (page index
+/* Script command `cfe.ldEf` (2 or 3 arguments): starts the effect of the next command of cfeCommands (page index
  * and offset; the 3-argument form also gives the bank flag) and sets the command's position and
  * rotation to the origin and its scale to cfeUnitScale. */
 int cfe_0024BD28(int handle)
@@ -550,7 +549,7 @@ int cfe_0024BD28(int handle)
 }
 
 
-/* Script command (1 argument): loads resource argument 1 as the object of the next group; when its
+/* Script command `cfe.ldMp` (1 argument): loads resource argument 1 as the object of the next group; when its
  * pack has a part pack, the group gets it, its matrices and one cleared record per geometry. */
 int cfe_0024BEF0(int handle)
 {
@@ -631,7 +630,7 @@ extern CfeCdSlot xglCdSlotTable[];
 /* Entries of xglCdSlotTable the walk may visit. */
 #define CFE_CD_SLOT_LAST 0x7F
 
-/* Script command (1 argument): opens the movie named by argument 1 in the next entry of
+/* Script command `cfe.ldMnt` (1 argument): opens the movie named by argument 1 in the next entry of
  * cfeEvalEntries: reads the file into a new block (walking the block table when the allocation
  * fails), opens it and allocates its two frame buffers. */
 int cfe_0024C0D8(int handle)
@@ -654,7 +653,9 @@ int cfe_0024C0D8(int handle)
     } while (xglCdServiceIfPending() != 0);
     xglCdReadFile(entry->name, entry->movie.source, 0, 1);
     entry->movie.loop = 1;
-    /* The original's assert macro also tests its message string cfeMovieOpenFailedText. */
+    /* assert(!"failed movie open
+") inside `if (xglMovieOpen(...) != 0)`: the string is the assert's own
+     * condition, so the test of cfeMovieOpenFailedText is the assert. */
     if (xglMovieOpen(&entry->movie, 0) != 0 && cfeMovieOpenFailedText != 0) {
         assertFailed(cfeMovieOpenAssert, cfeAssertFile, 604);
     }
@@ -716,7 +717,7 @@ extern const AlignedVector4 cfeParkedPosition;
 #define CFE_RECORD_FLAG_400000 0x400000
 #define CFE_RECORD_FLAG_800000 0x800000
 
-/* Script command: ends the map scene for a cut scene. Waits for the CD, resets the messages, the
+/* Script command `cfe.init`: ends the map scene for a cut scene. Waits for the CD, resets the messages, the
  * font, the path slot and the sound levels, restarts the cut-scene state, releases the actors of the
  * player and part records (moved to cfeParkedPosition first) and marks every used record, then frees all
  * actors and resets the camera and the fade. */
@@ -775,7 +776,7 @@ int cfe_0024C308(int handle)
 /* The key lists at +0x130 of each 0x1B0-byte entry of cfeEntries. */
 extern CfeTrackNode *D_006319F0[][108];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_006319F0 to the 8.8 value.
+/* Script command `cfe.stKyAt` (5 arguments): sets key `key` of list [index][sub] of D_006319F0 to the 8.8 value.
  * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
  * cfeListSetValue); the flagged forms are used when `flagged` is set. */
 int cfe_0024C500(int handle)
@@ -812,7 +813,7 @@ int cfe_0024C500(int handle)
 
 extern CfeTrackNode *D_00631A54[][108];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_00631A54
+/* Script command `cfe.stKyAtHd` (5 arguments): sets key `key` of list [index][sub] of D_00631A54
  * (the lists at +0x194 of each 0x1B0-byte entry of cfeEntries) to the 8.8 value, with flag
  * 0x2 (cfeListSetValueLinear) when `flagged` is set. */
 int cfe_0024C7B8(int handle)
@@ -842,7 +843,7 @@ int cfe_0024C7B8(int handle)
 extern unsigned char cfeArgCount6Assert[];
 extern CfeNode cfeEntries[];
 
-/* Script command (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
+/* Script command `cfe.stKyAtPrts` (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
  * to the 8.8 value (flagged through cfeListSetValueLinear when `flagged` is set), then walks that track to its
  * end. */
 int cfe_0024C940(int handle)
@@ -883,7 +884,7 @@ typedef struct CfeStudioBlock {
 
 extern CfeStudioBlock cfeCamera;
 
-/* Script command (4 arguments): fetches the studio camera and sets key `key` of camera list `index`
+/* Script command `cfe.stKyCm` (4 arguments): fetches the studio camera and sets key `key` of camera list `index`
  * to the 8.8 value in `mode`; lists 3 to 5 go through cfeListSetAngleKeyMode, the others through
  * cfeListSetKeyMode. */
 int cfe_0024CB80(int handle)
@@ -911,7 +912,7 @@ int cfe_0024CB80(int handle)
 
 extern CfeTrackNode *D_0063857C[][32];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063857C to the 8.8 value.
+/* Script command `cfe.stKyEf` (5 arguments): sets key `key` of list [index][sub] of D_0063857C to the 8.8 value.
  * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
  * cfeListSetValue); the flagged forms are used when `flagged` is set. */
 int cfe_0024CCF8(int handle)
@@ -948,7 +949,7 @@ int cfe_0024CCF8(int handle)
 
 extern CfeTrackNode *D_0063A54C[][16];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063A54C to the 8.8 value.
+/* Script command `cfe.stKyLgt` (5 arguments): sets key `key` of list [index][sub] of D_0063A54C to the 8.8 value.
  * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
  * cfeListSetValue); the flagged forms are used when `flagged` is set. */
 int cfe_0024CF70(int handle)
@@ -983,7 +984,7 @@ int cfe_0024CF70(int handle)
     return 1;
 }
 
-/* Script command (6 or 5 arguments): sets key `key` of a list of group `group` to the 8.8 value. With
+/* Script command `cfe.stKyMp` (6 or 5 arguments): sets key `key` of a list of group `group` to the 8.8 value. With
  * 6 arguments the list is source `sub` of the record of part `part` (sources 3 to 5 hold angles),
  * with 5 the group's own list `sub`; the flagged forms are used when `flagged` is set. */
 int cfe_0024D1E8(int handle)
@@ -1032,7 +1033,7 @@ int cfe_0024D1E8(int handle)
 
 extern CfeTrackNode *D_0063CDE0[];
 
-/* Script command (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
+/* Script command `cfe.stKyFog` (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
  * with flag 0x2 (cfeListSetValueLinear) when `flagged` is set. */
 int cfe_0024D5E0(int handle)
 {
@@ -1058,7 +1059,7 @@ int cfe_0024D5E0(int handle)
 
 extern CfeTrackNode *D_0063ACB4[][140];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4
+/* Script command `cfe.stKyMnt` (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4
  * (140 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
  * `flagged` is set. */
 int cfe_0024D738(int handle)
@@ -1087,7 +1088,7 @@ int cfe_0024D738(int handle)
 
 extern CfeTrackNode *D_0063CE0C[][6];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C
+/* Script command `cfe.stKyScrEff` (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C
  * (6 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
  * `flagged` is set. */
 int cfe_0024D8C0(int handle)
@@ -1116,7 +1117,7 @@ int cfe_0024D8C0(int handle)
 
 extern CfeTrackNode *D_0063CE90[][20];
 
-/* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE90
+/* Script command `cfe.stKySnd` (5 arguments): sets key `key` of list [index][sub] of D_0063CE90
  * (20 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
  * `flagged` is set. */
 int cfe_0024DA40(int handle)
@@ -1145,9 +1146,9 @@ int cfe_0024DA40(int handle)
 
 /* One 0x44C-byte message record of cfeMessages (cfe_0024DBC0 allocates them). */
 typedef struct CfeMessageRecord {
-    int first;                  /* +0x000: script argument 2 */
-    int second;                 /* +0x004: script argument 3 */
-    int third;                  /* +0x008: script argument 5 (5-argument form only) */
+    int firstFrame;             /* +0x000: script argument 2, the first frame the text is shown */
+    int endFrame;               /* +0x004: script argument 3, the frame it is gone again */
+    int soundSlot;              /* +0x008: script argument 5 (5-argument form only), the sound slot */
     char text[0x400];           /* +0x00C */
     char name[0x40];            /* +0x40C: script argument 4 (5-argument form), else empty */
 } CfeMessageRecord;
@@ -1155,7 +1156,7 @@ typedef struct CfeMessageRecord {
 extern CfeMessageRecord *cfeMessages;
 extern unsigned char cfeMessageAssert[];
 
-/* Script command (1 argument): allocates and clears argument 1 message records for cfeMessages. */
+/* Script command `cfe.allocMes` (1 argument): allocates and clears argument 1 message records for cfeMessages. */
 int cfe_0024DBC0(int handle)
 {
     int count;
@@ -1180,9 +1181,9 @@ int cfe_0024DBC0(int handle)
 extern int cfePlugInRecordCount;
 extern const char cfeEmptyName[];
 
-/* Script command (3 or 5 arguments): fills the next message record with the unescaped, laid-out text
+/* Script command `cfe.setMes` (3 or 5 arguments): fills the next message record with the unescaped, laid-out text
  * of argument 1 and arguments 2 and 3; the 5-argument form also sets the name (argument 4) and the
- * third value (argument 5). */
+ * sound slot (argument 5). */
 int cfe_0024DC78(int handle)
 {
     CfeMessageRecord *record = &cfeMessages[cfePlugInRecordCount];
@@ -1191,8 +1192,8 @@ int cfe_0024DC78(int handle)
         memset(record->text, 0, sizeof(record->text));
         cfeMesUnescape(record->text, vmKeyedEntryGet(handle, vmArgGet(handle, 1)));
         cfeMesLayoutText(record->text);
-        record->first = vmArgGet(handle, 2);
-        record->second = vmArgGet(handle, 3);
+        record->firstFrame = vmArgGet(handle, 2);
+        record->endFrame = vmArgGet(handle, 3);
         /* The empty name: the original copies the one byte of the empty string cfeEmptyName (an inlined
          * strcpy). */
         record->name[0] = cfeEmptyName[0];
@@ -1201,10 +1202,10 @@ int cfe_0024DC78(int handle)
         memset(record->text, 0, sizeof(record->text));
         cfeMesUnescape(record->text, vmKeyedEntryGet(handle, vmArgGet(handle, 1)));
         cfeMesLayoutText(record->text);
-        record->first = vmArgGet(handle, 2);
-        record->second = vmArgGet(handle, 3);
+        record->firstFrame = vmArgGet(handle, 2);
+        record->endFrame = vmArgGet(handle, 3);
         cfeMesUnescape(record->name, vmKeyedEntryGet(handle, vmArgGet(handle, 4)));
-        record->third = vmArgGet(handle, 5);
+        record->soundSlot = vmArgGet(handle, 5);
         cfePlugInRecordCount++;
     }
     return 1;
@@ -1294,10 +1295,10 @@ int strcmp(const char *first, const char *second);
 #define CFE_SLOT_SHORT 0.03f
 
 
-/* Script command (1 argument): one frame of the cut scene at the time in argument 1. Start pauses and resumes
- * (triangle while paused skips 30000 frames ahead), the cut scene is evaluated (camera, directions, nodes,
- * groups, commands, entries, slots, sound) and drawn with its subtitles, and the time to continue with is
- * returned: one frame later unless paused. */
+/* Script command `cfe.stFrm` (1 argument): one frame of the cut scene at the time in argument 1. Start pauses and
+ * resumes (triangle while paused skips 30000 frames ahead), the cut scene is evaluated (camera, directions, nodes,
+ * groups, commands, entries, slots, sound) and drawn with its subtitles, and the time to continue with is returned:
+ * one frame later unless paused. */
 int cfe_0024DF60(int handle)
 {
     CfeNode *entry;
@@ -1325,7 +1326,7 @@ int cfe_0024DF60(int handle)
         }
     }
     if (cfePlugInRecordCount > 0 && time == cfeRangeGetMin() && strcmp(cfeMessages->name, cfeEmptyName) != 0) {
-        cfeRunAndWait(cfeMessages->name, cfeMessages->third);
+        cfeRunAndWait(cfeMessages->name, cfeMessages->soundSlot);
     }
     if (cfePaused == 0) {
         cfeCameraEvaluate(time, 0);
@@ -1341,7 +1342,7 @@ int cfe_0024DF60(int handle)
     cfeSndSetTarget(time);
     /* PxyShadowLight is nml_model_set.c's view of the light set. */
     pxySetDefaultLight((struct PxyShadowLight *) &cfeLightSet);
-    if (cfeEvalGlobal.result_int != 0) {
+    if (cfeEvalGlobal.fogEnabled != 0) {
         pxySetGlobalFogDist(cfeEvalGlobal.evaluated[1].x, cfeEvalGlobal.evaluated[1].y, cfeEvalGlobal.evaluated[1].z,
                             cfeEvalGlobal.evaluated[1].w);
         pxySetGlobalFogColor(&cfeEvalGlobal.evaluated[0]);
@@ -1358,13 +1359,13 @@ int cfe_0024DF60(int handle)
         fadeStartIn(30);
     }
     for (i = 0; i < cfePlugInRecordCount; i++) {
-        if (cfeMessages[i].first <= time && time < cfeMessages[i].second && cfeMessages[i].first == time
+        if (cfeMessages[i].firstFrame <= time && time < cfeMessages[i].endFrame && cfeMessages[i].firstFrame == time
             && strcmp(cfeMessages[i].name, cfeEmptyName) != 0 && cfePaused == 0) {
-            soundSlotSetLevel(cfeMessages[i].third, 0);
+            soundSlotSetLevel(cfeMessages[i].soundSlot, 0);
         }
     }
     for (i = 0; i < cfePlugInRecordCount; i++) {
-        if (cfeMessages[i].first <= time && time < cfeMessages[i].second
+        if (cfeMessages[i].firstFrame <= time && time < cfeMessages[i].endFrame
             && (SaveData.captionAll != 0 || cfeMessages[i].text[0] == ' ')) {
             y = CFE_SUBTITLE_Y;
             if (cfeStrCountChar(cfeMessages[i].text, '\n') >= 2) {
@@ -1472,7 +1473,7 @@ extern UwamonoObject uwamonoRecords[];
 /* The record flag the cut-scene end clears on the current record. */
 #define CFE_RECORD_FLAG_2 0x2
 
-/* Script command: ends a cut scene. Stops both sound slots and the owned effects, copies the shown
+/* Script command `cfe.destroy`: ends a cut scene. Stops both sound slots and the owned effects, copies the shown
  * frame to the drawn one, clears the scene control bits and the current record's flag 0x2, frees the
  * message records, the group and entry buffers, the collision, wind, actors and resource slots, and
  * gives the player and part records new actors. */

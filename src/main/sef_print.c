@@ -19,7 +19,7 @@ extern const char tracePrintFormat[];
 extern int printf(const char *format, ...);
 extern int vsprintf(char *buffer, const char *format, va_list args);
 extern const char tracePrintFormat[8];
-extern PadRecord PadData;
+extern PadRecord PadData[];
 
 /* The reset message resetWaitForPad shows. */
 extern const char resetText[];
@@ -27,7 +27,7 @@ extern const char resetText[];
 /* Shows the reset message until SELECT and START are held together. */
 void resetWaitForPad(void)
 {
-    while ((PadData.heldAndPressed & (PAD_SELECT | PAD_START)) != (PAD_SELECT | PAD_START)) {
+    while ((PadData[0].heldAndPressed & (PAD_SELECT | PAD_START)) != (PAD_SELECT | PAD_START)) {
         xglFontDebugPrintf(8, 8, resetText);
         xglRenderClearFrame();
         xglSleep();

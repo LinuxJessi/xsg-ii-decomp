@@ -126,6 +126,9 @@ void gifStateFlush(void);
 /* The water state template sent by tiWaterSendStateTemplate, and its length for sceVif1PkAddDataN. */
 extern u64 tiWaterStateTemplate[];
 #define TI_WATER_STATE_TEMPLATE_COUNT 0x3C
+/* The two words tiWaterSendStateTemplate patches: the data of the FRAME_1 and TEX0_1 A+D pairs. */
+#define TI_WATER_TEMPLATE_FRAME_1 (0x60 / 8)
+#define TI_WATER_TEMPLATE_TEX0_1 (0x70 / 8)
 
 /* Sends the water state template: FRAME_1 at the frame buffer and TEX0_1 on the display buffer
  * (512 x 512, with alpha) are patched in, then the template goes out as direct data. */
@@ -133,8 +136,8 @@ void tiWaterSendStateTemplate(void)
 {
     XglPacket *packet = xglPacketGetCurrent();
 
-    tiWaterStateTemplate[0x60 / 8] = GS_SET_FRAME(sRender.frame_base, 8, 0, 0);
-    tiWaterStateTemplate[0x70 / 8] = GS_SET_TEX0(sRender.display_base << 5, 8, 0, 9, 9, 1, 0, 0, 0, 0, 0, 0);
+    tiWaterStateTemplate[TI_WATER_TEMPLATE_FRAME_1] = GS_SET_FRAME(sRender.frame_base, 8, 0, 0);
+    tiWaterStateTemplate[TI_WATER_TEMPLATE_TEX0_1] = GS_SET_TEX0(sRender.display_base << 5, 8, 0, 9, 9, 1, 0, 0, 0, 0, 0, 0);
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
     sceVif1PkAddDataN(packet, tiWaterStateTemplate, TI_WATER_STATE_TEMPLATE_COUNT);
@@ -277,8 +280,6 @@ float tiWaterVectorAngle(float x, float y)
 
 /* Source steps per unit of pad direction. */
 #define TI_WATER_SOURCE_STEP 0.001f
-/* PadRecord.directionBits: the bits of directionX and directionY. */
-#define TI_WATER_DIRECTION_MASK 0xFFFF000000000000ULL
 
 /* Moves the water source actor by the pad direction of port 0 (cross enables its channel). While a direction
  * is held, it turns the actor towards it and disturbs every registered water table at the actor's position.
@@ -294,7 +295,7 @@ void tiWaterUpdateSource(struct XenoActor *actor)
     if (PadData[0].held & PAD_CROSS) {
         XenoActorEnableChannel(actor);
     }
-    if (PadData[0].directionBits & TI_WATER_DIRECTION_MASK) {
+    if (PadData[0].directionX != 0 || PadData[0].directionY != 0) {
         actor->rotation.y = tiWaterVectorAngle(PadData[0].directionY, PadData[0].directionX);
         for (i = 0; i < tiWaterSubCount; i++) {
             /* TiWatSimTable is TiWatSim.c's view of a TiWaterSub. */
@@ -335,8 +336,6 @@ struct XenoActor *XenoActorAlloc(void);
 void XenoActorAllocMatrices(struct XenoActor *actor);
 void XenoActorSetMode(struct XenoActor *actor, int mode);
 void func_001BA68C(void);
-/* gifState.c defines it; sdv_183.c declares it with a float pointer, so it has no header prototype yet. */
-void nmlModelSetMulColor(Vector4 *color);
 extern const char tiWaterLandscapeName[];
 extern const char tiWaterSourceFile[];
 extern const char tiWaterLandscapeModelPath[];

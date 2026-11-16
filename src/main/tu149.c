@@ -49,10 +49,6 @@ void msgResetValues(void) {
     msgTotalValue = msgBalance;
 }
 
-/* Per frame: the shown value rolls down by 100 toward the total. UP and DOWN
- * move the selection. CROSS (0x40) resets the window. CIRCLE (0x20) buys the
- * selected item when its count is above zero: the cost comes off the total
- * (floored at 0) and the count drops by one. */
 extern unsigned short textOptionFlags;
 int msgWindowTestCurrentFlags(void *window, int mask);
 void msgWindowRunAll(void *window);
@@ -62,7 +58,11 @@ void func_002512B0(void);
 void dataBoxDecCategory1(int item);
 void dataBoxDecCategory2(int item);
 
-/* Returns the shown value once the purchase window closes (it also becomes msgBalance), else -1. */
+/* Per frame: the shown value rolls down by 100 toward the total (at once while the text option bit 0x20,
+ * which the message windows of tu099/tu113 also test, is set). UP and DOWN move the selection, CROSS (0x40)
+ * resets the window, CIRCLE (0x20) buys the selected item when its count is above zero: the cost comes off
+ * the total (floored at 0) and the count drops by one. Returns the shown value once the purchase window
+ * closes (it also becomes msgBalance), else -1. */
 int msgPurchaseUpdate(void)
 {
     int item;

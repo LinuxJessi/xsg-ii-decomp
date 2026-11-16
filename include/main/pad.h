@@ -49,15 +49,9 @@ typedef struct PadRecord {
     short verticalPressure;           /* +0x3E */
     unsigned char unmodeled_40[0x56 - 0x40];
     unsigned char actuatorMode;       /* +0x56: the actuator setting (SaveData +0x3E, tu060.c's name) */
-    unsigned char unmodeled_57[0x60 - 0x57];
-    union {
-        struct {
-            unsigned char unmodeled_60[6];
-            signed char directionX;   /* +0x66 */
-            signed char directionY;   /* +0x67 */
-        };
-        unsigned long long directionBits; /* +0x60: directionX and directionY are its top two bytes */
-    };
+    unsigned char unmodeled_57[0x66 - 0x57];
+    signed char directionX;           /* +0x66 */
+    signed char directionY;           /* +0x67 */
     unsigned char unmodeled_68[0x80 - 0x68];
 } PadRecord;
 

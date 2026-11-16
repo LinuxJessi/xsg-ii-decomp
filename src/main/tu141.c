@@ -191,7 +191,7 @@ extern CfeEvalGlobal cfeEvalGlobal;
 void cfeEvalGlobalInit(void)
 {
     memset(&cfeEvalGlobal, 0, sizeof(cfeEvalGlobal));
-    cfeEvalGlobal.result_int = 0;
+    cfeEvalGlobal.fogEnabled = 0;
     cfeEvalGlobal.evaluated[0].x = 255.0f;
     cfeEvalGlobal.evaluated[0].y = 255.0f;
     cfeEvalGlobal.evaluated[0].z = 255.0f;

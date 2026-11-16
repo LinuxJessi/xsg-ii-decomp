@@ -17,7 +17,6 @@ static PxyEntry pxyEntries[PXY_ENTRY_COUNT];
 extern signed char pxyTickScaleDouble[];
 int strcmp(const char *, const char *);
 char *strcpy(char *, const char *);
-int fptodp(float);
 int sprintf(char *, const char *, ...);
 int pxyDrawStringShadow(const char *str, int x, int y, float scale, u32 color, u32 depth, int flush);
 const char D_0068F000[16] = "%s  %3.2f";
@@ -240,7 +239,7 @@ float pxyEnd(const char *name)
         result = (float) pxyEntries[found].totalTicks * msPerTick;
         textLine = pxyEntries[found].text;
         entryName = pxyEntries[found].name;
-        sprintf(textLine, D_0068F000, entryName, fptodp(result));
+        sprintf(textLine, D_0068F000, entryName, result);
     }
     return result;
 }

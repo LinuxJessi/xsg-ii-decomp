@@ -44,9 +44,9 @@ typedef struct CfeEvalSlot {
     CfeTrackNode *source_for_sample_int;
 } CfeEvalSlot;
 
-/* Global block at cfeEvalGlobal (cfeGlobalEvaluate): one result word, two vectors and eight source handles. */
+/* Global block at cfeEvalGlobal (cfeGlobalEvaluate): the fog switch, two vectors and eight source handles. */
 typedef struct CfeEvalGlobal {
-    int result_int;
+    int fogEnabled;             /* sampled from source[7]; cfe_0024DF60 sets the fog when it is set */
     unsigned char unmodeled_04[0x0C];
     Vector4 evaluated[2];
     CfeTrackNode *source[8];
@@ -108,7 +108,7 @@ typedef struct CfeEvalEntry {
     CfeEvalVector evaluated[3]; /* +0x110: position, angles, scale */
     AlignedVector4 corners[4];  /* +0x140: the quad the entry is drawn with (cfeEvalEntriesInit) */
     unsigned char unmodeled_180[0x80];
-    int result_int;
+    int rewind;                 /* +0x200: sampled from source[9]; cfeUpdateEntries rewinds the movie when set */
     CfeTrackNode *source[10];
     unsigned char unmodeled_22c[4];
 } CfeEvalEntry;

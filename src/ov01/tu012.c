@@ -140,7 +140,6 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A849C8);
 /* Does nothing for value 0; else sets status bit 2 on the unit and calls the timing helpers on it and on children with 0x600 set. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A84B68);
 
-f32 XenoActorSetSelector(void *, int);
 
 /* For motion modes 1 to 10: the unit's timing call with 7.0f, then XenoActorSetSelector with the selector. */
 void unitSetSelector(Ov01Object *object, int selector) {

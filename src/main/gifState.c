@@ -200,10 +200,6 @@ typedef struct GifCameraPacket {
 /* The GIF tag template of the camera quad (the vertex count is or-ed in). */
 extern u32 gifCameraQuadTag[4];
 
-/* The far corner of the quad in pixels and texels. */
-#define GIF_CAMERA_RIGHT 511
-#define GIF_CAMERA_BOTTOM 447
-
 /* Draws the shown page again as a 512x448 sprite, offset on the screen by the blur direction turned into
  * the active camera's view and scaled by the blur amount, with the effect alpha faded by the ratio; then
  * lowers the ratio by its step. Nothing is drawn once the ratio is down to 0. */
@@ -251,30 +247,30 @@ void gifStateDrawCameraQuad(XglPacket *packet)
     cursor[6] = gifStatus.depth;
     cursor[7] = 0;
     cursor = GIF_CAMERA_PACKET->vertex[1].uv;
-    cursor[0] = GIF_CAMERA_RIGHT << 4;
+    cursor[0] = (GIF_STATE_WIDTH - 1) << 4;
     cursor[1] = 0;
     cursor[2] = 0;
     cursor[3] = 0;
-    cursor[4] = ((gifStateOriginX + corners[1][0] + GIF_CAMERA_RIGHT) << 4) - 8;
+    cursor[4] = ((gifStateOriginX + corners[1][0] + (GIF_STATE_WIDTH - 1)) << 4) - 8;
     cursor[5] = ((gifStateOriginY + corners[1][1]) << 4) - 9;
     cursor[6] = gifStatus.depth;
     cursor[7] = 0;
     cursor = GIF_CAMERA_PACKET->vertex[2].uv;
     cursor[0] = 0;
-    cursor[1] = GIF_CAMERA_BOTTOM << 4;
+    cursor[1] = (GIF_STATE_HEIGHT - 1) << 4;
     cursor[2] = 0;
     cursor[3] = 0;
     cursor[4] = ((gifStateOriginX + corners[2][0]) << 4) - 8;
-    cursor[5] = ((gifStateOriginY + corners[2][1] + GIF_CAMERA_BOTTOM) << 4) - 9;
+    cursor[5] = ((gifStateOriginY + corners[2][1] + (GIF_STATE_HEIGHT - 1)) << 4) - 9;
     cursor[6] = gifStatus.depth;
     cursor[7] = 0;
     cursor = GIF_CAMERA_PACKET->vertex[3].uv;
-    cursor[0] = GIF_CAMERA_RIGHT << 4;
-    cursor[1] = GIF_CAMERA_BOTTOM << 4;
+    cursor[0] = (GIF_STATE_WIDTH - 1) << 4;
+    cursor[1] = (GIF_STATE_HEIGHT - 1) << 4;
     cursor[2] = 0;
     cursor[3] = 0;
-    cursor[4] = ((gifStateOriginX + corners[3][0] + GIF_CAMERA_RIGHT) << 4) - 8;
-    cursor[5] = ((gifStateOriginY + corners[3][1] + GIF_CAMERA_BOTTOM) << 4) - 9;
+    cursor[4] = ((gifStateOriginX + corners[3][0] + (GIF_STATE_WIDTH - 1)) << 4) - 8;
+    cursor[5] = ((gifStateOriginY + corners[3][1] + (GIF_STATE_HEIGHT - 1)) << 4) - 9;
     cursor[6] = gifStatus.depth;
     cursor[7] = 0;
     gifTag = GIF_CAMERA_PACKET->tag;
@@ -294,10 +290,6 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawJitterGrid);
 
 /* The GIF tag template of the fade quad (the vertex count is or-ed in). */
 extern u32 gifFadeQuadTag[4];
-
-/* The far corner of the fade quad in pixels and texels. */
-#define GIF_FADE_RIGHT 511
-#define GIF_FADE_BOTTOM 447
 
 /* Draws the shown page again as a 512x448 sprite whose corners move by the sub-window offsets scaled by
  * the ratio, with the effect alpha faded by the ratio; then lowers the ratio by its step. Nothing is
@@ -324,32 +316,32 @@ void gifStateDrawFadeQuad(XglPacket *packet)
     cursor[7] = 0;
     cursor += 8;
     count++;
-    cursor[0] = GIF_FADE_RIGHT << 4;
+    cursor[0] = (GIF_STATE_WIDTH - 1) << 4;
     cursor[1] = 0;
     cursor[2] = 0;
     cursor[3] = 0;
-    cursor[4] = (gifStateOriginX + GIF_FADE_RIGHT + gifStatus.subWindow[0] * gifStatus.ratio) * 16.0f - 8.0f;
+    cursor[4] = (gifStateOriginX + (GIF_STATE_WIDTH - 1) + gifStatus.subWindow[0] * gifStatus.ratio) * 16.0f - 8.0f;
     cursor[5] = (gifStateOriginY + gifStatus.subWindow[1] * gifStatus.ratio) * 16.0f - 9.0f;
     cursor[6] = gifStatus.depth;
     cursor[7] = 0;
     cursor += 8;
     count++;
     cursor[0] = 0;
-    cursor[1] = GIF_FADE_BOTTOM << 4;
+    cursor[1] = (GIF_STATE_HEIGHT - 1) << 4;
     cursor[2] = 0;
     cursor[3] = 0;
     cursor[4] = (gifStateOriginX + gifStatus.subWindow[2] * gifStatus.ratio) * 16.0f - 8.0f;
-    cursor[5] = (gifStateOriginY + GIF_FADE_BOTTOM + gifStatus.subWindow[3] * gifStatus.ratio) * 16.0f - 9.0f;
+    cursor[5] = (gifStateOriginY + (GIF_STATE_HEIGHT - 1) + gifStatus.subWindow[3] * gifStatus.ratio) * 16.0f - 9.0f;
     cursor[6] = gifStatus.depth;
     cursor[7] = 0;
     cursor += 8;
     count++;
-    cursor[0] = GIF_FADE_RIGHT << 4;
-    cursor[1] = GIF_FADE_BOTTOM << 4;
+    cursor[0] = (GIF_STATE_WIDTH - 1) << 4;
+    cursor[1] = (GIF_STATE_HEIGHT - 1) << 4;
     cursor[2] = 0;
     cursor[3] = 0;
-    cursor[4] = (gifStateOriginX + GIF_FADE_RIGHT + gifStatus.subWindow[2] * gifStatus.ratio) * 16.0f - 8.0f;
-    cursor[5] = (gifStateOriginY + GIF_FADE_BOTTOM + gifStatus.subWindow[3] * gifStatus.ratio) * 16.0f - 9.0f;
+    cursor[4] = (gifStateOriginX + (GIF_STATE_WIDTH - 1) + gifStatus.subWindow[2] * gifStatus.ratio) * 16.0f - 8.0f;
+    cursor[5] = (gifStateOriginY + (GIF_STATE_HEIGHT - 1) + gifStatus.subWindow[3] * gifStatus.ratio) * 16.0f - 9.0f;
     cursor[6] = gifStatus.depth;
     cursor[7] = 0;
     count++;
@@ -1230,14 +1222,14 @@ void gifStateReset(void) {
 extern const char gifStatePacketAssert[];
 extern const char gifStateSourceFile[];
 
-/* The assert bound: numPacket < (STATEPACKET_MAX - 1) quadwords after the tag. */
-#define GIF_STATE_PACKET_MAX 0x7F
+/* The queue size the assert names: numPacket < (STATEPACKET_MAX - 1). */
+#define STATEPACKET_MAX 0x80
 
 /* Queues the A+D pair (gifAddress, gifData) as the next quadword of gifStatePacket (asserts while the
  * packet is not full). */
 void gifStateAddReg(int gifAddress, u64 gifData)
 {
-    if ((unsigned int) gifStateNumPacket >= GIF_STATE_PACKET_MAX) {
+    if ((unsigned int) gifStateNumPacket >= STATEPACKET_MAX - 1) {
         assertFailed(gifStatePacketAssert, gifStateSourceFile, 37);
     }
     gifStateNumPacket++;
@@ -1248,7 +1240,7 @@ void gifStateAddReg(int gifAddress, u64 gifData)
 /* Queues four raw words as one quadword of gifStatePacket (asserts while the packet is not full). */
 void gifStateAddRawQword(u32 word0, u32 word1, u32 word2, u32 word3)
 {
-    if ((unsigned int) gifStateNumPacket >= GIF_STATE_PACKET_MAX) {
+    if ((unsigned int) gifStateNumPacket >= STATEPACKET_MAX - 1) {
         assertFailed(gifStatePacketAssert, gifStateSourceFile, 50);
     }
     gifStateNumPacket++;
@@ -1299,7 +1291,6 @@ void gifStateSetZBufFormat(void) {
     gifStateAddReg(GS_ZBUF_1, GS_SET_ZBUF(0, 0x31, 0));
 }
 
-#include "quadword.h"
 /* Sets the model multiply colour (a quadword copy). */
 void nmlModelSetMulColor(Vector4 *color)
 {

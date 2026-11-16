@@ -28,8 +28,6 @@ void cfeListUnlink(CfeTrackNode *prev, CfeTrackNode *node, CfeTrackNode *next) {
     }
 }
 
-CfeTrackNode *cfeListFindOrAdd(CfeTrackNode **list, int key);
-
 /* Node flag bits that finding a node clears (their meaning is not recovered). */
 #define CFE_NODE_FLAG_8 0x8
 #define CFE_NODE_FLAG_10 0x10

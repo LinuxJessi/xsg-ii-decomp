@@ -72,8 +72,6 @@ void cfeRecordListSample(int time, CfeFlagOwner *owner, CfeFlagRecord *records)
     }
 }
 
-void XenoActorSetModeInSlot(struct XenoActor *actor, int slot, int mode);
-float XenoActorSetSelector(struct XenoActor *actor, int selector);
 int XenoActorReleaseChild(struct XenoActor *parent, struct XenoActor *child);
 int XenoActorAppendChildOnJoint(struct XenoActor *parent, struct XenoActor *child, int joint);
 /* TiMRPackage.c takes its own view of the state (TiMRState). */
@@ -548,6 +546,10 @@ typedef struct CfeSpawnedEffect {
     int flags;                  /* +0x44 */
 } CfeSpawnedEffect;
 
+/* Effect record flag: the record is drawn without the view-volume test (sv_get_image_item.c's culling
+ * skips records with it). */
+#define CFE_EFFECT_NO_CULL 0x10
+
 void sefClearOwnerFlags(unsigned int id, int flags);
 void sefExecEffectSteps(CfeSpawnedEffect *effect, float frames, float steps);
 void sefSetRecordOwner(CfeSpawnedEffect *effect, void *owner);
@@ -578,7 +580,7 @@ void cfeCommandSpawn(CfeEvalCommand *command)
         effect->scale.element[1] = command->scale[1];
         effect->scale.element[2] = command->scale[2];
         sefExecEffectSteps(effect, command->frames, command->frames / 15 + 1);
-        effect->flags |= 0x10;
+        effect->flags |= CFE_EFFECT_NO_CULL;
     }
     if (command->owner >= 0 && effect != 0) {
         entry = cfeGetEntry(command->owner);
@@ -779,7 +781,7 @@ void cfeGlobalEvaluate(int sample_param)
         cfeEvalGlobal.evaluated[1].w = cfeTrackSample(cfeEvalGlobal.source[6], sample_param);
     }
     if (cfeEvalGlobal.source[7] != 0) {
-        cfeEvalGlobal.result_int = (int) cfeTrackSampleStep(cfeEvalGlobal.source[7], sample_param);
+        cfeEvalGlobal.fogEnabled = (int) cfeTrackSampleStep(cfeEvalGlobal.source[7], sample_param);
     }
 }
 
@@ -813,7 +815,7 @@ void cfeEntryEvaluate(CfeEvalEntry *entry, int sample_param) {
         entry->evaluated[2].vector.z = cfeTrackSample(entry->source[8], sample_param);
     }
     if (entry->source[9] != 0) {
-        entry->result_int = (int) cfeTrackSample(entry->source[9], sample_param);
+        entry->rewind = (int) cfeTrackSample(entry->source[9], sample_param);
     }
 }
 
@@ -923,20 +925,20 @@ extern unsigned short sRenderDepthBase;
  * depth test GEQUAL), submitted deferred. */
 void cfeDrawLine(int x0, int y0, int x1, int y1, unsigned int color0, unsigned int color1, unsigned int depth)
 {
-    u64 *p;
+    u64 *cursor;
     u64 *start;
 
     xglDirectQueueBegin();
-    p = (u64 *) &xglDirectQueueBuffer[xglDirectQueueCount];
-    start = p;
-    GS_PUT(p, GS_TEST_1, GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2));
-    GS_PUT(p, GS_ZBUF_1, GS_SET_ZBUF(sRenderDepthBase, 1, 0));
-    GS_PUT(p, GS_PRIM, GS_SET_PRIM(CFE_GS_PRIM_LINE, 1, 0, 0, 0, 0, 0, 0, 0));
-    GS_PUT(p, GS_RGBAQ, CFE_GS_RGBAQ(color0));
-    GS_PUT(p, GS_XYZF2, GS_SET_XYZ((x0 << 4) + CFE_GS_ORIGIN_X, (y0 << 4) + CFE_GS_ORIGIN_Y, depth));
-    GS_PUT(p, GS_RGBAQ, CFE_GS_RGBAQ(color1));
-    GS_PUT(p, GS_XYZF2, GS_SET_XYZ((x1 << 4) + CFE_GS_ORIGIN_X, (y1 << 4) + CFE_GS_ORIGIN_Y, depth));
-    xglDirectQueueCount += ((u32) p - (u32) start) >> 4;
+    cursor = (u64 *) &xglDirectQueueBuffer[xglDirectQueueCount];
+    start = cursor;
+    GS_PUT(cursor, GS_TEST_1, GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2));
+    GS_PUT(cursor, GS_ZBUF_1, GS_SET_ZBUF(sRenderDepthBase, 1, 0));
+    GS_PUT(cursor, GS_PRIM, GS_SET_PRIM(CFE_GS_PRIM_LINE, 1, 0, 0, 0, 0, 0, 0, 0));
+    GS_PUT(cursor, GS_RGBAQ, CFE_GS_RGBAQ(color0));
+    GS_PUT(cursor, GS_XYZF2, GS_SET_XYZ((x0 << 4) + CFE_GS_ORIGIN_X, (y0 << 4) + CFE_GS_ORIGIN_Y, depth));
+    GS_PUT(cursor, GS_RGBAQ, CFE_GS_RGBAQ(color1));
+    GS_PUT(cursor, GS_XYZF2, GS_SET_XYZ((x1 << 4) + CFE_GS_ORIGIN_X, (y1 << 4) + CFE_GS_ORIGIN_Y, depth));
+    xglDirectQueueCount += ((u32) cursor - (u32) start) >> 4;
     xglDirectQueueDefer(0, 10);
 }
 
@@ -1307,7 +1309,7 @@ void cfeUpdateEntries(int noPlay)
 
     if (cfeEvalEntryCount != 0) {
         for (i = 0; i < cfeEvalEntryCount; i++) {
-            if (cfeEvalEntries[i].result_int != 0) {
+            if (cfeEvalEntries[i].rewind != 0) {
                 xglMovieRewind(&cfeEvalEntries[i].movie);
             }
         if (__builtin_fabsf(cfeEvalEntries[i].evaluated[2].vector.x) < CFE_ENTRY_MIN_SCALE

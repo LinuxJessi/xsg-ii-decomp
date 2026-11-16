@@ -71,6 +71,7 @@ extern GifEffectDraw gifStateModeHook;
 void func_00246AF8(void);
 void func_00246DD8(int value);
 void gifStateClearModeValue(void);
+void nmlModelSetMulColor(Vector4 *color);
 void gifStateEnableEffect(void);
 void gifStateSuppressDrawHook(void);
 void nmlModelEnableSubWindow0(void);
