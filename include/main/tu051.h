@@ -32,7 +32,15 @@ struct XenoActor {
     int drawFlags;                          /* 0x0BC: 0x4 hides the actor, 0x08000000 draws it translucent */
     float alpha;                            /* 0x0C0 */
     int drawMode;                           /* 0x0C4: 1 while attached as a part (uwamonoAttachPlayerParts) */
-    unsigned char unmodeled_0c8[0x5A4 - 0xC8];
+    unsigned char unmodeled_0c8[0x150 - 0xC8];
+    float moveAngle;                        /* 0x150: XenoActorUpdateMoveState advances it to 1 (xenoActor.c names) */
+    float moveVelocity;                     /* 0x154 */
+    float shadowValue;                      /* 0x158 */
+    int shadowCount;                        /* 0x15C: XenoActorUpdateMoveState runs while it is set */
+    int moveState;                          /* 0x160: the state XenoActorUpdateMoveState switches on (0..7) */
+    float shadowValue2;                     /* 0x164 */
+    float shadowValue3;                     /* 0x168 */
+    unsigned char unmodeled_16c[0x5A4 - 0x16C];
     struct XenoActor *parent;               /* 0x5A4: the actor this one is attached to (XenoActorReleaseChild) */
     unsigned char unmodeled_5a8[0x5CC - 0x5A8];
     u32 flags;                              /* 0x5CC */

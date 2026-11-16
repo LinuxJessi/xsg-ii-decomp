@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "main/cfePlugIn.h"
 #include "main/elevator.h"
+#include "main/gifState.h"
 #include "main/tu072.h"
 #include "main/tu074.h"
 #include "main/tu075.h"
@@ -1132,11 +1133,9 @@ int runtimeSetLocater(int call)
     return 1;
 }
 
-void gifStateStartWhiteShake(int value);
-
 int runtimeSetLastDan(void)
 {
-    gifStateStartWhiteShake((int) uwamonoSlotTable[uwamonoCurrentIndex].actor);
+    gifStateStartWhiteShake(uwamonoSlotTable[uwamonoCurrentIndex].actor);
     return 1;
 }
 

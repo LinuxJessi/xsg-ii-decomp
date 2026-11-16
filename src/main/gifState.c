@@ -3,6 +3,7 @@
 #include "gs.h"
 #include "quadword.h"
 #include "main/gifState.h"
+#include "main/tu051.h"
 #include "main/nml_model_set.h"
 #include "main/TiWater.h"
 #include "main/tu026.h"
@@ -34,7 +35,6 @@ extern int gifStateOriginY;
 
 #define NML_WINDOW_COUNT 4
 
-extern int g_aSubWindow[NML_WINDOW_COUNT];
 
 INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateSetupContext);
 
@@ -874,7 +874,7 @@ void gifBreakShardUpdate(GifBreakShard *shard, f32 ratio)
             angle.y = shard->angle[1].f = shard->spin[1].f * scale;
             angle.z = shard->angle[2].f = shard->spin[2].f * scale;
         } else {
-            if (shard->fall.i > 0 && g_aSubWindow[0] != 0) {
+            if (shard->fall.i > 0 && gifStatus.subWindow[0] != 0) {
                 shard->fall.i--;
             }
             angle.x = 0.0f;
@@ -1304,11 +1304,9 @@ void gifStateSetEffectAlpha(int alphaType, int alpha) {
     gifStatus.effectAlpha = alpha;
 }
 
-extern f32 gifStateDecrease;
-
-/* Stores the decrease value of the effect; the reader of gifStateDecrease is not located yet. */
+/* Sets the ratio step of the effect: the draw functions lower the ratio by it each frame. */
 void gifStateSetDecrease(f32 decrease) {
-    gifStateDecrease = decrease;
+    gifStatus.ratioStep = decrease;
 }
 
 /* Sets the centre of the effect (gifStatus +0x04/+0x08). */
@@ -1321,23 +1319,19 @@ void func_00246DD8(int value) {
     gifStatus.depth = value;
 }
 
-extern int gifStateFbp;
-
 /* Stores the frame buffer base of the effect. */
 void gifStateSetFbp(int fbp) {
-    gifStateFbp = fbp;
+    gifStatus.fbp = fbp;
 }
-
-extern int gifStateBlur;
 
 /* Stores the blur amount of the effect. */
 void gifStateSetBlur(int blur) {
-    gifStateBlur = blur;
+    gifStatus.blur = blur;
 }
 
 void nmlModelUseSubWindow(unsigned int index, int enabled) {
     if (index < NML_WINDOW_COUNT) {
-        g_aSubWindow[index] = enabled;
+        gifStatus.subWindow[index] = enabled;
     }
 }
 
@@ -1351,9 +1345,6 @@ void nmlModelSetSubWindowValue(u32 index, f32 value) {
 
 /* The draw function of each effect mode. */
 extern GifEffectDraw gifStateEffectDraws[];
-
-/* The number of effect modes (entries of gifStateEffectDraws). */
-#define GIF_EFFECT_COUNT 7
 
 /* Selects one of the seven GIF effects: its draw function becomes the effect hook, the state word and a
  * full ratio. */
@@ -1378,7 +1369,8 @@ void func_00246EB0(void) {
 }
 
 /* Starts the screen effect: full effect alpha, the decrease rate, frame buffer 1, the sub window off, the
- * effect frame hook, state 5 and ratio 1, then shows the panel. */
+ * effect frame hook, state GIF_EFFECT_FRAME and ratio 1, then shows panel entry 0x151 in mode 0x4E (tu148's
+ * func_00251B18 shows the same entry in mode 8; what the two numbers select is not recovered). */
 void gifStateEnableEffect(void)
 {
     func_001BA6F4();
@@ -1386,7 +1378,7 @@ void gifStateEnableEffect(void)
     gifStateSetDecrease(0.01334f);
     gifStateSetFbp(1);
     nmlModelUseSubWindow(0, 0);
-    gifStatus.state = 5;
+    gifStatus.state = GIF_EFFECT_FRAME;
     gifStatus.ratio = 1.0f;
     gifStateEffectHook = gifStateEffectFrame;
     msgPanelShow(0x151, 0x4E);
@@ -1398,7 +1390,7 @@ void nmlModelEnableSubWindow0(void) {
 
 
 int gifStateEffectReady(void) {
-    if (gifStateEffectHook != 0 && gifStatus.state == 5) {
+    if (gifStateEffectHook != 0 && gifStatus.state == GIF_EFFECT_FRAME) {
         if (!(0.5f <= gifStatus.ratio)) {
             return 1;
         }
@@ -1414,23 +1406,11 @@ void gifStateDisableEffect(void) {
     gifStateEffectHook = 0;
 }
 
-/* The camera-shake block of a map actor (+0x150) that gifStateStartWhiteShake sets up. */
-typedef struct GifShakeBlock {
-    unsigned char unmodeled_000[0x150];
-    float low;          /* +0x150 */
-    float high;         /* +0x154 */
-    float speed;        /* +0x158 */
-    int steps;          /* +0x15C */
-    int mode;           /* +0x160 */
-    unsigned char unmodeled_164[4];
-    float scale;        /* +0x168 */
-} GifShakeBlock;
-
 /* The colour of the white screen effect (RGB). */
 #define GIF_STATE_WHITE 0xFFFFFF
 
-/* Starts the white screen effect for an actor and sets its shake block. */
-void gifStateStartWhiteShake(GifShakeBlock *block)
+/* Starts the white screen effect for an actor and sets up its move state (XenoActorUpdateMoveState, state 3). */
+void gifStateStartWhiteShake(struct XenoActor *actor)
 {
     func_00246DD8(GIF_STATE_WHITE);
     gifStateSetCenter(0x100, 0xE0);
@@ -1440,13 +1420,13 @@ void gifStateStartWhiteShake(GifShakeBlock *block)
     gifStateSetBlur(1);
     nmlModelUseSubWindow(0, 0);
     nmlModelUseSubWindow(1, 0);
-    gifStateSetMode(0);
-    block->low = -0.6f;
-    block->speed = 3.019999f;
-    block->high = 0.6f;
-    block->steps = 4;
-    block->scale = 1.0f;
-    block->mode = 3;
+    gifStateSetMode(GIF_EFFECT_RADIAL_BLUR);
+    actor->moveAngle = -0.6f;
+    actor->shadowValue = 3.019999f;
+    actor->moveVelocity = 0.6f;
+    actor->shadowCount = 4;
+    actor->shadowValue3 = 1.0f;
+    actor->moveState = 3;
 }
 
 extern int gifStateDrawHookSuppressed;

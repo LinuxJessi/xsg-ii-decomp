@@ -47,12 +47,12 @@ typedef struct GifStatusBlock {
     int centerY;
     int effectAlphaType;
     int effectAlpha;
-    int fbp;                    /* +0x14: gifStateFbp is this word */
-    int blur;                   /* +0x18: gifStateBlur is this word */
+    int fbp;                    /* +0x14: gifStateSetFbp */
+    int blur;                   /* +0x18: gifStateSetBlur */
     int depth;                  /* +0x1C: the Z of the camera quad (func_00246DD8 sets it) */
     f32 ratio;
-    f32 ratioStep;
-    int subWindow[4];           /* +0x28: g_aSubWindow; word 0 is the flag gifStateEffectFrame tests,
+    f32 ratioStep;              /* +0x24: gifStateSetDecrease; the draw functions lower ratio by it */
+    int subWindow[4];           /* +0x28: nmlModelUseSubWindow; word 0 is the flag gifStateEffectFrame tests,
                                  * gifStateDrawFadeQuad moves its corners by all four */
     u8 unmodeled_38[0x50 - 0x38];
     Vector4 mulColor;           /* +0x50: the model multiply colour nmlModelSetMulColor sets;
@@ -60,6 +60,18 @@ typedef struct GifStatusBlock {
 } GifStatusBlock;
 
 extern GifStatusBlock gifStatus;
+
+/* The effect modes of gifStateSetMode: the index into gifStateEffectDraws, named after its draw function. */
+enum GifEffectMode {
+    GIF_EFFECT_RADIAL_BLUR,     /* gifStateDrawRadialBlur (gifStateStartWhiteShake's white effect) */
+    GIF_EFFECT_RING,            /* gifStateDrawRing */
+    GIF_EFFECT_CAMERA_QUAD,     /* gifStateDrawCameraQuad */
+    GIF_EFFECT_JITTER_GRID,     /* gifStateDrawJitterGrid */
+    GIF_EFFECT_FADE_QUAD,       /* gifStateDrawFadeQuad */
+    GIF_EFFECT_FRAME,           /* gifStateEffectFrame (gifStateEnableEffect) */
+    GIF_EFFECT_NONE,            /* func_002439C8, an empty function */
+    GIF_EFFECT_COUNT
+};
 
 /* The draw function of an effect: called with the frame packet. */
 typedef void (*GifEffectDraw)(struct XglPacket *packet);
@@ -72,6 +84,8 @@ void func_00246AF8(void);
 void func_00246DD8(int value);
 void gifStateClearModeValue(void);
 void nmlModelSetMulColor(Vector4 *color);
+struct XenoActor;
+void gifStateStartWhiteShake(struct XenoActor *actor);
 void gifStateEnableEffect(void);
 void gifStateSuppressDrawHook(void);
 void nmlModelEnableSubWindow0(void);
