@@ -1,12 +1,24 @@
 #include "common.h"
+#include "shared.h"
+#include "quadword.h"
 #include "main/tu151.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu151", func_00251F78);
+/* A variadic no-op like logNoOp (sef_print.c): it spills its arguments and returns. */
+void func_00251F78(const void *data, const char *format, ...)
+{
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu151", func_00251FC0);
+/* A variadic no-op like logNoOp (sef_print.c): it spills its arguments and returns. */
+void func_00251FC0(const void *data, const char *format, ...)
+{
+}
 
-/* Copies a Vector4 from a1 to a0 and sets its w to the float argument. */
-INCLUDE_ASM("asm/main/nonmatchings/tu151", vu0CopyVectorSetW);
+/* Copies the vector at source to destination and sets its w to the float argument. */
+void vu0CopyVectorSetW(Vector4 *destination, Vector4 *source, float w)
+{
+    QuadwordCopyT0(destination, source);
+    destination->w = w;
+}
 
 /* Normalizes vf20 in place (xyz divided by its length) and sets w to 1. */
 void vu0NormalizeVf20(void) {

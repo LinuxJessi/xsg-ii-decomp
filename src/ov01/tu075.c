@@ -92,7 +92,7 @@ void MGsGPInit(MGsPacket *packet, void *address, int size)
     packet->auxCount = 0;
 }
 
-void func_0012B9A0();
+void sceVif1PkAddCode();
 void sceVif1PkAddDirectDataN();
 void sceVif1PkCloseDirectHLCode();
 void sceVif1PkCnt();
@@ -110,7 +110,7 @@ void MGsGPTerm(MGsPacket *packet) {
     }
     vifPacket = xglPacketGetCurrent();
     sceVif1PkCnt(vifPacket, 0);
-    func_0012B9A0(vifPacket, 0x11000000);
+    sceVif1PkAddCode(vifPacket, 0x11000000);
     sceVif1PkOpenDirectHLCode(vifPacket, 0);
     sceVif1PkAddDirectDataN(vifPacket, packet->data, packet->count);
     sceVif1PkCloseDirectHLCode(vifPacket);

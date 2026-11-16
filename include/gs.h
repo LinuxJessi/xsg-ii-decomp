@@ -8,6 +8,7 @@
 
 #define GS_PRIM 0x00
 #define GS_RGBAQ 0x01
+#define GS_ST 0x02
 #define GS_UV 0x03
 #define GS_XYZF2 0x04
 /* XYZ2 register: a vertex without the fog value, 12.4 fixed point around the 2048 origin. */

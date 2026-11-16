@@ -23,7 +23,7 @@ int xglDebFileRead(const char *name, void *buffer)
     return -1;
 }
 
-int xglDebFileWrite(const char *name, const void *buffer)
+int xglDebFileWrite(const char *name, const void *buffer, int size)
 {
     printf("Don't use xglDebFileWrite()\n");
     DEBUG_BREAK();

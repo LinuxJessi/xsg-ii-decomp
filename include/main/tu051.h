@@ -4,11 +4,36 @@
 #include "shared.h"
 
 /* Types used by the map object code (tu051.c, tu075.c); the actor is only partly recovered. */
+/* One motion state of the actor's TiMRPackage channel block (TiMRPackage.c's TiMRState, 0x50 bytes). */
+typedef struct XenoMotionState {
+    u32 flags;
+    float speed;                            /* +0x04: tiMRStateSetSpeed */
+    float frame;                            /* +0x08 */
+    float value;                            /* +0x0C: XenoActorSetChannelValue */
+    int range[2];                           /* +0x10: the play range (xenoActor.c names word 0 source_value) */
+    unsigned char unmodeled_18[0x50 - 0x18];
+} XenoMotionState;
+
 /* The XenoActor of a map object (xenoActor.c); only the fields used below. */
+/* XenoActor.rsrc: the model pack (.pxy, xenoActor.c reads it as PxyHeader *), the texture (.txy), the hierarchy
+ * (.xhr, XenoActorAllocMatrices builds the matrices from it), the motion table (.xap, XenoActorGetSlotRange's
+ * table) and its second extension. No assert names slots 3 and 5. */
+enum XActRsrc {
+    XAct_Rsrc_MDL,
+    XAct_Rsrc_TEX,
+    XAct_Rsrc_XHR,
+    XAct_Rsrc_3,
+    XAct_Rsrc_XAP,
+    XAct_Rsrc_5,
+    XAct_Rsrc_XAP_Ext2,
+    XAct_Rsrc_Count
+};
+
 struct XenoActor {
     unsigned char unmodeled_000[0x10];
     AlignedVector4 position;                /* 0x010 */
-    unsigned char unmodeled_020[0x20];
+    AlignedVector4 previousPosition;        /* 0x020: x and z before this frame's move (tiWaterUpdateSource) */
+    unsigned char unmodeled_030[0x10];
     AlignedVector4 velocity;                /* 0x040: this frame's movement */
     AlignedVector4 rotation;                /* 0x050: y is the facing angle */
     AlignedVector4 direction;               /* 0x060: y is the moving angle */
@@ -21,27 +46,39 @@ struct XenoActor {
     int drawFlags;                          /* 0x0BC: 0x4 hides the actor, 0x08000000 draws it translucent */
     float alpha;                            /* 0x0C0 */
     int drawMode;                           /* 0x0C4: 1 while attached as a part (uwamonoAttachPlayerParts) */
-    unsigned char unmodeled_0c8[0x5CC - 0xC8];
+    unsigned char unmodeled_0c8[0x150 - 0xC8];
+    float moveAngle;                        /* 0x150: XenoActorUpdateMoveState advances it to 1 (xenoActor.c names) */
+    float moveVelocity;                     /* 0x154 */
+    float shadowValue;                      /* 0x158 */
+    int shadowCount;                        /* 0x15C: XenoActorUpdateMoveState runs while it is set */
+    int moveState;                          /* 0x160: the state XenoActorUpdateMoveState switches on (0..7) */
+    float shadowValue2;                     /* 0x164 */
+    float shadowValue3;                     /* 0x168 */
+    unsigned char unmodeled_16c[0x4C0 - 0x16C];
+    u32 visibility[8];                      /* 0x4C0: one bit per geometry of the pack (xenoActor.c's name);
+                                             * a cut-scene actor's flag records set them */
+    unsigned char unmodeled_4e0[0x5A4 - 0x4E0];
+    struct XenoActor *parent;               /* 0x5A4: the actor this one is attached to (XenoActorReleaseChild) */
+    unsigned char unmodeled_5a8[0x5CC - 0x5A8];
     u32 flags;                              /* 0x5CC */
-    unsigned char unmodeled_5d0[4];
+    float frame;                            /* 0x5D0: the scene frame (tiWaterSceneLoop counts it to 120) */
     int mode;                               /* 0x5D4: the motion XenoActorCheckMode compares against */
     unsigned char unmodeled_5d8[4];
     int requested_mode;                     /* 0x5DC */
-    unsigned char unmodeled_5e0[0x5EC - 0x5E0];
-    /* The model resources resPathSlotLoadID returns (uwamonoLoadPlayer copies them in). */
-    int pack;                               /* 0x5EC: the model pack (xenoActor.c reads it as PxyHeader *) */
-    int effect;                             /* 0x5F0 */
-    int hierarchy;                          /* 0x5F4: XenoActorAllocMatrices builds the matrices from it */
-    unsigned char unmodeled_5f8[4];
-    int slotTable;                          /* 0x5FC: XenoActorGetSlotRange's table */
-    unsigned char unmodeled_600[0x618 - 0x600];
+    unsigned char unmodeled_5e0[4];
+    int selector;                           /* 0x5E4: the last selector (xenoActor.c cachedSelector) */
+    unsigned char unmodeled_5e8[4];
+    /* 0x5EC: the actor's resources, rsrc[XAct_Rsrc_*] in the original's asserts (resPathSlotLoadID returns
+     * them, uwamonoLoadPlayer copies them in). */
+    int rsrc[XAct_Rsrc_Count];
+    unsigned char unmodeled_608[0x610 - 0x608];
+    void *sharedResource;                   /* 0x610: resource 0x30041, loaded when the hierarchy needs it */
+    unsigned char unmodeled_614[0x618 - 0x614];
     int lookLink;                           /* 0x618 */
     unsigned char unmodeled_61c[0x640 - 0x61C];
     int channel[4];                         /* 0x640: the tiMRPackage channel block (xenoActor.c handle640) */
-    unsigned char unmodeled_650[0x654 - 0x650];
-    float motionSpeed;                      /* 0x654 */
-    float motionFrame;                      /* 0x658 */
-    unsigned char unmodeled_65c[0x740 - 0x65C];
+    XenoMotionState motion[2];              /* 0x650, 0x6A0: the TiMRPackage states A and B of the channel block */
+    unsigned char unmodeled_6f0[0x740 - 0x6F0];
     unsigned char hitBuffer[8];             /* 0x740: the result block of mapMoveProbe */
     unsigned short hitFlags;                /* 0x748 */
     unsigned short groundFlags;             /* 0x74A: 0x10 while on a slope */
@@ -161,12 +198,21 @@ typedef struct UwamonoObject {
     unsigned char unmodeled_74a[0x870 - 0x74A];
 } UwamonoObject;
 
+/* gameWork as far as its control word: the files that read more of it keep their own view. */
+typedef struct GameWorkControl {
+    unsigned char unmodeled_00[8];
+    int control;                            /* +0x08: CONTROL_* */
+} GameWorkControl;
+
 /* Bits of gameWork.control. */
 #define CONTROL_PAUSED 0x1
 #define CONTROL_SCRIPTED 0x8000
 #define CONTROL_REPLAYED 0x10000
 #define CONTROL_SEARCHING 0x20000
 #define CONTROL_TOP_EXIT 0x20 /* reaching the top of a ladder moves on to the top state (tu075.c) */
+/* Set while a cut scene runs (cfePlugIn.c sets it at the start, clears it at the end). */
+#define CONTROL_CFE_SCENE 0x200
+#define CONTROL_CFE_NO_FADE 0x100000 /* set with it: events then start no fade-out (tu069.c) */
 #define CONTROL_SOFT_RESET 0x10000000 /* the soft-reset pad combo was pressed; Title will not start a game while it is set */
 
 extern UwamonoObject uwamonoRecords[];

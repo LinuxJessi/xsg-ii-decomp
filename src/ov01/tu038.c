@@ -56,7 +56,6 @@ extern int ov01EnemyIndex;
 extern UnitSpawnRecord *ov01PartyList;
 extern UnitSpawnRecord *ov01EnemyList;
 void func_00120360(void);
-void gifStateEnableEffect(void);
 void func_00A81D30(void);
 void ov01StepSetNext(void *item, int next_step);
 void ov01LoadBlockStart(void);

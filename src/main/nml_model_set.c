@@ -7,13 +7,6 @@
 
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
-typedef union Matrix {
-    float elements[16];
-    Matrix4 rows;
-    int words[4][4];
-    XglQuadword quadwords[4];
-} Matrix;
-
 typedef union GsTag {
     u64 value;
     u32 words[2];
@@ -813,8 +806,8 @@ extern f32 D_0096A0C8;
 extern int D_0096A0D0;
 extern int D_0096A0D4;
 extern float D_0096A0D8;
-extern unsigned char nmlModelDrawMatrix[];
-extern unsigned char D_0096A120[];
+extern Matrix nmlModelDrawMatrix;
+extern Matrix D_0096A120;
 extern f32 pxyModelScale;
 extern f32 D_0096A164;
 extern f32 D_0096A168;
@@ -1097,9 +1090,9 @@ void func_001BA278(void) {
     D_00969DB0.fields.render_status |= NML_RENDER_FOG_WHITE;
 }
 
-void pxySetDefaultLight(PxyShadowLight *light)
+void pxySetDefaultLight(XglLightSet *light)
 {
-    register PxyShadowLight *src = light;
+    register XglLightSet *src = light;
     register PxyState *dst = &pxyState;
     /* (src = src) is a dead same-value set: it adds a reference to src, so the light
      * pointer, not the address, takes the first volatile-free register as in the original */
@@ -1779,7 +1772,6 @@ void xglMatrixStackRotZ(float);
 void xglMatrixStackTrans(void *);
 void xglMatrixStackScale(void *);
 void xglMatrixScale(void *, PxyShadow *, void *);
-void xglMatrixInverse(void *, void *);
 
 /* Aims the shadow projector at the model from the light and builds its matrices and texture registers. */
 void pxySetupShadowProjector(PxyHeader *header)
@@ -2362,7 +2354,7 @@ void pxyCalcModelBounds(PxyHeader *header)
         xglVectorCopy_001CC998(&sphere, header->centre);
     }
     sphere.vector.w = 1.0f;
-    xglVectorMulMat(&pxyModelPosition, nmlModelDrawMatrix, &sphere.vector);
+    xglVectorMulMat(&pxyModelPosition, nmlModelDrawMatrix.rows, &sphere.vector);
     xglVectorCopy_001CC998(&sphere, &pxyModelPosition);
     sphere.vector.w = header->radius * pxyModelScaleMax;
     D_0096A1BC = sphere.vector.w;
@@ -3413,8 +3405,6 @@ void pxyPlayEntryGroupFiltered(int group, int filter) {
     }
 }
 
-void pxyAddEntryFull(int key, void *ptr, int a2, int a3, int a4);
-
 void pxyAddEntry(int key, int data, int qwc)
 {
     pxyAddEntryFull(key, data, qwc, 0, 0);
@@ -3424,7 +3414,7 @@ void pxyAddEntryWithState(int key, void *data, int qwc, int offset) {
     pxyAddEntryFull(key, data, qwc, 0, offset);
 }
 
-void pxyAddEntryFlagged(int key, int data, int qwc, int flag)
+void pxyAddEntryFlagged(int key, void *data, int qwc, int flag)
 {
     pxyAddEntryFull(key, data, qwc, flag, 0);
 }

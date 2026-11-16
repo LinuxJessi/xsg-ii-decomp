@@ -28,14 +28,14 @@ typedef struct XglPacket XglPacket;
 
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
-void func_0012B9A0(XglPacket *packet, unsigned int tag);
+void sceVif1PkAddCode(XglPacket *packet, unsigned int tag);
 
 void sefPacketFlush(void) {
     XglPacket *packet;
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
 }
 
 void sefPacketMscnt(void) {
@@ -43,7 +43,7 @@ void sefPacketMscnt(void) {
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x17000000);
+    sceVif1PkAddCode(packet, 0x17000000);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu185", sefPacketUnpackRef);
@@ -67,9 +67,9 @@ void sefBuildVuPacket(int kind, int alternate) {
         func_0012BCE8(packet, D_00881700, 0x11);
     } else {
         if (alternate != 0) {
-            func_0012B9A0(packet, ((u32) D_1FD0 >> 3) | 0x14000000);
+            sceVif1PkAddCode(packet, ((u32) D_1FD0 >> 3) | 0x14000000);
         } else {
-            func_0012B9A0(packet, ((u32) D_1F70 >> 3) | 0x14000000);
+            sceVif1PkAddCode(packet, ((u32) D_1F70 >> 3) | 0x14000000);
         }
         if (kind == 1) {
             func_0012B6E0(packet, 0x18, 0x6C, 4, 4);
@@ -80,7 +80,7 @@ void sefBuildVuPacket(int kind, int alternate) {
         }
     }
     func_0012B770(packet);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu185", sefBuildCameraPacket);

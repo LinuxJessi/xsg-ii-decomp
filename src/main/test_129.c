@@ -3,7 +3,9 @@
 #include "main/tu026.h"
 #include "main/pad.h"
 #include "main/xgl_font.h"
+#include "main/TiWater.h"
 #include "main/control_entry.h"
+#include "main/test_129.h"
 
 /* Debug test menu layout: entry count, the origin and line height of the list, and the slide offset at rest. */
 #define TEST_MENU_ENTRY_COUNT 4
@@ -21,7 +23,6 @@ extern int D_00631144;
 void xglCdLoadOverlay(int overlay);
 void xglFontSetStoredValue(int value);
 void glowRunScene(void);
-void tiWaterSceneLoop(void);
 void func_00A89428(void);
 
 int D_00631144 = 0x0068C728;
@@ -108,7 +109,7 @@ void testMenuRun(void)
 }
 
 /*
- * Reads a debug file into the next 16-byte aligned block of the test heap
+ * Reads the debug file name into the next 16-byte aligned block of the test heap
  * cursor (*bufferCursor) and returns its address, or 0 for an empty file.
  * The NULL check is the assert on pData at ../test.euc.c line 95.
  */
@@ -220,7 +221,7 @@ void *tiWaterDebugValues[14] = {
     &tiWaterDecrease, &tiWaterIntVals, &D_0063117C, &D_00631180, &D_00631184, 0, 0,
 };
 
-unsigned int D_00631220[60] = {
+unsigned int tiWaterStateTemplate[60] = {
     0, 0, 0, 0x5100000Eu, 32769, 0xD08B4000u, 0x31EEEEEEu, 0xEE535u,
     0x31000000u, 1, 78, 0, 0x71001u, 0, 71, 0,
     0, 0, 20, 0, 1, 0, 74, 0,
@@ -230,11 +231,11 @@ unsigned int D_00631220[60] = {
     36856, 32759, 0xFFFFFFFFu, 0, 0, 0, 63, 0,
     0, 0, 74, 0
 };
-unsigned int D_00631310[2] = { 0 };
-unsigned int D_00631318[4] = {
+unsigned int tiWaterDepthProgramSelect[2] = { 0 };
+unsigned int tiWaterSurfaceGridHeader[4] = {
     32768, 0x300E4000u, 1298, 0
 };
-unsigned int D_00631328[4] = {
+unsigned int tiWaterDepthGridHeader[4] = {
     32768, 0x302E4000u, 1298, 0
 };
 unsigned int tiWaterSubList[66] = { 0 };

@@ -37,7 +37,7 @@ typedef struct MsgItemList {
     int list_source;                /* +0x48: bind argument; zero keeps the cursor on the text lines */
     u8 unmodeled_4C[0x4];           /* +0x4C: cost table pointer (main/tu149 msgItemCost) */
     int *counts;                    /* +0x50: 40 item counts (main/tu149 msgItemCount) */
-    u8 unmodeled_54[0x4];           /* +0x54: total pointer (main/tu149 &D_008886E0) */
+    u8 unmodeled_54[0x4];           /* +0x54: total pointer (main/tu149 &msgShownValue) */
     int item_count;                 /* +0x58: number of nonzero entries in counts */
 } MsgItemList;
 

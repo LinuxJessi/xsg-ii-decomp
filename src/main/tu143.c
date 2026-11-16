@@ -1,22 +1,45 @@
 #include "common.h"
 
-int func_0024F418(int, int);
-int func_0024F480(int, int);
+char *cfeTextNextLine(char *text, int lines);
+int cfeTextCompareLine(const char *pattern, const char *text);
 
-/* Walks the text line by line from `start` and returns the first line the pattern matches (func_0024F480 is 0 on a match). */
-int func_0024F3B8(int start, int pattern)
+/* Walks the text line by line from `start` and returns the first line the pattern matches (cfeTextCompareLine is 0
+ * on a match). */
+char *func_0024F3B8(char *start, const char *pattern)
 {
-    int position;
+    char *position;
 
     position = start;
-    while (func_0024F480(pattern, position) != 0) {
-        position = func_0024F418(position, 1);
+    while (cfeTextCompareLine(pattern, position) != 0) {
+        position = cfeTextNextLine(position, 1);
     }
     return position;
 }
 
 /* Moves past the next newline, then past spaces and tabs; returns the new cursor. */
-INCLUDE_ASM("asm/main/nonmatchings/tu143", func_0024F418);
+char *cfeTextNextLine(char *text, int lines)
+{
+    while (*text != '\n') {
+        text++;
+    }
+    text++;
+    while (*text == ' ' || *text == '\t') {
+        text++;
+    }
+    return text;
+}
 
-/* Compares the text at a1 with the pattern at a0 up to a newline or a '%' wildcard: 0 on a match, nonzero otherwise. */
-INCLUDE_ASM("asm/main/nonmatchings/tu143", func_0024F480);
+/* Compares the text with the pattern up to the pattern's newline; a '%' in the pattern ends the
+ * comparison as a match. 0 on a match, nonzero otherwise. */
+int cfeTextCompareLine(const char *pattern, const char *text)
+{
+    int c;
+
+    for (; *pattern != '\n'; pattern++) {
+        c = *pattern;
+        if (c != *text++) {
+            return *pattern != '%';
+        }
+    }
+    return *pattern != *text;
+}

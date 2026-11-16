@@ -171,7 +171,7 @@ void yg2PathSetModelMode(int mode) {
     }
 }
 
-int func_0024F480(unsigned char *pattern, char *text);
+int cfeTextCompareLine(unsigned char *pattern, char *text);
 void sjisToEuc(char *first, char *second);
 
 /* Reads the quoted field that follows the first line matching `pattern`:
@@ -184,7 +184,7 @@ char *yg2PathReadTaggedText(char *text, unsigned char *pattern, char *out)
     char *outPos;
     int quoteCh;
 
-    while (*text != (char) *pattern || func_0024F480(pattern, text) != 0) {
+    while (*text != (char) *pattern || cfeTextCompareLine(pattern, text) != 0) {
         text++;
     }
     while (*text != '"') {

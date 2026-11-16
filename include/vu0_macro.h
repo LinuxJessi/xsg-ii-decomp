@@ -40,6 +40,18 @@
         : "r" (destination), "r" (minuend), "r" (subtrahend) \
         : "memory")
 
+/* The vf1 / vf2 sibling of Vu0SubVectorXYZ: destination.xyz = minuend.xyz - subtrahend.xyz through vf1 and
+ * vf2 (w is minuend's). The operands are listed minuend, subtrahend, destination, as the originals load them. */
+#define Vu0SubVectorXYZ12(destination, minuend, subtrahend) \
+    __asm__ __volatile__( \
+        "lqc2 vf1, 0(%0)\n" \
+        "lqc2 vf2, 0(%1)\n" \
+        "vsub.xyz vf1, vf1, vf2\n" \
+        "sqc2 vf1, 0(%2)\n" \
+        : \
+        : "r" (minuend), "r" (subtrahend), "r" (destination) \
+        : "memory")
+
 #define Vu0SubVector(destination, minuend, subtrahend) \
     __asm__ __volatile__( \
         "lqc2 vf20, 0(%1)\n" \
@@ -228,6 +240,7 @@
  *   Vu0ApplyMatrix2XYZ(d, a, b, v)  d.xyz = b * (a * (v.xyz, 1)), d.w = v.w
  *   Vu0UnitMatrix(d)                m = identity
  *   Vu0SetOrigin(d)                 v = (0, 0, 0, 1)
+ *   Vu0MMathCopyPoint(d, v)         d = (v.xyz, 1) through vf1 (MMathEvalHermiteKeys)
  */
 
 #define Vu0ApplyMatrixXYZ(destination, matrix, vector) \
@@ -296,6 +309,27 @@
         "sqc2 vf3, 0(%0)\n" \
         : \
         : "r" (destination) \
+        : "memory")
+
+/* The current matrix (vf26-vf29, as the vu0* rotation functions of tu152/tu153 keep it) = identity: rows 0-2
+ * from the identity table, row 3 from vf0. */
+#define Vu0SetCurrentIdentity(identity) \
+    __asm__ __volatile__( \
+        "lqc2 vf26, 0(%0)\n" \
+        "lqc2 vf27, 16(%0)\n" \
+        "lqc2 vf28, 32(%0)\n" \
+        "vmove.xyzw vf29, vf0\n" \
+        : \
+        : "r" (identity) \
+        : "memory")
+
+#define Vu0MMathCopyPoint(destination, source) \
+    __asm__ __volatile__( \
+        "lqc2 vf1, 0(%1)\n" \
+        "vmove.w vf1, vf0\n" \
+        "sqc2 vf1, 0(%0)\n" \
+        : \
+        : "r" (destination), "r" (source) \
         : "memory")
 
 #define Vu0SetOrigin(destination) \

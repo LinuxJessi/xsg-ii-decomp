@@ -173,7 +173,6 @@ int sdvTransOffset(int *screen, int *offset, int part, int depth, float *scale, 
 void nmlModelUseSubWindow(unsigned int index, int enabled);
 void *MMathNormalizeVector2(void *destination, const void *source);
 void sefApplyPartTransform(float *destination, float *source, int part);
-void nmlModelSetMulColor(float *color);
 
 #define SDV_SET_COLOR(rgba, source) \
     ((rgba).channel.red = (source)->color[0], \
@@ -185,6 +184,7 @@ void nmlModelSetMulColor(float *color);
 typedef union SdvScale {
     float f[4];
     unsigned int word[4];
+    Vector4 vector;
 } SdvScale;
 
 /* Normalizes a vector in place. */
@@ -464,7 +464,7 @@ void sdvDrawSpecial(SdvSpecialOwner *special)
                 scale.f[3] = 1.0f;
                 sdvNormalize(scale.f);
                 sefApplyPartTransform(vector, vector, record->table->part);
-                nmlModelSetMulColor(vector);
+                nmlModelSetMulColor(&scale.vector);
             }
             break;
         }
@@ -508,7 +508,7 @@ INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecAlter);
 
 typedef struct XglPacket XglPacket;
 
-extern void func_0012B9A0(XglPacket *packet, u32 tag);
+extern void sceVif1PkAddCode(XglPacket *packet, u32 tag);
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
 
@@ -518,8 +518,8 @@ void sdvPacketFlushMscnt(void)
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
-    func_0012B9A0(packet, 0x17000000);
+    sceVif1PkAddCode(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x17000000);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026AFB0);

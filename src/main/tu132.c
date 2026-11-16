@@ -94,12 +94,12 @@ void xglPacketRefTable(void) {
     sceVif1PkRef(xglCurrentPacket, &D_00671E60, xglPacketRefCount, 0, 0, 0);
 }
 
-void func_0012B9A0(XglPacket *packet, int tag);
+void sceVif1PkAddCode(XglPacket *packet, int tag);
 
 /* Resets the count and emits one VIF FLUSH (0x11000000). */
 void xglPacketFlush(void) {
     sceVif1PkCnt(xglCurrentPacket, 0);
-    func_0012B9A0(xglCurrentPacket, VIF_CODE_FLUSH);
+    sceVif1PkAddCode(xglCurrentPacket, VIF_CODE_FLUSH);
 }
 
 /*
@@ -341,12 +341,12 @@ void tiWaterSendGrid(WaterStripGrid *grid, const void *block) {
                 column += tiWaterStripColumns;
                 tiWaterSendStrip(first, column, row, grid);
                 first = column;
-                func_0012B9A0(packet, VIF_CODE_MSCNT);
+                sceVif1PkAddCode(packet, VIF_CODE_MSCNT);
             }
             column = column + (grid->rowStride - tiWaterStripColumns * strips) - 1;
             if (first < column) {
                 tiWaterSendStrip(first, column, row, grid);
-                func_0012B9A0(packet, VIF_CODE_MSCNT);
+                sceVif1PkAddCode(packet, VIF_CODE_MSCNT);
                 xglPacketFlush();
             }
         }

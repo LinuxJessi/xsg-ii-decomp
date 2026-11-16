@@ -3,6 +3,7 @@
 
 /* Functions of src/main/TiWater.c that other files call. */
 
+void tiWaterSceneLoop(void);
 f32 tiWaterVectorAngle(f32 x, f32 y);
 
 #endif /* INCLUDE_MAIN_TIWATER_H */

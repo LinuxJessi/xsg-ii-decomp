@@ -7939,9 +7939,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0012B9A0",
+     "name": "sceVif1PkAddCode",
      "size": 20,
-     "splat_name": "func_0012B9A0",
+     "splat_name": "sceVif1PkAddCode",
      "va": "0x0012b9a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -73051,9 +73051,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002424D8",
+     "name": "gifStateDrawRadialBlur",
      "size": 1984,
-     "splat_name": "func_002424D8",
+     "splat_name": "gifStateDrawRadialBlur",
      "va": "0x002424d8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -73096,9 +73096,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002439D0",
+     "name": "gifStateCopyDisplayToWork",
      "size": 388,
-     "splat_name": "func_002439D0",
+     "splat_name": "gifStateCopyDisplayToWork",
      "va": "0x002439d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -73141,9 +73141,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00245728",
+     "name": "gifBreakShardUpdate",
      "size": 804,
-     "splat_name": "func_00245728",
+     "splat_name": "gifBreakShardUpdate",
      "va": "0x00245728",
      "name_basis": "address",
      "provenance": "estimated"
@@ -73384,9 +73384,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00246FF8",
+     "name": "gifStateStartWhiteShake",
      "size": 212,
-     "splat_name": "func_00246FF8",
+     "splat_name": "gifStateStartWhiteShake",
      "va": "0x00246ff8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74014,18 +74014,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00248390",
+     "name": "cfeCameraEvaluate",
      "size": 1384,
-     "splat_name": "func_00248390",
+     "splat_name": "cfeCameraEvaluate",
      "va": "0x00248390",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002488F8",
+     "name": "cfeCommandSpawn",
      "size": 356,
-     "splat_name": "func_002488F8",
+     "splat_name": "cfeCommandSpawn",
      "va": "0x002488f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74122,9 +74122,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00249248",
+     "name": "cfeSndRecordEvaluate",
      "size": 204,
-     "splat_name": "func_00249248",
+     "splat_name": "cfeSndRecordEvaluate",
      "va": "0x00249248",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74140,18 +74140,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00249340",
+     "name": "cfeDrawLine",
      "size": 468,
-     "splat_name": "func_00249340",
+     "splat_name": "cfeDrawLine",
      "va": "0x00249340",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00249518",
+     "name": "cfeDrawRotationGrid",
      "size": 2484,
-     "splat_name": "func_00249518",
+     "splat_name": "cfeDrawRotationGrid",
      "va": "0x00249518",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74167,9 +74167,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024A8C0",
+     "name": "cfeEntryDrawMovie",
      "size": 1804,
-     "splat_name": "func_0024A8C0",
+     "splat_name": "cfeEntryDrawMovie",
      "va": "0x0024a8c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74278,7 +74278,7 @@
    "in_scope": true,
    "boundary_kind": "inferred",
    "boundary_evidence": [
-    "compiler: func_00249518 and func_00249ED0 initialize vectors at 0x68D220-0x68D26F, right after the jump table of cfeCommandEvaluate (0x68D200) in one increasing .rodata run, while the next file starts its .rodata (0x68CD10, below) with func_0024B0E8; the functions between use no .rodata, so they stay with cfeEvaluate. Found matching func_00249ED0; a string-free extension of rodata_order_breaks held on X1 (13/13) but gave false cuts on X2 at file-scope tables (0x68F0D0), user 2026-11-08"
+    "compiler: cfeDrawRotationGrid and func_00249ED0 initialize vectors at 0x68D220-0x68D26F, right after the jump table of cfeCommandEvaluate (0x68D200) in one increasing .rodata run, while the next file starts its .rodata (0x68CD10, below) with cfeListSetKeyMode; the functions between use no .rodata, so they stay with cfeEvaluate. Found matching func_00249ED0; a string-free extension of rodata_order_breaks held on X1 (13/13) but gave false cuts on X2 at file-scope tables (0x68F0D0), user 2026-11-08"
    ],
    "boundary_confidence": "medium",
    "provisional": true,
@@ -74322,18 +74322,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0024B0E8",
+     "name": "cfeListSetKeyMode",
      "size": 328,
-     "splat_name": "func_0024B0E8",
+     "splat_name": "cfeListSetKeyMode",
      "va": "0x0024b0e8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024B230",
+     "name": "cfeListSetAngleKeyMode",
      "size": 328,
-     "splat_name": "func_0024B230",
+     "splat_name": "cfeListSetAngleKeyMode",
      "va": "0x0024b230",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74349,9 +74349,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "cfeStrLastCharPos",
+     "name": "cfeStrCountChar",
      "size": 88,
-     "splat_name": "cfeStrLastCharPos",
+     "splat_name": "cfeStrCountChar",
      "va": "0x0024b3f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74385,9 +74385,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024B6D8",
+     "name": "cfeMapInitRecords",
      "size": 572,
-     "splat_name": "func_0024B6D8",
+     "splat_name": "cfeMapInitRecords",
      "va": "0x0024b6d8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -74856,18 +74856,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024EB48",
+     "name": "cfeLightSetInit",
      "size": 344,
-     "splat_name": "func_0024EB48",
+     "splat_name": "cfeLightSetInit",
      "va": "0x0024eb48",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024ECA0",
+     "name": "cfeLightRowsInit",
      "size": 132,
-     "splat_name": "func_0024ECA0",
+     "splat_name": "cfeLightRowsInit",
      "va": "0x0024eca0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75323,18 +75323,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024F418",
+     "name": "cfeTextNextLine",
      "size": 100,
-     "splat_name": "func_0024F418",
+     "splat_name": "cfeTextNextLine",
      "va": "0x0024f418",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024F480",
+     "name": "cfeTextCompareLine",
      "size": 112,
-     "splat_name": "func_0024F480",
+     "splat_name": "cfeTextCompareLine",
      "va": "0x0024f480",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75455,45 +75455,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024F698",
+     "name": "cfeListSetValue",
      "size": 148,
-     "splat_name": "func_0024F698",
+     "splat_name": "cfeListSetValue",
      "va": "0x0024f698",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024F730",
+     "name": "cfeListSetValueLinear",
      "size": 144,
-     "splat_name": "func_0024F730",
+     "splat_name": "cfeListSetValueLinear",
      "va": "0x0024f730",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024F7C0",
+     "name": "cfeListSetAngle",
      "size": 156,
-     "splat_name": "func_0024F7C0",
+     "splat_name": "cfeListSetAngle",
      "va": "0x0024f7c0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024F860",
+     "name": "cfeListSetAngleLinear",
      "size": 152,
-     "splat_name": "func_0024F860",
+     "splat_name": "cfeListSetAngleLinear",
      "va": "0x0024f860",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024F8F8",
+     "name": "cfeListCopyKey",
      "size": 72,
-     "splat_name": "func_0024F8F8",
+     "splat_name": "cfeListCopyKey",
      "va": "0x0024f8f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75632,9 +75632,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0024FC90",
+     "name": "cfeTrackUpdateDirections",
      "size": 1340,
-     "splat_name": "func_0024FC90",
+     "splat_name": "cfeTrackUpdateDirections",
      "va": "0x0024fc90",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75668,9 +75668,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00250478",
+     "name": "cfeTrackBezier",
      "size": 840,
-     "splat_name": "func_00250478",
+     "splat_name": "cfeTrackBezier",
      "va": "0x00250478",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75686,9 +75686,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002508C8",
+     "name": "cfeTrackSampleStep",
      "size": 348,
-     "splat_name": "func_002508C8",
+     "splat_name": "cfeTrackSampleStep",
      "va": "0x002508c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75722,27 +75722,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "cfeTrackFindAtOrBefore",
+     "name": "cfeTrackFindAtOrAfter",
      "size": 128,
-     "splat_name": "cfeTrackFindAtOrBefore",
+     "splat_name": "cfeTrackFindAtOrAfter",
      "va": "0x00250b38",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00250BB8",
+     "name": "cfeTrackFindNeighbor",
      "size": 176,
-     "splat_name": "func_00250BB8",
+     "splat_name": "cfeTrackFindNeighbor",
      "va": "0x00250bb8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00250C68",
+     "name": "cfeTracksFindNearest",
      "size": 240,
-     "splat_name": "func_00250C68",
+     "splat_name": "cfeTracksFindNearest",
      "va": "0x00250c68",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75758,9 +75758,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00250D88",
+     "name": "cfeTrackCountInRange",
      "size": 60,
-     "splat_name": "func_00250D88",
+     "splat_name": "cfeTrackCountInRange",
      "va": "0x00250d88",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75776,9 +75776,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00250E10",
+     "name": "cfeTrackCountValueRunsInRange",
      "size": 116,
-     "splat_name": "func_00250E10",
+     "splat_name": "cfeTrackCountValueRunsInRange",
      "va": "0x00250e10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -75794,9 +75794,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00250EF0",
+     "name": "cfeTrackShiftTimesBack",
      "size": 160,
-     "splat_name": "func_00250EF0",
+     "splat_name": "cfeTrackShiftTimesBack",
      "va": "0x00250ef0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -77486,9 +77486,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00252840",
+     "name": "MMathPointInTriangle",
      "size": 252,
-     "splat_name": "func_00252840",
+     "splat_name": "MMathPointInTriangle",
      "va": "0x00252840",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103024,9 +103024,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1790",
+     "name": "atanf",
      "size": 668,
-     "splat_name": "func_002A1790",
+     "splat_name": "atanf",
      "va": "0x002a1790",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103096,9 +103096,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1DB0",
+     "name": "sqrt",
      "size": 20,
-     "splat_name": "func_002A1DB0",
+     "splat_name": "sqrt",
      "va": "0x002a1db0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103114,9 +103114,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1DE0",
+     "name": "asinf",
      "size": 20,
-     "splat_name": "func_002A1DE0",
+     "splat_name": "asinf",
      "va": "0x002a1de0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103429,9 +103429,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A6D88",
+     "name": "fptodp",
      "size": 60,
-     "splat_name": "func_002A6D88",
+     "splat_name": "fptodp",
      "va": "0x002a6d88",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103447,18 +103447,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A7028",
+     "name": "dpadd",
      "size": 88,
-     "splat_name": "func_002A7028",
+     "splat_name": "dpadd",
      "va": "0x002a7028",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A7080",
+     "name": "dpsub",
      "size": 100,
-     "splat_name": "func_002A7080",
+     "splat_name": "dpsub",
      "va": "0x002a7080",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103519,9 +103519,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A76E8",
+     "name": "dptofp",
      "size": 84,
-     "splat_name": "func_002A76E8",
+     "splat_name": "dptofp",
      "va": "0x002a76e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -104077,9 +104077,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AA7F0",
+     "name": "strcat",
      "size": 300,
-     "splat_name": "func_002AA7F0",
+     "splat_name": "strcat",
      "va": "0x002aa7f0",
      "name_basis": "address",
      "provenance": "estimated"

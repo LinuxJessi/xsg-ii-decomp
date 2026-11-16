@@ -70,7 +70,7 @@ extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern void sceVif1PkRef(XglPacket *packet, const void *environment,
                          int count, int mode, int offset, int flags);
 extern XglPacket *xglPacketGetCurrent(void);
-void func_0012B9A0(XglPacket *packet, u32 word);
+void sceVif1PkAddCode(XglPacket *packet, u32 word);
 /*
  * Appends one draw record at the end cursor: a VIF FLUSH, STCYCL 4,4, an
  * UNPACK to VU address `vuAddress` and the operands. The record starts at the
@@ -383,10 +383,10 @@ void svDrawListFlush(int pending_count)
                       (DrawListEntry *) (svDrawList.entries + svDrawList.begin_index * 0x10),
                       pending_count);
         sceVif1PkCnt(packet, 0);
-        func_0012B9A0(packet, 0x11000000);
+        sceVif1PkAddCode(packet, 0x11000000);
         tag = D_003ED4A0[svDrawMode * 2];
-        func_0012B9A0(packet, (tag >> 3) | 0x14000000);
-        func_0012B9A0(packet, 0x11000000);
+        sceVif1PkAddCode(packet, (tag >> 3) | 0x14000000);
+        sceVif1PkAddCode(packet, 0x11000000);
         entry = (DrawListEntry *) (svDrawList.entries + svDrawList.begin_index * 0x10);
         svDrawListAppend(0x28, entry->operand_a, entry->operand_b);
     }
@@ -408,7 +408,7 @@ void svDrawSendStaticRef(void)
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
     sceVif1PkRef(packet, D_002B3750, D_002B3740[0], 0, 0, 0);
 }
 
@@ -442,7 +442,7 @@ void svDrawSendViewSetup(void)
     camera = xglStudioGetActiveCamera();
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
     sceVif1PkRef(packet, svViewSetupPacket, 9, 0, 0, 0);
     __asm__ __volatile__(
         "lqc2 vf1, 32(%1)\n"
@@ -470,8 +470,8 @@ void svDrawSendViewSetup(void)
     func_0012BCE8(packet, &svViewUpload, 10);
     func_0012B770(packet);
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
-    func_0012B9A0(packet, ((u32) D_50 >> 3) | 0x14000000);
+    sceVif1PkAddCode(packet, 0x11000000);
+    sceVif1PkAddCode(packet, ((u32) D_50 >> 3) | 0x14000000);
 }
 
 void svDrawSetState(short repeatWrap, int alphaIndex)
@@ -504,15 +504,15 @@ void svDrawSubmitMode(void)
         return;
     }
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
     func_0012B6E0(packet, 20, 108, 4, 4);
     func_0012BCE8(packet, svDrawStatePacket, 16);
     func_0012B770(packet);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
     if (svDrawMode < 5 || svDrawMode == 11 || svDrawMode == 12) {
-        func_0012B9A0(packet, ((u32) D_80 >> 3) | 0x14000000);
+        sceVif1PkAddCode(packet, ((u32) D_80 >> 3) | 0x14000000);
     } else {
-        func_0012B9A0(packet, ((u32) D_110 >> 3) | 0x14000000);
+        sceVif1PkAddCode(packet, ((u32) D_110 >> 3) | 0x14000000);
     }
 }
 
@@ -820,7 +820,7 @@ int svLoadImageList(SvTypeList *typeList) {
 
                     packet = xglPacketGetCurrent();
                     sceVif1PkCnt(packet, 0);
-                    func_0012B9A0(packet, 0x11000000);
+                    sceVif1PkAddCode(packet, 0x11000000);
                 }
                 imageCount++;
                 svLoadTexture(&typeList->entries[index]);
@@ -3783,7 +3783,7 @@ void svDrawImageItem(SvDrawItem *item, int renderState)
     svDrawListFlush(svDrawList.end_index - svDrawList.begin_index);
     xglPacket = xglPacketGetCurrent();
     sceVif1PkCnt(xglPacket, 0);
-    func_0012B9A0(xglPacket, 0x11000000);
+    sceVif1PkAddCode(xglPacket, 0x11000000);
 }
 
 /* Makes mapper `index` the active one (svActiveMapperIndex caches it) and refers its packet; does nothing when it is already active. */
@@ -4154,7 +4154,7 @@ void svBuildDrawStatePacket(void) {
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    func_0012B9A0(packet, 0x11000000);
+    sceVif1PkAddCode(packet, 0x11000000);
     func_0012B6E0(packet, 0x14, 0x6C, 4, 4);
     func_0012BCE8(packet, svDrawStatePacket, 0x10);
     func_0012B770(packet);

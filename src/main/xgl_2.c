@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/nml_model_set.h"
 #include "main/sdv_033.h"
 #include "shared.h"
 #include "main/xgl_2.h"
@@ -67,7 +68,7 @@ void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackRotZ(float angle);
 void xglMatrixStackSave(Matrix4 matrix);
-float func_002A1DE0(float value);
+float asinf(float value);
 float atan2f(float y, float x);
 
 void xglEulerFromRotation(Vector4 *euler, Vector4 *rotation)
@@ -84,7 +85,7 @@ void xglEulerFromRotation(Vector4 *euler, Vector4 *rotation)
         matrix[2][2] < 0.0001f && -0.0001f < matrix[2][2]) {
         *euler = *rotation;
     } else {
-        euler->x = -func_002A1DE0(matrix[2][1]);
+        euler->x = -asinf(matrix[2][1]);
         euler->y = atan2f(matrix[2][0], matrix[2][2]);
         euler->z = atan2f(matrix[0][1], matrix[1][1]);
     }
@@ -219,12 +220,6 @@ extern void xglMatrixStackSave(float matrix[4][4]);
 void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
-
-typedef union Matrix {
-    float elements[16];
-    Matrix4 rows;
-    XglQuadword quadwords[4];
-} Matrix;
 
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix,
                      const Vector4 *vector);
@@ -819,8 +814,7 @@ void xglRotTransPersN(Vector4 *destination, Matrix4 matrix, const Vector4 *sourc
 }
 
 void xglMatrixCopy();
-struct XglLightSet;
-void xglLightSetDefault(struct XglLightSet *lightSet);
+void xglLightSetDefault(XglLightSet *lightSet);
 extern Matrix4 xglIdentityMatrix;
 extern Matrix4 D_00645330;
 
@@ -1506,11 +1500,6 @@ void xglStudioLightReset(void *light)
 
 void *memcpy(void *destination, const void *source, unsigned int size);
 void xglZeroQuadwords18(AlignedVector4 *dst);
-void xglDirectionFromAngles(Vector4 *destination, const Vector4 *source);
-
-/* A vector kept as a plain float[4] (like sceVu0FVECTOR); its w is element 3. Vector4 here changes the
- * address arithmetic of the w stores, so the casts to Vector4 * at the calls stay. */
-typedef float XglFVector[4];
 
 /* A loaded light pack file: it starts with the "lxy" tag and is registered in xglLightPackTable. */
 typedef struct XglLightPack {
@@ -1533,19 +1522,6 @@ typedef struct XglLightPackSlot {
 } XglLightPackSlot;
 
 static XglLightPackSlot xglLightPackTable[16];
-
-/* Light set built by xglLightPackBuildLightSet, cleared with xglZeroQuadwords18 (0x18 quadwords). */
-typedef struct XglLightSet {
-    XglFVector directions[6]; /* 0x000 */
-    Vector4 viewDirection;  /* 0x060 */
-    XglFVector colors[6];   /* 0x070 */
-    Vector4 ambientColor;       /* 0x0D0 */
-    Vector4 ambientColorLower;   /* 0x0E0 */
-    Vector4 forward;        /* 0x0F0 */
-    Vector4 reserved[2];    /* 0x100 */ 
-    XglFVector points[3];   /* 0x120 */
-    XglFVector pointDirections[3]; /* 0x150 */
-} XglLightSet;
 
 static XglLightSet xglLightSetDefaultCache;
 
@@ -1574,12 +1550,18 @@ void xglLightSetDefault(XglLightSet *lightSet)
         for (i = 0; i < 7; i++) {
             xglDirectionFromAngles((Vector4 *)lightSet + i, (Vector4 *)lightSet + i);
         }
-        lightSet->points[0][0] = lightSet->points[0][1] = lightSet->points[0][2] = lightSet->points[0][3] = 0.0f;
-        lightSet->points[1][0] = lightSet->points[1][1] = lightSet->points[1][2] = lightSet->points[1][3] = 0.0f;
-        lightSet->points[2][0] = lightSet->points[2][1] = lightSet->points[2][2] = lightSet->points[2][3] = 0.0f;
-        lightSet->pointDirections[0][0] = lightSet->pointDirections[0][1] = lightSet->pointDirections[0][2] = lightSet->pointDirections[0][3] = 0.0f;
-        lightSet->pointDirections[1][0] = lightSet->pointDirections[1][1] = lightSet->pointDirections[1][2] = lightSet->pointDirections[1][3] = 0.0f;
-        lightSet->pointDirections[2][0] = lightSet->pointDirections[2][1] = lightSet->pointDirections[2][2] = lightSet->pointDirections[2][3] = 0.0f;
+        lightSet->pointPositions[0][0] = lightSet->pointPositions[0][1] = lightSet->pointPositions[0][2]
+            = lightSet->pointPositions[0][3] = 0.0f;
+        lightSet->pointPositions[1][0] = lightSet->pointPositions[1][1] = lightSet->pointPositions[1][2]
+            = lightSet->pointPositions[1][3] = 0.0f;
+        lightSet->pointPositions[2][0] = lightSet->pointPositions[2][1] = lightSet->pointPositions[2][2]
+            = lightSet->pointPositions[2][3] = 0.0f;
+        lightSet->pointColors[0][0] = lightSet->pointColors[0][1] = lightSet->pointColors[0][2]
+            = lightSet->pointColors[0][3] = 0.0f;
+        lightSet->pointColors[1][0] = lightSet->pointColors[1][1] = lightSet->pointColors[1][2]
+            = lightSet->pointColors[1][3] = 0.0f;
+        lightSet->pointColors[2][0] = lightSet->pointColors[2][1] = lightSet->pointColors[2][2]
+            = lightSet->pointColors[2][3] = 0.0f;
         {
             register Vector4 *src = (Vector4 *)lightSet;
             register void *saved = &xglLightSetDefaultCache;
@@ -2149,9 +2131,10 @@ void xglLightPackBuildLightSet(XglLightPack *pack, XglLightSet *lightSet, Vector
                 switch (entry->type) {
                 case 19:
                     if (pointCount < 3) {
-                        xglVectorCopy((Vector4 *)lightSet->points[pointCount], &key->position);
-                        xglVectorScale((Vector4 *)lightSet->pointDirections[pointCount], &key->color, key->intensity * 128.0f);
-                        lightSet->points[pointCount][3] = 1.0f;
+                        xglVectorCopy((Vector4 *)lightSet->pointPositions[pointCount], &key->position);
+                        xglVectorScale((Vector4 *)lightSet->pointColors[pointCount], &key->color,
+                            key->intensity * 128.0f);
+                        lightSet->pointPositions[pointCount][3] = 1.0f;
                         pointCount++;
                     }
                     break;

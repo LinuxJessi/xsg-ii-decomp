@@ -1,5 +1,10 @@
 #include "common.h"
 #include "shared.h"
+#include "main/control_entry.h"
+#include "main/pad.h"
+#include "main/sef_print.h"
+#include "main/xgl_font.h"
+#include "main/xgl_render.h"
 
 extern u8 *buffer;
 
@@ -14,8 +19,20 @@ extern const char tracePrintFormat[];
 extern int printf(const char *format, ...);
 extern int vsprintf(char *buffer, const char *format, va_list args);
 extern const char tracePrintFormat[8];
+extern PadRecord PadData[];
 
-INCLUDE_ASM("asm/main/nonmatchings/sef_print", resetWaitForPad);
+/* The reset message resetWaitForPad shows. */
+extern const char resetText[];
+
+/* Shows the reset message until SELECT and START are held together. */
+void resetWaitForPad(void)
+{
+    while ((PadData[0].heldAndPressed & (PAD_SELECT | PAD_START)) != (PAD_SELECT | PAD_START)) {
+        xglFontDebugPrintf(8, 8, resetText);
+        xglRenderClearFrame();
+        xglSleep();
+    }
+}
 
 void tracePrint(const char *format, ...) {
     va_list args;
@@ -27,5 +44,8 @@ void tracePrint(const char *format, ...) {
     va_end(args);
 }
 
-/* Log call sites use this variadic no-op: it spills its arguments and returns. */
-INCLUDE_ASM("asm/main/nonmatchings/sef_print", logNoOp);
+/* Log call sites use this variadic no-op (lightSetLogDump passes a vector, a format and an index): it spills
+ * its arguments and returns. */
+void logNoOp(const void *data, const char *format, ...)
+{
+}

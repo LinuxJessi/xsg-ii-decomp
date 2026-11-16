@@ -582,7 +582,7 @@ extern unsigned char D_0069D8E0[];
 extern unsigned char D_0069D8E8[];
 extern unsigned char D_0069D8F0[];
 void sprintf(void *dst, void *format, ...);
-void func_002AA7F0(void *dst, void *format);
+void strcat(void *dst, void *format);
 void textDrawDigitsPair(int x, int y, int value, int width, int digits);
 
 /* Draws the item explanation page: the panel and labels, the selected item's
@@ -640,7 +640,7 @@ void ysegfDrawItemPage(void)
         } else {
             sprintf(fileName, D_0069D8E8, D_0068B420, selected);
         }
-        func_002AA7F0(fileName, D_0069D8F0);
+        strcat(fileName, D_0069D8F0);
         ysegfReadFile(&ysegfItemImage, fileName, 0, 1);
         ysegfItemFadeAlpha = 16;
     }

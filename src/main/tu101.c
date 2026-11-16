@@ -3395,22 +3395,6 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
 }
 
 /* The save settings the option page shows (saveDataSetDefaults sets them: +0x28 = 1, +0x3A = 2, the rest 0). */
-typedef struct ConfigSaveSettings {
-    unsigned char unmodeled_00[0x28];
-    unsigned char soundMode;            /* +0x28: 0..2 (tu100.c's option page cycles it) */
-    unsigned char dolby_digital;        /* +0x29 */
-    unsigned char unmodeled_2a[0x32 - 0x2A];
-    short displayOffsetX;               /* +0x32: the horizontal argument of tyaSetDisplayOffset */
-    short displayOffsetY;               /* +0x34: the vertical argument */
-    unsigned char unmodeled_36[0x3A - 0x36];
-    unsigned char caption_all;          /* +0x3A */
-    unsigned char unmodeled_3b[0x3E - 0x3B];
-    unsigned char actuatorMode;         /* +0x3E: copied to both pads' PadRecord.actuatorMode */
-    unsigned char unmodeled_3f[0x46 - 0x3F];
-    unsigned char cursor_memory;        /* +0x46 */
-    unsigned char cursor_memory_alt;    /* +0x47 */
-} ConfigSaveSettings;
-
 extern ConfigSaveSettings SaveData;
 extern signed char D_0069E268[8];           /* the shown value of each option row */
 extern signed char D_003EB3F8[];            /* per option: value label group, 0 when it shows none */

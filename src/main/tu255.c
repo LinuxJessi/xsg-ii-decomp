@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "vu0_macro.h"
+#include "main/tu255.h"
 
 /* Sets the VU0 current matrix (vf27-vf30) from a 4x4 matrix. */
 void xglCurMatrixSet(f32 matrix[4][4]) {

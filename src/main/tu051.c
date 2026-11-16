@@ -2140,10 +2140,10 @@ void uwamonoChangePlayerModel(int request)
             {
                 int *values = modelParams;
 
-                actor->pack = values[0];
-                actor->effect = values[1];
-                actor->hierarchy = values[2];
-                actor->slotTable = values[4];
+                actor->rsrc[XAct_Rsrc_MDL] = values[0];
+                actor->rsrc[XAct_Rsrc_TEX] = values[1];
+                actor->rsrc[XAct_Rsrc_XHR] = values[2];
+                actor->rsrc[XAct_Rsrc_XAP] = values[4];
                 actor->lookLink = values[3];
             }
             XenoActorAllocMatrices(actor);
@@ -2286,7 +2286,6 @@ int uwamonoFindSelected(void);
 void uwamonoSendEvent(int kind, int id, int value);
 void uwamonoTriggerRecord(int index);
 void uwamonoReleaseHandles(void);
-void XenoActorSetSelector(struct XenoActor *actor, int selector);
 float atan2f(float y, float x);
 float func_002A1B30(float value);
 float Get_Decimal_Surplus_for_Radius(float angle);
@@ -2502,12 +2501,12 @@ void uwamonoPlayerUpdate(void)
         speed = 0.0f;
         frameScale = gameWork.frameScale;
         if (D_0069B978 >= 0 && record->key == UWAMONO_KEY_JIN_ES) {
-            if (actor->mode == 5 && actor->motionFrame >= 18.0f) {
+            if (actor->mode == 5 && actor->motion[0].frame >= 18.0f) {
                 /* The original calls it twice in a row (and ShowPart below the same). */
                 XenoActorHidePart(riders[0], "jin_saya_tuka");
                 XenoActorHidePart(riders[0], "jin_saya_tuka");
             }
-            if (record->key == UWAMONO_KEY_JIN_ES && actor->mode == 5 && actor->motionFrame >= 50.0f) {
+            if (record->key == UWAMONO_KEY_JIN_ES && actor->mode == 5 && actor->motion[0].frame >= 50.0f) {
                 XenoActorShowPart(riders[0], "jin_saya_tuka");
                 XenoActorShowPart(riders[0], "jin_saya_tuka");
             }
@@ -2627,17 +2626,17 @@ void uwamonoPlayerUpdate(void)
             if (!(gameWork.control & CONTROL_SCRIPTED)) {
                 do {
                     if (speed <= 0.0f) {
-                        actor->motionSpeed = 1.0f;
+                        actor->motion[0].speed = 1.0f;
                         walk = 0;
                         break;
                     }
                     if (speed < 192.0f) {
-                        actor->motionSpeed = speed * 2.6f / 192.0f;
+                        actor->motion[0].speed = speed * 2.6f / 192.0f;
                         walk = 1;
                         break;
                     }
                     walk = 2;
-                    actor->motionSpeed = speed * (1.0f / 256.0f);
+                    actor->motion[0].speed = speed * (1.0f / 256.0f);
                 } while (0);
                 if (actor->mode != walk && (walk != 0 || actor->mode != 3) && (walk != 0 || actor->mode != 4)
                     && (walk != 0 || actor->mode != 5)) {
@@ -2781,7 +2780,7 @@ void uwamonoPlayerUpdate(void)
                             sefSetRecordValues(D_0069E188, riders[0], riders[1], 0);
                             /* jumpMode is kept as a local for the original code generation. */
                             jumpMode = uwamonoRecords[searched].search.level + 3;
-                            actor->motionSpeed = 1.0f;
+                            actor->motion[0].speed = 1.0f;
                             D_0069B980 = jumpMode;
                             XenoActorSetChannelValueB(actor, 4.0f);
                             XenoActorSetSelector(actor, 5);

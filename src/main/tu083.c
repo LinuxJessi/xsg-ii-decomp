@@ -720,10 +720,10 @@ void uwamonoMoveSelection(int step)
     seVoiceStartDefault(0x02000004);
 }
 
-int func_002A6D88(float value);
+int fptodp(float value);
 int func_002A7510(int a, int b);
-int func_002A7080(int a, int b);
-float func_002A76E8(int value);
+int dpsub(int a, int b);
+float dptofp(int value);
 
 typedef struct UwamonoBox {
     Vector4 min;
@@ -1267,7 +1267,7 @@ void func_A9C888(int id);
 void selectionBlockFill(void);
 void msgChoiceShowPair(char *text, int count);
 void uwamonoSendEvent(int a, int b, int c);
-void func_002AA7F0(char *a, char *b);
+void strcat(char *a, char *b);
 
 void uwamonoUpdateCountdowns(void)
 {
@@ -1371,7 +1371,7 @@ void uwamonoUpdateCountdowns(void)
             strcpy(message, text);
             {
                 extern char D_0069D420[8];
-                func_002AA7F0(message, D_0069D420);
+                strcat(message, D_0069D420);
             }
             repeat = D_003E7270[0];
             strcpy(D_003E7270, message);
