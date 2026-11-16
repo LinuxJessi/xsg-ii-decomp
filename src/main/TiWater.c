@@ -378,36 +378,36 @@ void tiWaterSceneLoop(void)
     if (landscape == 0) {
         assertFailed(tiWaterLandscapeName, tiWaterSourceFile, 578);
     }
-    landscape->pack = testLoadFile(&heap, tiWaterLandscapeModelPath);
-    landscape->effect = testLoadFile(&heap, tiWaterLandscapeTexturePath);
-    if (landscape->pack == 0) {
+    landscape->rsrc[XAct_Rsrc_MDL] = testLoadFile(&heap, tiWaterLandscapeModelPath);
+    landscape->rsrc[XAct_Rsrc_TEX] = testLoadFile(&heap, tiWaterLandscapeTexturePath);
+    if (landscape->rsrc[XAct_Rsrc_MDL] == 0) {
         assertFailed(tiWaterLandscapeModelAssert, tiWaterSourceFile, 581);
     }
-    if (landscape->effect == 0) {
+    if (landscape->rsrc[XAct_Rsrc_TEX] == 0) {
         assertFailed(tiWaterLandscapeTextureAssert, tiWaterSourceFile, 582);
     }
     kosmos = XenoActorAlloc();
     if (kosmos == 0) {
         assertFailed(tiWaterKosmosName, tiWaterSourceFile, 585);
     }
-    kosmos->pack = testLoadFile(&heap, tiWaterKosmosModelPath);
-    kosmos->effect = testLoadFile(&heap, tiWaterKosmosTexturePath);
-    kosmos->hierarchy = testLoadFile(&heap, tiWaterKosmosHierarchyPath);
-    kosmos->slotTable = testLoadFile(&heap, tiWaterKosmosMotionPath);
-    kosmos->xapExt2 = testLoadFile(&heap, tiWaterKosmosMotionExt2Path);
-    if (kosmos->pack == 0) {
+    kosmos->rsrc[XAct_Rsrc_MDL] = testLoadFile(&heap, tiWaterKosmosModelPath);
+    kosmos->rsrc[XAct_Rsrc_TEX] = testLoadFile(&heap, tiWaterKosmosTexturePath);
+    kosmos->rsrc[XAct_Rsrc_XHR] = testLoadFile(&heap, tiWaterKosmosHierarchyPath);
+    kosmos->rsrc[XAct_Rsrc_XAP] = testLoadFile(&heap, tiWaterKosmosMotionPath);
+    kosmos->rsrc[XAct_Rsrc_XAP_Ext2] = testLoadFile(&heap, tiWaterKosmosMotionExt2Path);
+    if (kosmos->rsrc[XAct_Rsrc_MDL] == 0) {
         assertFailed(tiWaterKosmosModelAssert, tiWaterSourceFile, 596);
     }
-    if (kosmos->effect == 0) {
+    if (kosmos->rsrc[XAct_Rsrc_TEX] == 0) {
         assertFailed(tiWaterKosmosTextureAssert, tiWaterSourceFile, 597);
     }
-    if (kosmos->hierarchy == 0) {
+    if (kosmos->rsrc[XAct_Rsrc_XHR] == 0) {
         assertFailed(tiWaterKosmosHierarchyAssert, tiWaterSourceFile, 598);
     }
-    if (kosmos->slotTable == 0) {
+    if (kosmos->rsrc[XAct_Rsrc_XAP] == 0) {
         assertFailed(tiWaterKosmosMotionAssert, tiWaterSourceFile, 599);
     }
-    if (kosmos->xapExt2 == 0) {
+    if (kosmos->rsrc[XAct_Rsrc_XAP_Ext2] == 0) {
         assertFailed(tiWaterKosmosMotionExt2Assert, tiWaterSourceFile, 600);
     }
     kosmos->drawFlags |= TI_WATER_SOURCE_DRAW_FLAG;

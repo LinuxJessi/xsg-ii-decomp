@@ -122,55 +122,74 @@ typedef struct CfeFlagRecord {
     CfeTrackNode *track[1];
 } CfeFlagRecord;
 
-/* One 0x1B0-byte entry of cfeEntries as its evaluation sees it: the actor it drives, the values it last set and
- * the tracks they come from. tu141.c (CfeNodeInit) and tu138.c see other parts. */
-typedef struct CfeNode {
+/* The tracks of an actor entry from +0x130 (CfeActor.track): the script command cfe.stKyAt sets key lists by this
+ * index. */
+enum CfeActorTrack {
+    CFE_ACTOR_TRACK_POSITION,           /* x, y, z of the XenoActor */
+    CFE_ACTOR_TRACK_ROTATION = 3,       /* x, y, z */
+    CFE_ACTOR_TRACK_SCALE = 6,          /* x, y, z */
+    CFE_ACTOR_TRACK_MODE = 9,
+    CFE_ACTOR_TRACK_SELECTOR,
+    CFE_ACTOR_TRACK_SLOT,
+    CFE_ACTOR_TRACK_CHANNEL,
+    CFE_ACTOR_TRACK_PLAY_START,
+    CFE_ACTOR_TRACK_PLAY_END,
+    CFE_ACTOR_TRACK_PARENT_ACT,
+    CFE_ACTOR_TRACK_PARENT_MAT,
+    CFE_ACTOR_TRACK_SPEED_A,
+    CFE_ACTOR_TRACK_SPEED_B,
+    CFE_ACTOR_TRACK_ALPHA,
+    CFE_ACTOR_TRACK_DAMP_OFFSET,
+    CFE_ACTOR_TRACK_FIRST_WORD,
+    CFE_ACTOR_TRACK_DRAW_MODE,
+    CFE_ACTOR_TRACK_TRANSLUCENT,
+    CFE_ACTOR_TRACK_FORCE_MODE,
+    CFE_ACTOR_TRACK_COUNT
+};
+
+/* The tracks of an actor entry from +0x194 (CfeActor.headTrack), set by cfe.stKyAtHd. */
+enum CfeActorHeadTrack {
+    CFE_ACTOR_HEAD_SHOWN,
+    CFE_ACTOR_HEAD_POSITION,            /* x, y, z of the entry position */
+    CFE_ACTOR_HEAD_COUNT = 4
+};
+
+/* One 0x1B0-byte entry of cfeEntries, the original's actor table (actor[numActor].pAct in its asserts): the
+ * XenoActor it drives, the values it last set and the tracks they come from. */
+typedef struct CfeActor {
     unsigned char unmodeled_000[0xC0];
-    struct XenoActor *actor;    /* +0x0C0 */
-    unsigned char unmodeled_0c4[0xE0 - 0xC4];
+    struct XenoActor *actor;    /* +0x0C0: pAct */
+    unsigned char unmodeled_0c4[0xD0 - 0xC4];
+    AlignedVector4 vectorD0;    /* +0x0D0: cfeActorInitialVector (cfeEvalRecordsInit) */
     /* +0x0E0: the sampled offset, then in front of the actor. Reached through a union in the original:
      * cfeEvaluateNode loads the actor pointer again after the store to position.x (alias set 0). */
     union {
         AlignedVector4 position;
     };
-    int flags;                  /* +0x0F0: CFE_NODE_SHOWN */
+    int flags;                  /* +0x0F0: CFE_ACTOR_SHOWN */
     int mode;                   /* +0x0F4 */
     int selector;               /* +0x0F8 */
     int slot;                   /* +0x0FC: the mode slot */
     float channelValue;         /* +0x100: the channel value of the actor's first motion state */
     int playStart;              /* +0x104: the play range of that motion state */
     int playEnd;                /* +0x108 */
-    int attachSlot;             /* +0x10C: the cfePlugInSlots entry the actor hangs on, negative for none */
-    int attachJoint;            /* +0x110 */
-    float speed[2];             /* +0x114: of the motion states A and B */
+    int parentActId;            /* +0x10C: parentActID, the cfeEntries entry whose actor this one hangs on; -1 none */
+    int parentMatId;            /* +0x110: parentMatID, the joint of that actor */
+    float speedA;               /* +0x114: of the actor's motion state A */
+    float speedB;               /* +0x118: of motion state B */
     int dampOffset;             /* +0x11C: passed to cfeDampDirOffset every frame */
     int firstWord;              /* +0x120 */
     int drawMode;               /* +0x124 */
     int translucent;            /* +0x128 */
     int forceMode;              /* +0x12C: nonzero sets the mode again every time */
-    CfeTrackNode *transformTrack[9]; /* +0x130: position, rotation and scale of the actor */
-    CfeTrackNode *modeTrack;    /* +0x154 */
-    CfeTrackNode *selectorTrack; /* +0x158 */
-    CfeTrackNode *slotTrack;    /* +0x15C */
-    CfeTrackNode *channelTrack; /* +0x160 */
-    CfeTrackNode *playRangeTrack[2]; /* +0x164 */
-    CfeTrackNode *attachSlotTrack; /* +0x16C */
-    CfeTrackNode *attachJointTrack; /* +0x170 */
-    CfeTrackNode *speedTrack[2]; /* +0x174 */
-    CfeTrackNode *alphaTrack;   /* +0x17C */
-    CfeTrackNode *dampOffsetTrack; /* +0x180 */
-    CfeTrackNode *firstWordTrack; /* +0x184 */
-    CfeTrackNode *drawModeTrack; /* +0x188 */
-    CfeTrackNode *translucentTrack; /* +0x18C */
-    CfeTrackNode *forceModeTrack; /* +0x190 */
-    CfeTrackNode *shownTrack;   /* +0x194 */
-    CfeTrackNode *positionTrack[3]; /* +0x198 */
+    CfeTrackNode *track[CFE_ACTOR_TRACK_COUNT];          /* +0x130 */
+    CfeTrackNode *headTrack[CFE_ACTOR_HEAD_COUNT];       /* +0x194 */
     struct CfeFlagRecord *records; /* +0x1A4: the flag records of the actor's list */
     unsigned char unmodeled_1a8[0x1B0 - 0x1A8];
-} CfeNode;
+} CfeActor;
 
-/* CfeNode.flags: the entry's actor follows its position. */
-#define CFE_NODE_SHOWN 0x1
+/* CfeActor.flags: the entry's actor follows its position. */
+#define CFE_ACTOR_SHOWN 0x1
 
 /* Functions of src/main/cfeEvaluate.c that cfePlugIn.c calls. */
 int cfeEvaluateNodes(int sample_param);

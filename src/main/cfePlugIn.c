@@ -291,8 +291,8 @@ XenoActor *cfeLoadResourceObject(int id)
     resource = data;
     actor = XenoActorAlloc();
     ((CfeActorKindView *) actor)->kind = (void *) id;
-    actor->pack = resource->pack;
-    actor->effect = resource->effect;
+    actor->rsrc[XAct_Rsrc_MDL] = resource->pack;
+    actor->rsrc[XAct_Rsrc_TEX] = resource->effect;
     if (resource->pack != 0) {
         xglCullingMapSet(resource->pack);
     }
@@ -391,13 +391,13 @@ XenoActor *cfeLoadActorObject(int id)
     } while (xglCdServiceIfPending() != 0);
     pack = resource->pack;
     actor->drawMode = 6;
-    actor->pack = pack;
+    actor->rsrc[XAct_Rsrc_MDL] = pack;
     actor->kind = id;
-    actor->effect = resource->effect;
-    actor->hierarchy = resource->hierarchy;
-    actor->slotTable = resource->slotTable;
+    actor->rsrc[XAct_Rsrc_TEX] = resource->effect;
+    actor->rsrc[XAct_Rsrc_XHR] = resource->hierarchy;
+    actor->rsrc[XAct_Rsrc_XAP] = resource->slotTable;
     actor->lookLink = resource->lookLink;
-    if (actor->hierarchy != 0 && ((CfeHierarchyHeader *) actor->hierarchy)->needsShared != 0) {
+    if (actor->rsrc[XAct_Rsrc_XHR] != 0 && ((CfeHierarchyHeader *) actor->rsrc[XAct_Rsrc_XHR])->needsShared != 0) {
         do {
         } while (xglCdServiceIfPending() != 0);
         GameResLoadID(CFE_SHARED_RESOURCE_ID, &data, 0, 0);
@@ -414,7 +414,7 @@ XenoActor *cfeLoadActorObject(int id)
 
 extern unsigned char cfeActorAssert[];
 extern int cfeEntryCount;
-extern CfeNode cfeEntries[];
+extern CfeActor cfeEntries[];
 
 /* Script command `cfe.ldAt` (1 argument): loads actor argument 1 into the next entry of cfeEntries, copies the play
  * range of its first motion state, sets draw mode 6 and allocates a cleared record block of two words per
@@ -434,7 +434,7 @@ int cfe_0024BA70(int handle)
     }
     actor = cfeEntries[cfeEntryCount].actor;
     /* XenoActor keeps the pack as an int. */
-    pack = (CfePackHeader *) actor->pack;
+    pack = (CfePackHeader *) actor->rsrc[XAct_Rsrc_MDL];
     cfeEntries[cfeEntryCount].playStart = actor->motion[0].range[0];
     cfeEntries[cfeEntryCount].playEnd = actor->motion[0].range[1];
     cfeEntries[cfeEntryCount].drawMode = 6;
@@ -452,19 +452,6 @@ int cfe_0024BA70(int handle)
 int GameResLoadName(char *name, void **data, unsigned int *size,
                     void (*callback)(int index, void *buffer, unsigned int size, int value));
 
-/* One 0x1B0-byte entry; word 0 is the pointer to its object. The rest of
-   the entry is not recovered. */
-typedef struct CfePlugInEntry {
-    unsigned char *object;
-    unsigned char unmodeled_004[0x1B0 - 4];
-} CfePlugInEntry;
-
-extern CfePlugInEntry cfePlugInSlots[];
-
-/* Offset of the int result table inside the object; the element is added
-   as index * 4. The object's layout is not recovered. */
-#define CFE_OBJECT_RESULTS_OFFSET 0x5FC
-
 int cfe_0024BC10(int handle)
 {
     char buffer[0x80];
@@ -472,8 +459,8 @@ int cfe_0024BC10(int handle)
     int slot;
     int index;
     int kind;
-    CfePlugInEntry *entry;
-    unsigned char *object;
+    struct XenoActor **slotActor;
+    struct XenoActor *actor;
 
     data = 0;
     if (VM_PLUGIN_CNT_GET(handle) != 3) {
@@ -487,12 +474,12 @@ int cfe_0024BC10(int handle)
     do {
     } while (xglCdServiceIfPending() != 0);
     if (data != 0) {
-        entry = &cfePlugInSlots[slot];
-        object = entry->object;
-        *(int *) (object + CFE_OBJECT_RESULTS_OFFSET + index * 4) = (int) data;
+        slotActor = &cfeEntries[slot].actor;
+        actor = *slotActor;
+        actor->rsrc[XAct_Rsrc_XAP + index] = (int) data;
         if (index == 0) {
-            XenoActorSetModeInSlot(object, 0, 0);
-            XenoActorSetSelector(entry->object, 0);
+            XenoActorSetModeInSlot(actor, 0, 0);
+            XenoActorSetSelector(*slotActor, 0);
         }
     }
     return 1;
@@ -563,7 +550,7 @@ int cfe_0024BEF0(int handle)
     }
     object = cfeLoadResourceObject(vmArgGet(handle, 1));
     /* XenoActor keeps the pack as an int. */
-    pack = (CfePackHeader *) object->pack;
+    pack = (CfePackHeader *) object->rsrc[XAct_Rsrc_MDL];
     offset = pack->subPackOffset;
     group = &cfeGroups[cfeGroupCount];
     group->object = object;
@@ -771,12 +758,9 @@ int cfe_0024C308(int handle)
     return 1;
 }
 
-/* The key lists at +0x130 of each 0x1B0-byte entry of cfeEntries. */
-extern CfeTrackNode *D_006319F0[][108];
-
-/* Script command `cfe.stKyAt` (5 arguments): sets key `key` of list [index][sub] of D_006319F0 to the 8.8 value.
- * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
- * cfeListSetValue); the linear forms are used when `linear` is set. */
+/* Script command `cfe.stKyAt` (5 arguments): sets key `key` of track `sub` (CFE_ACTOR_TRACK_*) of actor `index` to
+ * the 8.8 value. Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values
+ * (cfeListSetValueLinear / cfeListSetValue); the linear forms are used when `linear` is set. */
 int cfe_0024C500(int handle)
 {
     int index;
@@ -795,24 +779,22 @@ int cfe_0024C500(int handle)
     value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (linear != 0) {
-            cfeListSetAngleLinear(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngleLinear(&cfeEntries[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            cfeListSetAngle(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngle(&cfeEntries[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
         if (linear != 0) {
-            cfeListSetValueLinear(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValueLinear(&cfeEntries[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            cfeListSetValue(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValue(&cfeEntries[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     }
     return 1;
 }
 
-extern CfeTrackNode *D_00631A54[][108];
-
-/* Script command `cfe.stKyAtHd` (5 arguments): sets key `key` of list [index][sub] of D_00631A54
- * (the lists at +0x194 of each 0x1B0-byte entry of cfeEntries) to the 8.8 value, with flag
+/* Script command `cfe.stKyAtHd` (5 arguments): sets key `key` of head track `sub` of actor `index`
+ * (CFE_ACTOR_HEAD_*) to the 8.8 value, with flag
  * linear (cfeListSetValueLinear) when `linear` is set. */
 int cfe_0024C7B8(int handle)
 {
@@ -831,15 +813,14 @@ int cfe_0024C7B8(int handle)
     linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
     if (linear != 0) {
-        cfeListSetValueLinear(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&cfeEntries[index].headTrack[sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        cfeListSetValue(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&cfeEntries[index].headTrack[sub], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
 
 extern unsigned char cfeArgCount6Assert[];
-extern CfeNode cfeEntries[];
 
 /* Script command `cfe.stKyAtPrts` (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
  * to the 8.8 value (linear through cfeListSetValueLinear when `linear` is set), then walks that track to its
@@ -1299,7 +1280,7 @@ int strcmp(const char *first, const char *second);
  * one frame later unless paused. */
 int cfe_0024DF60(int handle)
 {
-    CfeNode *entry;
+    CfeActor *entry;
     int time;
     int i;
     int y;
@@ -1347,7 +1328,7 @@ int cfe_0024DF60(int handle)
     }
     for (i = 0; i < cfeEntryCount; i++) {
         entry = &cfeEntries[i];
-        if (entry->flags & CFE_NODE_SHOWN) {
+        if (entry->flags & CFE_ACTOR_SHOWN) {
             func_0028B268(entry->actor, &entry->position);
         }
         cfeDampDirOffset(entry->actor, entry->dampOffset);

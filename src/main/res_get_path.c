@@ -3026,10 +3026,10 @@ void func_001E4178(int owner) {
             if (actor != 0) {
                 actor->kind = 0;
                 actor->lookLink = 0;
-                actor->slotTable = 0;
-                actor->hierarchy = 0;
-                actor->effect = 0;
-                actor->pack = 0;
+                actor->rsrc[XAct_Rsrc_XAP] = 0;
+                actor->rsrc[XAct_Rsrc_XHR] = 0;
+                actor->rsrc[XAct_Rsrc_TEX] = 0;
+                actor->rsrc[XAct_Rsrc_MDL] = 0;
                 XenoActorAllocMatrices(actor);
                 tiMRPackageInit(actor->channel);
                 tiMRPackageSetEntryA(actor->channel, 0);

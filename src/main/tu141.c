@@ -8,6 +8,7 @@
 #include "main/xgl_2.h"
 #include "main/xgl_studio.h"
 #include "quadword.h"
+#include "cfeEvaluate.h"
 
 
 void cfeNodePoolInit(void) {
@@ -18,44 +19,29 @@ void cfeNodePoolInit(void) {
 void *memset(void *, int, unsigned int);
 
 
-/* One 0x1B0-byte node of cfeEntries as cfeEvalRecordsInit sets it up. */
-typedef struct CfeNodeInit {
-    unsigned char unmodeled_000[0xD0];
-    AlignedVector4 vectorD0;    /* +0x0D0 */
-    AlignedVector4 vectorE0;    /* +0x0E0 */
-    unsigned char unmodeled_0f0[0x10C - 0xF0];
-    int parent;                 /* +0x10C: -1, no parent */
-    unsigned char unmodeled_110[4];
-    float scaleX;               /* +0x114 */
-    float scaleY;               /* +0x118 */
-    unsigned char unmodeled_11c[4];
-    int enabled;                /* +0x120 */
-    unsigned char unmodeled_124[0x1B0 - 0x124];
-} CfeNodeInit;
-
 /* Number of nodes in cfeEntries. */
 #define CFE_NODE_COUNT 64
 
-extern CfeNodeInit cfeEntries[];
+extern CfeActor cfeEntries[];
 extern const AlignedVector4 cfeActorInitialVector;
 
-/* Clears the 64 nodes of cfeEntries and gives each the vector cfeActorInitialVector at +0xD0 and +0xE0, no
- * parent, scale 1 and the enabled flag. */
+/* Clears the 64 actor entries of cfeEntries and gives each the vector cfeActorInitialVector at +0xD0 and as
+ * its position, no parent, both motion speeds 1 and the first word 1. */
 void cfeEvalRecordsInit(void)
 {
     AlignedVector4 initial = cfeActorInitialVector;
     const AlignedVector4 *source;
     int i;
 
-    memset(cfeEntries, 0, CFE_NODE_COUNT * sizeof(CfeNodeInit));
+    memset(cfeEntries, 0, CFE_NODE_COUNT * sizeof(CfeActor));
     for (i = 0; i < CFE_NODE_COUNT; i++) {
         source = &initial;
         QuadwordCopy(&cfeEntries[i].vectorD0, source);
-        QuadwordCopy(&cfeEntries[i].vectorE0, source);
-        cfeEntries[i].parent = -1;
-        cfeEntries[i].scaleX = 1.0f;
-        cfeEntries[i].scaleY = 1.0f;
-        cfeEntries[i].enabled = 1;
+        QuadwordCopy(&cfeEntries[i].position, source);
+        cfeEntries[i].parentActId = -1;
+        cfeEntries[i].speedA = 1.0f;
+        cfeEntries[i].speedB = 1.0f;
+        cfeEntries[i].firstWord = 1;
     }
 }
 
@@ -184,7 +170,6 @@ void cfePlugInRecordCountReset(void) {
     cfePlugInRecordCount = 0;
 }
 
-#include "cfeEvaluate.h"
 extern CfeEvalGlobal cfeEvalGlobal;
 
 /* Clears the global block and sets its two default vectors (255, 255, 255, 1) and (5, 20, 0, 1). */

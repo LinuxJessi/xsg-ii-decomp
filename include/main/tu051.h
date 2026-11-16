@@ -15,6 +15,20 @@ typedef struct XenoMotionState {
 } XenoMotionState;
 
 /* The XenoActor of a map object (xenoActor.c); only the fields used below. */
+/* XenoActor.rsrc: the model pack (.pxy, xenoActor.c reads it as PxyHeader *), the texture (.txy), the hierarchy
+ * (.xhr, XenoActorAllocMatrices builds the matrices from it), the motion table (.xap, XenoActorGetSlotRange's
+ * table) and its second extension. No assert names slots 3 and 5. */
+enum XActRsrc {
+    XAct_Rsrc_MDL,
+    XAct_Rsrc_TEX,
+    XAct_Rsrc_XHR,
+    XAct_Rsrc_3,
+    XAct_Rsrc_XAP,
+    XAct_Rsrc_5,
+    XAct_Rsrc_XAP_Ext2,
+    XAct_Rsrc_Count
+};
+
 struct XenoActor {
     unsigned char unmodeled_000[0x10];
     AlignedVector4 position;                /* 0x010 */
@@ -51,14 +65,9 @@ struct XenoActor {
     unsigned char unmodeled_5e0[4];
     int selector;                           /* 0x5E4: the last selector (xenoActor.c cachedSelector) */
     unsigned char unmodeled_5e8[4];
-    /* The model resources resPathSlotLoadID returns (uwamonoLoadPlayer copies them in). */
-    int pack;                               /* 0x5EC: the model pack (xenoActor.c reads it as PxyHeader *) */
-    int effect;                             /* 0x5F0 */
-    int hierarchy;                          /* 0x5F4: XenoActorAllocMatrices builds the matrices from it */
-    unsigned char unmodeled_5f8[4];
-    int slotTable;                          /* 0x5FC: XenoActorGetSlotRange's table */
-    unsigned char unmodeled_600[4];
-    int xapExt2;                            /* 0x604: rsrc[XAct_Rsrc_XAP_Ext2] (tiWaterSceneLoop assert) */
+    /* 0x5EC: the actor's resources, rsrc[XAct_Rsrc_*] in the original's asserts (resPathSlotLoadID returns
+     * them, uwamonoLoadPlayer copies them in). */
+    int rsrc[XAct_Rsrc_Count];
     unsigned char unmodeled_608[0x610 - 0x608];
     void *sharedResource;                   /* 0x610: resource 0x30041, loaded when the hierarchy needs it */
     unsigned char unmodeled_614[0x618 - 0x614];

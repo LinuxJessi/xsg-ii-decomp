@@ -80,13 +80,7 @@ extern const char cfeReleaseChildAssert[];
 extern const char cfeEvaluateSourceFile[];
 extern const char cfeAppendChildAssert[];
 
-/* The 0x1B0-byte entries of cfePlugInSlots as the attachment reads them: word 0 is the parent actor. */
-typedef struct CfeNodeSlot {
-    struct XenoActor *object;
-    unsigned char unmodeled_004[0x1B0 - 4];
-} CfeNodeSlot;
-
-extern CfeNodeSlot cfePlugInSlots[];
+extern CfeActor cfeEntries[];
 
 
 /* XenoActor's vector at +0x90 as the node's scale tracks write it. The original reaches it through a
@@ -107,9 +101,8 @@ typedef struct CfeActorScale {
 /* Evaluates one entry of cfeEntries at `time`: every track that is set drives its value (the actor's transform,
  * channel values, mode, selector, play range, speeds, draw state and attachment, the flag records and the entry
  * position), and the entry position is moved from the world into the space in front of the actor. */
-void cfeEvaluateNode(void *data, int time)
+void cfeEvaluateNode(CfeActor *entry, int time)
 {
-    CfeNode *entry = data;
     struct XenoActor *actor;
     struct XenoActor *shown;
     float alpha;
@@ -117,32 +110,32 @@ void cfeEvaluateNode(void *data, int time)
     int slot;
     int changed;
 
-    if (entry->transformTrack[0] != 0) {
-        entry->actor->position.x = cfeTrackSample(entry->transformTrack[0], time);
+    if (entry->track[CFE_ACTOR_TRACK_POSITION + 0] != 0) {
+        entry->actor->position.x = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_POSITION + 0], time);
     }
-    if (entry->transformTrack[1] != 0) {
-        entry->actor->position.y = cfeTrackSample(entry->transformTrack[1], time);
+    if (entry->track[CFE_ACTOR_TRACK_POSITION + 1] != 0) {
+        entry->actor->position.y = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_POSITION + 1], time);
     }
-    if (entry->transformTrack[2] != 0) {
-        entry->actor->position.z = cfeTrackSample(entry->transformTrack[2], time);
+    if (entry->track[CFE_ACTOR_TRACK_POSITION + 2] != 0) {
+        entry->actor->position.z = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_POSITION + 2], time);
     }
-    if (entry->transformTrack[3] != 0) {
-        entry->actor->rotation.x = cfeTrackSample(entry->transformTrack[3], time);
+    if (entry->track[CFE_ACTOR_TRACK_ROTATION + 0] != 0) {
+        entry->actor->rotation.x = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_ROTATION + 0], time);
     }
-    if (entry->transformTrack[4] != 0) {
-        entry->actor->rotation.y = cfeTrackSample(entry->transformTrack[4], time);
+    if (entry->track[CFE_ACTOR_TRACK_ROTATION + 1] != 0) {
+        entry->actor->rotation.y = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_ROTATION + 1], time);
     }
-    if (entry->transformTrack[5] != 0) {
-        entry->actor->rotation.z = cfeTrackSample(entry->transformTrack[5], time);
+    if (entry->track[CFE_ACTOR_TRACK_ROTATION + 2] != 0) {
+        entry->actor->rotation.z = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_ROTATION + 2], time);
     }
-    if (entry->transformTrack[6] != 0) {
-        ((CfeActorScale *) entry->actor)->scale.x = cfeTrackSample(entry->transformTrack[6], time);
+    if (entry->track[CFE_ACTOR_TRACK_SCALE + 0] != 0) {
+        ((CfeActorScale *) entry->actor)->scale.x = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_SCALE + 0], time);
     }
-    if (entry->transformTrack[7] != 0) {
-        ((CfeActorScale *) entry->actor)->scale.y = cfeTrackSample(entry->transformTrack[7], time);
+    if (entry->track[CFE_ACTOR_TRACK_SCALE + 1] != 0) {
+        ((CfeActorScale *) entry->actor)->scale.y = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_SCALE + 1], time);
     }
-    if (entry->transformTrack[8] != 0) {
-        ((CfeActorScale *) entry->actor)->scale.z = cfeTrackSample(entry->transformTrack[8], time);
+    if (entry->track[CFE_ACTOR_TRACK_SCALE + 2] != 0) {
+        ((CfeActorScale *) entry->actor)->scale.z = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_SCALE + 2], time);
     }
     offset.x = entry->position.x - entry->actor->position.x;
     offset.y = entry->position.y - entry->actor->position.y;
@@ -155,28 +148,28 @@ void cfeEvaluateNode(void *data, int time)
     entry->position.x += entry->actor->position.x;
     entry->position.y += entry->actor->position.y;
     entry->position.z += entry->actor->position.z;
-    if (entry->channelTrack != 0) {
-        entry->channelValue = cfeTrackSampleStep(entry->channelTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_CHANNEL] != 0) {
+        entry->channelValue = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_CHANNEL], time);
         XenoActorSetChannelValue(entry->actor, entry->channelValue);
         XenoActorSetChannelValueB(entry->actor, entry->channelValue);
     }
     slot = entry->slot;
-    if (entry->slotTrack != 0) {
-        slot = cfeTrackSampleStep(entry->slotTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_SLOT] != 0) {
+        slot = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_SLOT], time);
     }
-    if (entry->speedTrack[0] != 0) {
-        entry->speed[0] = cfeTrackSampleStep(entry->speedTrack[0], time);
-        tiMRStateSetSpeed(&entry->actor->motion[0], entry->speed[0]);
+    if (entry->track[CFE_ACTOR_TRACK_SPEED_A] != 0) {
+        entry->speedA = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_SPEED_A], time);
+        tiMRStateSetSpeed(&entry->actor->motion[0], entry->speedA);
     }
-    if (entry->speedTrack[1] != 0) {
-        entry->speed[1] = cfeTrackSampleStep(entry->speedTrack[1], time);
-        tiMRStateSetSpeed(&entry->actor->motion[1], entry->speed[1]);
+    if (entry->track[CFE_ACTOR_TRACK_SPEED_B] != 0) {
+        entry->speedB = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_SPEED_B], time);
+        tiMRStateSetSpeed(&entry->actor->motion[1], entry->speedB);
     }
-    if (entry->forceModeTrack != 0) {
-        entry->forceMode = cfeTrackSampleStep(entry->forceModeTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_FORCE_MODE] != 0) {
+        entry->forceMode = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_FORCE_MODE], time);
     }
-    if (entry->modeTrack != 0) {
-        entry->mode = cfeTrackSampleStep(entry->modeTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_MODE] != 0) {
+        entry->mode = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_MODE], time);
         if (entry->actor->mode != entry->mode || slot != entry->slot || time == cfeRangeGetMin()
             || entry->forceMode != 0) {
             entry->slot = slot;
@@ -187,38 +180,38 @@ void cfeEvaluateNode(void *data, int time)
         }
     }
     changed = 0;
-    if (entry->playRangeTrack[0] != 0) {
-        entry->playStart = cfeTrackSampleStep(entry->playRangeTrack[0], time);
+    if (entry->track[CFE_ACTOR_TRACK_PLAY_START] != 0) {
+        entry->playStart = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_PLAY_START], time);
         changed = 1;
     }
-    if (entry->playRangeTrack[1] != 0) {
-        entry->playEnd = cfeTrackSampleStep(entry->playRangeTrack[1], time);
+    if (entry->track[CFE_ACTOR_TRACK_PLAY_END] != 0) {
+        entry->playEnd = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_PLAY_END], time);
         changed = 1;
     }
     if (changed) {
         XenoActorSetPlayRange(entry->actor, entry->playStart, entry->playEnd);
     }
-    if (entry->selectorTrack != 0) {
-        entry->selector = cfeTrackSampleStep(entry->selectorTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_SELECTOR] != 0) {
+        entry->selector = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_SELECTOR], time);
         if (entry->actor->selector != entry->selector || time == cfeRangeGetMin()) {
             XenoActorEnableChannelB(entry->actor);
             XenoActorSetSelector(entry->actor, entry->selector);
         }
     }
-    if (entry->drawModeTrack != 0) {
-        entry->drawMode = cfeTrackSampleStep(entry->drawModeTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_DRAW_MODE] != 0) {
+        entry->drawMode = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_DRAW_MODE], time);
         entry->actor->drawMode = entry->drawMode;
     }
-    if (entry->translucentTrack != 0) {
-        entry->translucent = cfeTrackSampleStep(entry->translucentTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_TRANSLUCENT] != 0) {
+        entry->translucent = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_TRANSLUCENT], time);
     }
     if (entry->translucent != 0) {
         entry->actor->drawFlags |= CFE_ACTOR_TRANSLUCENT;
     } else {
         entry->actor->drawFlags &= ~CFE_ACTOR_TRANSLUCENT;
     }
-    if (entry->alphaTrack != 0) {
-        alpha = cfeTrackSample(entry->alphaTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_ALPHA] != 0) {
+        alpha = cfeTrackSample(entry->track[CFE_ACTOR_TRACK_ALPHA], time);
         actor = entry->actor;
         actor->alpha = alpha;
         if (alpha == 1.0f) {
@@ -235,20 +228,20 @@ void cfeEvaluateNode(void *data, int time)
             shown->drawFlags &= ~CFE_ACTOR_HIDDEN;
         }
     }
-    if (entry->attachSlotTrack != 0) {
-        entry->attachSlot = cfeTrackSampleStep(entry->attachSlotTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_PARENT_ACT] != 0) {
+        entry->parentActId = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_PARENT_ACT], time);
     }
-    if (entry->attachJointTrack != 0) {
-        entry->attachJoint = cfeTrackSampleStep(entry->attachJointTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_PARENT_MAT] != 0) {
+        entry->parentMatId = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_PARENT_MAT], time);
     }
-    if (entry->attachSlot >= 0) {
+    if (entry->parentActId >= 0) {
         if (entry->actor->parent != 0) {
             if (XenoActorReleaseChild(entry->actor->parent, entry->actor) != 1) {
                 assertFailed(cfeReleaseChildAssert, cfeEvaluateSourceFile, 393);
             }
         }
-        if (XenoActorAppendChildOnJoint(cfePlugInSlots[entry->attachSlot].object, entry->actor,
-                                        entry->attachJoint) != 1) {
+        if (XenoActorAppendChildOnJoint(cfeEntries[entry->parentActId].actor, entry->actor,
+                                        entry->parentMatId) != 1) {
             assertFailed(cfeAppendChildAssert, cfeEvaluateSourceFile, 396);
         }
     } else if (entry->actor->parent != 0) {
@@ -256,41 +249,40 @@ void cfeEvaluateNode(void *data, int time)
             assertFailed(cfeReleaseChildAssert, cfeEvaluateSourceFile, 402);
         }
     }
-    if (entry->dampOffsetTrack != 0) {
-        entry->dampOffset = cfeTrackSampleStep(entry->dampOffsetTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_DAMP_OFFSET] != 0) {
+        entry->dampOffset = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_DAMP_OFFSET], time);
     }
-    if (entry->firstWordTrack != 0) {
-        entry->firstWord = cfeTrackSampleStep(entry->firstWordTrack, time);
+    if (entry->track[CFE_ACTOR_TRACK_FIRST_WORD] != 0) {
+        entry->firstWord = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_FIRST_WORD], time);
         XenoActorSetFirstWord(entry->actor, entry->firstWord);
     }
     /* CfeFlagOwner is this file's view of the actor (its flag words and record list). */
     cfeRecordListSample(time, (CfeFlagOwner *) entry->actor, entry->records);
-    if (entry->shownTrack != 0) {
-        if (cfeTrackSampleStep(entry->shownTrack, time) != 0.0f) {
-            entry->flags |= CFE_NODE_SHOWN;
+    if (entry->headTrack[CFE_ACTOR_HEAD_SHOWN] != 0) {
+        if (cfeTrackSampleStep(entry->headTrack[CFE_ACTOR_HEAD_SHOWN], time) != 0.0f) {
+            entry->flags |= CFE_ACTOR_SHOWN;
         } else {
-            entry->flags &= ~CFE_NODE_SHOWN;
+            entry->flags &= ~CFE_ACTOR_SHOWN;
         }
     }
-    if (entry->positionTrack[0] != 0) {
-        entry->position.x = cfeTrackSample(entry->positionTrack[0], time);
+    if (entry->headTrack[CFE_ACTOR_HEAD_POSITION + 0] != 0) {
+        entry->position.x = cfeTrackSample(entry->headTrack[CFE_ACTOR_HEAD_POSITION + 0], time);
     }
-    if (entry->positionTrack[1] != 0) {
-        entry->position.y = cfeTrackSample(entry->positionTrack[1], time);
+    if (entry->headTrack[CFE_ACTOR_HEAD_POSITION + 1] != 0) {
+        entry->position.y = cfeTrackSample(entry->headTrack[CFE_ACTOR_HEAD_POSITION + 1], time);
     }
-    if (entry->positionTrack[2] != 0) {
-        entry->position.z = cfeTrackSample(entry->positionTrack[2], time);
+    if (entry->headTrack[CFE_ACTOR_HEAD_POSITION + 2] != 0) {
+        entry->position.z = cfeTrackSample(entry->headTrack[CFE_ACTOR_HEAD_POSITION + 2], time);
     }
 }
 
 
 extern int cfeEntryCount;
-extern unsigned char cfeEntries[];
 
-/* Evaluates every node of cfeEntries (cfeEntryCount nodes of 0x1B0 bytes) with cfeEvaluateNode. */
+/* Evaluates every actor entry of cfeEntries (cfeEntryCount of them) with cfeEvaluateNode. */
 int cfeEvaluateNodes(int sample_param)
 {
-    unsigned char *entry;
+    CfeActor *entry;
     int result;
     int i;
 
@@ -302,7 +294,7 @@ int cfeEvaluateNodes(int sample_param)
             do {
                 i++;
                 cfeEvaluateNode(entry, sample_param);
-                entry += 0x1B0;
+                entry++;
                 result = i < cfeEntryCount;
             } while (result != 0);
         }

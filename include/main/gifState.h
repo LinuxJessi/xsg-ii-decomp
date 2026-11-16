@@ -73,6 +73,8 @@ enum GifEffectMode {
     GIF_EFFECT_COUNT
 };
 
+struct XglPacket;
+
 /* The draw function of an effect: called with the frame packet. */
 typedef void (*GifEffectDraw)(struct XglPacket *packet);
 

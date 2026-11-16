@@ -2140,10 +2140,10 @@ void uwamonoChangePlayerModel(int request)
             {
                 int *values = modelParams;
 
-                actor->pack = values[0];
-                actor->effect = values[1];
-                actor->hierarchy = values[2];
-                actor->slotTable = values[4];
+                actor->rsrc[XAct_Rsrc_MDL] = values[0];
+                actor->rsrc[XAct_Rsrc_TEX] = values[1];
+                actor->rsrc[XAct_Rsrc_XHR] = values[2];
+                actor->rsrc[XAct_Rsrc_XAP] = values[4];
                 actor->lookLink = values[3];
             }
             XenoActorAllocMatrices(actor);
