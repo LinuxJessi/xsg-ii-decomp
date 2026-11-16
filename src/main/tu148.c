@@ -9,6 +9,7 @@
 #include "main/tu217.h"
 #include "main/tu220.h"
 #include "main/tu223.h"
+#include "main/tu224.h"
 
 /* Message-system state. msgWindow is the window object, msgChoice the choice
  * object and msgPanel the panel object; the init, close and show functions
@@ -106,7 +107,6 @@ int msgSlotCurrent(void) {
 void msgWindowSeekToWindowEnd(void *window);
 int msgWindowRunCurrentValue(void *window, int value);
 void msgWindowSetTalkFlag10(void *window);
-void msgWindowUpdateCurrent(void *window);
 int msgWindowCurrentStatus(void *window);
 
 /* One step of the open message (nothing while the window status is 2): CIRCLE finishes the window's text,
@@ -276,7 +276,6 @@ void msgChoiceShow(int value) {
     msgSlotPlaceByState(msgChoice, 0xA, 0x20);
 }
 
-void msgItemSlotStart(void *, int, int);
 
 /* Show the choice for two values; its timer runs from 0x5A. */
 void msgChoiceShowPair(int first, int second) {
@@ -285,15 +284,12 @@ void msgChoiceShowPair(int first, int second) {
     msgSlotPlaceByState(msgChoice, 0xA, 0x20);
 }
 
-void msgChoiceSetIndex(void *, int);
-
 /* Start the choice's timeline at `frame`, then the second step with `second`. */
 void msgChoiceOpen(int frame, int second) {
-    timecodeStartAtFrame(msgChoice, frame);
-    msgChoiceSetIndex(msgChoice, second);
+    timecodeStartAtFrame((MsgSlot *)msgChoice, frame);
+    msgChoiceSetIndex((MsgSlot *)msgChoice, second);
 }
 
-int msgChoiceTestFlags(void *choice, int mask);
 long long msgChoiceGetFrames(void *choice);
 void func_0027D9D8(void *choice, int step);
 void func_0027D9F0(void *choice, int step);
@@ -333,19 +329,16 @@ int msgChoicePoll(void)
 }
 
 void func_00251B18(void);
-void timecodeStartAtHms(void *, int, int, int);
 
 /* Open the panel, then show its default entry. */
 void msgPanelOpen(void) {
-    timecodeStartAtHms(msgPanel, 0, 0, 0);
+    timecodeStartAtHms((MsgSlot *)msgPanel, 0, 0, 0);
     func_00251B18();
 }
 
-void timecodeSetHmsf(void *, int, int, int, int);
-
 /* Set the panel's timecode: hours, minutes, seconds and frames. */
 void msgPanelSetTimecode(int hours, int minutes, int seconds, int frames) {
-    timecodeSetHmsf(msgPanel, hours, minutes, seconds, frames);
+    timecodeSetHmsf((MsgSlot *)msgPanel, hours, minutes, seconds, frames);
 }
 
 

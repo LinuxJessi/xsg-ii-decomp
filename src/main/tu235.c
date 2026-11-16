@@ -1,36 +1,49 @@
 #include "common.h"
+#include "main/tu235.h"
+#include "main/tu236.h"
+#include "main/tu242.h"
 #include "main/tu243.h"
-
-typedef signed char s8;
 
 typedef int s32;
 
-/*
- * Partial view of the dispatch body (struct DispatchBody in main/tu219.c, the body at slot +0x08):
- * only the words dispatchBodyInitKind2 sets are named here. Its kind is at +0x1C (msgSlotInit stores it).
- */
-typedef struct DispatchBody {
-    unsigned char unmodeled_00[0x50];
-    s32 word_50;
-    s32 word_54;
-} DispatchBody;
-
-void msgSlotInit();
+#define BODY_MARGIN 0x20          /* inset above and below the rows */
+#define BODY_HEADER_INSET 0x48    /* top inset when a header band is present */
+#define BODY_MIN_WIDTH 100
+#define BODY_ROW_PITCH 0x1E       /* row height divided into the range by msgListRowsBetween */
+#define BODY_PULSE_START 0x10
+#define BODY_PULSE_STEP 3
 
 /*
- * Initialises the body as a kind 2 dispatch body: msgSlotInit(body, 2) clears it and stores the kind
- * (main/tu219 calls msgListSlotSetGeometry for kind 2), then sets word_50 = 0x10 and word_54 = 3.
+ * Initialises the slot as a list window (state 2): msgSlotInit clears it and stores the state
+ * (main/tu219 calls msgListSlotSetGeometry for state 2), then starts the highlight pulse at its
+ * minimum, rising (BODY_PULSE_START, BODY_PULSE_STEP: MSG_PULSE_MIN and MSG_PULSE_STEP of main/tu238.c).
  */
-void dispatchBodyInitKind2(DispatchBody *body) {
-    msgSlotInit(body, 2);
-    body->word_50 = 0x10;
-    body->word_54 = 3;
+void msgListSlotInit(MsgSlot *slot) {
+    msgSlotInit(slot, MSG_SLOT_STATE_LIST);
+    slot->u.list.pulse_value = BODY_PULSE_START;
+    slot->u.list.pulse_step = BODY_PULSE_STEP;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu235", msgListSlotSetGeometry);
+/*
+ * List window (state 2) update: re-applies the slot geometry, raises the width to at least BODY_MIN_WIDTH, then
+ * stores in visible_rows the rows msgListRowsBetween fits below y (inset BODY_MARGIN, or BODY_HEADER_INSET when
+ * the item list is bound and adds its header band).
+ */
+void msgListSlotSetGeometry(MsgSlot *slot, int x, int y, int width, int height) {
+    if (slot->state == MSG_SLOT_STATE_LIST) {
+        msgSlotSetGeometry(slot, x, y, width, height);
+        if (slot->extent_x < BODY_MIN_WIDTH) {
+            slot->extent_x = BODY_MIN_WIDTH;
+        }
+        if (slot->u.list.list_active == 0) {
+            slot->u.list.visible_rows = msgListRowsBetween(slot->y + BODY_MARGIN, slot->y + slot->extent_y - BODY_MARGIN);
+        } else {
+            slot->u.list.visible_rows = msgListRowsBetween(slot->y + BODY_HEADER_INSET, slot->y + slot->extent_y - BODY_MARGIN);
+        }
+    }
+}
 
-
-/* Forwards its two arguments to deltaPerStep with a fixed third argument of 0x1E. Callee still unnamed. */
+/* Forwards its two arguments to deltaPerStep with a fixed third argument BODY_ROW_PITCH. */
 s32 msgListRowsBetween(s32 first, s32 second) {
-    return deltaPerStep(first, second, 0x1E);
+    return deltaPerStep(first, second, BODY_ROW_PITCH);
 }

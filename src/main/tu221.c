@@ -1,70 +1,78 @@
 #include "common.h"
 
-/*
- * One 0x98-byte record of the message window (main/tu148). The first word of
- * the window is the index of the current record; the record the functions
- * below address is the one that starts `current_index` records in: word
- * `current_index * 0x26` from the window base.
- */
-typedef struct MsgEntryBody {
-    unsigned char unmodeled_00[0x1c];
-    int state;
-} MsgEntryBody;
+#include "main/tu215.h"
+#include "main/tu239.h"
+#include "main/tu242.h"
 
-typedef struct MsgEntry {
-    int current_index;
-    unsigned char unmodeled_04[0x04];
-    MsgEntryBody body;
-    int value;
-    unsigned char unmodeled_2c[0x6c];
-} MsgEntry;
-
+/* Header form (tu227.h: void interpAdvance(MsgSlot *, int)) does not compile here: "void value not ignored" at the two uses of the result. The original returns the v0 the callee leaves on its state 1 path, the angle step it just stored, so this prototype keeps int. */
 int interpAdvance(void *, int);
-int msgWindowScrollBy(void *, int);
+/* Header form (tu238.h: void msgWindowScrollBy(struct MsgSlot *, int)) does not compile here: "void value not ignored" at the use of the result. The original returns the v0 the callee leaves on the list path (the slide step it just stored; the skipped path leaves v0 untouched), so this prototype keeps int. */
+int msgWindowScrollBy(MsgSlot *, int);
+int talkHasMoreLines(void *);
 
-/* Runs the current record by its state; states 1 and 2 call a handler with value. */
-int msgWindowRunCurrentValue(MsgEntry *window, int value)
+/* Runs the current record by its state; text and window slots call a handler with value. */
+int msgWindowRunCurrentValue(MsgWindow *window, int value)
 {
     int current;
     int state;
     int result;
-    MsgEntry *entry;
-    MsgEntryBody *body;
+    MsgSlot *slot;
 
     current = window->current_index;
-    result = current * 4;
+    result = current * 4; /* computed before the current >= 0 test, as in the original */
     if (current >= 0) {
-        entry = (MsgEntry *) ((int *) window + current * 0x26);
-        body = &entry->body;
-        state = body->state;
-        result = state < 3;
-        if (state != 2) {
+        slot = &window->slots[current];
+        state = slot->state;
+        result = state < MSG_SLOT_STATE_TIMECODE;
+        if (state != MSG_SLOT_STATE_WINDOW) {
             if (result != 0) {
                 result = 1;
-                if (state == 1) {
-                    result = interpAdvance(body, value);
+                if (state == MSG_SLOT_STATE_TEXT) {
+                    result = interpAdvance(slot, value);
                 }
             }
         } else {
-            result = msgWindowScrollBy(body, value);
+            result = msgWindowScrollBy(slot, value);
         }
     }
     return result;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu221", msgWindowPollMoreText);
+/* Polls the current record: a text slot asks whether the talk has more lines, a window slot whether the window overflows. */
+int msgWindowPollMoreText(MsgWindow *window) {
+    int pending = 0;
+    int current = window->current_index;
+    MsgSlot *slot;
+    int state;
 
-/* Stores value in the current record (its value word) and returns that record. */
-void *msgWindowStoreValue(MsgEntry *window, int value) {
+    if (current < 0) {
+        return 0;
+    }
+    slot = &window->slots[current];
+    state = slot->state;
+    if (state != MSG_SLOT_STATE_WINDOW) {
+        if (state < MSG_SLOT_STATE_TIMECODE) {
+            if (state == MSG_SLOT_STATE_TEXT) {
+                pending = talkHasMoreLines(slot);
+            }
+        }
+    } else {
+        pending = msgWindowOverflows(slot);
+    }
+    return pending;
+}
+
+/* Stores value in the current slot (its init_word) and returns the record base. */
+void *msgWindowStoreValue(MsgWindow *window, int value) {
     int current;
     void *result;
 
     current = window->current_index;
-    result = (void *) (current * 4);
+    result = (void *) (current * 4); /* computed before the current >= 0 test, as in the original */
     if (current >= 0) {
-        MsgEntry *entry = (MsgEntry *) ((int *) window + current * 0x26);
-        entry->value = value;
-        result = entry;
+        MsgSlot *slot = &window->slots[current];
+        slot->init_word = value;
+        result = (char *) slot - 8; /* the record base, 8 bytes before the slot, as the original returns */
     }
     return result;
 }
