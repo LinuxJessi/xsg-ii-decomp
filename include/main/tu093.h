@@ -15,7 +15,8 @@ typedef struct RenderFrameState {
     unsigned short page_height;     /* +0x12 */
     unsigned short frame_base;      /* +0x14: sRenderFrameBase */
     unsigned char unmodeled_16[4];
-    unsigned short frame_base_1;    /* +0x1A: the second page xgl_1_016 uploads movie strips to */
+    unsigned short frame_base_1;    /* +0x1A: the second page xgl_1_016 uploads movie strips to; the talk and text frames
+                                       read it as the font texture base (in 32-word units) */
     unsigned char unmodeled_1c[4];
     unsigned short display_base;    /* +0x20: sRenderDisplayBase */
     unsigned short copy_base;       /* +0x22 */

@@ -8,5 +8,8 @@ struct SizedRecord;
 int sizedRecordCenterX(struct SizedRecord *record);
 int sizedRecordCenterY(struct SizedRecord *record);
 void sizedRecordSetValue(struct SizedRecord *record, int value);
+void grControlPointSet(int index, int x, int y);
+int textIsLineBreak(signed char *text);
+signed char *textSkipLineBreak(signed char *text);
 
 #endif /* INCLUDE_MAIN_TU244_H */
