@@ -3,6 +3,7 @@
 #include "vu0_macro.h"
 #include "quadword.h"
 #include "gs.h"
+#include "main/sdv_033.h"
 #include "main/sm_initilize.h"
 #include "main/tu185.h"
 #include "main/xgl_2.h"
@@ -229,13 +230,23 @@ void sefPacketUnpackRef(SefUnpackBlock *block, int blockSize, int count, unsigne
 void func_0012B6E0(XglPacket *packet, int, int, int, int);
 void func_0012B770(XglPacket *packet);
 void func_0012BCE8(XglPacket *packet, const void *data, int count);
+/* The corners of a unit quad, (x, y, 0, 1) for x, y = -1, 1, as vectors and as the eight doublewords
+ * sefBuildCameraPacket copies. */
+typedef union SefQuadCorners {
+    DoublewordAlignedVector4 corner[4];
+    u64 words[8];
+} SefQuadCorners;
+
 /* The VU packet at D_00881700: sefBuildVuPacket sends 0x11 quadwords from +0x00, 0xD from +0x40
  * or 3 from +0xE0. */
 typedef struct SefVuPacket {
-    u8 unmodeled_00[0x40];    /* +0x00: sent with the rest by sefBuildVuPacket kind 0; no writer in this TU */
+    SefQuadCorners corners;   /* +0x00: copy of D_0068C610 (sefBuildCameraPacket) */
     Matrix4 modelViewMatrix;  /* +0x40: *sefViewMatrixPtr x the model matrix (func_0026C0A8) */
     Matrix4 cameraMatrix;     /* +0x80: copy of D_00831610 (func_0026C0A8) */
-    u8 unmodeled_c0[0xe0 - 0xc0];
+    u64 stripTag;             /* +0xC0: GIF tag: NLOOP 1, EOP, PRIM 0x54 (textured, blended triangle strip), NREG 13 */
+    u64 stripRegisters;       /* +0xC8: its registers: A+D, then ST, RGBAQ and XYZ2 for four vertices */
+    u64 settingsTag;          /* +0xD0: GIF tag of the three A+D pairs from tex0 on: NLOOP 3, EOP, NREG 1 */
+    u64 settingsRegisters;    /* +0xD8: GIF_AD */
     u64 tex0;                 /* +0xE0: A+D TEX0_1 value */
     u64 tex0Register;         /* +0xE8: GS_TEX0_1 */
     u64 alpha;                /* +0xF0: A+D ALPHA_1 value */
@@ -274,11 +285,41 @@ void sefBuildVuPacket(int kind, int alternate) {
     func_0012B9A0(packet, 0x11000000);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", sefBuildCameraPacket);
-
 Matrix4 *MMathMulMatrix(Matrix4 *out, const Matrix4 *rhs, const Matrix4 *lhs);
 extern const Matrix4 *sefViewMatrixPtr;
 extern Matrix4 D_00831610;
+XglCamera *xglStudioGetActiveCamera(void);
+extern Matrix4 D_00493B40;
+/* The unit quad (rodata). Declared without const: as a const object its loads cannot conflict with the packet stores,
+ * and gcc then schedules the epilogue's ld $31 after the fourteen stores instead of before them (fd 53/70). */
+extern SefQuadCorners D_0068C610;
+
+/* Takes the active camera's view matrix (sefViewMatrixPtr) into the VU packet and D_00831610 (view x D_00493B40),
+ * and fills the packet's quad corners, GIF tags and depth test. The corners are copied as doublewords through the
+ * union: as one struct assignment the tag stores go out before the epilogue's ld $31 (fd 55/70). */
+void sefBuildCameraPacket(void) {
+    XglCamera *camera;
+
+    camera = xglStudioGetActiveCamera();
+    sefViewMatrixPtr = (const Matrix4 *) &camera->volume[0].viewMatrix;
+    QuadwordCopyMatrixT0(&D_00881700.modelViewMatrix, sefViewMatrixPtr);
+    MMathMulMatrix(&D_00831610, sefViewMatrixPtr, (const Matrix4 *) &D_00493B40);
+    D_00881700.stripTag = 0xD02A400000008001ULL;
+    D_00881700.stripRegisters = 0x000512512512512EULL;
+    D_00881700.settingsTag = 0x1000000000008003ULL;
+    D_00881700.settingsRegisters = GIF_AD;
+    D_00881700.test = GS_SET_TEST(1, 6, 0, 0, 0, 0, 1, 2);
+    D_00881700.testRegister = GS_TEST_1;
+    D_00881700.corners.words[0] = D_0068C610.words[0];
+    D_00881700.corners.words[1] = D_0068C610.words[1];
+    D_00881700.corners.words[2] = D_0068C610.words[2];
+    D_00881700.corners.words[3] = D_0068C610.words[3];
+    D_00881700.corners.words[4] = D_0068C610.words[4];
+    D_00881700.corners.words[5] = D_0068C610.words[5];
+    D_00881700.corners.words[6] = D_0068C610.words[6];
+    D_00881700.corners.words[7] = D_0068C610.words[7];
+}
+
 /* GS ALPHA_1 values: [0] 0x44 normal blend, [1] 0x48 additive (rodata, also read by sdvDrawAlter). */
 extern const u64 D_0068C5E8[];
 
