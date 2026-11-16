@@ -27,49 +27,45 @@ int xglIsInRange(int value, int lower, int upper)
 typedef struct XglPacket XglPacket;
 
 /*
- * One 0x7C-byte draw record (tu213.c's GsQueueContext; recordBanks holds three banks of ten). The kind byte picks
- * the draw handler D_0063D758[type - 1]; the words after it mean different things per kind, so they are a union:
- * the kinds drawn through the gsQueue emitters (tu213.c) share the queue header, whose color (+0x0C) and halveRgb
- * (+0x18) are tu213.c's names.
+ * One 0x7C-byte draw record (tu213.c's GsQueueContext; recordBanks holds three banks of ten). The type byte picks
+ * the draw handler D_0063D758[type - 1], and that handler decides what the words after it hold: the type 1 handler
+ * reads +0x04 as a stage, the type 2 and 20 handlers as the gsQueue frame, the type 3 handler as a ring step, the
+ * type 6 handler as an alpha. Only these per-type arms are a union; color (+0x0C) and halveRgb (+0x18) are
+ * tu213.c's names.
  */
 typedef struct GsQueueContext {
     unsigned char type; /* +0x00: 0 unused, 1..21 picks the draw handler D_0063D758[type - 1] */
     unsigned char unmodeled_01[3];
     union {
-        /* +0x04..+0x7C: the parameter words as func_00275710 sets them (the first ten). */
-        int params[30];
-        /* gsQueueBeginTriStrip passes frame to gsQueueSetFrame, tex0 to gsQueueSetTex0 and blendKind with color
-           to gsQueueSetBlendColor; count is the number of passes. */
+        /* Any type: func_00275710 copies the first ten words without looking at the type. */
+        int params[30]; /* +0x04..+0x7B */
+        /* Types 2 and 20 (func_00275EE8 fills one for func_0027A6F0): gsQueueBeginTriStrip passes frame to
+           gsQueueSetFrame, tex0 to gsQueueSetTex0 and blendKind with color to gsQueueSetBlendColor; count is the
+           number of passes, screenRect and textureRect the sprite. */
         struct {
-            int frame;     /* +0x04 */
-            int tex0;      /* +0x08 */
-            int color;     /* +0x0C */
-            int depth;     /* +0x10 */
-            int count;     /* +0x14 */
-            int halveRgb;  /* +0x18 */
-            int blendKind; /* +0x1C */
-            union {
-                /* Kind 20 (func_0027A6F0): count sprites from screenRect with texture coordinates from textureRect. */
-                struct {
-                    int screenRect[4];  /* +0x20 */
-                    int textureRect[4]; /* +0x30 */
-                } sprite;
-                /* Kind 4 (func_00276458): the number of grid cells to set. */
-                int cellCount; /* +0x20 */
-            } shape;
+            int frame;          /* +0x04 */
+            int tex0;           /* +0x08 */
+            int color;          /* +0x0C */
+            int depth;          /* +0x10 */
+            int count;          /* +0x14 */
+            int halveRgb;       /* +0x18 */
+            int blendKind;      /* +0x1C */
+            int screenRect[4];  /* +0x20 */
+            int textureRect[4]; /* +0x30 */
         } queue;
-        /* Kind 1 (func_002759F8): the stage (0..2), the alpha and the depth of the full-screen sprite. */
+        /* Type 1 (func_002759F8): the stage (0..2) and alpha passed to func_00275D30/func_00275CF0, and the Z of
+           the full-screen sprite. */
         struct {
             int stage; /* +0x04 */
             int alpha; /* +0x08 */
             int depth; /* +0x0C */
         } fade;
-        /* Kind 3 (func_00275F70): the ring radius step and the depth of the fan. */
+        /* Type 3 (func_00275F70): the ring radius step passed to func_00276400, and the Z of the fan. */
         struct {
             int step;  /* +0x04 */
             int depth; /* +0x08 */
         } tunnel;
-        /* Kinds 5 and 6 (func_00276838, func_00276D68): the alpha (kind 5: the spread) and the Z and fog word. */
+        /* Type 6 (func_00276D68): the alpha of the RGBAQ word and the Z and fog word. */
         struct {
             int alpha; /* +0x04 */
             int z;     /* +0x08 */
@@ -81,9 +77,9 @@ typedef struct RecordBank {
     GsQueueContext records[10];
 } RecordBank;
 
-/* Declared as bytes, as recordClearBank below reads it. func_00274850 and func_00275710 index it as bytes:
- * through (RecordBank *) gcc emits addu base,offset instead of offset,base and, in func_00275710, merges
- * the two record address computations the original keeps apart. */
+/* Declared as bytes, as recordClearBank below reads it. func_00274850 indexes it as bytes and func_00275710
+ * steps to the bank as bytes: through ((RecordBank *) recordBanks)[bankIndex] gcc adds the base before the slot
+ * offset (fd.sh func_00275710: 12/32 in place, 32/32 with the byte step to the bank). */
 extern unsigned char recordBanks[];
 
 /* Local view of sRender (0x00645820; RenderFrameState in main/tu093.h does not model +0x3C): the
@@ -124,9 +120,9 @@ void recordClear(void *record);
 /* Flag that suspends the per-frame record updates; 1 while suspended. */
 extern int recordUpdatePaused;
 
-/* Fills bank bankIndex (0..2) with the record preset kind (0..24): clears its ten records, writes the
- * preset's records (type and parameter words; the two-, three- and five-record presets fill records 0..4),
- * then updates the render callback. The screen is 512 x 448. */
+/* Fills bank bankIndex (nothing happens unless it is below 3) with one of the record presets 0..24 (the second
+ * argument, through jtbl_0068D630): clears the bank's ten records, writes the preset's records, then updates the render callback
+ * (func_00274850). */
 INCLUDE_ASM("asm/main/nonmatchings/tu207", func_002748C8);
 
 /* Sets record slotIndex of bank bankIndex to type with its ten parameters, then updates the render callback. */
@@ -134,7 +130,7 @@ void func_00275710(int bankIndex, int slotIndex, int type, int *params)
 {
     int i;
 
-    recordBanks[slotIndex * 0x7C + bankIndex * 0x4D8] = type;
+    ((GsQueueContext *)(recordBanks + bankIndex * sizeof(RecordBank)))[slotIndex].type = type;
     for (i = 0; i < 10; i++) {
         ((RecordBank *)recordBanks)[bankIndex].records[slotIndex].u.params[i] = params[i];
     }
@@ -177,8 +173,8 @@ extern const unsigned char D_0063D7B0[];
 /* Draw handlers of record types 1..21. */
 extern void (*D_0063D758[])(GsQueueContext *record, XglPacket *packet);
 
-/* Draws every used record of the three banks between two fixed GIF blocks, then clears the banks and
- * removes itself as the render callback. */
+/* Calls the draw handler of every record of type 1..21 in the three banks between two fixed GIF blocks, then
+ * clears the banks and removes itself as the render callback. */
 void func_00275830(XglPacket *packet)
 {
     RecordBank *bank;
@@ -274,7 +270,7 @@ int func_00275CF0(int mode, int fallback);
 int func_00275D30(int mode, int alpha);
 int func_00275E08(void);
 
-/* Draw handler of record kind 1 (D_0063D758[0]): one textured sprite over the 512x448 screen, inset by the
+/* Draw handler of record type 1 (D_0063D758[0]): one textured sprite over the 512x448 screen, inset by the
    stage's size, in the stage's color; at stage 2 the sprite is drawn a second time in the pulsing color. */
 void func_002759F8(GsQueueContext *record)
 {
@@ -416,8 +412,8 @@ int func_00275E08(void)
 /* At stage 2, while updates are not suspended, steps the angle recordAngle by 92 and wraps it into 0..360. */
 void recordStepAngle(int stage)
 {
-    /* Block-scope declaration: a call through the file-scope one, after the definition above, is marked
-       nothrow and turns the original bnel at 0x275EB4 into bne; this call has no such mark. */
+    /* Block-scope declaration, a codegen device: with only the definition above in scope, fd.sh recordStepAngle
+       gives bne $4,$2 where the original has bnel at 0x275EB4 (17/18 in place); with it, 18/18. */
     int func_00274808(int value, int lower, int upper);
 
     if (recordUpdatePaused == 0 && stage == 2) {
@@ -428,8 +424,8 @@ void recordStepAngle(int stage)
 
 void func_0027A6F0(GsQueueContext *context, int packet);
 
-/* Draw handler of record kind 2 (D_0063D758[1]): draws the record's texture (its tex0 word) over the whole 512x448
-   screen through a kind 20 sprite record. */
+/* Draw handler of record type 2 (D_0063D758[1]): draws the record's texture (its tex0 word) over the whole 512x448
+   screen through a type 20 sprite record. */
 void func_00275EE8(GsQueueContext *record, int packet)
 {
     GsQueueContext sprite;
@@ -442,18 +438,18 @@ void func_00275EE8(GsQueueContext *record, int packet)
     sprite.u.queue.count = 1;
     sprite.u.queue.halveRgb = 1;
     sprite.u.queue.blendKind = 0;
-    sprite.u.queue.shape.sprite.screenRect[0] = 0;
-    sprite.u.queue.shape.sprite.screenRect[1] = 0;
-    sprite.u.queue.shape.sprite.screenRect[2] = 0x200;
-    sprite.u.queue.shape.sprite.screenRect[3] = 0x1C0;
-    sprite.u.queue.shape.sprite.textureRect[0] = 0;
-    sprite.u.queue.shape.sprite.textureRect[1] = 0;
-    sprite.u.queue.shape.sprite.textureRect[2] = 0x200;
-    sprite.u.queue.shape.sprite.textureRect[3] = 0x1C0;
+    sprite.u.queue.screenRect[0] = 0;
+    sprite.u.queue.screenRect[1] = 0;
+    sprite.u.queue.screenRect[2] = 0x200;
+    sprite.u.queue.screenRect[3] = 0x1C0;
+    sprite.u.queue.textureRect[0] = 0;
+    sprite.u.queue.textureRect[1] = 0;
+    sprite.u.queue.textureRect[2] = 0x200;
+    sprite.u.queue.textureRect[3] = 0x1C0;
     func_0027A6F0(&sprite, packet);
 }
 
-void func_00276400(int delta);
+void func_00276400(int step);
 void func_00276350(float *point, float *clampedPoint, float angle, float radius);
 /* libgcc __fixunssfdi, float to unsigned 64-bit integer (negative values give 0), in the libgcc block between
    __moddi3 and fptodp. */
@@ -461,7 +457,7 @@ u64 func_002A6A90(float value);
 extern float D_0069DDD8;
 extern int D_0069DDDC;
 
-/* Draw handler of record kind 3 (D_0063D758[2]): a triangle fan from the screen centre through octagonal rings of
+/* Draw handler of record type 3 (D_0063D758[2]): a triangle fan from the screen centre through octagonal rings of
    radius D_0069DDDC, D_0069DDDC + 25, ... below 620 (func_00276400 advances D_0069DDDC by the record's step); each
    ring vertex takes its texture coordinates from the point clamped to radius 224, at the record's depth. */
 void func_00275F70(GsQueueContext *record)
@@ -570,35 +566,22 @@ void func_00276350(float *point, float *clampedPoint, float angle, float radius)
     clampedPoint[1] = radius * sine + 224.0f;
 }
 
-/* While updates are not suspended, advances D_0069DDDC by delta and steps it back below 406 in steps of 25. */
-void func_00276400(int delta)
+/* While updates are not suspended, advances D_0069DDDC by step and steps it back below 406 in steps of 25. */
+void func_00276400(int step)
 {
     if (recordUpdatePaused == 0) {
-        D_0069DDDC += delta;
+        D_0069DDDC += step;
         while (D_0069DDDC >= 0x196) {
             D_0069DDDC -= 0x19;
         }
     }
 }
 
-/* Row stride of the cell grid (50 x 50 flags); recordGridReset sets the width and height in use. */
-#define RECORD_GRID_SIDE 50
-
 extern int recordGridWidth;
 extern int recordGridHeight;
-/* signed char: the original reads the flags with lb (unsigned char gave lbu). */
-extern signed char recordGridCells[];
+extern unsigned char recordGridCells[];
 
-void gsQueueBeginSprites(GsQueueContext *context);
-void gsQueueAddTexturedVertex(int packet, Vector4 *position, Vector4 *texcoord, GsQueueContext *context);
-void gsQueueAddTexturedKickVertex(int packet, Vector4 *position, Vector4 *texcoord, GsQueueContext *context);
-void gsQueueFlush(int packet);
-unsigned short xglSRand(void);
-
-/*
- * Draw handler of record kind 4 (D_0063D758[3]): sets the record's cellCount random cells of the grid (clearing
- * random ones when more are set), then draws one sprite per set cell on the 512 x 448 screen, count times.
- */
+/* Draw handler of record type 4 (D_0063D758[3]). */
 INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00276458);
 
 /* Clears the 0x9C4-byte cell grid and sets its width and height (cells across and down). */
@@ -619,14 +602,14 @@ void func_00277100(void);
 void func_00277168(Vector4 *result, int x, int y);
 
 /*
- * Draw handler of record kind 5 (D_0063D758[4]): draws the screen texture as a triangle fan around the screen centre (256, 224): eight corner and edge points
+ * Draw handler of record type 5 (D_0063D758[4]): draws the screen texture as a triangle fan around the screen centre (256, 224): eight corner and edge points
  * pushed outwards by the record's alpha word (spread), its half and its eighth, written twice around and closed
  * at the first point. Z and fog take the record's z word.
  */
 INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00276838);
 
 /*
- * Draw handler of record kind 6 (D_0063D758[5]): draws the 512 x 448 screen texture as one triangle fan of its four
+ * Draw handler of record type 6 (D_0063D758[5]): draws the 512 x 448 screen texture as one triangle fan of its four
  * corners, each corner moved by func_00277168. XYZF2 takes the record's z as the whole upper word (Z and fog).
  */
 void func_00276D68(GsQueueContext *record)
@@ -784,7 +767,7 @@ void func_00277610(float angle, Vector4 *screenPoints, Vector4 *texturePoints);
 extern float D_0069DDF4;
 
 /*
- * Draw handler of record kind 7 (D_0063D758[6]): draws a textured ring as one triangle strip: for every step an inner vertex (func_002775F0's colour) and an
+ * Draw handler of record type 7 (D_0063D758[6]): draws a textured ring as one triangle strip: for every step an inner vertex (func_002775F0's colour) and an
  * outer one (recordDefaultColor), Z and fog 0x7FFFFFFF.
  */
 void func_002772A8(void)
