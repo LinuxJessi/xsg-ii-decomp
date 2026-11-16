@@ -59,8 +59,8 @@ void msgWindowRunAll(void *window);
 int msgWindowPollCurrent(void *window);
 void msgWindowMoveSelection(void *window, int step);
 void func_002512B0(void);
-void func_A9C7E8(int item);
-void func_A9C848(int item);
+void dataBoxDecCategory1(int item);
+void dataBoxDecCategory2(int item);
 
 /* Returns the shown value once the purchase window closes (it also becomes msgBalance), else -1. */
 int msgPurchaseUpdate(void)
@@ -99,9 +99,9 @@ int msgPurchaseUpdate(void)
             }
             msgTotalValue = total;
             if (msgModeFlag == 0) {
-                func_A9C7E8(item + 1);
+                dataBoxDecCategory1(item + 1);
             } else {
-                func_A9C848(item + 1);
+                dataBoxDecCategory2(item + 1);
             }
         }
     }

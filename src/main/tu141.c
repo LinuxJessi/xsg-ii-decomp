@@ -37,13 +37,13 @@ typedef struct CfeNodeInit {
 #define CFE_NODE_COUNT 64
 
 extern CfeNodeInit cfeEntries[];
-extern const AlignedVector4 D_0068D070;
+extern const AlignedVector4 cfeActorInitialVector;
 
-/* Clears the 64 nodes of cfeEntries and gives each the vector D_0068D070 at +0xD0 and +0xE0, no
+/* Clears the 64 nodes of cfeEntries and gives each the vector cfeActorInitialVector at +0xD0 and +0xE0, no
  * parent, scale 1 and the enabled flag. */
 void cfeEvalRecordsInit(void)
 {
-    AlignedVector4 initial = D_0068D070;
+    AlignedVector4 initial = cfeActorInitialVector;
     const AlignedVector4 *source;
     int i;
 
@@ -63,18 +63,18 @@ int xglCameraSetPadPort(void *, int);
 void *xglStudioGetCamera2(int);
 void xglStudioInit(void);
 void xglStudioMainCameraInit(void);
-extern void *D_006384C0;
+extern void *cfeCamera;
 
-/* Studio setup: clears the 0x70-byte block at D_006384C0, starts xglStudio and the main camera,
+/* Studio setup: clears the 0x70-byte block at cfeCamera, starts xglStudio and the main camera,
    then keeps the object xglStudioGetCamera2 creates there (its word 1 is set to 2). */
 void cfeStudioInit(void) {
-    memset(&D_006384C0, 0, 0x70);
+    memset(&cfeCamera, 0, 0x70);
     xglStudioInit();
     xglStudioChange(0);
     xglStudioMainCameraInit();
-    D_006384C0 = xglStudioGetCamera2(0);
-    ((int *)D_006384C0)[1] = 2;
-    xglCameraSetPadPort(D_006384C0, 1);
+    cfeCamera = xglStudioGetCamera2(0);
+    ((int *)cfeCamera)[1] = 2;
+    xglCameraSetPadPort(cfeCamera, 1);
 }
 
 extern int cfeCommandCount[];
@@ -142,7 +142,7 @@ void cfeLightSetInit(XglLightSet *light)
     pxySetDefaultLight((struct PxyShadowLight *) light);
 }
 
-/* A row of cfeDirections: the direction and the colour of one light of cfeDirectionTable (row 0 has only
+/* A row of cfeDirections: the direction and the colour of one light of cfeLightSet (row 0 has only
  * the ambient colour). */
 typedef struct CfeLightRow {
     unsigned char unmodeled_00[0x10];
@@ -152,22 +152,22 @@ typedef struct CfeLightRow {
 } CfeLightRow;
 
 extern CfeLightRow cfeDirections[4];
-extern XglLightSet cfeDirectionTable;
+extern XglLightSet cfeLightSet;
 
-/* Sets up the light set cfeDirectionTable, clears cfeDirections and points its rows at the ambient colour
+/* Sets up the light set cfeLightSet, clears cfeDirections and points its rows at the ambient colour
  * and at the direction and colour of lights 0 to 2. */
 void cfeLightRowsInit(void)
 {
-    cfeLightSetInit(&cfeDirectionTable);
+    cfeLightSetInit(&cfeLightSet);
     memset(cfeDirections, 0, sizeof(cfeDirections));
     cfeDirections[0].direction = 0;
-    cfeDirections[0].color = &cfeDirectionTable.ambientColor.x;
-    cfeDirections[1].direction = cfeDirectionTable.directions[0];
-    cfeDirections[1].color = cfeDirectionTable.colors[0];
-    cfeDirections[2].direction = cfeDirectionTable.directions[1];
-    cfeDirections[2].color = cfeDirectionTable.colors[1];
-    cfeDirections[3].direction = cfeDirectionTable.directions[2];
-    cfeDirections[3].color = cfeDirectionTable.colors[2];
+    cfeDirections[0].color = &cfeLightSet.ambientColor.x;
+    cfeDirections[1].direction = cfeLightSet.directions[0];
+    cfeDirections[1].color = cfeLightSet.colors[0];
+    cfeDirections[2].direction = cfeLightSet.directions[1];
+    cfeDirections[2].color = cfeLightSet.colors[1];
+    cfeDirections[3].direction = cfeLightSet.directions[2];
+    cfeDirections[3].color = cfeLightSet.colors[2];
 }
 
 extern int cfeGroupCount;
@@ -210,15 +210,15 @@ typedef struct CfeEntryCorners {
     AlignedVector4 corner[4];
 } CfeEntryCorners;
 
-extern const CfeEntryCorners D_0068D080;
+extern const CfeEntryCorners cfeUnitQuad;
 
 /* Number of entries in cfeEvalEntries. */
 #define CFE_EVAL_ENTRY_COUNT 16
-/* Clears the entries and starts each one with the unit quad of D_0068D080, the position and angles
+/* Clears the entries and starts each one with the unit quad of cfeUnitQuad, the position and angles
  * at the origin (w = 1) and unit scale. */
 void cfeEvalEntriesInit(void)
 {
-    CfeEntryCorners corners = D_0068D080;
+    CfeEntryCorners corners = cfeUnitQuad;
     AlignedVector4 *source;
     int i;
 

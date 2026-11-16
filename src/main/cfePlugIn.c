@@ -39,7 +39,7 @@ extern unsigned char cfeAssertFile[];
 #define CFE_KEY_RESET_FIRST 0x8
 #define CFE_KEY_RESET_SECOND 0x10
 
-extern unsigned char D_0068CD10[];
+extern unsigned char cfeAssertZero[];
 
 /* Sets key `key` of the value list to `value` in a CFE_KEY_MODE_* mode: plain (cfeListSetValue) or
  * flagged (cfeListSetValueLinear), or plain with reset flags on the list's tail, which is then updated
@@ -80,7 +80,7 @@ void cfeListSetKeyMode(CfeTrackNode **list, int mode, int key, float value)
         }
         break;
     default:
-        assertFailed(D_0068CD10, cfeAssertFile, 96);
+        assertFailed(cfeAssertZero, cfeAssertFile, 96);
         break;
     }
 }
@@ -124,7 +124,7 @@ void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
         }
         break;
     default:
-        assertFailed(D_0068CD10, cfeAssertFile, 140);
+        assertFailed(cfeAssertZero, cfeAssertFile, 140);
         break;
     }
 }
@@ -132,13 +132,13 @@ void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
 void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackSave(Matrix4 matrix);
-extern const AlignedVector4 D_0068CD70;
+extern const AlignedVector4 cfeForwardVector;
 
-/* The vector D_0068CD70 rotated by angles[0] about X and angles[1] about Y. */
+/* The vector cfeForwardVector rotated by angles[0] about X and angles[1] about Y. */
 void cfeRotateVectorXY(Vector4 *result, const float *angles)
 {
     Matrix4 matrix;
-    AlignedVector4 vector = D_0068CD70;
+    AlignedVector4 vector = cfeForwardVector;
 
     xglMatrixStackUnit();
     xglMatrixStackRotX(angles[0]);
@@ -168,8 +168,8 @@ int cfeStrCountChar(const char *text, char character)
 void *memset(void *destination, int value, unsigned int count);
 char *strcpy(char *destination, const char *source);
 char *strcat(char *destination, const char *source);
-extern const char D_0068CD80[];
-extern const char D_0068CD88[];
+extern const char cfeMesEmpty[];
+extern const char cfeMesFontSettings[];
 
 /* The scratchpad, where each line is laid out before it is appended. */
 #define CFE_MES_SCRATCHPAD ((char *) 0x70000000)
@@ -195,9 +195,9 @@ void cfeMesLayoutText(char *text)
     int last;
 
     start = text;
-    result[0] = D_0068CD80[0];
+    result[0] = cfeMesEmpty[0];
     memset(result + 1, 0, sizeof(result) - 1);
-    xglFontGetStringWidth(D_0068CD88);
+    xglFontGetStringWidth(cfeMesFontSettings);
     if (*start == CFE_MES_INDENT) {
         indent = 1;
         text = start + 1;
@@ -219,7 +219,7 @@ void cfeMesLayoutText(char *text)
                 break;
             }
         }
-        xglFontPrint(0, CFE_MES_SETUP_Y, CFE_MES_SETUP_COLOR, D_0068CD88);
+        xglFontPrint(0, CFE_MES_SETUP_Y, CFE_MES_SETUP_COLOR, cfeMesFontSettings);
         line[0] = 1;
         width = xglFontGetStringWidth(line);
         line[1] = -1 - width / 2;
@@ -355,11 +355,11 @@ void cfeMapInitRecords(CfeGroup *group)
 
 void XenoActorSetModeInSlot(void *, int, int);
 float XenoActorSetSelector(void *, int);
-int func_A9F0A8(int handle);
-int func_A9F0C0(int, int);
-char *func_A9F238(int, int);
-extern unsigned char D_0068CE20[];
-extern unsigned char D_0068CDE8[];
+int VM_PLUGIN_CNT_GET(int handle);
+int vmArgGet(int, int);
+char *vmKeyedEntryGet(int, int);
+extern unsigned char cfeArgCount3Assert[];
+extern unsigned char cfeArgCount1Assert[];
 
 void XenoActorAllocMatrices(XenoActor *actor);
 
@@ -415,7 +415,7 @@ XenoActor *cfeLoadActorObject(int id)
     return actor;
 }
 
-extern unsigned char D_0068CE08[];
+extern unsigned char cfeActorAssert[];
 extern int cfeEntryCount;
 extern CfeNode cfeEntries[];
 
@@ -428,12 +428,12 @@ int cfe_0024BA70(int handle)
     CfePackHeader *pack;
     void *block;
 
-    if (func_A9F0A8(handle) != 1) {
-        assertFailed(D_0068CDE8, cfeAssertFile, 394);
+    if (VM_PLUGIN_CNT_GET(handle) != 1) {
+        assertFailed(cfeArgCount1Assert, cfeAssertFile, 394);
     }
-    cfeEntries[cfeEntryCount].actor = cfeLoadActorObject(func_A9F0C0(handle, 1));
+    cfeEntries[cfeEntryCount].actor = cfeLoadActorObject(vmArgGet(handle, 1));
     if (cfeEntries[cfeEntryCount].actor == 0) {
-        assertFailed(D_0068CE08, cfeAssertFile, 398);
+        assertFailed(cfeActorAssert, cfeAssertFile, 398);
     }
     actor = cfeEntries[cfeEntryCount].actor;
     /* XenoActor keeps the pack as an int. */
@@ -479,13 +479,13 @@ int cfe_0024BC10(int handle)
     unsigned char *object;
 
     data = 0;
-    if (func_A9F0A8(handle) != 3) {
-        assertFailed(D_0068CE20, cfeAssertFile, 430);
+    if (VM_PLUGIN_CNT_GET(handle) != 3) {
+        assertFailed(cfeArgCount3Assert, cfeAssertFile, 430);
     }
-    slot = func_A9F0C0(handle, 1);
-    index = func_A9F0C0(handle, 2);
-    kind = func_A9F0C0(handle, 3);
-    strcpy(buffer, func_A9F238(handle, kind));
+    slot = vmArgGet(handle, 1);
+    index = vmArgGet(handle, 2);
+    kind = vmArgGet(handle, 3);
+    strcpy(buffer, vmKeyedEntryGet(handle, kind));
     GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
@@ -501,18 +501,18 @@ int cfe_0024BC10(int handle)
     return 1;
 }
 
-extern unsigned char D_0068CF10[];
-extern unsigned char D_0068CED0[];
+extern unsigned char cfeArgCount4Assert[];
+extern unsigned char cfeArgCount5Assert[];
 
 extern int cfeCommandCount;
 extern CfeEvalCommand cfeCommands[];
 
 /* The initial scale of a command (1, 1, 1). */
-extern const AlignedVector4 D_0068CE40;
+extern const AlignedVector4 cfeUnitScale;
 
 /* Script command (2 or 3 arguments): starts the effect of the next command of cfeCommands (page index
  * and offset; the 3-argument form also gives the bank flag) and sets the command's position and
- * rotation to the origin and its scale to D_0068CE40. */
+ * rotation to the origin and its scale to cfeUnitScale. */
 int cfe_0024BD28(int handle)
 {
     AlignedVector4 position;
@@ -524,16 +524,16 @@ int cfe_0024BD28(int handle)
     position.w = 1.0f;
     memset(&rotation, 0, sizeof(rotation));
     rotation.w = 1.0f;
-    scale = D_0068CE40;
+    scale = cfeUnitScale;
     command = &cfeCommands[cfeCommandCount];
-    if (func_A9F0A8(handle) == 2) {
-        command->page_index = func_A9F0C0(handle, 1);
-        command->page_offset = func_A9F0C0(handle, 2);
+    if (VM_PLUGIN_CNT_GET(handle) == 2) {
+        command->page_index = vmArgGet(handle, 1);
+        command->page_offset = vmArgGet(handle, 2);
         sefStartEffectKeyDefault(0, (command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN);
-    } else if (func_A9F0A8(handle) == 3) {
-        command->flag = func_A9F0C0(handle, 1);
-        command->page_index = func_A9F0C0(handle, 2);
-        command->page_offset = func_A9F0C0(handle, 3);
+    } else if (VM_PLUGIN_CNT_GET(handle) == 3) {
+        command->flag = vmArgGet(handle, 1);
+        command->page_index = vmArgGet(handle, 2);
+        command->page_offset = vmArgGet(handle, 3);
         if (command->flag != 0) {
             sefStartEffectKeyDefault(0, (command->page_index << CFE_PAGE_SHIFT) | command->page_offset
                                      | CFE_BANK_FLAGGED);
@@ -561,10 +561,10 @@ int cfe_0024BEF0(int handle)
     int offset;
     CfeEvalRecord *records;
 
-    if (func_A9F0A8(handle) != 1) {
-        assertFailed(D_0068CDE8, cfeAssertFile, 502);
+    if (VM_PLUGIN_CNT_GET(handle) != 1) {
+        assertFailed(cfeArgCount1Assert, cfeAssertFile, 502);
     }
-    object = cfeLoadResourceObject(func_A9F0C0(handle, 1));
+    object = cfeLoadResourceObject(vmArgGet(handle, 1));
     /* XenoActor keeps the pack as an int. */
     pack = (CfePackHeader *) object->pack;
     offset = pack->subPackOffset;
@@ -592,7 +592,7 @@ int cfe_0024BEF0(int handle)
 
 void sprintf(char *, unsigned char *, char *);
 extern int D_0063A868[];
-extern unsigned char D_0068CE50[];
+extern unsigned char cfeMotionPathFormat[];
 
 int cfe_0024C030(int handle)
 {
@@ -602,9 +602,9 @@ int cfe_0024C030(int handle)
     char *text;
 
     data = 0;
-    slot = func_A9F0C0(handle, 1);
-    text = func_A9F238(handle, func_A9F0C0(handle, 2));
-    sprintf(buffer, D_0068CE50, text);
+    slot = vmArgGet(handle, 1);
+    text = vmKeyedEntryGet(handle, vmArgGet(handle, 2));
+    sprintf(buffer, cfeMotionPathFormat, text);
     GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
@@ -614,8 +614,8 @@ int cfe_0024C030(int handle)
 
 extern int cfeEvalEntryCount;
 extern CfeEvalEntry cfeEvalEntries[];
-extern char D_0068CE68[];
-extern unsigned char D_0068CE80[];
+extern char cfeMovieOpenFailedText[];
+extern unsigned char cfeMovieOpenAssert[];
 
 /* The block table of xgl_cd (res_get_path.c: CdSlot) as far as the free-slot walk reads it. */
 typedef struct CfeCdSlot {
@@ -639,7 +639,7 @@ int cfe_0024C0D8(int handle)
     CfeEvalEntry *entry = &cfeEvalEntries[cfeEvalEntryCount];
     unsigned int slot;
 
-    strcpy(entry->name, func_A9F238(handle, func_A9F0C0(handle, 1)));
+    strcpy(entry->name, vmKeyedEntryGet(handle, vmArgGet(handle, 1)));
     xglMovieInfoInit(&entry->movie);
     do {
     } while (xglCdServiceIfPending() != 0);
@@ -654,9 +654,9 @@ int cfe_0024C0D8(int handle)
     } while (xglCdServiceIfPending() != 0);
     xglCdReadFile(entry->name, entry->movie.source, 0, 1);
     entry->movie.loop = 1;
-    /* The original's assert macro also tests its message string D_0068CE68. */
-    if (xglMovieOpen(&entry->movie, 0) != 0 && D_0068CE68 != 0) {
-        assertFailed(D_0068CE80, cfeAssertFile, 604);
+    /* The original's assert macro also tests its message string cfeMovieOpenFailedText. */
+    if (xglMovieOpen(&entry->movie, 0) != 0 && cfeMovieOpenFailedText != 0) {
+        assertFailed(cfeMovieOpenAssert, cfeAssertFile, 604);
     }
     entry->movie.imageAddress[0] = GameResBufferAlloc(entry->movie.imageQwords * 16 + 0x20);
     entry->movie.imageAddress[1] = GameResBufferAlloc(entry->movie.imageQwords * 16 + 0x20);
@@ -677,7 +677,7 @@ int cfe_0024C278(int handle)
     CfeSndRecord *record;
     char *text;
 
-    text = func_A9F238(handle, func_A9F0C0(handle, 1));
+    text = vmKeyedEntryGet(handle, vmArgGet(handle, 1));
     strcpy(cfeSndRecords[cfeSndRecordCount].name, text);
     count = cfeSndRecordCount;
     record = &cfeSndRecords[count];
@@ -696,8 +696,8 @@ void XenoActorRelease(struct XenoActor *actor);
 void fadeClear(void);
 XglCamera *xglStudioGetCamera2(int index);
 extern signed char pxyTickScaleDouble;
-extern int D_006316A8;
-extern int D_006316AC;
+extern int cfePaused;
+extern int cfeStartDelay;
 extern int cfeEntryCount;
 
 /* gameWork as the scene end sees it: the control word at +0x08 (CONTROL_* in tu051.h). gameWork has no
@@ -709,7 +709,7 @@ typedef struct CfeGameWork {
 
 extern CfeGameWork gameWork;
 /* The position the parked record actors are moved to before they are released. */
-extern const AlignedVector4 D_0068CEA0;
+extern const AlignedVector4 cfeParkedPosition;
 
 /* The uwamonoRecords entries and the two flags this command sets on every used record. */
 #define CFE_RECORD_COUNT 256
@@ -718,7 +718,7 @@ extern const AlignedVector4 D_0068CEA0;
 
 /* Script command: ends the map scene for a cut scene. Waits for the CD, resets the messages, the
  * font, the path slot and the sound levels, restarts the cut-scene state, releases the actors of the
- * player and part records (moved to D_0068CEA0 first) and marks every used record, then frees all
+ * player and part records (moved to cfeParkedPosition first) and marks every used record, then frees all
  * actors and resets the camera and the fade. */
 int cfe_0024C308(int handle)
 {
@@ -731,8 +731,8 @@ int cfe_0024C308(int handle)
     xglFontLoad(0, 0);
     resUpdatePathSlot(-3);
     xglMovieInit();
-    D_006316A8 = 0;
-    D_006316AC = 0;
+    cfePaused = 0;
+    cfeStartDelay = 0;
     soundSlotSetLevel(0, 0);
     soundSlotSetLevel(1, 0);
     cfeInit();
@@ -747,7 +747,7 @@ int cfe_0024C308(int handle)
             break;
         case 4:
         case 5:
-            parked = D_0068CEA0;
+            parked = cfeParkedPosition;
             QuadwordCopy(&uwamonoRecords[i].actor->position, &parked);
             QuadwordCopy(&uwamonoRecords[i].position, &parked);
             QuadwordCopy(&uwamonoRecords[i].moveFrom, &parked);
@@ -786,14 +786,14 @@ int cfe_0024C500(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) != 5) {
-        assertFailed(D_0068CED0, cfeAssertFile, 756);
+    if (VM_PLUGIN_CNT_GET(handle) != 5) {
+        assertFailed(cfeArgCount5Assert, cfeAssertFile, 756);
     }
-    index = func_A9F0C0(handle, 1);
-    sub = func_A9F0C0(handle, 2);
-    key = func_A9F0C0(handle, 3);
-    flagged = func_A9F0C0(handle, 4);
-    value = func_A9F0C0(handle, 5);
+    index = vmArgGet(handle, 1);
+    sub = vmArgGet(handle, 2);
+    key = vmArgGet(handle, 3);
+    flagged = vmArgGet(handle, 4);
+    value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (flagged != 0) {
             cfeListSetAngleLinear(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -823,14 +823,14 @@ int cfe_0024C7B8(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) != 5) {
-        assertFailed(D_0068CED0, cfeAssertFile, 795);
+    if (VM_PLUGIN_CNT_GET(handle) != 5) {
+        assertFailed(cfeArgCount5Assert, cfeAssertFile, 795);
     }
-    index = func_A9F0C0(handle, 1);
-    sub = func_A9F0C0(handle, 2);
-    key = func_A9F0C0(handle, 3);
-    flagged = func_A9F0C0(handle, 4);
-    value = func_A9F0C0(handle, 5);
+    index = vmArgGet(handle, 1);
+    sub = vmArgGet(handle, 2);
+    key = vmArgGet(handle, 3);
+    flagged = vmArgGet(handle, 4);
+    value = vmArgGet(handle, 5);
     if (flagged != 0) {
         cfeListSetValueLinear(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
@@ -839,7 +839,7 @@ int cfe_0024C7B8(int handle)
     return 1;
 }
 
-extern unsigned char D_0068CEF0[];
+extern unsigned char cfeArgCount6Assert[];
 extern CfeNode cfeEntries[];
 
 /* Script command (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
@@ -855,15 +855,15 @@ int cfe_0024C940(int handle)
     int value;
     CfeTrackNode *node;
 
-    if (func_A9F0A8(handle) != 6) {
-        assertFailed(D_0068CEF0, cfeAssertFile, 821);
+    if (VM_PLUGIN_CNT_GET(handle) != 6) {
+        assertFailed(cfeArgCount6Assert, cfeAssertFile, 821);
     }
-    entry = func_A9F0C0(handle, 1);
-    row = func_A9F0C0(handle, 2);
-    column = func_A9F0C0(handle, 3);
-    key = func_A9F0C0(handle, 4);
-    flagged = func_A9F0C0(handle, 5);
-    value = func_A9F0C0(handle, 6);
+    entry = vmArgGet(handle, 1);
+    row = vmArgGet(handle, 2);
+    column = vmArgGet(handle, 3);
+    key = vmArgGet(handle, 4);
+    flagged = vmArgGet(handle, 5);
+    value = vmArgGet(handle, 6);
     if (flagged != 0) {
         cfeListSetValueLinear(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
     } else {
@@ -881,7 +881,7 @@ typedef struct CfeStudioBlock {
     CfeTrackNode *lists[27];
 } CfeStudioBlock;
 
-extern CfeStudioBlock D_006384C0;
+extern CfeStudioBlock cfeCamera;
 
 /* Script command (4 arguments): fetches the studio camera and sets key `key` of camera list `index`
  * to the 8.8 value in `mode`; lists 3 to 5 go through cfeListSetAngleKeyMode, the others through
@@ -893,18 +893,18 @@ int cfe_0024CB80(int handle)
     int key;
     int value;
 
-    if (func_A9F0A8(handle) != 4) {
-        assertFailed(D_0068CF10, cfeAssertFile, 856);
+    if (VM_PLUGIN_CNT_GET(handle) != 4) {
+        assertFailed(cfeArgCount4Assert, cfeAssertFile, 856);
     }
-    index = func_A9F0C0(handle, 1);
-    key = func_A9F0C0(handle, 2);
-    mode = func_A9F0C0(handle, 3);
-    value = func_A9F0C0(handle, 4);
-    xglStudioGetCamera(&D_006384C0.camera, 0);
+    index = vmArgGet(handle, 1);
+    key = vmArgGet(handle, 2);
+    mode = vmArgGet(handle, 3);
+    value = vmArgGet(handle, 4);
+    xglStudioGetCamera(&cfeCamera.camera, 0);
     if (index >= 3 && index < 6) {
-        cfeListSetAngleKeyMode(&D_006384C0.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetAngleKeyMode(&cfeCamera.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        cfeListSetKeyMode(&D_006384C0.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetKeyMode(&cfeCamera.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
@@ -922,14 +922,14 @@ int cfe_0024CCF8(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) != 5) {
-        assertFailed(D_0068CED0, cfeAssertFile, 896);
+    if (VM_PLUGIN_CNT_GET(handle) != 5) {
+        assertFailed(cfeArgCount5Assert, cfeAssertFile, 896);
     }
-    index = func_A9F0C0(handle, 1);
-    sub = func_A9F0C0(handle, 2);
-    key = func_A9F0C0(handle, 3);
-    flagged = func_A9F0C0(handle, 4);
-    value = func_A9F0C0(handle, 5);
+    index = vmArgGet(handle, 1);
+    sub = vmArgGet(handle, 2);
+    key = vmArgGet(handle, 3);
+    flagged = vmArgGet(handle, 4);
+    value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (flagged != 0) {
             cfeListSetAngleLinear(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -959,14 +959,14 @@ int cfe_0024CF70(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) != 5) {
-        assertFailed(D_0068CED0, cfeAssertFile, 933);
+    if (VM_PLUGIN_CNT_GET(handle) != 5) {
+        assertFailed(cfeArgCount5Assert, cfeAssertFile, 933);
     }
-    index = func_A9F0C0(handle, 1);
-    sub = func_A9F0C0(handle, 2);
-    key = func_A9F0C0(handle, 3);
-    flagged = func_A9F0C0(handle, 4);
-    value = func_A9F0C0(handle, 5);
+    index = vmArgGet(handle, 1);
+    sub = vmArgGet(handle, 2);
+    key = vmArgGet(handle, 3);
+    flagged = vmArgGet(handle, 4);
+    value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (flagged != 0) {
             cfeListSetAngleLinear(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -995,13 +995,13 @@ int cfe_0024D1E8(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) == 6) {
-        group = func_A9F0C0(handle, 1);
-        part = func_A9F0C0(handle, 2);
-        sub = func_A9F0C0(handle, 3);
-        key = func_A9F0C0(handle, 4);
-        flagged = func_A9F0C0(handle, 5);
-        value = func_A9F0C0(handle, 6);
+    if (VM_PLUGIN_CNT_GET(handle) == 6) {
+        group = vmArgGet(handle, 1);
+        part = vmArgGet(handle, 2);
+        sub = vmArgGet(handle, 3);
+        key = vmArgGet(handle, 4);
+        flagged = vmArgGet(handle, 5);
+        value = vmArgGet(handle, 6);
         if (sub >= 3 && sub < 6) {
             if (flagged != 0) {
                 cfeListSetAngleLinear(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -1016,11 +1016,11 @@ int cfe_0024D1E8(int handle)
             }
         }
     } else {
-        group = func_A9F0C0(handle, 1);
-        sub = func_A9F0C0(handle, 2);
-        key = func_A9F0C0(handle, 3);
-        flagged = func_A9F0C0(handle, 4);
-        value = func_A9F0C0(handle, 5);
+        group = vmArgGet(handle, 1);
+        sub = vmArgGet(handle, 2);
+        key = vmArgGet(handle, 3);
+        flagged = vmArgGet(handle, 4);
+        value = vmArgGet(handle, 5);
         if (flagged != 0) {
             cfeListSetValueLinear(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
@@ -1041,13 +1041,13 @@ int cfe_0024D5E0(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) != 4) {
-        assertFailed(D_0068CF10, cfeAssertFile, 1021);
+    if (VM_PLUGIN_CNT_GET(handle) != 4) {
+        assertFailed(cfeArgCount4Assert, cfeAssertFile, 1021);
     }
-    index = func_A9F0C0(handle, 1);
-    key = func_A9F0C0(handle, 2);
-    flagged = func_A9F0C0(handle, 3);
-    value = func_A9F0C0(handle, 4);
+    index = vmArgGet(handle, 1);
+    key = vmArgGet(handle, 2);
+    flagged = vmArgGet(handle, 3);
+    value = vmArgGet(handle, 4);
     if (flagged != 0) {
         cfeListSetValueLinear(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
     } else {
@@ -1069,14 +1069,14 @@ int cfe_0024D738(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) != 5) {
-        assertFailed(D_0068CED0, cfeAssertFile, 1047);
+    if (VM_PLUGIN_CNT_GET(handle) != 5) {
+        assertFailed(cfeArgCount5Assert, cfeAssertFile, 1047);
     }
-    index = func_A9F0C0(handle, 1);
-    sub = func_A9F0C0(handle, 2);
-    key = func_A9F0C0(handle, 3);
-    flagged = func_A9F0C0(handle, 4);
-    value = func_A9F0C0(handle, 5);
+    index = vmArgGet(handle, 1);
+    sub = vmArgGet(handle, 2);
+    key = vmArgGet(handle, 3);
+    flagged = vmArgGet(handle, 4);
+    value = vmArgGet(handle, 5);
     if (flagged != 0) {
         cfeListSetValueLinear(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
@@ -1098,14 +1098,14 @@ int cfe_0024D8C0(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) != 5) {
-        assertFailed(D_0068CED0, cfeAssertFile, 1073);
+    if (VM_PLUGIN_CNT_GET(handle) != 5) {
+        assertFailed(cfeArgCount5Assert, cfeAssertFile, 1073);
     }
-    index = func_A9F0C0(handle, 1);
-    sub = func_A9F0C0(handle, 2);
-    key = func_A9F0C0(handle, 3);
-    flagged = func_A9F0C0(handle, 4);
-    value = func_A9F0C0(handle, 5);
+    index = vmArgGet(handle, 1);
+    sub = vmArgGet(handle, 2);
+    key = vmArgGet(handle, 3);
+    flagged = vmArgGet(handle, 4);
+    value = vmArgGet(handle, 5);
     if (flagged != 0) {
         cfeListSetValueLinear(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
@@ -1127,14 +1127,14 @@ int cfe_0024DA40(int handle)
     int flagged;
     int value;
 
-    if (func_A9F0A8(handle) != 5) {
-        assertFailed(D_0068CED0, cfeAssertFile, 1099);
+    if (VM_PLUGIN_CNT_GET(handle) != 5) {
+        assertFailed(cfeArgCount5Assert, cfeAssertFile, 1099);
     }
-    index = func_A9F0C0(handle, 1);
-    sub = func_A9F0C0(handle, 2);
-    key = func_A9F0C0(handle, 3);
-    flagged = func_A9F0C0(handle, 4);
-    value = func_A9F0C0(handle, 5);
+    index = vmArgGet(handle, 1);
+    sub = vmArgGet(handle, 2);
+    key = vmArgGet(handle, 3);
+    flagged = vmArgGet(handle, 4);
+    value = vmArgGet(handle, 5);
     if (flagged != 0) {
         cfeListSetValueLinear(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
@@ -1143,7 +1143,7 @@ int cfe_0024DA40(int handle)
     return 1;
 }
 
-/* One 0x44C-byte message record of D_006316B4 (cfe_0024DBC0 allocates them). */
+/* One 0x44C-byte message record of cfeMessages (cfe_0024DBC0 allocates them). */
 typedef struct CfeMessageRecord {
     int first;                  /* +0x000: script argument 2 */
     int second;                 /* +0x004: script argument 3 */
@@ -1152,59 +1152,59 @@ typedef struct CfeMessageRecord {
     char name[0x40];            /* +0x40C: script argument 4 (5-argument form), else empty */
 } CfeMessageRecord;
 
-extern CfeMessageRecord *D_006316B4;
-extern unsigned char D_0068CF30[];
+extern CfeMessageRecord *cfeMessages;
+extern unsigned char cfeMessageAssert[];
 
-/* Script command (1 argument): allocates and clears argument 1 message records for D_006316B4. */
+/* Script command (1 argument): allocates and clears argument 1 message records for cfeMessages. */
 int cfe_0024DBC0(int handle)
 {
     int count;
     int size;
 
-    if (func_A9F0A8(handle) != 1) {
-        assertFailed(D_0068CDE8, cfeAssertFile, 1124);
+    if (VM_PLUGIN_CNT_GET(handle) != 1) {
+        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1124);
     }
-    count = func_A9F0C0(handle, 1);
+    count = vmArgGet(handle, 1);
     size = count * sizeof(CfeMessageRecord);
     if (count <= 0) {
         return 1;
     }
-    D_006316B4 = GameResBufferAlloc(size);
-    if (D_006316B4 == 0) {
-        assertFailed(D_0068CF30, cfeAssertFile, 1131);
+    cfeMessages = GameResBufferAlloc(size);
+    if (cfeMessages == 0) {
+        assertFailed(cfeMessageAssert, cfeAssertFile, 1131);
     }
-    memset(D_006316B4, 0, size);
+    memset(cfeMessages, 0, size);
     return 1;
 }
 
 extern int cfePlugInRecordCount;
-extern const char D_0068CF38[];
+extern const char cfeEmptyName[];
 
 /* Script command (3 or 5 arguments): fills the next message record with the unescaped, laid-out text
  * of argument 1 and arguments 2 and 3; the 5-argument form also sets the name (argument 4) and the
  * third value (argument 5). */
 int cfe_0024DC78(int handle)
 {
-    CfeMessageRecord *record = &D_006316B4[cfePlugInRecordCount];
+    CfeMessageRecord *record = &cfeMessages[cfePlugInRecordCount];
 
-    if (func_A9F0A8(handle) == 3) {
+    if (VM_PLUGIN_CNT_GET(handle) == 3) {
         memset(record->text, 0, sizeof(record->text));
-        cfeMesUnescape(record->text, func_A9F238(handle, func_A9F0C0(handle, 1)));
+        cfeMesUnescape(record->text, vmKeyedEntryGet(handle, vmArgGet(handle, 1)));
         cfeMesLayoutText(record->text);
-        record->first = func_A9F0C0(handle, 2);
-        record->second = func_A9F0C0(handle, 3);
-        /* The empty name: the original copies the one byte of the empty string D_0068CF38 (an inlined
+        record->first = vmArgGet(handle, 2);
+        record->second = vmArgGet(handle, 3);
+        /* The empty name: the original copies the one byte of the empty string cfeEmptyName (an inlined
          * strcpy). */
-        record->name[0] = D_0068CF38[0];
+        record->name[0] = cfeEmptyName[0];
         cfePlugInRecordCount++;
-    } else if (func_A9F0A8(handle) == 5) {
+    } else if (VM_PLUGIN_CNT_GET(handle) == 5) {
         memset(record->text, 0, sizeof(record->text));
-        cfeMesUnescape(record->text, func_A9F238(handle, func_A9F0C0(handle, 1)));
+        cfeMesUnescape(record->text, vmKeyedEntryGet(handle, vmArgGet(handle, 1)));
         cfeMesLayoutText(record->text);
-        record->first = func_A9F0C0(handle, 2);
-        record->second = func_A9F0C0(handle, 3);
-        cfeMesUnescape(record->name, func_A9F238(handle, func_A9F0C0(handle, 4)));
-        record->third = func_A9F0C0(handle, 5);
+        record->first = vmArgGet(handle, 2);
+        record->second = vmArgGet(handle, 3);
+        cfeMesUnescape(record->name, vmKeyedEntryGet(handle, vmArgGet(handle, 4)));
+        record->third = vmArgGet(handle, 5);
         cfePlugInRecordCount++;
     }
     return 1;
@@ -1219,10 +1219,10 @@ int setMesScr(void)
 int cfe_0024DE20(int handle)
 {
     int value;
-    if (func_A9F0A8(handle) != 1) {
-        assertFailed(D_0068CDE8, cfeAssertFile, 1201);
+    if (VM_PLUGIN_CNT_GET(handle) != 1) {
+        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1201);
     }
-    value = func_A9F0C0(handle, 1);
+    value = vmArgGet(handle, 1);
     cfeRangeSetMin(value);
     return 1;
 }
@@ -1231,10 +1231,10 @@ int cfe_0024DE20(int handle)
 int cfe_0024DE80(int handle)
 {
     int value;
-    if (func_A9F0A8(handle) != 1) {
-        assertFailed(D_0068CDE8, cfeAssertFile, 1217);
+    if (VM_PLUGIN_CNT_GET(handle) != 1) {
+        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1217);
     }
-    value = func_A9F0C0(handle, 1);
+    value = vmArgGet(handle, 1);
     cfeRangeSetMax(value);
     return 1;
 }
@@ -1266,7 +1266,7 @@ void xglFontPrintDirect(const char *text);
 /* The running fade (nonzero while a fade is under way). */
 extern int fadeUpdateHook;
 extern PadRecord PadData[];
-extern XglLightSet cfeDirectionTable;
+extern XglLightSet cfeLightSet;
 extern CfeEvalGlobal cfeEvalGlobal;
 
 /* SaveData as the subtitles read it: +0x3A shows every subtitle (game_movie.c caption_all). */
@@ -1276,7 +1276,7 @@ typedef struct CfeSaveData {
 } CfeSaveData;
 
 extern CfeSaveData SaveData;
-extern const char D_0068CD88[];
+extern const char cfeMesFontSettings[];
 extern CfeEvalSlot cfeEvalSlots[3];
 int strcmp(const char *first, const char *second);
 
@@ -1305,29 +1305,29 @@ int cfe_0024DF60(int handle)
     int i;
     int y;
 
-    if (func_A9F0A8(handle) != 1) {
-        assertFailed(D_0068CDE8, cfeAssertFile, 1250);
+    if (VM_PLUGIN_CNT_GET(handle) != 1) {
+        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1250);
     }
     while (xglCdServiceIfPending() != 0) {
     }
-    time = func_A9F0C0(handle, 1);
+    time = vmArgGet(handle, 1);
     cfeRangeSetValue(time);
-    if (D_006316AC != 0) {
-        D_006316AC--;
+    if (cfeStartDelay != 0) {
+        cfeStartDelay--;
     }
     if (cfeRangeGetValue() - cfeRangeGetMin() >= CFE_PAUSE_DELAY && fadeUpdateHook == 0
         && (PadData[0].pressed & PAD_START)) {
-        D_006316AC = 2;
-        D_006316A8 = D_006316A8 == 0;
+        cfeStartDelay = 2;
+        cfePaused = cfePaused == 0;
         seVoiceStartDefault(CFE_PAUSE_SOUND);
-        if (D_006316A8 != 0) {
+        if (cfePaused != 0) {
             xglClockSampleDayTime();
         }
     }
-    if (cfePlugInRecordCount > 0 && time == cfeRangeGetMin() && strcmp(D_006316B4->name, D_0068CF38) != 0) {
-        cfeRunAndWait(D_006316B4->name, D_006316B4->third);
+    if (cfePlugInRecordCount > 0 && time == cfeRangeGetMin() && strcmp(cfeMessages->name, cfeEmptyName) != 0) {
+        cfeRunAndWait(cfeMessages->name, cfeMessages->third);
     }
-    if (D_006316A8 == 0) {
+    if (cfePaused == 0) {
         cfeCameraEvaluate(time, 0);
     }
     cfeEvaluateDirections(time);
@@ -1340,7 +1340,7 @@ int cfe_0024DF60(int handle)
     cfeSlotTableEvaluate(time);
     cfeSndSetTarget(time);
     /* PxyShadowLight is nml_model_set.c's view of the light set. */
-    pxySetDefaultLight((struct PxyShadowLight *) &cfeDirectionTable);
+    pxySetDefaultLight((struct PxyShadowLight *) &cfeLightSet);
     if (cfeEvalGlobal.result_int != 0) {
         pxySetGlobalFogDist(cfeEvalGlobal.evaluated[1].x, cfeEvalGlobal.evaluated[1].y, cfeEvalGlobal.evaluated[1].z,
                             cfeEvalGlobal.evaluated[1].w);
@@ -1358,23 +1358,23 @@ int cfe_0024DF60(int handle)
         fadeStartIn(30);
     }
     for (i = 0; i < cfePlugInRecordCount; i++) {
-        if (D_006316B4[i].first <= time && time < D_006316B4[i].second && D_006316B4[i].first == time
-            && strcmp(D_006316B4[i].name, D_0068CF38) != 0 && D_006316A8 == 0) {
-            soundSlotSetLevel(D_006316B4[i].third, 0);
+        if (cfeMessages[i].first <= time && time < cfeMessages[i].second && cfeMessages[i].first == time
+            && strcmp(cfeMessages[i].name, cfeEmptyName) != 0 && cfePaused == 0) {
+            soundSlotSetLevel(cfeMessages[i].third, 0);
         }
     }
     for (i = 0; i < cfePlugInRecordCount; i++) {
-        if (D_006316B4[i].first <= time && time < D_006316B4[i].second
-            && (SaveData.captionAll != 0 || D_006316B4[i].text[0] == ' ')) {
+        if (cfeMessages[i].first <= time && time < cfeMessages[i].second
+            && (SaveData.captionAll != 0 || cfeMessages[i].text[0] == ' ')) {
             y = CFE_SUBTITLE_Y;
-            if (cfeStrCountChar(D_006316B4[i].text, '\n') >= 2) {
+            if (cfeStrCountChar(cfeMessages[i].text, '\n') >= 2) {
                 y = CFE_SUBTITLE_Y2;
             }
-            xglFontPrint(0, y, CFE_SUBTITLE_COLOR, D_0068CD88);
-            xglFontPrintDirect(D_006316B4[i].text);
+            xglFontPrint(0, y, CFE_SUBTITLE_COLOR, cfeMesFontSettings);
+            xglFontPrintDirect(cfeMessages[i].text);
         }
     }
-    if (D_006316A8 != 0) {
+    if (cfePaused != 0) {
         xglClockAccumulate();
         func_0027C7D0();
         XenoActorSetHoldFlag();
@@ -1382,7 +1382,7 @@ int cfe_0024DF60(int handle)
         soundSlotSetLevel(1, 1);
         seSetMuted(1, 1);
         pauseDrawScreen();
-        if ((PadData[0].pressed & PAD_TRIANGLE) && D_006316AC == 0) {
+        if ((PadData[0].pressed & PAD_TRIANGLE) && cfeStartDelay == 0) {
             PadData[0].pressed &= ~PAD_TRIANGLE;
             time += CFE_SKIP_FRAMES;
             soundSlotStop(0);
@@ -1424,10 +1424,10 @@ int cfe_0024DF60(int handle)
                           cfeEvalSlots[i].sample_int);
         }
     }
-    cfeUpdateEntries(D_006316A8);
+    cfeUpdateEntries(cfePaused);
     XenoActorDoit();
     XenoActorDisp();
-    if (D_006316A8 == 0) {
+    if (cfePaused == 0) {
         sefExecEffect();
     }
     return time;
@@ -1436,8 +1436,8 @@ int cfe_0024DF60(int handle)
 
 int cfe_0024E688(int handle)
 {
-    if (func_A9F0A8(handle) != 1) {
-        assertFailed(D_0068CDE8, cfeAssertFile, 1456);
+    if (VM_PLUGIN_CNT_GET(handle) != 1) {
+        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1456);
     }
     sefReleaseOwnedRecords(-1);
     return 1;
@@ -1448,10 +1448,10 @@ void fadeStartOut(int);
 int cfe_0024E6D8(int handle)
 {
     int value;
-    if (func_A9F0A8(handle) != 1) {
-        assertFailed(D_0068CDE8, cfeAssertFile, 1475);
+    if (VM_PLUGIN_CNT_GET(handle) != 1) {
+        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1475);
     }
-    value = func_A9F0C0(handle, 1);
+    value = vmArgGet(handle, 1);
     fadeStartOut(value);
     return 1;
 }
@@ -1494,9 +1494,9 @@ int cfe_0024E738(int handle)
     gameWork.control &= ~CONTROL_CFE_SCENE;
     uwamonoRecords[current].flags &= ~CFE_RECORD_FLAG_2;
     gameWork.control &= ~CONTROL_CFE_NO_FADE;
-    if (D_006316B4 != 0) {
-        GameResBlockFreeByBuffer(D_006316B4);
-        D_006316B4 = 0;
+    if (cfeMessages != 0) {
+        GameResBlockFreeByBuffer(cfeMessages);
+        cfeMessages = 0;
     }
     for (i = 0; i < cfeGroupCount; i++) {
         if (cfeGroups[i].records != 0) {
@@ -1535,11 +1535,11 @@ int cfe_0024E738(int handle)
     return 1;
 }
 
-void func_A9CDB0(void *, void *);
-extern unsigned char D_006316B8[];
-extern unsigned char D_0068D060[];
+void sbNativeOwnerAdd(void *, void *);
+extern unsigned char cfePlugInTable[];
+extern unsigned char cfePlugInName[];
 
 void cfeRegisterPlugIn(void)
 {
-    func_A9CDB0(D_0068D060, D_006316B8);
+    sbNativeOwnerAdd(cfePlugInName, cfePlugInTable);
 }

@@ -50,11 +50,11 @@ typedef struct GifGameWork {
 
 extern GifGameWork gameWork;
 /* The smallest texture scale of the blur, 0.9 of the ratio. */
-extern f32 D_00631554;
+extern f32 gifBlurMinScale;
 /* The texture scale of each edge point of the blur fan. */
-extern f32 D_00882310[512];
+extern f32 gifBlurScales[512];
 /* The GIF tag template of the blur fan (the vertex count is or-ed in). */
-extern u32 D_00631558[4];
+extern u32 gifBlurFanTag[4];
 
 #define GIF_GAME_PAUSED 0x1
 /* The edge points are this far apart at least. */
@@ -77,10 +77,10 @@ void gifStateDrawRadialBlur(XglPacket *packet)
     if (gifStatus.ratio == scale) {
         return;
     }
-    D_00631554 = gifStatus.ratio * 0.9f;
+    gifBlurMinScale = gifStatus.ratio * 0.9f;
     if (!(gameWork.control & GIF_GAME_PAUSED)) {
         for (pos = 0; pos < 512; pos++) {
-            D_00882310[pos] = (xglSRand() % 10U) * 0.01f + D_00631554;
+            gifBlurScales[pos] = (xglSRand() % 10U) * 0.01f + gifBlurMinScale;
         }
     }
     k = 0;
@@ -102,7 +102,7 @@ void gifStateDrawRadialBlur(XglPacket *packet)
     cursor[7] = 0;
     cursor = (u32 *) 0x70000030;
     do {
-        scale = D_00882310[k++];
+        scale = gifBlurScales[k++];
         cursor[0] = (gifStatus.centerX + (pos - gifStatus.centerX) * scale) * 16.0f;
         cursor[1] = (gifStatus.centerY + (0 - gifStatus.centerY) * scale) * 16.0f;
         cursor[2] = 0;
@@ -116,7 +116,7 @@ void gifStateDrawRadialBlur(XglPacket *packet)
         cursor += 8;
     } while (pos < GIF_STATE_WIDTH);
     for (pos = 0; pos < GIF_STATE_HEIGHT; pos += step) {
-        scale = D_00882310[k++];
+        scale = gifBlurScales[k++];
         cursor[0] = (gifStatus.centerX + ((GIF_STATE_WIDTH - 1) - gifStatus.centerX) * scale) * 16.0f;
         cursor[1] = (gifStatus.centerY + (pos - gifStatus.centerY) * scale) * 16.0f;
         cursor[2] = 0;
@@ -129,7 +129,7 @@ void gifStateDrawRadialBlur(XglPacket *packet)
         cursor += 8;
     }
     for (pos = GIF_STATE_WIDTH - 1; pos >= 0; pos -= step) {
-        scale = D_00882310[k++];
+        scale = gifBlurScales[k++];
         cursor[0] = (gifStatus.centerX + (pos - gifStatus.centerX) * scale) * 16.0f;
         cursor[1] = (gifStatus.centerY + ((GIF_STATE_HEIGHT - 1) - gifStatus.centerY) * scale) * 16.0f;
         cursor[2] = 0;
@@ -142,7 +142,7 @@ void gifStateDrawRadialBlur(XglPacket *packet)
         cursor += 8;
     }
     for (pos = GIF_STATE_HEIGHT - 1; pos >= 0; pos -= step) {
-        scale = D_00882310[k++];
+        scale = gifBlurScales[k++];
         cursor[0] = (gifStatus.centerX + (0 - gifStatus.centerX) * scale) * 16.0f;
         cursor[1] = (gifStatus.centerY + (pos - gifStatus.centerY) * scale) * 16.0f;
         cursor[2] = 0;
@@ -156,10 +156,10 @@ void gifStateDrawRadialBlur(XglPacket *packet)
     }
     count++;
     tag = (u32 *) 0x70000000;
-    tag[0] = D_00631558[0] | count;
-    tag[1] = D_00631558[1];
-    tag[2] = D_00631558[2];
-    tag[3] = D_00631558[3];
+    tag[0] = gifBlurFanTag[0] | count;
+    tag[1] = gifBlurFanTag[1];
+    tag[2] = gifBlurFanTag[2];
+    tag[3] = gifBlurFanTag[3];
     tag += 4;
     cursor[0] = tag[8];
     cursor[1] = tag[9];
@@ -198,7 +198,7 @@ typedef struct GifCameraPacket {
 #define GIF_CAMERA_PACKET ((GifCameraPacket *) 0x70000000)
 
 /* The GIF tag template of the camera quad (the vertex count is or-ed in). */
-extern u32 D_00631568[4];
+extern u32 gifCameraQuadTag[4];
 
 /* The far corner of the quad in pixels and texels. */
 #define GIF_CAMERA_RIGHT 511
@@ -278,10 +278,10 @@ void gifStateDrawCameraQuad(XglPacket *packet)
     cursor[6] = gifStatus.depth;
     cursor[7] = 0;
     gifTag = GIF_CAMERA_PACKET->tag;
-    gifTag[0] = D_00631568[0] | 4;
-    gifTag[1] = D_00631568[1];
-    gifTag[2] = D_00631568[2];
-    gifTag[3] = D_00631568[3];
+    gifTag[0] = gifCameraQuadTag[0] | 4;
+    gifTag[1] = gifCameraQuadTag[1];
+    gifTag[2] = gifCameraQuadTag[2];
+    gifTag[3] = gifCameraQuadTag[3];
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
     sceVif1PkAddDirectDataN(packet, GIF_CAMERA_PACKET, 9);
@@ -293,7 +293,7 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawJitterGrid);
 
 
 /* The GIF tag template of the fade quad (the vertex count is or-ed in). */
-extern u32 D_006315A0[4];
+extern u32 gifFadeQuadTag[4];
 
 /* The far corner of the fade quad in pixels and texels. */
 #define GIF_FADE_RIGHT 511
@@ -354,10 +354,10 @@ void gifStateDrawFadeQuad(XglPacket *packet)
     cursor[7] = 0;
     count++;
     gifTag = (u32 *) 0x70000000;
-    gifTag[0] = D_006315A0[0] | count;
-    gifTag[1] = D_006315A0[1];
-    gifTag[2] = D_006315A0[2];
-    gifTag[3] = D_006315A0[3];
+    gifTag[0] = gifFadeQuadTag[0] | count;
+    gifTag[1] = gifFadeQuadTag[1];
+    gifTag[2] = gifFadeQuadTag[2];
+    gifTag[3] = gifFadeQuadTag[3];
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
     sceVif1PkAddDirectDataN(packet, gifTag, count * 2 + 1);
@@ -397,10 +397,10 @@ extern int gifStateBlurOffset;                      /* blur offset in pixels */
 #define GIF_STATE_TEX0(base) GS_SET_TEX0((base) << 5, 8, GS_PSMCT32, 9, 9, 1, 0, 0, 0, 0, 0, 0)
 
 /* Size in pixels of the area gifStateCopyDisplayToWork copies. */
-extern int D_006315B4;
-extern int D_006315B8;
+extern int gifCopyWidth;
+extern int gifCopyHeight;
 
-/* Copies the D_006315B4 x D_006315B8 pixels at the origin of the shown page into the work page. */
+/* Copies the gifCopyWidth x gifCopyHeight pixels at the origin of the shown page into the work page. */
 void gifStateCopyDisplayToWork(XglPacket *packet)
 {
     sceVif1PkCnt(packet, 0);
@@ -412,8 +412,8 @@ void gifStateCopyDisplayToWork(XglPacket *packet)
     gifStateAddReg(GS_PRIM, GS_SET_PRIM(6, 0, 1, 0, 0, 0, 1, 0, 0));
     gifStateAddReg(GS_UV, GS_SET_UV(0, 0));
     gifStateAddReg(GS_XYZF2, GIF_STATE_XY(0, 0));
-    gifStateAddReg(GS_UV, GS_SET_UV(D_006315B4 << 4, D_006315B8 << 4));
-    gifStateAddReg(GS_XYZF2, GIF_STATE_XY(D_006315B4, D_006315B8));
+    gifStateAddReg(GS_UV, GS_SET_UV(gifCopyWidth << 4, gifCopyHeight << 4));
+    gifStateAddReg(GS_XYZF2, GIF_STATE_XY(gifCopyWidth, gifCopyHeight));
     gifStateFlush();
     sceVif1PkCloseDirectHLCode(packet);
 }
@@ -1227,8 +1227,8 @@ void gifStateReset(void) {
 }
 
 /* The assert text and the file name of the packet queue asserts. */
-extern const char D_0068CB18[];
-extern const char D_0068CB40[];
+extern const char gifStatePacketAssert[];
+extern const char gifStateSourceFile[];
 
 /* The assert bound: numPacket < (STATEPACKET_MAX - 1) quadwords after the tag. */
 #define GIF_STATE_PACKET_MAX 0x7F
@@ -1238,7 +1238,7 @@ extern const char D_0068CB40[];
 void gifStateAddReg(int gifAddress, u64 gifData)
 {
     if ((unsigned int) gifStateNumPacket >= GIF_STATE_PACKET_MAX) {
-        assertFailed(D_0068CB18, D_0068CB40, 37);
+        assertFailed(gifStatePacketAssert, gifStateSourceFile, 37);
     }
     gifStateNumPacket++;
     gifStatePacket[gifStateNumPacket].pair[0] = gifData;
@@ -1249,7 +1249,7 @@ void gifStateAddReg(int gifAddress, u64 gifData)
 void gifStateAddRawQword(u32 word0, u32 word1, u32 word2, u32 word3)
 {
     if ((unsigned int) gifStateNumPacket >= GIF_STATE_PACKET_MAX) {
-        assertFailed(D_0068CB18, D_0068CB40, 50);
+        assertFailed(gifStatePacketAssert, gifStateSourceFile, 50);
     }
     gifStateNumPacket++;
     gifStatePacket[gifStateNumPacket].word[0] = word0;
@@ -1359,9 +1359,9 @@ void nmlModelSetSubWindowValue(u32 index, f32 value) {
 }
 
 /* The draw function of each effect mode. */
-extern GifEffectDraw D_00631600[];
+extern GifEffectDraw gifStateEffectDraws[];
 
-/* The number of effect modes (entries of D_00631600). */
+/* The number of effect modes (entries of gifStateEffectDraws). */
 #define GIF_EFFECT_COUNT 7
 
 /* Selects one of the seven GIF effects: its draw function becomes the effect hook, the state word and a
@@ -1370,13 +1370,13 @@ void gifStateSetMode(int mode)
 {
     if (mode < GIF_EFFECT_COUNT) {
         gifStatus.state = mode;
-        D_0064586C = D_00631600[mode];
+        gifStateModeHook = gifStateEffectDraws[mode];
         gifStatus.ratio = 1.0f;
     }
 }
 
 void gifStateClearModeValue(void) {
-    D_0064586C = 0;
+    gifStateModeHook = 0;
 }
 
 

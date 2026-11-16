@@ -64,8 +64,9 @@ extern GifStatusBlock gifStatus;
 /* The draw function of an effect: called with the frame packet. */
 typedef void (*GifEffectDraw)(struct XglPacket *packet);
 
-/* The effect hook in the xgl_render data: gifStateSetMode sets it, gifStateClearModeValue clears it. */
-extern GifEffectDraw D_0064586C;
+/* The mode hook, the word at +0x4C of sRender (0x645820, xgl_render data; gifStateEffectHook is the one at
+ * +0x60): gifStateSetMode sets it, gifStateClearModeValue clears it. */
+extern GifEffectDraw gifStateModeHook;
 
 void func_00246AF8(void);
 void func_00246DD8(int value);

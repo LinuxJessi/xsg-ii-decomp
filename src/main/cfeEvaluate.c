@@ -78,9 +78,9 @@ int XenoActorReleaseChild(struct XenoActor *parent, struct XenoActor *child);
 int XenoActorAppendChildOnJoint(struct XenoActor *parent, struct XenoActor *child, int joint);
 /* TiMRPackage.c takes its own view of the state (TiMRState). */
 void tiMRStateSetSpeed(XenoMotionState *state, float value);
-extern const char D_0068D140[];
-extern const char D_0068D180[];
-extern const char D_0068D198[];
+extern const char cfeReleaseChildAssert[];
+extern const char cfeEvaluateSourceFile[];
+extern const char cfeAppendChildAssert[];
 
 /* The 0x1B0-byte entries of cfePlugInSlots as the attachment reads them: word 0 is the parent actor. */
 typedef struct CfeNodeSlot {
@@ -246,16 +246,16 @@ void cfeEvaluateNode(void *data, int time)
     if (entry->attachSlot >= 0) {
         if (entry->actor->parent != 0) {
             if (XenoActorReleaseChild(entry->actor->parent, entry->actor) != 1) {
-                assertFailed(D_0068D140, D_0068D180, 393);
+                assertFailed(cfeReleaseChildAssert, cfeEvaluateSourceFile, 393);
             }
         }
         if (XenoActorAppendChildOnJoint(cfePlugInSlots[entry->attachSlot].object, entry->actor,
                                         entry->attachJoint) != 1) {
-            assertFailed(D_0068D198, D_0068D180, 396);
+            assertFailed(cfeAppendChildAssert, cfeEvaluateSourceFile, 396);
         }
     } else if (entry->actor->parent != 0) {
         if (XenoActorReleaseChild(entry->actor->parent, entry->actor) != 1) {
-            assertFailed(D_0068D140, D_0068D180, 402);
+            assertFailed(cfeReleaseChildAssert, cfeEvaluateSourceFile, 402);
         }
     }
     if (entry->dampOffsetTrack != 0) {
@@ -414,7 +414,7 @@ typedef struct CfeCameraOffset {
     f32 rotation[3];
 } CfeCameraOffset;
 
-/* The studio block D_006384C0 (0x70 bytes) as the camera evaluation sees it: the camera, its key tracks
+/* The studio block cfeCamera (0x70 bytes) as the camera evaluation sees it: the camera, its key tracks
  * and the camera shake. cfePlugIn.c sees the same block as the
  * camera and 27 key lists (CfeStudioBlock). */
 typedef struct CfeCameraEval {
@@ -438,9 +438,9 @@ typedef union CfeStudioView {
     CfeCameraEval eval;
 } CfeStudioView;
 
-extern CfeStudioView D_006384C0;
+extern CfeStudioView cfeCamera;
 /* -1.0f and 1.0f: the random sign of a shake offset. */
-extern f32 D_006318B0[2];
+extern f32 cfeShakeSigns[2];
 
 /* The flag of CfeCameraEval.flags that stops the evaluation. */
 #define CFE_CAMERA_HELD 0x1
@@ -456,81 +456,81 @@ void cfeCameraEvaluate(int time, int paused)
     float blend;
     float rest;
 
-    xglStudioGetCamera(&D_006384C0.eval.camera, 0);
-    if (D_006384C0.eval.flags & CFE_CAMERA_HELD) {
+    xglStudioGetCamera(&cfeCamera.eval.camera, 0);
+    if (cfeCamera.eval.flags & CFE_CAMERA_HELD) {
         return;
     }
-    if (D_006384C0.eval.position[0] != 0) {
-        D_006384C0.eval.camera->travel.position.x = cfeTrackSample(D_006384C0.eval.position[0], time);
+    if (cfeCamera.eval.position[0] != 0) {
+        cfeCamera.eval.camera->travel.position.x = cfeTrackSample(cfeCamera.eval.position[0], time);
     }
-    if (D_006384C0.eval.position[1] != 0) {
-        D_006384C0.eval.camera->travel.position.y = cfeTrackSample(D_006384C0.eval.position[1], time);
+    if (cfeCamera.eval.position[1] != 0) {
+        cfeCamera.eval.camera->travel.position.y = cfeTrackSample(cfeCamera.eval.position[1], time);
     }
-    if (D_006384C0.eval.position[2] != 0) {
-        D_006384C0.eval.camera->travel.position.z = cfeTrackSample(D_006384C0.eval.position[2], time);
+    if (cfeCamera.eval.position[2] != 0) {
+        cfeCamera.eval.camera->travel.position.z = cfeTrackSample(cfeCamera.eval.position[2], time);
     }
-    if (D_006384C0.eval.rotation[0] != 0) {
-        D_006384C0.eval.camera->travel.rotation.x = cfeTrackSample(D_006384C0.eval.rotation[0], time);
+    if (cfeCamera.eval.rotation[0] != 0) {
+        cfeCamera.eval.camera->travel.rotation.x = cfeTrackSample(cfeCamera.eval.rotation[0], time);
     }
-    if (D_006384C0.eval.rotation[1] != 0) {
-        D_006384C0.eval.camera->travel.rotation.y = cfeTrackSample(D_006384C0.eval.rotation[1], time);
+    if (cfeCamera.eval.rotation[1] != 0) {
+        cfeCamera.eval.camera->travel.rotation.y = cfeTrackSample(cfeCamera.eval.rotation[1], time);
     }
-    if (D_006384C0.eval.rotation[2] != 0) {
-        D_006384C0.eval.camera->travel.rotation.z = cfeTrackSample(D_006384C0.eval.rotation[2], time);
+    if (cfeCamera.eval.rotation[2] != 0) {
+        cfeCamera.eval.camera->travel.rotation.z = cfeTrackSample(cfeCamera.eval.rotation[2], time);
     }
-    if (D_006384C0.eval.fov != 0) {
-        D_006384C0.eval.camera->travel.fov = cfeTrackSample(D_006384C0.eval.fov, time);
+    if (cfeCamera.eval.fov != 0) {
+        cfeCamera.eval.camera->travel.fov = cfeTrackSample(cfeCamera.eval.fov, time);
     }
-    if (D_006384C0.eval.shakeTrack[0] != 0) {
-        D_006384C0.eval.shakeOn = cfeTrackSampleStep(D_006384C0.eval.shakeTrack[0], time);
+    if (cfeCamera.eval.shakeTrack[0] != 0) {
+        cfeCamera.eval.shakeOn = cfeTrackSampleStep(cfeCamera.eval.shakeTrack[0], time);
     }
-    if (D_006384C0.eval.shakeTrack[1] != 0) {
-        D_006384C0.eval.shakeFrames = cfeTrackSampleStep(D_006384C0.eval.shakeTrack[1], time);
+    if (cfeCamera.eval.shakeTrack[1] != 0) {
+        cfeCamera.eval.shakeFrames = cfeTrackSampleStep(cfeCamera.eval.shakeTrack[1], time);
     }
-    if (D_006384C0.eval.shakeTrack[2] != 0) {
-        D_006384C0.eval.shakeAmount = cfeTrackSampleStep(D_006384C0.eval.shakeTrack[2], time);
+    if (cfeCamera.eval.shakeTrack[2] != 0) {
+        cfeCamera.eval.shakeAmount = cfeTrackSampleStep(cfeCamera.eval.shakeTrack[2], time);
     }
-    if (D_006384C0.eval.shakeOn != 0 && D_006384C0.eval.shakeAmount != 0) {
-        if (D_006384C0.eval.shakeCounter < 0 && paused == 0) {
-            D_006384C0.eval.shakeCounter = D_006384C0.eval.shakeFrames;
-            D_006384C0.eval.from = D_006384C0.eval.to;
-            D_006384C0.eval.to.position[0] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
-                                             * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.position[1] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
-                                             * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.position[2] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
-                                             * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.rotation[0] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
-                                             * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.rotation[1] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
-                                             * D_006318B0[xglSRand() & 1];
-            D_006384C0.eval.to.rotation[2] = xglSRand() % (D_006384C0.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
-                                             * D_006318B0[xglSRand() & 1];
+    if (cfeCamera.eval.shakeOn != 0 && cfeCamera.eval.shakeAmount != 0) {
+        if (cfeCamera.eval.shakeCounter < 0 && paused == 0) {
+            cfeCamera.eval.shakeCounter = cfeCamera.eval.shakeFrames;
+            cfeCamera.eval.from = cfeCamera.eval.to;
+            cfeCamera.eval.to.position[0] = xglSRand() % (cfeCamera.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
+                                             * cfeShakeSigns[xglSRand() & 1];
+            cfeCamera.eval.to.position[1] = xglSRand() % (cfeCamera.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
+                                             * cfeShakeSigns[xglSRand() & 1];
+            cfeCamera.eval.to.position[2] = xglSRand() % (cfeCamera.eval.shakeAmount + 1) * CFE_SHAKE_POSITION_UNIT
+                                             * cfeShakeSigns[xglSRand() & 1];
+            cfeCamera.eval.to.rotation[0] = xglSRand() % (cfeCamera.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
+                                             * cfeShakeSigns[xglSRand() & 1];
+            cfeCamera.eval.to.rotation[1] = xglSRand() % (cfeCamera.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
+                                             * cfeShakeSigns[xglSRand() & 1];
+            cfeCamera.eval.to.rotation[2] = xglSRand() % (cfeCamera.eval.shakeAmount + 1) * CFE_SHAKE_ROTATION_UNIT
+                                             * cfeShakeSigns[xglSRand() & 1];
         }
-        blend = (float) D_006384C0.eval.shakeCounter / (float) (D_006384C0.eval.shakeFrames + 1);
+        blend = (float) cfeCamera.eval.shakeCounter / (float) (cfeCamera.eval.shakeFrames + 1);
         if (1.0f < blend) {
             blend = 1.0f;
         }
         rest = 1.0f - blend;
-        D_006384C0.eval.camera->travel.position.x
-            += D_006384C0.eval.from.position[0] * blend + D_006384C0.eval.to.position[0] * rest;
-        D_006384C0.eval.camera->travel.position.y
-            += D_006384C0.eval.from.position[1] * blend + D_006384C0.eval.to.position[1] * rest;
-        D_006384C0.eval.camera->travel.position.z
-            += D_006384C0.eval.from.position[2] * blend + D_006384C0.eval.to.position[2] * rest;
-        D_006384C0.eval.camera->travel.rotation.x
-            += D_006384C0.eval.from.rotation[0] * blend + D_006384C0.eval.to.rotation[0] * rest;
-        D_006384C0.eval.camera->travel.rotation.y
-            += D_006384C0.eval.from.rotation[1] * blend + D_006384C0.eval.to.rotation[1] * rest;
-        D_006384C0.eval.camera->travel.rotation.z
-            += D_006384C0.eval.from.rotation[2] * blend + D_006384C0.eval.to.rotation[2] * rest;
+        cfeCamera.eval.camera->travel.position.x
+            += cfeCamera.eval.from.position[0] * blend + cfeCamera.eval.to.position[0] * rest;
+        cfeCamera.eval.camera->travel.position.y
+            += cfeCamera.eval.from.position[1] * blend + cfeCamera.eval.to.position[1] * rest;
+        cfeCamera.eval.camera->travel.position.z
+            += cfeCamera.eval.from.position[2] * blend + cfeCamera.eval.to.position[2] * rest;
+        cfeCamera.eval.camera->travel.rotation.x
+            += cfeCamera.eval.from.rotation[0] * blend + cfeCamera.eval.to.rotation[0] * rest;
+        cfeCamera.eval.camera->travel.rotation.y
+            += cfeCamera.eval.from.rotation[1] * blend + cfeCamera.eval.to.rotation[1] * rest;
+        cfeCamera.eval.camera->travel.rotation.z
+            += cfeCamera.eval.from.rotation[2] * blend + cfeCamera.eval.to.rotation[2] * rest;
         if (paused == 0) {
-            D_006384C0.eval.shakeCounter--;
+            cfeCamera.eval.shakeCounter--;
         }
     } else {
-        D_006384C0.eval.shakeCounter = 0;
-        memset(&D_006384C0.eval.from, 0, sizeof(D_006384C0.eval.from));
-        memset(&D_006384C0.eval.to, 0, sizeof(D_006384C0.eval.to));
+        cfeCamera.eval.shakeCounter = 0;
+        memset(&cfeCamera.eval.from, 0, sizeof(cfeCamera.eval.from));
+        memset(&cfeCamera.eval.to, 0, sizeof(cfeCamera.eval.to));
     }
     xglStudioMove();
 }

@@ -115,18 +115,18 @@ int cfeFileTempRead(const char *name, char **buffer)
     return size;
 }
 
-extern const char D_0068D108[];
+extern const char cfeFileLogOpenBrace[];
 
 /* Opens a block in the log: writes "{" at the current indent, then indents one level. */
 void cfeFileLogBlockBegin(void) {
-    cfeFileLogf(D_0068D108);
+    cfeFileLogf(cfeFileLogOpenBrace);
     cfeFileLogIndentAdd(1);
 }
 
-extern const char D_0068D110[];
+extern const char cfeFileLogCloseBrace[];
 
 /* Closes a block in the log: unindents one level, then writes "}" at that indent. */
 void cfeFileLogBlockEnd(void) {
     cfeFileLogIndentAdd(-1);
-    cfeFileLogf(D_0068D110);
+    cfeFileLogf(cfeFileLogCloseBrace);
 }
