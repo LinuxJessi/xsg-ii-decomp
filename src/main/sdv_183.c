@@ -1257,13 +1257,13 @@ void sdvPacketFlushMscnt(void)
 }
 
 /* A 128-bit quadword (one lq/sq), as the VIF1 packet writers take it. */
-typedef unsigned int Quadword __attribute__((mode(TI)));
+typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
 /* The header sdvDrawAlter puts in front of each strip it sends by reference: sdvSetStripHeader clears its first
    two quadwords, fills the UNPACK code, primitive count and strip flag, and ORs the primitive count into the
    loop count at +0x20 (the third quadword is not cleared). */
 typedef union SdvStripHeader {
-    Quadword quad[3];
+    XglQuadword quad[3];
     struct {
         unsigned int unmodeled_00[3];
         unsigned int unpack;           /* +0x0C VIF UNPACK code for the whole strip */
