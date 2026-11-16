@@ -1438,6 +1438,27 @@ def split_initialized_items(items, cuts, run_ends, tu_name, character_context=No
                     if data_addr + literal_size == cut:
                         directive = (cut, line_index)
                         break
+            if directive is None and cut in run_ends:
+                # Xenosaga II (2026-11-16): splat prints a table of printable bytes that a zero byte
+                # follows as one `.asciz` (xglLanguageCodeTable: nine two-letter codes, then alignment
+                # fill). The C object ends before that zero: give the terminator its own `.byte`.
+                for addr, _, line_index in _data_directives(current):
+                    line = current['block']['lines'][line_index]
+                    asciz = re.search(r'^(.*\*/\s*)\.asciz(\s+)("(?:[^"\\]|\\.)*")\s*$', line)
+                    if not asciz:
+                        continue
+                    try:
+                        literal_size = len(ast.literal_eval(asciz.group(3)).encode('latin1'))
+                    except (SyntaxError, ValueError, UnicodeEncodeError):
+                        continue
+                    if addr + literal_size == cut:
+                        changed = list(current['block']['lines'])
+                        changed[line_index:line_index + 1] = [
+                            f'{asciz.group(1)}.ascii{asciz.group(2)}{asciz.group(3)}',
+                            f'    /* {cut:08X} */ .byte 0x00']
+                        current = dict(current, block=dict(current['block'], lines=changed))
+                        directive = (cut, line_index + 1)
+                        break
             if directive is None:
                 # Splat can combine a final byte/halfword and zero bytes
                 # into one numeric .short/.word. Separate only that zero tail
@@ -2805,8 +2826,18 @@ def tu_context(root, unit, unit_dir, tu_id):
 
         def path_of(p, sec):
             return Path(unit_dir) / p['file']
+    extents = {}
+    if unit == 'main':
+        extents = load_object_extents(root, tu_id)
+        for sec, spans in (_OBJECT_EXTENT_OVERRIDE.get((unit, tu_id)) or {}).items():
+            extents[sec] = sorted(set(extents.get(sec, [])) | set(spans))
+    marks = {}
+    if unit == 'main':
+        marks = load_object_labels(root, tu_id)
+        for sec, addresses in (_OBJECT_LABEL_OVERRIDE.get((unit, tu_id)) or {}).items():
+            marks[sec] = sorted(set(marks.get(sec, [])) | set(addresses))
     return dict(name=name, pieces=pieces, fdirs=fdirs, text_start=text_start, orig=orig, path_of=path_of,
-                placed=placed, imported=imported)
+                placed=placed, imported=imported, object_extents=extents, object_labels=marks)
 
 
 def tu_object(unit_dir, unit, name):
@@ -3088,12 +3119,181 @@ def compiler_static_object_functions(elf, symbol, source_text, assembly):
     return sorted(proved)
 
 
+OBJECT_EXTENTS_FILE = 'config/objects/data-object-extents.json'
+OBJECT_EXTENTS_SCHEMA = 'tu-data-object-extents/1'
+# (unit, tu_id) -> {section: [(lo, hi)]}: extents the running derivation read off the candidate object.
+_OBJECT_EXTENT_OVERRIDE = {}
+
+
+def load_object_extents(root, tu_id):
+    """{section: [(lo, hi)]} of the C objects of one TU known to span several scaffold labels.
+
+    Xenosaga II has no symbol table: a scaffold data item is a splat label, one per referenced address, so one
+    C object (a struct, a table) is usually several items. The file records, per TU, the extent of every such
+    object as the compiled C object gave it (`derive --write`); `section_items` then presents the labels inside
+    an extent as one item, which is what every item rule below was written for (X1 items were ELF objects)."""
+    path = Path(root) / OBJECT_EXTENTS_FILE
+    if not path.is_file():
+        return {}
+    data = json.loads(path.read_bytes())
+    if data.get('schema') != OBJECT_EXTENTS_SCHEMA:
+        raise CarveError(f'{path}: schema {data.get("schema")!r} is not {OBJECT_EXTENTS_SCHEMA}')
+    return {sec: [(hx(row[0]), hx(row[1])) for row in rows]
+            for sec, rows in (data.get('tus', {}).get(tu_id) or {}).items()}
+
+
+def load_object_labels(root, tu_id):
+    """{section: [address]} of C objects of one TU that start where the scaffold has no label.
+
+    A datum no code reaches by its own address (a byte after an 8-byte array, the second of two short strings
+    that the code addresses from the first) has no splat label; the C source names it `D_<address>`, and the
+    item it lies in is split there for every item rule (recorded by `derive --write`)."""
+    path = Path(root) / OBJECT_EXTENTS_FILE
+    if not path.is_file():
+        return {}
+    data = json.loads(path.read_bytes())
+    return {sec: [hx(a) for a in rows] for sec, rows in (data.get('labels', {}).get(tu_id) or {}).items()}
+
+
+def write_object_extents(root, tu_id, extents, labels=None):
+    """Record (or drop) one TU's object extents and unlabeled object starts; True when the file changed."""
+    path = Path(root) / OBJECT_EXTENTS_FILE
+    data = json.loads(path.read_bytes()) if path.is_file() else dict(schema=OBJECT_EXTENTS_SCHEMA, tus={})
+    rows = {sec: [[h8(lo), h8(hi)] for lo, hi in sorted(spans)] for sec, spans in sorted(extents.items()) if spans}
+    before = json.dumps(data, sort_keys=True)
+    if rows:
+        data['tus'][tu_id] = rows
+    else:
+        data['tus'].pop(tu_id, None)
+    data['tus'] = dict(sorted(data['tus'].items()))
+    data.setdefault('labels', {})
+    marks = {sec: [h8(a) for a in sorted(set(addresses))] for sec, addresses in sorted((labels or {}).items())
+             if addresses}
+    if marks:
+        data['labels'][tu_id] = marks
+    else:
+        data['labels'].pop(tu_id, None)
+    data['labels'] = dict(sorted(data['labels'].items()))
+    if json.dumps(data, sort_keys=True) == before:
+        return False
+    path.write_text(json.dumps(data, indent=1) + '\n')
+    return True
+
+
+def candidate_object_extents(ctx, elf):
+    """{section: [(lo, hi)]}: initialized C OBJECTs longer than the scaffold item carrying their label."""
+    out = {}
+    for sec in SECTIONS:
+        if sec in ('.bss', '.sbss') or not ctx['pieces'].get(sec):
+            continue
+        raw = []
+        for p in ctx['pieces'][sec]:
+            path = ctx['path_of'](p, sec)
+            if Path(path).is_file():
+                raw += piece_items(path, p['start'], p['end'])[1]
+        raw = split_items_at_labels(raw, (ctx.get('object_labels') or {}).get(sec))
+        by_label = {}
+        for it in raw:
+            for label in it['labels']:
+                by_label.setdefault(label, []).append(it)
+        piece_end = {p['start']: p['end'] for p in ctx['pieces'][sec]}
+        for s in elf.symbols:
+            if s.type != 1 or not s.size or not s.name or not 0 < s.shndx < len(elf.sections):
+                continue
+            csec = elf.sections[s.shndx]
+            if csec.type == 8 or csec.name != sec or len(by_label.get(s.name, [])) != 1:
+                continue
+            it = by_label[s.name][0]
+            lo, hi = it['start'], it['start'] + s.size
+            limit = next((end for start, end in piece_end.items() if start <= lo < end), None)
+            if hi > it['end'] and limit is not None and hi <= limit:
+                out.setdefault(sec, []).append((lo, hi))
+    return {sec: sorted(set(spans)) for sec, spans in out.items()}
+
+
+_OBJECT_LABEL_OVERRIDE = {}   # (unit, tu_id) -> {section: [address]} read off the candidate object
+
+
+def candidate_object_labels(ctx, elf):
+    """{section: [address]}: C OBJECTs named D_<address> that start inside a scaffold item, not at a label."""
+    out = {}
+    for sec in SECTIONS:
+        if not ctx['pieces'].get(sec):
+            continue
+        raw = []
+        for p in ctx['pieces'][sec]:
+            path = ctx['path_of'](p, sec)
+            if Path(path).is_file():
+                raw += piece_items(path, p['start'], p['end'])[1]
+        starts = {it['start'] for it in raw}
+        for s in elf.symbols:
+            m = re.fullmatch(r'D_([0-9A-Fa-f]{8})', s.name or '')
+            if not m or s.type != 1 or not s.size or not 0 < s.shndx < len(elf.sections):
+                continue
+            address = int(m.group(1), 16)
+            if address not in starts and any(it['start'] < address < it['end'] for it in raw):
+                out.setdefault(sec, []).append(address)
+    return {sec: sorted(set(addresses)) for sec, addresses in out.items()}
+
+
+def split_items_at_labels(items, addresses):
+    """Items with an extra item started at each recorded unlabeled object address."""
+    if not addresses:
+        return items
+    out = []
+    for it in sorted(items, key=lambda it: it['start']):
+        cuts = sorted(a for a in addresses if it['start'] < a < it['end'])
+        if not cuts:
+            out.append(it)
+            continue
+        head = copy.deepcopy(it)
+        head['original_mapped_range'] = [it['start'], it['end']]
+        head['end'] = cuts[0]
+        out.append(head)
+        for k, a in enumerate(cuts):
+            end = cuts[k + 1] if k + 1 < len(cuts) else it['end']
+            name = f'D_{a:08X}'
+            out.append(dict(name=name, labels=[name], start=a, end=end, synthetic_label=True,
+                            block=dict(lines=[], start=a, offset=0, labels=[name])))
+    return out
+
+
+def merge_object_items(items, extents):
+    """Items with the labels inside a recorded object extent folded into the item that starts it."""
+    if not extents:
+        return items
+    starts = {lo: hi for lo, hi in extents}
+    out, k = [], 0
+    items = sorted(items, key=lambda it: it['start'])
+    while k < len(items):
+        it = items[k]
+        hi = starts.get(it['start'])
+        k += 1
+        if hi is None or hi <= it['end']:
+            out.append(it)
+            continue
+        merged = copy.deepcopy(it)
+        interior = []
+        while k < len(items) and items[k]['start'] < hi:
+            inner = items[k]
+            interior += inner['labels']
+            merged['end'] = inner['end']
+            merged['block']['lines'] = merged['block']['lines'] + inner['block']['lines']
+            k += 1
+        merged['interior_labels'] = interior
+        merged['object_extent'] = [it['start'], hi]
+        out.append(merged)
+    return out
+
+
 def section_items(ctx, sec):
     """[item] of every piece of one TU section, in address order."""
     items = []
     for p in ctx['pieces'].get(sec) or []:
         _, its = piece_items(ctx['path_of'](p, sec), p['start'], p['end'])
         items += its
+    items = split_items_at_labels(items, (ctx.get('object_labels') or {}).get(sec))
+    items = merge_object_items(items, (ctx.get('object_extents') or {}).get(sec))
     # A DATA gate may attach SOURCE-owned character subspan views only after
     # proving actual ordinary C storage and an original %s/pointer consumer.
     # These are SOURCE coordinate names, not invented original ELF symbols.
@@ -4924,7 +5124,16 @@ def refresh_initialized_spans(root, unit, unit_dir, tu_id, obj, elf, ctx, declar
             cursor += sym.size
         padding = int((original_part or {}).get('zero_padding_tail', 0))
         if cursor - symbols[0].value + padding != hi - lo:
-            raise CarveError(f'{tu_id} {sec}: current named owner extent differs from original span {h8(lo)}-{h8(hi)}')
+            # A retyped owner (an int item that the code reads as one byte) leaves alignment fill
+            # between its end and the next label: accepted when the C object has that zero fill itself.
+            fill = (hi - lo) - (cursor - symbols[0].value)
+            if not (unit == 'main' and 0 < fill < 16 and
+                    (csec.type == 8 or not any(elf.section_bytes(csec)[cursor:cursor + fill])) and
+                    not any(o.shndx == csec.index and o.type not in (3, 4) and cursor <= o.value < cursor + fill
+                            for o in elf.symbols)):
+                raise CarveError(f'{tu_id} {sec}: current named owner extent differs from original span {h8(lo)}-{h8(hi)}')
+            padding = fill
+            original_part = dict(original_part or {}, zero_padding_tail=fill)
         part = copy.deepcopy(original_part or {})
         part.update(section=csec.name, range=[h8(lo), h8(hi)],
                     object_range=[symbols[0].value, cursor + padding], symbols=[s.name for s in symbols])
@@ -5071,7 +5280,22 @@ def refresh_initialized_spans(root, unit, unit_dir, tu_id, obj, elf, ctx, declar
         lo, hi = it['start'], it['start'] + sym.size
         if hi > it['end'] or any(hx(r['range'][0]) < hi and lo < hx(r['range'][1]) for r in refreshed.get(sec, [])):
             raise CarveError(f'{tu_id}: new compiler OBJECT {name} overlaps or exceeds original ownership')
-        part = named_part(sec, lo, hi, [name])
+        # The item ends at the next label, so it holds the alignment fill after the object. When the C
+        # object has the same zero fill there (before its next datum), the run takes the whole item.
+        pad = it['end'] - hi
+        csec_ = elf.sections[sym.shndx]
+        tail_lo = sym.value + sym.size
+        # (An object that ends its C section has no fill of its own: the item's zero tail is then the
+        # fill before the next piece, exactly as when the next input is pinned after absorbed padding.)
+        if 0 < pad < 16 and \
+                not any(elf.section_bytes(csec_)[tail_lo:tail_lo + pad]) and \
+                not any(o.shndx == csec_.index and o.type not in (3, 4) and tail_lo <= o.value < tail_lo + pad
+                        for o in elf.symbols) and \
+                not any(va_bytes(Elf(Path(ctx['orig']).read_bytes()), hi, pad) or b''):
+            part = named_part(sec, lo, it['end'], [name], dict(zero_padding_tail=pad))
+            hi = it['end']
+        else:
+            part = named_part(sec, lo, hi, [name])
         refreshed.setdefault(sec, []).append(dict(range=[h8(lo), h8(hi)], generated=[h8(lo), h8(hi)],
             generated_by=[], c_owned_symbols=[name], also_referenced_by_c=[], c_input_spans=[part]))
 
@@ -5289,6 +5513,15 @@ def refresh_initialized_spans(root, unit, unit_dir, tu_id, obj, elf, ctx, declar
             if len(exact) != 1 and id(run) in data_only_runs:
                 # Reached only through another item's data and not proven
                 # emitted by C: leave it scaffold, exactly as before.
+                refreshed[sec] = [r for r in refreshed[sec] if r is not run]
+                continue
+            if not exact and unit == 'main':
+                # Xenosaga II (2026-11-15): the scaffold items are splat labels, one per referenced
+                # address, so a label the C functions reach is often the inside of an object the C
+                # source names through another label (`table[i].field` relocates against `table`+4 and
+                # leaves the inner label out of the object's symbols). Such an item is no compiler
+                # emission: it stays scaffold. A literal the C object does emit and that fits no
+                # original item is still refused by the complete-input-coverage rule of the splitter.
                 refreshed[sec] = [r for r in refreshed[sec] if r is not run]
                 continue
             if len(exact) != 1:
@@ -6272,6 +6505,23 @@ def _derive_current(root, unit, unit_dir, tu_id, source, obj, *, _declared=None,
     per_func = {n: identifiers([files[n]]) for n in c_funcs}
     asm_refs = identifiers(scaffold_files)
     elf = Elf(Path(obj).read_bytes())
+    if unit == 'main':
+        # The candidate's own objects say which scaffold labels are one object (see load_object_extents).
+        _OBJECT_LABEL_OVERRIDE[(unit, tu_id)] = candidate_object_labels(ctx, elf)
+        _OBJECT_EXTENT_OVERRIDE[(unit, tu_id)] = candidate_object_extents(
+            dict(ctx, object_extents={}, object_labels=_OBJECT_LABEL_OVERRIDE[(unit, tu_id)]), elf)
+        ctx = tu_context(root, unit, unit_dir, tu_id)
+        # A request written before an object grew over its neighbours (the pieces of a struct that
+        # were separate C objects) names owners the object no longer has. Such runs are dropped from
+        # the request; the object is then routed as a new owner of its whole extent.
+        for sec, spans in _OBJECT_EXTENT_OVERRIDE[(unit, tu_id)].items():
+            if declared.get(sec):
+                declared[sec] = [r for r in declared[sec]
+                                 if not any(lo < hx(r['range'][1]) and hx(r['range'][0]) < hi and
+                                            not (hx(r['range'][0]) == lo and hx(r['range'][1]) >= hi)
+                                            for lo, hi in spans)]
+                if not declared[sec]:
+                    del declared[sec]
     orig = None
     names_ref = {s.name for s in elf.symbols if s.name and s.shndx == 0}
     names_def = {s.name for s in elf.symbols if s.name and 0 < s.shndx < 0xff00 and s.type in (0, 1)}
@@ -6282,6 +6532,9 @@ def _derive_current(root, unit, unit_dir, tu_id, source, obj, *, _declared=None,
             extern.add(al[n][0])
     out = dict(tu=tu_id, unit=unit, source=str(source), object=str(obj), c_functions=c_funcs,
                runs={}, sections={}, problems=[])
+    if _OBJECT_EXTENT_OVERRIDE.get((unit, tu_id)):
+        out['object_extents'] = {sec: [[h8(lo), h8(hi)] for lo, hi in spans]
+                                 for sec, spans in _OBJECT_EXTENT_OVERRIDE[(unit, tu_id)].items()}
     if _declared is None:
         declared, withdrawn = withdraw_candidate_data(
             root, unit, unit_dir, tu_id, obj, elf, ctx, declared, accepted_root, accepted_runs)
@@ -7175,7 +7428,12 @@ def derive_entry(root, unit, unit_dir, tu_id, source, obj, basis=None, rounds=4)
         return got
     if got['problems'] and old:
         nobits = {sec: runs for sec, runs in old.items() if sec in ('.bss', '.sbss') and runs}
-        starts = ([(nobits, 'registry NOBITS runs only')] if nobits and nobits != old else []) + \
+        # A stale NOBITS request (one static now covers what were several spans) must not cost the
+        # initialized runs their explicit routing: derive the storage afresh, keep the rest.
+        initialized_only = {sec: runs for sec, runs in old.items() if sec not in ('.bss', '.sbss') and runs}
+        starts = ([(initialized_only, 'registry initialized runs only')]
+                  if nobits and initialized_only and initialized_only != old else []) + \
+                 ([(nobits, 'registry NOBITS runs only')] if nobits and nobits != old else []) + \
                  [({}, 'no registry entry')]
         for start, label in starts:
             retry = attempt(start, label)
@@ -7456,6 +7714,10 @@ def main(argv=None):
         got['consistent'] = normalize_runs(declared) == normalize_runs(got['runs']) and not got['problems']
     if a.cmd == 'derive' and a.write and not got['problems']:
         got['written'] = write_registry(a.root, a.tu, got['runs'], basis=basis)
+        if a.unit == 'main':
+            got['object_extents_written'] = write_object_extents(
+                a.root, a.tu, _OBJECT_EXTENT_OVERRIDE.get((a.unit, a.tu)) or {},
+                _OBJECT_LABEL_OVERRIDE.get((a.unit, a.tu)) or {})
     elif a.cmd == 'derive' and a.write and (got.get('withdrawn_candidate_data') or
                                             got.get('scaffold_only_items')):
         # Apply only the independently established absence transition, retaining

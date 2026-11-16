@@ -174,9 +174,21 @@ def asm_contract():
                 language="asm", source_class="hand-asm")
 
 
-def g_evidence(gp_count, optimization):
-    g_flag = "-G8" if gp_count else "-G0"
+# TUs with no gp-relative instruction that are -G8 all the same, keyed by text start: their code loads the
+# address of string literals of 8 bytes or less that sit in .sdata. GCC 2.96 puts such a literal in .sdata only
+# under -G8 (mips_select_section) and still addresses it with lui/addiu, because only variables get the
+# gp-relative flag (ENCODE_SECTION_INFO); a -G0 file emits nothing into .sdata (data pass, 2026-11-16).
+SMALL_DATA_LITERAL_TUS = {
+    0x0019A148: "xgl_menu: the three row formats of xglMenuDrawType1Sub (0x69DEF0, 0x69DEF8, 0x69DF00)",
+    0x0022D1D8: "tu111: \"NULL\" (0x69D778) of smsg and msgDtl",
+}
+
+
+def g_evidence(gp_count, optimization, start=None):
+    g_flag = "-G8" if gp_count or start in SMALL_DATA_LITERAL_TUS else "-G0"
     basis = (f"{gp_count} gp-relative instructions in the code" if gp_count else
+             f"string literals in .sdata reached with lui/addiu: {SMALL_DATA_LITERAL_TUS[start]}"
+             if start in SMALL_DATA_LITERAL_TUS else
              "no gp-relative instruction in the code; -G0 cannot add one")
     return g_flag, dict(compiler="2.96", compiler_confidence="medium", assembler_class="LA29",
                         assembler_confidence="medium", g_flag=g_flag, g_basis=basis,
@@ -386,7 +398,7 @@ def build_main(image, record, ov02_tus, ov02_stems, ov02_names, ov02_sizes, out)
                 g_flag="-G0", g_basis="whole library zone, kept as one hand-assembly scaffold",
                 g_confidence="zone", source="tools/tu/x2_scaffold.py")
         else:
-            g_flag, evidence = g_evidence(gp_count, optimization)
+            g_flag, evidence = g_evidence(gp_count, optimization, start)
             contract = main_contract(optimization, g_flag)
         path = (f"scaffold/src/main/{stem}.s" if hand else f"src/main/{stem}.c")
         rec = dict(

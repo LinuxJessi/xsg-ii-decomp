@@ -90,8 +90,6 @@ int padDebugPrintDirection(int sector_count)
 }
 
 /* Debug move-square check: same strings and corner offsets as X1 Check_MoveSquare. */
-extern const char moveSquarePlaceholderText[];
-extern const char moveSquareForecastText[];
 /* Sweeps from start toward end through the Undu query block; returns 1 when the sweep end is within 0.01 of end. */
 int unduCheckSweep(int slotIndex, const Vector4 *from, const Vector4 *to, int map_block, int bits, Vector4 *hit, int attr_mask);
 int uwamonoCrossPoint(const Vector4 *origin, const Vector4 *target, float radius, Vector4 *out);
@@ -182,20 +180,20 @@ int unduCheckMoveSquare(const Vector4 *first, const Vector4 *second,
     third_intersection = third_crossing;
     fourth_intersection = fourth_crossing;
 
-    xglFontDebugPrintf(8, 100, moveSquarePlaceholderText);
+    xglFontDebugPrintf(8, 100, "\xa1\xdf\xa1\xdf");
     if (Check_CrossingOver(second, &first_intersection, first,
                            &fourth_intersection) == 1) {
         *destination = first_intersection;
         destination->z = second->z;
         crossed = 1;
-        xglFontDebugPrintf(24, 100, moveSquareForecastText);
+        xglFontDebugPrintf(24, 100, "\xcd\xbd\xc1\xdb");
     }
     if (Check_CrossingOver(second, &second_intersection, first,
                            &third_intersection) == 1) {
         *destination = second_intersection;
         destination->x = second->x;
         crossed = 1;
-        xglFontDebugPrintf(24, 100, moveSquareForecastText);
+        xglFontDebugPrintf(24, 100, "\xcd\xbd\xc1\xdb");
     }
 
     dbg.debug_color[0] = 255;
@@ -346,7 +344,44 @@ void Get_MiddlePoint_Parabora(const ParabolaVec *first, const ParabolaVec *secon
     }
 }
 
-extern UnduParam unduTest;
+/* File-local UnduParam of the full item size: the 44-byte header type plus the tail the code never reads. */
+typedef struct UnduParamItem64 {
+    int query_flags;
+    unsigned char unmodeled_04[0x4];
+    short attr_mask;
+    unsigned char unmodeled_0A[5];
+    unsigned char probeEnabled;
+    unsigned char unmodeled_10[8];
+    union {
+        int header;
+        struct LayoutHeader *layout;
+    };
+    unsigned char unmodeled_1C[0x4];
+    int attribute;
+    unsigned char unmodeled_24[0x4];
+    float scale;
+    unsigned char unmodeled_2C[20];
+} UnduParamItem64;
+
+typedef struct UnduParamItem72 {
+    int query_flags;
+    unsigned char unmodeled_04[0x4];
+    short attr_mask;
+    unsigned char unmodeled_0A[5];
+    unsigned char probeEnabled;
+    unsigned char unmodeled_10[8];
+    union {
+        int header;
+        struct LayoutHeader *layout;
+    };
+    unsigned char unmodeled_1C[0x4];
+    int attribute;
+    unsigned char unmodeled_24[0x4];
+    float scale;
+    unsigned char unmodeled_2C[28];
+} UnduParamItem72;
+
+extern UnduParamItem72 unduTest;
 extern u64 eneTerritoryID[];
 int HitCheckMapUnitPosSize(const Vector4 *position, float radius);
 
@@ -438,7 +473,7 @@ short unduCheckStraight(const Vector4 *first, const Vector4 *second, short steps
     return steps;
 }
 
-extern UnduParam D_003E7BB8;
+extern UnduParamItem64 D_003E7BB8;
 void mapProbeInit(UnduParam *request);
 int mapFindBlockEntry(int block, int unused);
 float mapMoveProbe(const Vector4 *from, const Vector4 *delta, UnduParam *request);
@@ -508,6 +543,8 @@ float Get_Angle(const Vector4 *first, const Vector4 *second)
     return atan2f(second->x - first->x, second->z - first->z);
 }
 
+const char padDebugDirectionFormat[16] = "%2d(%3d)";
+
 /* Three Get_Decimal_Surplus_for_Radius normalisations and the range test of X1 Check_Angle, after a span shortcut. */
 int unduCheckAngle(float angle, float from, float to)
 {
@@ -546,10 +583,6 @@ float Get_Angle_Relative(const Vector4 *first, const Vector4 *second,
         relative -= GET_TWO_PI;
     return relative;
 }
-
-extern float fanMinDistance;
-extern float fanHeightTolerance;
-extern float fanMaxHeightDelta;
 
 /* True when the origin sees the midpoint of each edge of the quad (corner0..corner3) without that
    ray crossing another edge: the four midpoints are tested against the three other edges. */
@@ -624,10 +657,10 @@ int unduCheckInsideFan(int slotIndex, const Vector4 *origin, float centerAngle,
     inside = unduCheckSweep(slotIndex, origin, target, mask, -1, &hit, 0);
     if (inside == 0)
         return inside;
-    if (fanMinDistance <= Get_Distance(target, &hit)
-        || fanHeightTolerance <= __builtin_fabsf(target->y - hit.y))
+    if (0.01f <= Get_Distance(target, &hit)
+        || 0.1f <= __builtin_fabsf(target->y - hit.y))
         return 0;
-    if (fanMaxHeightDelta < __builtin_fabsf(origin->y - target->y))
+    if (3.2f < __builtin_fabsf(origin->y - target->y))
         return 0;
     return 1;
 }
@@ -776,8 +809,6 @@ int unduGetMapAttr(const Vector4 *position, int map_key, int attr_mask)
     return unduTest.attribute;
 }
 
-extern float unduDistanceTolerance;
-
 /* Sweeps from start toward end through the Undu query block; returns 1 when the sweep end is within 0.01 of end. */
 int unduCheckSweep(int slotIndex, const Vector4 *from, const Vector4 *to, int map_block, int bits, Vector4 *hit, int attr_mask)
 {
@@ -809,7 +840,7 @@ int unduCheckSweep(int slotIndex, const Vector4 *from, const Vector4 *to, int ma
     *hit = *from;
     mapMoveProbe(hit, 0, &unduTest);
     mapMoveProbe(hit, &delta, &unduTest);
-    return Get_Distance3D(to, hit) < unduDistanceTolerance;
+    return Get_Distance3D(to, hit) < 0.01f;
 }
 
 int Get_Rnd(int min, int max)
@@ -927,3 +958,10 @@ void bsplineGetLoopDummy(short frame, short count, short period, Vector4 *points
     }
     destination->w = 1.0f;
 }
+
+u64 eneTerritoryID[20] = { 0ULL, 134217728ULL, 150994944ULL, 167772160ULL, 184549376ULL, 201326592ULL, 218103808ULL,
+                           234881024ULL, 251658240ULL, 0ULL, 0ULL, 402653184ULL, 419430400ULL, 436207616ULL,
+                           452984832ULL, 469762048ULL, 486539264ULL, 503316480ULL, 520093696ULL, 0ULL };
+unsigned short *DataSpline = 0;
+UnduParamItem64 D_003E7BB8 = { 0 };
+UnduParamItem72 unduTest = { 0 };

@@ -125,9 +125,9 @@ typedef struct TextBox {
 
 extern int cursorBufferCount;
 extern int cursorBufferIndex;
-extern CursorBufferRecord cursorBufferPool[];
+static CursorBufferRecord cursorBufferPool[CURSOR_BUFFER_POOL_SIZE];
 extern CursorBufferFlags cursorBufferFlags[];
-extern TextBox textBoxPool[];
+static TextBox textBoxPool[TEXT_BOX_COUNT];
 /* Two-word callee: textBoxPush calls it with one argument and leaves the second word as is; textBoxSetTopText returns its result. */
 void *fontObjSetText();
 void fontObjSubAdvanceTracks(void *);
@@ -230,7 +230,7 @@ void textBoxPop(TextBoxStack *stack) {
     }
 }
 
-extern char D_00689FE8[];
+extern const char D_00689FE8[];
 void xglFontPrint(int x, int y, unsigned int color, const char *text);
 
 /*
@@ -731,3 +731,77 @@ void cursorBufferDeactivateCurrent(void)
         cursorBufferDeactivate((CursorBuffer *) &cursorBufferPool[cursorBufferIndex]);
     }
 }
+
+const char D_00689FE8[24] = "$mark1f;";
+
+const char D_0068A000[40] = "yosikawa\134skillmdl\134skilplate05.txy";
+
+const char D_0068A028[40] = "yosikawa\134skillmdl\134skilplate05.pxy";
+
+const char D_0068A050[40] = "yosikawa\134skillmdl\134skilplate04.txy";
+
+const char D_0068A078[40] = "yosikawa\134skillmdl\134skilplate04.pxy";
+
+const char D_0068A0A0[40] = "yosikawa\134skillmdl\134skilplate03.txy";
+
+const char D_0068A0C8[40] = "yosikawa\134skillmdl\134skilplate03.pxy";
+
+const char D_0068A0F0[40] = "yosikawa\134skillmdl\134skilplate02.txy";
+
+const char D_0068A118[40] = "yosikawa\134skillmdl\134skilplate02.pxy";
+
+const char D_0068A140[40] = "yosikawa\134skillmdl\134skilball04.txy";
+
+const char D_0068A168[40] = "yosikawa\134skillmdl\134skilball04.pxy";
+
+const char D_0068A190[40] = "yosikawa\134skillmdl\134skilball03.txy";
+
+const char D_0068A1B8[40] = "yosikawa\134skillmdl\134skilball03.pxy";
+
+const char D_0068A1E0[40] = "yosikawa\134skillmdl\134skilball02.txy";
+
+const char D_0068A208[40] = "yosikawa\134skillmdl\134skilball02.pxy";
+
+const char D_0068A230[40] = "yosikawa\134skillmdl\134skilball01.txy";
+
+const char D_0068A258[40] = "yosikawa\134skillmdl\134skilball01.pxy";
+
+const char D_0068A280[40] = "yosikawa\134skillmdl\134skilplate01.txy";
+
+const char D_0068A2A8[40] = "yosikawa\134skillmdl\134skilplate01.pxy";
+
+const char D_0068A2D0[24] = "yosikawa\134model\134rsv.txy";
+
+const char D_0068A2E8[24] = "yosikawa\134model\134rsv.pxy";
+
+const char D_0068A300[24] = "yosikawa\134model\134atk.txy";
+
+const char D_0068A318[24] = "yosikawa\134model\134atk.pxy";
+
+const char D_0068A330[24] = "yosikawa\134umn8.jpg";
+
+const char D_0068A348[24] = "yosikawa\134umn7.jpg";
+
+const char D_0068A360[24] = "yosikawa\134umn6.jpg";
+
+const char D_0068A378[24] = "yosikawa\134umn5.jpg";
+
+const char D_0068A390[24] = "yosikawa\134umn4.jpg";
+
+const char D_0068A3A8[24] = "yosikawa\134umn3.jpg";
+
+const char D_0068A3C0[24] = "yosikawa\134umn2.jpg";
+
+const char D_0068A3D8[24] = "yosikawa\134umn1.jpg";
+
+int cursorBufferCount = 0;
+
+int cursorBufferIndex = 0;
+
+int D_0069D4B8 = 0;
+
+int textBoxPending = -1;
+
+int textHighlightAlpha = 0x50;
+
+int textHighlightAlphaStep = -2;

@@ -3,9 +3,9 @@
 
 int printf(const char *format, ...);
 /* Exit path shared by the assertion and error reporters: prints "> Exit Program", then traps (break). */ void assertExit(void);
-extern char assertBannerTop[];
-extern char assertFormat[];
-extern char assertBannerBottom[];
+extern const char assertBannerTop[];
+extern const char assertFormat[];
+extern const char assertBannerBottom[];
 
 /* Assertion failure report: prints the banner, "ASSERTION <file, line> :: message", then exits. */
 void assertFailed(const char *message, const char *file, int line) {
@@ -17,7 +17,7 @@ void assertFailed(const char *message, const char *file, int line) {
 
 #include "debug_break.h"
 
-extern char exitProgramBanner[];
+extern const char exitProgramBanner[];
 
 /* Exit path shared by the assertion and error reporters: prints "> Exit Program", then traps (break). */
 void assertExit(void) {
@@ -29,7 +29,7 @@ typedef char *va_list;
 
 #define va_start(ap, last) ((ap) = (va_list)__builtin_next_arg(last) - (8 - __builtin_args_info(2)) * 8)
 
-extern char errorBanner[];
+extern const char errorBanner[];
 int func_002AF028();
 
 /* Fatal error with a printf-style message: prints "> Error!!", the formatted message, then exits. */
@@ -42,3 +42,13 @@ void errorFatal(const char *format, ...) {
     printf(format);
     assertExit();
 }
+
+const char assertBannerTop[64] = "_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n\n";
+
+const char assertFormat[32] = "ASSERTION <%s, %d> :: %s\n\n";
+
+const char assertBannerBottom[64] = "_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n";
+
+const char exitProgramBanner[64] = "> Exit Program ==========================================\n";
+
+const char errorBanner[16] = "> Error!!\n";

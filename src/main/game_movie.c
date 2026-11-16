@@ -149,6 +149,14 @@ char *caption_getparam(char *cursor, int *time, char *out)
     return caption_nextline(cursor);
 }
 
+/* Small data of the caption player: the file name suffix, the movie directory and the two string pointers
+ * GameMovieCaptionPlay builds the paths from. */
+char D_0069CFF8[8] = ".sfd";
+char *D_0069D000 = D_0069CFF8;
+char D_0069D008[8] = "movie/";
+char *D_0069D010 = D_0069D008;
+const char D_0069D018[8] = "\013\r\003\031\003";
+
 extern const char movieCaptionControl[];
 
 /* Lays the caption script out in place: the first line is kept as the header text when its time is 0
@@ -551,3 +559,7 @@ void GameMovieCaptionPlay(const char *name)
     GameResArenaRelease();
     fadeClear();
 }
+
+const char movieCaptionControl[48] = "$bg3;$prop1;$han1;$xx0,24;$xx1,8;$xx2,0;";
+const char D_00688420[16] = "$ay%d;$xx0,22;";
+const char D_00688430[88] = "\013\025\002\001\020\r\003\031\001A seek error has occured.\n\n\n\014\200  \241\373\014\200\200\200button: Replay\n\n\014 \200 \242\244\014\200\200\200button: Skip";

@@ -164,7 +164,11 @@ int runtimeVibration(int call)
     return 1;
 }
 
-extern unsigned char runtimeNativeTable[];
+struct RuntimeNative {
+    const char *name;
+    void *native;
+};
+extern struct RuntimeNative runtimeNativeTable[];
 extern unsigned char runtimeModuleName[];
 int func_A9CDB0(void *module, void *nativeTable);
 
@@ -237,7 +241,7 @@ int enepcSetParams(int call)
             }
             state->pointCount = state->pointCount * 2 - 2;
             /* The original tests mode against 9 a second time here (lbu 0x5F reloaded,
-               bne at 0x001F51A8). */
+               bne at enepcSetParams +0x280). */
             if (state->mode == 9) {
                 state->mode = 8;
             }
@@ -576,3 +580,86 @@ int enepcMotion(int call)
     }
     return 1;
 }
+
+unsigned char runtimeModuleName[8] = "runtime";
+
+/* script native table: (name string pointer, function) pairs; the name pointers are .rodata of other TUs. */
+void adx(void);
+void adxLoad(void);
+void adxPlay(void);
+void bgmFade(void);
+void bgmSe(void);
+void bgmSePos(void);
+void bgmSetTrack(void);
+void changeRobo(void);
+void mpeg2(void);
+void nextBgm(void);
+void runtimeFade(void);
+void runtimeGetFlag(void);
+void runtimeJumpCf(void);
+void runtimeMapChange(void);
+void runtimeMessage(void);
+void runtimeProgEffect(void);
+void runtimeSetElevator(void);
+void runtimeSetFlag(void);
+void runtimeSetItai(void);
+void runtimeSetLastDan(void);
+void runtimeSetLocater(void);
+void runtimeSetMapFog(void);
+void runtimeSetMapLight(void);
+void runtimeSetNumber(void);
+void runtimeSetPlayer(void);
+void runtimeSystem(void);
+void runtime_001F2DF8(void);
+void runtime_001F32E0(void);
+void runtime_001F3420(void);
+void sePos(void);
+void seSetVolumePan(void);
+void seVol(void);
+void setMapColor(void);
+extern const char D_00689860[];
+extern const char D_00689850[];
+extern const char D_00689840[];
+extern const char D_00689830[];
+extern const char D_00689820[];
+extern char D_0069D2C0[];
+extern const char D_00689810[];
+extern const char D_00689800[];
+extern const char D_006897F0[];
+extern const char D_006897E0[];
+extern char D_0069D2B8[];
+extern char D_0069D2B0[];
+extern const char D_006897D0[];
+extern char D_0069D2A8[];
+extern char D_0069D2A0[];
+extern char D_0069D298[];
+extern char D_0069D290[];
+extern char D_0069D288[];
+extern const char D_006897C0[];
+extern char D_0069D280[];
+extern char D_0069D278[];
+extern char D_0069D270[];
+extern char D_0069D268[];
+extern char D_0069D260[];
+extern char D_0069D258[];
+extern char D_0069D250[];
+extern char D_0069D248[];
+extern char D_0069D240[];
+extern const char D_006897B0[];
+extern char D_0069D238[];
+extern char D_0069D230[];
+extern char D_0069D228[];
+extern const char D_006897A0[];
+extern const char D_00689790[];
+struct RuntimeNative runtimeNativeTable[35] = {
+    { D_00689860, (void *) runtimeSetNumber }, { D_00689850, (void *) runtimeSetLocater }, { D_00689840, (void *) runtimeSetElevator }, { D_00689830, (void *) runtimeSetLastDan },
+    { D_00689820, (void *) runtimeSetPlayer }, { D_0069D2C0, (void *) runtime_001F2DF8 }, { D_00689810, (void *) runtime_001F32E0 }, { D_00689800, (void *) runtime_001F3420 },
+    { D_006897F0, (void *) runtimeProgEffect }, { D_006897E0, (void *) changeRobo }, { D_0069D2B8, (void *) runtimeMessage }, { D_0069D2B0, (void *) runtimeJumpCf },
+    { D_006897D0, (void *) runtimeMapChange }, { D_0069D2A8, (void *) runtimeFade }, { D_0069D2A0, (void *) runtimeSetFlag }, { D_0069D298, (void *) runtimeGetFlag },
+    { D_0069D290, (void *) runtimeSetMapFog }, { D_0069D288, (void *) runtimeSetItai }, { D_006897C0, (void *) runtimeSetMapLight }, { D_0069D280, (void *) runtimeSystem },
+    { D_0069D278, (void *) mpeg2 }, { D_0069D270, (void *) adx }, { D_0069D268, (void *) adxLoad }, { D_0069D260, (void *) adxPlay },
+    { D_0069D258, (void *) seSetVolumePan }, { D_0069D250, (void *) sePos }, { D_0069D248, (void *) seVol }, { D_0069D240, (void *) bgmSe },
+    { D_006897B0, (void *) bgmSePos }, { D_0069D238, (void *) bgmFade }, { D_0069D230, (void *) nextBgm }, { D_0069D228, (void *) bgmSetTrack },
+    { D_006897A0, (void *) runtimeVibration }, { D_00689790, (void *) setMapColor },
+    { 0, 0 }
+};

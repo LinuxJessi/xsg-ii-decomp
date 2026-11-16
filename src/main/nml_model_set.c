@@ -241,7 +241,7 @@ typedef struct PxyState {
     u8 unkAA0[0x49C0 - 0xAA0];
     PxySlot slots[PXY_SLOT_COUNT]; /* +0x49c0 */
     u8 unk4A00[0x10880 - 0x4A00];
-    int headerList[64]; /* +0x10880: headers of the flags-0x10 search, count at +0x5c0; length not recovered */
+    int headerList[256]; /* +0x10880: headers of the flags-0x10 search, count at +0x5c0; bound from the object extent up to pxyDrawEntryTable at 0x97A980 */
 } PxyState;
 
 typedef struct PxyBatch {
@@ -268,6 +268,17 @@ typedef struct PxyDrawEntry {
     PxyPart *part;
     PxyPacket *packet;
 } PxyDrawEntry;
+
+/* One 16-byte record of the pxy entry table pxyEntryQueue. */
+typedef struct PxyEntry {
+    PxyPacket *packet; /* +0x00 */
+    unsigned short value; /* +0x04: low half of the second argument */
+    unsigned char group; /* +0x06: bit index into pxyEntryGroupMask */
+    unsigned char flag; /* +0x07 */
+    int state; /* +0x08 */
+    unsigned char row; /* +0x0C: key / 12 */
+    unsigned char unmodeled_0d[3];
+} PxyEntry;
 
 /* Draw state kept in the EE scratchpad while the batches are drawn. */
 typedef struct PxyDrawWork {
@@ -475,9 +486,9 @@ typedef union NmlPartsReferenceScratch {
 
 /*
  * The "proreal" parameter block: the 0x1e0 bytes nmlModelSetProreal builds in
- * s_inProReal (main 0x0095b940) and nmlModelEntry copies into the packet with
+ * s_inProReal (D_0095A890 +0x10B0) and nmlModelEntry copies into the packet with
  * nmlPacketSetAttributeData16N(s_inProReal, 0x1e), storing the packet address
- * it returns in the layout's proreal (main 0x00233028-0x00233030).
+ * it returns in the layout's proreal (ysegfDrawItemNameFrame +0xE8 to +0xF0).
  */
 typedef struct NmlProRealParam {
     unsigned char unmodeled_000[0x40];
@@ -486,10 +497,10 @@ typedef struct NmlProRealParam {
     u32 block_material_data[16];
     unsigned char unmodeled_100[0x1c];
     /*
-     * +0x11c: nmlModelSetProreal clears it (main 0x0022f9dc) and the two
+     * +0x11c: nmlModelSetProreal clears it (yg2PathDrawMainMenu +0x1F4) and the two
      * projection entries set it to 1 immediately after calling that function,
-     * nmlModelCalcEntryProjectCircle (main 0x002320ec) and
-     * nmlModelCalcEntryProjectMap (main 0x00232680), so it marks a block built
+     * nmlModelCalcEntryProjectCircle (ysegfAllocFileBuffer +0x3C) and
+     * nmlModelCalcEntryProjectMap (ysegfDrawWindow +0xC0), so it marks a block built
      * for a projected entry.  add_exec_prog reads it to take the projected
      * slot of the "Pro" microcode family instead of the plain one.
      */
@@ -519,8 +530,7 @@ typedef struct NmlProRealParam {
 struct NmlStealthGeometry;
 
 /*
- * The model layout the engine renders from: the single s_inLayout (main
- * 0x004a91e0, 0x320 bytes) that the nmlModelSet* API fills, plus the
+ * The model layout the engine renders from: the single s_inLayout (sefDefaultMemoryBlock +0x15660, 0x320 bytes) that the nmlModelSet* API fills, plus the
  * per-entry copies nmlModelEntry stores in s_apModelLayout.  The packet
  * builders and the filter renderers read the same record.
  */
@@ -564,21 +574,20 @@ union LayoutStore {
         u64 alpha;                          /* +0x248 */
         /*
          * +0x250: the render-status word.  nmlModelSetRenderStatus is the
-         * setter that names it, and it ORs the value it is given (main
-         * 0x0022fab0 sets 0x100, 0x0022fad0 sets 0x200); the rest of the
+         * setter that names it, and it ORs the value it is given (yg2PathDrawMainMenu +0x2C8 sets 0x100, yg2PathDrawMainMenu +0x2E8 sets 0x200); the rest of the
          * nmlModelSet* API ORs one request bit each into the same word -
-         * nmlModelSetPlace 0x1 (main 0x0022ff24), nmlModelSetFogCol 0x2
-         * (0x00230030), nmlModelSetStencil 0x4 (0x0022fd28), nmlModelSetZwrite
-         * 0x8 (0x0022fd48), nmlModelSetLight 0x10 (0x0022fe50),
-         * nmlModelSetToumei 0x20 (0x0022fdf0), nmlModelSetHumanModel 0x40
-         * (0x0022e760), nmlModelSetTexProreal 0x800 (0x0022fa5c),
-         * nmlModelSetPointLight 0x1000 (0x0022f55c), nmlModelSetFogCancel
-         * 0x2000 (0x0023034c), nmlModelSetTexMap 0x4000 (0x0022f670) and
-         * nmlModelSetFaceModel 0x100000 (0x0022e73c).  The three render
+         * nmlModelSetPlace 0x1 (yg2PathDrawNewMarker +0x8C), nmlModelSetFogCol 0x2
+         * (yg2PathDrawMessagePage +0x88), nmlModelSetStencil 0x4 (yg2PathDrawPathGrid +0x160), nmlModelSetZwrite
+         * 0x8 (yg2PathDrawPathGrid +0x180), nmlModelSetLight 0x10 (yg2PathDrawPathGrid +0x288),
+         * nmlModelSetToumei 0x20 (yg2PathDrawPathGrid +0x228), nmlModelSetHumanModel 0x40
+         * (renderSpriteClutAlpha +0x50), nmlModelSetTexProreal 0x800 (yg2PathDrawMainMenu +0x274),
+         * nmlModelSetPointLight 0x1000 (yg2PathDrawFramedImage +0x44), nmlModelSetFogCancel
+         * 0x2000 (yg2PathDrawMessagePage +0x3A4), nmlModelSetTexMap 0x4000 (yg2PathDrawCellFrame +0xA8) and
+         * nmlModelSetFaceModel 0x100000 (renderSpriteClutAlpha +0x2C).  The three render
          * entries set the bit that picks their microcode family just before
          * calling nmlPacketAddTransMicrocode: nmlModelRenderProreal 0x800
-         * (main 0x002346c4), nmlModelRenderTexture 0x8000 (0x00234938) and
-         * nmlModelRenderDrop 0x80000 (0x00234d58).
+         * (battleResultDrawEntries +0x1C4), nmlModelRenderTexture 0x8000 (battleResultDrawScreen +0x70) and
+         * nmlModelRenderDrop 0x80000 (battleResultBuildEntries +0x130).
          */
         u32 render_status;
         NmlModel *model; /* +0x254; also how a child entry finds its parent layout */
@@ -586,14 +595,13 @@ union LayoutStore {
         unsigned char unmodeled_25c[4];
         /*
          * +0x260: this layout's own proreal block, the packet address
-         * nmlModelEntry stores after copying s_inProReal (main 0x00233030).
+         * nmlModelEntry stores after copying s_inProReal (ysegfDrawItemNameFrame +0xF0).
          */
         NmlProRealParam *proreal;
         /*
          * +0x264: another layout's proreal block, borrowed for the length of
          * one render.  nmlModelRenderProreal stores the entry's own +0x260
-         * here (main 0x002346dc) and clears it again afterwards (main
-         * 0x0023473c); nmlModelEntry clears it as well (main 0x00233034).
+         * here (battleResultDrawEntries +0x1DC) and clears it again afterwards (battleResultDrawEntries +0x23C); nmlModelEntry clears it as well (ysegfDrawItemNameFrame +0xF4).
          * add_exec_prog reads it in preference to proreal whenever it is set.
          */
         NmlProRealParam *prorealOverride;
@@ -608,9 +616,9 @@ union LayoutStore {
         float shadowHeight; /* +0x2ac */
         /*
          * +0x2b0: the render-level word nmlModelSetRenderLevel ORs its whole
-         * argument into (main 0x0022e97c).  nmlModelSetSpecularOff sets bit 1
-         * (main 0x0022f588), and nmlModelCalcSpecularClip sets and clears that
-         * same bit (main 0x00231ae0, 0x00231bf4) and sets bit 4 (0x00231bd4).
+         * argument into (citizenFlagSet +0x4).  nmlModelSetSpecularOff sets bit 1
+         * (yg2PathDrawFramedImage +0x70), and nmlModelCalcSpecularClip sets and clears that
+         * same bit (yg2PathEaseCursor +0xC0, yg2PathRun +0x9C) and sets bit 4 (yg2PathRun +0x7C).
          */
         unsigned int renderLevel;
         int partPixelAlphaCount; /* +0x2b4 */
@@ -695,12 +703,20 @@ typedef struct PxyStateRecords {
     PxyBatchTableTail records[1];
 } PxyStateRecords;
 
-extern PxyState pxyState;
+static PxyState pxyState;
 
 #define PXY_BATCH_TABLE_TAIL(i) \
     (((PxyStateRecords *) &pxyState)->records[(i) * 513 + 0x29A])
 
 extern PxyBatchTable pxyBatchTables[2];
+extern unsigned char D_0096E6C0[64];
+extern PxyEntry pxyEntryQueue[400];
+extern unsigned char D_00970000[43392];
+static PxyDrawEntry pxyDrawEntryTable[6656];
+static unsigned char D_00987980[48];
+static unsigned char pxyCircleShadowTexture[4128];
+static unsigned int D_009889D0[8];
+static int pxyFadeRamp[1024];
 extern int pxyOverlayBatchCount;
 extern int pxyShadowBatchCount;
 extern int pxySeparateBatchCount;
@@ -813,7 +829,6 @@ extern int D_0096A1D0;
 extern float D_0096A2B8;
 extern int D_0096A2D8;
 extern f32 D_0096A318;
-extern unsigned char D_00987980[];
 
 void pxyResetGlobals(void) {
     xglMatrixUnit(&nmlModelDrawMatrix);
@@ -966,7 +981,6 @@ void pxyInitTables(void)
     pxyClearEntryTable();
 }
 
-extern int pxyFadeRamp[];
 extern int D_00645F10[];
 
 void pxyBuildFadeRamp(float spread) {
@@ -995,8 +1009,6 @@ float sqrtf(float);
  * every access is $gp-relative. */
 int D_0069E0C0 = 0;
 int pxyShadowTexturesReady = 0;
-extern unsigned char pxyCircleShadowTexture[];
-extern unsigned int D_009889D0[];
 
 void pxyInitShadowTextures(void)
 {
@@ -1114,15 +1126,16 @@ void xglMatrixStackRotY(float);
 void xglMatrixStackSave(void *);
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 void xglVectorCopy_001CC998(Vector4 *destination, const Vector4 *source);
-extern const u64 D_0068F010;
 extern const u64 D_0068F018;
+
+const u64 D_0068F010[2] = { 0, 0x3f8000003f800000ULL };
 
 void xglDirectionFromAngles(Vector4 *direction, const Vector4 *rotation) {
     Matrix4 matrix;
     DoublewordVector4 forward;
     AlignedVector4 spare;
 
-    forward.words[0] = D_0068F010;
+    forward.words[0] = D_0068F010[0];
     forward.words[1] = D_0068F018;
     xglMatrixStackUnit();
     xglMatrixStackRotX(rotation->x);
@@ -2215,8 +2228,6 @@ void pxyEvaluateTracks(PxyHeader *header)
 }
 
 extern float D_0096A1BC;
-extern int D_0096C6A8;
-extern int D_0096E6B8;
 extern PxyBatch *pxyFirstBatch;
 extern PxyBatch *pxyLastBatch;
 
@@ -2234,15 +2245,15 @@ void pxyQueueBatch(PxySlot *slot, PxyPacket *packet)
     if (packet->header->flags & 0x81) {
         pxyState.overlayBatches[pxyOverlayBatchCount++] = batch;
         slot->packet = packet;
-        slot->batch = D_0096C6A8++;
-        slot->translucentBatch = D_0096E6B8++;
+        slot->batch = pxyBatchTables[0].count++;
+        slot->translucentBatch = pxyBatchTables[1].count++;
         return;
     }
     if (batch->flags & 0x100000) {
         pxyState.unk820[pxySeparateBatchCount++] = batch;
         slot->packet = packet;
-        slot->batch = D_0096C6A8++;
-        slot->translucentBatch = D_0096E6B8++;
+        slot->batch = pxyBatchTables[0].count++;
+        slot->translucentBatch = pxyBatchTables[1].count++;
         return;
     }
     if (packet->unk08) {
@@ -2287,8 +2298,8 @@ void pxyQueueBatch(PxySlot *slot, PxyPacket *packet)
         }
     }
     slot->packet = packet;
-    slot->batch = D_0096C6A8++;
-    slot->translucentBatch = D_0096E6B8++;
+    slot->batch = pxyBatchTables[0].count++;
+    slot->translucentBatch = pxyBatchTables[1].count++;
 }
 
 void pxyQueueBatchBasic(PxySlot *slot, PxyPacket *packet) {
@@ -2312,8 +2323,8 @@ void pxyQueueBatchBasic(PxySlot *slot, PxyPacket *packet) {
         pxyLastBatch = batch;
     }
     slot->packet = packet;
-    slot->batch = D_0096C6A8++;
-    slot->translucentBatch = D_0096E6B8++;
+    slot->batch = pxyBatchTables[0].count++;
+    slot->translucentBatch = pxyBatchTables[1].count++;
 }
 
 void _CurSetViewScaleTrans(void *, void *);
@@ -2524,7 +2535,7 @@ typedef struct {
     int e[8][2];
 } PxyShuffleTable;
 
-extern PxyShuffleTable D_0068F050;
+const PxyShuffleTable D_0068F050 = { .e = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 }, { 0, 2 }, { 1, 3 }, { 2, 0 }, { 3, 1 } } };
 
 void pxyDescrambleHeader(PxyHeader *hdr)
 {
@@ -2570,8 +2581,6 @@ void pxyDescrambleHeader(PxyHeader *hdr)
 }
 
 extern float D_0096A094;
-extern PxyBatchTable D_0096C6B0;
-extern PxyDrawEntry pxyDrawEntryTable[];
 void pxyDescrambleHeader(PxyHeader *hdr);
 void pxyEvaluateTracks(PxyHeader *);
 void xglMatrixStackLoad(void *);
@@ -2870,7 +2879,7 @@ int pxySubmitModel(PxyHeader *header)
     translucentEntry = &pxyDrawEntryTable[D_0096A30C];
     table = &pxyBatchTables[0];
     batch = &table->batches[table->count];
-    translucentTable = &D_0096C6B0;
+    translucentTable = &pxyBatchTables[1];
     translucentBatch = &translucentTable->batches[translucentTable->count];
     if (slot == 0) {
         batch->start = D_0096A308;
@@ -3261,7 +3270,7 @@ int pxySubmitModelBasic(PxyHeader *header)
     translucentEntry = &pxyDrawEntryTable[D_0096A30C];
     table = &pxyBatchTables[0];
     batch = &table->batches[table->count];
-    translucentTable = &D_0096C6B0;
+    translucentTable = &pxyBatchTables[1];
     translucentBatch = &translucentTable->batches[translucentTable->count];
     batch->start = D_0096A308;
     batch->count = 0;
@@ -3363,18 +3372,7 @@ int pxySubmitModelBasic(PxyHeader *header)
     return 0;
 }
 
-/* One 16-byte record of the pxy entry table pxyEntryQueue. */
-typedef struct PxyEntry {
-    PxyPacket *packet; /* +0x00 */
-    unsigned short value; /* +0x04: low half of the second argument */
-    unsigned char group; /* +0x06: bit index into pxyEntryGroupMask */
-    unsigned char flag; /* +0x07 */
-    int state; /* +0x08 */
-    unsigned char row; /* +0x0C: key / 12 */
-    unsigned char unmodeled_0d[3];
-} PxyEntry;
 
-extern PxyEntry pxyEntryQueue[];
 void xglPacketAddRefOffset(void *packet, int value, int state);
 
 void pxyPlayEntryGroup(int group) {
@@ -4995,7 +4993,7 @@ void pxyUpdateReflectionRotation(int);
 void xglPacketSelectDefaultMode(void);
 void pxyResetGsState(void);
 void func_001D4498(int);
-extern unsigned char D_0068F0B8[];
+const unsigned char D_0068F0B8[24] = "pxyFlush";
 extern int D_0096A2F8;
 extern f32 D_0096A2FC;
 extern f32 D_0096A300;
@@ -5117,8 +5115,8 @@ void pxyPlayEntryGroup5(int unused)
 void func_001B9B44(void);
 void pxyInitTables(void);
 void pxyInitShadowTextures(void);
-extern void (*D_00645874)(void);
-extern void (*D_00645878)(void);
+extern void (*D_00645874[])(void);
+extern void (*D_00645878[])(void);
 void pxyAddFrameCopyPacket(XglPacket *packet);
 void pxyPlayEntryGroup5(int unused);
 
@@ -5132,8 +5130,8 @@ void pxyInit(void)
     pxyResetBatchTables();
     pxyInitShadowTextures();
     D_0096A2F4 = 0;
-    D_00645878 = &pxyAddFrameCopyPacket;
-    D_00645874 = &pxyPlayEntryGroup5;
+    D_00645878[0] = &pxyAddFrameCopyPacket;
+    D_00645874[0] = &pxyPlayEntryGroup5;
 }
 
 #include "quadword.h"
@@ -5164,3 +5162,39 @@ void xglVectorSubXYZ_001CCA68(register AlignedVector4 *dst, register AlignedVect
 {
     Vu0SubVectorXYZ(dst, minuend, subtrahend);
 }
+
+void (*D_00645874[])(void) = { 0 };
+void (*D_00645878[])(void) = { 0 };
+void (*D_0064587C[])(void) = { 0 };
+int gifStateEffectHook[] = { 0 };
+void (*pauseDrawHook[])(void) = { 0 };
+int xglRenderGlobalFadeCallback[] = { 0 };
+int xglRenderStatus[] = { 0 };
+int xglRenderFrameDelta[] = { 0 };
+int xglRenderFrameCount[] = { 0 };
+int D_00645898[] = { 0 };
+int D_0064589C[] = { 0 };
+int D_006458A0[] = { 0 };
+unsigned char D_006458A4[252] = {
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x01, 0x06, 0x02, 0x07, 0x04,
+    0x07, 0x05, 0x06, 0x05, 0x02, 0x04, 0x01, 0x02, 0x01, 0x01, 0x02, 0xfe,
+    0xfe, 0x05, 0x02, 0x01, 0x06, 0x05, 0x02, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x07, 0x02, 0x02, 0x03, 0x01, 0x03, 0x07, 0x03, 0x01, 0xff, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x02, 0x01, 0x04, 0x01, 0x05,
+    0x02, 0x05, 0x03, 0x01, 0x07, 0x05, 0x07, 0x01, 0x07, 0xff, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x02, 0x01, 0x04, 0x01, 0x05,
+    0x02, 0x05, 0x03, 0x04, 0x04, 0x02, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05,
+    0x06, 0x04, 0x07, 0x02, 0x07, 0x01, 0x06, 0x02, 0x07, 0xff, 0x00, 0x00,
+    0x07, 0x04, 0x07, 0x04, 0x01, 0x01, 0x06, 0x05, 0x06, 0x01, 0x06, 0xff,
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x05, 0x01, 0x01, 0x01, 0x01, 0x04, 0x04,
+    0x04, 0x05, 0x05, 0x05, 0x06, 0x04, 0x07, 0x02, 0x07, 0x01, 0x06, 0x02,
+    0x07, 0xff, 0x00, 0x00, 0x07, 0x05, 0x02, 0x04, 0x01, 0x02, 0x01, 0x01,
+    0x02, 0x01, 0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x05, 0x04,
+    0x04, 0x01, 0x04, 0xff, 0x07, 0x01, 0x01, 0x05, 0x01, 0x02, 0x07, 0x05,
+    0x01, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x02, 0x01, 0x04,
+    0x01, 0x05, 0x02, 0x05, 0x03, 0x04, 0x04, 0x02, 0x04, 0x01, 0x05, 0x01,
+    0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x05, 0x04, 0x04, 0x02,
+    0x04, 0x01, 0x03, 0x02, 0x03, 0x02, 0x01, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x07, 0x01, 0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x02, 0x04,
+    0x01, 0x02, 0x01, 0x01, 0x02, 0x01, 0x03, 0x02, 0x04, 0x05, 0x04, 0xff,
+};

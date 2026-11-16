@@ -40,12 +40,12 @@ void xglCameraMove(XglCamera *camera);
 /*
  * XglCamera (include/shared.h; config/header-canon.json,
  * decisions.XglCamera) is the active-flag/state/camera-slot layout this
- * TU evidences. xglStudioSelectGetActiveCamera (main:0x0022c618,
+ * TU evidences. xglStudioSelectGetActiveCamera (saveWriteImage +0x970,
  * `lw $3,0($4)` feeding the `bne $3,$0` "camera in use" test) reads +0 as a
- * boolean active flag, and xglStudioMainCameraInit (main:0x0022c6f0/
- * 0x0022c6f8, `sw $17,4($2)` / `sw $17,0($2)` with $17=1) stores the same
+ * boolean active flag, and xglStudioMainCameraInit (saveWriteImage +0xA48/
+ * saveWriteImage +0xA50, `sw $17,4($2)` / `sw $17,0($2)` with $17=1) stores the same
  * word 1 to both +4 and +0 on init. The same function's
- * `addiu $4,$4,1520` stride (main:0x0022c620) sizes one camera slot at
+ * `addiu $4,$4,1520` stride (saveWriteImage +0x978) sizes one camera slot at
  * 0x5F0 bytes, not just the 8-byte leading pair. +4 state keeps its name,
  * type and offset, so src/main/game.c's `camera->state == 4` reads the
  * same byte either way.
@@ -76,8 +76,9 @@ void func_001B274C(void) {
     D_0069E078 = 0;
 }
 
-/* The studio records, 0x3180 bytes each. */
-extern unsigned char asStudioSource[];
+/* The studio records, 0x3180 bytes each: four of them, as one byte array because the code adds
+ * studio_index * 0x3180 to the byte pointer. */
+static unsigned char asStudioSource[4 * 0x3180];
 
 /* Makes studio_index the current studio: pCurrentStudio points at its record. */
 void xglStudioChange(int studio_index)

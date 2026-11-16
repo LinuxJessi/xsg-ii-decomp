@@ -194,7 +194,17 @@ typedef struct CdReadControl {
     u8 queue_cursor;                             /* +0x3e */
     u8 queue_tail;                               /* +0x3f */
     CdRequestPartial requests[CD_QUEUE_SIZE];    /* +0x40..0x103f */
+    u8 unmodeled_1040[0x3000];                   /* +0x1040..0x403f: the rest of the work area, up to xglCdStreamService */
 } CdReadControl;
+
+#define CD_STREAM_LIST_SIZE 2
+typedef struct CdStreamService {
+    unsigned short turn_countdown;  /* +0x00 */
+    unsigned short turn_period;     /* +0x02 */
+    unsigned char current;          /* +0x04 */
+    unsigned char unmodeled_05[0xb];
+    CdStreamParam *list[CD_STREAM_LIST_SIZE]; /* +0x10 */
+} CdStreamService;
 
 /* Four 0x18-byte archive slots; the initialization helper models each prefix. */
 typedef union CdArchiveStorage {
@@ -228,18 +238,22 @@ extern const char xenosagaPfs0Path[24];
 extern const char xenosagaArc00Name[16];
 /* Twelve month lengths followed by twelve cumulative month offsets. */
 extern unsigned short monthday[24];
-extern char xglCdModulePathHead[13];
-extern char xglCdHddPathHead[7];
-extern char xenosaga00FileName[12];
-extern char xenosaga10FileName[12];
-extern char xenosaga20FileName[12];
-extern char xglCdHostPathHead[24];
-extern char xglCdModulePathTail[7];
-extern CdCompletionCallback *callback;
-extern CdReadControl LW;
-extern CdArchiveStorage ArcHeader[4];
-extern signed char ReadClockInterval;
-extern unsigned char PresentTime[8];
+extern char xglCdModulePathHead[16];
+extern char xglCdHddPathHead[8];
+extern char xenosaga00FileName[16];
+extern char xenosaga10FileName[16];
+extern char xenosaga20FileName[16];
+extern char xglCdHostPathHead[32];
+extern char xglCdModulePathTail[8];
+static int xglCdDeviceHandle;
+static CdCompletionCallback *callback;
+static int xglCdReadTag;
+static signed char ReadClockInterval;
+static unsigned char PresentTime[8];
+static CdReadControl LW;
+/* The stream service state at 0x959CC0 (its list at +0x10 is the symbol xglCdStreamList). */
+static CdStreamService xglCdStreamService;
+static CdArchiveStorage ArcHeader[4];
 void xglCdDefaultCallback(int event, int value, int tag);
 void StreamReadRingCoreNormal(CdStreamParam *stream);
 void StreamReadRingCoreXss(CdStreamParam *stream);
@@ -257,9 +271,8 @@ void *memset(void *destination, int value, unsigned int size);
 void xglCdReset(void);
 /* The overlay loaded last, and the path pieces around "OVnn": "cdrom0:\\" and ".OVL;1". */
 extern unsigned char loaded_overlay;
-extern const char xglCdOverlayPathHead[];
+extern char xglCdOverlayPathHead[];
 extern const char xglCdOverlayPathTail[8];
-extern int xglCdDeviceHandle;
 /* The alternate CD device the handle selects: stop at once, or after the
  * current transfer (xglCdReadCancel). */
 int func_0017AAF0(int handle);
@@ -413,7 +426,7 @@ void xglCdServiceRead(void)
 }
 
 int func_0017A2E8(unsigned char *table, int mode);
-extern unsigned char xglCdDeviceName[];
+extern const unsigned char xglCdDeviceName[];
 
 /* Clears the busy byte xglCdServiceActive and stores the device handle from the table
  * at xglCdDeviceName in xglCdDeviceHandle. */
@@ -423,25 +436,14 @@ void xglCdOpenDevice(void)
     xglCdDeviceHandle = func_0017A2E8(xglCdDeviceName, 0);
 }
 
-/* The stream service state at 0x959CC0. xglCdControlThread gives each open stream of the list a
- * turn: turn_countdown runs down from turn_period, then `current` moves on to the next open
- * stream. The list at +0x10 is the symbol xglCdStreamList. */
-#define CD_STREAM_LIST_SIZE 2
-
-typedef struct CdStreamService {
-    unsigned short turn_countdown;  /* +0x00 */
-    unsigned short turn_period;     /* +0x02 */
-    unsigned char current;          /* +0x04 */
-    unsigned char unmodeled_05[0xb];
-    CdStreamParam *list[CD_STREAM_LIST_SIZE]; /* +0x10 */
-} CdStreamService;
-
+/* The stream service state at 0x959CC0 is defined with the other statics above. xglCdControlThread
+ * gives each open stream of the list a turn: turn_countdown runs down from turn_period, then `current`
+ * moves on to the next open stream. The list at +0x10 is the symbol xglCdStreamList. */
 #define CD_STREAM_TURN_PERIOD 0x40
 /* sceDevctl commands of the power-off sequence: close all files of a pfs mount, switch dev9 off. */
 #define HDD_DEVCTL_CLOSE_ALL 0x5003
 #define HDD_DEVCTL_DEV9_OFF 0x4402
 
-extern CdStreamService xglCdStreamService;
 extern const char xglCdPfs0Device[];
 extern const char xglCdPfs1Device[];
 extern const char xglCdDev9Device[];
@@ -749,7 +751,6 @@ CdCompletionCallback *xglCdSetCallback(int callback_address)
     return old_callback;
 }
 
-extern int xglCdReadTag;
 
 /* Sets the current read tag xglCdReadTag. */
 void xglCdSetReadTag(int value)
@@ -1734,7 +1735,7 @@ typedef struct CdFileSelect {
 } CdFileSelect;
 
 /* ".filelist", the name list file read from the selected directory. */
-extern const char xglCdFileListName[];
+extern char xglCdFileListName[];
 
 /* Reloads the .filelist name list of the selected directory through
  * xglDebFileRead and turns its lines into NUL-terminated names. */
@@ -2340,3 +2341,60 @@ void xglCdInitial(void)
     xglHddMount();
     xglCdArcInit();
 }
+
+/* .rodata strings of the CD module (typed definitions of the extern declarations above). */
+const unsigned char xglCdDeviceName[16] = "CDV:DVD-ROM";
+const char xenosagaArc10Name[16] = "xenosaga.10";
+const char xenosagaArc20Name[16] = "xenosaga.20";
+const char xglCdSystemCnfName[16] = "system.cnf";
+const char xglCdReplacePathFormat[32] = "**** replace path [%s]->";
+const char fileSelectPathFormat[16] = "PATH:/%s";
+const char xenosagaPfs0Path[24] = "pfs0:/xenosaga.00";
+const char xenosagaArc00Name[16] = "xenosaga.00";
+
+/* .sdata strings of the CD module (typed definitions; fileSelectParentNames is the pointer pair ".", ".."). */
+extern const char D_0069DF48[8];
+extern const char D_0069DF50[8];
+const char xglCdPfs0Device[8] = "pfs0:";
+const char xglCdPfs1Device[8] = "pfs1:";
+const char xglCdDev9Device[8] = "dev9x:";
+const char xglCdReplacedPathFormat[8] = "[%s]\012";
+char xglCdHddPathHead[8] = "pfs0:/";
+const char fileSelectUpArrowText[8] = "^";
+const char fileSelectCursorText[8] = ">";
+const char *fileSelectParentNames[2] = { D_0069DF50, D_0069DF48 };
+const char D_0069DF48[8] = ".";
+const char D_0069DF50[8] = "..";
+const char fileSelectDownArrowText[8] = "v";
+char xglCdModulePathTail[8] = ".IRX;1";
+const char xglCdOverlayPathTail[8] = ".OVL;1";
+
+/* Cumulative month offsets, the second part of monthday (xgl_menu.c owns the first 20 bytes). */
+unsigned short D_0063F694 = 30;
+unsigned short D_0063F696[13] = { 31, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+/* Path and name strings of the xgl_cd .data block (address order). */
+char xenosaga00FileName[16] = "xenosaga.00";
+char xenosaga10FileName[16] = "xenosaga.10";
+char xenosaga20FileName[16] = "xenosaga.20";
+char xglCdHostPathHead[32] = "host0:/home/xeno/vcd-f/x2/";
+char xglCdFileListName[16] = ".filelist";
+char xglCdModulePathHead[16] = "cdrom0:\\IOP\\";
+char xglCdOverlayPathHead[16] = "cdrom0:\\";
+unsigned char system_cnf[26] = { 0 };
+unsigned char D_0063F74A[118] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 47, 66,
+    65, 83, 76, 85, 83, 45, 50, 48,
+    52, 54, 57, 88, 101, 110, 111, 0,
+    0, 0, 0, 0, 0, 0, 47, 66,
+    73, 83, 76, 80, 83, 45, 50, 57,
+    48, 48, 53, 88, 101, 110, 111, 0,
+    0, 0, 0, 0, 0, 0, 47, 66,
+    73, 83, 76, 80, 83, 45, 50, 53,
+    51, 53, 51, 0, 0, 0
+};

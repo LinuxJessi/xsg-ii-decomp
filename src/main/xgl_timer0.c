@@ -73,14 +73,14 @@ typedef struct XglLanguageCodes {
 
 extern const XglLanguageCodes xglLanguageCodeTable;
 /* Unsized: the original addresses it absolutely, not through the gp. */
-extern unsigned char xglLanguageIndex[];
+extern unsigned char D_0063F878[];
 
 /* Copies the nine two-letter language codes in xglLanguageCodeTable to the stack and
  * returns the one selected by xglLanguageIndex; a non-null buffer receives its two bytes. */
 unsigned short xglGetLanguageCode(char *buffer)
 {
     XglLanguageCodes codes = xglLanguageCodeTable;
-    unsigned short code = codes.code[xglLanguageIndex[0]];
+    unsigned short code = codes.code[D_0063F878[2]];
 
     if (buffer != 0) {
         buffer[0] = code;
@@ -178,3 +178,13 @@ int xglArxExtract(u32 *dest, u32 *src)
     }
     return size;
 }
+
+/* Two-letter language codes, one halfword each (first letter in the low byte). */
+const XglLanguageCodes xglLanguageCodeTable = { { 0x6e65, 0x706a, 0x6e65, 0x6564, 0x7266, 0x7469, 0x7365, 0x687a, 0x6f6b } };
+
+/* 24-byte block: the language index (read at +2) that xglGetLanguageCode selects with. */
+unsigned char D_0063F878[24] = { 0 };
+
+unsigned char D_0063F890[24] = { 0 };
+
+unsigned int D_0063F8A8[470] = { 0 };

@@ -9,7 +9,7 @@
 #include "main/pad.h"
 
 char *strcpy(char *destination, const char *source);
-extern unsigned char xglFontTextBuffer[];
+extern unsigned char D_003E7C40[];
 
 /* The CD arena and buffers are handed out in whole 2048-byte CD sectors. */
 #define CD_SECTOR_SIZE 0x800
@@ -30,8 +30,8 @@ enum CdReadKind {
 /* xglFontGetTextWidth(text): copies the text into xglFontTextBuffer and returns the width xglFontGetStringWidth
    measures from two bytes before the buffer. */
 int xglFontGetTextWidth(const char *text) {
-    strcpy(xglFontTextBuffer, text);
-    return xglFontGetStringWidth(xglFontTextBuffer - 2);
+    strcpy(&D_003E7C40[2], text);
+    return xglFontGetStringWidth(D_003E7C40);
 }
 
 extern int xglCdArenaUsed;
@@ -357,3 +357,19 @@ void xglCallbackQueueRun(void) {
     }
     xglCallbackQueueAdd(0);
 }
+
+/* Two-byte prefix D_003E7C40[0..1] followed by the 254-byte text buffer at +2. */
+unsigned char D_003E7C40[256] = { 0x19, 0x03 };
+int xglCallbackQueue[4] = { 0, 0, 0, 0 };
+
+int xglCdArenaSize = 0;
+int xglCdArenaUsed = 0;
+unsigned char xglCdArenaOwned = 0;
+long long xglCdArenaHandle = 0LL;
+int xglCdBufferBase = 0;
+int xglCdBufferCursor = 0;
+int xglTickCounter = 0;
+unsigned char pxyTickScaleDoubleSaved = 0;
+int xglCdPendingReads = 0;
+int xglClockLastDayTime = 0;
+int xglCallbackQueueCount = 0;

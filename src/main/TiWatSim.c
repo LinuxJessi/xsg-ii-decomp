@@ -55,8 +55,8 @@ typedef struct TiWatSimPad {
 
 extern TiWatSimPad PadData;
 /* Cell under the pad cursor: row and column in the item grid. */
-u32 tiWatSimCursorRow;
-u32 tiWatSimCursorCol;
+static u32 tiWatSimCursorRow;
+static u32 tiWatSimCursorCol;
 
 /* Steers the cursor cell with the pad, then lowers its height in buffer A by drop_amount.
  * Pad bits (include/main/pad.h): held PAD_SELECT (0x100) enables the cursor, a fresh press of
@@ -172,9 +172,9 @@ void tiWatSimStepRain(TiWatSimItem *item)
 #include "main/tu026.h"
 #define NULL ((void *) 0)
 
-extern char D_0068D118[];
-extern char D_0068D138[];
-extern char D_0068D120[];
+extern const char D_0068D118[];
+extern const char D_0068D138[];
+extern const char D_0068D120[];
 
 /* Pushes the height buffer down at the grid cell under pPos: the cell loses drop_amount, its four neighbours half of it. */
 void tiWatSimDisturbAt(TiWatSimItem *item, Vector4 *pPos)
@@ -293,3 +293,20 @@ u32 tiWatSimAlloc(u32 *cursor, u32 size)
     *cursor = old + size;
     return old;
 }
+
+const char D_0068D118[8] = "pWater";
+
+const char D_0068D120[24] = "../TiWatSim.euc.c";
+
+const char D_0068D138[8] = "pPos";
+
+Vector4 tiWatSimSourcePos = { .x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f };
+
+Vector4 D_00631860 = { .x = 5.0f, .y = 0.0f, .z = 5.0f, .w = 1.0f };
+
+Vector4 D_00631870 = { .x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 0.0f };
+
+int tiWatSimRainCountdown = 0;
+int D_00631884 = 0;
+int D_00631888 = 0;
+int D_0063188C = 0;

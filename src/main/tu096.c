@@ -29,12 +29,10 @@ void xglTickIncrement(void) {
 }
 
 float xglSin(float angle);
-/* xglPi is the float pi (3.1415927). */
-extern float xglPi;
 
 /* sin(tick * pi / divisor) * amplitude, truncated; textDrawSegment (main/tu101) passes 32.0 and 24.0. */
 int xglTickWave(float divisor, float amplitude) {
-    return (int) (xglSin(((float) xglTickCounter * xglPi) / divisor) * amplitude);
+    return (int) (xglSin(((float) xglTickCounter * 3.14159274f) / divisor) * amplitude);
 }
 
 /* The speed grows by this much each tick while the track moves, up to the maximum. */

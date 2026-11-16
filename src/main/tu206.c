@@ -8,9 +8,9 @@ void sceVif1PkCnt(struct XglPacket *, int);
 void sceVif1PkOpenDirectHLCode(struct XglPacket *, int);
 void sceVif1PkAddDirectDataN(struct XglPacket *, const void *, int);
 void sceVif1PkCloseDirectHLCode(struct XglPacket *);
-extern struct XglPacket *xglScratchPacket;
-extern long long *xglScratchQuads;
-extern int xglScratchQuadCount;
+static struct XglPacket *xglScratchPacket;
+static long long *xglScratchQuads;
+static int xglScratchQuadCount;
 
 /* Starts a scratchpad quadword batch (proposed name xglPacketScratchBegin): the current packet goes to
  * xglScratchPacket, the batch base is the EE scratchpad at 0x70000000 and the count is reset to zero. */

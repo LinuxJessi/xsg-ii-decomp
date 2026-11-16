@@ -352,3 +352,20 @@ void tiWaterSendGrid(WaterStripGrid *grid, const void *block) {
         }
     }
 }
+
+Vector4 tiWaterAxes[3] = {
+    { .x = -0.5f, .y = -0.1f, .z = 0.0f, .w = 1.0f },
+    { .x = 0.5f, .y = 0.1f, .z = 0.5f, .w = 1.0f },
+    { .x = 0.0f, .y = 1.0f, .z = 0.0f, .w = 1.0f },
+};
+
+Matrix4 D_00631800 = {
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 128.0f, 128.0f, 128.0f, 1.0f },
+};
+
+int tiWaterStripColumns = 29;
+
+XglPacket *xglCurrentPacket = 0;

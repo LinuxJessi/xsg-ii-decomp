@@ -17,6 +17,139 @@
 #include "main/pad.h"
 #include "main/tu093.h"
 
+/* Initialized data read by menuSceneInit and by other TUs (0x002B5DA8, .data). */
+int D_002B5DA8[] = { 0, 0 };
+int D_002B5DB0[] = { 0, 0 };
+int D_002B5DB8[] = { 0 };
+
+/* Script strings of the text draw commands (0x0068A3F0, .rodata, 80 bytes with zero fill). */
+const char D_0068A3F0[80] = "$init;$bg2;$shadow+1,+3,000000;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
+
+/* Uninitialized static data of this TU (.bss 0x0069A4860..0x0069A4900 area): matrix and vector scratch objects used by menuModelDraw and the menu scene; D_006A4900 is a 40-byte raw table of 0x14-byte cursor records (type not known). */
+static Matrix4 D_006A4860;
+static Vector4 D_006A48A0;
+static Matrix4 D_006A48B0[1];
+static Vector4 D_006A48F0[1];
+static unsigned char D_006A4900[40];
+
+/* Cursor records: the 0x18-byte tables D_006A4928..D_006A5238 read through cursor (0x00), previous_cursor (0x04),
+   capacity (0x08), unit_size (0x0C), mode_flags (0x10) and status_flags (0x14). */
+typedef struct CursorRecord {
+    int cursor;
+    int previous_cursor;
+    int capacity;
+    int unit_size;
+    int mode_flags;
+    int status_flags;
+} CursorRecord;
+
+struct ControlSlot;
+
+typedef void (*ControlCallback)(struct ControlSlot *slot);
+typedef int (*ControlStep)(struct ControlSlot *slot);
+
+typedef struct ControlSlot {
+    ControlCallback callback;   /* 0x00: called by menuSlotDraw */
+    ControlCallback step;       /* 0x04: the slot's state-machine step, run every frame by menuSceneRunLoop */
+    void *link;                 /* 0x08 */
+    unsigned short value;       /* 0x0C: written when flag is set */
+    u8 state;                   /* 0x0E */
+    u8 flag;                    /* 0x0F */
+    u8 flags;                   /* 0x10: bit 1 set here */
+    u8 unmodeled_11[3];
+} ControlSlot;
+
+typedef struct StateBlock {
+    u8 unmodeled_00[4];
+    int baseY;                  /* 0x04 */
+    u8 unmodeled_08[4];
+    int offset;                 /* 0x0C */
+    u8 unmodeled_10[0xC];
+    FontTrack tracks[3];        /* 0x1C, 0x38 and 0x54: the font tracks of the menu */
+    u8 unmodeled_70[0x118];
+    int menuFlags;              /* 0x188: bit 0x100000 is set when the scene flag test passes */
+    u8 unmodeled_18C[0x240];
+    union {
+        u8 flag3CC;             /* 0x3CC: read as a byte by menuSceneDrawOverlays */
+        int cursor;             /* 0x3CC: read as a word */
+    };
+    u8 unmodeled_3D0[0xC];
+    int mode;                   /* 0x3DC */
+    u8 unmodeled_3E0[4];
+    int flags;                  /* 0x3E4: bits 0 and 1 cleared by menuFocusRootSlot */
+} StateBlock;
+
+/* Uninitialized static data of this TU in address order (.bss 0x006A4928..0x006A5510). */
+static CursorRecord D_006A4928[1];
+static StateBlock D_006A4940;
+static u8 D_006A4D28[1000];
+static FontTrack D_006A5110;
+static FontTrack D_006A5130[1];
+static CursorRecord D_006A5150[1];
+static CursorRecord D_006A5168[1];
+static CursorRecord D_006A5180[1];
+static CursorRecord D_006A5198[1];
+static CursorRecord D_006A51B0[1];
+static CursorRecord D_006A51C8[1];
+static int D_006A51E0[15];
+static CursorRecord D_006A5220[1];
+static CursorRecord D_006A5238[1];
+static u8 D_006A5250[16];
+static int menuSkillModelPxyBuffers[12];
+static int menuSkillModelTxyBuffers[12];
+static u8 menuSkillModelLoadTally[16];
+static float menuRingColumnAngle[4];
+static u8 D_006A52E0[128];
+static FontTrack D_006A5360[1];
+static u8 D_006A5380[32];
+static ControlSlot menuSlots[11];
+static int menuUmnImageBuffers[8];
+static FontTrack D_006A54A0[4];
+
+/* Initialized small data of this TU's functions (0x0069D4C8..0x0069D514, .sdata). Values from the original bytes, types from the existing extern declarations. */
+int menuLicenseState = 0;
+struct ControlLink *D_0069D4CC = 0;
+int menuCurrentSlot = 0;
+int D_0069D4D8 = 0;
+int D_0069D4DC = 0;
+unsigned char D_0069D4E0 = 0;
+int D_0069D4E4 = 0;
+int countdownActive = 0;
+signed char D_0069D4EC = 0;
+signed char D_0069D4ED = 0;
+signed char D_0069D4F0[] = { 0, 2, 0, 0, 0, 0, 0, 0 };
+signed char D_0069D4F8[8] = { 2, 0, 0, 0, 1, 1, 0, 2 };
+signed char D_0069D500 = 0;
+signed char D_0069D501 = 0;
+signed char D_0069D502 = 0;
+unsigned char D_0069D503 = 0;
+unsigned char D_0069D504 = 4;
+int D_0069D508 = 0;
+unsigned short D_0069D50C = 0;
+unsigned char D_0069D50E = 0;
+int menuSavedCursor = -1;
+
+/* Uninitialized static data of this TU's own functions (0x0069E220..0x0069E268, .sbss). Types from the uses in this file. */
+static int D_0069E220[2];
+static signed char D_0069E228;
+static signed char menuSkillModelsReady;
+static float menuRingTilt;
+static float menuRingTiltPrev;
+static unsigned char D_0069E238[4];
+static int D_0069E23C;
+static signed char D_0069E240[8];
+static unsigned char D_0069E248[4];
+static unsigned char D_0069E24C;
+static unsigned char D_0069E24D;
+static int D_0069E250;
+static int D_0069E254;
+static unsigned char D_0069E258[3];
+extern unsigned char D_0069E25A;
+static unsigned char D_0069E25B;
+static signed char menuUmnImageCount;
+static signed char menuUmnImageIndex;
+static int menuUmnImageSourceBuffer;
+
 /* Control buffer tables: entries below CONTROL_ENTRY_SECTOR_COUNT take CD sector buffers, the rest buffer
    reserves (menuSkillModelBuffersAlloc). */
 #define CONTROL_ENTRY_COUNT 11
@@ -70,11 +203,7 @@ struct ControlContext {
 
 void fontObjInitGlobals();
 void ptReset();
-extern int D_0069D4DC;
-extern u8 D_0069D4E0;
 extern u8 *D_00645868[];
-extern unsigned char D_006A4900[];
-extern CursorBuffer D_006A4928[];
 extern unsigned char xglCallbackQueueRun[];
 
 void menuSceneReset(void) {
@@ -96,19 +225,8 @@ void menuSceneReset(void) {
     cursorBufferTablesInit();
 }
 
-extern signed char D_0069D502;
-extern u8 D_0069D504;
 extern u8 selectionWindowCount;
-extern signed char D_0069E228;
-extern CursorBuffer D_006A5150[];
-extern CursorBuffer D_006A5168[];
-extern CursorBuffer D_006A5180[];
-extern CursorBuffer D_006A5198[];
-extern CursorBuffer D_006A51B0[];
-extern CursorBuffer D_006A51C8[];
 extern int D_006A51E0[];
-extern CursorBuffer D_006A5220[];
-extern CursorBuffer D_006A5238[];
 
 void cursorBufferTablesInit(void) {
     cursorBufferInit((CursorBuffer *) D_006A4900, 6, 6, 0);
@@ -128,7 +246,6 @@ void cursorBufferTablesInit(void) {
     D_0069D502 = 0;
 }
 
-extern signed char D_0069D4EC;
 
 /* Refreshes a cursor buffer: while D_0069D4EC is set only the unit size and capacity change, otherwise a full init. */
 void cursorBufferSetOrInit(CursorBuffer *buffer, int capacity, int unit_size, int mode_flags) {
@@ -179,21 +296,6 @@ void cursorBuffersRewind(void) {
     D_006A5220[0].cursor = 0;
 }
 
-struct ControlSlot;
-
-typedef void (*ControlCallback)(struct ControlSlot *slot);
-typedef int (*ControlStep)(struct ControlSlot *slot);
-
-typedef struct ControlSlot {
-    ControlCallback callback;   /* 0x00: called by menuSlotDraw */
-    ControlCallback step;       /* 0x04: the slot's state-machine step, run every frame by menuSceneRunLoop */
-    void *link;                 /* 0x08 */
-    unsigned short value;       /* 0x0C: written when flag is set */
-    u8 state;                   /* 0x0E */
-    u8 flag;                    /* 0x0F */
-    u8 flags;                   /* 0x10: bit 1 set here */
-    u8 unmodeled_11[3];
-} ControlSlot;
 
 /* ControlSlot.state values; 2 and 3 are not named yet. */
 enum ControlState {
@@ -215,9 +317,6 @@ void func_00210560(ControlSlot *slot, int flag, int value) {
     slot->flags |= CONTROL_SLOT_FLAG_ACTIVE;
 }
 
-extern signed char menuUmnImageCount;
-extern signed char menuUmnImageIndex;
-extern int menuUmnImageSourceBuffer;
 extern int menuUmnImageBuffers[];
 extern FontTrack D_006A54A0[];
 
@@ -360,7 +459,6 @@ void textDrawSegment(int x, int y, void *text, int style);
 void panelDrawNineSlice(void *record, int x, int y, int width, int height);
 void menuDrawTitledFrame(int x, int y, int width, int height, void *text);
 int xglFontGetStringWidth();
-extern char D_0068A3F0[];
 extern unsigned char menuPanelFrame[];
 extern unsigned char D_0069D530[];
 extern int D_006A54A4[];
@@ -421,7 +519,6 @@ extern unsigned int menuSkillModelSizes[];
 extern int menuSkillModelPxyBuffers[];
 extern int menuSkillModelTxyBuffers[];
 extern unsigned char menuSkillModelLoadTally[];
-extern signed char menuSkillModelsReady;
 int xglCdSectorAlloc(unsigned int size);
 
 /* Sets up the two 11-entry tables (menuSkillModelPxyBuffers and menuSkillModelTxyBuffers) from the size pairs at menuSkillModelSizes: the first
@@ -524,11 +621,6 @@ char *func_00A9B750();
 char *func_00A9B7D8();
 extern u8 D_0069D518;
 extern char *menuTutorialLine;
-extern int menuCurrentSlot;
-extern int D_0069D508;
-extern int D_0069E23C;
-extern signed char D_0069E240[8];
-extern unsigned char D_0069E238[4];
 extern unsigned char D_006A52E0[];
 extern unsigned char selectionWindowList[];
 extern unsigned char selectionPlainList[];
@@ -735,7 +827,6 @@ int selectionCopilotRecordCount();
 int selectionSubIsTaken();
 int selectionCollectEntries();
 int func_A8B810();
-extern u16 D_0069D50C;
 extern unsigned char D_003EC0D8[];
 extern unsigned char D_003EC662[];
 extern unsigned char D_006A4D0C[];
@@ -892,25 +983,6 @@ void menuSlotSetEnterDirection(int to, int from) {
     }
 }
 
-typedef struct StateBlock {
-    u8 unmodeled_00[4];
-    int baseY;                  /* 0x04 */
-    u8 unmodeled_08[4];
-    int offset;                 /* 0x0C */
-    u8 unmodeled_10[0xC];
-    FontTrack tracks[3];        /* 0x1C, 0x38 and 0x54: the font tracks of the menu */
-    u8 unmodeled_70[0x118];
-    int menuFlags;              /* 0x188: bit 0x100000 is set when the scene flag test passes */
-    u8 unmodeled_18C[0x240];
-    union {
-        u8 flag3CC;             /* 0x3CC: read as a byte by menuSceneDrawOverlays */
-        int cursor;             /* 0x3CC: read as a word */
-    };
-    u8 unmodeled_3D0[0xC];
-    int mode;                   /* 0x3DC */
-    u8 unmodeled_3E0[4];
-    int flags;                  /* 0x3E4: bits 0 and 1 cleared by menuFocusRootSlot */
-} StateBlock;
 
 extern StateBlock D_006A4940;
 extern u8 D_006A4D28[];
@@ -951,7 +1023,6 @@ void func_00211B88(int index, int flag) {
     menuCurrentSlot = index;
 }
 
-extern int menuSavedCursor;
 void menuSetCursor(StateBlock *menu, int index);
 void menuPlaceItemCursor(StateBlock *menu, int index);
 void menuEnableItems(StateBlock *menu, int value);
@@ -1041,8 +1112,23 @@ typedef union MenuLatch {
     u8 bytes[4];
 } MenuLatch;
 
+
+/* Initialized small data of this TU's menu functions (0x0069D514..0x0069D53F, .sdata); the definitions follow the MenuLatch type. */
+MenuLatch D_0069D514 = { -1 };
+u8 D_0069D518 = 0;
+signed char D_0069D519 = 0;
+u8 menuLayoutMode = 0;
+u8 D_0069D51B = 0;
+u8 D_0069D51C = 0;
+int menuTutorialIndex = 0;
+char *menuTutorialLine = 0;
+u8 menuTutorialStage = 0;
+u8 D_0069D529 = 0;
+unsigned char D_0069D530[] = "  Map";
+u8 D_0069D538[7] = { 0x0c, 0x3b, 0x49, 0x53, 0x5c, 0x6d, 0x6d };
+float D_0069D540 = 0.0f;
+
 extern MenuLatch D_0069D514;
-extern signed char D_0069D4ED;
 
 /* The TU's view of xglCdBufferRewind: its result is never used. */
 typedef void VoidFunction(void);
@@ -1339,21 +1425,12 @@ void menuDrawConfigPage(ControlSlot *slot);
 int menuMapChoiceStep(ControlSlot *slot);
 void menuMapDraw(struct ControlRecord *record);
 void menuResetState();
-extern u8 D_0069D503;
-extern int D_0069D4E4;
-extern int countdownActive;
-extern signed char D_0069D501;
-extern int D_002B5DA8[];
 extern FontTrack D_006A5110;
 extern FontTrack D_006A5130[];
-extern u8 D_0069D50E;
 extern u8 D_0069D538[7];
-extern signed char D_0069D4F8[8];
 extern u8 D_0069D529;
 extern u8 menuTutorialStage;
 extern u8 D_0069D51C;
-extern float menuRingTilt;
-extern float menuRingTiltPrev;
 extern float menuRingColumnAngle[4];
 
 void ptRefresh(void);
@@ -1583,8 +1660,6 @@ extern float D_0069B20C;
 extern float D_0069B210;
 extern float D_0069B214;
 extern int D_006A4944[];
-extern Matrix4 D_006A4860;
-extern Vector4 D_006A48A0;
 void xglMatrixStackUnit(void);
 void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
@@ -1630,8 +1705,6 @@ void menuModelDraw(int index, float tx, float ty, float tz, float rotX, float ro
     }
 }
 
-extern Matrix4 D_006A48B0[];
-extern Vector4 D_006A48F0[];
 void xglMatrixStackRotZ(float angle);
 
 void menuModelDrawRotated(int index, float tx, float ty, float tz, float rotX, float rotY, float rotZ, float yaw, int hasTransform) {
@@ -1927,7 +2000,6 @@ void menuSceneDrawOverlays(void) {
     xglFontFlush();
 }
 
-extern int D_0069D4D8;
 extern int *D_006A53A8[];
 extern u8 D_003EB1E0[];
 extern char D_003EB1F8[];
@@ -2661,7 +2733,6 @@ void countdownStart(void) {
 }
 
 void sprintf(int *target, u8 *source, int value);
-extern int D_0069E220;
 extern u8 D_0069D558[];
 
 /* Formats value as "%5d" into a shared buffer and returns that buffer. */
@@ -2744,13 +2815,6 @@ void menuSetLayout(u32 mode) {
 extern u8 D_0069D51B;
 /* Scene-change handler (menuState is the menu state id): clears the current slot, refreshes the cursors, then switches on menuState to set the menu mode and the cursor buffers. */
 void menuSceneSetState(int menuState);
-extern u8 D_0069E248[4];
-extern u8 D_0069E258[4];
-extern u8 D_0069E25B;
-extern u8 D_0069E24C;
-extern u8 D_0069E24D;
-extern int D_0069E250;
-extern int D_0069E254;
 extern unsigned char D_006A5380[];
 
 /* Resets the cursor state and link table, saves the kind bytes of links 0 to 2 when menuCurrentSlot is 3, and copies the cursor buffer's header, cells, flags and limits into the saved globals (clearing them in the buffer). */
@@ -2818,7 +2882,6 @@ void menuTutorialSaveState(void) {
     cursorBufferSetOffset((CursorBuffer *) ((CursorEntry *) D_006A51E0 + 2), 0);
 }
 
-extern unsigned char D_0069E25A;
 
 
 void menuTutorialRestoreState(void) {
@@ -3271,7 +3334,6 @@ void menuTutorialStep(void) {
     }
 }
 
-extern int D_006A4914[];
 void choiceSetRow(int value);
 int choiceGetResult(void);
 
@@ -3320,7 +3382,7 @@ int menuMainCommandStep(ControlSlot *slot) {
             D_0069D4E4 = 0;
         }
     } else if (padCirclePressedAlone() != 0 && xglCdServiceIfPending() == 0) {
-        switch (D_0069E240[D_006A4914[0]]) {
+        switch (D_0069E240[((int *) D_006A4900)[5]]) {
         case 0:
             if (*(int *) D_006A5240) {
                 if (ptState.progress->key != -1) {
@@ -4454,7 +4516,6 @@ int menuRecordItemStep(ControlSlot *slot) {
     return 0;
 }
 
-extern signed char D_0069D4F0[];
 void menuSkillModelTailLoad(void);
 void xglSleep(void);
 void tyaDisplaySetting(int value);
@@ -4588,8 +4649,6 @@ int menuConfigSlotStep(ControlSlot *slot) {
     return 0;
 }
 
-extern signed char D_0069D4F8[];
-extern signed char D_0069D500;
 extern unsigned char D_0069D570[];
 extern unsigned char D_0069D578[];
 void choiceSetFirstOptionText(void *entry);
@@ -5135,3 +5194,17 @@ int menuSceneRunSplit(void) {
     }
     return result;
 }
+
+/* Strings read by the menu draw and message code (.sdata 0x0069D548..0x0069D580); defined after the functions so their code keeps the extern form. */
+u8 D_0069D548[8] = "  Extra";
+u8 D_0069D550[8] = "\n";
+u8 D_0069D558[8] = "%5d";
+int D_0069D56C = 0;
+u8 D_0069D570[8] = "\n\n ";
+u8 D_0069D578[8] = "\n ";
+
+/* Float constants of menuModelDraw (.lit4 0x0069B20C..0x0069B218): the three values the function reads by name. */
+const float D_0069B20C = 0.32f;
+const float D_0069B210 = 0.020833f;
+const float D_0069B214 = -0.1f;
+int menuPendingSelection = -1;

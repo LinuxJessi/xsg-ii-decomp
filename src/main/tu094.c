@@ -42,9 +42,7 @@ void xglFontScissorReset(ScissorCursor *cursor) {
     sceVif1PkAddDirectDataN(cursor->packet, words, 2);
 }
 
-extern int bgLayerPxyData[4];
-extern int bgLayerTxyData[4];
-extern unsigned char bgLayerState0[4];
+static unsigned char bgLayerState0[8];
 
 /*
  * One background layer object: an XenoActor record (xenoActor.c), with only
@@ -74,7 +72,9 @@ typedef struct BgLayer {
 #define BG_LAYER_WINDOW_WIDTH 512
 #define BG_LAYER_WINDOW_HEIGHT 448
 
-extern BgLayer *bgLayerObjects[];
+static BgLayer *bgLayerObjects[4];
+static int bgLayerPxyData[4];
+static int bgLayerTxyData[8];
 /* The camera record bgLayerCameraSetup prepares: fov at +0x94, the rotation words at +0xA0, the position at +0xD0. */
 typedef struct StudioCamera {
     unsigned char unmodeled_00[0x94];
@@ -86,7 +86,7 @@ typedef struct StudioCamera {
     float position_z;               /* +0xD8 */
 } StudioCamera;
 
-extern StudioCamera *bgLayerCamera;
+StudioCamera *bgLayerCamera = 0;
 void bgLayerLoad(int index);
 
 /*
@@ -120,9 +120,9 @@ extern char D_003E7D90[];
 extern char D_003E7DB0[];
 extern char D_003E7DD0[];
 extern char D_003E7DF0[];
-extern char D_00689F70[];
-extern char D_00689F90[];
-extern char D_00689FB0[];
+extern const char D_00689F70[];
+extern const char D_00689F90[];
+extern const char D_00689FB0[];
 extern int xglCdReadFile(const char *name, void *buffer, int mode, int flags);
 extern int xglCdReadFileAsync(const char *name, int buffer, int mode, int flags);
 extern int xglCdSectorAlloc(int size);
@@ -133,9 +133,9 @@ typedef struct BgLayerHierarchy {
     unsigned long long words[64];
 } BgLayerHierarchy;
 
-extern unsigned char bgLayerReadBuffer[];
-extern BgLayerHierarchy bgLayerMiddleHierarchy;
-extern BgLayerHierarchy bgLayerFrontHierarchy;
+static unsigned char bgLayerReadBuffer[2048];
+static BgLayerHierarchy bgLayerMiddleHierarchy;
+static BgLayerHierarchy bgLayerFrontHierarchy;
 
 /* Starts loading background layer `index` (BG_BACK, BG_MIDDLE, BG_FRONT: its pxy and txy files; BG_MENUBG: the menu background hierarchies). */
 void bgLayerLoad(int index) {
@@ -212,6 +212,10 @@ extern void XenoActorAllocMatrices(BgLayer *actor);
 extern void XenoActorSetChannelValue(BgLayer *actor, float value);
 extern void XenoActorEnableChannel(BgLayer *actor);
 extern void XenoActorSetMode(BgLayer *actor, int mode);
+
+const char D_00689F70[32] = "yosikawa\\model\\midle.xhr";
+const char D_00689F90[32] = "yosikawa\\model\\front.xhr";
+const char D_00689FB0[32] = "yosikawa\\model\\menubg.xap";
 
 /*
  * Counts a finished file of a layer (index 0..5: two files per layer) and,
@@ -337,7 +341,7 @@ void bgLayerResetState(void) {
     bgLayerCamera = 0;
 }
 
-extern float D_0069B1E0;
+float D_0069B1E0 = 0.6981317400932312f;
 extern void XenoActorSetFlagAll(int flag);
 extern void fadeReset(void);
 extern void fadeStartIn(int frames);
@@ -408,3 +412,12 @@ void bgLayerClearAllFlags(void) {
     bgLayerClearFlags(1);
     bgLayerClearFlags(2);
 }
+
+char D_003E7D50[32] = "yosikawa\\model\\back.pxy";
+char D_003E7D70[32] = "yosikawa\\model\\back.txy";
+char D_003E7D90[32] = "yosikawa\\model\\midle.pxy";
+char D_003E7DB0[32] = "yosikawa\\model\\midle.txy";
+char D_003E7DD0[32] = "yosikawa\\model\\front.pxy";
+char D_003E7DF0[32] = "yosikawa\\model\\front.txy";
+
+int bgLayerPaths[8] = { 22528, 92160, 86016, 26624, 51200, 10240, 0, 0 };

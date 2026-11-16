@@ -162,19 +162,11 @@
     },
     {
      "c_split": false,
-     "end": "0x002B7BBC",
+     "end": "0x002BB578",
      "ordinal": 50,
      "piece": "tu050",
      "start": "0x002B7A90",
      "tu": "tu050"
-    },
-    {
-     "c_split": false,
-     "end": "0x002BB578",
-     "ordinal": 66,
-     "piece": "tya_draw_gauge",
-     "start": "0x002B7BBC",
-     "tu": "tya_draw_gauge"
     },
     {
      "c_split": false,
@@ -234,7 +226,7 @@
     },
     {
      "c_split": false,
-     "end": "0x0033EEC0",
+     "end": "0x002BD570",
      "ordinal": 65,
      "piece": "game_over_065",
      "start": "0x002BD4C0",
@@ -242,7 +234,15 @@
     },
     {
      "c_split": false,
-     "end": "0x003400F8",
+     "end": "0x0033EEC0",
+     "ordinal": 66,
+     "piece": "tya_draw_gauge",
+     "start": "0x002BD570",
+     "tu": "tya_draw_gauge"
+    },
+    {
+     "c_split": false,
+     "end": "0x0033FDC0",
      "ordinal": 83,
      "piece": "tu083",
      "start": "0x0033EEC0",
@@ -250,18 +250,10 @@
     },
     {
      "c_split": false,
-     "end": "0x00340200",
-     "ordinal": 110,
-     "piece": "tu110",
-     "start": "0x003400F8",
-     "tu": "tu110"
-    },
-    {
-     "c_split": false,
      "end": "0x003E6E40",
      "ordinal": 84,
      "piece": "init_uwamono_sys",
-     "start": "0x00340200",
+     "start": "0x0033FDC0",
      "tu": "init_uwamono_sys"
     },
     {
@@ -370,7 +362,7 @@
     },
     {
      "c_split": false,
-     "end": "0x003EC65C",
+     "end": "0x003EC458",
      "ordinal": 108,
      "piece": "tu108",
      "start": "0x003EBA58",
@@ -379,10 +371,10 @@
     {
      "c_split": false,
      "end": "0x003EC868",
-     "ordinal": 81,
-     "piece": "tu081",
-     "start": "0x003EC65C",
-     "tu": "tu081"
+     "ordinal": 110,
+     "piece": "tu110",
+     "start": "0x003EC458",
+     "tu": "tu110"
     },
     {
      "c_split": false,
@@ -794,26 +786,10 @@
     },
     {
      "c_split": false,
-     "end": "0x00644F1C",
-     "ordinal": 21,
-     "piece": "tu021",
-     "start": "0x00644F18",
-     "tu": "tu021"
-    },
-    {
-     "c_split": false,
-     "end": "0x00644F24",
-     "ordinal": 71,
-     "piece": "tu071",
-     "start": "0x00644F1C",
-     "tu": "tu071"
-    },
-    {
-     "c_split": false,
      "end": "0x00644F78",
      "ordinal": 22,
      "piece": "tu022",
-     "start": "0x00644F24",
+     "start": "0x00644F18",
      "tu": "tu022"
     },
     {
@@ -1609,7 +1585,7 @@
     },
     {
      "c_split": false,
-     "end": "0x0068E178",
+     "end": "0x0068E158",
      "ordinal": 19,
      "piece": "xgl_jpeg",
      "start": "0x0068E0E0",
@@ -1617,10 +1593,10 @@
     },
     {
      "c_split": false,
-     "end": "0x0068E1C8",
+     "end": "0x0068E1B8",
      "ordinal": 21,
      "piece": "tu021",
-     "start": "0x0068E178",
+     "start": "0x0068E158",
      "tu": "tu021"
     },
     {
@@ -1628,7 +1604,7 @@
      "end": "0x0068E208",
      "ordinal": 22,
      "piece": "tu022",
-     "start": "0x0068E1C8",
+     "start": "0x0068E1B8",
      "tu": "tu022"
     },
     {
@@ -2615,7 +2591,7 @@
     },
     {
      "c_split": false,
-     "end": "0x0069D7E4",
+     "end": "0x0069D7E0",
      "ordinal": 117,
      "piece": "yg2path",
      "start": "0x0069D7D0",
@@ -2626,7 +2602,7 @@
      "end": "0x0069D888",
      "ordinal": 115,
      "piece": "tu115",
-     "start": "0x0069D7E4",
+     "start": "0x0069D7E0",
      "tu": "tu115"
     },
     {
@@ -2935,7 +2911,7 @@
     },
     {
      "c_split": false,
-     "end": "0x0069DF80",
+     "end": "0x0069DF78",
      "ordinal": 12,
      "piece": "tu012",
      "start": "0x0069DF70",
@@ -2946,7 +2922,7 @@
      "end": "0x0069DF84",
      "ordinal": 17,
      "piece": "tu017",
-     "start": "0x0069DF80",
+     "start": "0x0069DF78",
      "tu": "tu017"
     },
     {
@@ -3421,7 +3397,7 @@
     },
     {
      "c_split": false,
-     "end": "0x006A5A84",
+     "end": "0x006A5A80",
      "ordinal": 101,
      "piece": "tu101",
      "start": "0x006A5510",
@@ -3432,7 +3408,7 @@
      "end": "0x006A5B98",
      "ordinal": 108,
      "piece": "tu108",
-     "start": "0x006A5A84",
+     "start": "0x006A5A80",
      "tu": "tu108"
     },
     {
@@ -3517,19 +3493,11 @@
     },
     {
      "c_split": false,
-     "end": "0x006B4C34",
+     "end": "0x006DE840",
      "ordinal": 157,
      "piece": "sv_get_image_item",
      "start": "0x006AF7C0",
      "tu": "sv_get_image_item"
-    },
-    {
-     "c_split": false,
-     "end": "0x006DE840",
-     "ordinal": 162,
-     "piece": "tu162",
-     "start": "0x006B4C34",
-     "tu": "tu162"
     },
     {
      "c_split": false,
@@ -38305,7 +38273,7 @@
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
      "-O2",
-     "-G0"
+     "-G8"
     ],
     "language": "c",
     "source_class": "c",
@@ -38318,8 +38286,8 @@
     "compiler_confidence": "medium",
     "assembler_class": "LA29",
     "assembler_confidence": "medium",
-    "g_flag": "-G0",
-    "g_basis": "no gp-relative instruction in the code; -G0 cannot add one",
+    "g_flag": "-G8",
+    "g_basis": "string literals in .sdata reached with lui/addiu: xgl_menu: the three row formats of xglMenuDrawType1Sub (0x69DEF0, 0x69DEF8, 0x69DF00)",
     "g_confidence": "medium",
     "optimization": "-O2",
     "source": "reports/x2-compiler-calibration.md"
@@ -39368,20 +39336,20 @@
      ],
      "bounds": [
       "0x0069df69",
-      "0x0069df80"
+      "0x0069df78"
      ],
-     "end": "0x0069DF80",
+     "end": "0x0069DF78",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x0069DF80",
+       "end": "0x0069DF78",
        "name": "tu012",
        "start": "0x0069DF70"
       }
      ],
-     "size": 16,
+     "size": 8,
      "splat_type": "sdata",
      "start": "0x0069DF70"
     },
@@ -40066,7 +40034,7 @@
     },
     ".sdata": {
      "anchored": [
-      "0x0069df80",
+      "0x0069df78",
       "0x0069df81"
      ],
      "bounds": [
@@ -40081,12 +40049,12 @@
        "c_split": false,
        "end": "0x0069DF84",
        "name": "tu017",
-       "start": "0x0069DF80"
+       "start": "0x0069DF78"
       }
      ],
-     "size": 4,
+     "size": 12,
      "splat_type": "sdata",
-     "start": "0x0069DF80"
+     "start": "0x0069DF78"
     }
    },
    "text": {
@@ -40648,20 +40616,20 @@
      ],
      "bounds": [
       "0x0068e0d1",
-      "0x0068e178"
+      "0x0068e158"
      ],
-     "end": "0x0068E178",
+     "end": "0x0068E158",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x0068E178",
+       "end": "0x0068E158",
        "name": "xgl_jpeg",
        "start": "0x0068E0E0"
       }
      ],
-     "size": 152,
+     "size": 120,
      "splat_type": "rodata",
      "start": "0x0068E0E0"
     },
@@ -40837,7 +40805,7 @@
      ],
      "bounds": [
       "0x00644e71",
-      "0x00644f1b"
+      "0x00644f18"
      ],
      "end": "0x00644F18",
      "evidence_source": "map",
@@ -41111,59 +41079,34 @@
    ],
    "owners": {
     ".text": "c",
-    ".data": "asm",
     ".rodata": "asm",
     ".sdata": "asm",
     ".sbss": "asm"
    },
    "sections": {
-    ".data": {
-     "anchored": [
-      "0x00644f1b",
-      "0x00644f1c"
-     ],
-     "bounds": [
-      "0x00644ed1",
-      "0x00644f1e"
-     ],
-     "end": "0x00644F1C",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00644F1C",
-       "name": "tu021",
-       "start": "0x00644F18"
-      }
-     ],
-     "size": 4,
-     "splat_type": "data",
-     "start": "0x00644F18"
-    },
     ".rodata": {
      "anchored": [
-      "0x0068e178",
+      "0x0068e158",
       "0x0068e179"
      ],
      "bounds": [
       "0x0068e0e1",
-      "0x0068e1c8"
+      "0x0068e1b8"
      ],
-     "end": "0x0068E1C8",
+     "end": "0x0068E1B8",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x0068E1C8",
+       "end": "0x0068E1B8",
        "name": "tu021",
-       "start": "0x0068E178"
+       "start": "0x0068E158"
       }
      ],
-     "size": 80,
+     "size": 96,
      "splat_type": "rodata",
-     "start": "0x0068E178"
+     "start": "0x0068E158"
     },
     ".sdata": {
      "anchored": [
@@ -41495,11 +41438,11 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x00644f24",
+      "0x00644f18",
       "0x00644f29"
      ],
      "bounds": [
-      "0x00644f1f",
+      "0x00644ed1",
       "0x00644f78"
      ],
      "end": "0x00644F78",
@@ -41510,16 +41453,16 @@
        "c_split": false,
        "end": "0x00644F78",
        "name": "tu022",
-       "start": "0x00644F24"
+       "start": "0x00644F18"
       }
      ],
-     "size": 84,
+     "size": 96,
      "splat_type": "data",
-     "start": "0x00644F24"
+     "start": "0x00644F18"
     },
     ".rodata": {
      "anchored": [
-      "0x0068e1c8",
+      "0x0068e1b8",
       "0x0068e1d9"
      ],
      "bounds": [
@@ -41534,12 +41477,12 @@
        "c_split": false,
        "end": "0x0068E208",
        "name": "tu022",
-       "start": "0x0068E1C8"
+       "start": "0x0068E1B8"
       }
      ],
-     "size": 64,
+     "size": 80,
      "splat_type": "rodata",
-     "start": "0x0068E1C8"
+     "start": "0x0068E1B8"
     },
     ".sdata": {
      "anchored": [
@@ -49800,24 +49743,24 @@
     ".data": {
      "anchored": [
       "0x002b7a90",
-      "0x003400b1"
+      "0x002b7cc9"
      ],
      "bounds": [
       "0x00645885",
-      "0x002b7bbc"
+      "0x002bb578"
      ],
-     "end": "0x002B7BBC",
+     "end": "0x002BB578",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x002B7BBC",
+       "end": "0x002BB578",
        "name": "tu050",
        "start": "0x002B7A90"
       }
      ],
-     "size": 300,
+     "size": 15080,
      "splat_type": "data",
      "start": "0x002B7A90"
     },
@@ -50805,7 +50748,7 @@
       "0x002bb579"
      ],
      "bounds": [
-      "0x002bd571",
+      "0x002b7cc9",
       "0x002bc1a0"
      ],
      "end": "0x002BC1A0",
@@ -54052,20 +53995,20 @@
      ],
      "bounds": [
       "0x002bd479",
-      "0x0033eec0"
+      "0x002bd570"
      ],
-     "end": "0x0033EEC0",
+     "end": "0x002BD570",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x0033EEC0",
+       "end": "0x002BD570",
        "name": "game_over_065",
        "start": "0x002BD4C0"
       }
      ],
-     "size": 530944,
+     "size": 176,
      "splat_type": "data",
      "start": "0x002BD4C0"
     },
@@ -54239,27 +54182,27 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x002b7bbc",
+      "0x002bd570",
       "0x002bd571"
      ],
      "bounds": [
-      "0x003400b1",
-      "0x002bb578"
+      "0x002bd541",
+      "0x0033eec0"
      ],
-     "end": "0x002BB578",
+     "end": "0x0033EEC0",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x002BB578",
+       "end": "0x0033EEC0",
        "name": "tya_draw_gauge",
-       "start": "0x002B7BBC"
+       "start": "0x002BD570"
       }
      ],
-     "size": 14780,
+     "size": 530768,
      "splat_type": "data",
-     "start": "0x002B7BBC"
+     "start": "0x002BD570"
     },
     ".rodata": {
      "anchored": [
@@ -54677,7 +54620,7 @@
       "0x003e6dc1"
      ],
      "bounds": [
-      "0x003403f9",
+      "0x002b6821",
       "0x002b78c0"
      ],
      "end": "0x002B78C0",
@@ -55161,7 +55104,7 @@
     ".data": {
      "anchored": [
       "0x002b6820",
-      "0x003403f9"
+      "0x002b6821"
      ],
      "bounds": [
       "0x002b6421",
@@ -55510,35 +55453,9 @@
     }
    ],
    "owners": {
-    ".text": "c",
-    ".data": "asm"
+    ".text": "c"
    },
-   "sections": {
-    ".data": {
-     "anchored": [
-      "0x00644f1e",
-      "0x00644f1f"
-     ],
-     "bounds": [
-      "0x00644f1c",
-      "0x00644f24"
-     ],
-     "end": "0x00644F24",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00644F24",
-       "name": "tu071",
-       "start": "0x00644F1C"
-      }
-     ],
-     "size": 8,
-     "splat_type": "data",
-     "start": "0x00644F1C"
-    }
-   },
+   "sections": {},
    "text": {
     "start": "0x001f4a20",
     "end": "0x001f4e20",
@@ -55689,7 +55606,7 @@
       "0x003e6e41"
      ],
      "bounds": [
-      "0x00340305",
+      "0x003403f9",
       "0x003e6f58"
      ],
      "end": "0x003E6F58",
@@ -57946,35 +57863,9 @@
     }
    ],
    "owners": {
-    ".text": "c",
-    ".data": "asm"
+    ".text": "c"
    },
-   "sections": {
-    ".data": {
-     "anchored": [
-      "0x003ec65f",
-      "0x003ec660"
-     ],
-     "bounds": [
-      "0x0061c4c1",
-      "0x003ec868"
-     ],
-     "end": "0x003EC868",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x003EC868",
-       "name": "tu081",
-       "start": "0x003EC65C"
-      }
-     ],
-     "size": 524,
-     "splat_type": "data",
-     "start": "0x003EC65C"
-    }
-   },
+   "sections": {},
    "text": {
     "start": "0x001fc888",
     "end": "0x001fcbd0",
@@ -58491,24 +58382,24 @@
     ".data": {
      "anchored": [
       "0x0033eec0",
-      "0x00340391"
+      "0x0033eec1"
      ],
      "bounds": [
-      "0x002bd541",
-      "0x003400f8"
+      "0x002bd571",
+      "0x0033fdc0"
      ],
-     "end": "0x003400F8",
+     "end": "0x0033FDC0",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x003400F8",
+       "end": "0x0033FDC0",
        "name": "tu083",
        "start": "0x0033EEC0"
       }
      ],
-     "size": 4664,
+     "size": 3840,
      "splat_type": "data",
      "start": "0x0033EEC0"
     },
@@ -59099,11 +58990,11 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x00340200",
-      "0x00340305"
+      "0x0033fdc0",
+      "0x003403f9"
      ],
      "bounds": [
-      "0x006446c1",
+      "0x0033eec1",
       "0x003e6e40"
      ],
      "end": "0x003E6E40",
@@ -59114,12 +59005,12 @@
        "c_split": false,
        "end": "0x003E6E40",
        "name": "init_uwamono_sys",
-       "start": "0x00340200"
+       "start": "0x0033FDC0"
       }
      ],
-     "size": 683072,
+     "size": 684160,
      "splat_type": "data",
-     "start": "0x00340200"
+     "start": "0x0033FDC0"
     },
     ".lit4": {
      "anchored": [
@@ -65896,7 +65787,7 @@
     ".data": {
      "anchored": [
       "0x003eb210",
-      "0x003ec661"
+      "0x003ec029"
      ],
      "bounds": [
       "0x003ed061",
@@ -66020,20 +65911,20 @@
      ],
      "bounds": [
       "0x006a54ad",
-      "0x006a5a84"
+      "0x006a5a80"
      ],
-     "end": "0x006A5A84",
+     "end": "0x006A5A80",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x006A5A84",
+       "end": "0x006A5A80",
        "name": "tu101",
        "start": "0x006A5510"
       }
      ],
-     "size": 1396,
+     "size": 1392,
      "splat_type": "bss",
      "start": "0x006A5510"
     }
@@ -66206,21 +66097,21 @@
       "0x0061c4c1"
      ],
      "bounds": [
-      "0x003ec665",
-      "0x003ec65f"
+      "0x003ec15b",
+      "0x003ec458"
      ],
-     "end": "0x003EC65C",
+     "end": "0x003EC458",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x003EC65C",
+       "end": "0x003EC458",
        "name": "tu108",
        "start": "0x003EBA58"
       }
      ],
-     "size": 3076,
+     "size": 2560,
      "splat_type": "data",
      "start": "0x003EBA58"
     },
@@ -66250,7 +66141,7 @@
     },
     ".bss": {
      "anchored": [
-      "0x006a5a84",
+      "0x006a5a80",
       "0x006a5b05"
      ],
      "bounds": [
@@ -66265,12 +66156,12 @@
        "c_split": false,
        "end": "0x006A5B98",
        "name": "tu108",
-       "start": "0x006A5A84"
+       "start": "0x006A5A80"
       }
      ],
-     "size": 276,
+     "size": 280,
      "splat_type": "bss",
-     "start": "0x006A5A84"
+     "start": "0x006A5A80"
     }
    },
    "text": {
@@ -66716,7 +66607,7 @@
     ".data": {
      "anchored": [
       "0x003eb70d",
-      "0x003ec665"
+      "0x003ec15b"
      ],
      "bounds": [
       "0x003ecaa1",
@@ -67250,27 +67141,27 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x003400f8",
+      "0x003ec458",
       "0x006446c1"
      ],
      "bounds": [
-      "0x00340391",
-      "0x00340200"
+      "0x0061c4c1",
+      "0x003ec868"
      ],
-     "end": "0x00340200",
+     "end": "0x003EC868",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x00340200",
+       "end": "0x003EC868",
        "name": "tu110",
-       "start": "0x003400F8"
+       "start": "0x003EC458"
       }
      ],
-     "size": 264,
+     "size": 1040,
      "splat_type": "data",
-     "start": "0x003400F8"
+     "start": "0x003EC458"
     },
     ".sdata": {
      "anchored": [
@@ -67376,7 +67267,7 @@
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
      "-O2",
-     "-G0"
+     "-G8"
     ],
     "language": "c",
     "source_class": "c",
@@ -67389,8 +67280,8 @@
     "compiler_confidence": "medium",
     "assembler_class": "LA29",
     "assembler_confidence": "medium",
-    "g_flag": "-G0",
-    "g_basis": "no gp-relative instruction in the code; -G0 cannot add one",
+    "g_flag": "-G8",
+    "g_basis": "string literals in .sdata reached with lui/addiu: tu111: \"NULL\" (0x69D778) of smsg and msgDtl",
     "g_confidence": "medium",
     "optimization": "-O2",
     "source": "reports/x2-compiler-calibration.md"
@@ -67982,7 +67873,7 @@
       "0x003ec919"
      ],
      "bounds": [
-      "0x003ec660",
+      "0x006446c1",
       "0x003ecab0"
      ],
      "end": "0x003ECAB0",
@@ -68175,7 +68066,7 @@
    "sections": {
     ".sdata": {
      "anchored": [
-      "0x0069d7e4",
+      "0x0069d7e0",
       "0x0069d7e9"
      ],
      "bounds": [
@@ -68190,12 +68081,12 @@
        "c_split": false,
        "end": "0x0069D888",
        "name": "tu115",
-       "start": "0x0069D7E4"
+       "start": "0x0069D7E0"
       }
      ],
-     "size": 164,
+     "size": 168,
      "splat_type": "sdata",
-     "start": "0x0069D7E4"
+     "start": "0x0069D7E0"
     }
    },
    "text": {
@@ -68690,7 +68581,7 @@
       "0x003ecaa1"
      ],
      "bounds": [
-      "0x003ec661",
+      "0x003ec029",
       "0x003eb70d"
      ],
      "end": "0x003EB70C",
@@ -68763,20 +68654,20 @@
      ],
      "bounds": [
       "0x0069d779",
-      "0x0069d7e4"
+      "0x0069d7e0"
      ],
-     "end": "0x0069D7E4",
+     "end": "0x0069D7E0",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x0069D7E4",
+       "end": "0x0069D7E0",
        "name": "yg2path",
        "start": "0x0069D7D0"
       }
      ],
-     "size": 20,
+     "size": 16,
      "splat_type": "sdata",
      "start": "0x0069D7D0"
     },
@@ -78999,24 +78890,24 @@
     ".bss": {
      "anchored": [
       "0x006af7c0",
-      "0x006b4b91"
+      "0x006b4c35"
      ],
      "bounds": [
       "0x006af641",
-      "0x006b4c34"
+      "0x006de840"
      ],
-     "end": "0x006B4C34",
+     "end": "0x006DE840",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x006B4C34",
+       "end": "0x006DE840",
        "name": "sv_get_image_item",
        "start": "0x006AF7C0"
       }
      ],
-     "size": 21620,
+     "size": 192640,
      "splat_type": "bss",
      "start": "0x006AF7C0"
     }
@@ -79186,35 +79077,9 @@
     }
    ],
    "owners": {
-    ".text": "c",
-    ".bss": "asm"
+    ".text": "c"
    },
-   "sections": {
-    ".bss": {
-     "anchored": [
-      "0x006b4c34",
-      "0x006b4c35"
-     ],
-     "bounds": [
-      "0x006b4b91",
-      "0x006de840"
-     ],
-     "end": "0x006DE840",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x006DE840",
-       "name": "tu162",
-       "start": "0x006B4C34"
-      }
-     ],
-     "size": 171020,
-     "splat_type": "bss",
-     "start": "0x006B4C34"
-    }
-   },
+   "sections": {},
    "text": {
     "start": "0x002594e8",
     "end": "0x00259628",

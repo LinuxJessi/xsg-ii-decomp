@@ -81,7 +81,6 @@ struct UwamonoObjectSlot {
 };
 
 extern struct UwamonoObjectSlot uwamonoSlotTable[];
-extern float D_0069B134;
 /* the float at gp-31932 (gp = 0x6A2DF0), read as the fan limit */
 int unduCheckInsideFan(int index, const Vector4 *origin, const Vector4 *target, int mode, float facing, float range, float limit, float height);
 float Get_Distance3D(const Vector4 *first, const Vector4 *second);
@@ -107,7 +106,7 @@ int uwamonoFindNearbyTarget(short index)
         if ((uwamonoRecords[candidate].flags & UWAMONO_FLAG_CANDIDATE) == 0) {
             continue;
         }
-        if (!unduCheckInsideFan(index, &actor->position, &uwamonoRecords[candidate].actor->position, -1, actor->rotation.y, 5.0f, D_0069B134, actor->radius)) {
+        if (!unduCheckInsideFan(index, &actor->position, &uwamonoRecords[candidate].actor->position, -1, actor->rotation.y, 5.0f, 3.14159274f, actor->radius)) {
             continue;
         }
         distance = Get_Distance3D(&actor->position, &uwamonoRecords[candidate].actor->position);

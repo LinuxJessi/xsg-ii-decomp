@@ -190,3 +190,48 @@ int xglHddDummyCallback(int stage, int offset, void *param)
 {
     return 0;
 }
+
+/* INTC and DMAC handlers that the tables below register (tu023.c and this file). */
+int xglIntcHandlerGs(int cause);
+int xglIntcHandlerVblankStart(int cause);
+int xglIntcHandlerVblankEnd(int cause);
+int xglIntcHandlerVif0(int cause);
+int intrTimerAccumulate(int index);
+int xglIntcHandlerVu0(int cause);
+int xglIntcHandlerVu1(int cause);
+int xglIntcHandlerIpu(int cause);
+int xglIntcHandlerTimer0(int cause);
+int xglIntcHandlerTimer1(int cause);
+
+/* DMAC slot map: channel -> slot in xglDmaRecords, -1 until xglIntrInit fills it. */
+volatile int xglDmaSlotMap[XGL_DMAC_CHANNELS] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+};
+
+/* INTC handler table: {handle, count, cause, handler}; the last record has cause -1. */
+XglIntrRecord xglIntcRecords[12] = {
+    { -1, 0, 0, xglIntcHandlerGs },
+    { -1, 0, 2, xglIntcHandlerVblankStart },
+    { -1, 0, 3, xglIntcHandlerVblankEnd },
+    { -1, 0, 4, xglIntcHandlerVif0 },
+    { -1, 0, 5, intrTimerAccumulate },
+    { -1, 0, 6, xglIntcHandlerVu0 },
+    { -1, 0, 7, xglIntcHandlerVu1 },
+    { -1, 0, 8, xglIntcHandlerIpu },
+    { -1, 0, 9, xglIntcHandlerTimer0 },
+    { -1, 0, 10, xglIntcHandlerTimer1 },
+    { -1, 0, 0, xglIntcHandlerGs },
+    { -1, 0, -1, (int (*)(int)) -1 }
+};
+
+/* DMAC handler table: {handle, count, channel, handler}; the last record has channel -1. */
+XglIntrRecord xglDmaRecords[8] = {
+    { -1, 0, 0, (int (*)(int)) xglDmaHandlerVif0 },
+    { -1, 0, 1, (int (*)(int)) xglDmaHandlerVif1 },
+    { -1, 0, 2, (int (*)(int)) xglDmaHandlerGif },
+    { -1, 0, 3, (int (*)(int)) xglDmaHandlerFromIpu },
+    { -1, 0, 4, (int (*)(int)) xglDmaHandlerToIpu },
+    { -1, 0, 8, (int (*)(int)) xglDmaHandlerFromSpr },
+    { -1, 0, 9, (int (*)(int)) xglDmaHandlerToSpr },
+    { -1, 0, -1, (int (*)(int)) -1 }
+};

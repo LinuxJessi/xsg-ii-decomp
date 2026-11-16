@@ -602,7 +602,7 @@ int enepcEnableDrawFlags(int call)
         start = lookupIndex;
         end = start + 1;
         /* Cannot be taken (lookupIndex was checked above), but the original
-         * compares start with -1 again here (bne at 0x001F6CD8). */
+         * compares start with -1 again here (bne at enepcEnableDrawFlags +0xA0). */
         if (start == -1) {
             return 1;
         }
@@ -622,3 +622,15 @@ int enepcEnableDrawFlags(int call)
     }
     return 1;
 }
+
+const char D_0069D2D8[8] = "setSE";
+
+const char D_0069D2E0[8] = "Resigne";
+
+const char D_0069D2E8[8] = "Encount";
+
+const char D_0069D2F0[8] = "lookat";
+
+const char D_0069D2F8[8] = "motion";
+
+const char D_0069D300[8] = "Extra";

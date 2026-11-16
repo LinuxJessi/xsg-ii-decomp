@@ -435,8 +435,8 @@ float Get_Decimal_Surplus_for_Radius(float value);
 void uwamonoCompactRoute(int index, short step);
 extern const char D_00689DC8[];
 extern const char D_00689DD8[];
-extern float uwamonoPi;
-extern float D_0069B0E8;
+extern const float uwamonoPi;
+extern const float D_0069B0E8;
 extern s16 D_002B60C0[];
 extern s16 uwamonoLadderState;
 extern float D_0069B0D4;
@@ -887,6 +887,16 @@ unsigned short xglSRand(void);
 void XenoActorSetModeInSlot(void *, int, int);
 
 
+const char D_00689D90[24] = "\314\334\267\342(%8f,%8f,%8f)";
+
+const char D_00689DA8[16] = "\277\267\265\254 %3d";
+
+const char D_00689DB8[16] = "\265\367\316\245 %8f";
+
+const char D_00689DC8[16] = "\245\253\245\246\245\363\245\310";
+
+const char D_00689DD8[24] = "\245\351\245\363\245\300\245\340";
+
 void uwamonoNextAction(int slotIndex)
 {
     UwamonoState *state = uwamonoRecords[slotIndex].state;
@@ -1054,10 +1064,10 @@ typedef struct UwamonoGameWork {
 extern UwamonoGameWork gameWork;
 extern signed char pxyTickScaleDouble;
 extern unsigned short textOptionFlags[];
-extern float D_0069B0F0;
-extern float D_0069B0F4;
-extern float D_0069B0F8;
-extern float D_0069B0FC;
+extern const float D_0069B0F0;
+extern const float D_0069B0F4;
+extern const float D_0069B0F8;
+extern const float D_0069B0FC;
 extern char D_0069D450[];
 void uwamonoDrawPointPath(int index);
 void uwamonoDrawStateLinks(int index);
@@ -1228,7 +1238,7 @@ void uwamonoUpdateRecord(int index)
 int HitCheckMapUnitPosSize(const Vector4 *position, float radius);
 int uwamonoFindOverlapRecord(int index, Vector4 *position, float scale);
 float unduGetSlotHeight(int index, Vector4 *position, int motion, int frame, int flags);
-extern char D_00689E60[];
+extern const char D_00689E60[];
 
 /*
  * Steps the record of one slot toward the target along the heading to it, at
@@ -1236,6 +1246,8 @@ extern char D_00689E60[];
  * another record puts the record back where it was. Returns 1 when the record
  * moved freely (the actor then walks or runs by the step length), 0 otherwise.
  */
+const char D_00689E60[16] = "\244\252\244\301\244\306\244\353\241\251";
+
 int uwamonoMoveAlongHeading(int index, Vector4 *target, float speed)
 {
     UwamonoRecord *record = &uwamonoRecords[index];
@@ -1422,7 +1434,7 @@ void uwamonoSetMotion(int slotIndex, int motion, float speed)
 
 
 
-extern float D_0069B108;
+extern const float D_0069B108;
 void XenoActorResetChannelFlags(UwamonoActor *actor);
 void *sefSpawnEffectRecordById(unsigned int id, int unknown1, int unknown2);
 void sefSetRecordOwner(void *record, UwamonoActor *actor);
@@ -1815,6 +1827,7 @@ void uwamonoBeginEncounter(int index, signed char takeValue, int reactionValue)
     }
 }
 
+
 void uwamonoCompactRoute(int index, short step)
 {
     UwamonoState *state = uwamonoSlotTable[index].state;
@@ -1912,3 +1925,23 @@ void uwamonoRebuildTrail(int index)
     uwamonoSetAction(index, 3);
     uwamonoSetAction(index, 2);
 }
+
+s16 D_002B60C0[] = { 0, 0 };
+
+const char D_0069D438[8] = "\276\345\312\252";
+
+const char D_0069D440[8] = "\304\276\277\312";
+
+const char D_0069D448[6] = "\304\311\262\303";
+
+s16 D_0069D44E = 0;
+
+char D_0069D450[4] = "%8f";
+
+const float uwamonoPi = 3.14159274f;
+const float D_0069B0E8 = 1.57079637f;
+const float D_0069B0F0 = 0.300000012f;
+const float D_0069B0F4 = 1.70000005f;
+const float D_0069B0F8 = 0.100000001f;
+const float D_0069B0FC = 1.70000005f;
+const float D_0069B108 = 0.100000001f;

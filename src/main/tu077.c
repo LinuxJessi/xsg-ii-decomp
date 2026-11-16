@@ -46,7 +46,7 @@ void ladderRegisterNatives(void) {
 }
 
 float I2F(int value);
-extern f32 cameraCentiScale;
+extern const f32 cameraCentiScale;
 
 f32 cameraCentiToFloat(int value) {
     return I2F(value) * cameraCentiScale;
@@ -58,13 +58,13 @@ int cameraFloatToCenti(f32 value) {
     return F2I(value * 100.0f);
 }
 
-extern f32 cameraRadPerCentiDeg;
+extern const f32 cameraRadPerCentiDeg;
 
 f32 cameraCentiDegToRad(int value) {
     return I2F(value) * cameraRadPerCentiDeg;
 }
 
-extern f32 cameraRadPerCentiDegDiv;
+extern const f32 cameraRadPerCentiDegDiv;
 
 int cameraRadToCentiDeg(f32 value) {
     return F2I(value / cameraRadPerCentiDegDiv);
@@ -143,8 +143,11 @@ struct CameraWork {
     /* 0x240 */ Vector4 camMoveAngles; /* target angles while a camera move is pending */
 };
 
+static u8 cameraRefMoveFlag;
+static u8 cameraCamMoveFlag;
+static u8 cameraMoveMode;
 /* Script argument count of the camera command now running; cameraCheckArgCount compares it with argc. */
-extern u8 cameraArgCount;
+static u8 cameraArgCount;
 extern u8 cameraRangeMode[];
 extern f32 D_002B5EEC[];
 extern f32 cameraPersAngle[];
@@ -390,7 +393,6 @@ int cfNorth(int handle) {
     return 1;
 }
 
-extern u8 cameraRefMoveFlag;
 
 int cameraSetRefPos(int scriptHandle) {
     f32 posX;
@@ -465,8 +467,6 @@ int cameraSetRefAct(int scriptHandle) {
 }
 
 void cameraOrbitPosition(float *dst, float *a, float *b);
-extern u8 cameraCamMoveFlag;
-extern u8 cameraMoveMode;
 
 int SetRefActR(int act)
 {
@@ -1450,3 +1450,43 @@ void cameraRegisterNatives(void) {
     cameraCamMoveFlag = 0;
     cameraMoveMode = 0;
 }
+
+f32 cameraRefMoveProgress[] = { 0.0f };
+unsigned char D_002B5EE0[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+int D_002B5EE8[] = { 0 };
+f32 D_002B5EEC[] = { 0.0f };
+unsigned char D_002B5EF0[16] = { 0 };
+unsigned char D_002B5F00[28] = { 0 };
+u8 cameraRangeMode[] = { 0, 0, 0, 0 };
+
+unsigned char D_002B5F20[16] = { 0 };
+unsigned char D_002B5F30[44] = { 0 };
+
+f32 cameraPersAngle[4] = { 0 };
+f32 cameraBankAngle[33] = { 0 };
+unsigned char D_002B5FF0[208] = { 0 };
+
+unsigned char ladderModuleName[8] = "ladder";
+unsigned char uwamonoLadderState[8] = "";
+unsigned char D_0069D328[8] = "SetPers";
+unsigned char D_0069D330[8] = "SetBank";
+unsigned char D_0069D338[8] = "Shake";
+unsigned char D_0069D340[8] = "Move";
+unsigned char D_0069D348[8] = "CamLock";
+unsigned char D_0069D350[8] = "RefLock";
+unsigned char D_0069D358[8] = "cfNorth";
+unsigned char D_0069D360[8] = "cfHokan";
+unsigned char D_0069D368[8] = "cfLock";
+unsigned char D_0069D370[8] = "cfCamID";
+unsigned char D_0069D378[8] = "cfSet";
+unsigned char D_0069D380[8] = "mode";
+unsigned char D_0069D388[8] = "reset";
+unsigned char cameraModuleName[8] = "camera";
+unsigned char D_0069D398[8] = "random";
+unsigned char D_0069D3A0[8] = "cos";
+unsigned char D_0069D3A8[8] = "sin";
+unsigned char D_0069D3B0[8] = "atan";
+
+const f32 cameraCentiScale = 0.00999999978f;
+const f32 cameraRadPerCentiDeg = 0.000174532935f;
+const f32 cameraRadPerCentiDegDiv = 0.000174532935f;

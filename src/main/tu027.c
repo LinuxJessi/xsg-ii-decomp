@@ -3,6 +3,17 @@
 
 /* Host-link constants: chunk size of one transfer, timeouts in ms (-1 waits forever), and the byte
  * lengths of the command verbs sent to the host ("SIZE ", "GET ", "PUT ", "SEND ", "RECV ", "CLOSE"). */
+static char netLocalAddressText[16];
+static unsigned char netLocalAddress[16];
+static char netHostName[16];
+static unsigned char netContext[64];
+static int netWork;
+static void (*netStatusHandler)(void);
+static struct {
+    int port;
+    int unmodeled_04;
+} netHostPort;
+
 enum {
     LAN_CHUNK_SIZE = 0x4000,
     LAN_CONNECT_TIMEOUT = 5000,
@@ -41,8 +52,6 @@ unsigned int strlen(const char *);
 int printf(const char *, ...);
 char *strcpy(char *, const char *);
 void xglFontDebugPrintf(int, int, const char *, ...);
-extern void (*netStatusHandler)(void);
-extern int netWork;
 extern const char D_0068E448[];
 extern const char D_0068E458[];
 extern const char D_0068E480[];
@@ -50,12 +59,9 @@ extern const char D_0068E490[];
 extern const char netCloseCommand[];
 extern const char netGetCommand[];
 extern const char netRecvCommand[];
-extern unsigned char netContext[];
 extern const char netSizeCommand[];
-extern char netHostName[];
 extern int netInitState;
 extern int netHostConfigured;
-extern int netHostPort;
 
 /* Shows a step label through the debug font, then runs the status handler (netStatusHandler) when one is set. */
 void LanReportStatus(const char *message) {
@@ -76,8 +82,6 @@ extern const char D_0068E3F8[];
 extern const char D_0068E418[];
 extern const char D_0068E428[];
 extern const char D_0068E468[];
-extern const char netLocalAddressText[];
-extern unsigned char netLocalAddress[];
 
 int LanOpen(void) {
     LanConnectRequest block;
@@ -91,7 +95,7 @@ int LanOpen(void) {
     if (func_0029FAA8(netContext, netWork, 0, block.address, netHostName, -1, -1) != 0) {
         printf(D_0068E3C8);
     }
-    block.port = netHostPort;
+    block.port = netHostPort.port;
     LanReportStatus(D_0068E3E8);
     handle = func_0029FCD8(netContext, netWork, &block);
     if (handle <= 0) {
@@ -328,7 +332,7 @@ int UsbSetHost(const char *name, int port) {
         return -1;
     }
     strcpy(netHostName, name);
-    netHostPort = port;
+    netHostPort.port = port;
     netHostConfigured = 1;
     return 0;
 }
@@ -337,7 +341,7 @@ int UsbSetHost(const char *name, int port) {
 int UsbGetHost(char *name, int *port) {
     if (netHostConfigured != 0) {
         strcpy(name, netHostName);
-        *port = netHostPort;
+        *port = netHostPort.port;
     } else {
         name[0] = '\0';
         *port = 0;
@@ -354,9 +358,9 @@ extern const char D_0069E050[];
 extern const char D_0069E058[];
 extern const char D_0069E060[];
 extern const char D_0069E068[];
-extern const char D_00645208[];
-extern const char D_00645278[];
-extern const char D_006452B0[];
+extern char D_00645208[];
+extern char D_00645278[];
+extern char D_006452B0[];
 extern const char D_0068E4F0[];
 extern const char D_0068E508[];
 extern const char D_0068E528[];
@@ -410,3 +414,45 @@ int UsbInit(void (*statusHandler)(void), int device) {
     netInitState = device + 1;
     return 0;
 }
+
+char D_00645208[112] = "icon=host1:/home/xeno/vcd-f/conf/iconjp/SYS_NET.ICO\000iconsys=host1:/home/xeno/vcd-f/conf/iconjp/icon.sys";
+
+char D_00645278[56] = "-no_decode\000mc0:/BISLPS-00000DebugSta/net000.cnf";
+
+char D_006452B0[64] = "-no_decode\000mc0:/BISLPS-00000DebugSta/net001.cnf";
+
+const char D_0068E3B8[16] = "LanOpen:search";
+const char D_0068E3C8[32] = "sceInetName2Address() failed.\n";
+const char D_0068E3E8[16] = "LanOpen:connect";
+const char D_0068E3F8[32] = "sceInetCreate() returns %d\n";
+const char D_0068E418[16] = "LanOpen:open";
+const char D_0068E428[32] = "sceInetOpen() failed. ret = %d\n";
+const char D_0068E448[16] = "close error:%d\n";
+const char D_0068E458[16] = "LanClose:close";
+const char D_0068E468[24] = "UsbRead:%8x %8d/%8d %8d";
+const char D_0068E480[16] = "UsbRead:request";
+const char D_0068E490[24] = "UsbRead:read size";
+const char D_0068E4A8[24] = "UsbWrite:request";
+const char D_0068E4C0[24] = "UsbWrite:read size";
+const char D_0068E4D8[24] = "UsbWrite:%8d/%8d";
+const char D_0068E4F0[24] = "reg_handler() failed.\n";
+const char D_0068E508[32] = "wait_get_addr() failed.\n";
+const char D_0068E528[16] = "invalid addr\n";
+const char D_0068E538[16] = "My address: %s\n";
+
+int netInitState = 0;
+int netHostConfigured = 0;
+const char netCloseCommand[8] = "CLOSE";
+const char netSizeCommand[8] = "SIZE ";
+const char netGetCommand[8] = "GET ";
+const char netPutCommand[8] = "PUT ";
+const char netSendCommand[8] = "SEND ";
+const char netRecvCommand[8] = "RECV ";
+const char D_0069E030[8] = "inet";
+const char D_0069E038[8] = "netcnf";
+const char D_0069E040[8] = "inetctl";
+const char D_0069E048[8] = "usbd";
+const char D_0069E050[8] = "an986";
+const char D_0069E058[8] = "smap";
+const char D_0069E060[8] = "msifrpc";
+const char D_0069E068[8] = "libnet";

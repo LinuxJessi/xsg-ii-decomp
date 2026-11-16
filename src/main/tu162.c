@@ -14,6 +14,7 @@ typedef struct DrawList {
 } DrawList;
 
 extern DrawList svDrawList;
+
 extern int D_006B4C34;
 
 void func_002594E8(int value)

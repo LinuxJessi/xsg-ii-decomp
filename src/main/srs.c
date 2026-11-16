@@ -8,7 +8,7 @@ extern int sprintf(char *destination, const char *format, ...);
 extern char *strcpy(char *destination, const char *source);
 
 void srsSetLoadMode(int load_mode);
-extern int _nRead;
+static int _nRead;
 
 #define SRS_EFFECT2_INDEX_ROWS 117   /* _srsEffect2IndexTbl */
 #define SRS_PATH_LENGTH 256          /* resolved file path and view path */
@@ -55,7 +55,7 @@ extern int sceRead(int descriptor, void *buffer, int bytes);
 extern int sceClose(int descriptor);
 /* Read-completion callback for xglCdReadFile, defined below. */
 void srsCdReadCallback(int readStatus);
-extern char srsViewPath[SRS_PATH_LENGTH];
+char srsViewPath[SRS_PATH_LENGTH] = "";
 extern signed char _srsEffect2IndexTbl[SRS_EFFECT2_INDEX_ROWS];
 int srsMakeFileName(char *buffer, const char *fileName);
 
@@ -87,7 +87,12 @@ int srsGetEffectFileKind(int index, int kind)
     return ((u32)(index - 300) < 100U) ? SRS_EFFECT_FILE_NONE : esdCategory;
 }
 
-extern char *srsEffectKindPrefix[4];
+int srsLoadMode = 0;
+int srsEffectStamp = 0;
+char srsPrefixEe[8] = "ee";
+char srsPrefixCe[8] = "ce";
+char srsPrefixPe[8] = "pe";
+char *srsEffectKindPrefix[4] = { srsPrefixPe, srsPrefixCe, srsPrefixEe, 0 };
 
 /* Formats the effect stem into buffer: the kind prefix from
  * srsEffectKindPrefix, the index as three digits, and, when withSubNo is
@@ -111,7 +116,7 @@ void srsFormatEffectStem(int effectNo, char *buffer, int withSubNo)
 }
 
 extern void *memset(void *destination, int value, unsigned int size);
-extern char srsEffectStemBuffer[];
+static char srsEffectStemBuffer[16];
 
 /* Returns the effect stem with its sub number, in srsEffectStemBuffer. */
 char *srsGetEffectStem(int effectNo)
@@ -123,7 +128,7 @@ char *srsGetEffectStem(int effectNo)
 extern int xglDebFileSize(const char *name);
 extern int xglDebFileRead(const char *name, void *buffer);
 extern void srsMapPendingResources(void);
-extern char srsEftNameBuffer[];
+static char srsEftNameBuffer[256];
 extern char *func_002AA7F0(char *dest, const char *src);
 
 /* Writes *charNo (the kind, for an .esp effect) and *effectType, and returns
@@ -223,6 +228,12 @@ int srsMakeFileName(char *buffer, const char *fileName)
 
 /* Returns the file length for the current load mode, rounded up to a 2 KB
  * sector, or 0 when the file cannot be opened. */
+/* Two counters after the srsMakeFileName literals in .sdata (types not declared in this TU: int guessed). */
+int D_0069DC20 = 0;
+int D_0069DC24 = 0;
+int sefGroupKey = 0;
+int D_0069DC2C = 0;
+
 int srsGetFileLen(const char *fileName)
 {
     char path[SRS_PATH_LENGTH];
@@ -334,8 +345,8 @@ int srsLoadFileSync(void *buffer, const char *name)
     return fileLoad(buffer, name, 0);
 }
 
-extern const char srsEsdPathFormat[];
-extern char srsEsdNameBuffer[];
+const char srsEsdPathFormat[16] = "esd/%s.esd";
+static char srsEsdNameBuffer[256];
 
 /* Returns esd/<stem>.esd for a positive effect number, in srsEsdNameBuffer. */
 char *srsGetEffectName(int effectNo)
@@ -352,8 +363,8 @@ char *srsGetEffectName(int effectNo)
     return name;
 }
 
-extern const char srsEspPathFormat[];
-extern char srsEspNameBuffer[];
+const char srsEspPathFormat[16] = "esp/%s.esp";
+static char srsEspNameBuffer[256];
 
 /* Returns esp/<stem>.esp for a positive effect number, in srsEspNameBuffer. */
 char *srsGetEspName(int effectNo)
@@ -454,3 +465,6 @@ void srsResetKeyTable(void)
     srsEffectStamp = 0;
     memset(srsRecordTable, 0, SRS_RECORD_TABLE_SIZE);
 }
+
+unsigned char srsRecordTable[12] = { 0 };
+int D_005E66DC = 0;

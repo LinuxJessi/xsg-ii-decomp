@@ -317,7 +317,6 @@ segments:
       - [0x1982B0, data, tu067]
       - [0x1988C0, data, tu049]
       - [0x198A90, data, tu050]
-      - [0x198BBC, data, tya_draw_gauge]
       - [0x19C578, data, tu053]
       - [0x19D1A0, data, game_snap_shot]
       - [0x19D2E0, data, game_defocus]
@@ -326,9 +325,9 @@ segments:
       - [0x19E3C0, data, tu063]
       - [0x19E478, data, elevator]
       - [0x19E4C0, data, game_over_065]
+      - [0x19E570, data, tya_draw_gauge]
       - [0x21FEC0, data, tu083]
-      - [0x2210F8, data, tu110]
-      - [0x221200, data, init_uwamono_sys]
+      - [0x220DC0, data, init_uwamono_sys]
       - [0x2C7E40, data, tu072]
       - [0x2C7F58, data, tu074]
       - [0x2C81E8, data, tu079]
@@ -343,7 +342,7 @@ segments:
       - [0x2CC308, data, yg2path]
       - [0x2CC70C, data, tu109]
       - [0x2CCA58, data, tu108]
-      - [0x2CD65C, data, tu081]
+      - [0x2CD458, data, tu110]
       - [0x2CD868, data, tu114]
       - [0x2CDAB0, data, ysegf]
       - [0x2CDB5C, data, tu124]
@@ -395,9 +394,7 @@ segments:
       - [0x521000, data, sce_sdk_low]
       - [0x5259A0, data, xgl_jpeg]
       - [0x525ED0, data, tu020]
-      - [0x525F18, data, tu021]
-      - [0x525F1C, data, tu071]
-      - [0x525F24, data, tu022]
+      - [0x525F18, data, tu022]
       - [0x525F78, data, tu024]
       - [0x526100, data, xgl_hdd]
       - [0x526208, data, tu027]
@@ -504,8 +501,8 @@ segments:
       - [0x56F088, rodata, xgl_1_016]
       - [0x56F0D0, rodata, tu017]
       - [0x56F0E0, rodata, xgl_jpeg]
-      - [0x56F178, rodata, tu021]
-      - [0x56F1C8, rodata, tu022]
+      - [0x56F158, rodata, tu021]
+      - [0x56F1B8, rodata, tu022]
       - [0x56F208, rodata, xgl_hdd]
       - [0x56F2C8, rodata, tu026]
       - [0x56F3B8, rodata, tu027]
@@ -630,7 +627,7 @@ segments:
       - [0x57E770, sdata, tu114]
       - [0x57E778, sdata, tu111]
       - [0x57E7D0, sdata, yg2path]
-      - [0x57E7E4, sdata, tu115]
+      - [0x57E7E0, sdata, tu115]
       - [0x57E888, sdata, ysegf]
       - [0x57E8F8, sdata, tu122]
       - [0x57E968, sdata, tu125]
@@ -670,7 +667,7 @@ segments:
       - [0x57EEF0, sdata, xgl_menu]
       - [0x57EF08, sdata, xgl_cd]
       - [0x57EF70, sdata, tu012]
-      - [0x57EF80, sdata, tu017]
+      - [0x57EF78, sdata, tu017]
       - [0x57EF84, sdata, xgl_jpeg]
       - [0x57EF88, sdata, tu021]
       - [0x57EF90, sdata, tu022]
@@ -731,7 +728,7 @@ segments:
       - { type: bss, vram: 0x006A2998, name: tu099 }
       - { type: bss, vram: 0x006A4860, name: tu100 }
       - { type: bss, vram: 0x006A5510, name: tu101 }
-      - { type: bss, vram: 0x006A5A84, name: tu108 }
+      - { type: bss, vram: 0x006A5A80, name: tu108 }
       - { type: bss, vram: 0x006A5B98, name: tu110 }
       - { type: bss, vram: 0x006ABBC0, name: tu109 }
       - { type: bss, vram: 0x006ABC18, name: yg2path }
@@ -743,7 +740,6 @@ segments:
       - { type: bss, vram: 0x006AC280, name: test_128 }
       - { type: bss, vram: 0x006AF4C0, name: tu156 }
       - { type: bss, vram: 0x006AF7C0, name: sv_get_image_item }
-      - { type: bss, vram: 0x006B4C34, name: tu162 }
       - { type: bss, vram: 0x006DE840, name: sef }
       - { type: bss, vram: 0x00807B90, name: srs }
       - { type: bss, vram: 0x00807EA0, name: tu182 }

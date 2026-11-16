@@ -5,6 +5,38 @@
 #include "vu0_macro.h"
 #include "gs.h"
 
+/* Small data before the draw state pointer: five 8-byte tag strings, the sort count, the draw mode and the fog value. */
+/* Scaffold .bss object of this TU: 384 bytes at D_006AF7C0 (the scaffold split it at D_006AF890, a 16-byte aligned vector at +0xD0). */
+static u8 D_006AF7C0[384];
+void *D_0069DAE4 = D_006AF7C0;
+char D_0069DAE8[8] = "sDir";
+char D_0069DAF0[8] = "sCol";
+char D_0069DAF8[8] = "sSha";
+char D_0069DB00[8] = "sPntP";
+char D_0069DB08[8] = "sPntC";
+int svSortCount = 0;
+int _draw3D = 0;
+int svFogValue = -1;
+
+/* Scaffold .sbss items of this TU only (no other TU reads them), in address order from svDrawTestWord. */
+static u64 svDrawTestWord;
+static int svZTestEnable;
+static void *svVertexScale;
+static void *svRecordScale;
+static int D_0069E2EC;
+static int svActiveMapperIndex;
+static void *D_0069E2F4;
+static void *D_0069E2F8;
+static int D_0069E2FC;
+static int D_0069E300;
+static int svDrawMode;
+static int D_0069E308;
+static Matrix4 *svRecordMatrix;
+static int D_0069E310;
+static Matrix4 *svViewMatrix;
+static int D_0069E318;
+
+
 typedef struct XglPacket XglPacket;
 
 typedef struct DrawList {
@@ -73,11 +105,28 @@ typedef struct SortBucket {
     unsigned char unmodeled_08[4];
 } SortBucket;
 
-extern SortItem svSortItems[];
-extern SortBucket svSortBuckets[];
-extern int svDrawMode;
+/* The view block svDrawSendViewSetup uploads to VU1: a unit rotation with the origin, the screen scale and offset (z scaled by 1/16, w cleared) and the view matrix. */
+typedef struct SvViewUpload {
+    Matrix4 unit;
+    Vector4 scale;
+    Vector4 offset;
+    Matrix4 view;
+} SvViewUpload;
+
+/* .bss of this TU in address order (data recovery pass 4): the sort chain, the matrix and vector scratch, the view upload,
+ * the draw list header and the draw-list storage that follows it. */
+static SortItem svSortItems[SV_SORT_ITEM_LIMIT];
+static SortBucket svSortBuckets[SV_SORT_BUCKET_COUNT];
+static Matrix4 D_006B4980[4];
+static Vector4 D_006B4A80;
+static u8 D_006B4A90[256];
+static SvViewUpload svViewUpload;
+static DrawList svDrawList;
+static u8 D_006B4C40[46016];
+static u8 D_006C0000[65536];
+static u8 D_006D0000[384];
+static u8 D_006D0180[59072];
 extern u32 D_003ED4A0[];
-extern DrawList svDrawList;
 extern int D_002B3740[];
 extern unsigned char D_002B3750[];
 
@@ -161,6 +210,22 @@ typedef struct DrawStateRegister {
 typedef struct DrawStateWords {
     u64 words[8];
 } DrawStateWords;
+/* Read-only scaffold items of this TU from svAlphaTestTable up to D_0068C1D0: GS alpha and state tables, the identity-like matrix and the vector. */
+const u64 svAlphaTestTable[4] = { 0x44ULL, 0x48ULL, 0x8000000042ULL, 0x6AULL };
+const u64 D_0068C010[4] = { 0x54ULL, 0x58ULL, 0x8000000052ULL, 0x6AULL };
+const Matrix4 D_0068C030 = {
+    { 0.0f, 0.0f, 1.0f, 0.0f },
+    { 1.0f, 0.0f, 1.0f, 0.0f },
+    { 0.0f, 1.0f, 1.0f, 0.0f },
+    { 1.0f, 1.0f, 1.0f, 0.0f },
+};
+const DrawStateWords D_0068C070 = { { 0x3F800000BF800000ULL, 0x3F80000000000000ULL, 0x3F8000003F800000ULL, 0x3F80000000000000ULL, 0xBF800000BF800000ULL, 0x3F80000000000000ULL, 0xBF8000003F800000ULL, 0x3F80000000000000ULL } };
+const DrawStateWords D_0068C0B0 = { { 0xBF800000ULL, 0x3F8000003F800000ULL, 0x3F800000ULL, 0x3F8000003F800000ULL, 0xBF800000ULL, 0x3F800000BF800000ULL, 0x3F800000ULL, 0x3F800000BF800000ULL } };
+const DrawStateWords D_0068C0F0 = { { 0x3F80000000000000ULL, 0x3F800000BF800000ULL, 0x3F80000000000000ULL, 0x3F8000003F800000ULL, 0xBF80000000000000ULL, 0x3F800000BF800000ULL, 0xBF80000000000000ULL, 0x3F8000003F800000ULL } };
+const DrawStateWords D_0068C130 = { { 0x42C80000C2C80000ULL, 0x3F80000000000000ULL, 0x42C8000042C80000ULL, 0x3F80000000000000ULL, 0xC2C80000C2C80000ULL, 0x3F80000000000000ULL, 0xC2C8000042C80000ULL, 0x3F80000000000000ULL } };
+const Vector4 D_0068C170 = { 0.0f, 0.0f, 0.0f, 1.0f };
+const u64 D_0068C180[2] = { 0xC02A400000008000ULL, 0x525252521EEEULL };
+
 
 /* The GS state block at the pointer in svDrawStatePacket: two matrices, one row of the draw state tables, a GIF tag with its
  * A+D register list and three A+D entries. */
@@ -186,7 +251,7 @@ typedef struct DrawBufferPair {
 } DrawBufferPair;
 
 extern DrawStatePacket *svDrawStatePacket;
-extern u64 svAlphaTestTable[];
+extern const u64 svAlphaTestTable[];
 extern u8 *xglPacketReserve(u8 *base);
 extern DrawBufferPair *func_00259638(int tag);
 
@@ -349,20 +414,12 @@ void svDrawSendStaticRef(void)
 
 #include "main/sdv_033.h"
 
-/* The view block svDrawSendViewSetup uploads to VU1: a unit rotation with the origin, the screen scale and offset (z scaled by 1/16, w cleared) and the view matrix. */
-typedef struct SvViewUpload {
-    Matrix4 unit;
-    Vector4 scale;
-    Vector4 offset;
-    Matrix4 view;
-} SvViewUpload;
-
 extern Vector4 svDefaultScreenParams[];
-extern Matrix4 D_0068C030;
+extern const Matrix4 D_0068C030;
 extern SvViewUpload svViewUpload;
 extern char D_50[];
 /* The static VU1 view setup packet, nine quadwords. */
-extern Quadword svViewSetupPacket[];
+extern unsigned int svViewSetupPacket[];
 extern Matrix4 MMathUnitMatrix;
 XglCamera *xglStudioGetActiveCamera(void);
 
@@ -495,16 +552,23 @@ typedef struct SvReferenceImageSlot {
 /* _imageMapper's symbol-table size is 40 mapper records followed by these
  * forty two-word reference-image slots. */
 typedef struct SvImageMapperStorage {
-    SvTypeList typeLists[SV_TYPE_LIST_COUNT];
-    SvReferenceImageSlot referenceImages[SV_TYPE_LIST_COUNT];
+    SvTypeList typeLists[8];
+    unsigned char unmodeled_tail[2208];
 } SvImageMapperStorage;
 
 SvTypeList *svGetTypeList(int type);
-extern SvImageList _imageList;
+typedef struct SvImageListStorage {
+    unsigned char header[0x1C];
+    SvImageItem items[SV_ENTRY_COUNT];
+    unsigned char gap[0x28];
+    float table[1024];
+    unsigned char tail[12];
+} SvImageListStorage;
+static SvImageListStorage _imageList;
 extern SvImageMapperStorage _imageMapper;
 
 void *svGetImageItem(int index) {
-    return &_imageList.items[index];
+    return &((SvImageList *) &_imageList)->items[index];
 }
 
 void svImageListCreate(void) {
@@ -670,6 +734,10 @@ SvTexParam *svGetPrmFromName(const char *resourceName, int type, SvTexParam *par
     memset(parameter, 0, sizeof(*parameter));
     return 0;
 }
+
+/* Small data after the bitmap name strings of svGetPrmFromName: the draw path flag and the visible entry count. */
+short D_0069DB3C = 0;
+int svVisibleEntryCount = 0;
 
 /* Number of 128-pixel pages of a texture: 128x64 pages for PSMT8, 128x128 for PSMT4, width * height / 128 otherwise. */
 int svGetTexturePageCount(int pixelFormat, int width, int height) {
@@ -1427,8 +1495,6 @@ typedef struct SvDrawItem {
 void svDrawScene(void);
 f32 MMathVectorDotProduct(const Vector4 *first, const Vector4 *second);
 extern unsigned char svMapperPacketEnv[];
-extern int svActiveMapperIndex;
-extern int D_0069E2EC;
 
 /* Refers the current packet to the three-quadword environment block svMapperPacketEnv; runs after every mapper switch. */
 void svRefMapperPacket(void) {
@@ -1438,11 +1504,10 @@ void svRefMapperPacket(void) {
 typedef struct SvDrawTagArea {
     unsigned char unmodeled_00[0x20];
     u64 tag;
+    unsigned char unmodeled_28[0x18];
 } SvDrawTagArea;
 
 extern SvDrawTagArea D_003ED600;
-extern int svZTestEnable;
-extern u64 svDrawTestWord;
 
 void svSetZTestEnv(int enable) {
     if (enable != 0) {
@@ -1553,7 +1618,6 @@ int sefClipViewVolumeA(const Vector4 *model, float limit)
         : "$2", "$3", "$4", "$5", "$f0", "$f1", "memory");
 }
 
-extern void *svVertexScale;
 extern Vector4 D_003ED640;
 
 /* The texture object at SvDrawState+0x1EC: its tex0 word is at +0x10. */
@@ -1736,7 +1800,6 @@ void vu0CurMatrixMulRight3(Vector4 *rows);
 extern Matrix4 D_006B4A40;
 extern Vector4 D_006B4A80;
 extern int svFogValue;
-extern Matrix4 *svRecordMatrix;
 extern Vector4 vu0IdentityMatrix[3];
 extern Vector4 sefCameraMatrix[3];
 
@@ -1886,11 +1949,9 @@ typedef struct SvViewBlock {
     AlignedVector4 scaledCopy;
 } SvViewBlock;
 
-extern u64 D_0068C1B8[];
-extern AlignedVector4 D_006AF890;
+extern const u64 D_0068C1B8[];
 extern void *D_0069DAE4;
-extern int D_0069E318;
-extern f32 D_0069B2B4;
+extern const f32 D_0069B2B4;
 void func_001BA9A0(float value);
 void func_001BAC70(int flags);
 void func_001BB3CC(float value);
@@ -1928,7 +1989,7 @@ void svSetModelRenderState(SvRenderItem *item, Matrix4 *matrix, int scale)
         "vitof0.xyzw vf2, vf2\n\t"
         "vmulx.xyz vf2, vf2, vf1x\n\t"
         "sqc2 vf2, 0(%1)"
-        : : "r"(item->position), "r"(&D_006AF890) : "$8", "$f0");
+        : : "r"(item->position), "r"((AlignedVector4 *) &D_006AF7C0[208]) : "$8", "$f0");
     do {
         vertexScale = svVertexScale;
     } while (0);
@@ -2282,9 +2343,8 @@ extern void vu0CurMatrixMulRight(Vector4 *rows);
 
 extern SefPartTransform sefGlobalTransform; /* the same object as sef.c's SefGlobalTransform (0x58 bytes) */
 
-extern int D_0069E308;
 extern short D_0069DB3C;
-extern u64 D_0068C010[];
+extern const u64 D_0068C010[];
 
 /* Draws the item's clipped polygon: the item matrix scaled by the part's axes (D_0069E308 picks the axes) goes to
  * sefClipPolygon, then the vertices are packed with the item colour, once with the overlay part over the base part
@@ -2528,7 +2588,6 @@ typedef struct SvSlotDrawPacket {
     Matrix4 matrix;
 } SvSlotDrawPacket;
 
-extern int D_0069E310;
 extern float D_0046E110[];
 
 /* Appends one slot draw record to svDrawList: tags, the part and state words, the scaled matrix rows and the position block. */
@@ -3333,24 +3392,17 @@ typedef struct SvDrawCall {
 
 extern SefCurrentRecord *sefCurrentRecord;
 extern unsigned short svSceneFlags;
-extern void *svRecordScale;
-extern void *D_0069E2F4;
-extern int D_0069E2FC;
-extern int D_0069E300;
 /* Stays asm-labelled: D_0069E310 is also read as an int; a single pointer declaration changed the code. */
 extern Vector4 *svPivot[1] __asm__("D_0069E310");
 /* Stays asm-labelled: D_006B4980 is also declared as Matrix4[2]; the one-matrix size is in the object. */
-extern Matrix4 D_006B4980_first __asm__("D_006B4980");
-extern Matrix4 *svViewMatrix;
-extern Vector4 D_003ED650;
-extern DrawStateWords D_0068C070;
-extern DrawStateWords D_0068C0B0;
-extern DrawStateWords D_0068C0F0;
-extern DrawStateWords D_0068C130;
-extern DrawStateWords D_0068C180;
-extern Vector4 D_0068C170;
+extern Vector4 D_003ED650[3];
+extern const DrawStateWords D_0068C070;
+extern const DrawStateWords D_0068C0B0;
+extern const DrawStateWords D_0068C0F0;
+extern const DrawStateWords D_0068C130;
+extern const u64 D_0068C180[2];
+extern const Vector4 D_0068C170;
 extern unsigned char D_006AF340[];
-extern unsigned char D_006AF7C0[];
 int sefFlagTest(int mask);
 unsigned char *sefGetSlotData(int slotIndex);
 Matrix4 *MMathMulMatrix(Matrix4 *out, Matrix4 *rhs, Matrix4 *lhs);
@@ -3543,7 +3595,7 @@ void svDrawImageItem(SvDrawItem *item, int renderState)
     svDrawStatePacket->stateWords = *stateTable;
     if (usesItemMatrix != 0) {
         if (item->entries[-2] == 2) {
-            itemMatrix = &D_006B4980_first;
+            itemMatrix = &D_006B4980[0];
         } else {
             itemMatrix = &D_006B49C0;
         }
@@ -4120,7 +4172,6 @@ typedef struct SvRequestView {
     float value;
 } SvRequestView;
 
-extern void *D_0069E2F8;
 extern Matrix4 D_006B4A00;
 void svDrawSendViewSetup(void);
 void svDrawSortedImages(SvEffectRecord *record);
@@ -4467,9 +4518,7 @@ void svDrawScene2D(void) {
     }
 }
 
-extern Matrix4 D_006B4980[2];
-extern Matrix4 D_0068C1D0;
-extern u8 D_006AF7C0[384];
+extern const Matrix4 D_0068C1D0;
 void xglMatrixInverse(Matrix4 *destination, Matrix4 *matrix);
 
 void svDrawEffectRecords3D(void) {
@@ -4493,3 +4542,214 @@ void svDrawEffectRecords3D(void) {
         }
     }
 }
+
+/* Read-only scaffold items after the C-owned literals: the stencil table D_0068C1B8 and the matrix D_0068C1D0. */
+const u64 D_0068C1B8[3] = { 0x44ULL, 0x48ULL, 0x42ULL };
+const Matrix4 D_0068C1D0 = {
+    { 0.264445007f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.343434989f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, -1.00000203f, -1.0f },
+    { 0.0f, 0.0f, -0.0199999996f, 0.0f },
+};
+
+/* .data of this TU: definitions in address order (data recovery pass 2). */
+const float D_0069B2B4 = -0.1f;
+float D_003ED490[4] = {
+    1.0f,
+    -1.1428571939468384f,
+    0.0625f,
+    1.0f
+};
+
+u32 D_003ED4A0[] = { 0 };
+
+u32 svDrawRecordDivisors[31] = {
+    0x00000000u, 0x000006D0u, 0x0000000Eu, 0x000009D8u, 0x0000001Cu, 0x000001D8u, 0x0000000Eu, 0x00000430u,
+    0x0000001Cu, 0x00000D28u, 0x00000011u, 0x00000D58u, 0x00000022u, 0x00000D38u, 0x00000011u, 0x00000D68u,
+    0x00000022u, 0x00000D48u, 0x00000011u, 0x00000D78u, 0x00000022u, 0x00001688u, 0x0000000Eu, 0x000018D8u,
+    0x0000001Cu, 0x00000D88u, 0x00000003u, 0x00000DD8u, 0x00000003u, 0x00000000u, 0x0000000Eu,
+};
+
+unsigned int svViewSetupPacket[36] = {
+    0x00000000u, 0x00000000u, 0x01000404u, 0x6C080000u, 0x00008007u, 0x10000000u, 0x0000000Eu, 0x00000000u,
+    0x0005000Du, 0x00000000u, 0x00000047u, 0x00000000u, 0x00000060u, 0x00000000u, 0x00000014u, 0x00000000u,
+    0x00000005u, 0x00000000u, 0x00000008u, 0x00000000u, 0x31000000u, 0x00000001u, 0x0000004Eu, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x0000004Au, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000049u, 0x00000000u,
+    0x00000001u, 0x00000000u, 0x00000046u, 0x00000000u,
+};
+
+int srsKeptEffectKeys[8] = {
+    268435507, 268435509, 268435511, 268435489, 268435519, 268435520, 0, 0,
+};
+
+unsigned char svMapperPacketEnv[48] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x51, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+SvDrawTagArea D_003ED600 = {
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x51, 0x02, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    0x5000DULL,
+    { 0x47, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x31, 0x01, 0x00, 0x00, 0x00, 0x4E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+
+Vector4 D_003ED640 = { 255.0f, 255.0f, 255.0f, 255.0f };
+
+Vector4 D_003ED650[3] = {
+    { 1.0f, 1.0f, 1.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f }
+};
+
+SvImageMapperStorage _imageMapper = { 0 };
+
+unsigned char D_00400000[864] = { 0 };
+
+unsigned char D_00400360[64672] = { 0 };
+
+unsigned char D_00410000[65780] = { 0 };
+
+unsigned char D_004200F4[130828] = { 0 };
+
+unsigned char D_00440000[131072] = { 0 };
+
+unsigned char D_00460000[57536] = { 0 };
+
+/* sefGlobalTransform (0x58 bytes): its position, scale and flags are the inner labels D_0046E100, D_0046E110 and D_0046E114. */
+SefPartTransform sefGlobalTransform = { 0 };
+
+SvDrawSlot D_0046E120[260] = { 0 };
+
+
+
+/* svDrawStatePacket: the pointer the draw-state code reads, initialized to the scratch block D_006B4A90 (data recovery pass 4). */
+DrawStatePacket *svDrawStatePacket = (DrawStatePacket *) D_006B4A90;
+
+/* _imageList (0x46E940..0x471D90): header, SV_ENTRY_COUNT items, a 0x28-byte gap and the 1024-entry float table at 0x470D84, one object. */
+static SvImageListStorage _imageList = { { 0 }, { { { 0 } } }, { 0 }, {
+0.000976999989f, 0.00195299997f, 0.00292999996f, 0.00390599994f, 0.00488300016f, 0.00585900014f, 0.0068359999f, 0.00781199988f,
+    0.0087890001f, 0.00976500008f, 0.0107420003f, 0.0117180003f, 0.0126949996f, 0.0136709996f, 0.0146469995f, 0.0156239998f,
+    0.0165999997f, 0.0175759997f, 0.0185529999f, 0.0195289999f, 0.0205049999f, 0.0214809999f, 0.0224569999f, 0.0234329998f,
+    0.0244089998f, 0.0253849998f, 0.0263609998f, 0.0273369998f, 0.0283129998f, 0.0292879995f, 0.0302639995f, 0.0312399995f,
+    0.0322149992f, 0.0331909992f, 0.0341660008f, 0.0351420008f, 0.0361169986f, 0.0370920002f, 0.0380680002f, 0.0390430018f,
+    0.0400179997f, 0.0409930013f, 0.0419679992f, 0.0429419987f, 0.0439170003f, 0.0448919982f, 0.0458660014f, 0.0468409993f,
+    0.0478149988f, 0.0487889983f, 0.0497639999f, 0.0507379994f, 0.0517119989f, 0.0526859984f, 0.0536589995f, 0.054632999f,
+    0.0556069985f, 0.0565799996f, 0.0575539991f, 0.0585270002f, 0.0595000014f, 0.0604729988f, 0.0614459999f, 0.062419001f,
+    0.0633919984f, 0.0643640012f, 0.0653370023f, 0.0663089976f, 0.0672810003f, 0.0682530031f, 0.0692249984f, 0.0701970011f,
+    0.0711689964f, 0.0721400008f, 0.0731120035f, 0.0740830004f, 0.0750539973f, 0.0760250017f, 0.0769959986f, 0.077967003f,
+    0.0789370015f, 0.0799079984f, 0.080877997f, 0.081848003f, 0.0828180015f, 0.083788f, 0.0847570002f, 0.0857269987f,
+    0.0866959989f, 0.0876649991f, 0.0886339992f, 0.0896029994f, 0.0905719995f, 0.0915400013f, 0.0925090015f, 0.0934770033f,
+    0.0944449976f, 0.0954129994f, 0.0963800028f, 0.0973479971f, 0.0983150005f, 0.0992819965f, 0.100249f, 0.101214997f,
+    0.102182001f, 0.103147998f, 0.104114003f, 0.105080001f, 0.106045999f, 0.107012004f, 0.107977003f, 0.108942002f,
+    0.109907001f, 0.110872f, 0.111836001f, 0.112800002f, 0.113764003f, 0.114727996f, 0.115691997f, 0.116655f,
+    0.117619f, 0.118582003f, 0.119543999f, 0.120507002f, 0.121468998f, 0.122431003f, 0.123392999f, 0.124355003f,
+    0.125315994f, 0.126277998f, 0.127239004f, 0.128198996f, 0.129160002f, 0.130119994f, 0.131080002f, 0.132039994f,
+    0.132999003f, 0.133958995f, 0.134918004f, 0.135876f, 0.136834994f, 0.137793005f, 0.138751f, 0.139708996f,
+    0.140665993f, 0.141624004f, 0.142581001f, 0.143537f, 0.144493997f, 0.145449996f, 0.146405995f, 0.147360995f,
+    0.148316994f, 0.149271995f, 0.150226995f, 0.151180997f, 0.152135998f, 0.15309f, 0.154043004f, 0.154997006f,
+    0.155949995f, 0.156902999f, 0.157855004f, 0.158807993f, 0.159759998f, 0.160711005f, 0.161662996f, 0.162614003f,
+    0.163564995f, 0.164515004f, 0.165464997f, 0.166415006f, 0.167365f, 0.168313995f, 0.169263005f, 0.170212001f,
+    0.171159998f, 0.172107995f, 0.173056006f, 0.174004003f, 0.174951002f, 0.175898001f, 0.176844001f, 0.177790001f,
+    0.178736001f, 0.179682001f, 0.180627003f, 0.181572005f, 0.182515994f, 0.183459997f, 0.184404001f, 0.185348004f,
+    0.186290994f, 0.187233999f, 0.188177004f, 0.189118996f, 0.190061003f, 0.191001996f, 0.191943005f, 0.192883998f,
+    0.193825006f, 0.194765002f, 0.195704997f, 0.196643993f, 0.197583005f, 0.198522002f, 0.199460998f, 0.200398996f,
+    0.201335996f, 0.202273995f, 0.203210995f, 0.204146996f, 0.205082998f, 0.206018999f, 0.206955001f, 0.207890004f,
+    0.208825007f, 0.209758997f, 0.210693002f, 0.211627007f, 0.212559998f, 0.213493004f, 0.214425996f, 0.215358004f,
+    0.216288999f, 0.217221007f, 0.218152002f, 0.219082996f, 0.220012993f, 0.220943004f, 0.221872002f, 0.222801f,
+    0.223729998f, 0.224657997f, 0.225585997f, 0.226513997f, 0.227440998f, 0.228367001f, 0.229294002f, 0.230220005f,
+    0.231144994f, 0.232069999f, 0.232995003f, 0.233918995f, 0.234843001f, 0.235767007f, 0.23669f, 0.237611994f,
+    0.238535002f, 0.239455998f, 0.240378007f, 0.241299003f, 0.242219001f, 0.243139997f, 0.244058996f, 0.244978994f,
+    0.245897993f, 0.246815994f, 0.247733995f, 0.248651996f, 0.249568999f, 0.250485986f, 0.251401991f, 0.252317995f,
+    0.253232986f, 0.25414899f, 0.255062997f, 0.255977005f, 0.256891012f, 0.257804006f, 0.258717f, 0.259629995f,
+    0.260542005f, 0.261453003f, 0.262364f, 0.263274997f, 0.264185011f, 0.265094995f, 0.266003996f, 0.266912997f,
+    0.267821014f, 0.268729001f, 0.269636989f, 0.270543993f, 0.271450013f, 0.272356987f, 0.273261994f, 0.274167001f,
+    0.275072008f, 0.275976002f, 0.276879996f, 0.27778399f, 0.278687f, 0.279588997f, 0.280490994f, 0.281392008f,
+    0.282292992f, 0.283194005f, 0.284094006f, 0.284994006f, 0.285892993f, 0.286790997f, 0.287690014f, 0.288587004f,
+    0.289485008f, 0.290381014f, 0.291278005f, 0.292172998f, 0.293069005f, 0.293962985f, 0.294858009f, 0.295751989f,
+    0.296644986f, 0.297538012f, 0.298429996f, 0.299322009f, 0.300213993f, 0.301104993f, 0.301995009f, 0.302884996f,
+    0.303773999f, 0.304663002f, 0.305552006f, 0.306439996f, 0.307327002f, 0.308214009f, 0.309100002f, 0.309985995f,
+    0.310871989f, 0.311756998f, 0.312640995f, 0.313524991f, 0.314408988f, 0.315290987f, 0.316174001f, 0.317056f,
+    0.317936987f, 0.318818003f, 0.319698006f, 0.320578009f, 0.321458012f, 0.322335988f, 0.323215008f, 0.324092001f,
+    0.324970007f, 0.325845987f, 0.326723009f, 0.327598006f, 0.328473985f, 0.329347998f, 0.330222011f, 0.331095994f,
+    0.331968993f, 0.332841992f, 0.333714008f, 0.334585011f, 0.335456014f, 0.336326987f, 0.337197006f, 0.338066012f,
+    0.338934988f, 0.33980301f, 0.340671003f, 0.341538012f, 0.342404991f, 0.343270987f, 0.344137013f, 0.345001996f,
+    0.345867008f, 0.346731007f, 0.347593993f, 0.348457009f, 0.349319994f, 0.350181997f, 0.351042986f, 0.351904005f,
+    0.35276401f, 0.353623986f, 0.354483008f, 0.355342001f, 0.35620001f, 0.357057005f, 0.357914001f, 0.358770996f,
+    0.359627008f, 0.360482007f, 0.361337006f, 0.362190992f, 0.363045007f, 0.363898009f, 0.364749998f, 0.365601987f,
+    0.366454005f, 0.367305011f, 0.368155003f, 0.369004995f, 0.369854003f, 0.370703012f, 0.371551007f, 0.372397989f,
+    0.373245001f, 0.374092013f, 0.374938011f, 0.375782996f, 0.376628011f, 0.377472013f, 0.378315985f, 0.379159003f,
+    0.380001009f, 0.380843014f, 0.381684005f, 0.382524997f, 0.383365005f, 0.384205014f, 0.385044008f, 0.385883003f,
+    0.386720985f, 0.387558013f, 0.388395011f, 0.389230996f, 0.390067011f, 0.390902013f, 0.391736001f, 0.392569989f,
+    0.393402994f, 0.394235998f, 0.39506799f, 0.395900011f, 0.396730989f, 0.397561997f, 0.398391008f, 0.399221003f,
+    0.400050014f, 0.400878012f, 0.401704997f, 0.402532011f, 0.403358996f, 0.404184014f, 0.405010015f, 0.405833989f,
+    0.406657994f, 0.407481998f, 0.408304989f, 0.409126997f, 0.409949005f, 0.410769999f, 0.41159001f, 0.412409991f,
+    0.413230002f, 0.414049f, 0.414867014f, 0.415684015f, 0.416500986f, 0.417317986f, 0.418134004f, 0.418949008f,
+    0.419764012f, 0.420578003f, 0.42139101f, 0.422203988f, 0.423016012f, 0.423828006f, 0.424638987f, 0.425449997f,
+    0.426259995f, 0.427069008f, 0.427877992f, 0.428685993f, 0.42949301f, 0.430299997f, 0.431107014f, 0.431912005f,
+    0.432716995f, 0.433521986f, 0.434325993f, 0.435128987f, 0.43593201f, 0.436733991f, 0.437536001f, 0.438336998f,
+    0.439137012f, 0.439936996f, 0.440735996f, 0.441534013f, 0.442332f, 0.443129987f, 0.443926007f, 0.444721997f,
+    0.445517987f, 0.446312994f, 0.447106987f, 0.447901011f, 0.448693991f, 0.449485987f, 0.450278014f, 0.451070011f,
+    0.451860011f, 0.452650011f, 0.453440011f, 0.454228997f, 0.455017f, 0.455805004f, 0.456591994f, 0.457378f,
+    0.458164006f, 0.458949f, 0.459733993f, 0.460518003f, 0.461300999f, 0.462083995f, 0.462866008f, 0.463647991f,
+    0.464428991f, 0.465209007f, 0.465988994f, 0.466767997f, 0.467545986f, 0.468324006f, 0.469101012f, 0.469877988f,
+    0.470654011f, 0.471430004f, 0.472204f, 0.472979009f, 0.473751992f, 0.474525005f, 0.475297987f, 0.476069003f,
+    0.476839989f, 0.477611005f, 0.478381008f, 0.479149997f, 0.479918987f, 0.480686992f, 0.481454015f, 0.482221007f,
+    0.482988f, 0.483752996f, 0.484517992f, 0.485282987f, 0.486045986f, 0.486808985f, 0.487572014f, 0.488334f,
+    0.489095002f, 0.489856005f, 0.490615994f, 0.491374999f, 0.492134005f, 0.49289301f, 0.493649989f, 0.494406998f,
+    0.495164007f, 0.495918989f, 0.496674001f, 0.497429013f, 0.498183012f, 0.498935997f, 0.499689013f, 0.500441015f,
+    0.501191974f, 0.501942992f, 0.502692997f, 0.503443003f, 0.504191995f, 0.504939973f, 0.505688012f, 0.506434977f,
+    0.507180989f, 0.507927001f, 0.508673012f, 0.509416997f, 0.510160983f, 0.510905027f, 0.511646986f, 0.512389004f,
+    0.513131022f, 0.513872027f, 0.514612019f, 0.515352011f, 0.516090989f, 0.516829014f, 0.517566979f, 0.51830399f,
+    0.519041002f, 0.519777f, 0.520511985f, 0.521247029f, 0.521981001f, 0.522714972f, 0.523446977f, 0.524179995f,
+    0.524910986f, 0.525641978f, 0.526373029f, 0.527101994f, 0.527831972f, 0.528559983f, 0.529287994f, 0.530014992f,
+    0.53074199f, 0.531467974f, 0.532193005f, 0.532917976f, 0.533641994f, 0.534366012f, 0.535089016f, 0.535811007f,
+    0.536532998f, 0.537253976f, 0.537975013f, 0.538694024f, 0.539413989f, 0.540131986f, 0.540849984f, 0.541567981f,
+    0.542284012f, 0.543000996f, 0.543716013f, 0.544430971f, 0.545144975f, 0.545858979f, 0.54657203f, 0.547284007f,
+    0.547995985f, 0.548707008f, 0.549417973f, 0.550127983f, 0.55083698f, 0.551545978f, 0.552254021f, 0.552962005f,
+    0.553668022f, 0.554374993f, 0.555079997f, 0.555785f, 0.556490004f, 0.557193995f, 0.557896972f, 0.558598995f,
+    0.559301019f, 0.560002983f, 0.56070298f, 0.561402977f, 0.562102973f, 0.562802017f, 0.563499987f, 0.564198017f,
+    0.564894974f, 0.565590978f, 0.566286981f, 0.566981971f, 0.567676008f, 0.568369985f, 0.569064021f, 0.569755971f,
+    0.570448995f, 0.571139991f, 0.571830988f, 0.572520971f, 0.573211014f, 0.573899984f, 0.574588001f, 0.575276017f,
+    0.57596302f, 0.576650023f, 0.577336013f, 0.57802099f, 0.578706026f, 0.579389989f, 0.580072999f, 0.580756009f,
+    0.581439018f, 0.582120001f, 0.582800984f, 0.583482027f, 0.584161997f, 0.584841013f, 0.585520029f, 0.586197972f,
+    0.586875021f, 0.587552011f, 0.588227987f, 0.58890301f, 0.589577973f, 0.590252995f, 0.590927005f, 0.591600001f,
+    0.592271984f, 0.592944026f, 0.593614995f, 0.594286025f, 0.594955981f, 0.595625997f, 0.596294999f, 0.596962988f,
+    0.597630978f, 0.598298013f, 0.598963976f, 0.599629998f, 0.600295007f, 0.600960016f, 0.601624012f, 0.602286994f,
+    0.602949977f, 0.603612006f, 0.604273975f, 0.60493499f, 0.605594993f, 0.606254995f, 0.606913984f, 0.607572973f,
+    0.608231008f, 0.60888797f, 0.609544992f, 0.610201001f, 0.61085701f, 0.611512005f, 0.612165987f, 0.612820029f,
+    0.613472998f, 0.614126027f, 0.614777982f, 0.615428984f, 0.616079986f, 0.616729975f, 0.617380023f, 0.618028998f,
+    0.61867702f, 0.619324982f, 0.619971991f, 0.620618999f, 0.621264994f, 0.621909976f, 0.622555017f, 0.623198986f,
+    0.623843014f, 0.624486029f, 0.625127971f, 0.625769973f, 0.626411021f, 0.627052009f, 0.627691984f, 0.628332019f,
+    0.628970027f, 0.629608989f, 0.630245984f, 0.630882978f, 0.631519973f, 0.632156014f, 0.632790983f, 0.633426011f,
+    0.634060025f, 0.63469398f, 0.635326982f, 0.635959029f, 0.636591017f, 0.637221992f, 0.637852013f, 0.638481975f,
+    0.639111996f, 0.639741004f, 0.640368998f, 0.640995979f, 0.64162302f, 0.642250001f, 0.642876029f, 0.643500984f,
+    0.644125998f, 0.644749999f, 0.645372987f, 0.645995975f, 0.646619022f, 0.647240996f, 0.647862017f, 0.648482025f,
+    0.649101973f, 0.64972198f, 0.650340974f, 0.650959015f, 0.651576996f, 0.652194023f, 0.652809978f, 0.653425992f,
+    0.654042006f, 0.654657006f, 0.655270994f, 0.655884027f, 0.656497002f, 0.657109976f, 0.657721996f, 0.658333004f,
+    0.658944011f, 0.659554005f, 0.660163999f, 0.660772979f, 0.661381006f, 0.661988974f, 0.662595987f, 0.663203001f,
+    0.663809001f, 0.664415002f, 0.665019989f, 0.665624022f, 0.666227996f, 0.666831017f, 0.667433977f, 0.668035984f,
+    0.668637991f, 0.669238985f, 0.669839025f, 0.670439005f, 0.671037972f, 0.671636999f, 0.672235012f, 0.672833025f,
+    0.673430026f, 0.674026012f, 0.674621999f, 0.675216973f, 0.675812006f, 0.676406026f, 0.676999986f, 0.677592993f,
+    0.678184986f, 0.678776979f, 0.679368019f, 0.679958999f, 0.680549026f, 0.681138992f, 0.681728005f, 0.682317019f,
+    0.682904005f, 0.683492005f, 0.684078991f, 0.684665024f, 0.685250998f, 0.685836017f, 0.686420023f, 0.687004983f,
+    0.687587976f, 0.688171029f, 0.688753009f, 0.689334989f, 0.689916015f, 0.690496981f, 0.691076994f, 0.691657007f,
+    0.692236006f, 0.692813993f, 0.693391979f, 0.693969011f, 0.694545984f, 0.695122004f, 0.695698023f, 0.696273029f,
+    0.696847975f, 0.697422028f, 0.697995007f, 0.698567986f, 0.699141026f, 0.699711978f, 0.700284004f, 0.700854003f,
+    0.701425016f, 0.701994002f, 0.702562988f, 0.703131974f, 0.703700006f, 0.704267025f, 0.704833984f, 0.70539999f,
+    0.705965996f, 0.706532001f, 0.707095981f, 0.707660019f, 0.708223999f, 0.708787024f, 0.70934999f, 0.709912002f,
+    0.710473001f, 0.711034f, 0.711593986f, 0.712153971f, 0.712713003f, 0.713271976f, 0.713829994f, 0.714388013f,
+    0.714945018f, 0.715502024f, 0.716058016f, 0.716612995f, 0.717167974f, 0.717723012f, 0.718276978f, 0.718829989f,
+    0.719383001f, 0.719935f, 0.720486999f, 0.721037984f, 0.721589029f, 0.722139001f, 0.722688973f, 0.723237991f,
+    0.723785996f, 0.724334002f, 0.724882007f, 0.725428998f, 0.725974977f, 0.726521015f, 0.72706598f, 0.727611005f,
+    0.728155971f, 0.728699028f, 0.72924298f, 0.729785025f, 0.730328023f, 0.730868995f, 0.73141098f, 0.731950998f,
+    0.732491016f, 0.733030975f, 0.73356998f, 0.734108984f, 0.734646022f, 0.735184014f, 0.735720992f, 0.736257017f,
+    0.736792982f, 0.737329006f, 0.737864017f, 0.738398015f, 0.738932014f, 0.739464998f, 0.739997983f, 0.740530014f,
+    0.741061985f, 0.741593003f, 0.742124021f, 0.742654026f, 0.74318397f, 0.743713021f, 0.744242013f, 0.74476999f,
+    0.745298028f, 0.745824993f, 0.746352017f, 0.746878028f, 0.747403026f, 0.747928023f, 0.748453021f, 0.748977005f,
+    0.74950099f, 0.750024021f, 0.750545979f, 0.751067996f, 0.751590014f, 0.752111018f, 0.752631009f, 0.753151f,
+    0.75367099f, 0.754190028f, 0.754707992f, 0.755226016f, 0.75574398f, 0.756260991f, 0.756776989f, 0.757292986f,
+    0.757808983f, 0.758324027f, 0.758837998f, 0.759352028f, 0.759864986f, 0.760378003f, 0.76089102f, 0.761403024f,
+    0.761914015f, 0.762425005f, 0.762935996f, 0.763445973f, 0.763954997f, 0.764464021f, 0.764972985f, 0.765479982f,
+    0.765987992f, 0.766494989f, 0.767000973f, 0.767507017f, 0.768013f, 0.768517971f, 0.769021988f, 0.769526005f,
+    0.770030022f, 0.770533025f, 0.771036029f, 0.771538019f, 0.772038996f, 0.772539973f, 0.77304101f, 0.773540974f,
+    0.774040997f, 0.774540007f, 0.775038004f, 0.775537014f, 0.776033998f, 0.776530981f, 0.777028024f, 0.777523994f,
+    0.778020024f, 0.778514981f, 0.779009998f, 0.779504001f, 0.779998004f, 0.780490994f, 0.780983984f, 0.781476974f,
+    0.781967998f, 0.782459974f, 0.782950997f, 0.783441007f, 0.783931017f, 0.784421027f, 0.784910023f, 0.785398006f
+}, { 0 } };

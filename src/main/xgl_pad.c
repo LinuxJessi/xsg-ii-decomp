@@ -125,7 +125,7 @@ typedef struct XglPadRecord {
 #define PAD_AXIS_THRESHOLD 32
 
 extern XglPadRecord PadData[2];
-extern unsigned char PadDmaBuffer[2 * PAD_DMA_BUFFER_SIZE];
+static unsigned char PadDmaBuffer[2 * PAD_DMA_BUFFER_SIZE];
 /* scePadSetActAlign table: small motor on byte 0, large motor on byte 1. */
 extern unsigned char PadActAlign[6];
 
@@ -599,3 +599,5 @@ void xglPadRead(void)
         }
     }
 }
+
+unsigned char PadActAlign[6] = { 0x00, 0x01, 0xff, 0xff, 0xff, 0xff };

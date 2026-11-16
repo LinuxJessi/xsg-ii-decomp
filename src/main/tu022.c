@@ -60,6 +60,8 @@ void soundSlotStartFile(int index, const char *fileKey)
  * sector, then sectors). */
 extern const char *adxPathPrefix;
 extern const char adxSlotKeyFormat[];
+const char *adxPathPrefix = "sound\\adx\\";
+const char adxSlotKeyFormat[16] = "%08x.%08x";
 int sprintf(char *destination, const char *format, ...);
 
 void adxSetSlotFile(int index, const char *name)
@@ -373,3 +375,15 @@ void soundDriverInit(void)
     soundSlotsReopen();
     WorkEnd = work;
 }
+
+/* Sound control block (main/tu022.h): the song number, default volumes and the two slots, all zero
+ * until the driver setup. */
+SoundControl soundCtrl = { 0 };
+
+/* Interrupt-slot map of the xgl interrupt layer (tu024.h): eleven free slots and slot 11 taken. */
+volatile int xglIntcSlotMap[12] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0 };
+
+/* Interrupt-timer state of the driver (tu024.h): timer active flag, start count and accumulated ticks. */
+int intrTimerActive = 0;
+int intrTimerStart = 0;
+int intrTimerAccum = 0;

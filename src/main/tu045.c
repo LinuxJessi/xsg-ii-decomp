@@ -36,13 +36,26 @@ typedef int s32;
 
 void xglMatrixUnit(void *object);
 void xglVectorZero_001D4508(register Vector4 *destination);
-extern s32 pxyReflectionMatrix;
-extern s32 D_00989A40;
+/* Static block of the reflection and shadow state (.bss 0x9899F0-0x989A50): the colour vector, then the
+ * reflection words and the shadow state. */
+typedef struct PxyReflectBlock {
+    Vector4 colour;     /* +0x00 D_009899F0.colour (colorScale copy) */
+    s32 matrix[3];      /* +0x10 reflection matrix words (xglMatrixStackSave target) */
+    float blend[4];     /* +0x1C blend[0] = reflectBlend */
+    float shade[4];     /* +0x2C shade[0] = +1.0f or -1.0f */
+    s32 mode;           /* +0x3C reflectMode */
+    s32 posVec[3];      /* +0x40 vector subtracted from shadowPosition */
+    s32 flag;           /* +0x4C 0 or 1 */
+    s32 zeroVec[3];     /* +0x50 cleared by func_001CCAA0 */
+    float angle;        /* +0x5C reflection rotation angle */
+} PxyReflectBlock;
+
+static PxyReflectBlock D_009899F0;
 
 void func_001CCAA0(void)
 {
-    xglMatrixUnit(&pxyReflectionMatrix);
-    xglVectorZero_001D4508(&D_00989A40);
+    xglMatrixUnit(D_009899F0.matrix);
+    xglVectorZero_001D4508(D_009899F0.zeroVec);
 }
 
 extern u8 D_00673150[];
@@ -201,21 +214,18 @@ void xglPacketSetMode4Flag(s32 value)
     xglPacketMode4Flag = value;
 }
 
-extern Vector4 D_009899F0;
-
 void func_001CCF84(const Vector4 *colorScale)
 {
-    D_009899F0 = *colorScale;
+    D_009899F0.colour = *colorScale;
 }
 
-extern f32 pxyReflectionAngle;
 void xglMatrixStackUnit(void);
 void xglMatrixStackRotX(f32 angle);
 void xglMatrixStackRotY(f32 angle);
 void xglMatrixStackSave(void *object);
 f32 sinf(f32 x);
 
-/* Reflection mapping rotation (X1 s_inReflRotX/Y): advances pxyReflectionAngle by 0.1 unless frozen, wraps at 2*pi and saves
+/* Reflection mapping rotation (X1 s_inReflRotX/Y): advances D_009899F0.angle by 0.1 unless frozen, wraps at 2*pi and saves
  * RotY(angle) * RotX(sin(angle)) in pxyReflectionMatrix. */
 void pxyUpdateReflectionRotation(s32 reflect)
 {
@@ -225,15 +235,15 @@ void pxyUpdateReflectionRotation(s32 reflect)
         pxyReflectionType = 0;
     }
     if (pxyRotateFreeze == 0) {
-        pxyReflectionAngle += 0.1f;
+        D_009899F0.angle += 0.1f;
     }
-    if (pxyReflectionAngle >= 6.283184f) {
-        pxyReflectionAngle -= 6.283184f;
+    if (D_009899F0.angle >= 6.283184f) {
+        D_009899F0.angle -= 6.283184f;
     }
     xglMatrixStackUnit();
-    xglMatrixStackRotX(sinf(pxyReflectionAngle));
-    xglMatrixStackRotY(pxyReflectionAngle);
-    xglMatrixStackSave(&pxyReflectionMatrix);
+    xglMatrixStackRotX(sinf(D_009899F0.angle));
+    xglMatrixStackRotY(D_009899F0.angle);
+    xglMatrixStackSave(D_009899F0.matrix);
 }
 
 XglCamera *xglStudioSelectGetActiveCamera(s32 index);
@@ -634,12 +644,6 @@ void xglMatrixCopy_001D44C4(Matrix4 *destination, const Matrix4 *source);
 void xglVectorSubXYZ_001D4530(AlignedVector4 *dst, AlignedVector4 *minuend, AlignedVector4 *subtrahend);
 void xglVectorNormal_001A9200(void *dst, void *src);
 
-extern s32 D_00989A30;
-extern float D_00989A0C;
-extern float D_00989A1C;
-extern s32 D_00989A2C;
-extern s32 D_00989A3C;
-
 /* Uploads the view, light and part matrices of the current part to VU1 (addresses 0x384..0x3D4). */
 void pxyUploadViewMatrices(void)
 {
@@ -734,23 +738,23 @@ void pxyUploadViewMatrices(void)
             && SPR_PXY_CHANNEL != 0) {
             register u8 *partBitmask;
 
-            xglVectorSubXYZ_001D4530(&D_00989A30, &SPR_CURRENT_PXY->shadowPosition,
+            xglVectorSubXYZ_001D4530(D_009899F0.posVec, &SPR_CURRENT_PXY->shadowPosition,
                                      (AlignedVector4 *) SPR_CURRENT_PXY->localMatrix[3]);
-            D_00989A0C = SPR_CURRENT_PXY->reflectBlend;
-            D_00989A1C = 1.0f;
+            D_009899F0.blend[0] = SPR_CURRENT_PXY->reflectBlend;
+            D_009899F0.shade[0] = 1.0f;
             if (SPR_CURRENT_PXY->reflectMode == 2) {
-                D_00989A1C = -1.0f;
+                D_009899F0.shade[0] = -1.0f;
             }
-            D_00989A2C = SPR_CURRENT_PXY->reflectMode;
-            D_00989A3C = 0;
+            D_009899F0.mode = SPR_CURRENT_PXY->reflectMode;
+            D_009899F0.flag = 0;
             partBitmask = SPR_CURRENT_PXY->reflectMask;
             /* One bit per matrix index, packed into 32-bit words. */
             if ((*(u32 *) (partBitmask + ((s16) (SPR_PXY_CHANNEL->matrixIndex >> 5) << 2))
                  & (1 << (SPR_PXY_CHANNEL->matrixIndex & 0x1F))) != 0) {
-                D_00989A3C = 1;
+                D_009899F0.flag = 1;
             }
             func_0012B6E0(vif, 969, 108, 1, 1);
-            func_0012BCE8(vif, &pxyReflectionMatrix, 4);
+            func_0012BCE8(vif, D_009899F0.matrix, 4);
             func_0012B770(vif);
             scale = SPR_CURRENT_PXY->reflectScale;
             if (scale < 1.0f) {
@@ -944,12 +948,12 @@ void xglPacketSelectDefaultMode(void);
 void xglDirectQueueFlush(void);
 float func_002A1D08(float x);
 void *memset(void *s, int c, unsigned int n);
-extern u8 D_0068F0D0[];
-extern u8 D_0068F1D0[];
-extern u8 D_0068F2D0[];
-extern u8 D_0068F2F0[];
-extern u8 D_0068F310[];
-extern u8 D_0068F330[];
+const u8 D_0068F0D0[256] = { 0, 128, 0, 0, 0, 64, 14, 48, 18, 4, 0, 0, 0, 192, 14, 48, 0, 128, 0, 0, 0, 64, 6, 48, 18, 4, 0, 0, 0, 192, 6, 48, 0, 128, 0, 0, 0, 64, 46, 48, 18, 4, 0, 0, 0, 192, 46, 48, 0, 128, 0, 0, 0, 64, 38, 48, 18, 4, 0, 0, 0, 192, 38, 48, 0, 128, 0, 0, 0, 64, 14, 80, 242, 241, 4, 0, 0, 192, 14, 80, 0, 128, 0, 0, 0, 64, 6, 80, 242, 241, 4, 0, 0, 192, 6, 80, 0, 128, 0, 0, 0, 64, 46, 80, 242, 241, 4, 0, 0, 192, 46, 80, 0, 128, 0, 0, 0, 64, 38, 80, 242, 241, 4, 0, 0, 192, 38, 80, 0, 128, 0, 0, 0, 64, 30, 48, 18, 4, 0, 0, 0, 192, 30, 48, 0, 128, 0, 0, 0, 64, 22, 48, 18, 4, 0, 0, 0, 192, 22, 48, 0, 128, 0, 0, 0, 64, 62, 48, 18, 4, 0, 0, 0, 192, 62, 48, 0, 128, 0, 0, 0, 64, 54, 48, 18, 4, 0, 0, 0, 192, 54, 48, 0, 128, 0, 0, 0, 64, 30, 80, 242, 241, 4, 0, 0, 192, 30, 80, 0, 128, 0, 0, 0, 64, 22, 80, 242, 241, 4, 0, 0, 192, 22, 80, 0, 128, 0, 0, 0, 64, 62, 80, 242, 241, 4, 0, 0, 192, 62, 80, 0, 128, 0, 0, 0, 64, 54, 80, 242, 241, 4, 0, 0, 192, 54, 80 };
+const u8 D_0068F1D0[256] = { 0, 128, 0, 0, 0, 64, 6, 48, 18, 4, 0, 0, 0, 192, 6, 48, 0, 128, 0, 0, 0, 64, 6, 48, 18, 4, 0, 0, 0, 192, 6, 48, 0, 128, 0, 0, 0, 64, 38, 48, 18, 4, 0, 0, 0, 192, 38, 48, 0, 128, 0, 0, 0, 64, 38, 48, 18, 4, 0, 0, 0, 192, 38, 48, 0, 128, 0, 0, 0, 64, 6, 80, 242, 241, 4, 0, 0, 192, 6, 80, 0, 128, 0, 0, 0, 64, 6, 80, 242, 241, 4, 0, 0, 192, 6, 80, 0, 128, 0, 0, 0, 64, 38, 80, 242, 241, 4, 0, 0, 192, 38, 80, 0, 128, 0, 0, 0, 64, 38, 80, 242, 241, 4, 0, 0, 192, 38, 80, 0, 128, 0, 0, 0, 64, 22, 48, 18, 4, 0, 0, 0, 192, 22, 48, 0, 128, 0, 0, 0, 64, 22, 48, 18, 4, 0, 0, 0, 192, 22, 48, 0, 128, 0, 0, 0, 64, 54, 48, 18, 4, 0, 0, 0, 192, 54, 48, 0, 128, 0, 0, 0, 64, 54, 48, 18, 4, 0, 0, 0, 192, 54, 48, 0, 128, 0, 0, 0, 64, 22, 80, 242, 241, 4, 0, 0, 192, 22, 80, 0, 128, 0, 0, 0, 64, 22, 80, 242, 241, 4, 0, 0, 192, 22, 80, 0, 128, 0, 0, 0, 64, 54, 80, 242, 241, 4, 0, 0, 192, 54, 80, 0, 128, 0, 0, 0, 64, 54, 80, 242, 241, 4, 0, 0, 192, 54, 80 };
+const u8 D_0068F2D0[32] = { 0, 128, 0, 0, 0, 64, 46, 81, 47, 31, 4, 0, 0, 192, 46, 81, 0, 128, 0, 0, 0, 64, 38, 81, 47, 31, 4, 0, 0, 192, 38, 81 };
+const u8 D_0068F2F0[32] = { 0, 128, 0, 0, 0, 64, 38, 81, 47, 31, 4, 0, 0, 192, 38, 81, 0, 128, 0, 0, 0, 64, 38, 81, 47, 31, 4, 0, 0, 192, 38, 81 };
+const u8 D_0068F310[32] = { 0, 128, 0, 0, 0, 64, 46, 81, 47, 241, 4, 0, 0, 192, 46, 81, 0, 128, 0, 0, 0, 64, 46, 81, 242, 241, 4, 0, 0, 192, 46, 81 };
+const u8 D_0068F330[16] = { 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 #define GS_ZBUF_2 0x4F
 
@@ -1040,8 +1044,8 @@ void xglPacketInitVuState(void)
         func_0012B770(vif);
     }
     {
-        u8 *vuTable;
-        u8 *smallTable;
+        const u8 *vuTable;
+        const u8 *smallTable;
 
         vuTable = D_0068F0D0;
         smallTable = D_0068F2D0;
@@ -1088,7 +1092,7 @@ void xglPacketInitVuState(void)
         scaleVec.y = scaleVec.w;
         scaleVec.z = scaleVec.w;
         xglPacketUploadVu1Data(&scaleVec, 1, 825);
-        xglPacketUploadVu1Data(&D_009899F0, 1, 833);
+        xglPacketUploadVu1Data(&D_009899F0.colour, 1, 833);
     }
     {
         CursorRecord records[5];
@@ -2353,7 +2357,7 @@ void func_001D4180(void)
     xglPacketUploadVu1Data(block, 10, 840);
 }
 
-/* Small-data word at 0x0069E10C, one of the unnamed .sdata cells between xglDirectQueueRefOffset and pxyFlushDone. */
+/* Small-data word D_0069E10C, one of the unnamed .sdata cells between xglDirectQueueRefOffset and pxyFlushDone. */
 
 void func_001D4498(int flag)
 {

@@ -46,10 +46,10 @@ typedef struct CullingMapEntry {
  * instructions; an incomplete-extent declaration keeps the target's
  * unknown size ineligible for that optimization.
  */
-extern s32 cullingExistFlag[];
+static s32 cullingExistFlag[4];
 int strcmp(const char *, const char *);
 static int s_nIgnoreCulling = 0;
-extern const CullingMapEntry s_aCullingMap[70];
+extern const CullingMapEntry s_aCullingMap[14];
 
 /* _ApplyMatrix33: _ApplyMatrix33, verbatim X1 twin (high). */
 void _ApplyMatrix33(register Vector4 *destination, register const Matrix4 *matrix, register const Vector4 *vector)
@@ -329,7 +329,7 @@ s32 check_occlusion(CullingVolume *volume, XglCamera *camera, const Vector4 *poi
 }
 
 /* xglCullingCheck: xglCullingCheck, X1 twin (high). */
-extern CullingVolume cullingVolumes[];
+static CullingVolume cullingVolumes[10];
 
 s32 xglCullingCheck(XglCamera *camera, const Vector4 *point)
 {
@@ -372,12 +372,21 @@ void xglCullingMapLastCheck(void)
     }
 }
 
-extern signed char cullingMapName;
+/*
+ * The 32-byte map-name buffer: the code stores its first byte as a scalar and
+ * passes its address to strcpy and check_culling_map.
+ */
+typedef union CullingMapNameBuffer {
+    signed char first;
+    char name[32];
+} CullingMapNameBuffer;
+
+static CullingMapNameBuffer cullingMapName;
 
 /* xglCullingMapInit: xglCullingMapInit (high); clears the culling state. */
 void xglCullingMapInit(void) {
     cullingExistFlag[0] = 0;
-    cullingMapName = 0;
+    cullingMapName.first = 0;
     cullingMapSource = 0;
     s_nIgnoreCulling = 0;
 }
@@ -458,7 +467,7 @@ void xglCullingMapSet(const CullingMapNameSource *source)
 }
 
 /* xglCullingMapCreate: xglCullingMapCreate, X1 twin (high). */
-extern float s_aCullingBase[9];
+extern const float s_aCullingBase[12];
 
 /* Appends the base volume (s_aCullingBase) to the map while there is room; the
  * body sits in a do { } while (0), which the -O0 nop after the prologue shows. */
@@ -543,3 +552,56 @@ void xglVectorSubXYZ_001B7468(register Vector4 *destination, register const Vect
 {
     Vu0SubVectorXYZ(destination, minuend, subtrahend);
 }
+
+/* main/tu036 .rodata 0x0068EDD0..0x0068F000: culling map table (14 rows, the last
+ * one is the terminator), its name strings, the base record and the corner vectors. */
+extern const unsigned char D_0068E7A0[];
+extern int D_0069E0A8;
+extern const char D_0068EF70[16];
+extern const char D_0068EF60[16];
+extern const char D_0068EF50[16];
+extern const char D_0068EF40[16];
+extern const char D_0068EF30[16];
+extern const char D_0068EF20[16];
+extern const char D_0068EF10[16];
+extern const char D_0068EF00[16];
+extern const char D_0068EEF0[16];
+extern const char D_0068EEE0[16];
+extern const char D_0068EED0[16];
+extern const char D_0068EEC0[16];
+extern const char D_0068EEB0[16];
+const CullingMapEntry s_aCullingMap[14] = {
+    { D_0068EF70, (const float *)D_0068E7A0, (const s32 *)((const char *)D_0068E7A0 + 0x600) },
+    { D_0068EF60, (const float *)((const char *)D_0068E7A0 + 0x70), 0 },
+    { D_0068EF50, (const float *)((const char *)D_0068E7A0 + 0xB8), 0 },
+    { D_0068EF40, (const float *)((const char *)D_0068E7A0 + 0x100), 0 },
+    { D_0068EF30, (const float *)((const char *)D_0068E7A0 + 0x190), 0 },
+    { D_0068EF20, (const float *)((const char *)D_0068E7A0 + 0x1D8), 0 },
+    { D_0068EF10, (const float *)((const char *)D_0068E7A0 + 0x220), 0 },
+    { D_0068EF00, (const float *)((const char *)D_0068E7A0 + 0x268), 0 },
+    { D_0068EEF0, (const float *)((const char *)D_0068E7A0 + 0x320), 0 },
+    { D_0068EEE0, (const float *)((const char *)D_0068E7A0 + 0x3D8), 0 },
+    { D_0068EED0, (const float *)((const char *)D_0068E7A0 + 0x4D8), 0 },
+    { D_0068EEC0, (const float *)((const char *)D_0068E7A0 + 0x548), 0 },
+    { D_0068EEB0, (const float *)((const char *)D_0068E7A0 + 0x5B8), 0 },
+    { (const char *)&D_0069E0A8, 0, 0 },
+};
+const char D_0068EEB0[16] = "E2_ELS04";
+const char D_0068EEC0[16] = "E2_SUI02";
+const char D_0068EED0[16] = "E2_EXB06";
+const char D_0068EEE0[16] = "E2_EXB05";
+const char D_0068EEF0[16] = "E2_EXB02";
+const char D_0068EF00[16] = "E2_RAV03";
+const char D_0068EF10[16] = "E2_MID02";
+const char D_0068EF20[16] = "E2_MIL02";
+const char D_0068EF30[16] = "E2_VEC02";
+const char D_0068EF40[16] = "E2_UMN01";
+const char D_0068EF50[16] = "E2_DYU01";
+const char D_0068EF60[16] = "E2_KUK06";
+const char D_0068EF70[16] = "E2_MIL06";
+const float s_aCullingBase[12] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
+const AlignedVector4 cullingForwardAxisVector = { 0.0f, 0.0f, 1.0f, 1.0f };
+const AlignedVector4 cullingCornerLowerLeftVector = { -1.0f, -1.0f, 0.0f, 1.0f };
+const AlignedVector4 cullingCornerLowerRightVector = { 1.0f, -1.0f, 0.0f, 1.0f };
+const AlignedVector4 cullingCornerUpperRightVector = { 1.0f, 1.0f, 0.0f, 1.0f };
+const AlignedVector4 cullingCornerUpperLeftVector = { -1.0f, 1.0f, 0.0f, 1.0f };

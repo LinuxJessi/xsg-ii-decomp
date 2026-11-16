@@ -130,7 +130,7 @@ void sefFreeEffectData(EffectData *effect, unsigned int index);
 /* Frees particle handle `index` of the record when it is in range and * returns -1; out of range, returns the handle's byte offset in the record. */
 int sefFreeLocalData(SefLocalData *data, unsigned int index);
 /* The original local pointer stores the KSEG0 alias of the named table
- * sefAtanTbl at 0x0040FAC0 (main symbol map: 0x0040FAC0, size 0x1004). */
+ * sefAtanTbl inside D_00400360 at +0xF760 (main symbol map: size 0x1004). */
 extern float *atanTbl_0;
 extern unsigned char _ptAlloc[0xA0810];
 void sefDestroyLocalData(SefLocalData *data);
@@ -295,10 +295,13 @@ typedef struct SefSlot {
     unsigned char data[0x2C0 - 0x10];
 } SefSlot;
 
-extern SefSlot *sefPtAllocatorState;
+static unsigned char D_00746C40[38056];
+SefSlot *sefPtAllocatorState = (SefSlot *) D_00746C40;
 extern int sefPtAllocCount;
-extern short sefPtFreeSlots[];
-extern unsigned char sefRequestBuffer[];
+static short sefPtFreeSlots[1104];
+/* The request buffer: 0x340 bytes (SefRequestBuffer view); D_008046F0 (+0x100) and D_008048F0 (+0x300) are
+ * labels inside it. */
+static unsigned char sefRequestBuffer[0x340];
 void sefMemZero(void *dest, int size);
 
 void sevInitPtAllocator(void)
@@ -714,7 +717,7 @@ void vu0CurMatrixMul(void *matrix);
 void vu0RotateCurrentYXZ(Vector4 *angles);
 void vu0SetCurrentRotationYXZ(Vector4 *angles);
 void vu0SetCurrentRotationZ(float angle);
-extern u8 D_0068C220[];
+const Vector4 sefDefaultOffset = { .x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f };
 extern Vector4 vu0IdentityMatrix[3];
 extern SefTransformState *sefLinkedPoint;
 void sefGetKindMatrix(Matrix4 *dest, int unused, int matrixIndex, int kind);
@@ -750,11 +753,12 @@ typedef struct SefPointMotion {
     short sameDirection;                             /* +0x14 */
     unsigned short keyParameter;                     /* +0x16 */
     struct SefTrackKey16 *keys;                      /* +0x18 */
+    unsigned char unmodeled_1C[0xA0 - 0x1C];
 } SefPointMotion;
 
-extern SefPointMotion sefPointMotion;
+SefPointMotion sefPointMotion = { 0 };
 float MMathEvalHermiteKeys(Vector4 *destination, void *keys, float time);
-extern Vector4 sefDefaultOffset;
+const Vector4 D_0068C220[2] = { { .x = 0.0f, .y = 0.0f, .z = 1.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = -1.0f, .w = 1.0f } };
 /* Copies rows 0-2 of src and the translation into dst; returns the distance
  * the translation step measured. */
 float vu0CopyMatrixWithTranslation(Vector4 *dst, Matrix4 src, Vector4 *aux, int value);
@@ -1473,12 +1477,30 @@ typedef struct SefPointState {
     SefTrackCursor alphaTrack;                       /* +0x2b8 */
 } SefPointState;
 
+int D_0069DB48 = 0;
+int sefVectorMode = 0;
+int D_0069DB54 = 0;
 int sefEffectRecordCount = 64;
+int sefLineDataCount = 192;
+int sefPtAllocCount = 1100;
+int D_0069DB6C = 0;
+int sefParentLine = -1;
+s16 sefInitialized = 0;
+int D_0069DB78 = 0;
+s16 D_0069DB80 = 0;
+s16 D_0069DB82 = 0;
+s16 D_0069DB84 = 0;
+s16 sefClipTestDisabled = 0;
+float sefTimeScale = 1.0f;
 float sefPointTimeScale = 1.0f;
+f32 sefTrackTimeStep = 1.0f;
+float sefStepScale = 1.0f;
+float *atanTbl_0 = (float *) 0x20470d80;
+int sefEffectRecordHead = 0;
 extern int sefParentLine;
 extern int D_0069DBB0;
 
-extern float D_0069B2DC;
+float D_0069B2DC = -0.100000001f;
 extern SefEffectRecord *sefCurrentRecord;
 Matrix4 *sefGetPoint(Vector4 *dest, Vector4 *source, int kind);
 struct SefPartTransform;
@@ -1771,12 +1793,12 @@ typedef struct SefLineScript {
     short noAttach;                                  /* +0x0e */
 } SefLineScript;
 
-extern int sefCurrentLoadTag;
-extern float D_0069B2E0;
+static int sefCurrentLoadTag;
+float D_0069B2E0 = 9.99999975e-06f;
 /* The z rotations for the two axis-aligned directions D_00471D90 and D_00471DA0. */
 extern int sefVectorMode;
-extern Vector4 D_00471D90;
-extern Vector4 D_00471DA0;
+Vector4 D_00471D90 = { .x = 1.0f, .y = 1.0f, .z = 0.0f, .w = 0.0f };
+Vector4 D_00471DA0 = { .x = 1.0f, .y = -1.0f, .z = 0.0f, .w = 0.0f };
 extern unsigned char MMathUnitMatrix[];
 int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
 void sefNoiseNextVector(Vector4 *pos);
@@ -1968,7 +1990,8 @@ void sefInitLineData(SefLocalData *line, int startTime, int frame, SefLineScript
     }
 }
 
-extern SefLocalData *sefLineDataRecords;
+static unsigned char sefLineDataPool[0x68400];
+SefLocalData *sefLineDataRecords = (SefLocalData *) sefLineDataPool;
 extern int sefLineDataCount;
 
 int sefAllocLineData(void)
@@ -2175,9 +2198,9 @@ typedef struct SefMotionState {
     short state;
 } SefMotionState;
 
-extern Vector4 D_00804960;
-extern f32 D_0069B2F0;
-extern f32 D_0069B2F4;
+static Vector4 D_00804960;
+f32 D_0069B2F0 = 0.00999999978f;
+f32 D_0069B2F4 = 0.0174532924f;
 f32 sefNoiseNext(void);
 f32 sefRandf(void);
 struct SefLaneObject;
@@ -2445,8 +2468,8 @@ typedef struct SefLineKeys {
 
 extern short D_0069DBB8;
 extern AlignedVector4 D_00471EA0;
-extern unsigned short D_00471DB0[];
-extern unsigned short D_00471DF0[];
+unsigned short D_00471DB0[32] = { 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 0, 0, 0, 0 };
+unsigned short D_00471DF0[24] = { 70, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 0, 0, 0, 0, 0, 0, 0, 0 };
 int sefGetLinkedFlag();
 
 /* result = first + second in x, y and z (w keeps first's). */
@@ -2639,7 +2662,7 @@ int sefExecLineGlobalData(SefLineEmitData *data, int frame)
                          : "$8", "memory")
 
 extern int D_0069DB48;
-extern float D_0069B2F8;
+float D_0069B2F8 = 0.00999999978f;
 
 /* The global transform the placement is merged with: the matrix at +0x000, a position at +0x040, a float scale at +0x050
  * and a flag at +0x054. */
@@ -3166,7 +3189,7 @@ pending:
     return slot->id != 0;
 }
 
-extern unsigned char sefLineDataPool[];
+static unsigned char sefLineDataPool[0x68400];
 
 /* Clears the static 0x68400-byte block sefLineDataPool (192 records of the 0x8B0 line-data stride); both start chains run it
    right after sefInitEffectRecords. */
@@ -3174,7 +3197,7 @@ void sefClearLineDataRecords(void) {
     sefMemClear(sefLineDataPool, 0x68400);
 }
 
-extern SefEffectRecord *sefEffectRecords;
+extern SefEffectRecord *sefEffectRecords;   /* scaffold .sdata item 0x69DB50; defining it changes sefCreateEffectRecord (blocked-b01.md) */
 extern int D_0069DB54;
 
 void sefInitEffectRecords(void)
@@ -3748,8 +3771,8 @@ typedef struct SefSpawnSource {
 struct SefEntry *sefFindEntryById(int id);
 float sefGetEntryScale(int id);
 int sefGetKindSlotVector(Vector4 *destination, int unused, int slot, int kind);
-extern float D_0069B2FC;
-extern float D_0069B300;
+float D_0069B2FC = -20000.0f;
+float D_0069B300 = 0.100000001f;
 extern float D_00493B08[];
 
 /* The unit matrix copy of sefCopyRecordMatrix's null branch, written inline: rows 0..2 from MMathUnitMatrix, row 3 from vf0. */
@@ -3852,7 +3875,7 @@ typedef struct SefEffectOwner {
 } SefEffectOwner;
 
 SefEffectOwner *xglStudioGetCamera2(int index);
-extern float D_0069B304;
+float D_0069B304 = 0.00999999978f;
 extern float sefTimeScale;
 
 void sefMatchEffectEntries(SefEffectRecord *records)
@@ -3904,6 +3927,7 @@ typedef struct SefCameraState {
     Vector4 motion;       /* +0x80: current[3] - previous[3] (xyz) */
     Matrix4 *inverse;     /* +0x90 */
     int valid;            /* +0x94: previous holds a transform */
+    unsigned char unmodeled_98[0xA0 - 0x98];
 } SefCameraState;
 
 typedef struct SefRecordOwnerScale {
@@ -3916,7 +3940,7 @@ typedef struct SefRecordView {
     SefEffectRecord *record;
 } SefRecordView;
 
-extern SefCameraState D_00471E20;
+extern SefCameraState D_00471E20;   /* scaffold items 0x471E20/0x471E60/0x471EA0: one struct over three items, see blocked-b01.md */
 extern short D_0069DB80;
 extern float sefStepScale;
 extern int D_0069DBAC;
@@ -4123,7 +4147,7 @@ int sefEffectRecordIsFree(int index) {
     return sefEffectRecords[index].inUse == 0;
 }
 
-extern int sefHandleTable[];
+static int sefHandleTable[34];
 
 void sefClearHandleTable(void) {
     memset(sefHandleTable, 0, 0x80);
@@ -4175,7 +4199,7 @@ typedef struct SefEntryTable {
     unsigned char unmodeled_21A94[0x0C];
 } SefEntryTable;
 
-extern SefEntryTable sefEntryTable;
+SefEntryTable sefEntryTable = { 0 };
 struct SefActor;
 int sefActorMulLocalVector(struct SefActor *actor, int input, void *output, int apply);
 
@@ -4449,8 +4473,9 @@ typedef struct SefChannel {
 } SefChannel;
 
 extern int D_0069DAD0;
-extern Vector4 sefFallbackVectorsEven[];
-extern Vector4 sefFallbackVectorsOdd[];
+const Vector4 sefFallbackVectorsEven[16] = { { .x = 0.0f, .y = 2.0f, .z = 2.0f, .w = 1.0f }, { .x = 0.40000000596046448f, .y = 0.80000001192092896f, .z = 2.0f, .w = 1.0f }, { .x = -0.20000000298023224f, .y = 1.1000000238418579f, .z = 2.0f, .w = 1.0f }, { .x = 0.40000000596046448f, .y = 0.80000001192092896f, .z = 2.0f, .w = 1.0f }, { .x = 0.20000000298023224f, .y = 1.1000000238418579f, .z = 2.0f, .w = 1.0f }, { .x = -0.10000000149011612f, .y = 0.0f, .z = 2.0f, .w = 1.0f }, { .x = -0.10000000149011612f, .y = 0.60000002384185791f, .z = 2.0f, .w = 1.0f }, { .x = 0.10000000149011612f, .y = 0.0f, .z = 2.0f, .w = 1.0f }, { .x = 0.10000000149011612f, .y = 0.60000002384185791f, .z = 2.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = 2.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = 2.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = 2.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = 2.0f, .w = 1.0f }, { .x = 0.0f, .y = 1.7000000476837158f, .z = 2.0f, .w = 1.0f }, { .x = 0.0f, .y = 1.5499999523162842f, .z = 2.1500000953674316f, .w = 1.0f }, { .x = 0.0f, .y = 1.2999999523162842f, .z = 2.1500000953674316f, .w = 1.0f } };
+
+const Vector4 sefFallbackVectorsOdd[16] = { { .x = 0.0f, .y = 2.0f, .z = -2.0f, .w = 1.0f }, { .x = 0.40000000596046448f, .y = 0.80000001192092896f, .z = -2.0f, .w = 1.0f }, { .x = -0.20000000298023224f, .y = 1.1000000238418579f, .z = -2.0f, .w = 1.0f }, { .x = 0.40000000596046448f, .y = 0.80000001192092896f, .z = -2.0f, .w = 1.0f }, { .x = 0.20000000298023224f, .y = 1.1000000238418579f, .z = -2.0f, .w = 1.0f }, { .x = -0.10000000149011612f, .y = 0.0f, .z = -2.0f, .w = 1.0f }, { .x = -0.10000000149011612f, .y = 0.60000002384185791f, .z = -2.0f, .w = 1.0f }, { .x = 0.10000000149011612f, .y = 0.0f, .z = -2.0f, .w = 1.0f }, { .x = 0.10000000149011612f, .y = 0.60000002384185791f, .z = -2.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = -2.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = -2.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = -2.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = -2.0f, .w = 1.0f }, { .x = 0.0f, .y = 1.7000000476837158f, .z = -2.0f, .w = 1.0f }, { .x = 0.0f, .y = 1.5499999523162842f, .z = -1.8500000238418579f, .w = 1.0f }, { .x = 0.0f, .y = 1.2999999523162842f, .z = -1.8500000238418579f, .w = 1.0f } };
 
 /* Bit test of a vector's xyz as the integer words: z as an int, x and y as one 64-bit word. */
 static inline int sefVectorXyzIsZero(const Vector4 *vector)
@@ -4575,8 +4600,8 @@ typedef struct SefGroupEntry {
     unsigned char unmodeled_18[8]; /* +0x18..0x1F: not read by the code in this unit */
 } SefGroupEntry;
 
-extern SefGroupEntry sefGroupTable[SEF_GROUP_ENTRY_COUNT];
-extern s16 sefSlotTable[];
+SefGroupEntry sefGroupTable[SEF_GROUP_ENTRY_COUNT] = { 0 };
+static s16 sefSlotTable[24];
 
 /* Clears the four work tables (sefSlotTable, sefRequestBuffer, sefGroupTable, sefEntryCounts), then runs the init chain of the
  * CD reader, the ambient, and the effect subsystems. */
@@ -4615,7 +4640,7 @@ void sefStartSystem(void) {
     sefInitialized = 1;
 }
 
-extern unsigned char sefDefaultMemoryBlock[];
+unsigned char sefDefaultMemoryBlock[181376] = { 0 };
 void smInitilize(void *, u32);
 
 /* Start with the built-in block sefDefaultMemoryBlock (0x152800 bytes): record limits 0x40 (sefEffectRecordCount), 0xC0 and 0x44C,
@@ -4756,7 +4781,7 @@ void sefLoadPendingEffects(void) {
     srsLoadPendingEffects(sefSlotTable);
 }
 
-extern unsigned char D_00471E60[];
+extern unsigned char D_00471E60[64];
 void sdvDestroyAlters(void);
 void tiWindResetSlots(void);
 
@@ -4873,6 +4898,12 @@ void sefLoadEffect(int key) {
         srsLoadEffectSlot(0, key, 0);
     }
 }
+
+unsigned char D_0069DBA0[8] = "load";
+SefEffectRecord *sefCurrentRecord = 0;
+int D_0069DBAC = 0;
+int D_0069DBB0 = 0;
+SefTransformState *sefLinkedPoint = 0;
 
 extern s16 D_0069DB84;
 void sdvExecAlters(void);
@@ -5013,7 +5044,7 @@ int sefGetActiveCount(void);
 void svDrawScene2D(void);
 void sefGetCameraPos(Matrix4 *dest);
 void MSeObjProc(int mode);
-extern Matrix4 sefCameraMatrix[];
+Matrix4 sefCameraMatrix[1] = { 0 };
 
 /* Draw pass installed at sRender +0x30. Guarded by the initialized flag sefInitialized and by the pending bit
  * 0x04000000 of gameLoopFlags (the X1 SEF_DRAW_FLAG_PENDING value). Ends the 3D mode with svDrawScene2D (the
@@ -5105,7 +5136,7 @@ typedef struct SefSrsTable {
 } SefSrsTable;
 
 extern SefSrsTable srsRecordTable;
-extern unsigned char D_0068C450[];
+const unsigned char D_0068C450[16] = "delete wait eft";
 
 /* Deletes the wait effect for the id (string "delete wait eft"): finds the matching entry of the eight-entry table
  * srsRecordTable and releases its record with sefReleaseEffectRecord. Called by sefReleaseWaitSlot (tu165). */
@@ -5764,7 +5795,7 @@ typedef struct SefNoiseTable {
     int nextIndex;
 } SefNoiseTable;
 
-extern SefNoiseTable sefNoiseTable;
+static SefNoiseTable sefNoiseTable;
 
 /* Fills the noise table once with uniform samples in [-0.5, 0.5) and resets its read index to zero. */
 void sefNoiseInit(void)
@@ -5816,7 +5847,7 @@ f32 sefRandfUpperQuarter(void)
 }
 
 /* Single-precision 2*pi, read from the scaffold literal sefTwoPi of this unit. */
-extern f32 sefTwoPi;
+f32 sefTwoPi = 6.28318548f;
 
 /* Random angle in [0, 2*pi): the same LCG step as sefRandf, scaled by 2^-15 and then by 2*pi. */
 f32 sefRandAngle(void)
@@ -5828,8 +5859,8 @@ f32 sefRandAngle(void)
     return (f32)bits * (1.0f / 32768.0f) * sefTwoPi;
 }
 
-extern unsigned int sefRandVectorSeeds[4];
-extern unsigned int sefRandVectorIncrements[4];
+unsigned int sefRandVectorSeeds[4] = { 0x5CFEDu, 0x198DBBu, 0xEC96Fu, 1 };
+unsigned int sefRandVectorIncrements[4] = { 12347, 12347, 12347, 0 };
 
 /* Random vector: steps the x, y and z seeds of the vector LCG (times 0xF82D, then all four lanes plus the increments in one paddw), keeps the high 15 bits of each lane and converts them to floats in out. */
 void sefRandVector(Vector4 *out)
@@ -6406,8 +6437,8 @@ void sefTransformPartPoint(SefPartTransform *part, Vector4 *out, int mode, Vecto
 }
 
 extern short sefUseAltMatrix[];
-extern Matrix4 sefScratchMatrix;
-extern Vector4 D_00493B00;
+static Matrix4 sefScratchMatrix;
+Vector4 D_00493B00 = { .x = 0.0f, .y = 0.0f, .z = 0.5f, .w = 1.0f };
 
 /* Resolves the point kind to a position in dest and applies the offset in source: through the matrix block the kind
  * selects when there is one (kind 64 scales the offset by the current record's second block first), otherwise by
@@ -6665,7 +6696,7 @@ void sefGetPosition(Vector4 *dest, Vector4 *source, int kind)
 
 f32 xglCos(f32 angle);
 f32 xglSin(f32 angle);
-extern f32 sefCircleAngleScale;
+f32 sefCircleAngleScale = 6.28318548f;
 
 /* Random point on the circle of the given radius in the XZ plane, y zero: the seed steps once, the angle is the
  * sampled fraction of a turn. */
@@ -6807,8 +6838,8 @@ void sefApplyPartTransform(Vector4 *destination, Vector4 *source, int partKind)
 
 void vu0RotateCurrentX(f32 value);
 void vu0RotateCurrentZ(f32 value);
-extern f32 D_0069B314;
-extern f32 D_0069B318;
+f32 D_0069B314 = 0.0174532924f;
+f32 D_0069B318 = 0.0174532924f;
 
 /* A point of the emission shape `kind` with the offsets as its size: sphere (random or fixed radius), the three
  * cubes, a circle turned by the y/z angles, or a random circle with a random height. */
@@ -7311,7 +7342,7 @@ typedef struct SefSpawnSlot {
     short largeVolume;               /* +0x3e: set when the scale volume is 9 or more */
 } SefSpawnSlot;
 
-extern SefSpawnSlot sefEffectSlots[SEF_SPAWN_SLOT_COUNT];
+static SefSpawnSlot sefEffectSlots[SEF_SPAWN_SLOT_COUNT];
 
 /* Clears the whole effect slot table sefEffectSlots: 32 records of 0x40 bytes. */
 void sefResetSlotTable(void) {
@@ -7321,7 +7352,7 @@ void sefResetSlotTable(void) {
 void logNoOp();
 extern const char D_0069DBD0[];
 extern const char D_0069DBD8[];
-extern const char D_0068C460[];
+const char D_0068C460[32] = "max=%d 2=%d t=%d";
 
 /* Spawns one effect into the first free slot of sefEffectSlots, after the canonical-id and count checks. */
 void sefSpawnEffect(int effectId, Vector4 *position, Vector4 *direction, Vector4 *scale, float angle, int count)
@@ -7537,7 +7568,7 @@ void sefSpawnEffectByName(signed char *name, Vector4 *position, Vector4 *outVect
     sefSpawnEffectById(srsEffectKeyFromName(name), position, outVector, scale, radius, count);
 }
 
-/* Load wait table at loadWaitTable (0x008062C0): sixteen ids, sixteen try counters, sixteen slot values and the ring head. */
+/* Load wait table loadWaitTable: sixteen ids, sixteen try counters, sixteen slot values and the ring head. */
 #define SEF_LOAD_WAIT_RING 16
 #define SEF_LOAD_WAIT_MAX_TRIES 300
 #define SEF_LOAD_STATUS_BUSY -2
@@ -7548,7 +7579,13 @@ typedef struct LoadWaitTable {
     short head;
 } LoadWaitTable;
 
-extern LoadWaitTable loadWaitTable;
+/* The 144-byte original object at loadWaitTable: the 132-byte LoadWaitTable plus 12 bytes the original reserves after it. */
+typedef struct LoadWaitTableBlock {
+    LoadWaitTable table;
+    unsigned char unmodeled_84[0x90 - 0x84];
+} LoadWaitTableBlock;
+
+static LoadWaitTableBlock loadWaitTable;
 
 /* Adds id with its slot value to loadWaitTable; an id of 0 clears the whole table. */
 void loadWaitAdd(int id, int slot)
@@ -7557,7 +7594,7 @@ void loadWaitAdd(int id, int slot)
     int i;
     int ringEnd;
 
-    table = &loadWaitTable;
+    table = &loadWaitTable.table;
     if (id == 0) {
         memset(table, 0, sizeof(*table));
     } else {
@@ -7586,7 +7623,7 @@ void loadWaitPoll(void)
     int ringEnd;
     int loadResult;
 
-    table = &loadWaitTable;
+    table = &loadWaitTable.table;
     ringEnd = (table->head - 1) & (SEF_LOAD_WAIT_RING - 1);
     for (i = table->head; i != ringEnd; i = (i + 1) & (SEF_LOAD_WAIT_RING - 1)) {
         if (table->id[i] != 0) {
@@ -7611,7 +7648,7 @@ int loadWaitBusy(void)
     int i;
 
     for (i = 0; i < SEF_LOAD_WAIT_RING; i++) {
-        if (loadWaitTable.id[i] != 0) {
+        if (loadWaitTable.table.id[i] != 0) {
             return 1;
         }
     }
@@ -7635,9 +7672,9 @@ void xglCdWaitUntilIdle(void)
 }
 
 /* A word set when either override vector was supplied; sefOverrideFlagPtr hands out its address. */
-extern unsigned char sefOverrideFlag[];
-extern AlignedVector4 sefOverrideVectorA;
-extern AlignedVector4 sefOverrideVectorB;
+static unsigned char sefOverrideFlag[16];
+static AlignedVector4 sefOverrideVectorA;
+static AlignedVector4 sefOverrideVectorB;
 
 /*
  * Copies the two override vectors; a null source resets that vector to the
@@ -8132,7 +8169,7 @@ void sefUpdateGroupGate(int owner, int enable, int reset) {
     }
 }
 
-extern short sefGateIdList[];
+short sefGateIdList[] = { 55, 56, 57, 0 };
 
 /*
  * Scans the zero-terminated short table sefGateIdList for id. When id is listed,
@@ -8158,7 +8195,7 @@ void sefSetGateForId(int owner, int id) {
     }
 }
 
-extern short sefDefaultGateIdList[];
+short sefDefaultGateIdList[] = { 2, 12, 13, 0 };
 
 void sefSetGateDefault(int first, int second)
 {
@@ -8177,7 +8214,15 @@ void sefSetGateDefault(int first, int second)
 }
 
 /* Set by sefSetCurrentOwner after sefReleaseOwnedRecords(-1); this file has no other reader. */
-extern int sefCurrentOwner;
+int sefFlagWord = 0;
+int sefCurrentOwner = 0;
+unsigned int sefRandSeed = 2599403U;
+int sefNoiseReady = 0;
+extern unsigned char D_006B4C40[];
+SefEffectRecord *sefEffectRecords = (SefEffectRecord *) D_006B4C40;
+short D_0069DBB8 = 0;
+const char D_0069DBD0[8] = "scl";
+const char D_0069DBD8[8] = "size";
 
 /* Changes the current owner: releases every effect record, then stores owner in sefCurrentOwner. */
 void sefSetCurrentOwner(int owner) {
@@ -8199,7 +8244,7 @@ typedef struct HandleSlot {
     u8 unmodeled_08[4];
 } HandleSlot;
 
-extern HandleSlot sefHandleSlots[];
+HandleSlot sefHandleSlots[48] = { 0 };
 void srsReleaseOtherOwnerEffectSlots(void);
 
 /* Clears the 48-slot handle table, calls srsReleaseOtherOwnerEffectSlots, then refills the
@@ -8310,7 +8355,7 @@ typedef struct SefEffectRecordOwnerView {
     struct SefGroupObject *owner;      /* +0x50 */
 } SefEffectRecordOwnerView;
 
-extern SefEffectListEntry sefEffectRecordList[];
+static SefEffectListEntry sefEffectRecordList[64];
 extern int D_0069DB6C;
 void func_00271398(SefEffectListEntry *list, int count);
 
@@ -8405,3 +8450,39 @@ void *sefGetEffectRecordsAfterScan(void) {
     }
     return records;
 }
+
+/* .bss of sef.c (pass 2): static storage, address order (see notes2-b01). */
+static unsigned char D_00746C40[38056];
+static unsigned char D_007500E8[65304];
+static unsigned char D_00760000[19488];
+static unsigned char D_00764C20[74544];
+static unsigned char D_00776F50[37040];
+static unsigned char D_00780000[13360];
+static unsigned char D_00783430[16456];
+static unsigned char D_00787478[66552];
+static unsigned char D_00797870[231312];
+static unsigned char D_007D0000[188416];
+static unsigned char D_007FE000[8192];
+static unsigned char D_00800000[32];
+static unsigned char D_00800020[32];
+static unsigned char D_00800040[16];
+static unsigned char D_00800050[48];
+static unsigned char D_00800080[15568];
+static SefEntryCounts sefEntryCounts[58];
+
+/* .data of sef.c (pass 2): zero-filled original objects, address order. */
+SefCameraState D_00471E20 = { 0 };
+unsigned char D_004C0000[262144] = { 0 };
+unsigned char D_00500000[32] = { 0 };
+unsigned char D_00500020[32] = { 0 };
+unsigned char D_00500040[32] = { 0 };
+unsigned char D_00500060[32] = { 0 };
+unsigned char D_00500080[32] = { 0 };
+unsigned char D_005000A0[65456] = { 0 };
+unsigned char D_00510050[65840] = { 0 };
+unsigned char D_00520180[130688] = { 0 };
+unsigned char D_00540000[327680] = { 0 };
+unsigned char D_00590000[88] = { 0 };
+unsigned char D_00590058[65448] = { 0 };
+unsigned char D_005A0000[262144] = { 0 };
+unsigned char D_005E0000[25472] = { 0 };

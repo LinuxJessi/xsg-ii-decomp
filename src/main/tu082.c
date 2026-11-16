@@ -3,7 +3,12 @@
 #include "main/tu082.h"
 
 void func_A9CDB0(void *module, void *nativeTable);
-extern unsigned char menuNativeTable[];
+typedef struct MenuNativeEntry {
+    const char *name;                   /* the entry name */
+    int (*function)();                  /* the native function */
+} MenuNativeEntry;
+
+extern MenuNativeEntry menuNativeTable[12];
 extern unsigned char D_0069D3F0[];
 
 /* Registers the menu native table menuNativeTable (ptInit ... umnReturn) under the module descriptor D_0069D3F0 ("menu"). */
@@ -271,3 +276,97 @@ int uwamonoInitRecord(short index)
     }
     return 0;
 }
+
+/* Terminated by a zero entry. Passed to func_A9CDB0 by menuInit. */
+extern char D_0069D3E8[];
+extern char D_0069D3E0[];
+extern char D_0069D3D8[];
+extern char D_0069D3D0[];
+extern const char D_00689D10[];
+extern char D_0069D3C8[];
+extern const char D_00689D00[];
+extern const char D_00689CF0[];
+extern const char D_00689CE0[];
+extern char D_0069D3C0[];
+extern const char D_00689CD0[];
+int ptInit();
+int ptClear();
+int ptJoin();
+int ptLeave();
+int ptChangeMode();
+int ptSet();
+int ptSetPilot();
+int ptGetLeader();
+int ptSetArray();
+int ptTent();
+int umnReturn();
+
+MenuNativeEntry menuNativeTable[12] = {
+    { D_0069D3E8, ptInit },
+    { D_0069D3E0, ptClear },
+    { D_0069D3D8, ptJoin },
+    { D_0069D3D0, ptLeave },
+    { D_00689D10, ptChangeMode },
+    { D_0069D3C8, ptSet },
+    { D_00689D00, ptSetPilot },
+    { D_00689CF0, ptGetLeader },
+    { D_00689CE0, ptSetArray },
+    { D_0069D3C0, ptTent },
+    { D_00689CD0, umnReturn },
+    { 0, 0 },
+};
+
+unsigned char D_003E7270[400] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 128, 0, 0, 0,
+    255, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 128, 0, 0, 0,
+    0, 0, 0, 0, 255, 0, 0, 0,
+    0, 0, 0, 0, 128, 0, 0, 0,
+    255, 0, 0, 0, 255, 0, 0, 0,
+    0, 0, 0, 0, 128, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    255, 0, 0, 0, 128, 0, 0, 0,
+    255, 0, 0, 0, 0, 0, 0, 0,
+    255, 0, 0, 0, 128, 0, 0, 0,
+    0, 0, 0, 0, 255, 0, 0, 0,
+    255, 0, 0, 0, 128, 0, 0, 0,
+    255, 0, 0, 0, 255, 0, 0, 0,
+    255, 0, 0, 0, 128, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+unsigned char D_0069D3F0[8] = "menu";

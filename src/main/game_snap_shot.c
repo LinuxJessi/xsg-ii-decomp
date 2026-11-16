@@ -315,3 +315,30 @@ int GameSnapShotSaveFile(int slot_number, const void *data, int size)
     snapnameno[3]++;
     return slot_number;
 }
+
+const char snapShotLogFormat[32] = "*** SnapShot:%s,%08x ***\n";
+
+const char snapShotQualityFormat[24] = "%d,%d,%d\n";
+
+char snapname[40] = "host0:/home/xeno/work/snap/game0000.jpg";
+
+GameSnapShotQuality quality_table[5] = {
+    { { { 100, 0, 0, 0 }, { 100, 0, 0, 0 }, { 0, 0, 0, 0 } }, { 0, 0, 0, 0 } },
+    { { { 90, 0, 0, 0 }, { 90, 0, 0, 0 }, { 0, 0, 0, 0 } }, { 0, 0, 0, 0 } },
+    { { { 75, 0, 0, 0 }, { 75, 0, 0, 0 }, { 0, 0, 0, 0 } }, { 0, 0, 0, 0 } },
+    { { { 50, 0, 0, 0 }, { 50, 0, 0, 0 }, { 0, 0, 0, 0 } }, { 0, 0, 0, 0 } },
+    { { { 30, 0, 0, 0 }, { 30, 0, 0, 0 }, { 0, 0, 0, 0 } }, { 0, 0, 0, 0 } },
+};
+
+char *snapnameno = snapname + 31;
+
+char *snapnamext = snapname + 36;
+
+SnapshotDmaPacket TestPrim_0_002BC220 = { {
+    0x0000000000000000ULL, 0x5100000B00000000ULL, 0xA08B400000008001ULL, 0x000000E53531EEEEULL,
+    0x0000000000071001ULL, 0x0000000000000047ULL, 0x0000000000000060ULL, 0x0000000000000014ULL,
+    0x0000000000000000ULL, 0x000000000000004CULL, 0x0000000000000000ULL, 0x0000000000000006ULL,
+    0x0000008000000080ULL, 0x0000000000000080ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x000071F700006FF8ULL, 0x00000000FFFFFFFFULL, 0x00001C0000002000ULL, 0x0000000000000000ULL,
+    0x000078F7000077F8ULL, 0x00000000FFFFFFFFULL, 0x0000000000000000ULL, 0x000000000000003FULL,
+} };

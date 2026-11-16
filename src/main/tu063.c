@@ -44,7 +44,18 @@ typedef struct {
     unsigned short year;
 } XglClock;
 
-extern void (*yajimaTestActions[])(int selection);
+void FontTest(int selection);
+void MemcardTest(int selection);
+void CdSlotTest(int selection);
+void IpuMovieTest(int selection);
+void SoundTest(int selection);
+void MovieListTest(int selection);
+void func_001E9B28(int selection);
+void func_001EAB08(int selection);
+void func_001ED1C0(int selection);
+void func_001ED568(int selection);
+
+extern void (*yajimaTestActions[10])(int selection);
 extern XglMenuRow yajimaTestRows[];
 extern XglMenuNode D_002BD440;
 extern XglMenuParams yajimaTestMenu;
@@ -117,3 +128,53 @@ void func_001EDC60(int index) {
 int streamSetLevel(int index) {
     return soundSlotSetVolume(index, 0x7A, 0);
 }
+
+void (*yajimaTestActions[10])(int selection) = {
+    FontTest,
+    func_001E9B28,
+    func_001EAB08,
+    MemcardTest,
+    CdSlotTest,
+    IpuMovieTest,
+    SoundTest,
+    MovieListTest,
+    func_001ED1C0,
+    func_001ED568
+};
+
+extern const char D_0069D190[];
+extern const char D_0069D188[];
+extern const char D_0069D180[];
+extern const char D_0069D178[];
+extern const char D_00689480[];
+extern const char D_0069D170[];
+extern const char D_0069D168[];
+extern const char D_0069D160[];
+extern const char D_0069D158[];
+extern const char D_0069D150[];
+
+XglMenuRow yajimaTestRows[11] = {
+    { (const char *) D_0069D190, { .result = 1 } },
+    { (const char *) D_0069D188, { .result = 2 } },
+    { (const char *) D_0069D180, { .result = 3 } },
+    { (const char *) D_0069D178, { .result = 4 } },
+    { (const char *) D_00689480, { .result = 5 } },
+    { (const char *) D_0069D170, { .result = 6 } },
+    { (const char *) D_0069D168, { .result = 7 } },
+    { (const char *) D_0069D160, { .result = 8 } },
+    { (const char *) D_0069D158, { .result = 9 } },
+    { (const char *) D_0069D150, { .result = 10 } },
+    { 0, { .result = -1 } }
+};
+
+const char D_00689490[24] = "%4d.%2d.%2d\n%2d.%2d.%2d";
+
+XglMenuNode D_002BD440 = { 0, { -1, 1, 8 }, 0, { 0, 0, 0 }, 0, 0, { 0 }, yajimaTestRows };
+
+XglMenuParams yajimaTestMenu = { 1, 0, { 0, 0 }, 8, 16, 0, { 0, 0 }, -1, &D_002BD440, 0 };
+
+const char D_0069D198[8] = "SELECT";
+const char D_0069D1A0[8] = "preload";
+const char D_0069D1A8[8] = "preren";
+const char D_0069D1B0[8] = "keepoff";
+const char D_0069D1B8[8] = "elvMove";

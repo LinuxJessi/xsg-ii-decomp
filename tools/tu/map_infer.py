@@ -1378,6 +1378,15 @@ def attribute_data(unit, tus):
                     gp_owners[target].add(owner[i])
     defined = {target: owner[unit.index[function]] for target, function, _ in DATA_OWNERS
                if function in unit.index and unit.index[function] in owner}
+    # One object that several TUs reach through different inner addresses: every referenced address inside
+    # it, and its first byte, belong to the TU that defines it.
+    for low, high, function, _ in DATA_OBJECT_OWNERS:
+        if function in unit.index and unit.index[function] in owner:
+            ordinal = owner[unit.index[function]]
+            defined[low] = ordinal
+            for target in users:
+                if low <= target < high:
+                    defined[target] = ordinal
     for target, who in users.items():
         ordinals = {owner[i] for i in who if i in owner}
         if target in defined:
@@ -1436,6 +1445,51 @@ DATA_OWNERS = [
      'D_0069DB8C, ...) falls into the piece of sv_get_image_item.c (2026-11-15)'),
 ]
 
+
+# Objects that span addresses the single-user rule gives to several TUs: (first byte, end, a function of the
+# defining TU, why). Xenosaga II has no symbol table, so a code reference to `object.field` or `table[i].field`
+# is a label inside the object, and the single-user rule hands that label to whichever TU reads the field.
+# Found while moving the data of the code-complete TUs to C (2026-11-15/16): a C object must start at its first
+# byte and cannot be split between two objects.
+DATA_OBJECT_OWNERS = [
+    (0x0033FDC0, 0x003C6DC0, 0x001FFC90,
+     'uwamonoRecords: 256 records of 0x870 bytes (0x33FDC0-0x3C6DC0, .data, zero). Every label in it is a field '
+     'offset of record 0 used as an array base with stride 0x870 (0x3400F8 = +0x338 in tu110, uwamonoMoveRecords '
+     '= +0x440, progEffectTable = +0x638 in init_uwamono_sys, +0x4..+0x334 in tu083). It lies between the data of '
+     'tu083 and init_uwamono_sys in link order; given to init_uwamono_sys (include/main/tu051.h: "see '
+     'init_uwamono_sys.c"), whose reset functions clear its columns'),
+    (0x00644F18, 0x00644F48, 0x001A3FA8,
+     'soundCtrl: the 0x30-byte SoundControl of include/main/tu022.h (song number +3, default volumes +6, the two '
+     'slots +0x10 = soundSlots). The labels +0..+3 went to tu021, +4..+0xB to tu071 and +0xC.. to tu022; the '
+     'struct starts 8-aligned at 0x644F18 and the slots array cannot start a section at 0x644F24'),
+    (0x003EC608, 0x003EC668, 0x0022A560,
+     'ptState: the 0x60-byte party state at 0x3EC608 (PartyState of tu110.c, the party module). Its head had '
+     'gone to tu108 (saveDataSetDefaults reads it) and its last 12 bytes (ptSplitMode +0x54 .. +0x5C) to tu081, '
+     'whose own first object is the 8-aligned selectionWindowList at 0x3EC668; the data before it '
+     '(0x3EC458...) is already read only by tu110'),
+    (0x006B4C30, 0x006B4C40, 0x002531C8,
+     'svDrawList (sv_get_image_item.c): DrawList is 16 bytes at 0x6B4C30; func_002594E8 of tu162 writes its word '
+     '+4 through its own label, so the single-user rule had started the .bss of tu162 at 0x6B4C34'),
+    (0x0069D7E0, 0x0069D7E4, 0x0022DEF8,
+     'the .sdata of tu115 starts at 0x69D7E0: its 8-byte arrays (0x69D7F0...) are 8-aligned in the object, so the '
+     'object starts 8-aligned and the int at 0x69D7E0 (yg2PathImageFade, read only by yg2path) is its first datum'),
+    (0x006A5A80, 0x006A5AF8, 0x00228520,
+     'the 120-byte .bss object at 0x6A5A80: tu101 reads its first word, tu108 the rest through 0x6A5A84; one '
+     'object, first of the .bss of tu108 (16-aligned start)'),
+    (0x0068E158, 0x0068E178, 0x001A3248,
+     '"sound\\vsf\\" and "sound\\smf\\" (.rodata 0x68E158, 0x68E168): the initializers of the .sdata pointers '
+     'seBankDirectory / seMidiDirectory of tu021, emitted by that file before its other strings; no code names '
+     'them, so they had stayed in the tail of the piece before (xgl_jpeg)'),
+    (0x0069DF78, 0x0069DF80, 0x001A01D8,
+     '"movie\\" (.sdata 0x69DF78, 7 bytes): the initializer of the pointer moviePathPrefix (0x69DF80) of tu017, '
+     'emitted right before it; it had stayed in the tail of the item before (xglMcWildcardName of tu012)'),
+    (0x002B7BB0, 0x002B7C88, 0x001D74E0,
+     'mapObjectResources: 27 pairs of 8 bytes (0x2B7BB0-0x2B7C88, zero) that tu050 indexes; tya_draw_gauge reads '
+     'words of it through its own labels (0x2B7BBC, 0x2B7BC0), so the single-user rule had cut it after 12 bytes'),
+    (0x0068E1B8, 0x0068E1C8, 0x001A3FA8,
+     'the string at 0x68E1B8 (.rodata): the initializer of the .sdata pointer adxPathPrefix (0x69DF90) of tu022, '
+     'first string of that file; it had been the tail of the .rodata of tu021'),
+]
 
 # Inferred TU starts that are no object edge: (start, why). The TU joins the one before.
 # Joined cuts whose merged TU keeps the LATER TU's ordinal (and with it its id and file name) instead of the first

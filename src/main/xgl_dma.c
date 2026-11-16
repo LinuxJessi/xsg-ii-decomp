@@ -94,8 +94,8 @@ extern void FlushCache(int mode);
 extern int sceGsSyncPath(int mode, int timeout);
 
 
-extern XglDmaChannel *tbl[DMA_CHANNEL_COUNT];
-extern struct MfifoDrainStorage mfifo_drain;
+extern XglDmaChannel *tbl[12];
+static struct MfifoDrainStorage mfifo_drain;
 
 /* Declared here, not at the top: moving it up changes the original code. */
 #define mfifo_drain mfifo_drain.channel
@@ -252,3 +252,21 @@ void xglDmaMFIFOLeave(void)
     while (drain->control & DMA_CHCR_STR)
         ;
 }
+
+/* Ten channel register blocks; the table holds two more zero slots. */
+XglDmaChannel *tbl[12] = {
+    (XglDmaChannel *)0x10008000, (XglDmaChannel *)0x10009000, (XglDmaChannel *)0x1000A000,
+    (XglDmaChannel *)0x1000B000, (XglDmaChannel *)0x1000B400, (XglDmaChannel *)0x1000C000,
+    (XglDmaChannel *)0x1000C400, (XglDmaChannel *)0x1000C800, (XglDmaChannel *)0x1000D000,
+    (XglDmaChannel *)0x1000D400, 0, 0,
+};
+
+unsigned char PadData[40] = { 0 };
+u16 D_0063EDA8[] = { 0 };
+
+unsigned short textOptionFlags = 0;
+int D_0063EDAC = 0;
+int D_0063EDB0 = 0;
+int D_0063EDB4[7] = { 0 };
+unsigned char D_0063EDD0 = 0;
+unsigned char D_0063EDD1[15] = { 0 };

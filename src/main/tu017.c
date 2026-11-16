@@ -430,3 +430,9 @@ void func_001A0980(void)
     func_00182EC0();
     func_0017B580();
 }
+
+const char movieFileKeyFormat[16] = "%08x.%08x";
+
+float D_0069B620 = 59.9399986f;
+
+const char *moviePathPrefix = "movie\\";

@@ -52,8 +52,8 @@ typedef struct CdSlot {
 
 extern CdSlot xglCdSlotTable[];
 /* Address range gameResArenaStart .. gameResArenaEnd whose blocks GameResBlockFindByOwner and GameResBlockFindByName skip. */
-extern unsigned int gameResArenaStart;
-extern unsigned int gameResArenaEnd;
+static unsigned int gameResArenaStart;
+static unsigned int gameResArenaEnd;
 
 /* The name key stored in a block header: name itself when it fits the header; for longer
  * names the original returns name - (GAME_RES_NAME_HEADER_SIZE - 1), not an offset into name. */
@@ -224,7 +224,7 @@ void GameResBlockFree(int index)
 /* Completion callback of xglCdReadFile: slot index, buffer, state word, value. */
 typedef void (*CdCallback)(int slot, void *buffer, int state, int value);
 
-extern int xglCdEventState;
+static int xglCdEventState;
 
 /* Completion handler passed to xglCdReadFile (proposed xglCdSlotEvent): event 1 stores value as the
  * state word xglCdEventState (xglCdEventState); event 4 calls the slot's callback with that state word. */
@@ -429,7 +429,7 @@ void *GameResBufferAllocOwned(int owner, int size)
  * block index, buffer, size and xglCdSlotValue. Stored as a block's read tag otherwise. */
 typedef void (*GameResCallback)(int index, void *buffer, unsigned int size, int value);
 
-extern int xglCdSlotValue;
+static int xglCdSlotValue;
 
 /* Sets the value that xglCdReadFileTagged and xglCdReadFileSlot copy into the slot (xglCdSlotValue). */
 void xglCdSetSlotValue(int value)
@@ -467,7 +467,7 @@ unsigned int xglCdSlotGetBuffer(unsigned int index)
     return result;
 }
 
-extern u8 xglCdLoadSync;
+static u8 xglCdLoadSync;
 
 /* Starts a read into a slot (proposed xglCdReadFileSlot). tag 0 reads without a slot;
  * otherwise the slot (index 0 when slot >= 0x80) takes tag and xglCdSlotValue before xglCdReadFile. */
@@ -1134,12 +1134,12 @@ void resSelectSlot(int search) {
     }
 }
 
-extern int seBankNames[32];
+static int seBankNames[32];
 extern int D_0069CEF0;
-extern char *seBankNameCursor;
-extern int seBankNamePool[];
-extern signed char resFootMaterials[9];
-extern int resEnemyFootGroups[16];
+static char *seBankNameCursor;
+static int seBankNamePool[64];
+static signed char resFootMaterials[16];
+static int resEnemyFootGroups[16];
 
 void resResetDescriptorTables(void) {
     int i;
@@ -1179,10 +1179,10 @@ typedef struct ResRecord {
     u32 flags;
 } ResRecord;
 
-extern ResRecord resRecordTable[];
-extern unsigned char D_006A10E0[];
-extern unsigned char D_006A10F0[];
-extern signed char seBgmName[];
+static ResRecord resRecordTable[24];
+static unsigned char D_006A10E0[16];
+static unsigned char D_006A10F0[16];
+static signed char seBgmName[32];
 
 /* Clears the type word of all 24 records and the three flags at seBgmName, D_006A10E0 and D_006A10F0 (proposed resClearRecordTable body). */
 void resClearRecordTable(void)
@@ -1418,7 +1418,7 @@ void soundReset(void) {
 }
 
 extern unsigned char D_0069CFD0;
-extern signed char seBgmVolume;
+static signed char seBgmVolume;
 
 void seBgmNameSet(signed char *name)
 {
@@ -1477,8 +1477,8 @@ void seVoiceRecordSet(u32 voice, u32 volume, u32 pan) {
 
 extern u32 gameResArenaStart;
 extern u32 gameResArenaEnd;
-extern u32 D_0069E1AC;
-extern u32 D_0069E1B0;
+static u32 D_0069E1AC;
+static u32 D_0069E1B0;
 
 typedef union {
     u32 w;
@@ -1551,7 +1551,7 @@ void seVoiceRecordsUpdatePan(void)
     }
 }
 
-extern f32 seMaxDistance;
+static f32 seMaxDistance;
 
 /* Sets the sound's maximum audible distance when maxDistance is not negative; returns the current value
    (proposed seSetMaxDistance). The distance check in seVoicePanVolumeFromPosition reads seMaxDistance. */
@@ -1723,7 +1723,7 @@ typedef struct PathSlot {
     int unmodeled_04;
 } PathSlot;
 
-extern PathSlot resPathSlots[];
+static PathSlot resPathSlots[4];
 
 void resResetSlotTable(void) {
     int i = xglCdSlotTable[0].owner;
@@ -1837,9 +1837,9 @@ u8 *resParseFileGroup(u8 *text, int kind, int *out)
     return text;
 }
 
-extern u32 resEntryTable[];
-extern char resNamePool[];
-extern char *resNameCursor;
+static u32 resEntryTable[64];
+static char resNamePool[1024];
+static char *resNameCursor;
 
 /*
  * Appends one word to resEntryTable; word 0 holds the next free index. Keys 0x40000, 0x90000 and 0xF00000
@@ -2011,7 +2011,7 @@ u8 *resCmdBgmVol(u8 *cursor) {
     return cursor;
 }
 
-extern signed char D_006A1110[];
+static signed char D_006A1110[16];
 int footMaterialFind(u8 *name);
 
 u8 *resCmdFoot(u8 *script) {
@@ -2142,7 +2142,7 @@ u8 *resCmdSave(u8 *cursor) {
 void GameMovieCaptionPlay(void);
 
 /*
- * Script command ";mpeg2" (name at 0x002BB670, handler at 0x002BB674 in the command table; proposed resCmdMpeg2).
+ * Script command ";mpeg2" (name and handler of its resCommandTable entry; proposed resCmdMpeg2).
  * It plays the caption and returns the script cursor unchanged, as the other resCmd handlers do.
  */
 int resCmdMpeg2(int cursor) {
@@ -2150,16 +2150,22 @@ int resCmdMpeg2(int cursor) {
     return cursor;
 }
 
-/* One entry of the script command table at 0x002BB610; a NULL name ends it. */
+/* One entry of the script command table resCommandTable; a NULL name ends it. */
 typedef struct {
     signed char *name;
     unsigned char *(*handler)(unsigned char *cursor);
 } ResCommand;
 
-extern void *resScriptBuffer[];           /* script buffer, "#scn" header */
+static void *resScriptBuffer[512];           /* script buffer, "#scn" header */
 extern ResCommand resCommandTable[];      /* script command table */
-extern unsigned char D_006A0AC0[];   /* 0x006A0AC0: u32 list, [0] = count incl. header */
-extern u8 resPreloadIndex;                /* gp-relative done flag */
+static unsigned char D_006A0AC0[256];   /* u32 list, [0] = count incl. header */
+typedef struct ResCfFile {
+    s16 id;
+    u8 kind;
+} ResCfFile;
+
+/* Current CF file id and kind; kind also serves as the preload step index (resPreloadStep). */
+static ResCfFile resCfCurrent;
 
 void resScriptRun(int mode)
 {
@@ -2289,10 +2295,9 @@ void resScriptRun(int mode)
             }
         } while (swapped);
     }
-    resPreloadIndex = 1;
+    resCfCurrent.kind = 1;
 }
 
-extern u8 resPreloadIndex;
 int xglCdGetServicePending(void);
 
 void resPreloadStep(int flag)
@@ -2306,7 +2311,7 @@ void resPreloadStep(int flag)
         }
     }
     {
-        u32 address = (u32)&resPreloadIndex;
+        u32 address = (u32)&resCfCurrent.kind;
         u8 *preloadIndex = (u8 *)(address + ((address & 0xFF) >> 8));
         if (GameResLoadID(((u32 *)resEntryTable)[*preloadIndex] + RES_ID_SYNC_LOAD, &block, 0, 0) > 0) {
             xglCdSlotTable[GameResBlockFindByBuffer(block)].owner |= RES_OWNER_PRELOADED;
@@ -2318,12 +2323,6 @@ void resPreloadStep(int flag)
     }
 }
 
-typedef struct ResCfFile {
-    s16 id;
-    u8 kind;
-} ResCfFile;
-
-extern ResCfFile resCfCurrent;
 extern char *D_0069CF5C;
 extern void *resScriptBuffer[];
 void resPreloadStep(int flag);
@@ -2398,7 +2397,7 @@ typedef struct JumpRecord {
     };
 } JumpRecord;
 
-extern JumpRecord resJumpRecords[];
+static JumpRecord resJumpRecords[32];
 
 typedef struct JumpTableHeader {
     u8 unmodeled_00[0x0C];
@@ -2786,7 +2785,7 @@ void resRelocateRecord(int toAbsolute, int kindWord, int *record) {
 
 extern int mainObject;
 extern int D_002B5DB8[];
-extern unsigned char resEnemyFootCount;
+static unsigned char resEnemyFootCount;
 void mapLoadBlock(int block);
 void sefStartEffectByCode(int code, char *name);
 void Intermission(int mode);
@@ -2979,8 +2978,8 @@ typedef struct {
 } ResPadText;
 
 int sprintf(char *destination, const char *format, ...);
-extern char D_006882E8[];
-extern ResPadText D_006882F8;
+const char D_006882E8[16] = "(Player#%d)";
+const ResPadText D_006882F8 = { "(padding)" };
 
 /* Loads resource 0x30041 and sets up the three path buffers (each followed by its pad text) and,
    in slot 3, the largest free block. */
@@ -3049,7 +3048,7 @@ typedef struct {
     char text[9];
 } PlayerName;
 
-extern char D_00688318[];
+extern const char D_00688318[];
 
 void resSetPathSlot(int slot, unsigned int base, unsigned int limit, int value)
 {
@@ -3098,6 +3097,8 @@ void resSetPathSlot(int slot, unsigned int base, unsigned int limit, int value)
 }
 
 void resSetPathSlot(int slot, unsigned int base, unsigned int limit, int value);
+
+const char D_00688318[16] = "(Player)";
 
 void resUpdatePathSlot(int slot)
 {
@@ -3381,3 +3382,46 @@ int seFootBankFromKind(int kind, int code) {
     }
     return -1;
 }
+
+char *D_002B5DBC[1] = { 0 };
+
+/* .sdata strings of the resource name tables (from D_0069CEE0 on). */
+char D_0069CEE0[8] = "man.xap";
+char D_0069CEE8[8] = "CFS_SE";
+int D_0069CEF0 = (int) D_0069CEE8;
+char D_0069CEF8[8] = ";mpeg2";
+char D_0069CF00[8] = "save";
+char D_0069CF08[8] = "disk";
+char D_0069CF10[8] = "enefoot";
+char D_0069CF18[8] = "foot";
+char D_0069CF20[8] = "bgmvol";
+char D_0069CF28[8] = "bgm";
+char D_0069CF30[8] = "mapse";
+char D_0069CF38[8] = "effect";
+char D_0069CF40[8] = "mobj";
+char D_0069CF48[8] = "mot";
+char D_0069CF50[8] = "act";
+char D_0069CF58[4] = "map";
+extern const char D_0069CE30[8];
+char *D_0069CF5C = (char *) D_0069CE30;
+char D_0069CF60[8] = "mapjump";
+char D_0069CF68[8] = "runtime";
+char D_0069CF70[8] = "jumpCF";
+char D_0069CF78[8] = "r05";
+char D_0069CF80[8] = "r03";
+char D_0069CF88[8] = "r02";
+char D_0069CF90[8] = "jin";
+char D_0069CF98[8] = "zig";
+char D_0069CFA0[8] = "mom";
+char D_0069CFA8[8] = "jrr";
+char D_0069CFB0[8] = "cha";
+char D_0069CFB8[8] = "kos";
+char D_0069CFC0[8] = "shi";
+char D_0069CFC8[8] = "%2x %2d";
+unsigned char D_0069CFD0 = 0;
+
+/* .data zero tables (elvSlopeTable .. D_002B5ED0), used by other TUs. */
+unsigned char elvSlopeTable[144] = { 0 };
+unsigned int D_002B5E50[4] = { 0 };
+unsigned int D_002B5E60[3] = { 0 };
+unsigned int D_002B5E6C[25] = { 0 };

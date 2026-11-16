@@ -4,6 +4,9 @@
 #include "main/xgl_2.h"
 #include "main/xgl_cd.h"
 
+extern const char adxPathPrefixString[];
+extern unsigned char seSongNumber[];
+
 #define SE_PATH_MAX 256
 #define SE_BANK_SLOT_COUNT 24
 
@@ -73,7 +76,7 @@ int seBankLoadFile(int slot, const char *name, const char *directory, int bank_s
     return size;
 }
 
-extern const char *seBankDirectory;
+const char *seBankDirectory = "sound\\vsf\\";
 
 /* Loads the bank `name` into `slot`, its files taken from the global directory seBankDirectory.
  * `bank_size` is the room the sound driver keeps for the bank (res_get_path.c's per-slot table:
@@ -124,7 +127,7 @@ int seBankLoadMemory(int slot, int vsf, int prj, int bank_size)
 /* A `packed` song id above this value loads the bank only, not the .mid file. */
 #define SE_BGM_ID_MAX 0xFFFF
 
-extern const char *seMidiDirectory;
+const char *seMidiDirectory = "sound\\smf\\";
 /* Takes the song id in its first argument (move $17,$4 at 0x139AF8). */
 void func_00139AF0(int id);
 int func_00139978(int packed, unsigned int lbn, int record_byte_27);
@@ -497,8 +500,8 @@ void seVoiceStop(int voice)
 
 /* seBendDisabled: nonzero turns the random pitch bend of seTonePlay off.
  * seNextChannel: counts the calls; its low four bits pick the MIDI channel. */
-extern unsigned char seBendDisabled;
-extern unsigned char seNextChannel;
+static unsigned char seBendDisabled;
+static unsigned char seNextChannel;
 
 /* Plays bank `packed & 0x7F` on channel group 1, on the next channel in turn, with a random pitch
  * bend and one of two notes. A value above 0xFFFFFF also carries the volume (bits 16..22) and the
@@ -544,3 +547,5 @@ void seTonePlay(int packed)
     func_0013A938(SE_GROUP_TONE, channel | SE_MSG_PROGRAM_CHANGE, 0);
     func_0013A938(SE_GROUP_TONE, channel | SE_MSG_DATA1(note) | SE_MSG_NOTE_ON | SE_MSG_DATA2(SOUND_LEVEL_MAX), 0);
 }
+
+static unsigned short HddActive;
