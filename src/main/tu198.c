@@ -20,6 +20,9 @@ typedef struct FadeState {
 } FadeState;
 
 extern FadeState fadeState;
+/* Hook table; fadeUpdate is stored in slot 0. As int[] with (int) fadeUpdate stores, fd.sh shows
+ * fadeSetColor 13/15 and fadeStart* 46/53, 46/53, 31/38, 34/41 equal-in-place (store scheduling);
+ * fadeReset, fadeClear and fadeUpdate are identical with either type. */
 extern void (*fadeUpdateHook[])(void);
 void *memset(void *destination, int value, unsigned int count);
 void fadeApplyColor(float red, float green, float blue, float alpha);
