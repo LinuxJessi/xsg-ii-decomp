@@ -151,10 +151,11 @@ void tiWaterSendDirection(XglCamera *camera, Matrix4 transform);
 void tiWaterSendGrid(TiWatSimItem *item, void *program);
 void sceVif1PkAddCode(XglPacket *packet, unsigned int code);
 
-/* VU1 microprogram entry points of the water drawing and the grid tables sent with them. */
-extern unsigned char D_688[];
-extern unsigned char D_7F0[];
-extern unsigned char D_9F0[];
+/* VU1 microprogram entry points of the water drawing (VU1 micro memory addresses, linked as absolute symbols
+ * like sv_get_image_item.c's D_50 / D_80) and the grid tables sent with them. */
+extern unsigned char D_688[]; /* the surface pass */
+extern unsigned char D_7F0[]; /* the depth pass while tiWaterDepthProgramSelect is set */
+extern unsigned char D_9F0[]; /* the depth pass otherwise */
 extern int tiWaterDepthProgramSelect;
 extern unsigned char tiWaterSurfaceGridHeader[];
 extern unsigned char tiWaterDepthGridHeader[];
