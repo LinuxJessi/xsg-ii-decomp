@@ -480,64 +480,53 @@ void cfeCameraEvaluate(int time, int paused)
     xglStudioMove();
 }
 
-/* The scale of a spawned effect; the original writes it through a union member (alias set 0). */
-typedef union CfeEffectScale {
-    float element[3];
-} CfeEffectScale;
-
-/* The spawned effect record, as far as cfeCommandSpawn writes it. */
-typedef struct CfeSpawnedEffect {
-    unsigned char unmodeled_00[0x20];
-    CfeEffectScale scale;       /* +0x20 */
-    unsigned char unmodeled_2c[0x44 - 0x2C];
-    int flags;                  /* +0x44 */
-} CfeSpawnedEffect;
+/* SefEffectRecord.secondBlock (+0x20) is the effect's scale: sef.c builds the effect matrix with it (as a
+ * Vector4 *). The original writes it through a union (alias set 0), hence DoublewordVector4. */
 
 /* Effect record flag: the record is drawn without the view-volume test (sv_get_image_item.c's culling
  * skips records with it). */
 #define CFE_EFFECT_NO_CULL 0x10
 
 void sefClearOwnerFlags(unsigned int id, int flags);
-void sefExecEffectSteps(CfeSpawnedEffect *effect, float frames, float steps);
-void sefSetRecordOwner(CfeSpawnedEffect *effect, void *owner);
+void sefSetOwnerFlags(int owner, int flags);
+void sefExecEffectSteps(SefEffectRecord *effect, float frames, float steps);
+void sefSetRecordOwner(SefEffectRecord *effect, struct XenoActor *owner);
 
 /* Spawns the command's effect (clearing its owner flags first), sets its scale, runs its first
  * frames (one step per 15 frames) and, when the command names an owner entry, hands the effect
  * to that entry's object. */
 void cfeCommandSpawn(CfeEvalCommand *command)
 {
-    CfeSpawnedEffect *effect;
-    unsigned char *entry;
+    SefEffectRecord *effect;
+    CfeActor *entry;
 
     if (command->flag != 0) {
         sefClearOwnerFlags((command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_FLAGGED,
                            CFE_OWNER_FLAGS);
-        effect = (CfeSpawnedEffect *) sefSpawnEffectRecordById(
+        effect = sefSpawnEffectRecordById(
             (command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_FLAGGED, (int) &command->position,
             (unsigned char *) &command->rotation);
     } else {
         sefClearOwnerFlags((command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN,
                            CFE_OWNER_FLAGS);
-        effect = (CfeSpawnedEffect *) sefSpawnEffectRecordById(
+        effect = sefSpawnEffectRecordById(
             (command->page_index << CFE_PAGE_SHIFT) | command->page_offset | CFE_BANK_PLAIN, (int) &command->position,
             (unsigned char *) &command->rotation);
     }
     if (effect != 0) {
-        effect->scale.element[0] = command->scale[0];
-        effect->scale.element[1] = command->scale[1];
-        effect->scale.element[2] = command->scale[2];
+        ((DoublewordVector4 *) effect->secondBlock)->vector.x = command->scale[0];
+        ((DoublewordVector4 *) effect->secondBlock)->vector.y = command->scale[1];
+        ((DoublewordVector4 *) effect->secondBlock)->vector.z = command->scale[2];
         sefExecEffectSteps(effect, command->frames, command->frames / 15 + 1);
         effect->flags |= CFE_EFFECT_NO_CULL;
     }
     if (command->owner >= 0 && effect != 0) {
         entry = cfeGetEntry(command->owner);
         if (entry != 0) {
-            sefSetRecordOwner(effect, *(void **) (entry + 0xC0));
+            sefSetRecordOwner(effect, entry->actor);
         }
     }
 }
-
-void sefSetOwnerFlags(int, int);
 
 /* Builds the command word from page_index and page_offset; the flag selects bank 0x20000000 or 0x10000000. */
 void cfeCommandSetOwnerFlags(CfeEvalCommand *command) {
