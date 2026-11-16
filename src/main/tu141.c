@@ -4,6 +4,7 @@
 #include "main/cfePlugIn.h"
 #include "main/tu022.h"
 #include "main/res_get_path.h"
+#include "main/sdv_033.h"
 #include "main/tu146.h"
 #include "main/xgl_2.h"
 #include "main/xgl_studio.h"
@@ -44,22 +45,24 @@ void cfeEvalRecordsInit(void)
     }
 }
 
-int xglCameraSetPadPort(void *, int);
-void *xglStudioGetCamera2(int);
+void xglCameraSetPadPort(XglCamera *camera, int port);
+XglCamera *xglStudioGetCamera2(int index);
 void xglStudioInit(void);
 void xglStudioMainCameraInit(void);
-extern void *cfeCamera;
 
 /* Studio setup: clears the 0x70-byte block at cfeCamera, starts xglStudio and the main camera,
-   then keeps the object xglStudioGetCamera2 creates there (its word 1 is set to 2). */
+   then keeps the camera xglStudioGetCamera2 creates there (its state set to 2). */
 void cfeStudioInit(void) {
+    XglCamera *camera;
+
     memset(&cfeCamera, 0, 0x70);
     xglStudioInit();
     xglStudioChange(0);
     xglStudioMainCameraInit();
-    cfeCamera = xglStudioGetCamera2(0);
-    ((int *)cfeCamera)[1] = 2;
-    xglCameraSetPadPort(cfeCamera, 1);
+    camera = xglStudioGetCamera2(0);
+    cfeCamera.eval.camera = camera;
+    camera->state = 2;
+    xglCameraSetPadPort(camera, 1);
 }
 
 

@@ -392,42 +392,9 @@ void cfeGroupTableEvaluate(int time)
 
 void *memset(void *destination, int value, unsigned int size);
 
-/* The shake offsets of the camera: position x, y, z, then rotation x, y, z. */
-typedef struct CfeCameraOffset {
-    f32 position[3];
-    f32 rotation[3];
-} CfeCameraOffset;
-
-/* The studio block cfeCamera (0x70 bytes) as the camera evaluation sees it: the camera, its key tracks
- * and the camera shake. cfePlugIn.c sees the same block as the
- * camera and 27 key lists (CfeStudioBlock). */
-typedef struct CfeCameraEval {
-    XglCamera *camera;          /* +0x00 */
-    CfeTrackNode *position[3];  /* +0x04: tracks of travel.position */
-    CfeTrackNode *rotation[3];  /* +0x10: tracks of travel.rotation */
-    CfeTrackNode *fov;          /* +0x1C: track of travel.fov */
-    CfeTrackNode *shakeTrack[3]; /* +0x20: tracks of shakeOn, shakeFrames and shakeAmount */
-    int flags;                  /* +0x2C: CFE_CAMERA_HELD leaves the camera alone */
-    int shakeOn;                /* +0x30 */
-    int shakeFrames;            /* +0x34: frames from one shake offset to the next */
-    int shakeAmount;            /* +0x38: the largest offset in 1/1000 units (rotation 1/10000) */
-    int shakeCounter;           /* +0x3C: frames left to the next offset; -1 starts a new one */
-    CfeCameraOffset from;       /* +0x40 */
-    CfeCameraOffset to;         /* +0x58 */
-} CfeCameraEval;
-
-/* The original reads and writes the block through a union member, so its accesses carry alias set 0 (the
- * camera pointer and the counter are read again after every camera store). */
-typedef union CfeStudioView {
-    CfeCameraEval eval;
-} CfeStudioView;
-
-extern CfeStudioView cfeCamera;
 /* -1.0f and 1.0f: the random sign of a shake offset. */
 extern f32 cfeShakeSigns[2];
 
-/* The flag of CfeCameraEval.flags that stops the evaluation. */
-#define CFE_CAMERA_HELD 0x1
 /* The units of the shake amount for the position and the rotation. */
 #define CFE_SHAKE_POSITION_UNIT 0.001f
 #define CFE_SHAKE_ROTATION_UNIT 0.0001f
@@ -444,35 +411,41 @@ void cfeCameraEvaluate(int time, int paused)
     if (cfeCamera.eval.flags & CFE_CAMERA_HELD) {
         return;
     }
-    if (cfeCamera.eval.position[0] != 0) {
-        cfeCamera.eval.camera->travel.position.x = cfeTrackSample(cfeCamera.eval.position[0], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_POSITION + 0] != 0) {
+        cfeCamera.eval.camera->travel.position.x
+            = cfeTrackSample(cfeCamera.eval.track[CFE_CAMERA_TRACK_POSITION + 0], time);
     }
-    if (cfeCamera.eval.position[1] != 0) {
-        cfeCamera.eval.camera->travel.position.y = cfeTrackSample(cfeCamera.eval.position[1], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_POSITION + 1] != 0) {
+        cfeCamera.eval.camera->travel.position.y
+            = cfeTrackSample(cfeCamera.eval.track[CFE_CAMERA_TRACK_POSITION + 1], time);
     }
-    if (cfeCamera.eval.position[2] != 0) {
-        cfeCamera.eval.camera->travel.position.z = cfeTrackSample(cfeCamera.eval.position[2], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_POSITION + 2] != 0) {
+        cfeCamera.eval.camera->travel.position.z
+            = cfeTrackSample(cfeCamera.eval.track[CFE_CAMERA_TRACK_POSITION + 2], time);
     }
-    if (cfeCamera.eval.rotation[0] != 0) {
-        cfeCamera.eval.camera->travel.rotation.x = cfeTrackSample(cfeCamera.eval.rotation[0], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_ROTATION + 0] != 0) {
+        cfeCamera.eval.camera->travel.rotation.x
+            = cfeTrackSample(cfeCamera.eval.track[CFE_CAMERA_TRACK_ROTATION + 0], time);
     }
-    if (cfeCamera.eval.rotation[1] != 0) {
-        cfeCamera.eval.camera->travel.rotation.y = cfeTrackSample(cfeCamera.eval.rotation[1], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_ROTATION + 1] != 0) {
+        cfeCamera.eval.camera->travel.rotation.y
+            = cfeTrackSample(cfeCamera.eval.track[CFE_CAMERA_TRACK_ROTATION + 1], time);
     }
-    if (cfeCamera.eval.rotation[2] != 0) {
-        cfeCamera.eval.camera->travel.rotation.z = cfeTrackSample(cfeCamera.eval.rotation[2], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_ROTATION + 2] != 0) {
+        cfeCamera.eval.camera->travel.rotation.z
+            = cfeTrackSample(cfeCamera.eval.track[CFE_CAMERA_TRACK_ROTATION + 2], time);
     }
-    if (cfeCamera.eval.fov != 0) {
-        cfeCamera.eval.camera->travel.fov = cfeTrackSample(cfeCamera.eval.fov, time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_FOV] != 0) {
+        cfeCamera.eval.camera->travel.fov = cfeTrackSample(cfeCamera.eval.track[CFE_CAMERA_TRACK_FOV], time);
     }
-    if (cfeCamera.eval.shakeTrack[0] != 0) {
-        cfeCamera.eval.shakeOn = cfeTrackSampleStep(cfeCamera.eval.shakeTrack[0], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_SHAKE_ON] != 0) {
+        cfeCamera.eval.shakeOn = cfeTrackSampleStep(cfeCamera.eval.track[CFE_CAMERA_TRACK_SHAKE_ON], time);
     }
-    if (cfeCamera.eval.shakeTrack[1] != 0) {
-        cfeCamera.eval.shakeFrames = cfeTrackSampleStep(cfeCamera.eval.shakeTrack[1], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_SHAKE_FRAMES] != 0) {
+        cfeCamera.eval.shakeFrames = cfeTrackSampleStep(cfeCamera.eval.track[CFE_CAMERA_TRACK_SHAKE_FRAMES], time);
     }
-    if (cfeCamera.eval.shakeTrack[2] != 0) {
-        cfeCamera.eval.shakeAmount = cfeTrackSampleStep(cfeCamera.eval.shakeTrack[2], time);
+    if (cfeCamera.eval.track[CFE_CAMERA_TRACK_SHAKE_AMOUNT] != 0) {
+        cfeCamera.eval.shakeAmount = cfeTrackSampleStep(cfeCamera.eval.track[CFE_CAMERA_TRACK_SHAKE_AMOUNT], time);
     }
     if (cfeCamera.eval.shakeOn != 0 && cfeCamera.eval.shakeAmount != 0) {
         if (cfeCamera.eval.shakeCounter < 0 && paused == 0) {

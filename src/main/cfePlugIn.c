@@ -844,17 +844,9 @@ int cfe_0024C940(int handle)
 }
 
 
-/* The studio block (0x70 bytes, cleared by cfeStudioInit): the camera and its key lists. */
-typedef struct CfeStudioBlock {
-    XglCamera *camera;
-    CfeTrackNode *lists[27];
-} CfeStudioBlock;
-
-extern CfeStudioBlock cfeCamera;
-
-/* Script command `cfe.stKyCm` (4 arguments): fetches the studio camera and sets key `key` of camera list `index`
- * to the 8.8 value in `mode`; lists 3 to 5 go through cfeListSetAngleKeyMode, the others through
- * cfeListSetKeyMode. */
+/* Script command `cfe.stKyCm` (4 arguments): fetches the studio camera and sets key `key` of camera track `index`
+ * (CFE_CAMERA_TRACK_*) to the 8.8 value in `mode`; lists 3 to 5 go through cfeListSetAngleKeyMode, the others
+ * through cfeListSetKeyMode. */
 int cfe_0024CB80(int handle)
 {
     int index;
@@ -869,11 +861,11 @@ int cfe_0024CB80(int handle)
     key = vmArgGet(handle, 2);
     mode = vmArgGet(handle, 3);
     value = vmArgGet(handle, 4);
-    xglStudioGetCamera(&cfeCamera.camera, 0);
+    xglStudioGetCamera(&cfeCamera.eval.camera, 0);
     if (index >= 3 && index < 6) {
-        cfeListSetAngleKeyMode(&cfeCamera.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetAngleKeyMode(&cfeCamera.eval.track[index], mode, key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        cfeListSetKeyMode(&cfeCamera.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetKeyMode(&cfeCamera.eval.track[index], mode, key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }

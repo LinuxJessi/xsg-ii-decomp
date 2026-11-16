@@ -222,6 +222,46 @@ typedef struct CfeActor {
 /* CfeActor.flags: the entry's actor follows its position. */
 #define CFE_ACTOR_SHOWN 0x1
 
+/* The tracks of the studio camera (CfeCamera.track): cfe.stKyCm sets them by this index. */
+enum CfeCameraTrack {
+    CFE_CAMERA_TRACK_POSITION,          /* x, y, z of travel.position */
+    CFE_CAMERA_TRACK_ROTATION = 3,      /* x, y, z of travel.rotation */
+    CFE_CAMERA_TRACK_FOV = 6,           /* travel.fov */
+    CFE_CAMERA_TRACK_SHAKE_ON,
+    CFE_CAMERA_TRACK_SHAKE_FRAMES,
+    CFE_CAMERA_TRACK_SHAKE_AMOUNT,
+    CFE_CAMERA_TRACK_COUNT
+};
+
+/* The shake offsets of the camera: position x, y, z, then rotation x, y, z. */
+typedef struct CfeCameraOffset {
+    f32 position[3];
+    f32 rotation[3];
+} CfeCameraOffset;
+
+/* The studio camera block cfeCamera (0x70 bytes, cleared by cfeStudioInit): the camera, its key tracks and the
+ * camera shake. */
+typedef struct CfeCamera {
+    struct XglCamera *camera;   /* +0x00 */
+    CfeTrackNode *track[CFE_CAMERA_TRACK_COUNT]; /* +0x04 */
+    int flags;                  /* +0x2C: CFE_CAMERA_HELD leaves the camera alone */
+    int shakeOn;                /* +0x30 */
+    int shakeFrames;            /* +0x34: frames from one shake offset to the next */
+    int shakeAmount;            /* +0x38: the largest offset in 1/1000 units (rotation 1/10000) */
+    int shakeCounter;           /* +0x3C: frames left to the next offset; -1 starts a new one */
+    CfeCameraOffset from;       /* +0x40 */
+    CfeCameraOffset to;         /* +0x58 */
+} CfeCamera;
+
+/* cfeCamera as the original reaches it: through a union member, so its accesses carry alias set 0 (the camera
+ * pointer and the counter are read again after every camera store). */
+typedef union CfeStudioView {
+    CfeCamera eval;
+} CfeStudioView;
+
+/* CfeCamera.flags: stops the evaluation. */
+#define CFE_CAMERA_HELD 0x1
+
 /* The cut-scene tables (the original's actors, maps, effects, lights, fog, monitors and screen effects) and
  * the light set the lights point into. */
 extern CfeActor cfeEntries[];
@@ -236,6 +276,7 @@ extern CfeEvalEntry cfeEvalEntries[];
 extern int cfeEvalEntryCount;
 extern CfeEvalSlot cfeEvalSlots[3];
 extern XglLightSet cfeLightSet;
+extern CfeStudioView cfeCamera;
 
 /* Functions of src/main/cfeEvaluate.c that cfePlugIn.c calls. */
 int cfeEvaluateNodes(int sample_param);
