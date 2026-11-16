@@ -158,7 +158,33 @@ void MSeObjProc(unsigned int mode) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu197", MSeObjAlloc);
+/* Takes the first free slot of the pool: its flags become MSE_OBJ_BUSY, the mapper and the four callbacks 0.
+ * Returns 0 when the pool already holds MSE_OBJ_SLOTS objects or no slot is free. */
+MSeObj *MSeObjAlloc(void) {
+    MSeObj *object = (MSeObj *)MSeObjPool;
+    int slot = MSE_OBJ_SLOTS;
+
+    if (MSeObjCount < MSE_OBJ_SLOTS) {
+        while (slot-- != 0) {
+            if (!(object->flags & MSE_OBJ_BUSY)) {
+                /* Volatile keeps the two header stores in source order (fd.sh: plain stores
+                 * issue the flags sh before the mapper sw, 26/28 in place; this view 28/28). */
+                volatile MSeObj *header = object;
+
+                header->imageMapper = 0;
+                header->flags = MSE_OBJ_BUSY;
+                MSeObjCount++;
+                object->modeProc[0] = 0;
+                object->modeProc[1] = 0;
+                object->modeProc[2] = 0;
+                object->modeProc[3] = 0;
+                return object;
+            }
+            object++;
+        }
+    }
+    return 0;
+}
 
 /* Marks the slot whose flags word is *flags for release: MSeObjProc mode 3 clears slots carrying 0x100. */
 void MSeObjRequestFree(unsigned short *flags) {
