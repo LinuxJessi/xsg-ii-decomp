@@ -21,30 +21,18 @@
 #include "main/TiGlobalColl.h"
 
 
-/* The object whose flag words (+0x4C0) the records set; +0x5EC is its record list. */
-typedef struct CfeFlagOwner {
-    unsigned char unmodeled_000[0x4C0];
-    u32 flags[(0x5EC - 0x4C0) / 4];
-    struct CfeFlagList *list;
-} CfeFlagOwner;
-
-typedef struct CfeFlagList {
-    unsigned char unmodeled_00[0x60];
-    int count;
-} CfeFlagList;
-
 /* 1 when the list exists and has items. */
-int cfeListHasItems(CfeFlagList *list)
+int cfeListHasItems(CfePackHeader *list)
 {
-    if (list != 0 && list->count != 0) {
+    if (list != 0 && list->geometryCount != 0) {
         return 1;
     }
     return 0;
 }
 
-/* Samples a flag record: its track at `time` into its value and into bit
- * `index` of the owner's flag words. */
-void cfeRecordSample(int time, CfeFlagOwner *owner, CfeFlagRecord *record, int index)
+/* Samples a flag record: its track at `time` into its value and into visibility bit `index` of the
+ * actor. */
+void cfeRecordSample(int time, struct XenoActor *owner, CfeFlagRecord *record, int index)
 {
     int value;
 
@@ -52,21 +40,22 @@ void cfeRecordSample(int time, CfeFlagOwner *owner, CfeFlagRecord *record, int i
         value = (int) cfeTrackSampleStep(record->track[0], time);
         record->value = value;
         if (value != 0) {
-            owner->flags[index >> 5] |= 1 << (index & 0x1F);
+            owner->visibility[index >> 5] |= 1 << (index & 0x1F);
         } else {
-            owner->flags[index >> 5] &= ~(1 << (index & 0x1F));
+            owner->visibility[index >> 5] &= ~(1 << (index & 0x1F));
         }
     }
 }
 
-/* Samples every record of the owner's list (records[i] into flag bit i). */
-void cfeRecordListSample(int time, CfeFlagOwner *owner, CfeFlagRecord *records)
+/* Samples one record per geometry of the actor's pack (records[i] into visibility bit i). */
+void cfeRecordListSample(int time, struct XenoActor *owner, CfeFlagRecord *records)
 {
-    CfeFlagList *list = owner->list;
+    /* XenoActor keeps the pack as an int. */
+    CfePackHeader *list = (CfePackHeader *) owner->rsrc[XAct_Rsrc_MDL];
     int i;
 
     if (cfeListHasItems(list)) {
-        for (i = 0; i < list->count; i++) {
+        for (i = 0; i < list->geometryCount; i++) {
             cfeRecordSample(time, owner, &records[i], i);
         }
     }
@@ -254,8 +243,7 @@ void cfeEvaluateNode(CfeActor *entry, int time)
         entry->firstWord = cfeTrackSampleStep(entry->track[CFE_ACTOR_TRACK_FIRST_WORD], time);
         XenoActorSetFirstWord(entry->actor, entry->firstWord);
     }
-    /* CfeFlagOwner is this file's view of the actor (its flag words and record list). */
-    cfeRecordListSample(time, (CfeFlagOwner *) entry->actor, entry->records);
+    cfeRecordListSample(time, entry->actor, entry->records);
     if (entry->headTrack[CFE_ACTOR_HEAD_SHOWN] != 0) {
         if (cfeTrackSampleStep(entry->headTrack[CFE_ACTOR_HEAD_SHOWN], time) != 0.0f) {
             entry->flags |= CFE_ACTOR_SHOWN;

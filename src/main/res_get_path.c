@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/xgl_timer0.h"
 #include "main/xgl_cd.h"
+#include "main/res_get_path.h"
 
 /* Writes the low 16 bits of number as a 6-byte name: "cf" then four decimal digits, no NUL. */
 void xglCdFormatFileName(char *buffer, int number)
@@ -17,27 +18,6 @@ void xglCdFormatFileName(char *buffer, int number)
     }
 }
 
-/* One 0x14-byte entry of the block table xglCdSlotTable, indexed by slot. The table
- * describes memory blocks in address order; CD reads and other allocations (e.g. the pool
- * cfeNodePoolInit takes through GameResBufferAlloc) share it:
- *   buffer: block start; 0 ends the table (every search stops there).
- *   size:   block bytes (GameResBlockAssign splits, GameResBlockFree merges by adding sizes).
- *   owner:  0 when free; a resource id, or GAME_RES_OWNER plus bits 8-23 of the buffer
- *           address for a block allocated without an owner (GameResBlockAlloc with owner 0,
- *           named loads and anonymous allocations alike). Entry 0's owner is the first
- *           index the best-fit search GameResBlockFindBestFit starts at.
- *   tag:    completion callback of a read into the block, 0 when idle.
- *   value:  word handed back to that callback (copied from xglCdSlotValue). */
-typedef struct CdSlot {
-    void *buffer;
-    unsigned int size;
-    int owner;
-    void *tag;
-    void *value;
-} CdSlot;
-
-/* Entries of xglCdSlotTable; every search walks indexes 1 .. GAME_RES_BLOCK_COUNT - 1. */
-#define GAME_RES_BLOCK_COUNT 0x80
 /* Block sizes are rounded up to this (GameResBlockAlloc). */
 #define GAME_RES_BLOCK_ALIGN 0x40
 /* A block loaded by name starts with the name in a header of this size (GameResLoadName). */
@@ -50,7 +30,6 @@ typedef struct CdSlot {
 /* Resource ids carry the file id in their low 24 bits (GameResLoadID). */
 #define GAME_RES_ID_MASK 0xFFFFFF
 
-extern CdSlot xglCdSlotTable[];
 /* Address range gameResArenaStart .. gameResArenaEnd whose blocks GameResBlockFindByOwner and GameResBlockFindByName skip. */
 static unsigned int gameResArenaStart;
 static unsigned int gameResArenaEnd;

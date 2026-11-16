@@ -54,7 +54,10 @@ struct XenoActor {
     int moveState;                          /* 0x160: the state XenoActorUpdateMoveState switches on (0..7) */
     float shadowValue2;                     /* 0x164 */
     float shadowValue3;                     /* 0x168 */
-    unsigned char unmodeled_16c[0x5A4 - 0x16C];
+    unsigned char unmodeled_16c[0x4C0 - 0x16C];
+    u32 visibility[8];                      /* 0x4C0: one bit per geometry of the pack (xenoActor.c's name);
+                                             * a cut-scene actor's flag records set them */
+    unsigned char unmodeled_4e0[0x5A4 - 0x4E0];
     struct XenoActor *parent;               /* 0x5A4: the actor this one is attached to (XenoActorReleaseChild) */
     unsigned char unmodeled_5a8[0x5CC - 0x5A8];
     u32 flags;                              /* 0x5CC */
@@ -194,6 +197,12 @@ typedef struct UwamonoObject {
     unsigned short hitFlags;                /* +0x748 */
     unsigned char unmodeled_74a[0x870 - 0x74A];
 } UwamonoObject;
+
+/* gameWork as far as its control word: the files that read more of it keep their own view. */
+typedef struct GameWorkControl {
+    unsigned char unmodeled_00[8];
+    int control;                            /* +0x08: CONTROL_* */
+} GameWorkControl;
 
 /* Bits of gameWork.control. */
 #define CONTROL_PAUSED 0x1

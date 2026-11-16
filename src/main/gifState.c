@@ -41,14 +41,7 @@ INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateSetupContext);
 INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawRing);
 
 
-/* gameWork as the effect sees it: the control word at +0x08; bit 0 pauses the game. gameWork has no header
- * type (tu069.c and cfePlugIn.c keep their own views). */
-typedef struct GifGameWork {
-    unsigned char unmodeled_00[8];
-    int control;
-} GifGameWork;
-
-extern GifGameWork gameWork;
+extern GameWorkControl gameWork;
 /* The smallest texture scale of the blur, 0.9 of the ratio. */
 extern f32 gifBlurMinScale;
 /* The texture scale of each edge point of the blur fan. */

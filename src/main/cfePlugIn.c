@@ -7,6 +7,7 @@
 #include "main/tu022.h"
 #include "main/tu026.h"
 #include "main/tu051.h"
+#include "main/tu101.h"
 #include "main/tu138.h"
 #include "main/sef.h"
 #include "main/tu144.h"
@@ -591,20 +592,6 @@ int cfe_0024C030(int handle)
 extern char cfeMovieOpenFailedText[];
 extern unsigned char cfeMovieOpenAssert[];
 
-/* The block table of xgl_cd (res_get_path.c: CdSlot) as far as the free-slot walk reads it. */
-typedef struct CfeCdSlot {
-    void *buffer;
-    unsigned int size;
-    int owner;                  /* +0x08: -1 ends the walk */
-    void *tag;
-    void *value;
-} CfeCdSlot;
-
-extern CfeCdSlot xglCdSlotTable[];
-
-/* Entries of xglCdSlotTable the walk may visit. */
-#define CFE_CD_SLOT_LAST 0x7F
-
 /* Script command `cfe.ldMnt` (1 argument): opens the movie named by argument 1 in the next entry of
  * cfeEvalEntries: reads the file into a new block (walking the block table when the allocation
  * fails), opens it and allocates its two frame buffers. */
@@ -621,7 +608,7 @@ int cfe_0024C0D8(int handle)
     entry->movie.source = GameResBufferAlloc(entry->movie.sourceSize);
     if (entry->movie.source == 0) {
         /* An empty walk to the first unused slot; the result is not used. */
-        for (slot = 1; slot < CFE_CD_SLOT_LAST && xglCdSlotTable[slot + 1].owner != -1; slot++) {
+        for (slot = 1; slot < GAME_RES_BLOCK_COUNT - 1 && xglCdSlotTable[slot + 1].owner != -1; slot++) {
         }
     }
     do {
@@ -675,14 +662,7 @@ extern signed char pxyTickScaleDouble;
 extern int cfePaused;
 extern int cfeStartDelay;
 
-/* gameWork as the scene end sees it: the control word at +0x08 (CONTROL_* in tu051.h). gameWork has no
- * header type; tu069.c keeps its own view as well. */
-typedef struct CfeGameWork {
-    unsigned char unmodeled_00[8];
-    int control;
-} CfeGameWork;
-
-extern CfeGameWork gameWork;
+extern GameWorkControl gameWork;
 /* The position the parked record actors are moved to before they are released. */
 extern const AlignedVector4 cfeParkedPosition;
 
@@ -1215,13 +1195,7 @@ void xglFontPrintDirect(const char *text);
 extern int fadeUpdateHook;
 extern PadRecord PadData[];
 
-/* SaveData as the subtitles read it: +0x3A shows every subtitle (game_movie.c caption_all). */
-typedef struct CfeSaveData {
-    unsigned char unmodeled_00[0x3A];
-    unsigned char captionAll;
-} CfeSaveData;
-
-extern CfeSaveData SaveData;
+extern ConfigSaveSettings SaveData;
 extern const char cfeMesFontSettings[];
 int strcmp(const char *first, const char *second);
 
@@ -1309,7 +1283,7 @@ int cfe_0024DF60(int handle)
     }
     for (i = 0; i < cfePlugInRecordCount; i++) {
         if (cfeMessages[i].firstFrame <= time && time < cfeMessages[i].endFrame
-            && (SaveData.captionAll != 0 || cfeMessages[i].text[0] == ' ')) {
+            && (SaveData.caption_all != 0 || cfeMessages[i].text[0] == ' ')) {
             y = CFE_SUBTITLE_Y;
             if (cfeStrCountChar(cfeMessages[i].text, '\n') >= 2) {
                 y = CFE_SUBTITLE_Y2;
