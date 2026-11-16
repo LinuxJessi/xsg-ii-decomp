@@ -4,7 +4,19 @@
 #include "gs.h"
 #include "main/tu207.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00274808);
+/* Wraps value once into lower..upper: one period (upper - lower + 1) down when above upper, one up when below lower. */
+int func_00274808(int value, int lower, int upper)
+{
+    int period = upper - lower + 1;
+
+    if (upper < value) {
+        value -= period;
+    }
+    if (value < lower) {
+        value += period;
+    }
+    return value;
+}
 
 /* Inclusive range test: lower <= value <= upper. */
 int xglIsInRange(int value, int lower, int upper)
@@ -368,7 +380,6 @@ int func_00275CF0(int mode, int fallback)
     }
 }
 
-int func_00274808(int, int, int);
 extern int recordAngle;
 float sinf(float angle);
 
@@ -405,6 +416,10 @@ int func_00275E08(void)
 /* At stage 2, while updates are not suspended, steps the angle recordAngle by 92 and wraps it into 0..360. */
 void recordStepAngle(int stage)
 {
+    /* Block-scope declaration: a call through the file-scope one, after the definition above, is marked
+       nothrow and turns the original bnel at 0x275EB4 into bne; this call has no such mark. */
+    int func_00274808(int value, int lower, int upper);
+
     if (recordUpdatePaused == 0 && stage == 2) {
         recordAngle += 0x5C;
         recordAngle = func_00274808(recordAngle, 0, 0x168);
