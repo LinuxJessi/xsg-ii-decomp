@@ -373,12 +373,10 @@
    "0x001947b8": "main",
    "0x002a6d50": "__main",
    "0x00122d68": "sceSifInitRpc",
-   "0x0012e160": "sceCdInit",
    "0x001288c8": "sceSifRebootIop",
    "0x00128890": "sceSifSyncIop",
    "0x00127478": "sceSifInitIopHeap",
    "0x00127b58": "sceSifLoadFileReset",
-   "0x0012f0d0": "sceCdMmode",
    "0x00124688": "sceFsReset",
    "0x00199428": "xglDmaInitial",
    "0x001a0920": "xglMovieInit",
@@ -3047,7 +3045,8 @@
    "0x0023e930": "heapOverviewMenuAttach",
    "0x0023f470": "tiWaterSendItemPair",
    "0x0023f4b0": "tiWaterSendFramePair",
-   "0x00240320": "tiWatSimStoreSourcePos2"
+   "0x00240320": "tiWatSimStoreSourcePos2",
+   "0x00274808": "xglWrapInt"
   },
   "ov01": {
    "0x00a80d88": "rnd",

@@ -5,7 +5,7 @@
 #include "main/tu207.h"
 
 /* Wraps value once into lower..upper: one period (upper - lower + 1) down when above upper, one up when below lower. */
-int func_00274808(int value, int lower, int upper)
+int xglWrapInt(int value, int lower, int upper)
 {
     int period = upper - lower + 1;
 
@@ -380,7 +380,7 @@ extern int recordAngle;
 float sinf(float angle);
 
 /* Sprite color of stage mode: grey 0x808080 under alpha at stage 1, the fixed 0x40808080 (alpha 0x40, whatever alpha
-   is) at stage 0, at stage 2 the alpha 80 + 5 * sin(recordAngle degrees) put into 0..127 by func_00274808; 0 for any
+   is) at stage 0, at stage 2 the alpha 80 + 5 * sin(recordAngle degrees) put into 0..127 by xglWrapInt; 0 for any
    other stage. */
 int func_00275D30(int mode, int alpha)
 {
@@ -390,7 +390,7 @@ int func_00275D30(int mode, int alpha)
     case 0:
         return 0x40808080;
     case 2:
-        alpha = func_00274808((int) (sinf(recordAngle * 3.141592 / 180.0) * 5.0f + 80.0f), 0, 0x7F);
+        alpha = xglWrapInt((int) (sinf(recordAngle * 3.141592 / 180.0) * 5.0f + 80.0f), 0, 0x7F);
         return (alpha << 24) | 0x808080;
     default:
         return 0;
@@ -400,12 +400,12 @@ int func_00275D30(int mode, int alpha)
 float cosf(float angle);
 
 /* Pulsing color: grey 0x808080 under the alpha 80 + 5 * cos(recordAngle degrees), put into 0..127 by
-   func_00274808. */
+   xglWrapInt. */
 int func_00275E08(void)
 {
     int alpha;
 
-    alpha = func_00274808((int) (cosf(recordAngle * 3.141592 / 180.0) * 5.0f + 80.0f), 0, 0x7F);
+    alpha = xglWrapInt((int) (cosf(recordAngle * 3.141592 / 180.0) * 5.0f + 80.0f), 0, 0x7F);
     return (alpha << 24) | 0x808080;
 }
 
@@ -414,11 +414,11 @@ void recordStepAngle(int stage)
 {
     /* Block-scope declaration, a codegen device: with only the definition above in scope, fd.sh recordStepAngle
        gives bne $4,$2 where the original has bnel at 0x275EB4 (17/18 in place); with it, 18/18. */
-    int func_00274808(int value, int lower, int upper);
+    int xglWrapInt(int value, int lower, int upper);
 
     if (recordUpdatePaused == 0 && stage == 2) {
         recordAngle += 0x5C;
-        recordAngle = func_00274808(recordAngle, 0, 0x168);
+        recordAngle = xglWrapInt(recordAngle, 0, 0x168);
     }
 }
 

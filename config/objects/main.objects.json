@@ -90127,9 +90127,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00274808",
+     "name": "xglWrapInt",
      "size": 40,
-     "splat_name": "func_00274808",
+     "splat_name": "xglWrapInt",
      "va": "0x00274808",
      "name_basis": "address",
      "provenance": "estimated"
