@@ -4429,18 +4429,18 @@ typedef struct SefActor {
     unsigned char handle640[0];
 } SefActor;
 
-int func_0029A6D0(void *operand, int input, void *output, int flag);
-int func_0029A980(void *operand, int input, void *output, int flag);
+int tiMRPackageGetNodeMatrix(void *operand, int input, void *output, int flag);
+int tiMRPackageGetNodePoint(void *operand, int input, void *output, int flag);
 void *MMathMulMatrix(void *destination, const void *matrix, const void *source);
 Vector4 *MMathApplyMatrix(Vector4 *destination, const void *matrix, const Vector4 *source);
 
-/* Fetches the actor's output for input through its handle channel (func_0029A6D0); on success, when apply is set,
+/* Fetches the actor's output for input through its handle channel (tiMRPackageGetNodeMatrix); on success, when apply is set,
    multiplies the output by the actor's local matrix. Same shape as XenoActorMulMatrix without its override matrix. */
 int sefActorMulLocalMatrix(SefActor *actor, int input, void *output, int apply)
 {
     int ok;
 
-    ok = func_0029A6D0(actor->handle640, input, output, 1);
+    ok = tiMRPackageGetNodeMatrix(actor->handle640, input, output, 1);
     if (ok != 0) {
         if (apply != 0) {
             MMathMulMatrix(output, actor->localMatrix, output);
@@ -4450,13 +4450,13 @@ int sefActorMulLocalMatrix(SefActor *actor, int input, void *output, int apply)
     return 0;
 }
 
-/* Same as sefActorMulLocalMatrix with the second callee (func_0029A980) and MMathApplyMatrix: the vector form, as
+/* Same as sefActorMulLocalMatrix with the second callee (tiMRPackageGetNodePoint) and MMathApplyMatrix: the vector form, as
    XenoActorMulVector in xenoActor.c, here without its override matrix. */
 int sefActorMulLocalVector(SefActor *actor, int input, void *output, int apply)
 {
     int ok;
 
-    ok = func_0029A980(actor->handle640, input, output, 1);
+    ok = tiMRPackageGetNodePoint(actor->handle640, input, output, 1);
     if (ok != 0) {
         if (apply != 0) {
             MMathApplyMatrix(output, actor->localMatrix, output);

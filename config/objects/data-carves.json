@@ -85112,6 +85112,260 @@
      }
     }
    ]
+  },
+  "main/tu249": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b5dc",
+      "0x0069b620"
+     ],
+     "generated": [
+      "0x0069b5dc",
+      "0x0069b620"
+     ],
+     "generated_by": [
+      "DrawCircleShadow",
+      "DrawDropCircle",
+      "DrawDropShadowSub",
+      "DrawZeldaShadow",
+      "DrawZeldaShadowSub"
+     ],
+     "c_owned_symbols": [
+      "D_0069B5DC",
+      "D_0069B5E0",
+      "D_0069B5E4",
+      "D_0069B5E8",
+      "D_0069B5EC",
+      "D_0069B5F0",
+      "D_0069B5F4",
+      "D_0069B5F8",
+      "D_0069B5FC",
+      "D_0069B600",
+      "D_0069B604",
+      "D_0069B608",
+      "D_0069B60C",
+      "D_0069B610",
+      "D_0069B614",
+      "D_0069B618",
+      "D_0069B61C"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/act_3.o"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x0068d8f0",
+      "0x0068d918"
+     ],
+     "generated": [
+      "0x0068d8f0",
+      "0x0068d918"
+     ],
+     "generated_by": [
+      "ACT_DrawShadow"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068D8F0"
+     ],
+     "also_referenced_by_c": [
+      "dropCircleQuadIndices"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/act_3.o"
+     }
+    }
+   ]
+  },
+  "main/tu258": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068f640",
+      "0x0068f658"
+     ],
+     "generated": [
+      "0x0068f640",
+      "0x0068f658"
+     ],
+     "generated_by": [
+      "xacGetKeyValue"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068F640"
+     ],
+     "also_referenced_by_c": [
+      "xacAssertFile",
+      "D_0068F630",
+      "D_0068F658",
+      "D_0068F670",
+      "D_0068F688",
+      "D_0068F6A0"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/TiXacAnimCurve.o"
+     }
+    },
+    {
+     "range": [
+      "0x0068f6c0",
+      "0x0068f6d8"
+     ],
+     "generated": [
+      "0x0068f6c0",
+      "0x0068f6d8"
+     ],
+     "generated_by": [
+      "xacEvalCurve"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068F6C0"
+     ],
+     "also_referenced_by_c": [
+      "D_0068F6D8",
+      "D_0068F6E0",
+      "D_0068F6F0",
+      "D_0068F700",
+      "D_0068F710",
+      "D_0068F720",
+      "D_0068F730"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/TiXacAnimCurve.o"
+     }
+    }
+   ]
+  },
+  "main/tu263": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068f7a8",
+      "0x0068f7b0"
+     ],
+     "generated": [
+      "0x0068f7a8",
+      "0x0068f7b0"
+     ],
+     "generated_by": [
+      "XrgQuaternionFromVectors"
+     ],
+     "c_owned_symbols": [
+      "D_0068F7A8"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu263.o"
+     }
+    }
+   ]
+  },
+  "main/tu272": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b854",
+      "0x0069b880"
+     ],
+     "generated": [
+      "0x0069b854",
+      "0x0069b880"
+     ],
+     "generated_by": [
+      "mapHeadingXZ",
+      "mapMoveAlongWalls"
+     ],
+     "c_owned_symbols": [
+      "D_0069B854",
+      "D_0069B858",
+      "D_0069B85C",
+      "D_0069B860",
+      "D_0069B864",
+      "D_0069B868",
+      "D_0069B86C",
+      "D_0069B870",
+      "D_0069B874",
+      "D_0069B878",
+      "D_0069B87C"
+     ],
+     "also_referenced_by_c": [
+      "mapNearestSearchLimit"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu272.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b884",
+      "0x0069b894"
+     ],
+     "generated": [
+      "0x0069b884",
+      "0x0069b894"
+     ],
+     "generated_by": [
+      "mapPushOutByRadius"
+     ],
+     "c_owned_symbols": [
+      "D_0069B884",
+      "D_0069B888",
+      "D_0069B88C",
+      "D_0069B890"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu272.o"
+     }
+    }
+   ]
+  },
+  "main/tu273": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b894",
+      "0x0069b898"
+     ],
+     "generated": [
+      "0x0069b894",
+      "0x0069b898"
+     ],
+     "generated_by": [
+      "mapBuildScanNode"
+     ],
+     "c_owned_symbols": [
+      "D_0069B894"
+     ],
+     "also_referenced_by_c": [
+      "D_0069B898",
+      "D_0069B89C"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu273.o"
+     }
+    }
+   ]
   }
  }
 }

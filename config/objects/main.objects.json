@@ -4032,7 +4032,6 @@
   "TiCameraSolver",
   "TiMotionSolver",
   "TiMRPackage",
-  "tu253",
   "tu254",
   "tu255",
   "tu256",
@@ -75079,7 +75078,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 10,
+    "of": 11,
     "migration_hints": [],
     "records": []
    },
@@ -75105,9 +75104,18 @@
     {
      "binding": "GLOBAL",
      "name": "cfeFileTempInit",
-     "size": 60,
+     "size": 44,
      "splat_name": "cfeFileTempInit",
      "va": "0x0024f100",
+     "name_basis": "address",
+     "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "cfeFileLogIndentSet",
+     "size": 12,
+     "splat_name": "cfeFileLogIndentSet",
+     "va": "0x0024f130",
      "name_basis": "address",
      "provenance": "estimated"
     },
@@ -75560,7 +75568,7 @@
    "in_scope": true,
    "boundary_kind": "inferred",
    "boundary_evidence": [
-    "model log-odds -1.45",
+    "model log-odds -1.44",
     "precision of this score band on X1, held out: 0.19 (19/100)"
    ],
    "boundary_confidence": "low",
@@ -75880,7 +75888,7 @@
    "in_scope": true,
    "boundary_kind": "inferred",
    "boundary_evidence": [
-    "model log-odds 0.06",
+    "model log-odds 0.07",
     "precision of this score band on X1, held out: 0.257 (9/35)"
    ],
    "boundary_confidence": "low",
@@ -97406,9 +97414,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0028D890",
+     "name": "tiMotionAimTarget",
      "size": 1212,
-     "splat_name": "func_0028D890",
+     "splat_name": "tiMotionAimTarget",
      "va": "0x0028d890",
      "name_basis": "address",
      "provenance": "estimated"
@@ -97442,27 +97450,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002900F8",
+     "name": "tiMotionSolveSkipNodesOld",
      "size": 1052,
-     "splat_name": "func_002900F8",
+     "splat_name": "tiMotionSolveSkipNodesOld",
      "va": "0x002900f8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00290518",
+     "name": "tiMotionSolveSkipNodes",
      "size": 1052,
-     "splat_name": "func_00290518",
+     "splat_name": "tiMotionSolveSkipNodes",
      "va": "0x00290518",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00290938",
+     "name": "tiMotionChainDynamics",
      "size": 380,
-     "splat_name": "func_00290938",
+     "splat_name": "tiMotionChainDynamics",
      "va": "0x00290938",
      "name_basis": "address",
      "provenance": "estimated"
@@ -97496,45 +97504,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00291010",
+     "name": "tiMotionSolveLocatorOutOfLine",
      "size": 488,
-     "splat_name": "func_00291010",
+     "splat_name": "tiMotionSolveLocatorOutOfLine",
      "va": "0x00291010",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002911F8",
+     "name": "tiMotionSolveJointOutOfLine",
      "size": 636,
-     "splat_name": "func_002911F8",
+     "splat_name": "tiMotionSolveJointOutOfLine",
      "va": "0x002911f8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00291478",
+     "name": "tiMotionSolveFace",
      "size": 776,
-     "splat_name": "func_00291478",
+     "splat_name": "tiMotionSolveFace",
      "va": "0x00291478",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00291780",
+     "name": "tiMotionSolveDynamicsOutOfLine",
      "size": 572,
-     "splat_name": "func_00291780",
+     "splat_name": "tiMotionSolveDynamicsOutOfLine",
      "va": "0x00291780",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002919C0",
+     "name": "tiMotionSolveDynamicsOldOutOfLine",
      "size": 584,
-     "splat_name": "func_002919C0",
+     "splat_name": "tiMotionSolveDynamicsOldOutOfLine",
      "va": "0x002919c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -97658,7 +97666,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 28,
+    "of": 31,
     "migration_hints": [],
     "records": []
    },
@@ -97728,9 +97736,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00291FD0",
+     "name": "tiMRPackageSetPamFrame",
      "size": 76,
-     "splat_name": "func_00291FD0",
+     "splat_name": "tiMRPackageSetPamFrame",
      "va": "0x00291fd0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -97881,9 +97889,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00292638",
+     "name": "tiMRPackageAdvanceAUnwrapped",
      "size": 368,
-     "splat_name": "func_00292638",
+     "splat_name": "tiMRPackageAdvanceAUnwrapped",
      "va": "0x00292638",
      "name_basis": "address",
      "provenance": "estimated"
@@ -97899,9 +97907,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002928C8",
+     "name": "tiMRPackageAdvanceBUnwrapped",
      "size": 280,
-     "splat_name": "func_002928C8",
+     "splat_name": "tiMRPackageAdvanceBUnwrapped",
      "va": "0x002928c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -97912,6 +97920,33 @@
      "size": 604,
      "splat_name": "tiMRPackageUpdate",
      "va": "0x002929e0",
+     "name_basis": "address",
+     "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "tiMRPackageSelectEntryA",
+     "size": 92,
+     "splat_name": "tiMRPackageSelectEntryA",
+     "va": "0x00292c40",
+     "name_basis": "address",
+     "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "tiMRPackageSetTableAndEntryA",
+     "size": 112,
+     "splat_name": "tiMRPackageSetTableAndEntryA",
+     "va": "0x00292ca0",
+     "name_basis": "address",
+     "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "tiMRPackageSelectEntryB",
+     "size": 92,
+     "splat_name": "tiMRPackageSelectEntryB",
+     "va": "0x00292d10",
      "name_basis": "address",
      "provenance": "estimated"
     }
@@ -97948,126 +97983,12 @@
    },
    "text": {
     "start": "0x00291d40",
-    "end": "0x00292c40",
-    "code_end": "0x00292c3c",
-    "size": 3840,
+    "end": "0x00292d70",
+    "code_end": "0x00292d6c",
+    "size": 4144,
     "splat": "c",
     "splat_range": [
      "0x00291d40",
-     "0x00292c40"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
-    "source": {
-     "kind": "file",
-     "path": "src/main/TiMRPackage.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu253",
-   "unit": "main",
-   "ordinal": 253,
-   "name": "tu253",
-   "path": "src/main/tu253.c",
-   "scaffold_path": "scaffold/src/main/tu253.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -2.03",
-    "precision of this score band on X1, held out: 0.231 (3/13)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "no name evidence",
-   "name_confidence": "none",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G0"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G0",
-    "g_basis": "no gp-relative instruction in the code; -G0 cannot add one",
-    "g_confidence": "medium",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 3,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
-    {
-     "binding": "GLOBAL",
-     "name": "tiMRPackageSelectEntryA",
-     "size": 92,
-     "splat_name": "tiMRPackageSelectEntryA",
-     "va": "0x00292c40",
-     "name_basis": "address",
-     "provenance": "estimated"
-    },
-    {
-     "binding": "GLOBAL",
-     "name": "tiMRPackageSetTableAndEntryA",
-     "size": 112,
-     "splat_name": "tiMRPackageSetTableAndEntryA",
-     "va": "0x00292ca0",
-     "name_basis": "address",
-     "provenance": "estimated"
-    },
-    {
-     "binding": "GLOBAL",
-     "name": "tiMRPackageSelectEntryB",
-     "size": 92,
-     "splat_name": "tiMRPackageSelectEntryB",
-     "va": "0x00292d10",
-     "name_basis": "address",
-     "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c"
-   },
-   "sections": {},
-   "text": {
-    "start": "0x00292c40",
-    "end": "0x00292d70",
-    "code_end": "0x00292d6c",
-    "size": 304,
-    "splat": "c",
-    "splat_range": [
-     "0x00292c40",
      "0x00292d70"
     ],
     "note": null
@@ -98077,7 +97998,7 @@
     "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
     "source": {
      "kind": "file",
-     "path": "src/main/tu253.c",
+     "path": "src/main/TiMRPackage.c",
      "include_dirs": [
       "include"
      ]
@@ -98744,18 +98665,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00293420",
+     "name": "xacGetKeyPayloadA",
      "size": 156,
-     "splat_name": "func_00293420",
+     "splat_name": "xacGetKeyPayloadA",
      "va": "0x00293420",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002934C0",
+     "name": "xacGetKeyPayloadB",
      "size": 156,
-     "splat_name": "func_002934C0",
+     "splat_name": "xacGetKeyPayloadB",
      "va": "0x002934c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -98963,9 +98884,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002945C8",
+     "name": "xacEvalTransDynamicsNoWeight",
      "size": 636,
-     "splat_name": "func_002945C8",
+     "splat_name": "xacEvalTransDynamicsNoWeight",
      "va": "0x002945c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -98999,36 +98920,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00294AE0",
+     "name": "xacEvalJointCurves9",
      "size": 268,
-     "splat_name": "func_00294AE0",
+     "splat_name": "xacEvalJointCurves9",
      "va": "0x00294ae0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00294BF0",
+     "name": "xacReadWindDirCurves",
      "size": 348,
-     "splat_name": "func_00294BF0",
+     "splat_name": "xacReadWindDirCurves",
      "va": "0x00294bf0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00294D50",
+     "name": "xacReadWindPointCurves",
      "size": 348,
-     "splat_name": "func_00294D50",
+     "splat_name": "xacReadWindPointCurves",
      "va": "0x00294d50",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00294EB0",
+     "name": "xacReadJointCurves12Padded",
      "size": 348,
-     "splat_name": "func_00294EB0",
+     "splat_name": "xacReadJointCurves12Padded",
      "va": "0x00294eb0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -99166,9 +99087,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00295260",
+     "name": "xacBuildCubicSegment",
      "size": 392,
-     "splat_name": "func_00295260",
+     "splat_name": "xacBuildCubicSegment",
      "va": "0x00295260",
      "name_basis": "address",
      "provenance": "estimated"
@@ -99184,18 +99105,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00295438",
+     "name": "xacGetKeyPairB",
      "size": 76,
-     "splat_name": "func_00295438",
+     "splat_name": "xacGetKeyPairB",
      "va": "0x00295438",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00295488",
+     "name": "xacEvalCubicKeys",
      "size": 308,
-     "splat_name": "func_00295488",
+     "splat_name": "xacEvalCubicKeys",
      "va": "0x00295488",
      "name_basis": "address",
      "provenance": "estimated"
@@ -99211,9 +99132,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00295610",
+     "name": "xacEvalLinearKeys",
      "size": 196,
-     "splat_name": "func_00295610",
+     "splat_name": "xacEvalLinearKeys",
      "va": "0x00295610",
      "name_basis": "address",
      "provenance": "estimated"
@@ -99333,18 +99254,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_002956D8",
+     "name": "tiDrawJointSetGifTag",
      "size": 168,
-     "splat_name": "func_002956D8",
+     "splat_name": "tiDrawJointSetGifTag",
      "va": "0x002956d8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00295780",
+     "name": "tiDrawJointScreenPoints",
      "size": 152,
-     "splat_name": "func_00295780",
+     "splat_name": "tiDrawJointScreenPoints",
      "va": "0x00295780",
      "name_basis": "address",
      "provenance": "estimated"
@@ -99387,18 +99308,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00295CF8",
+     "name": "tiDrawJointOrientMesh",
      "size": 496,
-     "splat_name": "func_00295CF8",
+     "splat_name": "tiDrawJointOrientMesh",
      "va": "0x00295cf8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00295EE8",
+     "name": "tiDrawJointDrawLists",
      "size": 1752,
-     "splat_name": "func_00295EE8",
+     "splat_name": "tiDrawJointDrawLists",
      "va": "0x00295ee8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -99745,9 +99666,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00296CF0",
+     "name": "XrgQuaternionCombine",
      "size": 324,
-     "splat_name": "func_00296CF0",
+     "splat_name": "XrgQuaternionCombine",
      "va": "0x00296cf0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -99886,18 +99807,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00297580",
+     "name": "XrgQuaternionFromVectors",
      "size": 356,
-     "splat_name": "func_00297580",
+     "splat_name": "XrgQuaternionFromVectors",
      "va": "0x00297580",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002976E8",
+     "name": "tiDynamicsNodeIntegrate",
      "size": 332,
-     "splat_name": "func_002976E8",
+     "splat_name": "tiDynamicsNodeIntegrate",
      "va": "0x002976e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -99913,54 +99834,54 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002978C8",
+     "name": "tiDynamicsNodePullToTarget",
      "size": 180,
-     "splat_name": "func_002978C8",
+     "splat_name": "tiDynamicsNodePullToTarget",
      "va": "0x002978c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00297980",
+     "name": "tiDynamicsNodeConstrainNormal",
      "size": 284,
-     "splat_name": "func_00297980",
+     "splat_name": "tiDynamicsNodeConstrainNormal",
      "va": "0x00297980",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00297AA0",
+     "name": "tiMatrixNormalizeRows",
      "size": 236,
-     "splat_name": "func_00297AA0",
+     "splat_name": "tiMatrixNormalizeRows",
      "va": "0x00297aa0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00297B90",
+     "name": "tiDynamicsNodeSolvePalette",
      "size": 360,
-     "splat_name": "func_00297B90",
+     "splat_name": "tiDynamicsNodeSolvePalette",
      "va": "0x00297b90",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00297CF8",
+     "name": "tiDynamicsNodeStep",
      "size": 164,
-     "splat_name": "func_00297CF8",
+     "splat_name": "tiDynamicsNodeStep",
      "va": "0x00297cf8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00297DA0",
+     "name": "tiDynamicsNodeSolveNext",
      "size": 132,
-     "splat_name": "func_00297DA0",
+     "splat_name": "tiDynamicsNodeSolveNext",
      "va": "0x00297da0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -100091,9 +100012,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00297F48",
+     "name": "tiWindSolveCellPairs",
      "size": 364,
-     "splat_name": "func_00297F48",
+     "splat_name": "tiWindSolveCellPairs",
      "va": "0x00297f48",
      "name_basis": "address",
      "provenance": "estimated"
@@ -100375,7 +100296,7 @@
    "path": "src/main/TiWindAnim.c",
    "scaffold_path": "scaffold/src/main/TiWindAnim.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -100454,7 +100375,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".rodata": "asm"
    },
    "sections": {
@@ -100494,6 +100415,17 @@
      "0x00299370"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "user order 2026-11-16: Muy bien, integra las funciones (x2-c17 pass b)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/TiWindAnim.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -100845,7 +100777,7 @@
    "path": "src/main/TiPartsAnim.c",
    "scaffold_path": "scaffold/src/main/TiPartsAnim.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -100915,16 +100847,16 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029A6D0",
+     "name": "tiMRPackageGetNodeMatrix",
      "size": 688,
-     "splat_name": "func_0029A6D0",
+     "splat_name": "tiMRPackageGetNodeMatrix",
      "va": "0x0029a6d0",
      "name_basis": "address",
      "provenance": "estimated"
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".rodata": "asm"
    },
    "sections": {
@@ -100964,6 +100896,17 @@
      "0x0029a980"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "user order 2026-11-16: Muy bien, integra las funciones (x2-c17 pass b)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/TiPartsAnim.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -101026,9 +100969,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0029A980",
+     "name": "tiMRPackageGetNodePoint",
      "size": 340,
-     "splat_name": "func_0029A980",
+     "splat_name": "tiMRPackageGetNodePoint",
      "va": "0x0029a980",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101123,7 +101066,7 @@
    "path": "src/main/tu270.c",
    "scaffold_path": "scaffold/src/main/tu270.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -101184,9 +101127,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029AEE8",
+     "name": "tiDynamicsCollClampAbovePlane",
      "size": 332,
-     "splat_name": "func_0029AEE8",
+     "splat_name": "tiDynamicsCollClampAbovePlane",
      "va": "0x0029aee8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101247,9 +101190,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029B860",
+     "name": "tiDynamicsCollSolveMatrixPair",
      "size": 492,
-     "splat_name": "func_0029B860",
+     "splat_name": "tiDynamicsCollSolveMatrixPair",
      "va": "0x0029b860",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101265,7 +101208,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm"
    },
    "sections": {
@@ -101305,6 +101248,17 @@
      "0x0029bc48"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "user order 2026-11-16: Muy bien, integra las funciones (x2-c17 pass b)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu270.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -101586,9 +101540,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0029C288",
+     "name": "mapHeadingXZ",
      "size": 364,
-     "splat_name": "func_0029C288",
+     "splat_name": "mapHeadingXZ",
      "va": "0x0029c288",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101604,9 +101558,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029C438",
+     "name": "mapStoreEdgePlanes",
      "size": 32,
-     "splat_name": "func_0029C438",
+     "splat_name": "mapStoreEdgePlanes",
      "va": "0x0029c438",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101676,9 +101630,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029C960",
+     "name": "mapPushOutOfKeepOff",
      "size": 956,
-     "splat_name": "func_0029C960",
+     "splat_name": "mapPushOutOfKeepOff",
      "va": "0x0029c960",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101712,45 +101666,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029CF78",
+     "name": "mapCrossingBlocked",
      "size": 316,
-     "splat_name": "func_0029CF78",
+     "splat_name": "mapCrossingBlocked",
      "va": "0x0029cf78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029D0B8",
+     "name": "mapStepRecord",
      "size": 676,
-     "splat_name": "func_0029D0B8",
+     "splat_name": "mapStepRecord",
      "va": "0x0029d0b8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029D360",
+     "name": "mapMoveAlongWalls",
      "size": 1772,
-     "splat_name": "func_0029D360",
+     "splat_name": "mapMoveAlongWalls",
      "va": "0x0029d360",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029DA50",
+     "name": "mapWalkSegment",
      "size": 172,
-     "splat_name": "func_0029DA50",
+     "splat_name": "mapWalkSegment",
      "va": "0x0029da50",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029DB00",
+     "name": "mapCommitProbeHit",
      "size": 256,
-     "splat_name": "func_0029DB00",
+     "splat_name": "mapCommitProbeHit",
      "va": "0x0029db00",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101784,9 +101738,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0029DEF8",
+     "name": "mapPushOutByRadius",
      "size": 1064,
-     "splat_name": "func_0029DEF8",
+     "splat_name": "mapPushOutByRadius",
      "va": "0x0029def8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -101965,7 +101919,7 @@
    "path": "src/main/tu273.c",
    "scaffold_path": "scaffold/src/main/tu273.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -102017,9 +101971,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0029E6A0",
+     "name": "mapBuildScanNode",
      "size": 1224,
-     "splat_name": "func_0029E6A0",
+     "splat_name": "mapBuildScanNode",
      "va": "0x0029e6a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -102062,7 +102016,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".lit4": "asm",
     ".sdata": "asm",
@@ -102168,15 +102122,26 @@
    },
    "text": {
     "start": "0x0029e6a0",
-    "end": "0x0029f008",
+    "end": "0x0029f000",
     "code_end": "0x0029f000",
-    "size": 2408,
+    "size": 2400,
     "splat": "c",
     "splat_range": [
      "0x0029e6a0",
-     "0x0029f008"
+     "0x0029f000"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "user order 2026-11-16: Muy bien, integra las funciones (x2-c17 pass b)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu273.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -102955,13 +102920,13 @@
     }
    },
    "text": {
-    "start": "0x0029f008",
+    "start": "0x0029f000",
     "end": "0x002a1578",
     "code_end": "0x002a1574",
-    "size": 9584,
+    "size": 9592,
     "splat": "hasm",
     "splat_range": [
-     "0x0029f008",
+     "0x0029f000",
      "0x002a1578"
     ],
     "note": null

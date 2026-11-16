@@ -859,7 +859,7 @@ void cfeDrawLine(int x0, int y0, int x1, int y1, unsigned int color0, unsigned i
 }
 
 void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source);
-void func_00297580(Vector4 *quaternion, const Vector4 *from, const Vector4 *to);
+void XrgQuaternionFromVectors(Vector4 *quaternion, const Vector4 *from, const Vector4 *to);
 void XrgQuaternionToMatrix(Matrix4 matrix, const Vector4 *quaternion);
 void xglMatrixStackUnit(void);
 void xglMatrixStackRotX(float angle);
@@ -1016,7 +1016,7 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
 
         xglVectorNormal_001A9200(&normal, direction);
         normal.y = -normal.y;
-        func_00297580(&quaternion, &axis, &normal);
+        XrgQuaternionFromVectors(&quaternion, &axis, &normal);
         XrgQuaternionToMatrix(rotation, &quaternion);
         xglMatrixStackUnit();
         xglMatrixStackRotX(camera->travel.rotation.x);

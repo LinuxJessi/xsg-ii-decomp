@@ -1,15 +1,15 @@
 #include "common.h"
+#include "shared.h"
+#include "main/tu026.h"
 
-/* Named in the proposals: tiCameraFovDegrees. Horizontal or vertical field of view in degrees
- * from a focal length in millimetres and a frame size in inches (0.03937 converts mm to inch). */
 void func_0028D4C8(void)
 {
 }
 
-typedef float f32;
-
 f32 atanf(f32);
 
+/* Horizontal or vertical field of view in degrees from a focal length in millimetres and a frame size in inches
+ * (0.03937 converts mm to inch). */
 f32 tiCameraFovDegrees(f32 focal_length_mm, f32 frame_size)
 {
     f32 half_frame;
@@ -18,20 +18,92 @@ f32 tiCameraFovDegrees(f32 focal_length_mm, f32 frame_size)
     return 2.0f * atanf(half_frame / (focal_length_mm * 0.03937f)) * 57.29578f;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/TiCameraSolver", tiCameraReadPose);
+/* Channel written by the scalar and angle readers at camera +0x90. */
+typedef struct TiCameraChannel {
+    unsigned char unmodeled_00[4];
+    float value;
+    int unknown_08;
+    int unknown_0c;
+} TiCameraChannel;
 
-INCLUDE_ASM("asm/main/nonmatchings/TiCameraSolver", tiCameraReadScalar);
+/* Camera record (pCam). Only the fields the three readers touch are named. */
+typedef struct TiCamera {
+    unsigned char unmodeled_00[0x90];
+    TiCameraChannel channel;
+    Vector4 euler;
+    unsigned char unmodeled_b0[0x20];
+    float position[3];
+} TiCamera;
 
-INCLUDE_ASM("asm/main/nonmatchings/TiCameraSolver", tiCameraReadAngle);
+extern unsigned char tiCameraAssertPData[];
+extern unsigned char tiCameraSourceFile[];
+extern unsigned char tiCameraAssertPCam[];
+void xacEvalJointPose(f32 *values, void **ppJointHeader, f32 curveParam);
+void xacEvalJointValue(f32 curveParam, f32 *values, void **ppJointHeader);
+void xglEulerFromRotation(Vector4 *euler, Vector4 *rotation);
 
-/* The `camera` argument is the pCam pointer of the asserts, typed int here by the stage. */
-void tiCameraReadPose(int camera, void **stream, f32 value);
-void tiCameraReadScalar(int camera, void **stream, f32 value);
-void tiCameraReadAngle(int camera, void **stream, f32 value);
+void tiCameraReadPose(TiCamera *camera, void **ppData, f32 curveParam)
+{
+    /* Three position values, then three rotation angles, as xacEvalJointPose writes them. */
+    f32 pose[6];
+    Vector4 rotation;
+    /* Unused local: removing it changes the stack frame and the .text bytes. */
+    Vector4 unused_frame_slot;
+
+    if (ppData == 0) {
+        assertFailed(tiCameraAssertPData, tiCameraSourceFile, 28);
+    }
+    if (camera == 0) {
+        assertFailed(tiCameraAssertPCam, tiCameraSourceFile, 29);
+    }
+    xacEvalJointPose(pose, ppData, curveParam);
+    camera->position[0] = pose[0];
+    camera->position[1] = pose[1];
+    camera->position[2] = pose[2];
+    rotation.x = pose[3];
+    rotation.y = pose[4];
+    rotation.z = pose[5];
+    xglEulerFromRotation(&camera->euler, &rotation);
+}
+
+void tiCameraReadScalar(TiCamera *camera, void **ppData, f32 curveParam)
+{
+    f32 sample;
+    TiCameraChannel *channel;
+
+    if (ppData == 0) {
+        assertFailed(tiCameraAssertPData, tiCameraSourceFile, 56);
+    }
+    if (camera == 0) {
+        assertFailed(tiCameraAssertPCam, tiCameraSourceFile, 57);
+    }
+    xacEvalJointValue(curveParam, &sample, ppData);
+    channel = &camera->channel;
+    channel->unknown_08 = channel->unknown_0c = 0;
+    channel->value = sample;
+}
+
+void tiCameraReadAngle(TiCamera *camera, void **ppData, f32 curveParam)
+{
+    f32 sample;
+    TiCameraChannel *channel;
+
+    if (ppData == 0) {
+        assertFailed(tiCameraAssertPData, tiCameraSourceFile, 76);
+    }
+    if (camera == 0) {
+        assertFailed(tiCameraAssertPCam, tiCameraSourceFile, 77);
+    }
+    xacEvalJointValue(curveParam, &sample, ppData);
+    channel = &camera->channel;
+    channel->unknown_0c = 0;
+    channel->unknown_08 = 0;
+    channel->value = sample * 3.1415927f / 180.0f;
+}
 
 /* Camera record: three header words, then `record[1]` picks the layout (< 1.1 uses the
  * scalar reader, otherwise the angle reader). The data cursor starts at record[3]. */
-void tiCameraReadRecord(int camera, f32 *record, f32 value)
+void tiCameraReadRecord(TiCamera *camera, f32 *record, f32 value)
 {
     void *stream;
 

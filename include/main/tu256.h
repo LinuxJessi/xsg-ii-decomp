@@ -6,5 +6,6 @@
 void xglCurMulRotateX(float angle);
 void xglCurMulRotateY(float angle);
 void xglCurMulRotateZ(float angle);
+void xglCurMulTranslate(float *translation);
 
 #endif /* INCLUDE_MAIN_TU256_H */

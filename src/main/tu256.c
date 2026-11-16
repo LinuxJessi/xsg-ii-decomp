@@ -1,10 +1,10 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu256.h"
+#include "main/tu255.h"
 
 f32 cosf(f32);
 f32 sinf(f32);
-void xglCurMatrixMul(Matrix4 *matrix);
 extern Matrix4 xglMulRotMatrixX;
 extern Matrix4 xglMulRotMatrixY;
 extern Matrix4 xglMulRotMatrixZ;
@@ -58,11 +58,11 @@ void xglCurMulRotateZ(f32 angle)
 }
 
 /* Current matrix = translation matrix * current matrix; translation fills row 3 of xglMulTranslateMatrix. */
-void xglCurMulTranslate(const Vector4 *translation)
+void xglCurMulTranslate(float *translation)
 {
-    xglMulTranslateMatrix[3][0] = translation->x;
-    xglMulTranslateMatrix[3][1] = translation->y;
-    xglMulTranslateMatrix[3][2] = translation->z;
+    xglMulTranslateMatrix[3][0] = translation[0];
+    xglMulTranslateMatrix[3][1] = translation[1];
+    xglMulTranslateMatrix[3][2] = translation[2];
     xglCurMatrixMul(xglMulTranslateMatrix);
 }
 
@@ -84,5 +84,18 @@ void xglCurMulScaleXYZ(const Vector4 *scale)
     xglCurMatrixMul(xglMulScaleXYZMatrix);
 }
 
+extern Matrix4 xglMulInvScaleMatrix;
+
 /* Writes 1/x, 1/y, 1/z on the diagonal of xglMulInvScaleMatrix for each non-zero component (zero components are skipped), then multiplies the current matrix by it. */
-INCLUDE_ASM("asm/main/nonmatchings/tu256", xglCurMulInvScaleXYZ);
+void xglCurMulInvScaleXYZ(f32 scale[3]) {
+    if (scale[0] != 0.0f) {
+        xglMulInvScaleMatrix[0][0] = 1.0f / scale[0];
+    }
+    if (scale[1] != 0.0f) {
+        xglMulInvScaleMatrix[1][1] = 1.0f / scale[1];
+    }
+    if (scale[2] != 0.0f) {
+        xglMulInvScaleMatrix[2][2] = 1.0f / scale[2];
+    }
+    xglCurMatrixMul(xglMulInvScaleMatrix);
+}

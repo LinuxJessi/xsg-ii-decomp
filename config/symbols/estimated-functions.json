@@ -42896,7 +42896,13 @@
     [
      "cfeFileTempInit",
      2420992,
-     60,
+     44,
+     2
+    ],
+    [
+     "cfeFileLogIndentSet",
+     2421040,
+     12,
      2
     ],
     [
@@ -50328,7 +50334,7 @@
      2
     ],
     [
-     "func_0028D890",
+     "tiMotionAimTarget",
      2676880,
      1212,
      2
@@ -50352,19 +50358,19 @@
      2
     ],
     [
-     "func_002900F8",
+     "tiMotionSolveSkipNodesOld",
      2687224,
      1052,
      2
     ],
     [
-     "func_00290518",
+     "tiMotionSolveSkipNodes",
      2688280,
      1052,
      2
     ],
     [
-     "func_00290938",
+     "tiMotionChainDynamics",
      2689336,
      380,
      2
@@ -50388,31 +50394,31 @@
      2
     ],
     [
-     "func_00291010",
+     "tiMotionSolveLocatorOutOfLine",
      2691088,
      488,
      2
     ],
     [
-     "func_002911F8",
+     "tiMotionSolveJointOutOfLine",
      2691576,
      636,
      2
     ],
     [
-     "func_00291478",
+     "tiMotionSolveFace",
      2692216,
      776,
      2
     ],
     [
-     "func_00291780",
+     "tiMotionSolveDynamicsOutOfLine",
      2692992,
      572,
      2
     ],
     [
-     "func_002919C0",
+     "tiMotionSolveDynamicsOldOutOfLine",
      2693568,
      584,
      2
@@ -50466,7 +50472,7 @@
      2
     ],
     [
-     "func_00291FD0",
+     "tiMRPackageSetPamFrame",
      2695120,
      76,
      2
@@ -50568,7 +50574,7 @@
      2
     ],
     [
-     "func_00292638",
+     "tiMRPackageAdvanceAUnwrapped",
      2696760,
      368,
      2
@@ -50580,7 +50586,7 @@
      2
     ],
     [
-     "func_002928C8",
+     "tiMRPackageAdvanceBUnwrapped",
      2697416,
      280,
      2
@@ -50784,13 +50790,13 @@
      2
     ],
     [
-     "func_00293420",
+     "xacGetKeyPayloadA",
      2700320,
      156,
      2
     ],
     [
-     "func_002934C0",
+     "xacGetKeyPayloadB",
      2700480,
      156,
      2
@@ -50838,7 +50844,7 @@
      2
     ],
     [
-     "func_002945C8",
+     "xacEvalTransDynamicsNoWeight",
      2704840,
      636,
      2
@@ -50862,25 +50868,25 @@
      2
     ],
     [
-     "func_00294AE0",
+     "xacEvalJointCurves9",
      2706144,
      268,
      2
     ],
     [
-     "func_00294BF0",
+     "xacReadWindDirCurves",
      2706416,
      348,
      2
     ],
     [
-     "func_00294D50",
+     "xacReadWindPointCurves",
      2706768,
      348,
      2
     ],
     [
-     "func_00294EB0",
+     "xacReadJointCurves12Padded",
      2707120,
      348,
      2
@@ -50898,7 +50904,7 @@
      2
     ],
     [
-     "func_00295260",
+     "xacBuildCubicSegment",
      2708064,
      392,
      2
@@ -50910,13 +50916,13 @@
      2
     ],
     [
-     "func_00295438",
+     "xacGetKeyPairB",
      2708536,
      76,
      2
     ],
     [
-     "func_00295488",
+     "xacEvalCubicKeys",
      2708616,
      308,
      2
@@ -50928,19 +50934,19 @@
      2
     ],
     [
-     "func_00295610",
+     "xacEvalLinearKeys",
      2709008,
      196,
      2
     ],
     [
-     "func_002956D8",
+     "tiDrawJointSetGifTag",
      2709208,
      168,
      2
     ],
     [
-     "func_00295780",
+     "tiDrawJointScreenPoints",
      2709376,
      152,
      2
@@ -50970,13 +50976,13 @@
      2
     ],
     [
-     "func_00295CF8",
+     "tiDrawJointOrientMesh",
      2710776,
      496,
      2
     ],
     [
-     "func_00295EE8",
+     "tiDrawJointDrawLists",
      2711272,
      1752,
      2
@@ -51042,7 +51048,7 @@
      2
     ],
     [
-     "func_00296CF0",
+     "XrgQuaternionCombine",
      2714864,
      324,
      2
@@ -51078,13 +51084,13 @@
      2
     ],
     [
-     "func_00297580",
+     "XrgQuaternionFromVectors",
      2717056,
      356,
      2
     ],
     [
-     "func_002976E8",
+     "tiDynamicsNodeIntegrate",
      2717416,
      332,
      2
@@ -51096,37 +51102,37 @@
      2
     ],
     [
-     "func_002978C8",
+     "tiDynamicsNodePullToTarget",
      2717896,
      180,
      2
     ],
     [
-     "func_00297980",
+     "tiDynamicsNodeConstrainNormal",
      2718080,
      284,
      2
     ],
     [
-     "func_00297AA0",
+     "tiMatrixNormalizeRows",
      2718368,
      236,
      2
     ],
     [
-     "func_00297B90",
+     "tiDynamicsNodeSolvePalette",
      2718608,
      360,
      2
     ],
     [
-     "func_00297CF8",
+     "tiDynamicsNodeStep",
      2718968,
      164,
      2
     ],
     [
-     "func_00297DA0",
+     "tiDynamicsNodeSolveNext",
      2719136,
      132,
      2
@@ -51138,7 +51144,7 @@
      2
     ],
     [
-     "func_00297F48",
+     "tiWindSolveCellPairs",
      2719560,
      364,
      2
@@ -51360,13 +51366,13 @@
      2
     ],
     [
-     "func_0029A6D0",
+     "tiMRPackageGetNodeMatrix",
      2729680,
      688,
      2
     ],
     [
-     "func_0029A980",
+     "tiMRPackageGetNodePoint",
      2730368,
      340,
      2
@@ -51396,7 +51402,7 @@
      2
     ],
     [
-     "func_0029AEE8",
+     "tiDynamicsCollClampAbovePlane",
      2731752,
      332,
      2
@@ -51438,7 +51444,7 @@
      2
     ],
     [
-     "func_0029B860",
+     "tiDynamicsCollSolveMatrixPair",
      2734176,
      492,
      2
@@ -51504,7 +51510,7 @@
      2
     ],
     [
-     "func_0029C288",
+     "mapHeadingXZ",
      2736776,
      364,
      2
@@ -51516,7 +51522,7 @@
      2
     ],
     [
-     "func_0029C438",
+     "mapStoreEdgePlanes",
      2737208,
      32,
      2
@@ -51564,7 +51570,7 @@
      2
     ],
     [
-     "func_0029C960",
+     "mapPushOutOfKeepOff",
      2738528,
      956,
      2
@@ -51588,31 +51594,31 @@
      2
     ],
     [
-     "func_0029CF78",
+     "mapCrossingBlocked",
      2740088,
      316,
      2
     ],
     [
-     "func_0029D0B8",
+     "mapStepRecord",
      2740408,
      676,
      2
     ],
     [
-     "func_0029D360",
+     "mapMoveAlongWalls",
      2741088,
      1772,
      2
     ],
     [
-     "func_0029DA50",
+     "mapWalkSegment",
      2742864,
      172,
      2
     ],
     [
-     "func_0029DB00",
+     "mapCommitProbeHit",
      2743040,
      256,
      2
@@ -51636,7 +51642,7 @@
      2
     ],
     [
-     "func_0029DEF8",
+     "mapPushOutByRadius",
      2744056,
      1064,
      2
@@ -51666,7 +51672,7 @@
      2
     ],
     [
-     "func_0029E6A0",
+     "mapBuildScanNode",
      2746016,
      1224,
      2

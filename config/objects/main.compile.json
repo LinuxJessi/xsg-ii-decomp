@@ -3430,7 +3430,7 @@
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/10",
+   "accepted_functions": "0/11",
    "assembler_options": [
     "-g"
    ]
@@ -5882,32 +5882,7 @@
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/28",
-   "assembler_options": [
-    "-g"
-   ]
-  },
-  "tu253": {
-   "id": "main/tu253",
-   "ordinal": 253,
-   "path": "src/main/tu253.c",
-   "kind": "gcc",
-   "category": "game",
-   "in_scope": true,
-   "mode": "asm",
-   "language": "c",
-   "compiler_profile": "ee-gcc2_96-realconv-lp7",
-   "flags": [
-    "-O2",
-    "-G0"
-   ],
-   "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-   "owners": {
-    ".text": "asm"
-   },
-   "evidence": "reports/x2-compiler-calibration.md",
-   "all_functions_accepted": false,
-   "accepted_functions": "0/3",
+   "accepted_functions": "0/31",
    "assembler_options": [
     "-g"
    ]

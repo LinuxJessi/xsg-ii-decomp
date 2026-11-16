@@ -4,6 +4,7 @@
 #include "main/get.h"
 #include "shared.h"
 #include "main/sdv_033.h"
+#include "main/tu272.h"
 
 /* The resource record handed to mainResLoadCallback; gameWork.active points at it. */
 typedef struct MainActive {
@@ -279,7 +280,6 @@ extern MapObjectRecord uwamonoRecords[];
 void *GameResBufferAlloc(unsigned int size);
 void ladderInitTable(void);
 void mapLoadBlock(int blockId);
-unsigned short *mapFindBlockEntry(int id, int index);
 void xglCullingMapSet(MainObject *object);
 int xglJpegDecode(void *info);
 void sefReleaseOwnedRecords(int owner);
@@ -360,7 +360,7 @@ void mainResLoadCallback(int index, void *buffer, unsigned int size, int value)
 
     mapLoadBlock(record->blockId);
     uwamonoEntryCountPtr = 0;
-    uwamonoEntryCountPtr = mapFindBlockEntry(0x300, -1);
+    uwamonoEntryCountPtr = (unsigned short *)mapFindBlockEntry(0x300, -1);
     if (uwamonoEntryCountPtr != 0) {
         unsigned short entryCount = uwamonoEntryCountPtr[0];
         uwamonoEntries = (int)uwamonoEntryCountPtr + 16;

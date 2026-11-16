@@ -3,7 +3,10 @@
 
 /* Functions of src/main/TiWindBase.c that other files call. */
 
+struct TiWindWorld;
+
 void tiWindApplyAll(void *first_input, void *second_input);
+void tiWindSolveCellPairs(struct TiWindWorld *world);
 void tiWindPointSetEnabled(unsigned int index, int enabled);
 
 #endif /* INCLUDE_MAIN_TIWINDBASE_H */

@@ -173,7 +173,7 @@ f32 cfeEntryEvalCubic(f32 time, CfeTrackNode *entry, f32 *coefficients)
 }
 
 /* Fits the cubic through the Bezier points (x[i], y[i]) into coefficients[0..3] (tu259.c). */
-void func_00295260(f32 *coefficients, const f32 *x, const f32 *y);
+void xacBuildCubicSegment(f32 *coefficients, const f32 *x, const f32 *y);
 extern f32 cfeBezierTimeScale;
 
 /* The angle at `time` on the Bezier curve between the keys `from` and `to`: from leaves along its second
@@ -213,7 +213,7 @@ float cfeTrackBezier(CfeTrackNode *from, CfeTrackNode *to, float time)
     x[2] = x[3] - arrive[0];
     y[3] = CFE_FIXED_TO_FLOAT(to->value);
     y[2] = y[3] - arrive[1];
-    func_00295260(coefficients, x, y);
+    xacBuildCubicSegment(coefficients, x, y);
     return cfeEntryEvalCubic(time, from, coefficients);
 }
 

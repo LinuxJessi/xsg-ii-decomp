@@ -11,6 +11,7 @@
 #include "main/tu082.h"
 #include "main/tu114.h"
 #include "main/xenoActor.h"
+#include "main/tu272.h"
 
 /* The XenoActor of a map object (xenoActor.c); only the fields this file touches. */
 struct XenoActor {
@@ -971,7 +972,6 @@ typedef struct UwamonoSlot {
     unsigned char unmodeled_08[0x870 - 8];
 } UwamonoSlot;
 
-int mapFindBlockEntry(int id, int index);
 extern UwamonoSlot uwamonoSlotTable[];
 
 /* Native "changeId": key, groundId: the map block 0x100 entry of the record's ground. */
@@ -990,7 +990,7 @@ int objxChangeId(int call)
     key = func_A9F0C0(call, 1);
     index = uwamonoFindIndexByShortKey((short) key);
     groundId = func_A9F0C0(call, 2);
-    ground = mapFindBlockEntry(0x100, groundId);
+    ground = (int)mapFindBlockEntry(0x100, groundId);
     slot = &uwamonoSlotTable[index];
     slot->actor->ground = ground;
     slot->state->groundId = groundId;

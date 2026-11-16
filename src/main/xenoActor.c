@@ -181,8 +181,8 @@ extern int *XenoActorActiveTable;
 int InstanceOfRgHeapById(int);
 void tiMRStateSetValue(void *, float);
 void XenoActorRelease(int);
-int func_0029A6D0(int);
-int func_0029A980(int);
+int tiMRPackageGetNodeMatrix(int);
+int tiMRPackageGetNodePoint(int);
 void XenoActorPushMatrix(XenoActor *actor);
 void xglCurMatrixSet(f32 *);
 void xglCurApplyVector(Vector4 *, const Vector4 *);
@@ -466,7 +466,7 @@ void XenoActorRefreshItems(XenoActor *actor)
 int XenoActorMulMatrix(struct XenoActor *actor, int unusedArg, void *matrix) {
     int result;
 
-    result = func_0029A6D0((int) actor->handle640);
+    result = tiMRPackageGetNodeMatrix((int) actor->handle640);
     if (result != 0) {
         if (actor->overrideMatrix != 0) {
             xglMatrixMul(matrix, matrix, actor->overrideMatrix);
@@ -482,7 +482,7 @@ int XenoActorMulMatrix(struct XenoActor *actor, int unusedArg, void *matrix) {
 int XenoActorMulVector(struct XenoActor *actor, int unusedArg, Vector4 *vector) {
     int result;
 
-    result = func_0029A980((int) actor->handle640);
+    result = tiMRPackageGetNodePoint((int) actor->handle640);
     if (result != 0) {
         if (actor->overrideMatrix != 0) {
             xglVectorMulMat(vector, actor->overrideMatrix, vector);
@@ -516,7 +516,7 @@ void XenoActorSetVector(XenoActor *actor, float x, float y, float z) {
 }
 
 extern char D_0068D7A0[], D_0068D7C0[], D_0068D7E0[], D_0068D828[];
-void func_00295EE8(XenoActor *actor, XenoMatrix *global, XenoMatrix *local);
+void tiDrawJointDrawLists(XenoActor *actor, XenoMatrix *global, XenoMatrix *local);
 void func_001BAA98(int state);
 void pxySetModelScale(float *row);
 void func_001BA248(unsigned char *color);
@@ -623,7 +623,7 @@ void XenoActorDrawMotion(XenoActor *actor)
         if (actor->globalMatrices == 0) {
             assertFailed(D_0068D7C0, xenoActorAssertFile, 0x5CF);
         }
-        func_00295EE8(actor, actor->globalMatrices, &actor->localMatrix);
+        tiDrawJointDrawLists(actor, actor->globalMatrices, &actor->localMatrix);
         if (actor->attr & 4) {
             XenoActorRefreshItems(actor);
         }

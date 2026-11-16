@@ -50,6 +50,9 @@ OUT_OF_SCOPE = -99.0
 OVERLAYS = (('ov01', 'OV01.OVL', 'annotations/overlays/ov01_annotations.csv'),
             ('ov02', 'OV02.OVL', 'annotations/overlays/ov02_annotations.csv'))
 # Checked by map_infer.py generate: no library zone calls game code, except crt0 to main.
+# The game zone ends at 0x29f000, not at func_0029F008: the C of the last game object (tu273) is exactly
+# the 0x960 bytes of its five functions, so the eight zero bytes before 0x29f008 open the Sony library
+# zone (x2-c17 publication, 2026-11-16).
 MAIN_ZONES = (
     dict(start=0x120000, end=0x138298, cls='sce_sdk', stem='sce_sdk_low',
          evidence='crt0 and Sony libraries: sce* and libpad strings, no calls into game code, except crt0 to main'),
@@ -57,13 +60,17 @@ MAIN_ZONES = (
          evidence='KORG EE client: [KORGEVAG] string, RPC stubs over one client block at 0x69e148'),
     dict(start=0x13b7a0, end=0x194638, cls='middleware', stem='cri_sofdec', families={'cri': 1},
          evidence='CRI ADX and Sofdec: mwPly, SFH and ADXRT strings, no calls into game code'),
-    dict(start=0x194638, end=0x29f008, cls='game', stem='game', evidence='from InitializeSystem to the last caller of game code'),
-    dict(start=0x29f008, end=0x2a1578, cls='sce_sdk', stem='sce_sdk_high', evidence='Sony libraries by earlier study; no calls into game code'),
+    dict(start=0x194638, end=0x29f000, cls='game', stem='game', evidence='from InitializeSystem to the last caller of game code'),
+    dict(start=0x29f000, end=0x2a1578, cls='sce_sdk', stem='sce_sdk_high', evidence='Sony libraries by earlier study; no calls into game code'),
     dict(start=0x2a1578, end=0x2b3740, cls='runtime_library', stem='runtime', evidence='C runtime by earlier study; no calls into game code'),
 )
 # Code built without optimization: every function opens a $fp frame, functions are not aligned
 # to 8, and C compiled with -O0 reproduces its bytes (reports/x2-compiler-calibration.md).
 MAIN_O0_ZONES = ((0x1a75a8, 0x1d5440),)
+# Function entries the bytes do not state (no jal, no prologue, no taken address), keyed by image file name.
+# cfeFileLogIndentSet (0x24F130) is reached only by the tail jump of cfeFileTempInit; the published C defines it as
+# its own function (cfeFileControl.c, upstream 7ffbd0d0), so the function table must start one there.
+KNOWN_STARTS = {'SLUS_208.92': {0x24F130}}
 FP_FROM_SP = 0x03a0f02d           # daddu $fp, $sp, $zero
 LOG_ODDS_EDGES = (-3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5)
 
@@ -224,7 +231,7 @@ def follows_function_end(image, va):
 
 def collect_starts(image):
     """Entries the bytes state outright: jal targets, opened frames, taken addresses in data."""
-    starts = {image.text_start}
+    starts = {image.text_start} | KNOWN_STARTS.get(image.path.name, set())
     tables = {}
     for va in range(image.text_start, image.text_end, 4):
         word = image.word(va)
@@ -1499,6 +1506,11 @@ JOINED_KEEPS_LATER_ORDINAL = {
 }
 
 JOINED_CUTS = [
+    (0x00292C40,
+     'tiMRPackageSetTableAndEntryA (0x292CA0) is exact only when tiMRPackageSetTableA (0x2920C8, TiMRPackage.c) is an '
+     'already compiled definition of the same file (reorg nothrow: beqz, not beqzl); the merged TiMRPackage.c + old '
+     'tu253 compiles all 31 functions byte-identical at their VAs. The cut had log-odds -2.03 (X1 band precision '
+     '0.23) and splits the SelectEntryA/SelectEntryB twins of the A/B setters. User 2026-11-16'),
     (0x0019F360,
      'setD4_CHCR (0x19F300, the former one-function TU sce_ipu) is static in the movie file: upstream commit 9cc4558d '
      'merged TU sce_ipu into xgl_1_016 (make_gstrans is the first function of the old cut); pulled 2026-11-15'),
@@ -1588,9 +1600,9 @@ MOVED_CUTS = [
      '-O0 static-copy tail: AddXYZ/SubXYZ 0x1CCA30-0x1CCAA0 are called only by nml_model_set, so tu045 starts '
      'at func_001CCAA0, user 2026-11-08'),
     (0x00249248, 0x0024B0E8,
-     'func_00249518 and func_00249ED0 initialize vectors at 0x68D220-0x68D26F, right after the jump table '
+     'cfeDrawRotationGrid and func_00249ED0 initialize vectors at 0x68D220-0x68D26F, right after the jump table '
      'of cfeCommandEvaluate (0x68D200) in one increasing .rodata run, while the next file starts its '
-     '.rodata (0x68CD10, below) with func_0024B0E8; the functions between use no .rodata, so they stay '
+     '.rodata (0x68CD10, below) with cfeListSetKeyMode; the functions between use no .rodata, so they stay '
      'with cfeEvaluate. Found matching func_00249ED0; a string-free extension of rodata_order_breaks '
      'held on X1 (13/13) but gave false cuts on X2 at file-scope tables (0x68F0D0), user 2026-11-08'),
     (0x0020CE30, 0x0020CE40,
@@ -1708,7 +1720,8 @@ def render_main_tu(unit, tu, names, homologs, model_file):
     zone = tu['_zone']
     first = unit.functions[indices[0]]
     last = unit.functions[indices[-1]]
-    start = max(first['va'], zone['start']) if tu['ordinal'] else zone['start']
+    # A coarse library record covers its whole zone, including bytes before its first function.
+    start = max(first['va'], zone['start']) if tu['ordinal'] and zone['cls'] == 'game' else zone['start']
     next_va = tu.get('_next_start', last['end'])
     end = next_va
     in_game = zone['cls'] == 'game'

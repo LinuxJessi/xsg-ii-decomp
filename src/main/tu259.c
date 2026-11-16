@@ -1,39 +1,117 @@
 #include "common.h"
-
-INCLUDE_ASM("asm/main/nonmatchings/tu259", func_00295260);
-
 #include "shared.h"
+#include "main/TiXacAnimCurve.h"
 
-f32 func_00293420(int);
-f32 xacGetKeyValue(void);
+/* The time scale tiXacAnimCurveTimeScale converts (time - origin). */
 
-/* Reads two key values of one key header: the first through xacGetKeyValue, the second through func_00293420. */
-void xacGetKeyPair(int keyHeader, f32 *first, f32 *second)
+/* Cubic segment from two keys: times[0..3] and values[0..3] hold each key's time and value and its tangent sample; the power-basis coefficients (coeffs[0] leading, coeffs[3] constant) of the Hermite curve are written to coeffs. */
+void xacBuildCubicSegment(f32 *coeffs, const f32 *times, const f32 *values)
 {
-    *first = xacGetKeyValue();
-    *second = func_00293420(keyHeader);
+    f32 toStart;
+    f32 fromStart;
+    f32 fromStep;
+    f32 fromEnd;
+    f32 span;
+    f32 toEnd;
+    f32 toDelta;
+    f32 startRatio;
+    f32 endRatio;
+    f32 fromTail;
+    f32 startTerm;
+    f32 endTerm;
+    f32 inverseSquare;
+
+    fromStart = times[0];
+    toStart = values[0];
+    fromEnd = times[3];
+    fromStep = times[1] - fromStart;
+    toEnd = values[3];
+    span = fromEnd - fromStart;
+    toDelta = toEnd - toStart;
+    startRatio = 5729578.0f;
+    endRatio = startRatio;
+    if (fromStep != 0.0) {
+        startRatio = (values[1] - toStart) / fromStep;
+    }
+    fromStep = fromEnd - times[2];
+    /* The (double) compare keeps the double-precision dpcmp call of the original; the plain float compare changes the code. */
+    if ((double) fromStep != 0.0) {
+        endRatio = (toEnd - values[2]) / fromStep;
+    }
+    startTerm = span * startRatio;
+    endTerm = span * endRatio;
+    inverseSquare = 1.0f / (span * span);
+    coeffs[2] = startRatio;
+    coeffs[1] = (((2.0f * toDelta) + toDelta) - startTerm - startTerm - endTerm) * inverseSquare;
+    coeffs[0] = (((startTerm + endTerm) - toDelta - toDelta) * inverseSquare) / span;
+    coeffs[3] = values[0];
 }
 
-f32 func_002934C0(int);
-
-void func_00295438(int keyHeader, f32 *first, f32 *second)
+/* Reads two key values of one key header: the first through xacGetKeyValue, the second through xacGetKeyPayloadA. */
+void xacGetKeyPair(TiXacKey *keyHeader, f32 *first, f32 *second)
 {
-    *first = xacGetKeyValue();
-    *second = func_002934C0(keyHeader);
+    *first = xacGetKeyValue(keyHeader);
+    *second = xacGetKeyPayloadA(keyHeader);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu259", func_00295488);
+void xacGetKeyPairB(TiXacKey *keyHeader, f32 *first, f32 *second)
+{
+    *first = xacGetKeyValue(keyHeader);
+    *second = xacGetKeyPayloadB(keyHeader);
+}
 
-/* One curve key. origin is the key's start time; the time scale tiXacAnimCurveTimeScale converts (time - origin). */
-typedef struct CurveRecord {
-    unsigned char unmodeled_00[2];
-    short origin;
-} CurveRecord;
+extern f32 sinf(f32 angle);
+extern f32 cosf(f32 angle);
 
 extern f32 tiXacAnimCurveTimeScale;
+extern f32 D_00646338;
+f32 xacEvalCubicSegment(f32 value, const TiXacKey *record, const f32 *coeffs);
+
+/* Evaluates the curve of one key pair at time: the two key segments (position and tangent) are built from the key values and the trig of each second value, then the cubic is evaluated. */
+f32 xacEvalCubicKeys(TiXacKey *key, TiXacKey *nextKey, f32 time)
+{
+    f32 keyFirst;
+    f32 keySecond;
+    f32 nextFirst;
+    f32 nextSecond;
+    f32 times[4];
+    f32 values[4];
+    f32 coeffs[4];
+    f32 keyScale;
+    f32 nextScale;
+    f32 keyCos;
+    TiXacKey *record;
+    f32 keySin;
+    f32 nextCos;
+    f32 nextSin;
+    f32 keyAngle;
+    f32 nextAngle;
+
+    record = key;
+    xacGetKeyPair(key, &keyFirst, &keySecond);
+    xacGetKeyPairB(nextKey, &nextFirst, &nextSecond);
+    keyAngle = keySecond;
+    nextAngle = nextSecond;
+    keyCos = cosf(keyAngle);
+    keySin = sinf(keyAngle);
+    nextCos = cosf(nextAngle);
+    nextSin = sinf(nextAngle);
+    keyScale = (f32) key->origin * D_00646338;
+    nextScale = (f32) nextKey->origin * D_00646338;
+    values[0] = keyFirst;
+    values[3] = nextFirst;
+    times[0] = keyScale;
+    times[3] = nextScale;
+    values[1] = keyFirst + keySin;
+    values[2] = nextFirst - nextSin;
+    times[1] = keyScale + keyCos;
+    times[2] = nextScale - nextCos;
+    xacBuildCubicSegment(coeffs, times, values);
+    return xacEvalCubicSegment(time, record, coeffs);
+}
 
 /* Cubic segment of one key: coeffs[0] is the leading term, coeffs[3] the constant (Horner form). */
-f32 xacEvalCubicSegment(const CurveRecord *record, const f32 *coeffs, f32 value)
+f32 xacEvalCubicSegment(f32 value, const TiXacKey *record, const f32 *coeffs)
 {
     f32 scaled;
 
@@ -41,4 +119,25 @@ f32 xacEvalCubicSegment(const CurveRecord *record, const f32 *coeffs, f32 value)
     return scaled * (scaled * (scaled * coeffs[0] + coeffs[1]) + coeffs[2]) + coeffs[3];
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu259", func_00295610);
+/* Blends the value of one key with the next key over the segment between them; a zero span counts as one frame. */
+f32 xacEvalLinearKeys(TiXacKey *key, TiXacKey *nextKey, f32 time)
+{
+    f32 offset;
+    f32 span;
+    f32 offsetScaled;
+    f32 fraction;
+    f32 valueA;
+    f32 valueB;
+
+    offset = time - (f32) key->origin;
+    offsetScaled = offset / 30.0f;
+    span = (f32) (nextKey->origin - key->origin);
+    if (span == 0.0f) {
+        span = 1.0f;
+    }
+    span = span / 30.0f;
+    valueA = xacGetKeyValue(key);
+    valueB = xacGetKeyValue(nextKey);
+    fraction = offsetScaled / span;
+    return valueA + (valueB - valueA) * fraction;
+}

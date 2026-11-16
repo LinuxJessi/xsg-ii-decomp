@@ -44,5 +44,8 @@ void xglLightPackCacheInvalidate(void);
 void xglMatrixStackUnit(void);
 void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
+void xglMatrixRotY(Matrix4 destination, Matrix4 source, float angle);
+void xglRotTransPersN(Vector4 *destination, Matrix4 matrix, const Vector4 *source,
+                      int count, int cameraId);
 
 #endif /* INCLUDE_MAIN_XGL_2_H */
