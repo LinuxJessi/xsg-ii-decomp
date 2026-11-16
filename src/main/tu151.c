@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "quadword.h"
 #include "main/tu151.h"
 
 /* A variadic no-op like logNoOp (sef_print.c): it spills its arguments and returns. */
@@ -15,7 +16,7 @@ void func_00251FC0(const void *data, const char *format, ...)
 /* Copies the vector at source to destination and sets its w to the float argument. */
 void vu0CopyVectorSetW(Vector4 *destination, Vector4 *source, float w)
 {
-    __asm__ __volatile__("lq $8, 0(%1)\n\tsq $8, 0(%0)" : : "r"(destination), "r"(source) : "$8", "memory");
+    QuadwordCopyT0(destination, source);
     destination->w = w;
 }
 

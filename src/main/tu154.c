@@ -84,24 +84,9 @@ int MMathPointInTriangle(const Vector4 *first, const Vector4 *second, const Vect
     AlignedVector4 normal2;
     int inside;
 
-    __asm__ __volatile__(
-        "lqc2 vf1, 0(%0)\n\t"
-        "lqc2 vf2, 0(%1)\n\t"
-        "vsub.xyz vf1, vf1, vf2\n\t"
-        "sqc2 vf1, 0(%2)"
-        : : "r"(first), "r"(origin), "r"(&toFirst) : "memory");
-    __asm__ __volatile__(
-        "lqc2 vf1, 0(%0)\n\t"
-        "lqc2 vf2, 0(%1)\n\t"
-        "vsub.xyz vf1, vf1, vf2\n\t"
-        "sqc2 vf1, 0(%2)"
-        : : "r"(second), "r"(origin), "r"(&toSecond) : "memory");
-    __asm__ __volatile__(
-        "lqc2 vf1, 0(%0)\n\t"
-        "lqc2 vf2, 0(%1)\n\t"
-        "vsub.xyz vf1, vf1, vf2\n\t"
-        "sqc2 vf1, 0(%2)"
-        : : "r"(third), "r"(origin), "r"(&toThird) : "memory");
+    Vu0SubVectorXYZ12(&toFirst, first, origin);
+    Vu0SubVectorXYZ12(&toSecond, second, origin);
+    Vu0SubVectorXYZ12(&toThird, third, origin);
     MMathVectorCrossProduct(&normal0, &toFirst, &toThird);
     MMathVectorCrossProduct(&normal1, &toSecond, &toFirst);
     MMathVectorCrossProduct(&normal2, &toThird, &toSecond);

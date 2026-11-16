@@ -1,5 +1,7 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu152.h"
+#include "vu0_macro.h"
 
 /* Current matrix = current x M, M given by four rows (vf26-vf29 are the current matrix). */
 void vu0CurMatrixMulRight(Vector4 *rows) {
@@ -44,19 +46,12 @@ void vu0CurMatrixMulRight3(Vector4 *rows) {
     __asm__ __volatile__("vmaddw.xyzw vf28, vf0, vf28w" : : : "memory");
 }
 
-extern Vector4 vu0IdentityMatrix[3];
-
 /* Sets the current matrix (vf26-vf29) to a rotation about X by angle; 0 gives the identity. The VU0
  * micro routines at 0xE8 and 0x20 return the cosine and the sine of vf4x in vf1x. */
 void vu0SetCurrentRotationX(float angle)
 {
     if (angle == 0.0f) {
-        __asm__ __volatile__(
-            "lqc2 vf26, 0(%0)\n\t"
-            "lqc2 vf27, 16(%0)\n\t"
-            "lqc2 vf28, 32(%0)\n\t"
-            "vmove.xyzw vf29, vf0"
-            : : "r"(vu0IdentityMatrix) : "memory");
+        Vu0SetCurrentIdentity(vu0IdentityMatrix);
         return;
     }
     __asm__ __volatile__(
@@ -81,12 +76,7 @@ void vu0SetCurrentRotationX(float angle)
 void vu0SetCurrentRotationY(float angle)
 {
     if (angle == 0.0f) {
-        __asm__ __volatile__(
-            "lqc2 vf26, 0(%0)\n\t"
-            "lqc2 vf27, 16(%0)\n\t"
-            "lqc2 vf28, 32(%0)\n\t"
-            "vmove.xyzw vf29, vf0"
-            : : "r"(vu0IdentityMatrix) : "memory");
+        Vu0SetCurrentIdentity(vu0IdentityMatrix);
         return;
     }
     __asm__ __volatile__(
@@ -111,12 +101,7 @@ void vu0SetCurrentRotationY(float angle)
 void vu0SetCurrentRotationZ(float angle)
 {
     if (angle == 0.0f) {
-        __asm__ __volatile__(
-            "lqc2 vf26, 0(%0)\n\t"
-            "lqc2 vf27, 16(%0)\n\t"
-            "lqc2 vf28, 32(%0)\n\t"
-            "vmove.xyzw vf29, vf0"
-            : : "r"(vu0IdentityMatrix) : "memory");
+        Vu0SetCurrentIdentity(vu0IdentityMatrix);
         return;
     }
     __asm__ __volatile__(

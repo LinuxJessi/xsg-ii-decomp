@@ -1,4 +1,6 @@
 #include "common.h"
+#include "shared.h"
+#include "vu0_macro.h"
 #include "main/sef.h"
 #include "main/tu152.h"
 
@@ -68,7 +70,6 @@ void vu0RotateCurrentZ(float angle)
     }
 }
 
-#include "shared.h"
 
 /* Euler rotation of the current matrix: X, then Y, then Z. */
 void vu0RotateCurrentXYZ(Vector4 *angles)
@@ -112,8 +113,6 @@ void vu0TransformPoint(Vector4 *point)
     __asm__ __volatile__("vmaddaz.xyzw ACC, vf28, vf1z" : : : "memory");
     __asm__ __volatile__("vmaddw.xyzw vf29, vf29, vf1w" : : : "memory");
 }
-
-extern Vector4 vu0IdentityMatrix[3];
 
 /* Multiplies the current matrix by a translation: identity rows 0-2 and offset as row 3. */
 void vu0TranslateCurrent(Vector4 *offset)
@@ -167,20 +166,10 @@ int vu0SetRotationFromDirection(Vector4 *matrix, Vector4 *to, Vector4 *from)
     float length;
     float pitch;
 
-    __asm__ __volatile__(
-        "lqc2 vf1, 0(%0)\n\t"
-        "lqc2 vf2, 0(%1)\n\t"
-        "vsub.xyz vf1, vf1, vf2\n\t"
-        "sqc2 vf1, 0(%2)"
-        : : "r"(to), "r"(from), "r"(direction) : "memory");
+    Vu0SubVectorXYZ12(direction, to, from);
     zero = (direction->bits.z | direction->bits.xy) == 0;
     if (zero) {
-        __asm__ __volatile__(
-            "lqc2 vf26, 0(%0)\n\t"
-            "lqc2 vf27, 16(%0)\n\t"
-            "lqc2 vf28, 32(%0)\n\t"
-            "vmove.xyzw vf29, vf0"
-            : : "r"(vu0IdentityMatrix) : "memory");
+        Vu0SetCurrentIdentity(vu0IdentityMatrix);
     } else {
         pitch = -direction->vector.y;
         angles = &matrix[2];
