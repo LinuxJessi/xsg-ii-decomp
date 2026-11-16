@@ -359,8 +359,9 @@ int func_00278FC8(Vector4 *transform, float x, float y, GsQueueGrid *record);
 void quadDrawRepeated(int packet, Vector4 *quad, void *context);
 void quadDrawTransformed(int packet, Vector4 *quad, void *context, Vector4 *transform);
 
-/* Draws the record rectangle as rows x columns cells. For each cell corner func_00278FC8 (still asm: it loads
-   transformStart and transformEnd at +0x68/+0x6C, compares with c.lt.s and returns 0, 1 or 2) fills a transform;
+/* Draws the record rectangle as rows x columns cells. Once per cell, from the cell's first corner, func_00278FC8
+   (still asm: it loads transformStart and transformEnd at +0x68/+0x6C, compares with c.lt.s and returns 0, 1 or 2)
+   fills a transform;
    the cell is then drawn flat, drawn transformed or skipped. endColor, when set, colours the cells (lerped by
    transform.x for transformed ones). */
 void gridDrawCells(GsQueueGrid *record, int packet) {
