@@ -189,13 +189,13 @@ void tiWatSimDisturbAt(TiWatSimItem *item, Vector4 *pPos)
 }
 
 /* Disturbs every item of the table at the position pointed to by pPos. */
-void tiWatSimDisturbAll(TiWatSimTable *table, Vector4 *pPos)
+void tiWatSimDisturbAll(TiWaterSub *table, Vector4 *pPos)
 {
     TiWatSimItem *item;
     u32 i;
 
-    item = (TiWatSimItem *) (table + 1);
-    for (i = 0; i < table->count; i++) {
+    item = table->items;
+    for (i = 0; i < table->active; i++) {
         tiWatSimDisturbAt(item, pPos);
         item++;
     }
@@ -217,13 +217,13 @@ void tiWatSimRandomizeItem(TiWatSimItem *item, int range)
 }
 
 /* Randomizes every item of the table with the same range. */
-void tiWatSimRandomizeAll(TiWatSimTable *table, int range)
+void tiWatSimRandomizeAll(TiWaterSub *table, int range)
 {
     TiWatSimItem *item;
     u32 i;
 
-    item = (TiWatSimItem *) (table + 1);
-    for (i = 0; i < table->count; i++) {
+    item = table->items;
+    for (i = 0; i < table->active; i++) {
         tiWatSimRandomizeItem(item, range);
         item++;
     }

@@ -299,8 +299,7 @@ void tiWaterUpdateSource(struct XenoActor *actor)
     if (PadData[0].directionX != 0 || PadData[0].directionY != 0) {
         actor->rotation.y = tiWaterVectorAngle(PadData[0].directionY, PadData[0].directionX);
         for (i = 0; i < tiWaterSubCount; i++) {
-            /* TiWatSimTable is TiWatSim.c's view of a TiWaterSub. */
-            tiWatSimDisturbAll((TiWatSimTable *) tiWaterSubList[i], &actor->position);
+            tiWatSimDisturbAll(tiWaterSubList[i], &actor->position);
         }
         /* The original computes the length of the direction here and drops it. */
         (void) __builtin_sqrtf(PadData[0].directionY * PadData[0].directionY
