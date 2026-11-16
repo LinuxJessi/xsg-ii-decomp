@@ -28,12 +28,8 @@ void cfeListUnlink(CfeTrackNode *prev, CfeTrackNode *node, CfeTrackNode *next) {
     }
 }
 
-/* Node flag bits that finding a node clears (their meaning is not recovered). */
-#define CFE_NODE_FLAG_8 0x8
-#define CFE_NODE_FLAG_10 0x10
-
 /* Finds the node with key `key` in the sorted list at *list, or allocates one (cfeNodeAlloc) and
- * links it in key order; a found node has its flag bits 0x8 and 0x10 cleared. */
+ * links it in key order; a found node has its reset flags cleared. */
 CfeTrackNode *cfeListFindOrAdd(CfeTrackNode **list, int key)
 {
     CfeTrackNode **link;
@@ -56,8 +52,8 @@ CfeTrackNode *cfeListFindOrAdd(CfeTrackNode **list, int key)
                 return node;
             }
             if ((*link)->startTime == key) {
-                (*link)->flags &= ~CFE_NODE_FLAG_8;
-                (*link)->flags &= ~CFE_NODE_FLAG_10;
+                (*link)->flags &= ~CFE_TRACK_RESET_FIRST;
+                (*link)->flags &= ~CFE_TRACK_RESET_SECOND;
                 return *link;
             }
             if ((*link)->next != 0 && (*link)->startTime < key && key < (*link)->next->startTime) {
@@ -88,27 +84,27 @@ CfeTrackNode *cfeListFindOrAdd(CfeTrackNode **list, int key)
     return first;
 }
 
-/* Sets the 8.8 fixed-point value of the key's node and clears flag 0x2, then updates the list. */
+/* Sets the 8.8 fixed-point value of the key's node and clears CFE_TRACK_LINEAR, then updates the list. */
 CfeTrackNode *cfeListSetValue(CfeTrackNode **list, int key, float value)
 {
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
     int whole;
 
-    node->flags &= ~2;
+    node->flags &= ~CFE_TRACK_LINEAR;
     whole = (int) value;
-    node->value = (whole << 8) + (int) ((value - (float) whole) * 256.0f);
+    node->value = CFE_FIXED_FROM_WHOLE(whole, value);
     cfeTrackUpdateDirections(*list);
     return node;
 }
 
-/* Same as cfeListSetValue but sets flag 0x2. */
+/* Same as cfeListSetValue but sets CFE_TRACK_LINEAR. */
 CfeTrackNode *cfeListSetValueLinear(CfeTrackNode **list, int key, float value)
 {
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
     int whole = (int) value;
 
-    node->flags |= 2;
-    node->value = (whole << 8) + (int) ((value - (float) whole) * 256.0f);
+    node->flags |= CFE_TRACK_LINEAR;
+    node->value = CFE_FIXED_FROM_WHOLE(whole, value);
     cfeTrackUpdateDirections(*list);
     return node;
 }
@@ -119,22 +115,22 @@ CfeTrackNode *cfeListSetAngle(CfeTrackNode **list, int key, float value)
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
     int whole;
 
-    node->flags &= ~2;
+    node->flags &= ~CFE_TRACK_LINEAR;
     whole = (int) value;
-    node->value = (whole << 8) + (int) ((value - (float) whole) * 256.0f);
+    node->value = CFE_FIXED_FROM_WHOLE(whole, value);
     cfeChainUnwrapAngles(*list);
     cfeTrackUpdateDirections(*list);
     return node;
 }
 
-/* Same as cfeListSetAngle but sets flag 0x2. */
+/* Same as cfeListSetAngle but sets CFE_TRACK_LINEAR. */
 CfeTrackNode *cfeListSetAngleLinear(CfeTrackNode **list, int key, float value)
 {
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
     int whole = (int) value;
 
-    node->flags |= 2;
-    node->value = (whole << 8) + (int) ((value - (float) whole) * 256.0f);
+    node->flags |= CFE_TRACK_LINEAR;
+    node->value = CFE_FIXED_FROM_WHOLE(whole, value);
     cfeChainUnwrapAngles(*list);
     cfeTrackUpdateDirections(*list);
     return node;

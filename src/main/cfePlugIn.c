@@ -29,21 +29,19 @@
 
 extern unsigned char cfeAssertFile[];
 
-/* The modes of cfeListSetKeyMode / cfeListSetAngleKeyMode: set the key plain or flagged (0x2), or plain and mark the
- * list's tail to reset its first (0x8), second (0x10) or both direction pairs (cfeEntryResetDirs). */
+/* The modes of cfeListSetKeyMode / cfeListSetAngleKeyMode: set the key plain or linear (CFE_TRACK_LINEAR), or
+ * plain and mark the list's tail to reset its first, second or both direction pairs (CFE_TRACK_RESET_*). */
 #define CFE_KEY_MODE_PLAIN 0
-#define CFE_KEY_MODE_FLAGGED 1
+#define CFE_KEY_MODE_LINEAR 1
 #define CFE_KEY_MODE_RESET_BOTH 2
 #define CFE_KEY_MODE_RESET_FIRST 3
 #define CFE_KEY_MODE_RESET_SECOND 4
-#define CFE_KEY_RESET_FIRST 0x8
-#define CFE_KEY_RESET_SECOND 0x10
 
 /* The text "0" of the default cases' assert(0). */
 extern unsigned char cfeAssertZero[];
 
 /* Sets key `key` of the value list to `value` in a CFE_KEY_MODE_* mode: plain (cfeListSetValue) or
- * flagged (cfeListSetValueLinear), or plain with reset flags on the list's tail, which is then updated
+ * linear (cfeListSetValueLinear), or plain with reset flags on the list's tail, which is then updated
  * (cfeTrackUpdateDirections). */
 void cfeListSetKeyMode(CfeTrackNode **list, int mode, int key, float value)
 {
@@ -53,14 +51,14 @@ void cfeListSetKeyMode(CfeTrackNode **list, int mode, int key, float value)
     case CFE_KEY_MODE_PLAIN:
         cfeListSetValue(list, key, value);
         break;
-    case CFE_KEY_MODE_FLAGGED:
+    case CFE_KEY_MODE_LINEAR:
         cfeListSetValueLinear(list, key, value);
         break;
     case CFE_KEY_MODE_RESET_BOTH:
         cfeListSetValue(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= CFE_KEY_RESET_FIRST | CFE_KEY_RESET_SECOND;
+            tail->flags |= CFE_TRACK_RESET_FIRST | CFE_TRACK_RESET_SECOND;
             cfeTrackUpdateDirections(*list);
         }
         break;
@@ -68,7 +66,7 @@ void cfeListSetKeyMode(CfeTrackNode **list, int mode, int key, float value)
         cfeListSetValue(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= CFE_KEY_RESET_FIRST;
+            tail->flags |= CFE_TRACK_RESET_FIRST;
             cfeTrackUpdateDirections(*list);
         }
         break;
@@ -76,7 +74,7 @@ void cfeListSetKeyMode(CfeTrackNode **list, int mode, int key, float value)
         cfeListSetValue(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= CFE_KEY_RESET_SECOND;
+            tail->flags |= CFE_TRACK_RESET_SECOND;
             cfeTrackUpdateDirections(*list);
         }
         break;
@@ -87,7 +85,7 @@ void cfeListSetKeyMode(CfeTrackNode **list, int mode, int key, float value)
 }
 
 /* Sets key `key` of the angle list to `value` in a CFE_KEY_MODE_* mode: plain (cfeListSetAngle) or
- * flagged (cfeListSetAngleLinear), or plain with reset flags on the list's tail, which is then updated
+ * linear (cfeListSetAngleLinear), or plain with reset flags on the list's tail, which is then updated
  * (cfeTrackUpdateDirections). */
 void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
 {
@@ -97,14 +95,14 @@ void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
     case CFE_KEY_MODE_PLAIN:
         cfeListSetAngle(list, key, value);
         break;
-    case CFE_KEY_MODE_FLAGGED:
+    case CFE_KEY_MODE_LINEAR:
         cfeListSetAngleLinear(list, key, value);
         break;
     case CFE_KEY_MODE_RESET_BOTH:
         cfeListSetAngle(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= CFE_KEY_RESET_FIRST | CFE_KEY_RESET_SECOND;
+            tail->flags |= CFE_TRACK_RESET_FIRST | CFE_TRACK_RESET_SECOND;
             cfeTrackUpdateDirections(*list);
         }
         break;
@@ -112,7 +110,7 @@ void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
         cfeListSetAngle(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= CFE_KEY_RESET_FIRST;
+            tail->flags |= CFE_TRACK_RESET_FIRST;
             cfeTrackUpdateDirections(*list);
         }
         break;
@@ -120,7 +118,7 @@ void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
         cfeListSetAngle(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
-            tail->flags |= CFE_KEY_RESET_SECOND;
+            tail->flags |= CFE_TRACK_RESET_SECOND;
             cfeTrackUpdateDirections(*list);
         }
         break;
@@ -778,13 +776,13 @@ extern CfeTrackNode *D_006319F0[][108];
 
 /* Script command `cfe.stKyAt` (5 arguments): sets key `key` of list [index][sub] of D_006319F0 to the 8.8 value.
  * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
- * cfeListSetValue); the flagged forms are used when `flagged` is set. */
+ * cfeListSetValue); the linear forms are used when `linear` is set. */
 int cfe_0024C500(int handle)
 {
     int index;
     int sub;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
@@ -793,16 +791,16 @@ int cfe_0024C500(int handle)
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
     key = vmArgGet(handle, 3);
-    flagged = vmArgGet(handle, 4);
+    linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
-        if (flagged != 0) {
+        if (linear != 0) {
             cfeListSetAngleLinear(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
             cfeListSetAngle(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
-        if (flagged != 0) {
+        if (linear != 0) {
             cfeListSetValueLinear(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
             cfeListSetValue(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -815,13 +813,13 @@ extern CfeTrackNode *D_00631A54[][108];
 
 /* Script command `cfe.stKyAtHd` (5 arguments): sets key `key` of list [index][sub] of D_00631A54
  * (the lists at +0x194 of each 0x1B0-byte entry of cfeEntries) to the 8.8 value, with flag
- * 0x2 (cfeListSetValueLinear) when `flagged` is set. */
+ * linear (cfeListSetValueLinear) when `linear` is set. */
 int cfe_0024C7B8(int handle)
 {
     int index;
     int sub;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
@@ -830,9 +828,9 @@ int cfe_0024C7B8(int handle)
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
     key = vmArgGet(handle, 3);
-    flagged = vmArgGet(handle, 4);
+    linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
-    if (flagged != 0) {
+    if (linear != 0) {
         cfeListSetValueLinear(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
         cfeListSetValue(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -844,7 +842,7 @@ extern unsigned char cfeArgCount6Assert[];
 extern CfeNode cfeEntries[];
 
 /* Script command `cfe.stKyAtPrts` (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
- * to the 8.8 value (flagged through cfeListSetValueLinear when `flagged` is set), then walks that track to its
+ * to the 8.8 value (linear through cfeListSetValueLinear when `linear` is set), then walks that track to its
  * end. */
 int cfe_0024C940(int handle)
 {
@@ -852,7 +850,7 @@ int cfe_0024C940(int handle)
     int row;
     int column;
     int key;
-    int flagged;
+    int linear;
     int value;
     CfeTrackNode *node;
 
@@ -863,9 +861,9 @@ int cfe_0024C940(int handle)
     row = vmArgGet(handle, 2);
     column = vmArgGet(handle, 3);
     key = vmArgGet(handle, 4);
-    flagged = vmArgGet(handle, 5);
+    linear = vmArgGet(handle, 5);
     value = vmArgGet(handle, 6);
-    if (flagged != 0) {
+    if (linear != 0) {
         cfeListSetValueLinear(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
     } else {
         cfeListSetValue(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
@@ -914,13 +912,13 @@ extern CfeTrackNode *D_0063857C[][32];
 
 /* Script command `cfe.stKyEf` (5 arguments): sets key `key` of list [index][sub] of D_0063857C to the 8.8 value.
  * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
- * cfeListSetValue); the flagged forms are used when `flagged` is set. */
+ * cfeListSetValue); the linear forms are used when `linear` is set. */
 int cfe_0024CCF8(int handle)
 {
     int index;
     int sub;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
@@ -929,16 +927,16 @@ int cfe_0024CCF8(int handle)
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
     key = vmArgGet(handle, 3);
-    flagged = vmArgGet(handle, 4);
+    linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
-        if (flagged != 0) {
+        if (linear != 0) {
             cfeListSetAngleLinear(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
             cfeListSetAngle(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
-        if (flagged != 0) {
+        if (linear != 0) {
             cfeListSetValueLinear(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
             cfeListSetValue(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -951,13 +949,13 @@ extern CfeTrackNode *D_0063A54C[][16];
 
 /* Script command `cfe.stKyLgt` (5 arguments): sets key `key` of list [index][sub] of D_0063A54C to the 8.8 value.
  * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
- * cfeListSetValue); the flagged forms are used when `flagged` is set. */
+ * cfeListSetValue); the linear forms are used when `linear` is set. */
 int cfe_0024CF70(int handle)
 {
     int index;
     int sub;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
@@ -966,16 +964,16 @@ int cfe_0024CF70(int handle)
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
     key = vmArgGet(handle, 3);
-    flagged = vmArgGet(handle, 4);
+    linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
-        if (flagged != 0) {
+        if (linear != 0) {
             cfeListSetAngleLinear(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
             cfeListSetAngle(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
-        if (flagged != 0) {
+        if (linear != 0) {
             cfeListSetValueLinear(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
             cfeListSetValue(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -986,14 +984,14 @@ int cfe_0024CF70(int handle)
 
 /* Script command `cfe.stKyMp` (6 or 5 arguments): sets key `key` of a list of group `group` to the 8.8 value. With
  * 6 arguments the list is source `sub` of the record of part `part` (sources 3 to 5 hold angles),
- * with 5 the group's own list `sub`; the flagged forms are used when `flagged` is set. */
+ * with 5 the group's own list `sub`; the linear forms are used when `linear` is set. */
 int cfe_0024D1E8(int handle)
 {
     int group;
     int part;
     int sub;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) == 6) {
@@ -1001,16 +999,16 @@ int cfe_0024D1E8(int handle)
         part = vmArgGet(handle, 2);
         sub = vmArgGet(handle, 3);
         key = vmArgGet(handle, 4);
-        flagged = vmArgGet(handle, 5);
+        linear = vmArgGet(handle, 5);
         value = vmArgGet(handle, 6);
         if (sub >= 3 && sub < 6) {
-            if (flagged != 0) {
+            if (linear != 0) {
                 cfeListSetAngleLinear(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             } else {
                 cfeListSetAngle(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             }
         } else {
-            if (flagged != 0) {
+            if (linear != 0) {
                 cfeListSetValueLinear(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             } else {
                 cfeListSetValue(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -1020,9 +1018,9 @@ int cfe_0024D1E8(int handle)
         group = vmArgGet(handle, 1);
         sub = vmArgGet(handle, 2);
         key = vmArgGet(handle, 3);
-        flagged = vmArgGet(handle, 4);
+        linear = vmArgGet(handle, 4);
         value = vmArgGet(handle, 5);
-        if (flagged != 0) {
+        if (linear != 0) {
             cfeListSetValueLinear(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
             cfeListSetValue(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -1034,12 +1032,12 @@ int cfe_0024D1E8(int handle)
 extern CfeTrackNode *D_0063CDE0[];
 
 /* Script command `cfe.stKyFog` (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
- * with flag 0x2 (cfeListSetValueLinear) when `flagged` is set. */
+ * linear (cfeListSetValueLinear) when `linear` is set. */
 int cfe_0024D5E0(int handle)
 {
     int index;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 4) {
@@ -1047,9 +1045,9 @@ int cfe_0024D5E0(int handle)
     }
     index = vmArgGet(handle, 1);
     key = vmArgGet(handle, 2);
-    flagged = vmArgGet(handle, 3);
+    linear = vmArgGet(handle, 3);
     value = vmArgGet(handle, 4);
-    if (flagged != 0) {
+    if (linear != 0) {
         cfeListSetValueLinear(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
     } else {
         cfeListSetValue(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
@@ -1060,14 +1058,14 @@ int cfe_0024D5E0(int handle)
 extern CfeTrackNode *D_0063ACB4[][140];
 
 /* Script command `cfe.stKyMnt` (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4
- * (140 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
- * `flagged` is set. */
+ * (140 per row) to the 8.8 value, linear (cfeListSetValueLinear) when
+ * `linear` is set. */
 int cfe_0024D738(int handle)
 {
     int index;
     int sub;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
@@ -1076,9 +1074,9 @@ int cfe_0024D738(int handle)
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
     key = vmArgGet(handle, 3);
-    flagged = vmArgGet(handle, 4);
+    linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
-    if (flagged != 0) {
+    if (linear != 0) {
         cfeListSetValueLinear(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
         cfeListSetValue(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -1089,14 +1087,14 @@ int cfe_0024D738(int handle)
 extern CfeTrackNode *D_0063CE0C[][6];
 
 /* Script command `cfe.stKyScrEff` (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C
- * (6 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
- * `flagged` is set. */
+ * (6 per row) to the 8.8 value, linear (cfeListSetValueLinear) when
+ * `linear` is set. */
 int cfe_0024D8C0(int handle)
 {
     int index;
     int sub;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
@@ -1105,9 +1103,9 @@ int cfe_0024D8C0(int handle)
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
     key = vmArgGet(handle, 3);
-    flagged = vmArgGet(handle, 4);
+    linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
-    if (flagged != 0) {
+    if (linear != 0) {
         cfeListSetValueLinear(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
         cfeListSetValue(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
@@ -1118,14 +1116,14 @@ int cfe_0024D8C0(int handle)
 extern CfeTrackNode *D_0063CE90[][20];
 
 /* Script command `cfe.stKySnd` (5 arguments): sets key `key` of list [index][sub] of D_0063CE90
- * (20 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
- * `flagged` is set. */
+ * (20 per row) to the 8.8 value, linear (cfeListSetValueLinear) when
+ * `linear` is set. */
 int cfe_0024DA40(int handle)
 {
     int index;
     int sub;
     int key;
-    int flagged;
+    int linear;
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
@@ -1134,9 +1132,9 @@ int cfe_0024DA40(int handle)
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
     key = vmArgGet(handle, 3);
-    flagged = vmArgGet(handle, 4);
+    linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
-    if (flagged != 0) {
+    if (linear != 0) {
         cfeListSetValueLinear(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
         cfeListSetValue(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));

@@ -27,27 +27,27 @@ void cfeEntryNormalizeDirs(CfeTrackNode *entry)
     cfeNormalizeFixed2(&entry->secondDirection[0], &entry->secondDirection[1]);
 }
 
-/* Resets a direction pair to (1, 0) when its flag bit is set: 0x8 for the first pair, 0x10 for the second. */
+/* Resets a direction pair to (1, 0) when its flag is set: CFE_TRACK_RESET_FIRST, else CFE_TRACK_RESET_SECOND. */
 void cfeEntryResetDirs(CfeTrackNode *entry)
 {
     if (entry != 0) {
         int flags = entry->flags;
 
-        if (flags & 8) {
+        if (flags & CFE_TRACK_RESET_FIRST) {
             entry->firstDirection[1] = 0;
             entry->firstDirection[0] = 0x100;
             return;
         }
-        if (flags & 0x10) {
+        if (flags & CFE_TRACK_RESET_SECOND) {
             entry->secondDirection[1] = 0;
             entry->secondDirection[0] = 0x100;
         }
     }
 }
 
-/* Sets the directions of every key of the track from its neighbours (flag 0x4 on the first key keeps them):
+/* Sets the directions of every key of the track from its neighbours (an integer track, CFE_TRACK_INTEGER, has none):
  * both directions point along the time and angle step to the next key (first key), from the previous key
- * (last key) or from the previous to the next key. Flag 0x2 gives a middle key a first direction from the
+ * (last key) or from the previous to the next key. CFE_TRACK_LINEAR gives a middle key a first direction from the
  * previous key only, and makes it the previous key's second direction (also on the last key). A track of one
  * key gets (1, 0). The reset flags of the three keys are applied after each step. */
 void cfeTrackUpdateDirections(CfeTrackNode *track)
@@ -56,7 +56,7 @@ void cfeTrackUpdateDirections(CfeTrackNode *track)
     CfeTrackNode *node = track;
     CfeTrackNode *next;
 
-    if (track != 0 && (track->flags & 4)) {
+    if (track != 0 && (track->flags & CFE_TRACK_INTEGER)) {
         return;
     }
     while (node != 0) {
@@ -82,7 +82,7 @@ void cfeTrackUpdateDirections(CfeTrackNode *track)
             node->firstDirection[0] = node->secondDirection[0];
             node->firstDirection[1] = node->secondDirection[1];
             cfeEntryNormalizeDirs(node);
-            if (node->flags & 2) {
+            if (node->flags & CFE_TRACK_LINEAR) {
                 prev->secondDirection[0] = node->firstDirection[0];
                 prev->secondDirection[1] = node->firstDirection[1];
             }
@@ -94,7 +94,7 @@ void cfeTrackUpdateDirections(CfeTrackNode *track)
             node->firstDirection[0] = node->secondDirection[0];
             node->firstDirection[1] = node->secondDirection[1];
             cfeEntryNormalizeDirs(node);
-            if (node->flags & 2) {
+            if (node->flags & CFE_TRACK_LINEAR) {
                 node->firstDirection[0] = (node->startTime - prev->startTime) << 8;
                 node->firstDirection[1]
                     = CFE_FLOAT_TO_FIXED(CFE_FIXED_TO_FLOAT(node->value) - CFE_FIXED_TO_FLOAT(prev->value));
@@ -144,7 +144,7 @@ void cfeChainUnwrapAngles(CfeTrackNode *node)
             }
         }
         whole = (int) current;
-        next->value = (whole << 8) + (int) ((current - (float) whole) * 256.0f);
+        next->value = CFE_FIXED_FROM_WHOLE(whole, current);
         node = next;
         after = next->next;
     } while ((next = after) != 0);
@@ -217,9 +217,6 @@ float cfeTrackBezier(CfeTrackNode *from, CfeTrackNode *to, float time)
     return cfeEntryEvalCubic(time, from, coefficients);
 }
 
-/* Key flag: interpolate linearly to the next key (cfeTrackLerp) instead of by cfeTrackBezier. */
-#define CFE_TRACK_LINEAR 0x2
-
 /* The track's value at `time`: 0 without keys, the first key's value before it, the last key's value
  * after the end, and in between the two surrounding keys interpolated (linearly with CFE_TRACK_LINEAR,
  * else by cfeTrackBezier). */
@@ -246,9 +243,6 @@ float cfeTrackSample(CfeTrackNode *track, int time)
     }
     return CFE_FIXED_TO_FLOAT(node->value);
 }
-
-/* Key flag: the track holds whole numbers, not 8.8 fixed-point values. */
-#define CFE_TRACK_INTEGER 0x4
 
 /* The value of the key in effect at `time` (the last key that starts at or before it, the first key before
  * the start): as a whole number for integer tracks, else from 8.8 fixed point. */
