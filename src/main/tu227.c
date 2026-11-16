@@ -1,108 +1,183 @@
 #include "common.h"
 #include "main/tu206.h"
+#include "main/tu215.h"
 #include "main/tu229.h"
+#include "main/tu232.h"
+#include "main/tu234.h"
 #include "main/tu242.h"
-
-INCLUDE_ASM("asm/main/nonmatchings/tu227", interpUpdate);
-
-INCLUDE_ASM("asm/main/nonmatchings/tu227", interpAdvanceCursor);
-
-INCLUDE_ASM("asm/main/nonmatchings/tu227", interpDrawTextSlot);
+#include "main/tu227.h"
+#include "main/tu243.h"
+#include "main/tu245.h"
+#include "main/xgl_font.h"
 
 #include "shared.h"
 
-/*
- * The interpolation block at +0x28 of the object. Its members are the
- * sub-object the functions of this TU address through one pointer; the
- * gaps stay unmodeled.
- */
-typedef struct InterpBlock {
-    int handle;
-    u8 unmodeled_04[0x08];
-    int pending;
-    u8 unmodeled_10[0x04];
-    int cursor;
-    int value;
-    int base;
-    int delta;
-    int angle;
-    int angle_step;
-    int range_first;
-    u8 unmodeled_30[0x04];
-    int range_last;
-} InterpBlock;
-
-typedef struct InterpObject {
-    int flags;
-    u8 unmodeled_04[0x18];
-    int state;
-    u8 unmodeled_20[0x08];
-    InterpBlock interp;
-} InterpObject;
-
 extern float cosf(float x);
 extern float mathDegToRad;
-int easeAngleStep(int delta, int base);
+const char *func_0027E7A0(const char *text);
 
-void interpRewind(InterpObject *object)
+/* Global flag word gameLoopFlags; bit 0 set suspends the text update (same bit as tu238/tu240). */
+extern int gameLoopFlags[];
+#define SYS_FLAG_HOLD_UPDATES 0x1
+void talkAdvanceCounter(MsgSlot *slot);
+
+/* Per-frame update of a text slot: ramps the timer, steps the scan and the cosine easing, advances the counter. */
+void interpUpdate(MsgSlot *slot)
 {
-    if (object->state == 1) {
-        textSetOutputCursor(object->interp.handle);
-        object->flags = ((object->flags & ~0x4) & ~((u32) 0x8)) | 0x2;
+    if (slot->state != MSG_SLOT_STATE_TEXT) {
+        return;
+    }
+    if (gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES) {
+        return;
+    }
+    if (slot->flags & TALK_FLAG_OPENING) {
+        slot->reset_value++;
+        if (slot->reset_value >= INTERP_OPEN_FRAMES) {
+            slot->flags = (slot->flags & ~TALK_FLAG_OPENING) | (TALK_FLAG_OPEN | INTERP_FLAG_SCAN);
+        }
+    }
+    if (slot->flags & TALK_FLAG_CLOSING) {
+        slot->reset_value--;
+        if (slot->reset_value <= 0) {
+            slot->flags = 0;
+        }
+    }
+    if (slot->flags & INTERP_FLAG_SCAN) {
+        if (interpAdvanceCursor(slot)) {
+            slot->flags &= ~INTERP_FLAG_SCAN;
+        }
+    }
+    if (slot->flags & INTERP_FLAG_EASE) {
+        if (interpStepCosine(slot)) {
+            slot->flags &= ~INTERP_FLAG_EASE;
+        }
+    }
+    /* The original reads the flag word as a doubleword here (ld); only the low bits matter. Open and no longer scanning. */
+    if ((*(long long *) slot & TALK_CURSOR_FLAGS_MASK) == TALK_FLAG_OPEN) {
+        talkAdvanceCounter(slot);
     }
 }
 
-void interpSetPending(InterpObject *object, int value)
+/*
+ * Advances the text cursor of the current line range by one unit once the
+ * wait counter reaches the pending delay. Leading '$' control units are
+ * consumed first. Returns 1 when the cursor has reached the end of the range
+ * (it is then clamped to the end), 0 while text remains or while waiting.
+ */
+int interpAdvanceCursor(MsgSlot *slot)
 {
-    if (object->state == 1) {
-        object->interp.pending = value;
+    MsgSlotText *interp;
+    const char *end;
+
+    if (slot->state != MSG_SLOT_STATE_TEXT) {
+        return 0;
+    }
+    interp = &slot->u.text;
+    if (interp->halted != 0) {
+        return 0;
+    }
+    end = textSkipLines(interp->start, interp->first_line + interp->visible_rows - 1);
+    if (interp->reveal < end) {
+        interp->wait++;
+        if (interp->wait < interp->pending) {
+            return 0;
+        }
+        interp->wait = 0;
+        while (*interp->reveal == '$') {
+            interp->reveal = xglFontCopyTextUnit(0, interp->reveal, 0);
+        }
+        interp->reveal = func_0027E7A0(interp->reveal);
+        if (interp->reveal >= end - 1) {
+            interp->reveal = end;
+            return 1;
+        }
+    } else {
+        return 1;
+    }
+    return 0;
+}
+
+
+/* Type 1 (text) slot handler: refreshes the slot per pending flag, then draws its text box and tags. */
+/* Declared int to match tu215's call site; the original has no return value path (a void definition changes the bytes). */
+int interpDrawTextSlot(MsgSlot *slot)
+{
+    if (slot->state == MSG_SLOT_STATE_TEXT) {
+        if (slot->flags & TALK_FLAG_OPENING) {
+            talkDrawFramesBasic(slot);
+        }
+        if (slot->flags & TALK_FLAG_CLOSING) {
+            talkDrawFramesBasic(slot);
+        }
+        if (slot->flags & TALK_FLAG_OPEN) {
+            talkDrawFramesBasic(slot);
+            talkDrawTextBox(slot);
+            textTagDrawActive(slot->u.text.reveal, slot->u.text.scroll_y, slot);
+        }
     }
 }
 
-void interpAdvance(InterpObject *object, int advance)
+void interpRewind(MsgSlot *slot)
 {
-    InterpBlock *interp;
+    if (slot->state == MSG_SLOT_STATE_TEXT) {
+        textSetOutputCursor((int) slot->u.text.start);
+        /* The original clears the two bits with two separate masks (li -5, li -9): the first AND on the flags read
+         * as int and the second on the (u32) mask keep the compiler from folding them into one. */
+        slot->flags = (((int) slot->flags & ~TALK_FLAG_OPENING) & ~((u32) TALK_FLAG_OPEN)) | TALK_FLAG_CLOSING;
+    }
+}
+
+void interpSetPending(MsgSlot *slot, int value)
+{
+    if (slot->state == MSG_SLOT_STATE_TEXT) {
+        slot->u.text.pending = value;
+    }
+}
+
+void interpAdvance(MsgSlot *slot, int advance)
+{
+    MsgSlotText *interp;
     int old_value;
     int cursor;
     int next_cursor;
     int base;
 
-    interp = &object->interp;
-    if (object->state == 1) {
-        object->flags |= 0x20;
-        old_value = interp->value;
-        cursor = interp->cursor + advance;
-        interp->delta = old_value;
-        interp->cursor = cursor;
-        next_cursor = xglClampInt(cursor, 1, interp->range_last - interp->range_first + 1);
-        interp->cursor = next_cursor;
+    interp = &slot->u.text;
+    if (slot->state == MSG_SLOT_STATE_TEXT) {
+        slot->flags |= INTERP_FLAG_EASE;
+        old_value = interp->scroll_y;
+        cursor = interp->first_line + advance;
+        interp->scroll_from = old_value;
+        interp->first_line = cursor;
+        next_cursor = xglClampInt(cursor, 1, interp->line_count - interp->visible_rows + 1);
+        interp->first_line = next_cursor;
         base = interpCursorFrame(next_cursor);
         interp->angle = 0;
-        interp->base = base;
-        interp->angle_step = easeAngleStep(interp->delta, base);
+        interp->scroll_to = base;
+        interp->angle_step = easeAngleStep(interp->scroll_from, base);
     }
 }
 
-int interpStepCosine(InterpObject *object)
+int interpStepCosine(MsgSlot *slot)
 {
-    InterpBlock *interp;
+    MsgSlotText *interp;
     int angle;
     int base;
     int half_sum;
     int midpoint;
     float span;
 
-    interp = &object->interp;
+    interp = &slot->u.text;
     angle = interp->angle + interp->angle_step;
     interp->angle = angle;
-    if (angle >= 0xB4) {
-        interp->value = interp->base;
+    if (angle >= INTERP_ANGLE_END) {
+        interp->scroll_y = interp->scroll_to;
         return 1;
     }
-    base = interp->base;
-    half_sum = base + interp->delta;
+    base = interp->scroll_to;
+    half_sum = base + interp->scroll_from;
     midpoint = half_sum >> 1;
     span = (float) (midpoint - base);
-    interp->value = midpoint + (int) (span * cosf((float) angle * mathDegToRad));
+    interp->scroll_y = midpoint + (int) (span * cosf((float) angle * mathDegToRad));
     return 0;
 }
