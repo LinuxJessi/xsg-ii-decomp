@@ -221,12 +221,6 @@ void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
-typedef union Matrix {
-    float elements[16];
-    Matrix4 rows;
-    XglQuadword quadwords[4];
-} Matrix;
-
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix,
                      const Vector4 *vector);
 void xglVectorScaleXYZ(Vector4 *destination, const Vector4 *source, float scale);

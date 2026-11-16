@@ -26,7 +26,18 @@ typedef struct XglLightSet {
  * alignment test). */
 typedef XglLightSet AlignedXglLightSet __attribute__((aligned(16)));
 
+/* A 4x4 matrix as xgl_2.c and nml_model_set.c read it: floats, rows, words or quadwords. */
+typedef unsigned int XglMatrixQuadword __attribute__((mode(TI)));
+
+typedef union Matrix {
+    float elements[16];
+    Matrix4 rows;
+    int words[4][4];
+    XglMatrixQuadword quadwords[4];
+} Matrix;
+
 /* Functions of src/main/xgl_2.c (the whole xgl_2 file) that other files call. */
+void xglMatrixInverse(Matrix *destination, Matrix *source);
 
 unsigned short xglSRand(void);
 void xglLightPackCacheInvalidate(void);

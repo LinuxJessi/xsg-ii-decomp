@@ -174,9 +174,6 @@ void gifStateDrawRadialBlur(XglPacket *packet)
     }
 }
 
-/* xgl_2.c defines it with its own Matrix struct; the callers pass a Matrix4. */
-void xglMatrixInverse(void *destination, void *source);
-
 /* The camera quad packet on the scratchpad: the GIF tag, then four vertices of UV and XYZ2. */
 typedef struct GifCameraVertex {
     u32 uv[4];
@@ -200,7 +197,7 @@ void gifStateDrawCameraQuad(XglPacket *packet)
 {
     Vector4 scaled;
     Vector4 offset;
-    Matrix4 matrix;
+    Matrix matrix;
     int corners[4][2];
     XglCamera *camera = xglStudioSelectGetActiveCamera(0);
     u32 *cursor;
@@ -215,10 +212,10 @@ void gifStateDrawCameraQuad(XglPacket *packet)
     xglCurMulRotateY(camera->travel.rotation.y);
     xglCurMulRotateX(camera->travel.rotation.x);
     xglCurMulRotateZ(camera->travel.rotation.z);
-    xglCurMatrixGet(matrix);
-    xglMatrixInverse(matrix, matrix);
+    xglCurMatrixGet(matrix.rows);
+    xglMatrixInverse(&matrix, &matrix);
     xglVectorScale(&scaled, &gifStatus.mulColor, gifStatus.blur);
-    xglVectorMulMat(&offset, matrix, &scaled);
+    xglVectorMulMat(&offset, matrix.rows, &scaled);
     x = -offset.x;
     y = offset.y;
     corners[0][0] = x;
