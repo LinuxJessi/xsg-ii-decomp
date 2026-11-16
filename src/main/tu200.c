@@ -1,16 +1,12 @@
 #include "common.h"
 #include "main/tu005.h"
 
-extern const char D_0068D5B8[];
 int scriptReadFile(int *slot, char *fileName);
 
-/* Builds "scNNNN.sb" from number (N = thousands, hundreds, tens, units digit) and loads it.
-   __builtin_memcpy: plain memcpy() compiles to a jal + explicit call, not the inlined
-   ldl/ldr/sdl/sdr copy the original uses for this fixed 10-byte unaligned template. */
+/* Builds "scNNNN.sb" from number (N = thousands, hundreds, tens, units digit) and loads it. */
 int scriptLoadByNumber(int *slot, int number) {
-    char fileName[10];
+    char fileName[] = "sc0000.sb";
 
-    __builtin_memcpy(fileName, D_0068D5B8, sizeof(fileName));
     fileName[2] = ((number / 1000) % 10) + '0';
     fileName[3] = ((number / 100) % 10) + '0';
     fileName[4] = ((number / 10) % 10) + '0';

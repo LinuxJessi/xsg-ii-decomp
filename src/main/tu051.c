@@ -163,10 +163,10 @@ void cameraSaveState(void)
     D_0069E180 = D_002B5E6C[0];
 }
 
-/* Triangle wave record: value is the current amplitude, step the amount it decays per cycle; period and phase
+/* Triangle wave record: amplitude is the current peak, step the amount it decays per cycle; period and phase
    are in frames, hold delays the decay, remaining counts the cycles left. */
 struct CameraWave {
-    float value;                        /* +0x00 */
+    float amplitude;                    /* +0x00 */
     float step;                         /* +0x04 */
     unsigned short period;              /* +0x08 */
     unsigned short phase;               /* +0x0A */
@@ -1472,7 +1472,7 @@ void cameraLerpVector(Vector4 *destination, const Vector4 *from, const Vector4 *
         : : "r"(destination), "r"(to), "r"(from), "r"(fraction) : "memory");
 }
 
-/* Advances the wave one frame and returns its offset: rising from -value to value over the first half of the
+/* Advances the wave one frame and returns its offset: rising from -amplitude to amplitude over the first half of the
    period, falling back over the second; zero once no cycles remain. */
 float cameraWaveStep(struct CameraWave *wave)
 {
@@ -1495,17 +1495,17 @@ float cameraWaveStep(struct CameraWave *wave)
         wave->hold = wave->hold - 1;
     } else {
         wave->remaining = wave->remaining - 1;
-        wave->value = wave->value - wave->step;
-        if (wave->value < 0.0f) {
-            wave->value = 0.0f;
+        wave->amplitude = wave->amplitude - wave->step;
+        if (wave->amplitude < 0.0f) {
+            wave->amplitude = 0.0f;
         }
     }
     half = wave->period >> 1;
-    doubled = wave->value + wave->value;
+    doubled = wave->amplitude + wave->amplitude;
     if (wave->phase < half) {
-        result = (doubled * I2F(wave->phase)) / I2F(half) - wave->value;
+        result = (doubled * I2F(wave->phase)) / I2F(half) - wave->amplitude;
     } else {
-        result = wave->value - (doubled * I2F(wave->phase - half)) / I2F(half);
+        result = wave->amplitude - (doubled * I2F(wave->phase - half)) / I2F(half);
     }
     return result;
 }

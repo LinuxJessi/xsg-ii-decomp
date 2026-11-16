@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/xgl_render.h"
 
 /* Fade record. fadeStartIn/fadeStartColorAlpha copy current into start, set target and
  * delta = (target - start) / totalFrames (fadeDeltaVector) and install fadeUpdate as the hook.
@@ -26,7 +27,6 @@ extern FadeState fadeState;
 extern void (*fadeUpdateHook[])(void);
 void *memset(void *destination, int value, unsigned int count);
 void fadeApplyColor(float red, float green, float blue, float alpha);
-void xglRenderGlobalFadeReset(void);
 
 /* Resets the fade: black, fully opaque, no fade in progress. */
 void fadeReset(void)

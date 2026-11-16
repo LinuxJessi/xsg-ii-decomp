@@ -1729,7 +1729,6 @@ void *sefGetResourceSlot(int index) {
 
 void func_00258970(void);
 void svBuildDrawStatePacket(void);
-void sefBuildCameraPacket(void);
 void func_00270CA0(ResourceSlot *slot, int emitterIndex);
 extern int D_0069E330;
 

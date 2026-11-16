@@ -245,11 +245,11 @@ void sdvSetCameraParam(SdvCameraParam *camera, int kind, short *angles, int scal
     sefGetPosition(&camera->point, offset, kind);
 }
 
-/* Triangle wave record of the camera shake (struct CameraWave of tu051.c, private there): value is the current
-   amplitude, step the amount it decays per cycle; period and phase are in frames, hold delays the decay,
+/* Triangle wave record of the camera shake (struct CameraWave of tu051.c, private there): amplitude is the current
+   peak, step the amount it decays per cycle; period and phase are in frames, hold delays the decay,
    remaining counts the cycles left. */
 struct CameraWave {
-    float value;                        /* +0x00 */
+    float amplitude;                    /* +0x00 */
     float step;                         /* +0x04 */
     unsigned short period;              /* +0x08 */
     unsigned short phase;               /* +0x0A */
@@ -482,7 +482,7 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
     signed char blendMode;              /* key's blend and ease modes, read again for the slot transition */
     unsigned char easeMode;
     struct CameraWave *wave;
-    float value;
+    float amplitude;                    /* the shake key's amplitude in radians */
     int bit;
     int i;
 
@@ -517,13 +517,13 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
                             wave = 0;
                         }
                         if (wave != 0) {
-                            value = (float)shakeKey->amplitude * 0.017453292f * 0.05f;
+                            amplitude = (float)shakeKey->amplitude * 0.017453292f * 0.05f;
                             wave->period = shakeKey->period;
                             wave->hold = shakeKey->hold;
                             wave->remaining = shakeKey->cycles;
-                            wave->value = value;
+                            wave->amplitude = amplitude;
                             if (shakeKey->cycles != 0) {
-                                wave->step = value / (float)shakeKey->cycles;
+                                wave->step = amplitude / (float)shakeKey->cycles;
                             } else {
                                 wave->step = 0.0f;
                             }
