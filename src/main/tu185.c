@@ -116,7 +116,6 @@ void sefResetPool(void) {
 
 extern unsigned char D_005E7AC0[];
 void smInitilizeSmall(void *cell, unsigned int size);
-void sefResetPool(void);
 
 void sefResetBuffers(void) {
     smInitilizeSmall(D_005E7AC0, 0x20000);
@@ -163,7 +162,9 @@ int sefPoolAlloc(void) {
 /* VIF UNPACK code: CMD 0x6C (V4-32, USN set), NUM = count in bits 16-23, the low word 0x8000 fixed. */
 #define VIF_UNPACK_V4_32_USN 0x6C008000U
 
-/* The first data quadword of a block: cleared whole by func_0026BD10, its first word the particle count. */
+/* The first data quadword of a block. The same 16 bytes are written at two widths: func_0026BD10 clears the
+ * whole quadword (sq) and then the count in its first word (sw), sefPacketUnpackRef writes the count (sw).
+ * Flat fields (entryCount plus three zeroed words) compile to four sw instead of the original's por/sq. */
 typedef union SefUnpackData {
     Quadword quad;
     unsigned int entryCount;  /* the particles in the block */
