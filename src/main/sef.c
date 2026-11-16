@@ -4985,8 +4985,8 @@ typedef struct SefStepRecord {
 } SefStepRecord;
 
 /* Runs the frame steps of one effect: stores step in sefStepScale and loops with a float time accumulator from 0 up to frames.
-   effectRecord 0 runs sefExecStep per step, then sefRunEmitters(0) per frame; other records clear sefEntryCounts and run
-   sefStepEffectRecords per step when stepKind is 0, or sefRunEmitters per frame otherwise. */
+   effectRecord 0 runs sefExecStep per step, then sefRunEmitters(0) per frame; other records clear sefEntryCounts
+   and run sefStepEffectRecords per step when stepKind is 0, or sefRunEmitters per frame otherwise. */
 void sefExecEffectSteps(int effectRecord, float frames, float step)
 {
     float elapsed;

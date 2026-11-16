@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/sef.h"
+#include "main/tu051.h"
 #include "vu0_macro.h"
 
 /* A key sequence: keys holds rows of stride halfwords, the first of each row being the frame
@@ -23,19 +24,6 @@ typedef struct SdvSequence {
 #define SDV_KEY_LINK_1 0x400        /* the request's linked actors (links[0..2]) */
 #define SDV_KEY_LINK_2 0x800
 #define SDV_KEY_LINK_3 0x1000
-
-/* The actor (xenoActor.c); only the move-state and shadow fields sdvExecShadowSeq sets. func_00289028
- * (XenoActorUpdateMoveState) animates state +0x160, angle +0x150 and velocity +0x154. */
-struct XenoActor {
-    unsigned char unmodeled_000[0x150];
-    float angle;            /* +0x150 */
-    float velocity;         /* +0x154 */
-    float shadowValue;      /* +0x158 */
-    int shadowCount;        /* +0x15C */
-    int state;              /* +0x160 */
-    unsigned char unmodeled_164[4];
-    float shadowValue3;     /* +0x168 */
-};
 
 /* The effect request copied into sefRequestBuffer (0x40 bytes). */
 typedef struct SefRequest {
@@ -268,11 +256,11 @@ void sdvExecShadowSeq(SdvSequence *sequence)
         actor = request->source;
     }
     if (actor != 0) {
-        actor->angle = angle;
+        actor->moveAngle = angle;
         actor->shadowValue = shadowValue;
-        actor->velocity = velocity;
+        actor->moveVelocity = velocity;
         actor->shadowCount = shadowCount;
         actor->shadowValue3 = shadowValue3;
-        actor->state = state;
+        actor->moveState = state;
     }
 }

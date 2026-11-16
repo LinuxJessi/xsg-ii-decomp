@@ -15,7 +15,7 @@ int scriptLoadByNumber(int *slot, int number) {
 }
 
 int func_002A9350(int size);
-void strcat(char *destination, char *source);
+char *strcat(char *destination, const char *source);
 int sbLinkImage(int buffer);
 extern const char D_0068D5C8[];
 char *strcpy(char *, const char *);

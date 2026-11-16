@@ -59,8 +59,6 @@ int GameResLoadID(int id, void **buffer, unsigned int *size,
                   void (*callback)(int index, void *buffer, unsigned int size, int value));
 struct XenoActor *XenoActorAlloc(void);
 void XenoActorAllocMatrices(struct XenoActor *actor);
-void XenoActorSetModeInSlot(struct XenoActor *actor, int slot, int mode);
-float XenoActorSetSelector(struct XenoActor *actor, int selector);
 
 /* Loads the object resource Id (asserted at line 157) and creates the actor from its
  * resource table (pack, effect, hierarchy, lookLink, slotTable) as uwamonoLoadPlayer does. */

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "vu0_macro.h"
+#include "main/xgl_2.h"
 
 /* Source record read by recordProjectQuad: an int value and an (x, y) screen offset added to corner 0. */
 typedef struct RecordSource {
@@ -245,10 +246,8 @@ void recordProjectQuad(Vector4 *corners, RecordSource *source, void *params)
 extern f32 D_0069DDF8;
 void xglMatrixUnit(Matrix4 matrix);
 void xglMatrixRotX(Matrix4 destination, Matrix4 source, f32 angle);
-void xglMatrixRotY(Matrix4 destination, Matrix4 source, f32 angle);
 void xglMatrixRotZ(Matrix4 destination, Matrix4 source, f32 angle);
 void xglMatrixMul(void *destination, void *left, void *right);
-void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 
 /* Rotates one corner by the (x, y, z) angles in degrees of params around the point (x, y); value is not read. */
 void recordRotateCorner(Vector4 *vectors, void *params, int value, int x, int y)

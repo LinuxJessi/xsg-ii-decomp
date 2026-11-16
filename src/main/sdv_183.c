@@ -4,6 +4,7 @@
 #include "main/sdv_183.h"
 #include "main/sef.h"
 #include "main/tu051.h"
+#include "main/tu152.h"
 #include "vu0_macro.h"
 
 void sdvClearSpecialWork(void);
@@ -150,9 +151,8 @@ typedef struct SefGlobalTransform {
 /* Returns its second argument. kind is int: declared short, a sll/sra pair extends it before the call. */
 struct SefPartTransform;
 int sefInitPartTransform(struct SefPartTransform *part, int kind, int scaleKey40, int scaleKey80, int scaleKey100);
-void vu0SetCurrentRotationY(f32 value);
 void vu0RotateCurrentX(f32 value);
-void sefGetKindVector(Vector4 *destination, int object, int count, int kind);
+int sefGetKindVector(Vector4 *destination, int object, int count, int kind);
 void sefGetPosition(Vector4 *destination, Vector4 *offset, int kind);
 extern SefGlobalTransform sefGlobalTransform;
 

@@ -1683,7 +1683,6 @@ void recordStepWarp(void)
 void xglMatrixUnit(Matrix4 matrix);
 void xglMatrixRotZ(Matrix4 destination, Matrix4 source, f32 angle);
 void xglMatrixScale(Matrix4 destination, Matrix4 source, const Vector4 *scale);
-void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 extern AlignedVector4 D_0068D6C0;
 extern AlignedVector4 D_0068D6D0;
 extern float D_0069DDF0;
