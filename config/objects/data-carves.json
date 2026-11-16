@@ -7463,6 +7463,32 @@
     }
    ]
   },
+  "main/tu182": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b330",
+      "0x0069b334"
+     ],
+     "generated": [
+      "0x0069b330",
+      "0x0069b334"
+     ],
+     "generated_by": [
+      "tiWindUpdateKeyframes"
+     ],
+     "c_owned_symbols": [
+      "D_0069B330"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu182.o"
+     }
+    }
+   ]
+  },
   "main/tu183": {
    ".lit4": [
     {
