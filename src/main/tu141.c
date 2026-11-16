@@ -9,7 +9,7 @@
 #include "main/xgl_2.h"
 #include "main/xgl_studio.h"
 #include "quadword.h"
-#include "cfeEvaluate.h"
+#include "main/cfeEvaluate.h"
 
 
 void cfeNodePoolInit(void) {

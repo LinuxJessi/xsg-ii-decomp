@@ -1,5 +1,5 @@
-#ifndef MAIN_CFEEVALUATE_H
-#define MAIN_CFEEVALUATE_H
+#ifndef INCLUDE_MAIN_CFEEVALUATE_H
+#define INCLUDE_MAIN_CFEEVALUATE_H
 
 #include "shared.h"
 #include "main/tu144.h"
@@ -290,4 +290,4 @@ void cfeSlotTableEvaluate(int sample_param);
 void cfeSndSetTarget(int target);
 void cfeUpdateEntries(int noPlay);
 
-#endif /* MAIN_CFEEVALUATE_H */
+#endif /* INCLUDE_MAIN_CFEEVALUATE_H */

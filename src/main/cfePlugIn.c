@@ -18,7 +18,7 @@
 #include "main/xgl_2.h"
 #include "main/xgl_cd.h"
 #include "main/xgl_studio.h"
-#include "cfeEvaluate.h"
+#include "main/cfeEvaluate.h"
 #include "main/tu148.h"
 #include "main/TiGlobalColl.h"
 #include "main/nml_model_set.h"

@@ -8,7 +8,7 @@
 #include "main/tu256.h"
 #include "gs.h"
 #include "main/tu045.h"
-#include "cfeEvaluate.h"
+#include "main/cfeEvaluate.h"
 #include "main/tu145.h"
 #include "main/xgl_studio.h"
 #include "main/nml_model_set.h"
