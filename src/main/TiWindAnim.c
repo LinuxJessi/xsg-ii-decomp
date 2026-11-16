@@ -10,12 +10,6 @@ extern const char D_0068F818[];
 extern const DoublewordAlignedVector4 D_0068F800;
 void xglCurSetRotateZ(f32 angle);
 void xglCurApplyVector(Vector4 *destination, const Vector4 *vector);
-void tiWindDirSetEnabled(u32 index, int enabled);
-void tiWindDirSetPosition(u32 index, f32 *position);
-void tiWindDirSetDirection(u32 index, f32 x, f32 y, f32 z);
-void tiWindDirSetSpeed(u32 index, f32 speed);
-void tiWindDirSetRange(u32 index, f32 upper, f32 lower);
-void tiWindDirSetRadius(u32 index, f32 radius, int mode);
 
 /* The 12 floats that xacReadWindDirCurves and xacReadWindPointCurves fill from a wind header. */
 enum WindAnimField {
@@ -67,10 +61,6 @@ void tiWindAnimApplyDir(u32 index, u8 *pHeader, f32 time)
     }
 }
 
-void tiWindPointSetSpeed(u32 index, f32 speed);
-void tiWindPointSetRange(u32 index, f32 upper, f32 lower);
-void tiWindPointSetPosition(u32 index, f32 *position);
-void tiWindPointSetRadius(u32 index, f32 radius, int mode);
 
 void tiWindAnimApplyPoint(u32 index, u8 *pHeader, f32 time)
 {

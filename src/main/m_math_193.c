@@ -321,7 +321,7 @@ Matrix4 *MMathRotateMatrixZXY(Matrix4 *out, const Matrix4 *matrix, const Vector4
     return out;
 }
 
-Matrix4 *MMathRotateMatrixZYX(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles)
+Matrix4 *MMathRotateMatrixZYX(Matrix4 *out, Matrix4 *matrix, const Vector4 *angles)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"

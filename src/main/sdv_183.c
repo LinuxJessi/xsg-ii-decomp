@@ -149,9 +149,9 @@ typedef struct SefGlobalTransform {
 
 
 /* Returns its second argument. kind is int: declared short, a sll/sra pair extends it before the call. */
-struct SefPartTransform;
-int sefInitPartTransform(struct SefPartTransform *part, int kind, int scaleKey40, int scaleKey80, int scaleKey100);
-void vu0RotateCurrentX(f32 value);
+typedef struct SefPartTransform SefPartTransform;
+int sefInitPartTransform(SefPartTransform *part, int kind, int scaleKey40, int scaleKey80, int scaleKey100);
+void vu0RotateCurrentX(float value);
 int sefGetKindVector(Vector4 *destination, int object, int count, int kind);
 void sefGetPosition(Vector4 *destination, Vector4 *offset, int kind);
 extern SefGlobalTransform sefGlobalTransform;
@@ -178,7 +178,7 @@ void sdvSetCameraParam(SdvCameraParam *camera, int kind, short *angles, int scal
     scale = 1.0f;
     memset(camera, 0, sizeof(*camera));
     if (scaled != 0) {
-        sefInitPartTransform((struct SefPartTransform *)&sefGlobalTransform, kind, objects[0], objects[2], objects[1]);
+        sefInitPartTransform((SefPartTransform *)&sefGlobalTransform, kind, objects[0], objects[2], objects[1]);
         if (sefGlobalTransform.scaled != 0) {
             scale = sefGlobalTransform.scale;
         }
@@ -1242,7 +1242,7 @@ INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026A7A0);
  */
 INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecAlter);
 
-extern void sceVif1PkAddCode(XglPacket *packet, u32 tag);
+extern void sceVif1PkAddCode(XglPacket *packet, unsigned int tag);
 extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
 

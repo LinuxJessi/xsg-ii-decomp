@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/sdv_180.h"
+#include "main/sv_get_image_item.h"
 
 void sdvSetAmbState2(int state, int effect_no);
 char *srsAnalyzeEftNo(int effectNo, int *charNo, int *effectType);
@@ -23,7 +24,7 @@ int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
 
 #define SCRIPT_ADDRESS_NONE 0xFFFF    /* absent table entry or address */
 
-void sefStepEffectRecords(int);
+int sefStepEffectRecords(int only);
 extern u16 sefGroupKey;
 
 void sefAdvanceGroupKey(void)
@@ -53,7 +54,7 @@ short scGetImmNumIdx(short *table, int index)
     return table[index];
 }
 
-/* Script effect record returned through svGetScriptEntry. */
+/* Script effect record: the data of the type-list entry svGetScriptEntry returns. */
 typedef struct SefScriptRecord {
     unsigned char unmodeled_00[0x10];
     short kind;                 /* 0x10: 0x3C..0x3F or 0x49 */
@@ -73,7 +74,6 @@ static inline int scOfsToAdrInline(int offset)
 
 /* Takes the effect id in a0 (tu170 0x00261D5C daddu $16,$4,$0, then srsAnalyzeEftNo(effectId, ...)). */
 int sefFindRecordIndex(int effectId);
-SefScriptRecord **svGetScriptEntry(int key);
 int srsGetEffectSlot(int effectKey);
 extern int D_0069DC20;
 extern int D_0069DC24;
@@ -91,7 +91,7 @@ extern short *D_0069DC2C;
  * one register and the 0x3E/0x3F lookups are no longer merged. */
 SefScriptRecord *scGetKeyRecord(int key, int *offset_out, int index)
 {
-    SefScriptRecord **entry;
+    SvTypeListEntry *entry;
     SefScriptRecord *record;
     SefScriptRecord *found;
     int value;
@@ -107,7 +107,7 @@ SefScriptRecord *scGetKeyRecord(int key, int *offset_out, int index)
     if (status >= 0) {
         entry = svGetScriptEntry(key);
         if (entry != 0) {
-            record = *entry;
+            record = (SefScriptRecord *)entry->data;
             offset = 0;
             if (record != 0) {
                 D_0069DC20 = kind = record->kind;

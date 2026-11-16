@@ -33,8 +33,6 @@ int tiWindAcquireSlot(int key, unsigned short subkey, int aux)
     return -1;
 }
 
-void tiWindDirSetEnabled(int, int);
-
 /* Releases every wind slot owned by key and subkey (key 0 matches all slots):
  * each one is disabled and cleared. */
 void tiWindReleaseSlots(int key, int subkey)
@@ -119,15 +117,6 @@ typedef union TiWindVector {
 
 int sdvExecSeqTbl(SdvSequence *sequence);
 void sefGetPosition(Vector4 *destination, Vector4 *offset, int kind);
-void tiWindPointSetPosition(unsigned int index, Vector4 *position);
-void tiWindPointSetSpeed(unsigned int index, float speed);
-void tiWindPointSetRange(unsigned int index, float upper, float lower);
-void tiWindPointSetRadius(unsigned int index, float radius, int global);
-void tiWindDirSetPosition(unsigned int index, Vector4 *position);
-void tiWindDirSetDirection(unsigned int index, float x, float y, float z);
-void tiWindDirSetSpeed(unsigned int index, float speed);
-void tiWindDirSetRange(unsigned int index, float upper, float lower);
-void tiWindDirSetRadius(unsigned int index, float radius, int global);
 void *MMathNormalizeVector2(void *destination, const Vector4 *source);
 
 /* One length of the key reached: the row's value, moved towards the next key by t (in 256ths of
@@ -223,7 +212,7 @@ void tiWindUpdateKeyframes(SdvSequence *sequence, int key, unsigned short subkey
         int enabled;
 
         tiWindDirSetEnabled(slot, 0);
-        tiWindPointSetPosition(slot, &position);
+        tiWindPointSetPosition(slot, &position.x);
         tiWindPointSetSpeed(slot, speed * 0.01f);
         tiWindPointSetRange(slot, frame_key->rangeUpper * 0.01f, frame_key->rangeLower * 0.01f);
         enabled = 0;
@@ -246,7 +235,7 @@ void tiWindUpdateKeyframes(SdvSequence *sequence, int key, unsigned short subkey
         int enabled;
 
         tiWindPointSetEnabled(slot, 0);
-        tiWindDirSetPosition(slot, &position);
+        tiWindDirSetPosition(slot, &position.x);
         offset.vector.x = frame_key->direction[0] * 0.01f;
         offset.vector.y = frame_key->direction[1] * 0.01f;
         offset.vector.z = frame_key->direction[2] * 0.01f;

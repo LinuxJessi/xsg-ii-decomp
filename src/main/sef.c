@@ -1803,8 +1803,8 @@ extern unsigned char MMathUnitMatrix[];
 int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
 void sefNoiseNextVector(Vector4 *pos);
 void sefGetPosition(Vector4 *dest, Vector4 *source, int kind);
-int MMathIsVectorEqual(const Vector4 *first, const Vector4 *second);
-void MMathRotateMatrixZ(Matrix4 *matrix, int unused, float angle);
+short MMathIsVectorEqual(const Vector4 *first, const Vector4 *second);
+Matrix4 *MMathRotateMatrixZ(Matrix4 *out, const Matrix4 *matrix, float angle);
 struct SefAnimObject;
 int sefAnalyzeAnim(struct SefAnimObject *object);
 
@@ -5043,7 +5043,7 @@ void sefFinishDrawPass(int value) {
 int sefGetActiveCount(void);
 void svDrawScene2D(void);
 void sefGetCameraPos(Matrix4 *dest);
-void MSeObjProc(int mode);
+void MSeObjProc(unsigned int mode);
 Matrix4 sefCameraMatrix[1] = { 0 };
 
 /* Draw pass installed at sRender +0x30. Guarded by the initialized flag sefInitialized and by the pending bit
@@ -5592,7 +5592,7 @@ typedef union {
     SefEffectLoadEntry *table;
 } SefRecordOwner;
 
-void sefResetSlotRecords(SefEffectRecord *record);
+void sefResetSlotRecords(SefEffectRecord *record, int suspend);
 
 /* Destroys the 32 effect entries of record and reloads its slots, or resets a cell record; then sets or clears the SEF_RECORD_SKIP_STEP flag. */
 void sefDestroyRecordEffects(SefEffectRecord *record, int setFlag)
@@ -5611,7 +5611,7 @@ void sefDestroyRecordEffects(SefEffectRecord *record, int setFlag)
         return;
     }
     if (record->cellSlot != 0) {
-        sefResetSlotRecords(record);
+        sefResetSlotRecords(record, setFlag);
         return;
     }
     slotIndex = record->slotIndex;
@@ -6836,7 +6836,7 @@ void sefApplyPartTransform(Vector4 *destination, Vector4 *source, int partKind)
         : "$8", "memory");
 }
 
-void vu0RotateCurrentX(f32 value);
+void vu0RotateCurrentX(float value);
 void vu0RotateCurrentZ(f32 value);
 f32 D_0069B314 = 0.0174532924f;
 f32 D_0069B318 = 0.0174532924f;

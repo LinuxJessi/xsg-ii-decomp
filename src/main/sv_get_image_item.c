@@ -2071,7 +2071,7 @@ typedef struct SefPartTransform {
 } SefPartTransform;
 
 f32 sefGetEntryScale(int);
-void sefGetPosition(Vector4 *position, int index, int kind);
+void sefGetPosition(Vector4 *position, Vector4 *source, int kind);
 
 /* Screen vertex written by svProjectVertex: x and y in 12.4 fixed point, then z and the clip flags. */
 typedef struct SvScreenVertex {
@@ -3407,7 +3407,7 @@ int sefFlagTest(int mask);
 unsigned char *sefGetSlotData(int slotIndex);
 Matrix4 *MMathMulMatrix(Matrix4 *out, Matrix4 *rhs, Matrix4 *lhs);
 Matrix4 *MMathScaleMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *scale);
-int MMathIsVectorEqual(const Vector4 *a, const Vector4 *b);
+short MMathIsVectorEqual(const Vector4 *a, const Vector4 *b);
 Matrix4 *MMathScaleMatrixRotS(Matrix4 *out, Matrix4 *matrix, float scale);
 
 /* Unused in this file; the original compiled it here (it takes one label number ahead of svDrawImageItem). */
