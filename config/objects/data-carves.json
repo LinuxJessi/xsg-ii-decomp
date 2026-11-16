@@ -7816,24 +7816,29 @@
    ".rodata": [
     {
      "range": [
-      "0x0068d698",
+      "0x0068d630",
       "0x0068d6c0"
      ],
      "generated": [
-      "0x0068d698",
+      "0x0068d630",
       "0x0068d6b8"
      ],
      "generated_by": [
+      "func_002748C8",
       "func_00275D30",
       "func_00275E08"
      ],
      "c_owned_symbols": [
+      "jtbl_0068D630",
       "D_0068D698",
       "D_0068D6A0",
       "D_0068D6A8",
       "D_0068D6B0"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "D_0068D6C0",
+      "D_0068D6D0"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",

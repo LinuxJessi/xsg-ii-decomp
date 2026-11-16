@@ -3,6 +3,7 @@
 #include "vu0_macro.h"
 #include "gs.h"
 #include "main/tu207.h"
+#include "main/xgl_2.h"
 
 /* Wraps value once into lower..upper: one period (upper - lower + 1) down when above upper, one up when below lower. */
 int xglWrapInt(int value, int lower, int upper)
@@ -26,12 +27,21 @@ int xglIsInRange(int value, int lower, int upper)
 
 typedef struct XglPacket XglPacket;
 
+/* One rectangle of a draw record: top, left, right, bottom (tu210.c's GsQueueRect). */
+typedef struct GsQueueRect {
+    int top;
+    int left;
+    int right;
+    int bottom;
+} GsQueueRect;
+
 /*
  * One 0x7C-byte draw record (tu213.c's GsQueueContext; recordBanks holds three banks of ten). The type byte picks
  * the draw handler D_0063D758[type - 1], and that handler decides what the words after it hold: the type 1 handler
- * reads +0x04 as a stage, the type 2 and 20 handlers as the gsQueue frame, the type 3 handler as a ring step, the
- * type 6 handler as an alpha. Only these per-type arms are a union; color (+0x0C) and halveRgb (+0x18) are
- * tu213.c's names.
+ * reads +0x04 as a stage, the type 2, 4, 8-14 and 20 handlers as the gsQueue frame (types 4 and 8-14 pass the
+ * record to gsQueueBeginTriStrip or gsQueueBeginSprites), the type 3 handler as a ring step, the type 6 handler as
+ * an alpha. Only these per-type arms are a union; color (+0x0C) and halveRgb (+0x18) are tu213.c's names, the
+ * type 8-14 arms use the field names of tu208.c's and tu210.c's views of the record.
  */
 typedef struct GsQueueContext {
     unsigned char type; /* +0x00: 0 unused, 1..21 picks the draw handler D_0063D758[type - 1] */
@@ -53,6 +63,84 @@ typedef struct GsQueueContext {
             int screenRect[4];  /* +0x20 */
             int textureRect[4]; /* +0x30 */
         } queue;
+        /* Type 4 (func_00276458): after the gsQueue words of queue, the number of grid cells to set. */
+        struct {
+            unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
+            int cellCount;                         /* +0x20 */
+        } gridFill;
+        /* Type 8 (func_00277720; tu208.c's RecordGradient): two colours over a rectangle, along y when vertical. */
+        struct {
+            unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
+            int color0;                            /* +0x20 */
+            int color1;                            /* +0x24 */
+            int top;                               /* +0x28 */
+            int left;                              /* +0x2C */
+            int right;                             /* +0x30 */
+            int bottom;                            /* +0x34 */
+            int vertical;                          /* +0x38 */
+        } gradient;
+        /* Type 9 (func_002778D0; tu208.c's RecordBatch): the graph's colour, baseline, time range, top, columns,
+           rows and value ceiling. */
+        struct {
+            unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
+            int color;                             /* +0x20 */
+            int bottom;                            /* +0x24 */
+            int startTime;                         /* +0x28 */
+            int endTime;                           /* +0x2C */
+            int top;                               /* +0x30 */
+            int columns;                           /* +0x34 */
+            int rows;                              /* +0x38 */
+            unsigned char unmodeled_3c[0x5C - 0x3C];
+            int maxValue;                          /* +0x5C */
+        } graph;
+        /* Type 10 (orbitDrawRing; tu210.c's GsQueueRing). */
+        struct {
+            unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
+            int endColor;                          /* +0x20 */
+            int centerX;                           /* +0x24 */
+            int centerY;                           /* +0x28 */
+            int radius;                            /* +0x2C */
+            int innerRadius;                       /* +0x30 */
+            int phaseSpeed;                        /* +0x34 */
+            int segments;                          /* +0x38 */
+            int amplitude;                         /* +0x3C */
+        } ring;
+        /* Type 11 (func_002783D0; tu210.c's GsQueuePresetQuad): a position preset and a texture rectangle. */
+        struct {
+            unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
+            int positionPreset;                    /* +0x20 */
+            unsigned char unmodeled_24[0x30 - 0x24];
+            GsQueueRect texture;                   /* +0x30 */
+        } presetQuad;
+        /* Type 12 (func_00278558; tu210.c's GsQueuePresetUvQuad): a screen rectangle and a texture preset. */
+        struct {
+            unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
+            GsQueueRect screen;                    /* +0x20 */
+            int texturePreset;                     /* +0x30 */
+        } presetUvQuad;
+        /* Type 13 (circleDrawSegments; tu210.c's GsQueueCircle). */
+        struct {
+            unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
+            GsQueueRect screen;                    /* +0x20 */
+            GsQueueRect texture;                   /* +0x30 */
+            int radiusStep;                        /* +0x40 */
+            int ringCount;                         /* +0x44 */
+            int endColor;                          /* +0x48 */
+            int startAngle;                        /* +0x4C */
+            int segments;                          /* +0x50 */
+            int centerDisabled;                    /* +0x54 */
+        } circle;
+        /* Type 14 (gridDrawCells; tu210.c's GsQueueGrid). */
+        struct {
+            unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
+            int endColor;                          /* +0x20 */
+            GsQueueRect screen;                    /* +0x24 */
+            int columns;                           /* +0x34 */
+            int rows;                              /* +0x38 */
+            unsigned char unmodeled_3c[0x68 - 0x3C];
+            int transformStart;                    /* +0x68 */
+            int transformEnd;                      /* +0x6C */
+        } grid;
         /* Type 1 (func_002759F8): the stage (0..2) and alpha passed to func_00275D30/func_00275CF0, and the Z of
            the full-screen sprite. */
         struct {
@@ -117,13 +205,667 @@ void func_00274850(void)
 }
 
 void recordClear(void *record);
-/* Flag that suspends the per-frame record updates; 1 while suspended. */
-extern int recordUpdatePaused;
+/* Flag that suspends the per-frame record updates; 1 while suspended. A struct, not an int: as a scalar,
+ * sched2 lifts func_002748C8 case 16's flag load above its params[0] reload (fd.sh 909/913); as a struct member
+ * the load stays behind the record stores (913/913). */
+typedef struct RecordUpdateFlag {
+    int paused;
+} RecordUpdateFlag;
+extern RecordUpdateFlag recordUpdatePaused;
 
-/* Fills bank bankIndex (nothing happens unless it is below 3) with one of the record presets 0..24 (the second
- * argument, through jtbl_0068D630): clears the bank's ten records, writes the preset's records, then updates the render callback
- * (func_00274850). */
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_002748C8);
+/*
+ * Fills bank bankIndex (nothing happens unless it is below 3) with one of the record presets 0..24 (the second
+ * argument, through jtbl_0068D630; any other value leaves the bank cleared): clears the bank's ten records, writes
+ * the preset's records, then updates the render callback (func_00274850). Words no record arm names stay params[]
+ * (all of types 7 and 16-19, the unmodeled ones of types 9 and 14).
+ * Cases 14 and 15 declare their locals in the case block: at function scope they become global pseudos and $16
+ * and $17 trade places from the prologue on (fd.sh 244/913).
+ */
+void func_002748C8(int bankIndex, int preset, int depth, int *params)
+{
+    int slot;
+    GsQueueContext *records;
+    GsQueueContext *record;
+
+    records = ((RecordBank *)recordBanks)[bankIndex].records;
+    if (bankIndex >= 3) {
+        return;
+    }
+    record = records;
+    for (slot = 0; slot < 10; slot++) {
+        recordClear(record);
+        record++;
+    }
+    switch (preset) {
+    case 1:
+        records[0].type = 4;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 2;
+        records[0].u.queue.color = params[0];
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 1;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.gridFill.cellCount = params[1];
+        break;
+    case 2:
+        records[0].type = 11;
+        records[0].u.queue.frame = 2;
+        records[0].u.queue.tex0 = 0;
+        records[0].u.queue.color = 0x80FFFFFF;
+        records[0].u.queue.depth = 0x7FFFFFFF;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 1;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.presetQuad.positionPreset = 0;
+        records[0].u.presetQuad.texture.top = 0;
+        records[0].u.presetQuad.texture.left = 0;
+        records[0].u.presetQuad.texture.right = 512;
+        records[0].u.presetQuad.texture.bottom = 448;
+        records[1].type = 12;
+        records[1].u.queue.frame = 0;
+        records[1].u.queue.tex0 = 2;
+        records[1].u.queue.color = 0x80FFFFFF;
+        records[1].u.queue.depth = depth;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 1;
+        records[1].u.queue.blendKind = 0;
+        records[1].u.presetUvQuad.screen.top = 0;
+        records[1].u.presetUvQuad.screen.left = 0;
+        records[1].u.presetUvQuad.screen.right = 512;
+        records[1].u.presetUvQuad.screen.bottom = 448;
+        records[1].u.presetUvQuad.texturePreset = 0;
+        break;
+    case 3:
+        records[0].type = 2;
+        records[0].u.queue.tex0 = 0;
+        records[1].type = 17;
+        records[1].u.queue.frame = 0;
+        records[1].u.queue.tex0 = 2;
+        records[1].u.queue.color = params[0];
+        records[1].u.queue.depth = depth;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 1;
+        records[1].u.queue.blendKind = params[1];
+        records[1].u.params[7] = -params[3];
+        records[1].u.params[8] = -params[2];
+        records[1].u.params[9] = params[2] + 512;
+        records[1].u.params[10] = params[3] + 448;
+        records[1].u.params[11] = params[2];
+        records[1].u.params[12] = -(params[2] >> 1);
+        records[1].u.params[13] = params[3];
+        records[1].u.params[14] = -(params[3] >> 1);
+        records[1].u.params[15] = 8;
+        break;
+    case 4:
+        records[0].type = 2;
+        records[0].u.queue.tex0 = 0;
+        records[1].type = 18;
+        records[1].u.queue.frame = 0;
+        records[1].u.queue.tex0 = 2;
+        records[1].u.queue.color = params[0];
+        records[1].u.queue.depth = depth;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 1;
+        records[1].u.queue.blendKind = params[1];
+        records[1].u.params[7] = params[5];
+        records[1].u.params[8] = -params[3];
+        records[1].u.params[9] = -params[4];
+        records[1].u.params[10] = params[4] + 512;
+        records[1].u.params[11] = params[3] + 448;
+        records[1].u.params[15] = params[3];
+        records[1].u.params[13] = 20;
+        records[1].u.params[14] = params[2];
+        records[1].u.params[12] = params[4];
+        records[1].u.params[16] = 20;
+        records[1].u.params[17] = params[2];
+        records[1].u.params[18] = 7;
+        break;
+    case 5:
+        records[0].type = 2;
+        records[0].u.queue.tex0 = 0;
+        records[1].type = 19;
+        records[1].u.queue.frame = 0;
+        records[1].u.queue.tex0 = 2;
+        records[1].u.queue.color = params[0];
+        records[1].u.queue.depth = depth;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 1;
+        records[1].u.queue.blendKind = params[1];
+        records[1].u.params[7] = params[4];
+        records[1].u.params[8] = -7;
+        records[1].u.params[9] = -7;
+        records[1].u.params[10] = 519;
+        records[1].u.params[11] = 455;
+        records[1].u.params[12] = 256;
+        records[1].u.params[13] = 224;
+        records[1].u.params[14] = 0;
+        records[1].u.params[15] = 360;
+        records[1].u.params[16] = params[2];
+        records[1].u.params[17] = 6;
+        records[1].u.params[18] = params[3];
+        records[1].u.params[19] = params[5];
+        break;
+    case 6:
+        records[0].type = 19;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 1;
+        records[0].u.queue.color = 0x10FFFFFF;
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 0;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.params[7] = 0x80FFFFFF;
+        records[0].u.params[8] = -7;
+        records[0].u.params[9] = -7;
+        records[0].u.params[10] = 519;
+        records[0].u.params[11] = 455;
+        records[0].u.params[12] = 256;
+        records[0].u.params[13] = 224;
+        records[0].u.params[14] = 0;
+        records[0].u.params[15] = (params[0] << 6);
+        records[0].u.params[16] = 2;
+        records[0].u.params[17] = 12;
+        records[0].u.params[18] = params[1];
+        records[0].u.params[19] = 14;
+        break;
+    case 7:
+        records[0].type = 20;
+        records[0].u.queue.frame = 2;
+        records[0].u.queue.tex0 = 0;
+        records[0].u.queue.color = 0x80FFFFFF;
+        records[0].u.queue.depth = 0xFFFFFFF;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 1;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.screenRect[0] = 0;
+        records[0].u.queue.screenRect[1] = 0;
+        records[0].u.queue.screenRect[2] = 512;
+        records[0].u.queue.screenRect[3] = 448;
+        records[0].u.queue.textureRect[0] = 0;
+        records[0].u.queue.textureRect[1] = 0;
+        records[0].u.queue.textureRect[2] = 512;
+        records[0].u.queue.textureRect[3] = 448;
+        records[1].type = 20;
+        records[1].u.queue.frame = 2;
+        records[1].u.queue.tex0 = 0;
+        records[1].u.queue.color = params[0];
+        records[1].u.queue.depth = 0xFFFFFFF;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 0;
+        records[1].u.queue.blendKind = 2;
+        records[1].u.queue.screenRect[0] = 0;
+        records[1].u.queue.screenRect[1] = 0;
+        records[1].u.queue.screenRect[2] = 512;
+        records[1].u.queue.screenRect[3] = 448;
+        records[2].type = 13;
+        records[2].u.queue.frame = 0;
+        records[2].u.queue.tex0 = 2;
+        records[2].u.queue.color = 0x40FFFFFF;
+        records[2].u.queue.depth = depth;
+        records[2].u.queue.count = 1;
+        records[2].u.queue.halveRgb = 1;
+        records[2].u.queue.blendKind = 1;
+        records[2].u.circle.screen.top = 0;
+        records[2].u.circle.screen.left = 0;
+        records[2].u.circle.screen.right = 512;
+        records[2].u.circle.screen.bottom = 448;
+        records[2].u.circle.texture.top = 0;
+        records[2].u.circle.texture.left = 0;
+        records[2].u.circle.texture.right = 512;
+        records[2].u.circle.texture.bottom = 448;
+        records[2].u.circle.radiusStep = 4;
+        records[2].u.circle.ringCount = params[2];
+        records[2].u.circle.endColor = (params[0] & 0xFFFFFF);
+        records[2].u.circle.startAngle = params[3];
+        records[2].u.circle.segments = params[1];
+        records[2].u.circle.centerDisabled = 0;
+        break;
+    case 8:
+        records[0].type = 2;
+        records[0].u.queue.tex0 = 0;
+        records[1].type = 20;
+        records[1].u.queue.frame = 2;
+        records[1].u.queue.tex0 = 0;
+        records[1].u.queue.color =
+            (((((128 - params[1]) << 16) | (128 - params[1])) | ((128 - params[1]) << 8)) | 0x80000000);
+        records[1].u.queue.depth = 0xFFFFFFF;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 0;
+        records[1].u.queue.blendKind = 2;
+        records[1].u.queue.screenRect[0] = 0;
+        records[1].u.queue.screenRect[1] = 0;
+        records[1].u.queue.screenRect[2] = 512;
+        records[1].u.queue.screenRect[3] = 448;
+        records[2].type = 20;
+        records[2].u.queue.frame = 0;
+        records[2].u.queue.tex0 = 0;
+        records[2].u.queue.color = ((((params[2] << 16) | params[2]) | (params[2] << 8)) | 0x80000000);
+        records[2].u.queue.depth = 0xFFFFFFF;
+        records[2].u.queue.count = 1;
+        records[2].u.queue.halveRgb = 0;
+        records[2].u.queue.blendKind = 2;
+        records[2].u.queue.screenRect[0] = 0;
+        records[2].u.queue.screenRect[1] = 0;
+        records[2].u.queue.screenRect[2] = 512;
+        records[2].u.queue.screenRect[3] = 448;
+        records[3].type = 20;
+        records[3].u.queue.frame = 0;
+        records[3].u.queue.tex0 = 2;
+        records[3].u.queue.color = 0x80FFFFFF;
+        records[3].u.queue.depth = 0xFFFFFFF;
+        records[3].u.queue.count = 1;
+        records[3].u.queue.halveRgb = 1;
+        records[3].u.queue.blendKind = 1;
+        records[3].u.queue.screenRect[0] = 0;
+        records[3].u.queue.screenRect[1] = 0;
+        records[3].u.queue.screenRect[2] = 512;
+        records[3].u.queue.screenRect[3] = 448;
+        records[3].u.queue.textureRect[0] = 0;
+        records[3].u.queue.textureRect[1] = 0;
+        records[3].u.queue.textureRect[2] = 512;
+        records[3].u.queue.textureRect[3] = 448;
+        break;
+    case 9:
+        records[0].type = 2;
+        records[0].u.queue.tex0 = 0;
+        records[1].type = 20;
+        records[1].u.queue.frame = 2;
+        records[1].u.queue.tex0 = 2;
+        records[1].u.queue.color = 0x80808080;
+        records[1].u.queue.depth = 0xFFFFFFF;
+        records[1].u.queue.count = params[1];
+        records[1].u.queue.halveRgb = 1;
+        records[1].u.queue.blendKind = 2;
+        records[1].u.queue.screenRect[0] = 0;
+        records[1].u.queue.screenRect[1] = 0;
+        records[1].u.queue.screenRect[2] = 512;
+        records[1].u.queue.screenRect[3] = 448;
+        records[1].u.queue.textureRect[0] = 0;
+        records[1].u.queue.textureRect[1] = 0;
+        records[1].u.queue.textureRect[2] = 512;
+        records[1].u.queue.textureRect[3] = 448;
+        records[2].type = 20;
+        records[2].u.queue.frame = 2;
+        records[2].u.queue.tex0 = 2;
+        records[2].u.queue.color = 0x80808080;
+        records[2].u.queue.depth = 0xFFFFFFF;
+        records[2].u.queue.count = params[1];
+        records[2].u.queue.halveRgb = 1;
+        records[2].u.queue.blendKind = 1;
+        records[2].u.queue.screenRect[0] = 0;
+        records[2].u.queue.screenRect[1] = 0;
+        records[2].u.queue.screenRect[2] = 512;
+        records[2].u.queue.screenRect[3] = 448;
+        records[2].u.queue.textureRect[0] = 0;
+        records[2].u.queue.textureRect[1] = 0;
+        records[2].u.queue.textureRect[2] = 512;
+        records[2].u.queue.textureRect[3] = 448;
+        records[3].type = 20;
+        records[3].u.queue.frame = 0;
+        records[3].u.queue.tex0 = 2;
+        records[3].u.queue.color = params[0];
+        records[3].u.queue.depth = depth;
+        records[3].u.queue.count = 1;
+        records[3].u.queue.halveRgb = 1;
+        records[3].u.queue.blendKind = 0;
+        records[3].u.queue.screenRect[0] = 0;
+        records[3].u.queue.screenRect[1] = 0;
+        records[3].u.queue.screenRect[2] = 512;
+        records[3].u.queue.screenRect[3] = 448;
+        records[3].u.queue.textureRect[0] = 0;
+        records[3].u.queue.textureRect[1] = 0;
+        records[3].u.queue.textureRect[2] = 512;
+        records[3].u.queue.textureRect[3] = 448;
+        break;
+    case 10:
+        records[0].type = 20;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 2;
+        records[0].u.queue.color = params[0];
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = params[1];
+        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.screenRect[0] = 0;
+        records[0].u.queue.screenRect[1] = 0;
+        records[0].u.queue.screenRect[2] = 512;
+        records[0].u.queue.screenRect[3] = 448;
+        records[0].u.queue.textureRect[0] = 0;
+        records[0].u.queue.textureRect[1] = 0;
+        records[0].u.queue.textureRect[2] = 512;
+        records[0].u.queue.textureRect[3] = 448;
+        break;
+    case 11:
+        records[0].type = 20;
+        records[0].u.queue.frame = 2;
+        records[0].u.queue.tex0 = 0;
+        records[0].u.queue.color = 0x7FFFFFFF;
+        records[0].u.queue.depth = 0xFFFFFFF;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 1;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.screenRect[0] = 0;
+        records[0].u.queue.screenRect[1] = 0;
+        records[0].u.queue.screenRect[2] = 512;
+        records[0].u.queue.screenRect[3] = 448;
+        records[0].u.queue.textureRect[0] = 0;
+        records[0].u.queue.textureRect[1] = 0;
+        records[0].u.queue.textureRect[2] = 512;
+        records[0].u.queue.textureRect[3] = 448;
+        records[1].type = 20;
+        records[1].u.queue.frame = 0;
+        records[1].u.queue.tex0 = 2;
+        records[1].u.queue.color = params[0];
+        records[1].u.queue.depth = depth;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 1;
+        records[1].u.queue.blendKind = 0;
+        records[1].u.queue.screenRect[0] = params[1];
+        records[1].u.queue.screenRect[1] = params[1];
+        records[1].u.queue.screenRect[2] = params[1] + 512;
+        records[1].u.queue.screenRect[3] = params[1] + 448;
+        records[1].u.queue.textureRect[0] = 0;
+        records[1].u.queue.textureRect[1] = 0;
+        records[1].u.queue.textureRect[2] = 512;
+        records[1].u.queue.textureRect[3] = 448;
+        break;
+    case 12:
+        records[0].type = 20;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 1;
+        records[0].u.queue.color = params[0];
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 1;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.screenRect[0] = 0;
+        records[0].u.queue.screenRect[1] = 0;
+        records[0].u.queue.screenRect[2] = 512;
+        records[0].u.queue.screenRect[3] = 448;
+        records[0].u.queue.textureRect[0] = 0;
+        records[0].u.queue.textureRect[1] = 0;
+        records[0].u.queue.textureRect[2] = 512;
+        records[0].u.queue.textureRect[3] = 448;
+        break;
+    case 13:
+        records[0].type = 8;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 0;
+        records[0].u.queue.color = 0;
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 0;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.gradient.color0 = ((params[1] << 24) | params[0]);
+        records[0].u.gradient.color1 = ((params[2] << 24) | params[0]);
+        records[0].u.gradient.top = 0;
+        records[0].u.gradient.left = 0;
+        records[0].u.gradient.right = 512;
+        records[0].u.gradient.bottom = 448;
+        records[0].u.gradient.vertical = params[3];
+        break;
+    case 14: {
+        int columns;
+        int rows;
+        int bottom;
+        int top;
+        int start;
+        int end;
+        int halfWidth;
+        int halfHeight;
+
+        columns = 9;
+        rows = 6;
+        bottom = -3;
+        top = 451;
+        start = -6;
+        end = 515;
+        halfWidth = (end - start) / columns / 2;
+        halfHeight = (top - bottom) / rows / 2;
+        records[0].type = 9;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 2;
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = params[4];
+        records[0].u.queue.blendKind = 0;
+        records[0].u.graph.bottom = bottom;
+        records[0].u.graph.top = top;
+        records[0].u.graph.columns = columns;
+        records[0].u.graph.rows = rows;
+        records[0].u.params[18] = halfHeight;
+        records[0].u.graph.maxValue = 90;
+        switch (params[1]) {
+        case 1:
+            records[0].u.queue.color = params[0];
+            records[0].u.graph.color = params[3];
+            records[0].u.graph.startTime = start;
+            records[0].u.graph.endTime = end;
+            records[0].u.params[17] = halfWidth;
+            records[0].u.params[14] = params[2];
+            records[0].u.params[15] = params[2];
+            records[0].u.params[16] = params[2];
+            records[0].u.params[19] = params[2] - 180;
+            records[0].u.params[20] = params[2] - 180;
+            records[0].u.params[21] = params[2] - 180;
+            break;
+        case 2:
+            records[0].u.queue.color = params[0];
+            records[0].u.graph.color = params[3];
+            records[0].u.graph.startTime = end;
+            records[0].u.graph.endTime = start;
+            records[0].u.params[17] = -halfWidth;
+            records[0].u.params[14] = params[2];
+            records[0].u.params[15] = params[2];
+            records[0].u.params[16] = params[2];
+            records[0].u.params[19] = params[2] - 180;
+            records[0].u.params[20] = params[2] - 180;
+            records[0].u.params[21] = params[2] - 180;
+            break;
+        }
+        break;
+    }
+    case 15: {
+        int columns;
+        int rows;
+        int top;
+        int left;
+        int right;
+        int bottom;
+        int halfWidth;
+        int halfHeight;
+        int angle;
+
+        columns = 9;
+        rows = 6;
+        top = 0;
+        left = 0;
+        right = 512;
+        bottom = 448;
+        halfWidth = (right - left) / columns / 2;
+        halfHeight = (bottom - top) / rows / 2;
+        angle = params[2];
+        records[0].type = 14;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 2;
+        records[0].u.queue.color = params[0];
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = params[4];
+        records[0].u.queue.blendKind = 0;
+        records[0].u.grid.endColor = params[3];
+        records[0].u.grid.screen.top = top;
+        records[0].u.grid.screen.left = left;
+        records[0].u.grid.screen.right = right;
+        records[0].u.grid.screen.bottom = bottom;
+        records[0].u.grid.columns = columns;
+        records[0].u.grid.rows = rows;
+        records[0].u.params[14] = 228;
+        records[0].u.params[15] = 187;
+        records[0].u.params[16] = 350;
+        records[0].u.params[17] = angle;
+        records[0].u.params[18] = angle;
+        records[0].u.params[19] = angle;
+        records[0].u.params[20] = angle - 180;
+        records[0].u.params[21] = angle - 180;
+        records[0].u.params[22] = angle - 180;
+        records[0].u.params[23] = halfWidth;
+        records[0].u.params[24] = halfHeight;
+        records[0].u.grid.transformStart = 0;
+        records[0].u.grid.transformEnd = 90;
+        records[0].u.params[27] = params[1];
+        break;
+    }
+    case 16: {
+        int phaseSpeed;
+
+        phaseSpeed = (recordUpdatePaused.paused == 0) ? 184 : 180;
+        records[0].type = 10;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 0;
+        records[0].u.queue.color = (params[0] & 0xFFFFFF);
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 0;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.ring.endColor = params[0];
+        records[0].u.ring.centerX = 256;
+        records[0].u.ring.centerY = 224;
+        records[0].u.ring.radius = params[1];
+        records[0].u.ring.innerRadius = 350;
+        records[0].u.ring.phaseSpeed = phaseSpeed;
+        records[0].u.ring.segments = 35;
+        records[0].u.ring.amplitude = params[2];
+        records[1].type = 10;
+        records[1].u.queue.frame = 0;
+        records[1].u.queue.tex0 = 0;
+        records[1].u.queue.color = (params[0] & 0xFFFFFF);
+        records[1].u.queue.depth = depth;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 0;
+        records[1].u.queue.blendKind = 0;
+        records[1].u.ring.endColor = params[0];
+        records[1].u.ring.centerX = 256;
+        records[1].u.ring.centerY = 224;
+        records[1].u.ring.radius = params[1];
+        records[1].u.ring.innerRadius = 350;
+        records[1].u.ring.phaseSpeed = phaseSpeed;
+        records[1].u.ring.segments = 35;
+        records[1].u.ring.amplitude = params[2];
+        break;
+    }
+    case 17:
+        records[0].type = 16;
+        records[0].u.queue.frame = 0;
+        records[0].u.queue.tex0 = 1;
+        records[0].u.queue.color = params[0];
+        records[0].u.queue.depth = depth;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 1;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.params[7] = 0;
+        records[0].u.params[8] = 0;
+        records[0].u.params[9] = 512;
+        records[0].u.params[10] = 448;
+        records[0].u.params[11] = 0;
+        records[0].u.params[12] = 0;
+        records[0].u.params[13] = 512;
+        records[0].u.params[14] = 448;
+        records[0].u.params[15] = params[1];
+        records[0].u.params[16] = params[2];
+        records[0].u.params[17] = params[3];
+        records[0].u.params[18] = params[4];
+        records[0].u.params[19] = params[5];
+        records[0].u.params[20] = 256;
+        records[0].u.params[21] = 124;
+        break;
+    case 18:
+        records[0].type = 20;
+        records[0].u.queue.frame = 2;
+        records[0].u.queue.tex0 = 0;
+        records[0].u.queue.color = 0x7FFFFFFF;
+        records[0].u.queue.depth = 0x7FFFFFFF;
+        records[0].u.queue.count = 1;
+        records[0].u.queue.halveRgb = 1;
+        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.screenRect[0] = 0;
+        records[0].u.queue.screenRect[1] = 0;
+        records[0].u.queue.screenRect[2] = 512;
+        records[0].u.queue.screenRect[3] = 448;
+        records[0].u.queue.textureRect[0] = 0;
+        records[0].u.queue.textureRect[1] = 0;
+        records[0].u.queue.textureRect[2] = 512;
+        records[0].u.queue.textureRect[3] = 448;
+        records[1].type = 20;
+        records[1].u.queue.frame = 2;
+        records[1].u.queue.tex0 = 0;
+        records[1].u.queue.color = 0;
+        records[1].u.queue.depth = depth;
+        records[1].u.queue.count = 1;
+        records[1].u.queue.halveRgb = 0;
+        records[1].u.queue.blendKind = 0;
+        records[1].u.queue.screenRect[0] = 0;
+        records[1].u.queue.screenRect[1] = 0;
+        records[1].u.queue.screenRect[2] = 512;
+        records[1].u.queue.screenRect[3] = 448;
+        records[2].type = 15;
+        records[2].u.queue.frame = 1;
+        records[2].u.queue.tex0 = 1;
+        records[2].u.queue.color = 0;
+        records[3].type = 20;
+        records[3].u.queue.frame = 0;
+        records[3].u.queue.tex0 = 2;
+        records[3].u.queue.color = params[0];
+        records[3].u.queue.depth = 0x7FFFFFFF;
+        records[3].u.queue.count = 1;
+        records[3].u.queue.halveRgb = 1;
+        records[3].u.queue.blendKind = 0;
+        records[3].u.queue.screenRect[0] = params[1];
+        records[3].u.queue.screenRect[1] = params[1];
+        records[3].u.queue.screenRect[2] = params[1] + 512;
+        records[3].u.queue.screenRect[3] = params[1] + 448;
+        records[3].u.queue.textureRect[0] = 0;
+        records[3].u.queue.textureRect[1] = 0;
+        records[3].u.queue.textureRect[2] = 512;
+        records[3].u.queue.textureRect[3] = 448;
+        records[4].type = 15;
+        records[4].u.queue.frame = 0;
+        break;
+    case 20:
+        records[0].type = 1;
+        records[0].u.fade.stage = params[0];
+        records[0].u.fade.alpha = params[1];
+        records[0].u.fade.depth = depth;
+        break;
+    case 22:
+        records[0].type = 2;
+        records[0].u.queue.tex0 = 1;
+        records[1].type = 5;
+        records[1].u.warp.alpha = params[0];
+        records[1].u.warp.z = depth;
+        break;
+    case 21:
+        records[0].type = 6;
+        records[0].u.warp.alpha = params[0];
+        records[0].u.warp.z = depth;
+        break;
+    case 19:
+        records[0].type = 3;
+        records[0].u.tunnel.step = params[0];
+        records[0].u.tunnel.depth = depth;
+        break;
+    case 23:
+        records[0].type = 7;
+        records[0].u.params[0] = params[0];
+        records[0].u.params[1] = depth;
+        break;
+    case 0:
+    case 24:
+        break;
+    }
+    func_00274850();
+}
 
 /* Sets record slotIndex of bank bankIndex to type with its ten parameters, then updates the render callback. */
 void func_00275710(int bankIndex, int slotIndex, int type, int *params)
@@ -210,7 +952,7 @@ void func_00275830(XglPacket *packet)
     sceVif1PkAddDirectDataN(packet, D_0063D7B0, 3);
     sceVif1PkCloseDirectHLCode(packet);
     func_002757F0();
-    recordUpdatePaused = 0;
+    recordUpdatePaused.paused = 0;
     sRender.callback = 0;
 }
 
@@ -246,7 +988,7 @@ void recordClear(void *record)
 /* Sets recordUpdatePaused, the flag that suspends the per-frame record updates. */
 void recordPauseUpdates(void)
 {
-  recordUpdatePaused = 1;
+  recordUpdatePaused.paused = 1;
 }
 
 /* The EE scratchpad, where the packet is built before it is sent. */
@@ -416,7 +1158,7 @@ void recordStepAngle(int stage)
        gives bne $4,$2 where the original has bnel at 0x275EB4 (17/18 in place); with it, 18/18. */
     int xglWrapInt(int value, int lower, int upper);
 
-    if (recordUpdatePaused == 0 && stage == 2) {
+    if (recordUpdatePaused.paused == 0 && stage == 2) {
         recordAngle += 0x5C;
         recordAngle = xglWrapInt(recordAngle, 0, 0x168);
     }
@@ -569,7 +1311,7 @@ void func_00276350(float *point, float *clampedPoint, float angle, float radius)
 /* While updates are not suspended, advances D_0069DDDC by step and steps it back below 406 in steps of 25. */
 void func_00276400(int step)
 {
-    if (recordUpdatePaused == 0) {
+    if (recordUpdatePaused.paused == 0) {
         D_0069DDDC += step;
         while (D_0069DDDC >= 0x196) {
             D_0069DDDC -= 0x19;
@@ -577,12 +1319,110 @@ void func_00276400(int step)
     }
 }
 
+/* Row length of the cell grid: 50 x 50 flags (0x9C4 bytes, cleared by recordGridReset), of which recordGridWidth
+ * x recordGridHeight are in use; func_00276458 indexes a cell as column + row * 50. */
+#define RECORD_GRID_SIDE 50
+
 extern int recordGridWidth;
 extern int recordGridHeight;
-extern unsigned char recordGridCells[];
+/* signed char: func_00276458 reads the flags with lb (fd.sh with unsigned char: lbu $2,0($4) at its first flag
+ * read, 221/225). */
+extern signed char recordGridCells[];
 
-/* Draw handler of record type 4 (D_0063D758[3]). */
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00276458);
+void gsQueueBeginSprites(void *context);
+void gsQueueAddTexturedVertex(int packet, Vector4 *position, Vector4 *uv, void *context);
+void gsQueueAddTexturedKickVertex(int packet, Vector4 *position, Vector4 *uv, void *context);
+void gsQueueFlush(int packet);
+
+/*
+ * Draw handler of record type 4 (D_0063D758[3]): sets random free cells of the grid until cellCount (clamped to
+ * 0..width * height) are set, or clears random set ones down to it, then draws each set cell as one sprite of
+ * 512 / width x 448 / height pixels at the record's depth, count times. Reading count before depth gives the
+ * original's depth reload register (fd.sh: depth first 216/225, count first 225/225); each random loop declares
+ * its own cell, randomColumn and randomRow (at function scope fd.sh gives 33/225).
+ */
+void func_00276458(GsQueueContext *record, int packet)
+{
+    Vector4 position;
+    Vector4 kickPosition;
+    int pass;
+    int depth;
+    int cellHeight;
+    int cellWidth;
+    int cellTotal;
+    int cellCount;
+    int count;
+    int filled;
+    int row;
+    int column;
+    int toSet;
+    int toClear;
+
+    cellTotal = recordGridHeight * recordGridWidth;
+    cellCount = record->u.gridFill.cellCount;
+    count = record->u.queue.count;
+    depth = record->u.queue.depth;
+    if (cellCount < 0) {
+        cellCount = 0;
+    }
+    if (cellCount > cellTotal) {
+        cellCount = cellTotal;
+    }
+    filled = 0;
+    for (row = 0; row < recordGridHeight; row++) {
+        for (column = 0; column < recordGridWidth; column++) {
+            if (recordGridCells[column + row * RECORD_GRID_SIDE] == 1) {
+                filled++;
+            }
+        }
+    }
+    toSet = cellCount - filled;
+    toClear = filled - cellCount;
+    for (column = 0; column < toSet; column++) {
+        signed char *cell;
+        int randomColumn;
+        int randomRow;
+
+        do {
+            randomColumn = xglSRand() % recordGridWidth;
+            randomRow = xglSRand() % recordGridHeight;
+            cell = &recordGridCells[randomColumn + randomRow * RECORD_GRID_SIDE];
+        } while (*cell == 1);
+        *cell = 1;
+    }
+    for (column = 0; column < toClear; column++) {
+        signed char *cell;
+        int randomColumn;
+        int randomRow;
+
+        do {
+            randomColumn = xglSRand() % recordGridWidth;
+            randomRow = xglSRand() % recordGridHeight;
+            cell = &recordGridCells[randomColumn + randomRow * RECORD_GRID_SIDE];
+        } while (*cell == 0);
+        *cell = 0;
+    }
+    cellWidth = 512 / recordGridWidth;
+    cellHeight = 448 / recordGridHeight;
+    gsQueueBeginSprites(record);
+    for (pass = 0; pass < count; pass++) {
+        for (row = 0; row < recordGridHeight; row++) {
+            for (column = 0; column < recordGridWidth; column++) {
+                if (recordGridCells[column + row * RECORD_GRID_SIDE] != 0) {
+                    position.x = cellWidth * column;
+                    position.y = cellHeight * row;
+                    position.z = depth;
+                    kickPosition.x = cellWidth * (column + 1);
+                    kickPosition.y = cellHeight * (row + 1);
+                    kickPosition.z = depth;
+                    gsQueueAddTexturedVertex(packet, &position, &position, record);
+                    gsQueueAddTexturedKickVertex(packet, &kickPosition, &kickPosition, record);
+                }
+            }
+        }
+    }
+    gsQueueFlush(packet);
+}
 
 /* Clears the 0x9C4-byte cell grid and sets its width and height (cells across and down). */
 void recordGridReset(int width, int height)
@@ -601,12 +1441,132 @@ int recordGridCellCount(void)
 void func_00277100(void);
 void func_00277168(Vector4 *result, int x, int y);
 
+/* XYZ of a point in screen pixels: + (2048 - 256, 2048 - 224) puts it around the GS origin, in 12.4 fixed point. */
+#define RECORD_XYZ(x, y, z) GS_SET_XYZ((int) (((x) + 1792.0f) * 16.0f), (int) (((y) + 1824.0f) * 16.0f), z)
+
 /*
- * Draw handler of record type 5 (D_0063D758[4]): draws the screen texture as a triangle fan around the screen centre (256, 224): eight corner and edge points
- * pushed outwards by the record's alpha word (spread), its half and its eighth, written twice around and closed
- * at the first point. Z and fog take the record's z word.
+ * Draw handler of record type 5 (D_0063D758[4]): draws the screen texture as a triangle fan around the screen
+ * centre (256, 224). The four edge midpoints move out by an eighth of the record's alpha word (spread), each corner
+ * by spread along one axis and half of it along the other, a quarter turn further at each corner. The fan goes
+ * around twice and closes at its first point. Z and fog take the record's z word.
  */
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00276838);
+void func_00276838(GsQueueContext *record)
+{
+    GsAdPair *pairs;
+    XglPacket *packet;
+    int spread;
+    int z;
+    int eighth;
+    int pairCount;
+    int lap;
+
+    spread = record->u.warp.alpha;
+    z = record->u.warp.z;
+    packet = xglPacketGetCurrent();
+    eighth = spread >> 3;
+    pairs = (GsAdPair *) SCRATCHPAD_BASE;
+    pairCount = 0;
+    pairs[pairCount].ad.reg = GIF_AD;
+    pairs[pairCount].ad.data = ((u64)0x10000000 << 32) | 0x8000;
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_TEXFLUSH;
+    pairs[pairCount].ad.data = 0;
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_TEST_1;
+    pairs[pairCount].ad.data = GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2);
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_TEX1_1;
+    pairs[pairCount].ad.data = 0;
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_TEXA;
+    pairs[pairCount].ad.data = 0;
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_ALPHA_1;
+    pairs[pairCount].ad.data = func_002746F8(0);
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_TEX0_1;
+    pairs[pairCount].ad.data = func_002745A8(2, 0);
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_FRAME_1;
+    pairs[pairCount].ad.data = func_00274650(0, 0);
+    pairCount++;
+    pairs[pairCount].ad.data = 0x15D;
+    pairs[pairCount].ad.reg = GS_PRIM;
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_RGBAQ;
+    pairs[pairCount].ad.data = 0x40808080;
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_UV;
+    pairs[pairCount].ad.data = GS_SET_UV(256 * 16, 224 * 16);
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_XYZF2;
+    pairs[pairCount].ad.data = RECORD_XYZ(256, 224, z);
+    pairCount++;
+    for (lap = 0; lap < 2; lap++) {
+        /* Declared in the loop: at function scope gcc leaves the 512 + half chain in the loop (fd.sh 16/331). */
+        int half = spread >> 1;
+
+        pairs[pairCount].ad.reg = GS_UV;
+        pairs[pairCount].ad.data = GS_SET_UV(512 * 16, 224 * 16);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_XYZF2;
+        pairs[pairCount].ad.data = RECORD_XYZ(512 + eighth, 224, z);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_UV;
+        pairs[pairCount].ad.data = GS_SET_UV(512 * 16, 448 * 16);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_XYZF2;
+        pairs[pairCount].ad.data = RECORD_XYZ(512 + spread, 448 + half, z);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_UV;
+        pairs[pairCount].ad.data = GS_SET_UV(256 * 16, 448 * 16);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_XYZF2;
+        pairs[pairCount].ad.data = RECORD_XYZ(256, 448 + eighth, z);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_UV;
+        pairs[pairCount].ad.data = GS_SET_UV(0, 448 * 16);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_XYZF2;
+        pairs[pairCount].ad.data = RECORD_XYZ(-half, 448 + spread, z);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_UV;
+        pairs[pairCount].ad.data = GS_SET_UV(0, 224 * 16);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_XYZF2;
+        pairs[pairCount].ad.data = RECORD_XYZ(-eighth, 224, z);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_UV;
+        pairs[pairCount].ad.data = GS_SET_UV(0, 0);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_XYZF2;
+        pairs[pairCount].ad.data = RECORD_XYZ(-spread, -half, z);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_UV;
+        pairs[pairCount].ad.data = GS_SET_UV(256 * 16, 0);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_XYZF2;
+        pairs[pairCount].ad.data = RECORD_XYZ(256, -eighth, z);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_UV;
+        pairs[pairCount].ad.data = GS_SET_UV(512 * 16, 0);
+        pairCount++;
+        pairs[pairCount].ad.reg = GS_XYZF2;
+        pairs[pairCount].ad.data = RECORD_XYZ(512 + half, -spread, z);
+        pairCount++;
+    }
+    pairs[pairCount].ad.reg = GS_UV;
+    pairs[pairCount].ad.data = GS_SET_UV(512 * 16, 224 * 16);
+    pairCount++;
+    pairs[pairCount].ad.reg = GS_XYZF2;
+    pairs[pairCount].ad.data = RECORD_XYZ(512 + eighth, 224, z);
+    pairCount++;
+    pairs[0].ad.data += pairCount - 1;
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, pairs, pairCount);
+    sceVif1PkCloseDirectHLCode(packet);
+}
 
 /*
  * Draw handler of record type 6 (D_0063D758[5]): draws the 512 x 448 screen texture as one triangle fan of its four
@@ -702,7 +1662,7 @@ void func_00277100(void)
     float velocity;
     float next;
 
-    if (recordUpdatePaused != 0) {
+    if (recordUpdatePaused.paused != 0) {
         return;
     }
 
