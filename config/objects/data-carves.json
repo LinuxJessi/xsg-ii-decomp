@@ -84953,6 +84953,86 @@
     }
    ]
   },
+  "main/tu211": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068d6e0",
+      "0x0068d6f0"
+     ],
+     "generated": [
+      "0x0068d6e0",
+      "0x0068d6e8"
+     ],
+     "generated_by": [
+      "func_00279EA8"
+     ],
+     "c_owned_symbols": [
+      "D_0068D6E0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu211.o",
+      "note": "entry written by hand like main/tu213; D_0068D6E0 is the double 0.1 (0x3FB999999999999A) followed by 8 zero bytes in the original symbol (range is the whole 16-byte symbol, C emits the first 8), read from tu211.rodata.s"
+     }
+    }
+   ]
+  },
+  "main/tu213": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b574",
+      "0x0069b57c"
+     ],
+     "generated": [
+      "0x0069b574",
+      "0x0069b57c"
+     ],
+     "generated_by": [
+      "func_0027A960"
+     ],
+     "c_owned_symbols": [
+      "D_0069B574",
+      "D_0069B578"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu213.o",
+      "note": "entry written by hand: derive refused (tu213 missing from tu-manifest); runs read from tu213.lit4.s and the C object's .lit4"
+     }
+    }
+   ],
+   ".rodata": [
+    {
+     "range": [
+      "0x0068d2b0",
+      "0x0068d348"
+     ],
+     "generated": [
+      "0x0068d2b0",
+      "0x0068d344"
+     ],
+     "generated_by": [
+      "func_0027BFD0"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068D2B0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu213.o",
+      "note": "entry written by hand like main/tu247 .rodata; jtbl_0068D2B0 is the 37-entry switch table of func_0027BFD0 (0x94 bytes emitted by C, original symbol 0x98 bytes with one trailing zero word), read from tu213.rodata.s"
+     }
+    }
+   ]
+  },
   "main/tu229": {
    ".rodata": [
     {
@@ -84977,6 +85057,127 @@
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/main/build/c/tu229.o"
+     }
+    }
+   ],
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b51c",
+      "0x0069b54c"
+     ],
+     "generated": [
+      "0x0069b51c",
+      "0x0069b54c"
+     ],
+     "generated_by": [
+      "func_0027E8B8",
+      "func_0027E960",
+      "func_0027EA80",
+      "func_0027EB40",
+      "func_0027EC18",
+      "func_0027ED28"
+     ],
+     "c_owned_symbols": [
+      "D_0069B51C",
+      "D_0069B520",
+      "D_0069B524",
+      "D_0069B528",
+      "D_0069B52C",
+      "D_0069B530",
+      "D_0069B534",
+      "D_0069B538",
+      "D_0069B53C",
+      "D_0069B540",
+      "D_0069B544",
+      "D_0069B548"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu229.o",
+      "note": "lit4 runs written by hand like main/tu213 and main/tu248; items read from tu229.lit4.s and the C object's .lit4"
+     }
+    }
+   ]
+  },
+  "main/tu234": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068d3a8",
+      "0x0068d3b0"
+     ],
+     "generated": [
+      "0x0068d3a8",
+      "0x0068d3b0"
+     ],
+     "generated_by": [
+      "func_00281CA0"
+     ],
+     "c_owned_symbols": [
+      "D_0068D3A8"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu234.o",
+      "note": "entry written by hand like main/tu213; D_0068D3A8 is the double 0.1 (0x3FB999999999999A) read from tu234.rodata.s and the C object's .rodata"
+     }
+    },
+    {
+     "range": [
+      "0x0068d488",
+      "0x0068d4a0"
+     ],
+     "generated": [
+      "0x0068d488",
+      "0x0068d4a0"
+     ],
+     "generated_by": [
+      "func_002833F0",
+      "func_00283648"
+     ],
+     "c_owned_symbols": [
+      "D_0068D488",
+      "D_0068D490",
+      "D_0068D498"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu234.o",
+      "note": "entry written by hand like main/tu213; D_0068D488/490 = double 0.1, D_0068D498 = double 3.333, read from tu234.rodata.s and the C object's .rodata (after the D_0068D3A8 item)"
+     }
+    }
+   ]
+  },
+  "main/tu241": {
+   ".rodata": [
+    {
+     "range": [
+      "0x0068d510",
+      "0x0068d518"
+     ],
+     "generated": [
+      "0x0068d510",
+      "0x0068d518"
+     ],
+     "generated_by": [
+      "timecodeSplit"
+     ],
+     "c_owned_symbols": [
+      "D_0068D510"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu241.o",
+      "note": "entry written by hand like main/tu213; D_0068D510 is the double 3.333 (0x400AA9FBE76C8B44) read from tu241.rodata.s and the C object's .rodata"
      }
     }
    ]
@@ -85085,6 +85286,29 @@
    ".rodata": [
     {
      "range": [
+      "0x0068d780",
+      "0x0068d7a0"
+     ],
+     "generated": [
+      "0x0068d780",
+      "0x0068d7a0"
+     ],
+     "generated_by": [
+      "func_00289028"
+     ],
+     "c_owned_symbols": [
+      "jtbl_0068D780"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xenoActor.o",
+      "note": "written by hand like main/tu213; items read from xenoActor.lit4.s/rodata.s and the C object's .lit4/.rodata in emission order"
+     }
+    },
+    {
+     "range": [
       "0x0068d850",
       "0x0068d880"
      ],
@@ -85109,6 +85333,85 @@
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/main/build/c/xenoActor.o"
+     }
+    }
+   ],
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b57c",
+      "0x0069b5d4"
+     ],
+     "generated": [
+      "0x0069b57c",
+      "0x0069b5d4"
+     ],
+     "generated_by": [
+      "XenoActorInit",
+      "XenoActorAttachChildToJoint",
+      "func_00289028",
+      "XenoActorUpdateCameraFade",
+      "XenoActorUpdateTree",
+      "func_0028B060"
+     ],
+     "c_owned_symbols": [
+      "D_0069B57C",
+      "D_0069B580",
+      "D_0069B584",
+      "D_0069B588",
+      "D_0069B58C",
+      "D_0069B590",
+      "D_0069B594",
+      "D_0069B598",
+      "D_0069B59C",
+      "D_0069B5A0",
+      "D_0069B5A4",
+      "D_0069B5A8",
+      "D_0069B5AC",
+      "D_0069B5B0",
+      "D_0069B5B4",
+      "D_0069B5B8",
+      "D_0069B5BC",
+      "D_0069B5C0",
+      "D_0069B5C4",
+      "D_0069B5C8",
+      "D_0069B5CC",
+      "D_0069B5D0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/xenoActor.o",
+      "note": "written by hand like main/tu213; all 22 floats D_0069B57C..B5D0 of the tu247 .lit4 are C-owned and emitted contiguously, read from xenoActor.lit4.s and the C object's .lit4"
+     }
+    }
+   ]
+  },
+  "main/tu248": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b5d4",
+      "0x0069b5dc"
+     ],
+     "generated": [
+      "0x0069b5d4",
+      "0x0069b5dc"
+     ],
+     "generated_by": [
+      "cfeDampDirOffset"
+     ],
+     "c_owned_symbols": [
+      "D_0069B5D4",
+      "D_0069B5D8"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu248.o",
+      "note": "entry written by hand like main/tu213 (derive tool unavailable for unregistered TUs); runs read from tu248.lit4.s and the C object's .lit4"
      }
     }
    ]

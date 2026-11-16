@@ -90074,7 +90074,7 @@
    "path": "src/main/tu218.c",
    "scaffold_path": "scaffold/src/main/tu218.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -90153,7 +90153,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -90167,6 +90167,17 @@
      "0x0027cd98"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "tu218 registered as C when its first functions were recovered (same shape as main/tu217)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu218.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -92113,7 +92124,7 @@
    "path": "src/main/tu230.c",
    "scaffold_path": "scaffold/src/main/tu230.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -92192,7 +92203,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -92206,6 +92217,17 @@
      "0x00280728"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "tu230 registered as C when its first functions were recovered (same shape as main/tu217 and main/tu218)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu230.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -92216,7 +92238,7 @@
    "path": "src/main/tu231.c",
    "scaffold_path": "scaffold/src/main/tu231.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -92295,7 +92317,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -92309,6 +92331,17 @@
      "0x00281a90"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "tu231 registered as C when its first functions were recovered (same shape as main/tu217, tu218 and tu230)",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu231.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -93351,9 +93384,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "dispatchBodyInitKind2",
+     "name": "msgListSlotInit",
      "size": 56,
-     "splat_name": "dispatchBodyInitKind2",
+     "splat_name": "msgListSlotInit",
      "va": "0x00284300",
      "name_basis": "address",
      "provenance": "estimated"
