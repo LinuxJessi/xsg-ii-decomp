@@ -4,6 +4,7 @@
 #include "shared.h"
 #include "main/tu144.h"
 #include "main/xgl_1_016.h"
+#include "main/xgl_2.h"
 
 /* One 0x80-byte command of cfeCommands: an effect (its id built from a page index and a page offset,
  * cfeCommandSetOwnerFlags), where and how it is spawned, and the tracks that drive those values. */
@@ -19,14 +20,19 @@ typedef struct CfeEvalCommand {
     int frames;                 /* +0x40 */
     int action;                 /* +0x44: what cfeCommandEvaluate does, 0 to 4 */
     int owner;                  /* +0x48: entry of cfeEntries that owns the effect, or negative */
-    CfeTrackNode *positionTracks[3]; /* +0x4C */
-    CfeTrackNode *rotationTracks[3]; /* +0x58 */
-    CfeTrackNode *scaleTracks[3]; /* +0x64 */
-    CfeTrackNode *actionTrack;  /* +0x70 */
-    CfeTrackNode *framesTrack;  /* +0x74 */
-    CfeTrackNode *ownerTrack;   /* +0x78 */
+    CfeTrackNode *track[12];    /* +0x4C: CFE_COMMAND_TRACK_* (cfe.stKyEf sets them by this index) */
     unsigned char unmodeled_7c[4];
 } CfeEvalCommand;
+
+/* The tracks of a command (CfeEvalCommand.track). */
+enum CfeCommandTrack {
+    CFE_COMMAND_TRACK_POSITION,         /* x, y, z */
+    CFE_COMMAND_TRACK_ROTATION = 3,     /* x, y, z */
+    CFE_COMMAND_TRACK_SCALE = 6,        /* x, y, z */
+    CFE_COMMAND_TRACK_ACTION = 9,
+    CFE_COMMAND_TRACK_FRAMES,
+    CFE_COMMAND_TRACK_OWNER
+};
 
 /* Command word layout: page index above bit 12, a bank bit selected by the flag. */
 #define CFE_PAGE_SHIFT 0xC
@@ -34,15 +40,21 @@ typedef struct CfeEvalCommand {
 #define CFE_BANK_PLAIN 0x10000000
 #define CFE_OWNER_FLAGS 0x80
 
-/* One 0x18-byte slot of the table at cfeEvalSlots: three sources and their results. */
+/* One 0x18-byte slot of the table at cfeEvalSlots (the screen effects): three values and the tracks they are
+ * sampled from (CFE_SLOT_SOURCE_*; cfe.stKyScrEff sets them by this index). */
 typedef struct CfeEvalSlot {
     int result_int;
     int sample_int;
     float sample_float;
-    CfeTrackNode *source_for_result_int;
-    CfeTrackNode *source_for_sample_float;
-    CfeTrackNode *source_for_sample_int;
+    CfeTrackNode *source[3];    /* +0x0C */
 } CfeEvalSlot;
+
+/* CfeEvalSlot.source: the track of result_int, sample_float and sample_int. */
+enum CfeSlotSource {
+    CFE_SLOT_SOURCE_RESULT_INT,
+    CFE_SLOT_SOURCE_SAMPLE_FLOAT,
+    CFE_SLOT_SOURCE_SAMPLE_INT
+};
 
 /* Global block at cfeEvalGlobal (cfeGlobalEvaluate): the fog switch, two vectors and eight source handles. */
 typedef struct CfeEvalGlobal {
@@ -80,9 +92,9 @@ typedef struct CfePackHeader {
     int subPackOffset;          /* +0xD0: bytes from the pack to its part pack, 0 if none */
 } CfePackHeader;
 
-/* A group of cfeGroups (0xC0 bytes, quadword aligned): an object, the part table of its pack with the part
- * matrices and one evaluation record per part, and the group's own values with their tracks. */
-typedef struct CfeGroup {
+/* A map of cfeGroups, the original's maps (cfe.ldMp; 0xC0 bytes, quadword aligned): an object, the part table of
+ * its pack with the part matrices and one evaluation record per part, and the group's own values with their tracks. */
+typedef struct CfeMap {
     struct XenoActor *object;   /* +0x00 */
     CfePackHeader *parts;       /* +0x04: the part pack of the object's pack (one record per geometry) */
     Matrix4 *matrices;          /* +0x08: one per part */
@@ -96,7 +108,26 @@ typedef struct CfeGroup {
      * ahead of an int store in cfeGroupTableEvaluate. */
     void *collision;
     unsigned char unmodeled_bc[0xC0 - 0xBC];
-} CfeGroup;
+} CfeMap;
+
+/* A row of cfeDirections, the original's lights (0x40 bytes): the angles of a light direction, the light-set
+ * vectors it drives (cfeLightRowsInit points them into cfeLightSet; row 0 has only the ambient colour) and
+ * the tracks they are sampled from. */
+typedef struct CfeLight {
+    float angles[3];            /* +0x00: X and Y rotation of the direction */
+    unsigned char unmodeled_0c[4];
+    float *direction;           /* +0x10: rotated from angles */
+    float *color;               /* +0x14 */
+    float *extra;               /* +0x18 */
+    CfeTrackNode *track[9];     /* +0x1C: CFE_LIGHT_TRACK_* (cfe.stKyLgt sets them by this index) */
+} CfeLight;
+
+/* The tracks of a light (CfeLight.track). */
+enum CfeLightTrack {
+    CFE_LIGHT_TRACK_EXTRA,              /* x, y, z */
+    CFE_LIGHT_TRACK_ANGLE = 3,          /* x, y, z */
+    CFE_LIGHT_TRACK_COLOR = 6           /* r, g, b */
+};
 
 /* Table entry (stride 0x230) of cfeEntryEvaluate: three vectors, a result word and ten source handles. */
 typedef struct CfeEvalEntry {
@@ -190,6 +221,21 @@ typedef struct CfeActor {
 
 /* CfeActor.flags: the entry's actor follows its position. */
 #define CFE_ACTOR_SHOWN 0x1
+
+/* The cut-scene tables (the original's actors, maps, effects, lights, fog, monitors and screen effects) and
+ * the light set the lights point into. */
+extern CfeActor cfeEntries[];
+extern int cfeEntryCount;
+extern CfeMap cfeGroups[];
+extern int cfeGroupCount;
+extern CfeEvalCommand cfeCommands[];
+extern int cfeCommandCount;
+extern CfeLight cfeDirections[4];
+extern CfeEvalGlobal cfeEvalGlobal;
+extern CfeEvalEntry cfeEvalEntries[];
+extern int cfeEvalEntryCount;
+extern CfeEvalSlot cfeEvalSlots[3];
+extern XglLightSet cfeLightSet;
 
 /* Functions of src/main/cfeEvaluate.c that cfePlugIn.c calls. */
 int cfeEvaluateNodes(int sample_param);

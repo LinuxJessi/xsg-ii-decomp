@@ -137,7 +137,8 @@ void tiWaterSendStateTemplate(void)
     XglPacket *packet = xglPacketGetCurrent();
 
     tiWaterStateTemplate[TI_WATER_TEMPLATE_FRAME_1] = GS_SET_FRAME(sRender.frame_base, 8, 0, 0);
-    tiWaterStateTemplate[TI_WATER_TEMPLATE_TEX0_1] = GS_SET_TEX0(sRender.display_base << 5, 8, 0, 9, 9, 1, 0, 0, 0, 0, 0, 0);
+    tiWaterStateTemplate[TI_WATER_TEMPLATE_TEX0_1]
+        = GS_SET_TEX0(sRender.display_base << 5, 8, 0, 9, 9, 1, 0, 0, 0, 0, 0, 0);
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
     sceVif1PkAddDataN(packet, tiWaterStateTemplate, TI_WATER_STATE_TEMPLATE_COUNT);

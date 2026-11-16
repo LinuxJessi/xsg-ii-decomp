@@ -80,8 +80,6 @@ extern const char cfeReleaseChildAssert[];
 extern const char cfeEvaluateSourceFile[];
 extern const char cfeAppendChildAssert[];
 
-extern CfeActor cfeEntries[];
-
 
 /* XenoActor's vector at +0x90 as the node's scale tracks write it. The original reaches it through a
  * union here: after a store to a component the node's actor pointer is loaded again (alias set 0).
@@ -277,8 +275,6 @@ void cfeEvaluateNode(CfeActor *entry, int time)
 }
 
 
-extern int cfeEntryCount;
-
 /* Evaluates every actor entry of cfeEntries (cfeEntryCount of them) with cfeEvaluateNode. */
 int cfeEvaluateNodes(int sample_param)
 {
@@ -351,8 +347,6 @@ void cfeRecordEvaluate(CfeEvalRecord *record, f32 dest_matrix[4][4], int sample_
 void func_001BB3FC(Vector4 *value);
 void func_001BBBD8(void);
 
-extern int cfeGroupCount;
-extern CfeGroup cfeGroups[];
 
 /* Evaluates every group at `time`: its position from tracks 0..2, the light value from track 4 and the
  * hidden flag from track 3 (hidden, or shown with its light applied and its collision set made current),
@@ -621,41 +615,41 @@ static inline void cfeCommandRespawn(CfeEvalCommand *command)
  * them and spawns the effect again. */
 void cfeCommandEvaluate(CfeEvalCommand *command, int time)
 {
-    if (command->positionTracks[0] != 0) {
-        command->position.x = cfeTrackSample(command->positionTracks[0], time);
+    if (command->track[CFE_COMMAND_TRACK_POSITION + 0] != 0) {
+        command->position.x = cfeTrackSample(command->track[CFE_COMMAND_TRACK_POSITION + 0], time);
     }
-    if (command->positionTracks[1] != 0) {
-        command->position.y = cfeTrackSample(command->positionTracks[1], time);
+    if (command->track[CFE_COMMAND_TRACK_POSITION + 1] != 0) {
+        command->position.y = cfeTrackSample(command->track[CFE_COMMAND_TRACK_POSITION + 1], time);
     }
-    if (command->positionTracks[2] != 0) {
-        command->position.z = cfeTrackSample(command->positionTracks[2], time);
+    if (command->track[CFE_COMMAND_TRACK_POSITION + 2] != 0) {
+        command->position.z = cfeTrackSample(command->track[CFE_COMMAND_TRACK_POSITION + 2], time);
     }
-    if (command->rotationTracks[0] != 0) {
-        command->rotation.x = cfeTrackSample(command->rotationTracks[0], time);
+    if (command->track[CFE_COMMAND_TRACK_ROTATION + 0] != 0) {
+        command->rotation.x = cfeTrackSample(command->track[CFE_COMMAND_TRACK_ROTATION + 0], time);
     }
-    if (command->rotationTracks[1] != 0) {
-        command->rotation.y = cfeTrackSample(command->rotationTracks[1], time);
+    if (command->track[CFE_COMMAND_TRACK_ROTATION + 1] != 0) {
+        command->rotation.y = cfeTrackSample(command->track[CFE_COMMAND_TRACK_ROTATION + 1], time);
     }
-    if (command->rotationTracks[2] != 0) {
-        command->rotation.z = cfeTrackSample(command->rotationTracks[2], time);
+    if (command->track[CFE_COMMAND_TRACK_ROTATION + 2] != 0) {
+        command->rotation.z = cfeTrackSample(command->track[CFE_COMMAND_TRACK_ROTATION + 2], time);
     }
-    if (command->scaleTracks[0] != 0) {
-        command->scale[0] = cfeTrackSample(command->scaleTracks[0], time);
+    if (command->track[CFE_COMMAND_TRACK_SCALE + 0] != 0) {
+        command->scale[0] = cfeTrackSample(command->track[CFE_COMMAND_TRACK_SCALE + 0], time);
     }
-    if (command->scaleTracks[1] != 0) {
-        command->scale[1] = cfeTrackSample(command->scaleTracks[1], time);
+    if (command->track[CFE_COMMAND_TRACK_SCALE + 1] != 0) {
+        command->scale[1] = cfeTrackSample(command->track[CFE_COMMAND_TRACK_SCALE + 1], time);
     }
-    if (command->scaleTracks[2] != 0) {
-        command->scale[2] = cfeTrackSample(command->scaleTracks[2], time);
+    if (command->track[CFE_COMMAND_TRACK_SCALE + 2] != 0) {
+        command->scale[2] = cfeTrackSample(command->track[CFE_COMMAND_TRACK_SCALE + 2], time);
     }
-    if (command->framesTrack != 0) {
-        command->frames = (int) cfeTrackSampleStep(command->framesTrack, time);
+    if (command->track[CFE_COMMAND_TRACK_FRAMES] != 0) {
+        command->frames = (int) cfeTrackSampleStep(command->track[CFE_COMMAND_TRACK_FRAMES], time);
     }
-    if (command->ownerTrack != 0) {
-        command->owner = (int) cfeTrackSampleStep(command->ownerTrack, time);
+    if (command->track[CFE_COMMAND_TRACK_OWNER] != 0) {
+        command->owner = (int) cfeTrackSampleStep(command->track[CFE_COMMAND_TRACK_OWNER], time);
     }
-    if (command->actionTrack != 0) {
-        command->action = (int) cfeTrackSampleStep(command->actionTrack, time);
+    if (command->track[CFE_COMMAND_TRACK_ACTION] != 0) {
+        command->action = (int) cfeTrackSampleStep(command->track[CFE_COMMAND_TRACK_ACTION], time);
         switch (command->action) {
         case CFE_ACTION_NONE:
             break;
@@ -675,8 +669,6 @@ void cfeCommandEvaluate(CfeEvalCommand *command, int time)
     }
 }
 
-extern int cfeCommandCount;
-extern CfeEvalCommand cfeCommands[];
 
 /* Evaluates every command of cfeCommands at `time`. */
 void cfeCommandTableEvaluate(int time)
@@ -690,55 +682,41 @@ void cfeCommandTableEvaluate(int time)
     }
 }
 
-/* A row of cfeDirections (0x40 bytes): the angles of a light direction, the vectors it drives and
- * the tracks they are sampled from. */
-typedef struct CfeDirectionRow {
-    float angles[3];            /* +0x00: X and Y rotation of the direction */
-    unsigned char unmodeled_0c[4];
-    Vector4 *direction;         /* +0x10: rotated from angles */
-    Vector4 *color;             /* +0x14 */
-    Vector4 *extra;             /* +0x18 */
-    CfeTrackNode *extraTracks[3]; /* +0x1C */
-    CfeTrackNode *angleTracks[3]; /* +0x28 */
-    CfeTrackNode *colorTracks[3]; /* +0x34 */
-} CfeDirectionRow;
-
-extern CfeDirectionRow cfeDirections[4];
 
 /* Samples the tracks of the four light rows at `time` and rotates each row's direction. */
 void cfeEvaluateDirections(int time)
 {
-    CfeDirectionRow *row;
+    CfeLight *row;
     int i;
 
     for (i = 0; i < 4; i++) {
         row = &cfeDirections[i];
-        if (row->extraTracks[0] != 0) {
-            row->extra->x = cfeTrackSample(row->extraTracks[0], time);
+        if (row->track[CFE_LIGHT_TRACK_EXTRA + 0] != 0) {
+            row->extra[0] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_EXTRA + 0], time);
         }
-        if (row->extraTracks[1] != 0) {
-            row->extra->y = cfeTrackSample(row->extraTracks[1], time);
+        if (row->track[CFE_LIGHT_TRACK_EXTRA + 1] != 0) {
+            row->extra[1] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_EXTRA + 1], time);
         }
-        if (row->extraTracks[2] != 0) {
-            row->extra->z = cfeTrackSample(row->extraTracks[2], time);
+        if (row->track[CFE_LIGHT_TRACK_EXTRA + 2] != 0) {
+            row->extra[2] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_EXTRA + 2], time);
         }
-        if (row->colorTracks[0] != 0) {
-            row->color->x = cfeTrackSample(row->colorTracks[0], time);
+        if (row->track[CFE_LIGHT_TRACK_COLOR + 0] != 0) {
+            row->color[0] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_COLOR + 0], time);
         }
-        if (row->colorTracks[1] != 0) {
-            row->color->y = cfeTrackSample(row->colorTracks[1], time);
+        if (row->track[CFE_LIGHT_TRACK_COLOR + 1] != 0) {
+            row->color[1] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_COLOR + 1], time);
         }
-        if (row->colorTracks[2] != 0) {
-            row->color->z = cfeTrackSample(row->colorTracks[2], time);
+        if (row->track[CFE_LIGHT_TRACK_COLOR + 2] != 0) {
+            row->color[2] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_COLOR + 2], time);
         }
-        if (row->angleTracks[0] != 0) {
-            row->angles[0] = cfeTrackSample(row->angleTracks[0], time);
+        if (row->track[CFE_LIGHT_TRACK_ANGLE + 0] != 0) {
+            row->angles[0] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_ANGLE + 0], time);
         }
-        if (row->angleTracks[1] != 0) {
-            row->angles[1] = cfeTrackSample(row->angleTracks[1], time);
+        if (row->track[CFE_LIGHT_TRACK_ANGLE + 1] != 0) {
+            row->angles[1] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_ANGLE + 1], time);
         }
-        if (row->angleTracks[2] != 0) {
-            row->angles[2] = cfeTrackSample(row->angleTracks[2], time);
+        if (row->track[CFE_LIGHT_TRACK_ANGLE + 2] != 0) {
+            row->angles[2] = cfeTrackSample(row->track[CFE_LIGHT_TRACK_ANGLE + 2], time);
         }
         if (row->direction != 0) {
             cfeRotateVectorXY(row->direction, row->angles);
@@ -746,7 +724,6 @@ void cfeEvaluateDirections(int time)
     }
 }
 
-extern CfeEvalGlobal cfeEvalGlobal;
 
 /* Samples the eight sources of the global block cfeEvalGlobal. */
 void cfeGlobalEvaluate(int sample_param)
@@ -811,8 +788,6 @@ void cfeEntryEvaluate(CfeEvalEntry *entry, int sample_param) {
     }
 }
 
-extern int cfeEvalEntryCount;
-extern CfeEvalEntry cfeEvalEntries[];
 
 /* Evaluates the first cfeEvalEntryCount entries of cfeEvalEntries. */
 int cfeEntryTableEvaluate(int sample_param)
@@ -841,18 +816,17 @@ int cfeEntryTableEvaluate(int sample_param)
 
 /* Samples the three sources of one slot of cfeEvalSlots. */
 void cfeSlotEvaluate(CfeEvalSlot *slot, int sample_param) {
-    if (slot->source_for_result_int != 0) {
-        slot->result_int = (int) cfeTrackSampleStep(slot->source_for_result_int, sample_param);
+    if (slot->source[CFE_SLOT_SOURCE_RESULT_INT] != 0) {
+        slot->result_int = (int) cfeTrackSampleStep(slot->source[CFE_SLOT_SOURCE_RESULT_INT], sample_param);
     }
-    if (slot->source_for_sample_float != 0) {
-        slot->sample_float = cfeTrackSample(slot->source_for_sample_float, sample_param);
+    if (slot->source[CFE_SLOT_SOURCE_SAMPLE_FLOAT] != 0) {
+        slot->sample_float = cfeTrackSample(slot->source[CFE_SLOT_SOURCE_SAMPLE_FLOAT], sample_param);
     }
-    if (slot->source_for_sample_int != 0) {
-        slot->sample_int = (int) cfeTrackSample(slot->source_for_sample_int, sample_param);
+    if (slot->source[CFE_SLOT_SOURCE_SAMPLE_INT] != 0) {
+        slot->sample_int = (int) cfeTrackSample(slot->source[CFE_SLOT_SOURCE_SAMPLE_INT], sample_param);
     }
 }
 
-extern CfeEvalSlot cfeEvalSlots[3];
 
 /* Evaluates the three slots of cfeEvalSlots. */
 void cfeSlotTableEvaluate(int sample_param)
@@ -873,12 +847,12 @@ void cfeSndRecordEvaluate(CfeSndRecord *record, int time)
     int value;
     int steps;
 
-    if (record->durationTrack != 0) {
-        record->duration = (int) cfeTrackSampleStep(record->durationTrack, time);
+    if (record->track[CFE_SND_TRACK_DURATION] != 0) {
+        record->duration = (int) cfeTrackSampleStep(record->track[CFE_SND_TRACK_DURATION], time);
     }
-    if (record->valueTrack != 0) {
+    if (record->track[CFE_SND_TRACK_VALUE] != 0) {
         old = record->value;
-        value = (int) cfeTrackSampleStep(record->valueTrack, time);
+        value = (int) cfeTrackSampleStep(record->track[CFE_SND_TRACK_VALUE], time);
         record->value = value;
         if (record->duration != 0) {
             steps = (int) (__builtin_fabsf((float) (old - value)) / (float) record->duration);

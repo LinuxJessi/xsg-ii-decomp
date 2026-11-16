@@ -22,7 +22,6 @@ void *memset(void *, int, unsigned int);
 /* Number of nodes in cfeEntries. */
 #define CFE_NODE_COUNT 64
 
-extern CfeActor cfeEntries[];
 extern const AlignedVector4 cfeActorInitialVector;
 
 /* Clears the 64 actor entries of cfeEntries and gives each the vector cfeActorInitialVector at +0xD0 and as
@@ -63,16 +62,14 @@ void cfeStudioInit(void) {
     xglCameraSetPadPort(cfeCamera, 1);
 }
 
-extern int cfeCommandCount[];
-extern unsigned char cfeCommands[];
 
 void cfeCommandTableInit(void) {
     int *entry;
     int i;
 
-    cfeCommandCount[0] = 0;
+    cfeCommandCount = 0;
     memset(cfeCommands, 0, 0x2000);
-    entry = (int *)(cfeCommands + 0x1FC8);
+    entry = &cfeCommands[63].owner;
     for (i = 0; i < 64; i++) {
         *entry = -1;
         entry -= 0x20;
@@ -128,17 +125,6 @@ void cfeLightSetInit(XglLightSet *light)
     pxySetDefaultLight((struct PxyShadowLight *) light);
 }
 
-/* A row of cfeDirections: the direction and the colour of one light of cfeLightSet (row 0 has only
- * the ambient colour). */
-typedef struct CfeLightRow {
-    unsigned char unmodeled_00[0x10];
-    const float *direction;     /* +0x10 */
-    const float *color;         /* +0x14 */
-    unsigned char unmodeled_18[0x28];
-} CfeLightRow;
-
-extern CfeLightRow cfeDirections[4];
-extern XglLightSet cfeLightSet;
 
 /* Sets up the light set cfeLightSet, clears cfeDirections and points its rows at the ambient colour
  * and at the direction and colour of lights 0 to 2. */
@@ -156,8 +142,6 @@ void cfeLightRowsInit(void)
     cfeDirections[3].color = cfeLightSet.colors[2];
 }
 
-extern int cfeGroupCount;
-extern unsigned char cfeGroups[];
 
 void cfeGroupTableInit(void) {
     memset(cfeGroups, 0, 0x300);
@@ -170,7 +154,6 @@ void cfePlugInRecordCountReset(void) {
     cfePlugInRecordCount = 0;
 }
 
-extern CfeEvalGlobal cfeEvalGlobal;
 
 /* Clears the global block and sets its two default vectors (255, 255, 255, 1) and (5, 20, 0, 1). */
 void cfeEvalGlobalInit(void)
@@ -187,8 +170,6 @@ void cfeEvalGlobalInit(void)
     cfeEvalGlobal.evaluated[1].w = 1.0f;
 }
 
-extern int cfeEvalEntryCount;
-extern CfeEvalEntry cfeEvalEntries[];
 
 /* The four corners every entry starts with (a unit quad around the origin). */
 typedef struct CfeEntryCorners {
@@ -228,18 +209,17 @@ void cfeEvalEntriesInit(void)
 }
 
 /* Resets the three CfeEvalSlot entries of cfeEvalSlots (cfeEvaluate.h): result 0, sample 0x80, sample_float 1.0. */
-extern unsigned char cfeEvalSlots[];
 
 void cfeEvalSlotsInit(void) {
-    u8 *slot;
+    CfeEvalSlot *slot;
     int i;
 
     do { memset(cfeEvalSlots, 0, 0x48); slot = cfeEvalSlots; } while (0);
     for (i = 0; i < 3; i++) {
-        ((int *)slot)[0] = 0;
-        ((int *)slot)[1] = 0x80;
-        ((f32 *)slot)[2] = 1.0f;
-        slot += 0x18;
+        slot->result_int = 0;
+        slot->sample_int = 0x80;
+        slot->sample_float = 1.0f;
+        slot++;
     }
 }
 

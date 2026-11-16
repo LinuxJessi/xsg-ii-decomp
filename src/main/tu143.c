@@ -3,7 +3,8 @@
 char *cfeTextNextLine(char *text, int lines);
 int cfeTextCompareLine(const char *pattern, const char *text);
 
-/* Walks the text line by line from `start` and returns the first line the pattern matches (cfeTextCompareLine is 0 on a match). */
+/* Walks the text line by line from `start` and returns the first line the pattern matches (cfeTextCompareLine is 0
+ * on a match). */
 char *func_0024F3B8(char *start, const char *pattern)
 {
     char *position;

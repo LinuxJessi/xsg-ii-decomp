@@ -134,7 +134,7 @@ void xglMatrixStackSave(Matrix4 matrix);
 extern const AlignedVector4 cfeForwardVector;
 
 /* The vector cfeForwardVector rotated by angles[0] about X and angles[1] about Y. */
-void cfeRotateVectorXY(Vector4 *result, const float *angles)
+void cfeRotateVectorXY(float *result, const float *angles)
 {
     Matrix4 matrix;
     AlignedVector4 vector = cfeForwardVector;
@@ -299,9 +299,6 @@ XenoActor *cfeLoadResourceObject(int id)
     return actor;
 }
 
-extern int cfeGroupCount;
-
-extern CfeGroup cfeGroups[];
 
 float asinf(float value);
 double sqrt(double value);
@@ -316,7 +313,7 @@ float atan2f(float y, float x);
 /* Starts the records of every part of the group from the part's matrix: the position (w = 1), the Euler
  * angles (x from the pitch row, y from the heading of the third row, z the roll, reflected across pi when the
  * up row points down) and unit scale; both are kept as the initial values. */
-void cfeMapInitRecords(CfeGroup *group)
+void cfeMapInitRecords(CfeMap *group)
 {
     float *matrix;
     int i;
@@ -413,8 +410,6 @@ XenoActor *cfeLoadActorObject(int id)
 }
 
 extern unsigned char cfeActorAssert[];
-extern int cfeEntryCount;
-extern CfeActor cfeEntries[];
 
 /* Script command `cfe.ldAt` (1 argument): loads actor argument 1 into the next entry of cfeEntries, copies the play
  * range of its first motion state, sets draw mode 6 and allocates a cleared record block of two words per
@@ -488,8 +483,6 @@ int cfe_0024BC10(int handle)
 extern unsigned char cfeArgCount4Assert[];
 extern unsigned char cfeArgCount5Assert[];
 
-extern int cfeCommandCount;
-extern CfeEvalCommand cfeCommands[];
 
 /* The initial scale of a command (1, 1, 1). */
 extern const AlignedVector4 cfeUnitScale;
@@ -538,7 +531,7 @@ int cfe_0024BD28(int handle)
  * pack has a part pack, the group gets it, its matrices and one cleared record per geometry. */
 int cfe_0024BEF0(int handle)
 {
-    CfeGroup *group;
+    CfeMap *group;
     XenoActor *object;
     CfePackHeader *pack;
     CfePackHeader *parts;
@@ -575,7 +568,6 @@ int cfe_0024BEF0(int handle)
 }
 
 void sprintf(char *, unsigned char *, char *);
-extern int D_0063A868[];
 extern unsigned char cfeMotionPathFormat[];
 
 int cfe_0024C030(int handle)
@@ -592,12 +584,10 @@ int cfe_0024C030(int handle)
     GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
-    D_0063A868[slot * 0x30] = (int) data;
+    cfeGroups[slot].collision = data;
     return 1;
 }
 
-extern int cfeEvalEntryCount;
-extern CfeEvalEntry cfeEvalEntries[];
 extern char cfeMovieOpenFailedText[];
 extern unsigned char cfeMovieOpenAssert[];
 
@@ -684,7 +674,6 @@ XglCamera *xglStudioGetCamera2(int index);
 extern signed char pxyTickScaleDouble;
 extern int cfePaused;
 extern int cfeStartDelay;
-extern int cfeEntryCount;
 
 /* gameWork as the scene end sees it: the control word at +0x08 (CONTROL_* in tu051.h). gameWork has no
  * header type; tu069.c keeps its own view as well. */
@@ -889,11 +878,9 @@ int cfe_0024CB80(int handle)
     return 1;
 }
 
-extern CfeTrackNode *D_0063857C[][32];
-
-/* Script command `cfe.stKyEf` (5 arguments): sets key `key` of list [index][sub] of D_0063857C to the 8.8 value.
- * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
- * cfeListSetValue); the linear forms are used when `linear` is set. */
+/* Script command `cfe.stKyEf` (5 arguments): sets key `key` of track `sub` (CFE_COMMAND_TRACK_*) of command `index`
+ * to the 8.8 value. Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values
+ * (cfeListSetValueLinear / cfeListSetValue); the linear forms are used when `linear` is set. */
 int cfe_0024CCF8(int handle)
 {
     int index;
@@ -912,25 +899,23 @@ int cfe_0024CCF8(int handle)
     value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (linear != 0) {
-            cfeListSetAngleLinear(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngleLinear(&cfeCommands[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            cfeListSetAngle(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngle(&cfeCommands[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
         if (linear != 0) {
-            cfeListSetValueLinear(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValueLinear(&cfeCommands[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            cfeListSetValue(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValue(&cfeCommands[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     }
     return 1;
 }
 
-extern CfeTrackNode *D_0063A54C[][16];
-
-/* Script command `cfe.stKyLgt` (5 arguments): sets key `key` of list [index][sub] of D_0063A54C to the 8.8 value.
- * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
- * cfeListSetValue); the linear forms are used when `linear` is set. */
+/* Script command `cfe.stKyLgt` (5 arguments): sets key `key` of track `sub` (CFE_LIGHT_TRACK_*) of light `index` to
+ * the 8.8 value. Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values
+ * (cfeListSetValueLinear / cfeListSetValue); the linear forms are used when `linear` is set. */
 int cfe_0024CF70(int handle)
 {
     int index;
@@ -949,15 +934,15 @@ int cfe_0024CF70(int handle)
     value = vmArgGet(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (linear != 0) {
-            cfeListSetAngleLinear(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngleLinear(&cfeDirections[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            cfeListSetAngle(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngle(&cfeDirections[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
         if (linear != 0) {
-            cfeListSetValueLinear(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValueLinear(&cfeDirections[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            cfeListSetValue(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValue(&cfeDirections[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     }
     return 1;
@@ -1010,10 +995,8 @@ int cfe_0024D1E8(int handle)
     return 1;
 }
 
-extern CfeTrackNode *D_0063CDE0[];
-
-/* Script command `cfe.stKyFog` (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
- * linear (cfeListSetValueLinear) when `linear` is set. */
+/* Script command `cfe.stKyFog` (4 arguments): sets key `key` of fog track `index` (cfeEvalGlobal.source) to the 8.8
+ * value, linear (cfeListSetValueLinear) when `linear` is set. */
 int cfe_0024D5E0(int handle)
 {
     int index;
@@ -1029,16 +1012,14 @@ int cfe_0024D5E0(int handle)
     linear = vmArgGet(handle, 3);
     value = vmArgGet(handle, 4);
     if (linear != 0) {
-        cfeListSetValueLinear(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&cfeEvalGlobal.source[index], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        cfeListSetValue(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&cfeEvalGlobal.source[index], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
 
-extern CfeTrackNode *D_0063ACB4[][140];
-
-/* Script command `cfe.stKyMnt` (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4
+/* Script command `cfe.stKyMnt` (5 arguments): sets key `key` of track `sub` of monitor `index` (cfeEvalEntries)
  * (140 per row) to the 8.8 value, linear (cfeListSetValueLinear) when
  * `linear` is set. */
 int cfe_0024D738(int handle)
@@ -1058,18 +1039,15 @@ int cfe_0024D738(int handle)
     linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
     if (linear != 0) {
-        cfeListSetValueLinear(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&cfeEvalEntries[index].source[sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        cfeListSetValue(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&cfeEvalEntries[index].source[sub], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
 
-extern CfeTrackNode *D_0063CE0C[][6];
-
-/* Script command `cfe.stKyScrEff` (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C
- * (6 per row) to the 8.8 value, linear (cfeListSetValueLinear) when
- * `linear` is set. */
+/* Script command `cfe.stKyScrEff` (5 arguments): sets key `key` of track `sub` (CFE_SLOT_SOURCE_*) of screen effect
+ * `index` (6 per row) to the 8.8 value, linear (cfeListSetValueLinear) when `linear` is set. */
 int cfe_0024D8C0(int handle)
 {
     int index;
@@ -1087,16 +1065,14 @@ int cfe_0024D8C0(int handle)
     linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
     if (linear != 0) {
-        cfeListSetValueLinear(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&cfeEvalSlots[index].source[sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        cfeListSetValue(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&cfeEvalSlots[index].source[sub], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
 
-extern CfeTrackNode *D_0063CE90[][20];
-
-/* Script command `cfe.stKySnd` (5 arguments): sets key `key` of list [index][sub] of D_0063CE90
+/* Script command `cfe.stKySnd` (5 arguments): sets key `key` of track `sub` (CFE_SND_TRACK_*) of sound `index`
  * (20 per row) to the 8.8 value, linear (cfeListSetValueLinear) when
  * `linear` is set. */
 int cfe_0024DA40(int handle)
@@ -1116,9 +1092,9 @@ int cfe_0024DA40(int handle)
     linear = vmArgGet(handle, 4);
     value = vmArgGet(handle, 5);
     if (linear != 0) {
-        cfeListSetValueLinear(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&cfeSndRecords[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        cfeListSetValue(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&cfeSndRecords[index].track[sub], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
@@ -1246,8 +1222,6 @@ void xglFontPrintDirect(const char *text);
 /* The running fade (nonzero while a fade is under way). */
 extern int fadeUpdateHook;
 extern PadRecord PadData[];
-extern XglLightSet cfeLightSet;
-extern CfeEvalGlobal cfeEvalGlobal;
 
 /* SaveData as the subtitles read it: +0x3A shows every subtitle (game_movie.c caption_all). */
 typedef struct CfeSaveData {
@@ -1257,7 +1231,6 @@ typedef struct CfeSaveData {
 
 extern CfeSaveData SaveData;
 extern const char cfeMesFontSettings[];
-extern CfeEvalSlot cfeEvalSlots[3];
 int strcmp(const char *first, const char *second);
 
 /* Frames after the start of the cut scene before start can pause it, and the sound of pausing. */
@@ -1444,8 +1417,6 @@ void tiWindDisableAll(void);
 void resResetSlotTable(void);
 void resResetPathSlots(void);
 void func_001BA320(void);
-extern int cfeEvalEntryCount;
-extern CfeEvalEntry cfeEvalEntries[];
 extern int uwamonoCurrentIndex;
 extern UwamonoObject uwamonoRecords[];
 
