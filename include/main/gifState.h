@@ -82,6 +82,6 @@ void gifStateSetEffectAlpha(int alphaType, int alpha);
 void gifStateSetFbp(int fbp);
 void gifStateSetBlur(int blur);
 void gifStateBuildBreakShards(GifBreakShard *shards, GifBreakPoint *points);
-void func_00245728(GifBreakShard *shard, f32 ratio);
+void gifBreakShardUpdate(GifBreakShard *shard, f32 ratio);
 
 #endif /* INCLUDE_MAIN_GIFSTATE_H */

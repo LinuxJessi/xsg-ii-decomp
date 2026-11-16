@@ -68,7 +68,7 @@ void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackRotZ(float angle);
 void xglMatrixStackSave(Matrix4 matrix);
-float func_002A1DE0(float value);
+float asinf(float value);
 float atan2f(float y, float x);
 
 void xglEulerFromRotation(Vector4 *euler, Vector4 *rotation)
@@ -85,7 +85,7 @@ void xglEulerFromRotation(Vector4 *euler, Vector4 *rotation)
         matrix[2][2] < 0.0001f && -0.0001f < matrix[2][2]) {
         *euler = *rotation;
     } else {
-        euler->x = -func_002A1DE0(matrix[2][1]);
+        euler->x = -asinf(matrix[2][1]);
         euler->y = atan2f(matrix[2][0], matrix[2][2]);
         euler->z = atan2f(matrix[0][1], matrix[1][1]);
     }

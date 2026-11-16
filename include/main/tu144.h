@@ -28,9 +28,9 @@ typedef struct CfeTrackNode {
  * not parenthesized inside the casts, as in the original: for a difference a - b only a is truncated. */
 #define CFE_FLOAT_TO_FIXED(value) ((int) (((int) value) * 256.0f + (int) (((value) - ((int) value)) * 256.0f)))
 
-CfeTrackNode *func_0024F698(CfeTrackNode **list, int key, float value);
-CfeTrackNode *func_0024F730(CfeTrackNode **list, int key, float value);
-CfeTrackNode *func_0024F7C0(CfeTrackNode **list, int key, float value);
-CfeTrackNode *func_0024F860(CfeTrackNode **list, int key, float value);
+CfeTrackNode *cfeListSetValue(CfeTrackNode **list, int key, float value);
+CfeTrackNode *cfeListSetValueLinear(CfeTrackNode **list, int key, float value);
+CfeTrackNode *cfeListSetAngle(CfeTrackNode **list, int key, float value);
+CfeTrackNode *cfeListSetAngleLinear(CfeTrackNode **list, int key, float value);
 
 #endif /* INCLUDE_MAIN_TU144_H */

@@ -253,7 +253,7 @@ void tiWaterDrawAll(int pass)
     func_001CD160();
 }
 
-float func_002A1790(float value);
+float atanf(float value);
 extern float tiWaterTwoPi;
 
 /* The angle of (x, y) in [0, 2 pi): atan(y / x) moved into the right half turn. */
@@ -264,7 +264,7 @@ float tiWaterVectorAngle(float x, float y)
     if (x == 0.0f) {
         x = 1e-05f;
     }
-    angle = func_002A1790(y / x);
+    angle = atanf(y / x);
     if (x > 0.0f) {
         if (angle < 0.0f) {
             angle += tiWaterTwoPi;

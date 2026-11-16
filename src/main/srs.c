@@ -129,7 +129,7 @@ extern int xglDebFileSize(const char *name);
 extern int xglDebFileRead(const char *name, void *buffer);
 extern void srsMapPendingResources(void);
 static char srsEftNameBuffer[256];
-extern char *func_002AA7F0(char *dest, const char *src);
+extern char *strcat(char *dest, const char *src);
 
 /* Writes *charNo (the kind, for an .esp effect) and *effectType, and returns
  * the file name of the effect's .esp or .esd file, or 0 when it has none. */
@@ -155,14 +155,14 @@ char *srsAnalyzeEftNo(int effectNo, int *charNo, int *effectType)
             *charNo = effectKind;
             *effectType = fileKind;
             srsFormatEffectStem(effectNo, srsEftNameBuffer, 0);
-            func_002AA7F0(srsEftNameBuffer, ".esp");
+            strcat(srsEftNameBuffer, ".esp");
             name = srsEftNameBuffer;
             break;
         case SRS_EFFECT_FILE_ESD:
             *charNo = 0;
             *effectType = SRS_EFFECT_TYPE_ESD;
             srsFormatEffectStem(effectNo, srsEftNameBuffer, 1);
-            func_002AA7F0(srsEftNameBuffer, ".esd");
+            strcat(srsEftNameBuffer, ".esd");
             name = srsEftNameBuffer;
             break;
     }
@@ -210,18 +210,18 @@ int srsMakeFileName(char *buffer, const char *fileName)
     }
     if (srsLoadMode == SRS_LOAD_MODE_CD) {
         *(SrsCdRoot *)buffer = *(SrsCdRoot *)"simajiri/";
-        func_002AA7F0(buffer, fileName);
+        strcat(buffer, fileName);
     } else if (srsLoadMode == SRS_LOAD_MODE_HOST) {
         *(SrsHostRoot *)buffer = *(SrsHostRoot *)"host0:/home/xeno/work/";
-        func_002AA7F0(buffer, srsViewPath);
-        func_002AA7F0(buffer, fileName);
+        strcat(buffer, srsViewPath);
+        strcat(buffer, fileName);
     } else if (srsLoadMode == SRS_LOAD_MODE_DEB) {
         strcpy(buffer, srsViewPath);
-        func_002AA7F0(buffer, fileName);
+        strcat(buffer, fileName);
     } else if (srsLoadMode == SRS_LOAD_MODE_USB) {
         *(SrsUsbRoot *)buffer = *(SrsUsbRoot *)"usb0:/";
-        func_002AA7F0(buffer, srsViewPath);
-        func_002AA7F0(buffer, fileName);
+        strcat(buffer, srsViewPath);
+        strcat(buffer, fileName);
     }
     return 1;
 }

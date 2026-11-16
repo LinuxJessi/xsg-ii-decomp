@@ -29,7 +29,7 @@
 
 extern unsigned char cfeAssertFile[];
 
-/* The modes of func_0024B0E8 / func_0024B230: set the key plain or flagged (0x2), or plain and mark the
+/* The modes of cfeListSetKeyMode / cfeListSetAngleKeyMode: set the key plain or flagged (0x2), or plain and mark the
  * list's tail to reset its first (0x8), second (0x10) or both direction pairs (cfeEntryResetDirs). */
 #define CFE_KEY_MODE_PLAIN 0
 #define CFE_KEY_MODE_FLAGGED 1
@@ -41,42 +41,42 @@ extern unsigned char cfeAssertFile[];
 
 extern unsigned char D_0068CD10[];
 
-/* Sets key `key` of the value list to `value` in a CFE_KEY_MODE_* mode: plain (func_0024F698) or
- * flagged (func_0024F730), or plain with reset flags on the list's tail, which is then updated
- * (func_0024FC90). */
-void func_0024B0E8(CfeTrackNode **list, int mode, int key, float value)
+/* Sets key `key` of the value list to `value` in a CFE_KEY_MODE_* mode: plain (cfeListSetValue) or
+ * flagged (cfeListSetValueLinear), or plain with reset flags on the list's tail, which is then updated
+ * (cfeTrackUpdateDirections). */
+void cfeListSetKeyMode(CfeTrackNode **list, int mode, int key, float value)
 {
     CfeTrackNode *tail;
 
     switch (mode) {
     case CFE_KEY_MODE_PLAIN:
-        func_0024F698(list, key, value);
+        cfeListSetValue(list, key, value);
         break;
     case CFE_KEY_MODE_FLAGGED:
-        func_0024F730(list, key, value);
+        cfeListSetValueLinear(list, key, value);
         break;
     case CFE_KEY_MODE_RESET_BOTH:
-        func_0024F698(list, key, value);
+        cfeListSetValue(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
             tail->flags |= CFE_KEY_RESET_FIRST | CFE_KEY_RESET_SECOND;
-            func_0024FC90(*list);
+            cfeTrackUpdateDirections(*list);
         }
         break;
     case CFE_KEY_MODE_RESET_FIRST:
-        func_0024F698(list, key, value);
+        cfeListSetValue(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
             tail->flags |= CFE_KEY_RESET_FIRST;
-            func_0024FC90(*list);
+            cfeTrackUpdateDirections(*list);
         }
         break;
     case CFE_KEY_MODE_RESET_SECOND:
-        func_0024F698(list, key, value);
+        cfeListSetValue(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
             tail->flags |= CFE_KEY_RESET_SECOND;
-            func_0024FC90(*list);
+            cfeTrackUpdateDirections(*list);
         }
         break;
     default:
@@ -85,42 +85,42 @@ void func_0024B0E8(CfeTrackNode **list, int mode, int key, float value)
     }
 }
 
-/* Sets key `key` of the angle list to `value` in a CFE_KEY_MODE_* mode: plain (func_0024F7C0) or
- * flagged (func_0024F860), or plain with reset flags on the list's tail, which is then updated
- * (func_0024FC90). */
-void func_0024B230(CfeTrackNode **list, int mode, int key, float value)
+/* Sets key `key` of the angle list to `value` in a CFE_KEY_MODE_* mode: plain (cfeListSetAngle) or
+ * flagged (cfeListSetAngleLinear), or plain with reset flags on the list's tail, which is then updated
+ * (cfeTrackUpdateDirections). */
+void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
 {
     CfeTrackNode *tail;
 
     switch (mode) {
     case CFE_KEY_MODE_PLAIN:
-        func_0024F7C0(list, key, value);
+        cfeListSetAngle(list, key, value);
         break;
     case CFE_KEY_MODE_FLAGGED:
-        func_0024F860(list, key, value);
+        cfeListSetAngleLinear(list, key, value);
         break;
     case CFE_KEY_MODE_RESET_BOTH:
-        func_0024F7C0(list, key, value);
+        cfeListSetAngle(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
             tail->flags |= CFE_KEY_RESET_FIRST | CFE_KEY_RESET_SECOND;
-            func_0024FC90(*list);
+            cfeTrackUpdateDirections(*list);
         }
         break;
     case CFE_KEY_MODE_RESET_FIRST:
-        func_0024F7C0(list, key, value);
+        cfeListSetAngle(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
             tail->flags |= CFE_KEY_RESET_FIRST;
-            func_0024FC90(*list);
+            cfeTrackUpdateDirections(*list);
         }
         break;
     case CFE_KEY_MODE_RESET_SECOND:
-        func_0024F7C0(list, key, value);
+        cfeListSetAngle(list, key, value);
         tail = cfeListTail(*list);
         if (tail != 0) {
             tail->flags |= CFE_KEY_RESET_SECOND;
-            func_0024FC90(*list);
+            cfeTrackUpdateDirections(*list);
         }
         break;
     default:
@@ -149,7 +149,7 @@ void cfeRotateVectorXY(Vector4 *result, const float *angles)
 }
 
 /* Number of characters of `text` equal to `character`; 0 for no text. */
-int cfeStrLastCharPos(const char *text, char character)
+int cfeStrCountChar(const char *text, char character)
 {
     int count = 0;
 
@@ -167,7 +167,7 @@ int cfeStrLastCharPos(const char *text, char character)
 
 void *memset(void *destination, int value, unsigned int count);
 char *strcpy(char *destination, const char *source);
-char *func_002AA7F0(char *destination, const char *source);   /* strcat */
+char *strcat(char *destination, const char *source);
 extern const char D_0068CD80[];
 extern const char D_0068CD88[];
 
@@ -226,7 +226,7 @@ void cfeMesLayoutText(char *text)
         if (line[1] == 0) {
             line[1] = 1;
         }
-        func_002AA7F0(result, CFE_MES_SCRATCHPAD);
+        strcat(result, CFE_MES_SCRATCHPAD);
         last = *text++;
     } while (last != 0);
     strcpy(start, result);
@@ -304,8 +304,8 @@ extern int cfeGroupCount;
 
 extern CfeGroup cfeGroups[];
 
-float func_002A1DE0(float value);   /* asinf */
-double func_002A1DB0(double value); /* sqrt */
+float asinf(float value);
+double sqrt(double value);
 float atan2f(float y, float x);
 
 /* The record of part `index` with its address computed index first (index * size + records), as the
@@ -317,7 +317,7 @@ float atan2f(float y, float x);
 /* Starts the records of every part of the group from the part's matrix: the position (w = 1), the Euler
  * angles (x from the pitch row, y from the heading of the third row, z the roll, reflected across pi when the
  * up row points down) and unit scale; both are kept as the initial values. */
-void func_0024B6D8(CfeGroup *group)
+void cfeMapInitRecords(CfeGroup *group)
 {
     float *matrix;
     int i;
@@ -331,17 +331,17 @@ void func_0024B6D8(CfeGroup *group)
         group->records[i].evaluated[0].vector.y = matrix[13];
         group->records[i].evaluated[0].vector.z = matrix[14];
         group->records[i].evaluated[0].vector.w = 1.0f;
-        group->records[i].evaluated[1].vector.x = func_002A1DE0(matrix[9]);
+        group->records[i].evaluated[1].vector.x = asinf(matrix[9]);
         group->records[i].evaluated[1].vector.y = atan2f(matrix[8], matrix[10]);
         if (matrix[5] >= 0.0f) {
             double sine = matrix[1];
 
-            group->records[i].evaluated[1].vector.z = func_002A1DE0(sine / func_002A1DB0(1.0f - matrix[9] * matrix[9]));
+            group->records[i].evaluated[1].vector.z = asinf(sine / sqrt(1.0f - matrix[9] * matrix[9]));
         } else {
             double sine = matrix[1];
 
             group->records[i].evaluated[1].vector.z
-                = 3.1415927f - func_002A1DE0(sine / func_002A1DB0(1.0f - matrix[9] * matrix[9]));
+                = 3.1415927f - asinf(sine / sqrt(1.0f - matrix[9] * matrix[9]));
         }
         group->records[i].evaluated[1].vector.w = 1.0f;
         group->records[i].evaluated[2].vector.x = 1.0f;
@@ -585,7 +585,7 @@ int cfe_0024BEF0(int handle)
         group->matrices = 0;
         group->records = 0;
     }
-    func_0024B6D8(&cfeGroups[cfeGroupCount]);
+    cfeMapInitRecords(&cfeGroups[cfeGroupCount]);
     cfeGroupCount++;
     return 1;
 }
@@ -776,8 +776,8 @@ int cfe_0024C308(int handle)
 extern CfeTrackNode *D_006319F0[][108];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_006319F0 to the 8.8 value.
- * Lists 3 to 5 hold angles (func_0024F860 / func_0024F7C0), the others plain values (func_0024F730 /
- * func_0024F698); the flagged forms are used when `flagged` is set. */
+ * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
+ * cfeListSetValue); the flagged forms are used when `flagged` is set. */
 int cfe_0024C500(int handle)
 {
     int index;
@@ -796,15 +796,15 @@ int cfe_0024C500(int handle)
     value = func_A9F0C0(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (flagged != 0) {
-            func_0024F860(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngleLinear(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            func_0024F7C0(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngle(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
         if (flagged != 0) {
-            func_0024F730(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValueLinear(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            func_0024F698(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValue(&D_006319F0[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     }
     return 1;
@@ -814,7 +814,7 @@ extern CfeTrackNode *D_00631A54[][108];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_00631A54
  * (the lists at +0x194 of each 0x1B0-byte entry of cfeEntries) to the 8.8 value, with flag
- * 0x2 (func_0024F730) when `flagged` is set. */
+ * 0x2 (cfeListSetValueLinear) when `flagged` is set. */
 int cfe_0024C7B8(int handle)
 {
     int index;
@@ -832,9 +832,9 @@ int cfe_0024C7B8(int handle)
     flagged = func_A9F0C0(handle, 4);
     value = func_A9F0C0(handle, 5);
     if (flagged != 0) {
-        func_0024F730(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024F698(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&D_00631A54[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
@@ -843,7 +843,7 @@ extern unsigned char D_0068CEF0[];
 extern CfeNode cfeEntries[];
 
 /* Script command (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
- * to the 8.8 value (flagged through func_0024F730 when `flagged` is set), then walks that track to its
+ * to the 8.8 value (flagged through cfeListSetValueLinear when `flagged` is set), then walks that track to its
  * end. */
 int cfe_0024C940(int handle)
 {
@@ -865,9 +865,9 @@ int cfe_0024C940(int handle)
     flagged = func_A9F0C0(handle, 5);
     value = func_A9F0C0(handle, 6);
     if (flagged != 0) {
-        func_0024F730(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024F698(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&cfeEntries[entry].records[row].track[column], key, CFE_FIXED_TO_FLOAT(value));
     }
     for (node = cfeEntries[entry].records[row].track[column]; node != 0; node = node->next) {
     }
@@ -884,8 +884,8 @@ typedef struct CfeStudioBlock {
 extern CfeStudioBlock D_006384C0;
 
 /* Script command (4 arguments): fetches the studio camera and sets key `key` of camera list `index`
- * to the 8.8 value in `mode`; lists 3 to 5 go through func_0024B230, the others through
- * func_0024B0E8. */
+ * to the 8.8 value in `mode`; lists 3 to 5 go through cfeListSetAngleKeyMode, the others through
+ * cfeListSetKeyMode. */
 int cfe_0024CB80(int handle)
 {
     int index;
@@ -902,9 +902,9 @@ int cfe_0024CB80(int handle)
     value = func_A9F0C0(handle, 4);
     xglStudioGetCamera(&D_006384C0.camera, 0);
     if (index >= 3 && index < 6) {
-        func_0024B230(&D_006384C0.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetAngleKeyMode(&D_006384C0.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024B0E8(&D_006384C0.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetKeyMode(&D_006384C0.lists[index], mode, key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
@@ -912,8 +912,8 @@ int cfe_0024CB80(int handle)
 extern CfeTrackNode *D_0063857C[][32];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063857C to the 8.8 value.
- * Lists 3 to 5 hold angles (func_0024F860 / func_0024F7C0), the others plain values (func_0024F730 /
- * func_0024F698); the flagged forms are used when `flagged` is set. */
+ * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
+ * cfeListSetValue); the flagged forms are used when `flagged` is set. */
 int cfe_0024CCF8(int handle)
 {
     int index;
@@ -932,15 +932,15 @@ int cfe_0024CCF8(int handle)
     value = func_A9F0C0(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (flagged != 0) {
-            func_0024F860(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngleLinear(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            func_0024F7C0(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngle(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
         if (flagged != 0) {
-            func_0024F730(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValueLinear(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            func_0024F698(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValue(&D_0063857C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     }
     return 1;
@@ -949,8 +949,8 @@ int cfe_0024CCF8(int handle)
 extern CfeTrackNode *D_0063A54C[][16];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063A54C to the 8.8 value.
- * Lists 3 to 5 hold angles (func_0024F860 / func_0024F7C0), the others plain values (func_0024F730 /
- * func_0024F698); the flagged forms are used when `flagged` is set. */
+ * Lists 3 to 5 hold angles (cfeListSetAngleLinear / cfeListSetAngle), the others plain values (cfeListSetValueLinear /
+ * cfeListSetValue); the flagged forms are used when `flagged` is set. */
 int cfe_0024CF70(int handle)
 {
     int index;
@@ -969,15 +969,15 @@ int cfe_0024CF70(int handle)
     value = func_A9F0C0(handle, 5);
     if (sub >= 3 && sub < 6) {
         if (flagged != 0) {
-            func_0024F860(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngleLinear(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            func_0024F7C0(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetAngle(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     } else {
         if (flagged != 0) {
-            func_0024F730(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValueLinear(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            func_0024F698(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValue(&D_0063A54C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     }
     return 1;
@@ -1004,15 +1004,15 @@ int cfe_0024D1E8(int handle)
         value = func_A9F0C0(handle, 6);
         if (sub >= 3 && sub < 6) {
             if (flagged != 0) {
-                func_0024F860(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
+                cfeListSetAngleLinear(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             } else {
-                func_0024F7C0(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
+                cfeListSetAngle(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             }
         } else {
             if (flagged != 0) {
-                func_0024F730(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
+                cfeListSetValueLinear(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             } else {
-                func_0024F698(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
+                cfeListSetValue(&cfeGroups[group].records[part].source[sub], key, CFE_FIXED_TO_FLOAT(value));
             }
         }
     } else {
@@ -1022,9 +1022,9 @@ int cfe_0024D1E8(int handle)
         flagged = func_A9F0C0(handle, 4);
         value = func_A9F0C0(handle, 5);
         if (flagged != 0) {
-            func_0024F730(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValueLinear(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
         } else {
-            func_0024F698(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
+            cfeListSetValue(&cfeGroups[group].tracks[sub], key, CFE_FIXED_TO_FLOAT(value));
         }
     }
     return 1;
@@ -1033,7 +1033,7 @@ int cfe_0024D1E8(int handle)
 extern CfeTrackNode *D_0063CDE0[];
 
 /* Script command (4 arguments): sets key `key` of list `index` of D_0063CDE0 to the 8.8 value,
- * with flag 0x2 (func_0024F730) when `flagged` is set. */
+ * with flag 0x2 (cfeListSetValueLinear) when `flagged` is set. */
 int cfe_0024D5E0(int handle)
 {
     int index;
@@ -1049,9 +1049,9 @@ int cfe_0024D5E0(int handle)
     flagged = func_A9F0C0(handle, 3);
     value = func_A9F0C0(handle, 4);
     if (flagged != 0) {
-        func_0024F730(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024F698(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&D_0063CDE0[index], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
@@ -1059,7 +1059,7 @@ int cfe_0024D5E0(int handle)
 extern CfeTrackNode *D_0063ACB4[][140];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063ACB4
- * (140 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
+ * (140 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
  * `flagged` is set. */
 int cfe_0024D738(int handle)
 {
@@ -1078,9 +1078,9 @@ int cfe_0024D738(int handle)
     flagged = func_A9F0C0(handle, 4);
     value = func_A9F0C0(handle, 5);
     if (flagged != 0) {
-        func_0024F730(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024F698(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&D_0063ACB4[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
@@ -1088,7 +1088,7 @@ int cfe_0024D738(int handle)
 extern CfeTrackNode *D_0063CE0C[][6];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE0C
- * (6 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
+ * (6 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
  * `flagged` is set. */
 int cfe_0024D8C0(int handle)
 {
@@ -1107,9 +1107,9 @@ int cfe_0024D8C0(int handle)
     flagged = func_A9F0C0(handle, 4);
     value = func_A9F0C0(handle, 5);
     if (flagged != 0) {
-        func_0024F730(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024F698(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&D_0063CE0C[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
@@ -1117,7 +1117,7 @@ int cfe_0024D8C0(int handle)
 extern CfeTrackNode *D_0063CE90[][20];
 
 /* Script command (5 arguments): sets key `key` of list [index][sub] of D_0063CE90
- * (20 per row) to the 8.8 value, with flag 0x2 (func_0024F730) when
+ * (20 per row) to the 8.8 value, with flag 0x2 (cfeListSetValueLinear) when
  * `flagged` is set. */
 int cfe_0024DA40(int handle)
 {
@@ -1136,9 +1136,9 @@ int cfe_0024DA40(int handle)
     flagged = func_A9F0C0(handle, 4);
     value = func_A9F0C0(handle, 5);
     if (flagged != 0) {
-        func_0024F730(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValueLinear(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     } else {
-        func_0024F698(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
+        cfeListSetValue(&D_0063CE90[index][sub], key, CFE_FIXED_TO_FLOAT(value));
     }
     return 1;
 }
@@ -1328,7 +1328,7 @@ int cfe_0024DF60(int handle)
         cfeRunAndWait(D_006316B4->name, D_006316B4->third);
     }
     if (D_006316A8 == 0) {
-        func_00248390(time, 0);
+        cfeCameraEvaluate(time, 0);
     }
     cfeEvaluateDirections(time);
     cfeGlobalEvaluate(time);
@@ -1367,7 +1367,7 @@ int cfe_0024DF60(int handle)
         if (D_006316B4[i].first <= time && time < D_006316B4[i].second
             && (SaveData.captionAll != 0 || D_006316B4[i].text[0] == ' ')) {
             y = CFE_SUBTITLE_Y;
-            if (cfeStrLastCharPos(D_006316B4[i].text, '\n') >= 2) {
+            if (cfeStrCountChar(D_006316B4[i].text, '\n') >= 2) {
                 y = CFE_SUBTITLE_Y2;
             }
             xglFontPrint(0, y, CFE_SUBTITLE_COLOR, D_0068CD88);

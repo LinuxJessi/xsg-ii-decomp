@@ -1267,7 +1267,7 @@ void func_A9C888(int id);
 void selectionBlockFill(void);
 void msgChoiceShowPair(char *text, int count);
 void uwamonoSendEvent(int a, int b, int c);
-void func_002AA7F0(char *a, char *b);
+void strcat(char *a, char *b);
 
 void uwamonoUpdateCountdowns(void)
 {
@@ -1371,7 +1371,7 @@ void uwamonoUpdateCountdowns(void)
             strcpy(message, text);
             {
                 extern char D_0069D420[8];
-                func_002AA7F0(message, D_0069D420);
+                strcat(message, D_0069D420);
             }
             repeat = D_003E7270[0];
             strcpy(D_003E7270, message);

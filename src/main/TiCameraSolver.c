@@ -8,14 +8,14 @@ void func_0028D4C8(void)
 
 typedef float f32;
 
-f32 func_002A1790(f32);
+f32 atanf(f32);
 
 f32 tiCameraFovDegrees(f32 focal_length_mm, f32 frame_size)
 {
     f32 half_frame;
 
     half_frame = frame_size * 0.5f;
-    return 2.0f * func_002A1790(half_frame / (focal_length_mm * 0.03937f)) * 57.29578f;
+    return 2.0f * atanf(half_frame / (focal_length_mm * 0.03937f)) * 57.29578f;
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/TiCameraSolver", tiCameraReadPose);

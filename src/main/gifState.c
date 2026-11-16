@@ -64,7 +64,7 @@ extern u32 D_00631558[4];
  * subWindow[0] pixels; each edge point samples the texture at a random scale between 0.9 and 1.0 of the ratio
  * towards the centre, so the picture blurs radially. The scales are drawn anew and the ratio lowered by its
  * step only while the game is not paused. Nothing is drawn while the ratio is 0. */
-void func_002424D8(XglPacket *packet)
+void gifStateDrawRadialBlur(XglPacket *packet)
 {
     u32 *cursor;
     u32 *tag = 0;
@@ -396,12 +396,12 @@ extern int gifStateBlurOffset;                      /* blur offset in pixels */
 /* TEX0_1 of a 512x512 PSMCT32 page used as a texture. */
 #define GIF_STATE_TEX0(base) GS_SET_TEX0((base) << 5, 8, GS_PSMCT32, 9, 9, 1, 0, 0, 0, 0, 0, 0)
 
-/* Size in pixels of the area func_002439D0 copies. */
+/* Size in pixels of the area gifStateCopyDisplayToWork copies. */
 extern int D_006315B4;
 extern int D_006315B8;
 
 /* Copies the D_006315B4 x D_006315B8 pixels at the origin of the shown page into the work page. */
-void func_002439D0(XglPacket *packet)
+void gifStateCopyDisplayToWork(XglPacket *packet)
 {
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
@@ -863,7 +863,7 @@ void gifStateBuildBreakShards(GifBreakShard *shards, GifBreakPoint *points)
  * fall count goes up each frame while the ratio is above one half, below it the angle is reset and
  * the count goes down again while sub-window 0 is on. Its vertices are rotated (X, then Y), projected
  * and moved to its centre, sideways away from the screen middle by twice the squared fall count. */
-void func_00245728(GifBreakShard *shard, f32 ratio)
+void gifBreakShardUpdate(GifBreakShard *shard, f32 ratio)
 {
     Matrix4 matrix;
     Vector4 angle;
@@ -1053,7 +1053,7 @@ void gifStateEffectFrame(XglPacket *packet)
     for (i = 0; i < GIF_BREAK_SHARDS; i++) {
         cursor = (void *) (GIF_SCRATCHPAD + 0x10);
         vertexCount = 0;
-        func_00245728(&gifBreakShards[i], gifStatus.ratio);
+        gifBreakShardUpdate(&gifBreakShards[i], gifStatus.ratio);
         if (gifBreakShards[i].projected[0][0].f < 0.0f && gifBreakShards[i].projected[1][0].f < 0.0f && gifBreakShards[i].projected[2][0].f < 0.0f) {
             continue;
         }
@@ -1423,7 +1423,7 @@ void gifStateDisableEffect(void) {
     gifStateEffectHook = 0;
 }
 
-/* The camera-shake block of a map actor (+0x150) that func_00246FF8 sets up. */
+/* The camera-shake block of a map actor (+0x150) that gifStateStartWhiteShake sets up. */
 typedef struct GifShakeBlock {
     unsigned char unmodeled_000[0x150];
     float low;          /* +0x150 */
@@ -1439,7 +1439,7 @@ typedef struct GifShakeBlock {
 #define GIF_STATE_WHITE 0xFFFFFF
 
 /* Starts the white screen effect for an actor and sets its shake block. */
-void func_00246FF8(GifShakeBlock *block)
+void gifStateStartWhiteShake(GifShakeBlock *block)
 {
     func_00246DD8(GIF_STATE_WHITE);
     gifStateSetCenter(0x100, 0xE0);

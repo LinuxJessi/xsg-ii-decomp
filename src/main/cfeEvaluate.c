@@ -49,7 +49,7 @@ void cfeRecordSample(int time, CfeFlagOwner *owner, CfeFlagRecord *record, int i
     int value;
 
     if (record->track[0] != 0) {
-        value = (int) func_002508C8(record->track[0], time);
+        value = (int) cfeTrackSampleStep(record->track[0], time);
         record->value = value;
         if (value != 0) {
             owner->flags[index >> 5] |= 1 << (index & 0x1F);
@@ -158,27 +158,27 @@ void cfeEvaluateNode(void *data, int time)
     entry->position.y += entry->actor->position.y;
     entry->position.z += entry->actor->position.z;
     if (entry->channelTrack != 0) {
-        entry->channelValue = func_002508C8(entry->channelTrack, time);
+        entry->channelValue = cfeTrackSampleStep(entry->channelTrack, time);
         XenoActorSetChannelValue(entry->actor, entry->channelValue);
         XenoActorSetChannelValueB(entry->actor, entry->channelValue);
     }
     slot = entry->slot;
     if (entry->slotTrack != 0) {
-        slot = func_002508C8(entry->slotTrack, time);
+        slot = cfeTrackSampleStep(entry->slotTrack, time);
     }
     if (entry->speedTrack[0] != 0) {
-        entry->speed[0] = func_002508C8(entry->speedTrack[0], time);
+        entry->speed[0] = cfeTrackSampleStep(entry->speedTrack[0], time);
         tiMRStateSetSpeed(&entry->actor->motion[0], entry->speed[0]);
     }
     if (entry->speedTrack[1] != 0) {
-        entry->speed[1] = func_002508C8(entry->speedTrack[1], time);
+        entry->speed[1] = cfeTrackSampleStep(entry->speedTrack[1], time);
         tiMRStateSetSpeed(&entry->actor->motion[1], entry->speed[1]);
     }
     if (entry->forceModeTrack != 0) {
-        entry->forceMode = func_002508C8(entry->forceModeTrack, time);
+        entry->forceMode = cfeTrackSampleStep(entry->forceModeTrack, time);
     }
     if (entry->modeTrack != 0) {
-        entry->mode = func_002508C8(entry->modeTrack, time);
+        entry->mode = cfeTrackSampleStep(entry->modeTrack, time);
         if (entry->actor->mode != entry->mode || slot != entry->slot || time == cfeRangeGetMin()
             || entry->forceMode != 0) {
             entry->slot = slot;
@@ -190,29 +190,29 @@ void cfeEvaluateNode(void *data, int time)
     }
     changed = 0;
     if (entry->playRangeTrack[0] != 0) {
-        entry->playStart = func_002508C8(entry->playRangeTrack[0], time);
+        entry->playStart = cfeTrackSampleStep(entry->playRangeTrack[0], time);
         changed = 1;
     }
     if (entry->playRangeTrack[1] != 0) {
-        entry->playEnd = func_002508C8(entry->playRangeTrack[1], time);
+        entry->playEnd = cfeTrackSampleStep(entry->playRangeTrack[1], time);
         changed = 1;
     }
     if (changed) {
         XenoActorSetPlayRange(entry->actor, entry->playStart, entry->playEnd);
     }
     if (entry->selectorTrack != 0) {
-        entry->selector = func_002508C8(entry->selectorTrack, time);
+        entry->selector = cfeTrackSampleStep(entry->selectorTrack, time);
         if (entry->actor->selector != entry->selector || time == cfeRangeGetMin()) {
             XenoActorEnableChannelB(entry->actor);
             XenoActorSetSelector(entry->actor, entry->selector);
         }
     }
     if (entry->drawModeTrack != 0) {
-        entry->drawMode = func_002508C8(entry->drawModeTrack, time);
+        entry->drawMode = cfeTrackSampleStep(entry->drawModeTrack, time);
         entry->actor->drawMode = entry->drawMode;
     }
     if (entry->translucentTrack != 0) {
-        entry->translucent = func_002508C8(entry->translucentTrack, time);
+        entry->translucent = cfeTrackSampleStep(entry->translucentTrack, time);
     }
     if (entry->translucent != 0) {
         entry->actor->drawFlags |= CFE_ACTOR_TRANSLUCENT;
@@ -238,10 +238,10 @@ void cfeEvaluateNode(void *data, int time)
         }
     }
     if (entry->attachSlotTrack != 0) {
-        entry->attachSlot = func_002508C8(entry->attachSlotTrack, time);
+        entry->attachSlot = cfeTrackSampleStep(entry->attachSlotTrack, time);
     }
     if (entry->attachJointTrack != 0) {
-        entry->attachJoint = func_002508C8(entry->attachJointTrack, time);
+        entry->attachJoint = cfeTrackSampleStep(entry->attachJointTrack, time);
     }
     if (entry->attachSlot >= 0) {
         if (entry->actor->parent != 0) {
@@ -259,16 +259,16 @@ void cfeEvaluateNode(void *data, int time)
         }
     }
     if (entry->dampOffsetTrack != 0) {
-        entry->dampOffset = func_002508C8(entry->dampOffsetTrack, time);
+        entry->dampOffset = cfeTrackSampleStep(entry->dampOffsetTrack, time);
     }
     if (entry->firstWordTrack != 0) {
-        entry->firstWord = func_002508C8(entry->firstWordTrack, time);
+        entry->firstWord = cfeTrackSampleStep(entry->firstWordTrack, time);
         XenoActorSetFirstWord(entry->actor, entry->firstWord);
     }
     /* CfeFlagOwner is this file's view of the actor (its flag words and record list). */
     cfeRecordListSample(time, (CfeFlagOwner *) entry->actor, entry->records);
     if (entry->shownTrack != 0) {
-        if (func_002508C8(entry->shownTrack, time) != 0.0f) {
+        if (cfeTrackSampleStep(entry->shownTrack, time) != 0.0f) {
             entry->flags |= CFE_NODE_SHOWN;
         } else {
             entry->flags &= ~CFE_NODE_SHOWN;
@@ -383,10 +383,10 @@ void cfeGroupTableEvaluate(int time)
             cfeGroups[i].position.z = cfeTrackSample(cfeGroups[i].tracks[2], time);
         }
         if (cfeGroups[i].tracks[4] != 0) {
-            cfeGroups[i].light = func_002508C8(cfeGroups[i].tracks[4], time);
+            cfeGroups[i].light = cfeTrackSampleStep(cfeGroups[i].tracks[4], time);
         }
         if (cfeGroups[i].tracks[3] != 0) {
-            if ((int) func_002508C8(cfeGroups[i].tracks[3], time) != 0) {
+            if ((int) cfeTrackSampleStep(cfeGroups[i].tracks[3], time) != 0) {
                 cfeGroups[i].object->drawFlags |= CFE_ACTOR_HIDDEN;
             } else {
                 if (cfeGroups[i].light != 0) {
@@ -451,7 +451,7 @@ extern f32 D_006318B0[2];
 /* Evaluates the studio camera at `time`: its position, rotation and field of view from their tracks, and
  * the camera shake: while it is on, the camera moves from one random offset to the next over shakeFrames
  * frames (the counter only runs when `paused` is 0); off, the offsets are cleared. Then moves the studio. */
-void func_00248390(int time, int paused)
+void cfeCameraEvaluate(int time, int paused)
 {
     float blend;
     float rest;
@@ -482,13 +482,13 @@ void func_00248390(int time, int paused)
         D_006384C0.eval.camera->travel.fov = cfeTrackSample(D_006384C0.eval.fov, time);
     }
     if (D_006384C0.eval.shakeTrack[0] != 0) {
-        D_006384C0.eval.shakeOn = func_002508C8(D_006384C0.eval.shakeTrack[0], time);
+        D_006384C0.eval.shakeOn = cfeTrackSampleStep(D_006384C0.eval.shakeTrack[0], time);
     }
     if (D_006384C0.eval.shakeTrack[1] != 0) {
-        D_006384C0.eval.shakeFrames = func_002508C8(D_006384C0.eval.shakeTrack[1], time);
+        D_006384C0.eval.shakeFrames = cfeTrackSampleStep(D_006384C0.eval.shakeTrack[1], time);
     }
     if (D_006384C0.eval.shakeTrack[2] != 0) {
-        D_006384C0.eval.shakeAmount = func_002508C8(D_006384C0.eval.shakeTrack[2], time);
+        D_006384C0.eval.shakeAmount = cfeTrackSampleStep(D_006384C0.eval.shakeTrack[2], time);
     }
     if (D_006384C0.eval.shakeOn != 0 && D_006384C0.eval.shakeAmount != 0) {
         if (D_006384C0.eval.shakeCounter < 0 && paused == 0) {
@@ -540,7 +540,7 @@ typedef union CfeEffectScale {
     float element[3];
 } CfeEffectScale;
 
-/* The spawned effect record, as far as func_002488F8 writes it. */
+/* The spawned effect record, as far as cfeCommandSpawn writes it. */
 typedef struct CfeSpawnedEffect {
     unsigned char unmodeled_00[0x20];
     CfeEffectScale scale;       /* +0x20 */
@@ -555,7 +555,7 @@ void sefSetRecordOwner(CfeSpawnedEffect *effect, void *owner);
 /* Spawns the command's effect (clearing its owner flags first), sets its scale, runs its first
  * frames (one step per 15 frames) and, when the command names an owner entry, hands the effect
  * to that entry's object. */
-void func_002488F8(CfeEvalCommand *command)
+void cfeCommandSpawn(CfeEvalCommand *command)
 {
     CfeSpawnedEffect *effect;
     unsigned char *entry;
@@ -619,7 +619,7 @@ void cfeCommandReleaseRecords(CfeEvalCommand *command) {
 static inline void cfeCommandRespawn(CfeEvalCommand *command)
 {
     cfeCommandReleaseRecords(command);
-    func_002488F8(command);
+    cfeCommandSpawn(command);
 }
 
 /* Samples the command's tracks at `time` (position, rotation, scale, frames, owner, action) and runs
@@ -655,18 +655,18 @@ void cfeCommandEvaluate(CfeEvalCommand *command, int time)
         command->scale[2] = cfeTrackSample(command->scaleTracks[2], time);
     }
     if (command->framesTrack != 0) {
-        command->frames = (int) func_002508C8(command->framesTrack, time);
+        command->frames = (int) cfeTrackSampleStep(command->framesTrack, time);
     }
     if (command->ownerTrack != 0) {
-        command->owner = (int) func_002508C8(command->ownerTrack, time);
+        command->owner = (int) cfeTrackSampleStep(command->ownerTrack, time);
     }
     if (command->actionTrack != 0) {
-        command->action = (int) func_002508C8(command->actionTrack, time);
+        command->action = (int) cfeTrackSampleStep(command->actionTrack, time);
         switch (command->action) {
         case CFE_ACTION_NONE:
             break;
         case CFE_ACTION_SPAWN:
-            func_002488F8(command);
+            cfeCommandSpawn(command);
             break;
         case CFE_ACTION_SET_OWNER_FLAGS:
             cfeCommandSetOwnerFlags(command);
@@ -779,7 +779,7 @@ void cfeGlobalEvaluate(int sample_param)
         cfeEvalGlobal.evaluated[1].w = cfeTrackSample(cfeEvalGlobal.source[6], sample_param);
     }
     if (cfeEvalGlobal.source[7] != 0) {
-        cfeEvalGlobal.result_int = (int) func_002508C8(cfeEvalGlobal.source[7], sample_param);
+        cfeEvalGlobal.result_int = (int) cfeTrackSampleStep(cfeEvalGlobal.source[7], sample_param);
     }
 }
 
@@ -848,7 +848,7 @@ int cfeEntryTableEvaluate(int sample_param)
 /* Samples the three sources of one slot of cfeEvalSlots. */
 void cfeSlotEvaluate(CfeEvalSlot *slot, int sample_param) {
     if (slot->source_for_result_int != 0) {
-        slot->result_int = (int) func_002508C8(slot->source_for_result_int, sample_param);
+        slot->result_int = (int) cfeTrackSampleStep(slot->source_for_result_int, sample_param);
     }
     if (slot->source_for_sample_float != 0) {
         slot->sample_float = cfeTrackSample(slot->source_for_sample_float, sample_param);
@@ -873,18 +873,18 @@ void cfeSlotTableEvaluate(int sample_param)
 
 /* Updates one sound record at `time`: samples its duration and value tracks and, when it has a
  * duration, sets the volume to the new value over |old - new| / duration steps (at least 1). */
-void func_00249248(CfeSndRecord *record, int time)
+void cfeSndRecordEvaluate(CfeSndRecord *record, int time)
 {
     int old;
     int value;
     int steps;
 
     if (record->durationTrack != 0) {
-        record->duration = (int) func_002508C8(record->durationTrack, time);
+        record->duration = (int) cfeTrackSampleStep(record->durationTrack, time);
     }
     if (record->valueTrack != 0) {
         old = record->value;
-        value = (int) func_002508C8(record->valueTrack, time);
+        value = (int) cfeTrackSampleStep(record->valueTrack, time);
         record->value = value;
         if (record->duration != 0) {
             steps = (int) (__builtin_fabsf((float) (old - value)) / (float) record->duration);
@@ -897,12 +897,12 @@ void func_00249248(CfeSndRecord *record, int time)
 }
 
 /* Sets the target of record 0. The argument's address is taken: the original
-   keeps a frame for the call and does not tail-call func_00249248. */
+   keeps a frame for the call and does not tail-call cfeSndRecordEvaluate. */
 void cfeSndSetTarget(int target)
 {
   int *target_ref;
   target_ref = &target;
-  func_00249248(cfeSndRecords, *target_ref);
+  cfeSndRecordEvaluate(cfeSndRecords, *target_ref);
 }
 
 extern unsigned short sRenderDepthBase;
@@ -921,7 +921,7 @@ extern unsigned short sRenderDepthBase;
 
 /* Queues a Gouraud-shaded line from (x0, y0) in colour0 to (x1, y1) in colour1 at `depth` (pixels,
  * depth test GEQUAL), submitted deferred. */
-void func_00249340(int x0, int y0, int x1, int y1, unsigned int color0, unsigned int color1, unsigned int depth)
+void cfeDrawLine(int x0, int y0, int x1, int y1, unsigned int color0, unsigned int color1, unsigned int depth)
 {
     u64 *p;
     u64 *start;
@@ -961,7 +961,7 @@ void xglVectorInner(float *result, const Vector4 *left, const Vector4 *right);
 
 /* Draws the orientation grid of a rotation: like cfeDrawDirectionGrid, with the grid turned by the angles
  * (x, then y) instead of towards a direction vector. The direction of the angles is computed but not used. */
-void func_00249518(int x, int y, Vector4 *angles, float *color0, float *color1)
+void cfeDrawRotationGrid(int x, int y, Vector4 *angles, float *color0, float *color1)
 {
     Matrix4 view;
     static const AlignedVector4 upAxis = { 0.0f, 1.0f, 0.0f, 1.0f };
@@ -1027,7 +1027,7 @@ void func_00249518(int x, int y, Vector4 *angles, float *color0, float *color1)
             xglVectorMulMat(&line[1], view, &line[1]);
             xglVectorMulMat(&line[2], view, &line[2]);
             xglVectorMulMat(&line[3], view, &line[3]);
-            func_00249340(SCREEN_X(line[0].x, line[0].z), SCREEN_Y(line[0].y, line[0].z),
+            cfeDrawLine(SCREEN_X(line[0].x, line[0].z), SCREEN_Y(line[0].y, line[0].z),
                           SCREEN_X(line[1].x, line[1].z), SCREEN_Y(line[1].y, line[1].z),
                           near_color, far_color, 0xFFFFFF);
             mixed_color = 0;
@@ -1039,7 +1039,7 @@ void func_00249518(int x, int y, Vector4 *angles, float *color0, float *color1)
                                             + (1.0f - near_weight) * CHANNEL(far_color, 16)) << 16;
             mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 24)
                                             + (1.0f - near_weight) * CHANNEL(far_color, 24)) << 24;
-            func_00249340(SCREEN_X(line[2].x, line[2].z), SCREEN_Y(line[2].y, line[2].z),
+            cfeDrawLine(SCREEN_X(line[2].x, line[2].z), SCREEN_Y(line[2].y, line[2].z),
                           SCREEN_X(line[3].x, line[3].z), SCREEN_Y(line[3].y, line[3].z),
                           mixed_color, mixed_color, 0xFFFFFF);
             near_weight += 0.1f;
@@ -1049,7 +1049,7 @@ void func_00249518(int x, int y, Vector4 *angles, float *color0, float *color1)
         tip.z = 70.0f;
         tip.w = 1.0f;
         xglVectorMulMat(&tip, view, &tip);
-        func_00249340(SCREEN_X(0.0f, tip.z), SCREEN_Y(0.0f, tip.z),
+        cfeDrawLine(SCREEN_X(0.0f, tip.z), SCREEN_Y(0.0f, tip.z),
                       SCREEN_X(tip.x, tip.z), SCREEN_Y(tip.y, tip.z),
                       0x80FFFFFF, 0x80FFFFFF, 0xFFFFFF);
     }
@@ -1128,7 +1128,7 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
             xglVectorMulMat(&line[1], view, &line[1]);
             xglVectorMulMat(&line[2], view, &line[2]);
             xglVectorMulMat(&line[3], view, &line[3]);
-            func_00249340(SCREEN_X(line[0].x, line[0].z), SCREEN_Y(line[0].y, line[0].z),
+            cfeDrawLine(SCREEN_X(line[0].x, line[0].z), SCREEN_Y(line[0].y, line[0].z),
                           SCREEN_X(line[1].x, line[1].z), SCREEN_Y(line[1].y, line[1].z),
                           near_color, far_color, 0xFFFFFF);
             mixed_color = 0;
@@ -1136,7 +1136,7 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
             mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 8) + (1.0f - near_weight) * CHANNEL(far_color, 8)) << 8;
             mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 16) + (1.0f - near_weight) * CHANNEL(far_color, 16)) << 16;
             mixed_color += (unsigned char) (near_weight * CHANNEL(near_color, 24) + (1.0f - near_weight) * CHANNEL(far_color, 24)) << 24;
-            func_00249340(SCREEN_X(line[2].x, line[2].z), SCREEN_Y(line[2].y, line[2].z),
+            cfeDrawLine(SCREEN_X(line[2].x, line[2].z), SCREEN_Y(line[2].y, line[2].z),
                           SCREEN_X(line[3].x, line[3].z), SCREEN_Y(line[3].y, line[3].z),
                           mixed_color, mixed_color, 0xFFFFFF);
             near_weight += 0.1f;
@@ -1146,7 +1146,7 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
         tip.z = 70.0f;
         tip.w = 1.0f;
         xglVectorMulMat(&tip, view, &tip);
-        func_00249340(SCREEN_X(0.0f, tip.z), SCREEN_Y(0.0f, tip.z),
+        cfeDrawLine(SCREEN_X(0.0f, tip.z), SCREEN_Y(0.0f, tip.z),
                       SCREEN_X(tip.x, tip.z), SCREEN_Y(tip.y, tip.z),
                       0x80FFFFFF, 0x80FFFFFF, 0xFFFFFF);
     }
@@ -1186,7 +1186,7 @@ typedef struct CfeMovieScratch {
 /* Draws the movie frame of the entry on its quad: the corners are moved by the entry's translation, rotation
  * and scale and projected (nothing is drawn if a corner is clipped), the frame is uploaded into the texture page
  * and drawn as a textured strip whose alpha is the z of the entry's scale. */
-void func_0024A8C0(CfeEvalEntry *entry)
+void cfeEntryDrawMovie(CfeEvalEntry *entry)
 {
     u32 upload[8];
     XglCamera *camera = xglStudioSelectGetActiveCamera(0);
@@ -1318,7 +1318,7 @@ void cfeUpdateEntries(int noPlay)
         if (noPlay == 0) {
             xglMoviePlay(&cfeEvalEntries[i].movie);
         }
-        func_0024A8C0(&cfeEvalEntries[i]);
+        cfeEntryDrawMovie(&cfeEvalEntries[i]);
         }
     }
 }

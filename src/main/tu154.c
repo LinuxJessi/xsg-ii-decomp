@@ -74,7 +74,7 @@ void func_00252838(void)
 
 /* 1 when origin lies inside the triangle first, second, third (seen along the triangle's normal): the normals
  * of the three edge triangles around origin all point the same way. */
-int func_00252840(const Vector4 *first, const Vector4 *second, const Vector4 *third, const Vector4 *origin)
+int MMathPointInTriangle(const Vector4 *first, const Vector4 *second, const Vector4 *third, const Vector4 *origin)
 {
     AlignedVector4 toFirst;
     AlignedVector4 toSecond;

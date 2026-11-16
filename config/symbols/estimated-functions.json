@@ -42054,7 +42054,7 @@
      2
     ],
     [
-     "func_002424D8",
+     "gifStateDrawRadialBlur",
      2368728,
      1984,
      2
@@ -42084,7 +42084,7 @@
      2
     ],
     [
-     "func_002439D0",
+     "gifStateCopyDisplayToWork",
      2374096,
      388,
      2
@@ -42114,7 +42114,7 @@
      2
     ],
     [
-     "func_00245728",
+     "gifBreakShardUpdate",
      2381608,
      804,
      2
@@ -42276,7 +42276,7 @@
      2
     ],
     [
-     "func_00246FF8",
+     "gifStateStartWhiteShake",
      2387960,
      212,
      2
@@ -42426,13 +42426,13 @@
      2
     ],
     [
-     "func_00248390",
+     "cfeCameraEvaluate",
      2392976,
      1384,
      2
     ],
     [
-     "func_002488F8",
+     "cfeCommandSpawn",
      2394360,
      356,
      2
@@ -42498,7 +42498,7 @@
      2
     ],
     [
-     "func_00249248",
+     "cfeSndRecordEvaluate",
      2396744,
      204,
      2
@@ -42510,13 +42510,13 @@
      2
     ],
     [
-     "func_00249340",
+     "cfeDrawLine",
      2396992,
      468,
      2
     ],
     [
-     "func_00249518",
+     "cfeDrawRotationGrid",
      2397464,
      2484,
      2
@@ -42528,7 +42528,7 @@
      2
     ],
     [
-     "func_0024A8C0",
+     "cfeEntryDrawMovie",
      2402496,
      1804,
      2
@@ -42540,13 +42540,13 @@
      2
     ],
     [
-     "func_0024B0E8",
+     "cfeListSetKeyMode",
      2404584,
      328,
      2
     ],
     [
-     "func_0024B230",
+     "cfeListSetAngleKeyMode",
      2404912,
      328,
      2
@@ -42558,7 +42558,7 @@
      2
     ],
     [
-     "cfeStrLastCharPos",
+     "cfeStrCountChar",
      2405368,
      88,
      2
@@ -42582,7 +42582,7 @@
      2
     ],
     [
-     "func_0024B6D8",
+     "cfeMapInitRecords",
      2406104,
      572,
      2
@@ -42804,13 +42804,13 @@
      2
     ],
     [
-     "func_0024EB48",
+     "cfeLightSetInit",
      2419528,
      344,
      2
     ],
     [
-     "func_0024ECA0",
+     "cfeLightRowsInit",
      2419872,
      132,
      2
@@ -42948,13 +42948,13 @@
      2
     ],
     [
-     "func_0024F418",
+     "cfeTextNextLine",
      2421784,
      100,
      2
     ],
     [
-     "func_0024F480",
+     "cfeTextCompareLine",
      2421888,
      112,
      2
@@ -42978,31 +42978,31 @@
      2
     ],
     [
-     "func_0024F698",
+     "cfeListSetValue",
      2422424,
      148,
      2
     ],
     [
-     "func_0024F730",
+     "cfeListSetValueLinear",
      2422576,
      144,
      2
     ],
     [
-     "func_0024F7C0",
+     "cfeListSetAngle",
      2422720,
      156,
      2
     ],
     [
-     "func_0024F860",
+     "cfeListSetAngleLinear",
      2422880,
      152,
      2
     ],
     [
-     "func_0024F8F8",
+     "cfeListCopyKey",
      2423032,
      72,
      2
@@ -43038,7 +43038,7 @@
      2
     ],
     [
-     "func_0024FC90",
+     "cfeTrackUpdateDirections",
      2423952,
      1340,
      2
@@ -43062,7 +43062,7 @@
      2
     ],
     [
-     "func_00250478",
+     "cfeTrackBezier",
      2425976,
      840,
      2
@@ -43074,7 +43074,7 @@
      2
     ],
     [
-     "func_002508C8",
+     "cfeTrackSampleStep",
      2427080,
      348,
      2
@@ -43098,19 +43098,19 @@
      2
     ],
     [
-     "cfeTrackFindAtOrBefore",
+     "cfeTrackFindAtOrAfter",
      2427704,
      128,
      2
     ],
     [
-     "func_00250BB8",
+     "cfeTrackFindNeighbor",
      2427832,
      176,
      2
     ],
     [
-     "func_00250C68",
+     "cfeTracksFindNearest",
      2428008,
      240,
      2
@@ -43122,7 +43122,7 @@
      2
     ],
     [
-     "func_00250D88",
+     "cfeTrackCountInRange",
      2428296,
      60,
      2
@@ -43134,7 +43134,7 @@
      2
     ],
     [
-     "func_00250E10",
+     "cfeTrackCountValueRunsInRange",
      2428432,
      116,
      2
@@ -43146,7 +43146,7 @@
      2
     ],
     [
-     "func_00250EF0",
+     "cfeTrackShiftTimesBack",
      2428656,
      160,
      2
@@ -43632,7 +43632,7 @@
      2
     ],
     [
-     "func_00252840",
+     "MMathPointInTriangle",
      2435136,
      252,
      2
@@ -52134,7 +52134,7 @@
      2
     ],
     [
-     "func_002A1790",
+     "atanf",
      2758544,
      668,
      2
@@ -52182,7 +52182,7 @@
      2
     ],
     [
-     "func_002A1DB0",
+     "sqrt",
      2760112,
      20,
      2
@@ -52194,7 +52194,7 @@
      2
     ],
     [
-     "func_002A1DE0",
+     "asinf",
      2760160,
      20,
      2
@@ -52836,7 +52836,7 @@
      2
     ],
     [
-     "func_002AA7F0",
+     "strcat",
      2795504,
      300,
      2

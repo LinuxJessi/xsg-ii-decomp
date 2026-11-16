@@ -65,7 +65,7 @@ typedef union CfeEvalVector {
  * handles. */
 typedef struct CfeEvalRecord {
     CfeEvalVector evaluated[3]; /* +0x00: position (w = 1), angles, scale */
-    CfeEvalVector initial[2];   /* +0x30: the position and angles the record starts from (func_0024B6D8) */
+    CfeEvalVector initial[2];   /* +0x30: the position and angles the record starts from (cfeMapInitRecords) */
     CfeTrackNode *source[9];    /* +0x50 */
     unsigned char unmodeled_74[0x80 - 0x74];
 } CfeEvalRecord;
@@ -175,7 +175,7 @@ typedef struct CfeNode {
 /* Functions of src/main/cfeEvaluate.c that cfePlugIn.c calls. */
 int cfeEvaluateNodes(int sample_param);
 void cfeGroupTableEvaluate(int time);
-void func_00248390(int time, int paused);
+void cfeCameraEvaluate(int time, int paused);
 void cfeCommandTableEvaluate(int time);
 void cfeEvaluateDirections(int time);
 void cfeGlobalEvaluate(int sample_param);

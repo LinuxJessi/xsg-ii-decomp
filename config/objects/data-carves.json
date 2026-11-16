@@ -78564,7 +78564,7 @@
      "generated_by": [
       "cfeCommandEvaluate",
       "cfeDrawDirectionGrid",
-      "func_00249518"
+      "cfeDrawRotationGrid"
      ],
      "c_owned_symbols": [
       "jtbl_0068D200",
@@ -78595,8 +78595,8 @@
       "0x0068cd70"
      ],
      "generated_by": [
-      "func_0024B0E8",
-      "func_0024B230"
+      "cfeListSetKeyMode",
+      "cfeListSetAngleKeyMode"
      ],
      "c_owned_symbols": [
       "jtbl_0068CD30",

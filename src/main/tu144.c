@@ -91,7 +91,7 @@ CfeTrackNode *cfeListFindOrAdd(CfeTrackNode **list, int key)
 }
 
 /* Sets the 8.8 fixed-point value of the key's node and clears flag 0x2, then updates the list. */
-CfeTrackNode *func_0024F698(CfeTrackNode **list, int key, float value)
+CfeTrackNode *cfeListSetValue(CfeTrackNode **list, int key, float value)
 {
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
     int whole;
@@ -99,24 +99,24 @@ CfeTrackNode *func_0024F698(CfeTrackNode **list, int key, float value)
     node->flags &= ~2;
     whole = (int) value;
     node->value = (whole << 8) + (int) ((value - (float) whole) * 256.0f);
-    func_0024FC90(*list);
+    cfeTrackUpdateDirections(*list);
     return node;
 }
 
-/* Same as func_0024F698 but sets flag 0x2. */
-CfeTrackNode *func_0024F730(CfeTrackNode **list, int key, float value)
+/* Same as cfeListSetValue but sets flag 0x2. */
+CfeTrackNode *cfeListSetValueLinear(CfeTrackNode **list, int key, float value)
 {
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
     int whole = (int) value;
 
     node->flags |= 2;
     node->value = (whole << 8) + (int) ((value - (float) whole) * 256.0f);
-    func_0024FC90(*list);
+    cfeTrackUpdateDirections(*list);
     return node;
 }
 
-/* Like func_0024F698 for an angle key: also unwraps the angles along the list. */
-CfeTrackNode *func_0024F7C0(CfeTrackNode **list, int key, float value)
+/* Like cfeListSetValue for an angle key: also unwraps the angles along the list. */
+CfeTrackNode *cfeListSetAngle(CfeTrackNode **list, int key, float value)
 {
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
     int whole;
@@ -125,12 +125,12 @@ CfeTrackNode *func_0024F7C0(CfeTrackNode **list, int key, float value)
     whole = (int) value;
     node->value = (whole << 8) + (int) ((value - (float) whole) * 256.0f);
     cfeChainUnwrapAngles(*list);
-    func_0024FC90(*list);
+    cfeTrackUpdateDirections(*list);
     return node;
 }
 
-/* Same as func_0024F7C0 but sets flag 0x2. */
-CfeTrackNode *func_0024F860(CfeTrackNode **list, int key, float value)
+/* Same as cfeListSetAngle but sets flag 0x2. */
+CfeTrackNode *cfeListSetAngleLinear(CfeTrackNode **list, int key, float value)
 {
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
     int whole = (int) value;
@@ -138,18 +138,18 @@ CfeTrackNode *func_0024F860(CfeTrackNode **list, int key, float value)
     node->flags |= 2;
     node->value = (whole << 8) + (int) ((value - (float) whole) * 256.0f);
     cfeChainUnwrapAngles(*list);
-    func_0024FC90(*list);
+    cfeTrackUpdateDirections(*list);
     return node;
 }
 
 /* Copies the flags and the value of `source` to the node of `key` (found or added), then updates the list. */
-void func_0024F8F8(CfeTrackNode **list, CfeTrackNode *source, int key)
+void cfeListCopyKey(CfeTrackNode **list, CfeTrackNode *source, int key)
 {
     CfeTrackNode *node = cfeListFindOrAdd(list, key);
 
     node->flags = source->flags;
     node->value = source->value;
-    func_0024FC90(*list);
+    cfeTrackUpdateDirections(*list);
 }
 
 /* Removes the first node whose key is `key` from the list starting at `head`, frees it (cfeNodeRelease) and

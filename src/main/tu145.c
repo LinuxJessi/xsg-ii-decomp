@@ -50,7 +50,7 @@ void cfeEntryResetDirs(CfeTrackNode *entry)
  * (last key) or from the previous to the next key. Flag 0x2 gives a middle key a first direction from the
  * previous key only, and makes it the previous key's second direction (also on the last key). A track of one
  * key gets (1, 0). The reset flags of the three keys are applied after each step. */
-void func_0024FC90(CfeTrackNode *track)
+void cfeTrackUpdateDirections(CfeTrackNode *track)
 {
     CfeTrackNode *prev = 0;
     CfeTrackNode *node = track;
@@ -164,7 +164,7 @@ extern f32 cfeTimeScale;
 
 /* Cubic in the time elapsed since the key (scaled by cfeTimeScale): coefficients[0..3], Horner form. The time
  * comes first: EABI passes it in $f12 either way, and this order gives the argument setup of its caller
- * func_00250478. */
+ * cfeTrackBezier. */
 f32 cfeEntryEvalCubic(f32 time, CfeTrackNode *entry, f32 *coefficients)
 {
     f32 elapsed = (time - (f32) entry->startTime) * cfeTimeScale;
@@ -178,7 +178,7 @@ extern f32 D_006317B8;
 
 /* The angle at `time` on the Bezier curve between the keys `from` and `to`: from leaves along its second
  * direction, to arrives along its first one (both normalized; a zero length counts as 1e-7). */
-float func_00250478(CfeTrackNode *from, CfeTrackNode *to, float time)
+float cfeTrackBezier(CfeTrackNode *from, CfeTrackNode *to, float time)
 {
     f32 x[4];
     f32 y[4];
@@ -217,12 +217,12 @@ float func_00250478(CfeTrackNode *from, CfeTrackNode *to, float time)
     return cfeEntryEvalCubic(time, from, coefficients);
 }
 
-/* Key flag: interpolate linearly to the next key (cfeTrackLerp) instead of by func_00250478. */
+/* Key flag: interpolate linearly to the next key (cfeTrackLerp) instead of by cfeTrackBezier. */
 #define CFE_TRACK_LINEAR 0x2
 
 /* The track's value at `time`: 0 without keys, the first key's value before it, the last key's value
  * after the end, and in between the two surrounding keys interpolated (linearly with CFE_TRACK_LINEAR,
- * else by func_00250478). */
+ * else by cfeTrackBezier). */
 float cfeTrackSample(CfeTrackNode *track, int time)
 {
     CfeTrackNode *node = track;
@@ -240,7 +240,7 @@ float cfeTrackSample(CfeTrackNode *track, int time)
             if (node->flags & CFE_TRACK_LINEAR) {
                 return cfeTrackLerp(node, next, time);
             }
-            return func_00250478(node, next, time);
+            return cfeTrackBezier(node, next, time);
         }
         node = next;
     }
@@ -252,7 +252,7 @@ float cfeTrackSample(CfeTrackNode *track, int time)
 
 /* The value of the key in effect at `time` (the last key that starts at or before it, the first key before
  * the start): as a whole number for integer tracks, else from 8.8 fixed point. */
-float func_002508C8(CfeTrackNode *track, int time)
+float cfeTrackSampleStep(CfeTrackNode *track, int time)
 {
     CfeTrackNode *node = track;
     CfeTrackNode *next;
@@ -330,7 +330,7 @@ CfeTrackNode *cfeTrackFindTime(CfeTrackNode *node, int time)
 
 /* The first key when the track starts after `time`, the key exactly at `time`, else the first key
  * after `time`; null when the track ends before it. */
-CfeTrackNode *cfeTrackFindAtOrBefore(CfeTrackNode *node, int time)
+CfeTrackNode *cfeTrackFindAtOrAfter(CfeTrackNode *node, int time)
 {
     CfeTrackNode *found;
     CfeTrackNode *next;
@@ -357,10 +357,10 @@ CfeTrackNode *cfeTrackFindAtOrBefore(CfeTrackNode *node, int time)
     return found;
 }
 
-/* The key next to `time` in `direction` (1 = later, any other value = earlier): before the start the first
+/* The key next to `time` in `direction` (-1 = earlier, any other value = later): before the start the first
  * key; at a key the one after it (later) or before it (earlier); between two keys the later or the earlier
  * one; after the end the last key; null for an empty track. */
-CfeTrackNode *func_00250BB8(CfeTrackNode *node, int time, int direction)
+CfeTrackNode *cfeTrackFindNeighbor(CfeTrackNode *node, int time, int direction)
 {
     CfeTrackNode *found;
     CfeTrackNode *next;
@@ -405,15 +405,15 @@ CfeTrackNode *func_00250BB8(CfeTrackNode *node, int time, int direction)
 
 
 /* The nearest key after `time` (direction > 0) or before it (otherwise) over `count` tracks, found
- * per track with func_00250BB8; null when no track has one. */
-CfeTrackNode *func_00250C68(CfeTrackNode **tracks, int count, int time, int direction)
+ * per track with cfeTrackFindNeighbor; null when no track has one. */
+CfeTrackNode *cfeTracksFindNearest(CfeTrackNode **tracks, int count, int time, int direction)
 {
     CfeTrackNode *best = 0;
     CfeTrackNode *node;
     int i;
 
     for (i = 0; i < count; i++) {
-        node = func_00250BB8(tracks[i], time, direction);
+        node = cfeTrackFindNeighbor(tracks[i], time, direction);
         if (node == 0) {
             continue;
         }
@@ -456,7 +456,7 @@ int cfeTrackCount(CfeTrackNode *entry)
 }
 
 /* Number of keys of the track with lower <= startTime <= upper. */
-int func_00250D88(CfeTrackNode *node, int lower, int upper)
+int cfeTrackCountInRange(CfeTrackNode *node, int lower, int upper)
 {
     int count = 0;
 
@@ -488,7 +488,7 @@ int cfeTrackCountValueRuns(CfeTrackNode *node)
 }
 
 /* Number of runs of equal angles among the keys with lower <= startTime <= upper (0 for none). */
-int func_00250E10(CfeTrackNode *node, int lower, int upper)
+int cfeTrackCountValueRunsInRange(CfeTrackNode *node, int lower, int upper)
 {
     int count;
     int value;
@@ -523,7 +523,7 @@ int func_00250E10(CfeTrackNode *node, int lower, int upper)
 /* Moves every key from the first one at or after `time` by `delta`, then updates the track. */
 void cfeTrackShiftTimes(CfeTrackNode *track, int time, int delta)
 {
-    CfeTrackNode *node = cfeTrackFindAtOrBefore(track, time);
+    CfeTrackNode *node = cfeTrackFindAtOrAfter(track, time);
     CfeTrackNode *next;
 
     while (node != 0) {
@@ -531,14 +531,14 @@ void cfeTrackShiftTimes(CfeTrackNode *track, int time, int delta)
         node->startTime += delta;
         node = next;
     }
-    func_0024FC90(track);
+    cfeTrackUpdateDirections(track);
 }
 
 /* Moves every key from the first one at or after `time` back by `delta`, at most to one tick after the
  * key before it, then updates the track. A zero delta changes nothing. */
-void func_00250EF0(CfeTrackNode *track, int time, int delta)
+void cfeTrackShiftTimesBack(CfeTrackNode *track, int time, int delta)
 {
-    CfeTrackNode *node = cfeTrackFindAtOrBefore(track, time);
+    CfeTrackNode *node = cfeTrackFindAtOrAfter(track, time);
     CfeTrackNode *next;
     int *start;
     int gap;
@@ -561,7 +561,7 @@ void func_00250EF0(CfeTrackNode *track, int time, int delta)
             node = next;
         }
     }
-    func_0024FC90(track);
+    cfeTrackUpdateDirections(track);
 }
 
 /* 1 when every key of the track has the same angle; 0 for an empty track. */

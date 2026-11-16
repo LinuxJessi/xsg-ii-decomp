@@ -103,7 +103,7 @@ void cfeCommandTableInit(void) {
 
 /* Sets the light set the CFE preview uses: three directional lights given as angles (turned into
  * directions here), ambient 0.2 and no point lights, then makes it the pxy default light. */
-void func_0024EB48(XglLightSet *light)
+void cfeLightSetInit(XglLightSet *light)
 {
     Vector4 *direction;
     int i;
@@ -156,9 +156,9 @@ extern XglLightSet cfeDirectionTable;
 
 /* Sets up the light set cfeDirectionTable, clears cfeDirections and points its rows at the ambient colour
  * and at the direction and colour of lights 0 to 2. */
-void func_0024ECA0(void)
+void cfeLightRowsInit(void)
 {
-    func_0024EB48(&cfeDirectionTable);
+    cfeLightSetInit(&cfeDirectionTable);
     memset(cfeDirections, 0, sizeof(cfeDirections));
     cfeDirections[0].direction = 0;
     cfeDirections[0].color = &cfeDirectionTable.ambientColor.x;
@@ -280,7 +280,7 @@ void cfeInit(void) {
     cfeEvalRecordsInit();
     cfeStudioInit();
     cfeCommandTableInit();
-    func_0024ECA0();
+    cfeLightRowsInit();
     cfePlugInRecordCountReset();
     cfeEvalGlobalInit();
     cfeEvalEntriesInit();

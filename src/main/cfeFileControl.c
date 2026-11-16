@@ -8,7 +8,7 @@ typedef char *va_list;
 #define va_end(ap) ((void)0)
 
 int sceClose(int fd);
-void func_002AA7F0(char *destination, const char *source);
+void strcat(char *destination, const char *source);
 void *memset(void *destination, int value, unsigned int size);
 int strlen(const char *text);
 int vsprintf(char *buffer, const char *format, va_list args);
@@ -71,7 +71,7 @@ void cfeFileLogWriteIndent(int count) {
         remaining = count;
         do {
             remaining -= 1;
-            func_002AA7F0(cfeFileTemp, cfeFileLogIndentStr);
+            strcat(cfeFileTemp, cfeFileLogIndentStr);
         } while (remaining != 0);
     }
 }
@@ -85,7 +85,7 @@ void cfeFileLogf(const char *format, ...) {
     if (cfeFileTemp != 0) {
         vsprintf((char *) 0x70000000, format, args);
         cfeFileLogWriteIndent(cfeFileLogIndent);
-        func_002AA7F0(cfeFileTemp, (const char *) 0x70000000);
+        strcat(cfeFileTemp, (const char *) 0x70000000);
     }
     va_end(args);
 }

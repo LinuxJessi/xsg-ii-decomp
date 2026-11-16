@@ -117,7 +117,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu234", drawSellItemList);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", func_002827C0);
 
-int func_002AA7F0();
+int strcat();
 char *strchr(char *s, int c);
 extern int D_0069DCA0;
 extern unsigned char fmtString[];
@@ -136,25 +136,25 @@ void drawSellCloseButtons(LabelWidget *widget) {
     line_y = widget->y + 7;
     sprintf((char *) 0x70000000, fmtString, fontStylePrefix);
     zoom_tag = fontZoomTag(0xE);
-    func_002AA7F0((char *) 0x70000000, zoom_tag);
-    func_002AA7F0((char *) 0x70000000, fontPropTag);
+    strcat((char *) 0x70000000, zoom_tag);
+    strcat((char *) 0x70000000, fontPropTag);
     text_end = strchr((char *) 0x70000000, 0);
     if (state->flag != 0) {
         color_tag = fontColorTag(0x828282);
-        func_002AA7F0((char *) 0x70000000, color_tag);
+        strcat((char *) 0x70000000, color_tag);
     } else {
         color_tag = fontColorTag(0x4B4B4B);
-        func_002AA7F0((char *) 0x70000000, color_tag);
+        strcat((char *) 0x70000000, color_tag);
     }
     if (D_0069DCA0 == 0) {
-        func_002AA7F0((char *) 0x70000000, sellActionSell);
+        strcat((char *) 0x70000000, sellActionSell);
     }
     xglFontPrint(0xB9, 0x15B, line_y, (char *) 0x70000000);
     *text_end = '\0';
     color_tag = fontColorTag(0x828282);
-    func_002AA7F0((char *) 0x70000000, color_tag);
+    strcat((char *) 0x70000000, color_tag);
     if (D_0069DCA0 == 0) {
-        func_002AA7F0((char *) 0x70000000, sellActionClose);
+        strcat((char *) 0x70000000, sellActionClose);
     }
     xglFontPrint(0x11D, 0x15B, line_y, (char *) 0x70000000);
 }
@@ -214,7 +214,7 @@ void drawEmptyNotice(struct TextPosition *pos) {
     color_tag = fontColorTag(0x50509C);
     sprintf((u8 *) 0x70000000, fmtThreeStrings, fontStylePrefix, fontPropTag, color_tag);
     if (D_0069DCA0 == 0) {
-        func_002AA7F0((u8 *) 0x70000000, sellNoItemsText);
+        strcat((u8 *) 0x70000000, sellNoItemsText);
     }
     xglFontPrint(pos->x + 0x7A, pos->y + 0x3B, pos->color, (u8 *) 0x70000000);
 }
@@ -417,7 +417,7 @@ void appendXAdvanceTag(s32 dst, s32 advance_x) {
 
     memset(&tag[0], 0, sizeof(tag));
     sprintf(&tag[0], fmtXAdvance, advance_x);
-    func_002AA7F0(dst, &tag[0]);
+    strcat(dst, &tag[0]);
 }
 
 extern unsigned char fmtDecimal[];
@@ -428,7 +428,7 @@ void appendNumberText(s32 dst, s32 number) {
 
     memset(&number_text[0], 0, sizeof(number_text));
     sprintf(&number_text[0], fmtDecimal, number);
-    func_002AA7F0(dst, &number_text[0]);
+    strcat(dst, &number_text[0]);
 }
 
 int textFirstRowY(const TextLayout *layout)
