@@ -1,8 +1,9 @@
 #include "common.h"
 #include "shared.h"
 
-/* Converts a coordinate to 12.4 fixed point with half-unit rounding by sign: the same conversion as gsRoundCoord
-   (tu202.c). */
+/* Converts a coordinate to 12.4 fixed point with half-unit rounding by sign: (value << 4) + 8 above zero, else
+   -(|value| << 4) - 8, so 0 gives -8; the same conversion as gsRoundCoord (tu202.c). The absolute value is taken
+   at entry as the original does: written as (value << 4) - 8 in the branch, fd.sh gives 6 insns for the 11. */
 int xglRoundCoord(int value)
 {
     int magnitude = (value >= 0) ? value : -value;

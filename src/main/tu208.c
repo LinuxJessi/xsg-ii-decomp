@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "vu0_macro.h"
 
 /* Source record read by recordProjectQuad: an int value and an (x, y) screen offset added to corner 0. */
 typedef struct RecordSource {
@@ -129,8 +130,10 @@ void recordDrawBatchQuad(int packet, Vector4 *corners, RecordBatch *batch);
 void func_00277EA0(int packet, Vector4 *corners, RecordBatch *batch);
 
 /*
- * Draws the record's curve as columns of quads: one column per time step, filled in rows up to the
- * sampled value. The record is passed on untyped: each helper reads its own partial view of it
+ * Draws the record's curve as columns of quads, one column per time step: a column whose sample is out of range
+ * (animSampleSegment state 2) is skipped, state 0 draws one quad from bottom to top, otherwise all rows quads are
+ * stacked from the bottom, projected by the sample and coloured from white towards color by sample / maxValue.
+ * The record is passed on untyped: each helper reads its own partial view of it
  * (RecordSource, RecordBatch, AnimSegment in tu209.c).
  */
 void recordDrawCurve(void *record, int packet)
@@ -238,7 +241,6 @@ void recordProjectQuad(Vector4 *corners, RecordSource *source, void *params)
     recordRotateCorner(&corners[3], params, value, originX, originY);
 }
 
-#include "vu0_macro.h"
 
 extern f32 D_0069DDF8;
 void xglMatrixUnit(Matrix4 matrix);

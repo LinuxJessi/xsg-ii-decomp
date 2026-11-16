@@ -7,7 +7,8 @@
 INCLUDE_ASM("asm/main/nonmatchings/tu197", MMathMatrixBetweenVectors);
 
 extern void *memset(void *destination, int value, unsigned int count);
-extern unsigned short MSeObjReady; /* unsigned: MSeObjProc tests it with lhu, andi 1, andi 0xffff */
+extern unsigned short MSeObjReady; /* unsigned: MSeObjProc tests it with lhu, andi 1, andi 0xffff (as short, fd.sh
+                                     MSeObjProc 14/172 in place) */
 extern int MSeObjCount;
 extern int MSeObjPool;
 extern int MSeMode1Hook;

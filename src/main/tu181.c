@@ -16,7 +16,8 @@ typedef struct SdvSequence {
 #define SDV_KEY_WAIT_HIT 0x1000     /* the row waits for the hit signal */
 #define SDV_KEY_FRAME_MASK 0xFFF    /* frame of a hit-wait row */
 
-/* Actor select bits of a key row: which actor of the effect request the row applies to. */
+/* Actor select bits of a key row: which actor of the effect request the row applies to. They live in the select
+   column, not the frame column, so LINK_1 and LINK_3 share their values with SDV_KEY_END and SDV_KEY_WAIT_HIT. */
 #define SDV_KEY_SOURCE 0x40         /* the request's source actor */
 #define SDV_KEY_TARGET 0x80         /* the request's target actor */
 #define SDV_KEY_LINK_1 0x400        /* the request's linked actors (links[0..2]) */

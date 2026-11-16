@@ -77,17 +77,6 @@ typedef struct GsQueueGrid {
     int transformEnd;
 } GsQueueGrid;
 
-/* The 0x7C-byte draw record: the header is shared, the words from 0x20 on depend on the primitive. Each drawing
-   function below takes the member of its primitive. */
-typedef union GsQueueRecord {
-    GsQueueContext header;
-    GsQueueRing ring;
-    GsQueuePresetQuad presetQuad;
-    GsQueuePresetUvQuad presetUvQuad;
-    GsQueueCircle circle;
-    GsQueueGrid grid;
-} GsQueueRecord;
-
 extern int D_0069DDFC; /* wave phase in degrees, advanced by phaseSpeed on every orbitDrawRing call */
 extern float D_0069DE00; /* degrees to radians */
 
