@@ -5,7 +5,9 @@ extern u16 sRenderDisplayBase;
 extern u16 sRenderFrameBase;
 extern u16 D_00645842;
 
-u64 func_00274650(int buffer, int flag)
+/* GS FRAME register value of a 512-pixel-wide (FBW 8) frame page: buffer 0 the display page, 1 the page D_00645842,
+   2 sRenderFrameBase; flag is not read. */
+u64 xglFrameReg(int buffer, int flag)
 {
     switch (buffer) {
     case 0:
@@ -21,7 +23,8 @@ u64 func_00274650(int buffer, int flag)
 
 extern void xglVectorNormal_001A9200(Vector4 *destination, const Vector4 *source);
 
-void func_002746B8(Vector4 *v)
+/* Normalizes v in place (through a copy of it). */
+void xglVectorNormalInPlace(Vector4 *v)
 {
     Vector4 source = *v;
 

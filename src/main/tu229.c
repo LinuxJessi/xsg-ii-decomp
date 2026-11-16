@@ -189,7 +189,7 @@ void sceVif1PkOpenDirectHLCode(XglPacket *packet, int mode);
 void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 u64 xglFrameTex0(int buffer, int flag);
-u64 func_00274650(int buffer, int flag);
+u64 xglFrameReg(int buffer, int flag);
 int xglBlendAlpha(int blend);
 void func_002803D8(int *left, int *top, int *bottom, int *right, TalkWindow *window, int mode, float scale);
 unsigned int func_002805C8(unsigned int color, float scale);
@@ -376,7 +376,7 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
                     pairs[pairCount].ad.data = xglBlendAlpha(0);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_FRAME_1;
-                    pairs[pairCount].ad.data = func_00274650(2, 0);
+                    pairs[pairCount].ad.data = xglFrameReg(2, 0);
                     pairCount++;
                     /* A black alpha mask into the work frame: opaque at the edges, clear in the middle. */
                     pairs[pairCount].ad.data = 0x14E;
@@ -470,7 +470,7 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
                     pairCount++;
                     /* Then the work frame, masked, through the scissor of the window. */
                     pairs[pairCount].ad.reg = GS_FRAME_1;
-                    pairs[pairCount].ad.data = func_00274650(0, 0);
+                    pairs[pairCount].ad.data = xglFrameReg(0, 0);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_TEX0_1;
                     pairs[pairCount].ad.data = xglFrameTex0(2, 0);

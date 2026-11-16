@@ -11,8 +11,8 @@ void func_00260840(void) {
 INCLUDE_ASM("asm/main/nonmatchings/tu166", sefDeleteWaitEffect);
 
 /* Starts an effect from the 0x40-byte request at object: copies it into sefRequestBuffer, allocates a record with
- * scGetKeyRecord, passes value on to sefCreateEffectRecordDefault and sets flag bits in the word at +0x44 of the record in
- * sefEffectRecords. D_0069DC20 (0x3D or 0x3E) selects the path. */
+ * scGetKeyRecord, passes value on to sefCreateEffectRecordDefault and sets flag bits in the word at +0x44 of the
+ * record in sefEffectRecords. D_0069DC20 (0x3D or 0x3E) selects the path. */
 INCLUDE_ASM("asm/main/nonmatchings/tu166", sefStartEffect);
 
 void sefStartEffect(void *object, int value);

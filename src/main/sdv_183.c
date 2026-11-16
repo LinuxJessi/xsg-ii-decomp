@@ -1107,7 +1107,8 @@ void sdvDrawSpecial(SdvSpecialOwner *special)
     }
 }
 
-/* The seven words of an sef request: sdvExecAlter copies them into the sef request buffer and hands them to func_0025E678. */
+/* The seven words of an sef request: sdvExecAlter copies them into the sef request buffer and hands them to
+   func_0025E678. */
 typedef struct SdvSefRequest {
     struct SefActor *actor;             /* +0x00 the SefActor of sef_164.c */
     int params[6];                      /* +0x04 */
@@ -1129,7 +1130,8 @@ typedef struct SdvAlterRequest {
     float width;                  /* +0x2C */
     float height;                 /* +0x30 */
     float minDelta;               /* +0x34 a shorter move keeps the previous delta */
-    short parts[2];               /* +0x38 sefGetPosition kinds; with follow set, parts[1] is the heading turn rate in 1/100 */
+    short parts[2];               /* +0x38 sefGetPosition kinds; with follow set, parts[1] is the heading turn
+                                     rate in 1/100 */
     short maxSamples;             /* +0x3C points the record grows to: at most 64, 32 with follow set */
     unsigned short shrink;        /* +0x3E frames taken per frame once the life is spent */
     unsigned short blend;         /* +0x40 */

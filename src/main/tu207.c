@@ -216,8 +216,8 @@ extern RecordUpdateFlag recordUpdatePaused;
 /*
  * Fills bank bankIndex (nothing happens unless it is below 3) with one of the record presets 0..24 (the second
  * argument, through jtbl_0068D630; any other value leaves the bank cleared): clears the bank's ten records, writes
- * the preset's records, then updates the render callback (recordUpdateRenderHook). Words no record arm names stay params[]
- * (all of types 7 and 16-19, the unmodeled ones of types 9 and 14).
+ * the preset's records, then updates the render callback (recordUpdateRenderHook). Words no record arm names stay
+ * params[] (all of types 7 and 16-19, the unmodeled ones of types 9 and 14).
  * Cases 14 and 15 declare their locals in the case block: at function scope they become global pseudos and $16
  * and $17 trade places from the prologue on (fd.sh 244/913).
  */
@@ -1005,7 +1005,7 @@ typedef union GsAdPair {
 
 XglPacket *xglPacketGetCurrent(void);
 u64 xglFrameTex0(int buffer, int flag);
-u64 func_00274650(int buffer, int flag);
+u64 xglFrameReg(int buffer, int flag);
 int xglBlendAlpha(int blend);
 void recordStepAngle(int stage);
 int recordStageSize(int mode, int fallback);
@@ -1057,7 +1057,7 @@ void recordDrawType1(GsQueueContext *record)
     pairs[pairCount].ad.data = xglFrameTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = func_00274650(0, 0);
+    pairs[pairCount].ad.data = xglFrameReg(0, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_PRIM;
     pairs[pairCount].ad.data = GS_SET_PRIM(GS_PRIM_SPRITE, 1, 1, 0, 1, 0, 1, 0, 0);
@@ -1200,8 +1200,8 @@ extern float D_0069DDD8;
 extern int D_0069DDDC;
 
 /* Draw handler of record type 3 (D_0063D758[2]): a triangle fan from the screen centre through octagonal rings of
-   radius D_0069DDDC, D_0069DDDC + 25, ... below 620 (recordAdvanceRingRadius advances D_0069DDDC by the record's step); each
-   ring vertex takes its texture coordinates from the point clamped to radius 224, at the record's depth. */
+   radius D_0069DDDC, D_0069DDDC + 25, ... below 620 (recordAdvanceRingRadius advances D_0069DDDC by the record's
+   step); each ring vertex takes its texture coordinates from the point clamped to radius 224, at the record's depth. */
 void recordDrawType3(GsQueueContext *record)
 {
     int z;
@@ -1241,7 +1241,7 @@ void recordDrawType3(GsQueueContext *record)
     pairs[pairCount].ad.data = xglFrameTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = func_00274650(0, 0);
+    pairs[pairCount].ad.data = xglFrameReg(0, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_PRIM;
     pairs[pairCount].ad.data = GS_SET_PRIM(5, 1, 1, 0, 1, 0, 1, 0, 0);
@@ -1488,7 +1488,7 @@ void recordDrawType5(GsQueueContext *record)
     pairs[pairCount].ad.data = xglFrameTex0(2, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = func_00274650(0, 0);
+    pairs[pairCount].ad.data = xglFrameReg(0, 0);
     pairCount++;
     pairs[pairCount].ad.data = 0x15D;
     pairs[pairCount].ad.reg = GS_PRIM;
@@ -1609,7 +1609,7 @@ void recordDrawType6(GsQueueContext *record)
     pairs[pairCount].ad.data = xglFrameTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = func_00274650(0, 0);
+    pairs[pairCount].ad.data = xglFrameReg(0, 0);
     pairCount++;
     pairs[pairCount].ad.data = 0x15D;
     pairs[pairCount].ad.reg = GS_PRIM;
@@ -1727,8 +1727,8 @@ void recordRingStep(float angle, Vector4 *screenPoints, Vector4 *texturePoints);
 extern float D_0069DDF4;
 
 /*
- * Draw handler of record type 7 (D_0063D758[6]): draws a textured ring as one triangle strip: for every step an inner vertex (func_002775F0's colour) and an
- * outer one (recordDefaultColor), Z and fog 0x7FFFFFFF.
+ * Draw handler of record type 7 (D_0063D758[6]): draws a textured ring as one triangle strip: for every step an
+ * inner vertex (func_002775F0's colour) and an outer one (recordDefaultColor), Z and fog 0x7FFFFFFF.
  */
 void recordDrawType7(void)
 {
@@ -1770,7 +1770,7 @@ void recordDrawType7(void)
     pairs[pairCount].ad.data = xglFrameTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = func_00274650(0, 0);
+    pairs[pairCount].ad.data = xglFrameReg(0, 0);
     pairCount++;
     pairs[pairCount].ad.data = 0x15C;
     pairs[pairCount].ad.reg = GS_PRIM;

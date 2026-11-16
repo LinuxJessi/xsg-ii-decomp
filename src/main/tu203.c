@@ -1,7 +1,9 @@
 #include "common.h"
 #include "shared.h"
 
-int func_00274100(int value)
+/* Converts a coordinate to 12.4 fixed point with half-unit rounding by sign: the same conversion as gsRoundCoord
+   (tu202.c). */
+int xglRoundCoord(int value)
 {
     int magnitude = (value >= 0) ? value : -value;
 

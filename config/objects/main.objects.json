@@ -89524,9 +89524,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00274100",
+     "name": "xglRoundCoord",
      "size": 44,
-     "splat_name": "func_00274100",
+     "splat_name": "xglRoundCoord",
      "va": "0x00274100",
      "name_basis": "address",
      "provenance": "estimated"
@@ -89855,18 +89855,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00274650",
+     "name": "xglFrameReg",
      "size": 104,
-     "splat_name": "func_00274650",
+     "splat_name": "xglFrameReg",
      "va": "0x00274650",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002746B8",
+     "name": "xglVectorNormalInPlace",
      "size": 60,
-     "splat_name": "func_002746B8",
+     "splat_name": "xglVectorNormalInPlace",
      "va": "0x002746b8",
      "name_basis": "address",
      "provenance": "estimated"
