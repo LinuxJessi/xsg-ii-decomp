@@ -47,9 +47,9 @@ typedef struct GsQueueContext {
     unsigned char type; /* +0x00: 0 unused, 1..21 picks the draw handler D_0063D758[type - 1] */
     unsigned char unmodeled_01[3];
     union {
-        /* Any type: func_00275710 copies the first ten words without looking at the type. */
+        /* Any type: recordSetSlot copies the first ten words without looking at the type. */
         int params[30]; /* +0x04..+0x7B */
-        /* Types 2 and 20 (func_00275EE8 fills one for func_0027A6F0): gsQueueBeginTriStrip passes frame to
+        /* Types 2 and 20 (recordDrawType2 fills one for func_0027A6F0): gsQueueBeginTriStrip passes frame to
            gsQueueSetFrame, tex0 to gsQueueSetTex0 and blendKind with color to gsQueueSetBlendColor; count is the
            number of passes, screenRect and textureRect the sprite. */
         struct {
@@ -63,12 +63,12 @@ typedef struct GsQueueContext {
             int screenRect[4];  /* +0x20 */
             int textureRect[4]; /* +0x30 */
         } queue;
-        /* Type 4 (func_00276458): after the gsQueue words of queue, the number of grid cells to set. */
+        /* Type 4 (recordDrawType4): after the gsQueue words of queue, the number of grid cells to set. */
         struct {
             unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
             int cellCount;                         /* +0x20 */
         } gridFill;
-        /* Type 8 (func_00277720; tu208.c's RecordGradient): two colours over a rectangle, along y when vertical. */
+        /* Type 8 (recordDrawStrip; tu208.c's RecordGradient): two colours over a rectangle, along y when vertical. */
         struct {
             unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
             int color0;                            /* +0x20 */
@@ -79,7 +79,7 @@ typedef struct GsQueueContext {
             int bottom;                            /* +0x34 */
             int vertical;                          /* +0x38 */
         } gradient;
-        /* Type 9 (func_002778D0; tu208.c's RecordBatch): the graph's colour, baseline, time range, top, columns,
+        /* Type 9 (recordDrawCurve; tu208.c's RecordBatch): the graph's colour, baseline, time range, top, columns,
            rows and value ceiling. */
         struct {
             unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
@@ -105,14 +105,14 @@ typedef struct GsQueueContext {
             int segments;                          /* +0x38 */
             int amplitude;                         /* +0x3C */
         } ring;
-        /* Type 11 (func_002783D0; tu210.c's GsQueuePresetQuad): a position preset and a texture rectangle. */
+        /* Type 11 (quadDrawPreset; tu210.c's GsQueuePresetQuad): a position preset and a texture rectangle. */
         struct {
             unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
             int positionPreset;                    /* +0x20 */
             unsigned char unmodeled_24[0x30 - 0x24];
             GsQueueRect texture;                   /* +0x30 */
         } presetQuad;
-        /* Type 12 (func_00278558; tu210.c's GsQueuePresetUvQuad): a screen rectangle and a texture preset. */
+        /* Type 12 (quadDrawPresetUv; tu210.c's GsQueuePresetUvQuad): a screen rectangle and a texture preset. */
         struct {
             unsigned char queueWords[0x20 - 0x04]; /* +0x04: frame..blendKind, see queue */
             GsQueueRect screen;                    /* +0x20 */
@@ -141,19 +141,19 @@ typedef struct GsQueueContext {
             int transformStart;                    /* +0x68 */
             int transformEnd;                      /* +0x6C */
         } grid;
-        /* Type 1 (func_002759F8): the stage (0..2) and alpha passed to func_00275D30/func_00275CF0, and the Z of
+        /* Type 1 (recordDrawType1): the stage (0..2) and alpha passed to recordStageColor/recordStageSize, and the Z of
            the full-screen sprite. */
         struct {
             int stage; /* +0x04 */
             int alpha; /* +0x08 */
             int depth; /* +0x0C */
         } fade;
-        /* Type 3 (func_00275F70): the ring radius step passed to func_00276400, and the Z of the fan. */
+        /* Type 3 (recordDrawType3): the ring radius step passed to recordAdvanceRingRadius, and the Z of the fan. */
         struct {
             int step;  /* +0x04 */
             int depth; /* +0x08 */
         } tunnel;
-        /* Type 6 (func_00276D68): the alpha of the RGBAQ word and the Z and fog word. */
+        /* Type 6 (recordDrawType6): the alpha of the RGBAQ word and the Z and fog word. */
         struct {
             int alpha; /* +0x04 */
             int z;     /* +0x08 */
@@ -165,9 +165,9 @@ typedef struct RecordBank {
     GsQueueContext records[10];
 } RecordBank;
 
-/* Declared as bytes, as recordClearBank below reads it. func_00274850 indexes it as bytes and func_00275710
+/* Declared as bytes, as recordClearBank below reads it. recordUpdateRenderHook indexes it as bytes and recordSetSlot
  * steps to the bank as bytes: through ((RecordBank *) recordBanks)[bankIndex] gcc adds the base before the slot
- * offset (fd.sh func_00275710: 12/32 in place, 32/32 with the byte step to the bank). */
+ * offset (fd.sh recordSetSlot: 12/32 in place, 32/32 with the byte step to the bank). */
 extern unsigned char recordBanks[];
 
 /* Local view of sRender (0x00645820; RenderFrameState in main/tu093.h does not model +0x3C): the
@@ -179,11 +179,11 @@ typedef struct RecordRenderState {
 
 extern RecordRenderState sRender;
 
-void func_00275830(XglPacket *packet);
+void recordRenderAll(XglPacket *packet);
 
-/* Installs func_00275830 as the render callback while any record is used, else removes it. The scan
+/* Installs recordRenderAll as the render callback while any record is used, else removes it. The scan
  * covers 30 banks although recordBanks holds 3 (0xE88 bytes), as the original does. */
-void func_00274850(void)
+void recordUpdateRenderHook(void)
 {
     int active;
     int slot;
@@ -200,13 +200,13 @@ void func_00274850(void)
     if (active == 0) {
         sRender.callback = 0;
     } else {
-        sRender.callback = func_00275830;
+        sRender.callback = recordRenderAll;
     }
 }
 
 void recordClear(void *record);
 /* Flag that suspends the per-frame record updates; 1 while suspended. A struct, not an int: as a scalar,
- * sched2 lifts func_002748C8 case 16's flag load above its params[0] reload (fd.sh 909/913); as a struct member
+ * sched2 lifts recordSetPreset case 16's flag load above its params[0] reload (fd.sh 909/913); as a struct member
  * the load stays behind the record stores (913/913). */
 typedef struct RecordUpdateFlag {
     int paused;
@@ -216,12 +216,12 @@ extern RecordUpdateFlag recordUpdatePaused;
 /*
  * Fills bank bankIndex (nothing happens unless it is below 3) with one of the record presets 0..24 (the second
  * argument, through jtbl_0068D630; any other value leaves the bank cleared): clears the bank's ten records, writes
- * the preset's records, then updates the render callback (func_00274850). Words no record arm names stay params[]
+ * the preset's records, then updates the render callback (recordUpdateRenderHook). Words no record arm names stay params[]
  * (all of types 7 and 16-19, the unmodeled ones of types 9 and 14).
  * Cases 14 and 15 declare their locals in the case block: at function scope they become global pseudos and $16
  * and $17 trade places from the prologue on (fd.sh 244/913).
  */
-void func_002748C8(int bankIndex, int preset, int depth, int *params)
+void recordSetPreset(int bankIndex, int preset, int depth, int *params)
 {
     int slot;
     GsQueueContext *records;
@@ -864,11 +864,11 @@ void func_002748C8(int bankIndex, int preset, int depth, int *params)
     case 24:
         break;
     }
-    func_00274850();
+    recordUpdateRenderHook();
 }
 
 /* Sets record slotIndex of bank bankIndex to type with its ten parameters, then updates the render callback. */
-void func_00275710(int bankIndex, int slotIndex, int type, int *params)
+void recordSetSlot(int bankIndex, int slotIndex, int type, int *params)
 {
     int i;
 
@@ -876,7 +876,7 @@ void func_00275710(int bankIndex, int slotIndex, int type, int *params)
     for (i = 0; i < 10; i++) {
         ((RecordBank *)recordBanks)[bankIndex].records[slotIndex].u.params[i] = params[i];
     }
-    func_00274850();
+    recordUpdateRenderHook();
 }
 
 /* Clears the ten 0x7C-byte records of bank bankIndex (banks are 0x4D8 bytes apart). */
@@ -893,7 +893,7 @@ void recordClearBank(int bankIndex)
 }
 
 /* Clears the first three banks' records. */
-void func_002757F0(void)
+void recordClearBanks(void)
 {
     int bankIndex;
 
@@ -908,7 +908,7 @@ void sceVif1PkCnt(XglPacket *packet, int count);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, int mode);
 void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
-int func_00275968(void);
+int recordAnyUsed(void);
 /* GIF data sent before (9 quadwords) and after (3 quadwords) the records are drawn. */
 extern const unsigned char D_0063D6C8[];
 extern const unsigned char D_0063D7B0[];
@@ -917,7 +917,7 @@ extern void (*D_0063D758[])(GsQueueContext *record, XglPacket *packet);
 
 /* Calls the draw handler of every record of type 1..21 in the three banks between two fixed GIF blocks, then
  * clears the banks and removes itself as the render callback. */
-void func_00275830(XglPacket *packet)
+void recordRenderAll(XglPacket *packet)
 {
     RecordBank *bank;
     GsQueueContext *record;
@@ -926,7 +926,7 @@ void func_00275830(XglPacket *packet)
     int type;
 
     bank = (RecordBank *)recordBanks;
-    if (func_00275968() == 0) {
+    if (recordAnyUsed() == 0) {
         return;
     }
     sceVif1PkCnt(packet, 0);
@@ -951,13 +951,13 @@ void func_00275830(XglPacket *packet)
     sceVif1PkOpenDirectHLCode(packet, 0);
     sceVif1PkAddDirectDataN(packet, D_0063D7B0, 3);
     sceVif1PkCloseDirectHLCode(packet);
-    func_002757F0();
+    recordClearBanks();
     recordUpdatePaused.paused = 0;
     sRender.callback = 0;
 }
 
 /* True if any of the 30 records (3 banks of 10) has a nonzero first byte. */
-int func_00275968(void)
+int recordAnyUsed(void)
 {
     unsigned char *bank;
     unsigned char *record;
@@ -995,7 +995,7 @@ void recordPauseUpdates(void)
 #define SCRATCHPAD_BASE 0x70000000
 
 /* One A+D qword of a GS packet: the register value, then the register address. A union as tu229.c's TalkGsPair:
-   with a plain struct gcc moves func_00275F70's point reads above the packet stores. */
+   with a plain struct gcc moves recordDrawType3's point reads above the packet stores. */
 typedef union GsAdPair {
     struct {
         u64 data;
@@ -1004,17 +1004,17 @@ typedef union GsAdPair {
 } GsAdPair;
 
 XglPacket *xglPacketGetCurrent(void);
-u64 func_002745A8(int buffer, int flag);
+u64 xglFrameTex0(int buffer, int flag);
 u64 func_00274650(int buffer, int flag);
-int func_002746F8(int blend);
+int xglBlendAlpha(int blend);
 void recordStepAngle(int stage);
-int func_00275CF0(int mode, int fallback);
-int func_00275D30(int mode, int alpha);
-int func_00275E08(void);
+int recordStageSize(int mode, int fallback);
+int recordStageColor(int mode, int alpha);
+int recordPulseColor(void);
 
 /* Draw handler of record type 1 (D_0063D758[0]): one textured sprite over the 512x448 screen, inset by the
    stage's size, in the stage's color; at stage 2 the sprite is drawn a second time in the pulsing color. */
-void func_002759F8(GsQueueContext *record)
+void recordDrawType1(GsQueueContext *record)
 {
     int stage;
     int alpha;
@@ -1029,8 +1029,8 @@ void func_002759F8(GsQueueContext *record)
     alpha = record->u.fade.alpha;
     z = record->u.fade.depth;
     recordStepAngle(stage);
-    color = func_00275D30(stage, alpha);
-    size = func_00275CF0(stage, alpha);
+    color = recordStageColor(stage, alpha);
+    size = recordStageSize(stage, alpha);
     packet = xglPacketGetCurrent();
     pairs = (GsAdPair *) SCRATCHPAD_BASE;
     pairCount = 0;
@@ -1051,10 +1051,10 @@ void func_002759F8(GsQueueContext *record)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = func_002746F8(0);
+    pairs[pairCount].ad.data = xglBlendAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = func_002745A8(1, 0);
+    pairs[pairCount].ad.data = xglFrameTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
     pairs[pairCount].ad.data = func_00274650(0, 0);
@@ -1080,7 +1080,7 @@ void func_002759F8(GsQueueContext *record)
     pairs[pairCount].ad.data = GS_SET_XYZ(0x9000, 0x8E00, z);
     pairCount++;
     if (stage == 2) {
-        color = func_00275E08();
+        color = recordPulseColor();
         pairs[pairCount].ad.reg = GS_RGBAQ;
         pairs[pairCount].ad.data = color;
         pairCount++;
@@ -1105,7 +1105,7 @@ void func_002759F8(GsQueueContext *record)
 }
 
 /* Mode selector: mode 0 and 2 return fallback, mode 1 returns 5, anything else returns 0. */
-int func_00275CF0(int mode, int fallback)
+int recordStageSize(int mode, int fallback)
 {
     switch (mode) {
     case 0:
@@ -1124,7 +1124,7 @@ float sinf(float angle);
 /* Sprite color of stage mode: grey 0x808080 under alpha at stage 1, the fixed 0x40808080 (alpha 0x40, whatever alpha
    is) at stage 0, at stage 2 the alpha 80 + 5 * sin(recordAngle degrees) put into 0..127 by xglWrapInt; 0 for any
    other stage. */
-int func_00275D30(int mode, int alpha)
+int recordStageColor(int mode, int alpha)
 {
     switch (mode) {
     case 1:
@@ -1143,7 +1143,7 @@ float cosf(float angle);
 
 /* Pulsing color: grey 0x808080 under the alpha 80 + 5 * cos(recordAngle degrees), put into 0..127 by
    xglWrapInt. */
-int func_00275E08(void)
+int recordPulseColor(void)
 {
     int alpha;
 
@@ -1168,7 +1168,7 @@ void func_0027A6F0(GsQueueContext *context, int packet);
 
 /* Draw handler of record type 2 (D_0063D758[1]): draws the record's texture (its tex0 word) over the whole 512x448
    screen through a type 20 sprite record. */
-void func_00275EE8(GsQueueContext *record, int packet)
+void recordDrawType2(GsQueueContext *record, int packet)
 {
     GsQueueContext sprite;
 
@@ -1191,8 +1191,8 @@ void func_00275EE8(GsQueueContext *record, int packet)
     func_0027A6F0(&sprite, packet);
 }
 
-void func_00276400(int step);
-void func_00276350(float *point, float *clampedPoint, float angle, float radius);
+void recordAdvanceRingRadius(int step);
+void recordRingPoint(float *point, float *clampedPoint, float angle, float radius);
 /* libgcc __fixunssfdi, float to unsigned 64-bit integer (negative values give 0), in the libgcc block between
    __moddi3 and fptodp. */
 u64 func_002A6A90(float value);
@@ -1200,9 +1200,9 @@ extern float D_0069DDD8;
 extern int D_0069DDDC;
 
 /* Draw handler of record type 3 (D_0063D758[2]): a triangle fan from the screen centre through octagonal rings of
-   radius D_0069DDDC, D_0069DDDC + 25, ... below 620 (func_00276400 advances D_0069DDDC by the record's step); each
+   radius D_0069DDDC, D_0069DDDC + 25, ... below 620 (recordAdvanceRingRadius advances D_0069DDDC by the record's step); each
    ring vertex takes its texture coordinates from the point clamped to radius 224, at the record's depth. */
-void func_00275F70(GsQueueContext *record)
+void recordDrawType3(GsQueueContext *record)
 {
     int z;
     XglPacket *packet;
@@ -1214,7 +1214,7 @@ void func_00275F70(GsQueueContext *record)
     float clampedPoint[2];
 
     z = record->u.tunnel.depth;
-    func_00276400(record->u.tunnel.step);
+    recordAdvanceRingRadius(record->u.tunnel.step);
     packet = xglPacketGetCurrent();
     pairs = (GsAdPair *) SCRATCHPAD_BASE;
     pairCount = 0;
@@ -1235,10 +1235,10 @@ void func_00275F70(GsQueueContext *record)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = func_002746F8(0);
+    pairs[pairCount].ad.data = xglBlendAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = func_002745A8(1, 0);
+    pairs[pairCount].ad.data = xglFrameTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
     pairs[pairCount].ad.data = func_00274650(0, 0);
@@ -1262,7 +1262,7 @@ void func_00275F70(GsQueueContext *record)
        The first vertex of a ring goes to the XYZ3 register, without a drawing kick; D_0069DDD8 converts degrees
        to radians. */
     for (radius = D_0069DDDC; radius < 620; radius += 25) {
-        func_00276350(point, clampedPoint, 0.0f, radius);
+        recordRingPoint(point, clampedPoint, 0.0f, radius);
         pairs[pairCount].ad.reg = GS_UV;
         pairs[pairCount].ad.data = GS_SET_UV(func_002A6A90(clampedPoint[0] * 16.0f),
                                              func_002A6A90(clampedPoint[1] * 16.0f));
@@ -1272,7 +1272,7 @@ void func_00275F70(GsQueueContext *record)
                                               (int) ((point[1] + 1824.0f) * 16.0f), z);
         pairCount++;
         for (side = 1; side <= 8; side++) {
-            func_00276350(point, clampedPoint, side * 45 * D_0069DDD8, radius);
+            recordRingPoint(point, clampedPoint, side * 45 * D_0069DDD8, radius);
             pairs[pairCount].ad.reg = GS_UV;
             pairs[pairCount].ad.data = GS_SET_UV(func_002A6A90(clampedPoint[0] * 16.0f),
                                                  func_002A6A90(clampedPoint[1] * 16.0f));
@@ -1292,7 +1292,7 @@ void func_00275F70(GsQueueContext *record)
 
 /* point: the screen position at angle (radians) and radius around the screen centre (256, 224); clampedPoint: the
    same with the radius clamped to 224. */
-void func_00276350(float *point, float *clampedPoint, float angle, float radius)
+void recordRingPoint(float *point, float *clampedPoint, float angle, float radius)
 {
     float cosine;
     float sine;
@@ -1309,7 +1309,7 @@ void func_00276350(float *point, float *clampedPoint, float angle, float radius)
 }
 
 /* While updates are not suspended, advances D_0069DDDC by step and steps it back below 406 in steps of 25. */
-void func_00276400(int step)
+void recordAdvanceRingRadius(int step)
 {
     if (recordUpdatePaused.paused == 0) {
         D_0069DDDC += step;
@@ -1320,12 +1320,12 @@ void func_00276400(int step)
 }
 
 /* Row length of the cell grid: 50 x 50 flags (0x9C4 bytes, cleared by recordGridReset), of which recordGridWidth
- * x recordGridHeight are in use; func_00276458 indexes a cell as column + row * 50. */
+ * x recordGridHeight are in use; recordDrawType4 indexes a cell as column + row * 50. */
 #define RECORD_GRID_SIDE 50
 
 extern int recordGridWidth;
 extern int recordGridHeight;
-/* signed char: func_00276458 reads the flags with lb (fd.sh with unsigned char: lbu $2,0($4) at its first flag
+/* signed char: recordDrawType4 reads the flags with lb (fd.sh with unsigned char: lbu $2,0($4) at its first flag
  * read, 221/225). */
 extern signed char recordGridCells[];
 
@@ -1341,7 +1341,7 @@ void gsQueueFlush(int packet);
  * original's depth reload register (fd.sh: depth first 216/225, count first 225/225); each random loop declares
  * its own cell, randomColumn and randomRow (at function scope fd.sh gives 33/225).
  */
-void func_00276458(GsQueueContext *record, int packet)
+void recordDrawType4(GsQueueContext *record, int packet)
 {
     Vector4 position;
     Vector4 kickPosition;
@@ -1438,8 +1438,8 @@ int recordGridCellCount(void)
   return recordGridWidth * recordGridHeight;
 }
 
-void func_00277100(void);
-void func_00277168(Vector4 *result, int x, int y);
+void recordStepWarp(void);
+void recordWarpCorner(Vector4 *result, int x, int y);
 
 /* XYZ of a point in screen pixels: + (2048 - 256, 2048 - 224) puts it around the GS origin, in 12.4 fixed point. */
 #define RECORD_XYZ(x, y, z) GS_SET_XYZ((int) (((x) + 1792.0f) * 16.0f), (int) (((y) + 1824.0f) * 16.0f), z)
@@ -1450,7 +1450,7 @@ void func_00277168(Vector4 *result, int x, int y);
  * by spread along one axis and half of it along the other, a quarter turn further at each corner. The fan goes
  * around twice and closes at its first point. Z and fog take the record's z word.
  */
-void func_00276838(GsQueueContext *record)
+void recordDrawType5(GsQueueContext *record)
 {
     GsAdPair *pairs;
     XglPacket *packet;
@@ -1482,10 +1482,10 @@ void func_00276838(GsQueueContext *record)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = func_002746F8(0);
+    pairs[pairCount].ad.data = xglBlendAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = func_002745A8(2, 0);
+    pairs[pairCount].ad.data = xglFrameTex0(2, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
     pairs[pairCount].ad.data = func_00274650(0, 0);
@@ -1570,9 +1570,9 @@ void func_00276838(GsQueueContext *record)
 
 /*
  * Draw handler of record type 6 (D_0063D758[5]): draws the 512 x 448 screen texture as one triangle fan of its four
- * corners, each corner moved by func_00277168. XYZF2 takes the record's z as the whole upper word (Z and fog).
+ * corners, each corner moved by recordWarpCorner. XYZF2 takes the record's z as the whole upper word (Z and fog).
  */
-void func_00276D68(GsQueueContext *record)
+void recordDrawType6(GsQueueContext *record)
 {
     Vector4 point;
     GsAdPair *pairs;
@@ -1583,7 +1583,7 @@ void func_00276D68(GsQueueContext *record)
 
     alpha = record->u.warp.alpha;
     z = record->u.warp.z;
-    func_00277100();
+    recordStepWarp();
     packet = xglPacketGetCurrent();
     pairs = (GsAdPair *) SCRATCHPAD_BASE;
     pairCount = 0;
@@ -1603,10 +1603,10 @@ void func_00276D68(GsQueueContext *record)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = func_002746F8(0);
+    pairs[pairCount].ad.data = xglBlendAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = func_002745A8(1, 0);
+    pairs[pairCount].ad.data = xglFrameTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
     pairs[pairCount].ad.data = func_00274650(0, 0);
@@ -1618,28 +1618,28 @@ void func_00276D68(GsQueueContext *record)
     pairs[pairCount].ad.reg = GS_RGBAQ;
     pairs[pairCount].ad.data = (unsigned int)(alpha << 24 | 0x808080);
     pairCount++;
-    func_00277168(&point, 0, 0);
+    recordWarpCorner(&point, 0, 0);
     pairs[pairCount].ad.reg = GS_UV;
     pairs[pairCount].ad.data = GS_SET_UV(0, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_XYZF2;
     pairs[pairCount].ad.data = GS_SET_XYZ((int)((point.x + 1792.0f) * 16.0f), (int)((point.y + 1824.0f) * 16.0f), z);
     pairCount++;
-    func_00277168(&point, 512, 0);
+    recordWarpCorner(&point, 512, 0);
     pairs[pairCount].ad.reg = GS_UV;
     pairs[pairCount].ad.data = GS_SET_UV(512 * 16, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_XYZF2;
     pairs[pairCount].ad.data = GS_SET_XYZ((int)((point.x + 1792.0f) * 16.0f), (int)((point.y + 1824.0f) * 16.0f), z);
     pairCount++;
-    func_00277168(&point, 512, 448);
+    recordWarpCorner(&point, 512, 448);
     pairs[pairCount].ad.reg = GS_UV;
     pairs[pairCount].ad.data = GS_SET_UV(512 * 16, 448 * 16);
     pairCount++;
     pairs[pairCount].ad.reg = GS_XYZF2;
     pairs[pairCount].ad.data = GS_SET_XYZ((int)((point.x + 1792.0f) * 16.0f), (int)((point.y + 1824.0f) * 16.0f), z);
     pairCount++;
-    func_00277168(&point, 0, 448);
+    recordWarpCorner(&point, 0, 448);
     pairs[pairCount].ad.reg = GS_UV;
     pairs[pairCount].ad.data = GS_SET_UV(0, 448 * 16);
     pairCount++;
@@ -1657,7 +1657,7 @@ extern float D_0069DDE8;
 extern float D_0069DDEC;
 
 /* Integrates D_0069DDE8 by D_0069DDEC and stops the motion once it crosses -1.0f. */
-void func_00277100(void)
+void recordStepWarp(void)
 {
     float velocity;
     float next;
@@ -1690,7 +1690,7 @@ extern float D_0069DDF0;
 
 /* Rotates the point (x, y) about D_0068D6C0 by D_0069DDE8 * D_0069DDF0, scales it by D_0068D6D0 and stores the
  * resulting x and y in result. */
-void func_00277168(Vector4 *result, int x, int y)
+void recordWarpCorner(Vector4 *result, int x, int y)
 {
     AlignedVector4 point = { x, y, 0.0f, 0.0f };
     AlignedVector4 center = D_0068D6C0;
@@ -1723,14 +1723,14 @@ void func_00277168(Vector4 *result, int x, int y)
 void func_002775E8(void);
 int func_002775F0(void);
 int recordDefaultColor(void);
-void func_00277610(float angle, Vector4 *screenPoints, Vector4 *texturePoints);
+void recordRingStep(float angle, Vector4 *screenPoints, Vector4 *texturePoints);
 extern float D_0069DDF4;
 
 /*
  * Draw handler of record type 7 (D_0063D758[6]): draws a textured ring as one triangle strip: for every step an inner vertex (func_002775F0's colour) and an
  * outer one (recordDefaultColor), Z and fog 0x7FFFFFFF.
  */
-void func_002772A8(void)
+void recordDrawType7(void)
 {
     Vector4 screenPoints;
     Vector4 texturePoints;
@@ -1764,10 +1764,10 @@ void func_002772A8(void)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = func_002746F8(0);
+    pairs[pairCount].ad.data = xglBlendAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = func_002745A8(1, 0);
+    pairs[pairCount].ad.data = xglFrameTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
     pairs[pairCount].ad.data = func_00274650(0, 0);
@@ -1777,7 +1777,7 @@ void func_002772A8(void)
     pairCount++;
     degrees = 0;
     for (step = 0; step < RING_STEPS; step++) {
-        func_00277610((float)degrees * D_0069DDF4, &screenPoints, &texturePoints);
+        recordRingStep((float)degrees * D_0069DDF4, &screenPoints, &texturePoints);
         pairs[pairCount].ad.reg = GS_RGBAQ;
         pairs[pairCount].ad.data = innerColor;
         pairCount++;
@@ -1827,7 +1827,7 @@ int recordDefaultColor(void)
  * One step of the ring for angle: texturePoints gets the texture coordinates around (256, 224), radius 150 in x/y
  * and 300 in z/w; screenPoints the screen positions, radius 150 in x/y and 350 in z/w.
  */
-void func_00277610(float angle, Vector4 *screenPoints, Vector4 *texturePoints)
+void recordRingStep(float angle, Vector4 *screenPoints, Vector4 *texturePoints)
 {
     float textureSin;
     float textureCos;

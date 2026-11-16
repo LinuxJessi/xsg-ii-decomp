@@ -188,9 +188,9 @@ void sceVif1PkCnt(XglPacket *packet, int count);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, int mode);
 void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
-u64 func_002745A8(int buffer, int flag);
+u64 xglFrameTex0(int buffer, int flag);
 u64 func_00274650(int buffer, int flag);
-int func_002746F8(int blend);
+int xglBlendAlpha(int blend);
 void func_002803D8(int *left, int *top, int *bottom, int *right, TalkWindow *window, int mode, float scale);
 unsigned int func_002805C8(unsigned int color, float scale);
 void func_00280688(int *x, int *y, TalkWindow *window);
@@ -373,7 +373,7 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
                     pairs[pairCount].ad.reg = GS_SCISSOR_1;
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount].ad.data = func_002746F8(0);
+                    pairs[pairCount].ad.data = xglBlendAlpha(0);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_FRAME_1;
                     pairs[pairCount].ad.data = func_00274650(2, 0);
@@ -473,10 +473,10 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
                     pairs[pairCount].ad.data = func_00274650(0, 0);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_TEX0_1;
-                    pairs[pairCount].ad.data = func_002745A8(2, 0);
+                    pairs[pairCount].ad.data = xglFrameTex0(2, 0);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount].ad.data = func_002746F8(1);
+                    pairs[pairCount].ad.data = xglBlendAlpha(1);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_CLAMP_1;
                     pairs[pairCount].ad.data = 0;
@@ -507,17 +507,17 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
                     pairs[pairCount].ad.data = color;
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount++].ad.data = func_002746F8(0);
+                    pairs[pairCount++].ad.data = xglBlendAlpha(0);
                     break;
                 case TALK_PIECE_BLEND_ZERO:
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount++].ad.data = func_002746F8(0);
+                    pairs[pairCount++].ad.data = xglBlendAlpha(0);
                     break;
                 case TALK_PIECE_BLEND_ONE_A:
                 case TALK_PIECE_BLEND_ONE_B:
                 case TALK_PIECE_BLEND_ONE_C:
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount++].ad.data = func_002746F8(1);
+                    pairs[pairCount++].ad.data = xglBlendAlpha(1);
                     break;
                 }
             }

@@ -23,7 +23,7 @@ typedef struct SdvSequence {
 #define SDV_KEY_LINK_2 0x800
 #define SDV_KEY_LINK_3 0x1000
 
-/* The actor (xenoActor.c); only the move-state and shadow fields func_00267388 sets. func_00289028
+/* The actor (xenoActor.c); only the move-state and shadow fields sdvExecShadowSeq sets. func_00289028
  * (XenoActorUpdateMoveState) animates state +0x160, angle +0x150 and velocity +0x154. */
 struct XenoActor {
     unsigned char unmodeled_000[0x150];
@@ -51,7 +51,7 @@ extern short D_0069DB82;
 
 /* Returns the current row when the sequence reaches it (and advances to the next row), else -1
  * (sdvExecSeqTbl's key test in X1). */
-int func_00266F68(SdvSequence *sequence)
+int sdvCheckSeqKey(SdvSequence *sequence)
 {
     int result = -1;
     short key = sequence->keys[sequence->position * sequence->stride];
@@ -72,7 +72,7 @@ int func_00266F68(SdvSequence *sequence)
 
 /* Counts one frame (up to 0x3FF) and runs the key test; SDV_KEY_END when the sequence has ended
  * (sdvExecSeqTbl in X1, which counts after the test). */
-int func_00267048(SdvSequence *sequence)
+int sdvExecSeqTbl(SdvSequence *sequence)
 {
     if (sequence->keys[sequence->position * sequence->stride] == SDV_KEY_END) {
         return SDV_KEY_END;
@@ -81,12 +81,12 @@ int func_00267048(SdvSequence *sequence)
     if (sequence->elapsed >= 0x400) {
         sequence->elapsed = 0x3FF;
     }
-    return func_00266F68(sequence);
+    return sdvCheckSeqKey(sequence);
 }
 
 /* The same key test on a row position kept by the caller and an elapsed frame count passed in;
  * SDV_KEY_END when the sequence has ended (sdvProgressKey in X1). */
-int func_002670C0(short *keys, short *position, int stride, int elapsed)
+int sdvProgressKey(short *keys, short *position, int stride, int elapsed)
 {
     int result = -1;
     int key = keys[*position * stride];
@@ -142,7 +142,7 @@ void MSeFire(MSeRequest *request);
 
 /* Steps an effect key sequence and fires the MSe effect of the row it reaches, attached to
  * the actors of the current effect request. */
-void func_002671A0(SdvSequence *sequence, int effectId)
+void sdvExecEffectSeq(SdvSequence *sequence, int effectId)
 {
     MSeRequest fire;
     DoublewordVector4 offset;
@@ -157,7 +157,7 @@ void func_002671A0(SdvSequence *sequence, int effectId)
     if (sequence == 0 || sequence->keys == 0) {
         return;
     }
-    index = func_00267048(sequence);
+    index = sdvExecSeqTbl(sequence);
     if ((unsigned int)index >= 0x400) {
         return;
     }
@@ -220,7 +220,7 @@ typedef struct SdvShadowKey {
 
 /* Steps a shadow key sequence and copies the row it reaches into the shadow fields of the
  * request's source or target actor. */
-void func_00267388(SdvSequence *sequence)
+void sdvExecShadowSeq(SdvSequence *sequence)
 {
     int index;
     SefRequest *request;
@@ -241,7 +241,7 @@ void func_00267388(SdvSequence *sequence)
     if (sequence == 0 || sequence->keys == 0) {
         return;
     }
-    index = func_00267048(sequence);
+    index = sdvExecSeqTbl(sequence);
     if ((unsigned int)index >= 0x400) {
         return;
     }

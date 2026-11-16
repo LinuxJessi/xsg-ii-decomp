@@ -37,7 +37,7 @@ typedef struct GsQueueRing {
     int amplitude;
 } GsQueueRing;
 
-/* Quad record with preset positions and a texture rectangle (func_002783D0). */
+/* Quad record with preset positions and a texture rectangle (quadDrawPreset). */
 typedef struct GsQueuePresetQuad {
     GsQueueHeader header;
     int positionPreset;
@@ -45,14 +45,14 @@ typedef struct GsQueuePresetQuad {
     GsQueueRect texture;
 } GsQueuePresetQuad;
 
-/* Quad record with a screen rectangle and preset texture coordinates (func_00278558). */
+/* Quad record with a screen rectangle and preset texture coordinates (quadDrawPresetUv). */
 typedef struct GsQueuePresetUvQuad {
     GsQueueHeader header;
     GsQueueRect screen;
     int texturePreset;
 } GsQueuePresetUvQuad;
 
-/* Circle-of-sprites record (circleDrawSegments, func_002789C8). */
+/* Circle-of-sprites record (circleDrawSegments, circleSpriteCorners). */
 typedef struct GsQueueCircle {
     GsQueueHeader header;
     GsQueueRect screen;
@@ -174,7 +174,7 @@ void gsQueueAddTexturedKickVertex(int packet, Vector4 *position, Vector4 *uv, vo
 
 /* Draws one textured quad count times as a triangle strip: the positions are the preset quad of func_0027A960, the
    UVs come from the record's uv rectangle. */
-void func_002783D0(GsQueuePresetQuad *record, int packet) {
+void quadDrawPreset(GsQueuePresetQuad *record, int packet) {
     Vector4 uvs[4];
     Vector4 positions[4];
     int z;
@@ -214,9 +214,9 @@ void func_002783D0(GsQueuePresetQuad *record, int packet) {
     gsQueueFlush(packet);
 }
 
-/* As func_002783D0 with the roles swapped: the positions come from the record's rectangle, the UVs are the preset
+/* As quadDrawPreset with the roles swapped: the positions come from the record's rectangle, the UVs are the preset
    quad of func_0027A960. */
-void func_00278558(GsQueuePresetUvQuad *record, int packet) {
+void quadDrawPresetUv(GsQueuePresetUvQuad *record, int packet) {
     Vector4 uvs[4];
     Vector4 positions[4];
     int z;
@@ -259,7 +259,7 @@ void func_00278558(GsQueuePresetUvQuad *record, int packet) {
 float xglCosDeg(int degrees);
 float xglSinDeg(int degrees);
 void gsQueueBeginSprites(void *context);
-void func_002789C8(Vector4 *points, int x, int y, const GsQueueCircle *record);
+void circleSpriteCorners(Vector4 *points, int x, int y, const GsQueueCircle *record);
 u64 xglColorLerp(u64 from, u64 to, float t);
 
 /* Draws rings of sprites around the record rectangle, count times: segments sprites per ring, ring (ring + 1) *
@@ -316,7 +316,7 @@ void circleDrawSegments(GsQueueCircle *record, int packet) {
         gsQueueBeginSprites(record);
         for (i = 0; i < count; i++) {
             if (centerDisabled == 0) {
-                func_002789C8(positions, 0, 0, record);
+                circleSpriteCorners(positions, 0, 0, record);
                 gsQueueAddTexturedVertex(packet, &positions[0], &uvs[0], record);
                 gsQueueAddTexturedKickVertex(packet, &positions[1], &uvs[1], record);
             }
@@ -327,7 +327,7 @@ void circleDrawSegments(GsQueueCircle *record, int packet) {
                 }
                 for (segment = 0; segment < segments; segment++) {
                     radius = (float) (radiusStep * (ring + 1));
-                    func_002789C8(positions, (int) (radius * directions[segment][0]),
+                    circleSpriteCorners(positions, (int) (radius * directions[segment][0]),
                                   (int) (radius * directions[segment][1]), record);
                     gsQueueAddTexturedVertex(packet, &positions[0], &uvs[0], record);
                     gsQueueAddTexturedKickVertex(packet, &positions[1], &uvs[1], record);
@@ -339,7 +339,7 @@ void circleDrawSegments(GsQueueCircle *record, int packet) {
 }
 
 /* Sets the two corner points of a sprite: the record rectangle shifted by (x, y), z from the record. */
-void func_002789C8(Vector4 *points, int x, int y, const GsQueueCircle *record) {
+void circleSpriteCorners(Vector4 *points, int x, int y, const GsQueueCircle *record) {
     int top;
     int left;
     int right;

@@ -69,7 +69,7 @@ extern SdvSpecialWork sdvSpecialTable[32];
 
 /* One key track of a camera schedule; sdvProgressPrm reads its key table at +0x04. */
 typedef struct SdvScheduleChannel {
-    short keyIndex;           /* +0x00: the key func_002670C0 is at; sdvProgressPrm steps it onto the end marker */
+    short keyIndex;           /* +0x00: the key sdvProgressKey is at; sdvProgressPrm steps it onto the end marker */
     unsigned char unmodeled_02[2];
     void *keys;               /* +0x04 */
 } SdvScheduleChannel;
@@ -335,7 +335,7 @@ typedef struct SdvCameraWork {
 extern SdvCameraWork D_002B5E60;
 
 /* Applies the slots, then clears CAMERA_FLAG_SLOTS_APPLIED so the next camera update re-blends. */
-void func_00268010(int slot_mask, int blend_mode, int ease_mode, int frames)
+void sdvApplyCameraSlots(int slot_mask, int blend_mode, int ease_mode, int frames)
 {
     unsigned short *flags = &D_002B5E60.flags;
 
@@ -364,7 +364,7 @@ float sdvWrapAngle(float angle)
 }
 
 /* Returns angle moved by whole turns to lie within half a turn of current (radians). */
-float func_002680A8(float angle, float current)
+float sdvNearestAngle(float angle, float current)
 {
     float wrappedCurrent = sdvWrapAngle(current);
     float delta = sdvWrapAngle(angle) - wrappedCurrent;
@@ -450,7 +450,7 @@ extern float D_0069DC38;
 
 /* Finds the key of keys (keySize halfwords each) that frame reaches, counting channel->keyIndex up; returns
    its index, or SDV_KEY_TIME_END when the table is over. */
-int func_002670C0(short *keys, SdvScheduleChannel *channel, int keySize, int frame);
+int sdvProgressKey(short *keys, SdvScheduleChannel *channel, int keySize, int frame);
 XglCamera *xglStudioGetActiveCamera(void);
 void cameraInit(void);
 /* Returns the distance between two points (tu153.c declares it void: the original reads $f0 here). */
@@ -485,7 +485,7 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
     int bit;
     int i;
 
-    index = func_002670C0(keys, channel, keySize, frame);
+    index = sdvProgressKey(keys, channel, keySize, frame);
     if (index < SDV_KEY_TIME_END) {
         camera = &D_002B5E60;
         key = (SdvCameraKey *)&keys[index * keySize];
@@ -627,7 +627,7 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
                         camera->toLookAtY = param.point.y;
                         camera->toLookAtZ = param.point.z;
                         camera->anchorIndex = -1;
-                        func_00268010(1, blendMode, easeMode, remaining);
+                        sdvApplyCameraSlots(1, blendMode, easeMode, remaining);
                     }
                 } else if (kind == SDV_TRACK_POSITION) {
                     sdvSetCameraParam(&param, next->kind, next->angles, key->scaled, next->mode);
@@ -638,25 +638,25 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
                         cameraAnglesBetween(&angles, (Vector4 *)&camera->toLookAtX, (Vector4 *)&camera->toPositionX);
                         camera->pitch = sdvWrapAngle(camera->pitch);
                         camera->yaw = sdvWrapAngle(camera->yaw);
-                        camera->toPitch = func_002680A8(angles.x, camera->pitch);
-                        camera->toYaw = func_002680A8(angles.y, camera->yaw);
+                        camera->toPitch = sdvNearestAngle(angles.x, camera->pitch);
+                        camera->toYaw = sdvNearestAngle(angles.y, camera->yaw);
                         camera->toDistance = angles.w;
                     } else {
                         camera->toPitch = 0.0f;
                         camera->toYaw = 0.0f;
                         camera->toDistance = 0.0f;
                     }
-                    func_00268010(2, blendMode, easeMode, remaining);
+                    sdvApplyCameraSlots(2, blendMode, easeMode, remaining);
                 } else if (kind == SDV_TRACK_LENS) {
                     lensKey = (SdvLensKey *)key;
                     lensNext = (SdvLensKey *)next;
                     if (lensNext->perspective != lensKey->perspective) {
                         camera->toPerspective = (float)lensNext->perspective * 0.017453292f;
-                        func_00268010(4, blendMode, easeMode, remaining);
+                        sdvApplyCameraSlots(4, blendMode, easeMode, remaining);
                     }
                     if (lensNext->roll != lensKey->roll) {
                         camera->toRoll = (float)lensNext->roll * 0.017453292f;
-                        func_00268010(8, blendMode, easeMode, remaining);
+                        sdvApplyCameraSlots(8, blendMode, easeMode, remaining);
                     }
                 }
                 after = (SdvCameraKey *)(keyBytes + (int)next);
@@ -772,7 +772,7 @@ void sdvClearSpecialRecord(int slot)
 #define SDV_FLAG_MODE_SET_SHIFT 6
 #define SDV_FLAG_MODE_SET (1 << SDV_FLAG_MODE_SET_SHIFT)
 
-/* The owner of a special: the sequence it runs (func_00267048 steps it), then its slot ids. */
+/* The owner of a special: the sequence it runs (sdvExecSeqTbl steps it), then its slot ids. */
 typedef struct SdvSpecialOwner {
     short *script;            /* +0x00 the sequence table, 0 when none */
     unsigned short time;      /* +0x04 */
@@ -1214,7 +1214,7 @@ void sdvKillAlter(int id)
  * With "active != 0 && owner == owner" gcc reads owner through the active pointer (bnel slots;
  * fndiff 23/34 in place); the owner test on a separate record pointer keeps the original's beq/bne (34/34).
  */
-void func_0026A718(int owner)
+void sdvDestroyOwnerAlters(int owner)
 {
     int i;
 
@@ -1256,7 +1256,7 @@ void sdvPacketFlushMscnt(void)
 /* A 128-bit quadword (one lq/sq), as the VIF1 packet writers take it. */
 typedef unsigned int Quadword __attribute__((mode(TI)));
 
-/* The header sdvDrawAlter puts in front of each strip it sends by reference: func_0026AFB0 clears its first
+/* The header sdvDrawAlter puts in front of each strip it sends by reference: sdvSetStripHeader clears its first
    two quadwords, fills the UNPACK code, primitive count and strip flag, and ORs the primitive count into the
    loop count at +0x20 (the third quadword is not cleared). */
 typedef union SdvStripHeader {
@@ -1282,7 +1282,7 @@ extern void sceVif1PkRef(XglPacket *packet, const void *environment,
  * Masking the address inside the sceVif1PkRef call loads the mask after the calls instead of before them
  * (fndiff 44 insns, 5/48 in place; this form 48/48).
  */
-void func_0026AFB0(SdvStripHeader *header, int unused, int qwc, int primitiveCount, int strip)
+void sdvSetStripHeader(SdvStripHeader *header, int unused, int qwc, int primitiveCount, int strip)
 {
     XglPacket *packet;
     void *physical;
@@ -1361,7 +1361,7 @@ void sdvDrawAlters(int layer)
 }
 
 /* Draws every active alter record that belongs to owner, like sdvDrawAlters. */
-void func_0026BB78(int owner)
+void sdvDrawOwnerAlters(int owner)
 {
     int i;
     int stateBuilt = 0;

@@ -31,7 +31,7 @@ void func_002746B8(Vector4 *v)
 /* GS ALPHA register value for a blend mode: 1 additive (Cs*As + Cd), 2 subtractive
  * (-Cs*As + Cd), 3 (Cs - Cd)*As with no destination term, anything else normal
  * alpha blending ((Cs - Cd)*As + Cd). */
-int func_002746F8(int blend)
+int xglBlendAlpha(int blend)
 {
     if (blend == 1) {
         return 0x48;

@@ -11,7 +11,7 @@ typedef struct RecordSource {
 } RecordSource;
 
 /*
- * Batch header: the depth shared by the four corners and the number of repeats. func_002778D0 reads
+ * Batch header: the depth shared by the four corners and the number of repeats. recordDrawCurve reads
  * the graph fields from 0x20: colour, baseline, time range, top, columns, rows and value ceiling.
  */
 typedef struct RecordBatch {
@@ -65,7 +65,7 @@ void gsQueueAddKickVertex(void *context, Vector4 *vectors, void *batch);
 void gsQueueFlush(void *packet);
 
 /* Draws the record's rectangle as one two-colour strip, count times. */
-void func_00277720(Record *record, void *packet)
+void recordDrawStrip(Record *record, void *packet)
 {
     Vector4 corners[4];
     int depth;
@@ -130,7 +130,7 @@ void func_00277EA0(void *context, Vector4 *corners, RecordBatch *batch);
  * sampled value. The record is passed on untyped: each helper reads its own partial view of it
  * (RecordSource, RecordBatch, AnimSegment in tu209.c).
  */
-void func_002778D0(void *record, void *packet)
+void recordDrawCurve(void *record, void *packet)
 {
     RecordBatch *graph;
     Vector4 corners[4];
@@ -217,9 +217,9 @@ void func_002778D0(void *record, void *packet)
     gsQueueFlush(packet);
 }
 
-void func_00277C28(Vector4 *vectors, void *params, int value, int x, int y);
+void recordRotateCorner(Vector4 *vectors, void *params, int value, int x, int y);
 
-/* Passes the four corners to func_00277C28 with one value and an origin: corner 0 plus the source offset. */
+/* Passes the four corners to recordRotateCorner with one value and an origin: corner 0 plus the source offset. */
 void recordProjectQuad(Vector4 *corners, RecordSource *source, void *params)
 {
     int value;
@@ -229,10 +229,10 @@ void recordProjectQuad(Vector4 *corners, RecordSource *source, void *params)
     originX = (int) (corners[0].x + (float) source->offset_x);
     value = source->value;
     originY = (int) (corners[0].y + (float) source->offset_y);
-    func_00277C28(&corners[0], params, value, originX, originY);
-    func_00277C28(&corners[1], params, value, originX, originY);
-    func_00277C28(&corners[2], params, value, originX, originY);
-    func_00277C28(&corners[3], params, value, originX, originY);
+    recordRotateCorner(&corners[0], params, value, originX, originY);
+    recordRotateCorner(&corners[1], params, value, originX, originY);
+    recordRotateCorner(&corners[2], params, value, originX, originY);
+    recordRotateCorner(&corners[3], params, value, originX, originY);
 }
 
 #include "vu0_macro.h"
@@ -246,7 +246,7 @@ void xglMatrixMul(void *destination, void *left, void *right);
 void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 
 /* Rotates one corner by the (x, y, z) angles in degrees of params around the point (x, y); value is not read. */
-void func_00277C28(Vector4 *vectors, void *params, int value, int x, int y)
+void recordRotateCorner(Vector4 *vectors, void *params, int value, int x, int y)
 {
     AlignedVector4 offset;
     AlignedVector4 centered;

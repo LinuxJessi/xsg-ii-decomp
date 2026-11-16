@@ -117,7 +117,7 @@ typedef union TiWindVector {
 
 #define TIWIND_RADIUS_OFF 20000
 
-int func_00267048(SdvSequence *sequence);
+int sdvExecSeqTbl(SdvSequence *sequence);
 void sefGetPosition(Vector4 *destination, Vector4 *offset, int kind);
 void tiWindPointSetPosition(unsigned int index, Vector4 *position);
 void tiWindPointSetSpeed(unsigned int index, float speed);
@@ -166,7 +166,7 @@ void tiWindUpdateKeyframes(SdvSequence *sequence, int key, unsigned short subkey
     if (sequence == 0 || sequence->keys == 0) {
         return;
     }
-    index = func_00267048(sequence);
+    index = sdvExecSeqTbl(sequence);
     if (index < 0) {
         index = sequence->position - 1;
     }

@@ -81,7 +81,7 @@ void sefDispatchHandleSlots(void) {
 /* Clears the sefEffectRecordList list, sets D_0069DB6C to 1 and calls sefResetHandleSlots.
  * Copies the in-use records that pass its flag and key tests into the list
  * (0x50-byte entries), registers their handles through sefRegisterHandle, and
- * passes the list and its count to func_00271398. */
+ * passes the list and its count to sefCollectPersistentSlots. */
 INCLUDE_ASM("asm/main/nonmatchings/tu176", sefCollectEffectRecords);
 
 /* Releases every record, dispatches the handle slots, then re-creates each

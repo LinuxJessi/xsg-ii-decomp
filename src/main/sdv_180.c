@@ -89,7 +89,7 @@ extern short *D_0069DC2C;
  * The dead store to value in the 0x49 branch keeps value live past the 0x3F
  * lookup; without it gcc folds that lookup's loaded and resolved offsets into
  * one register and the 0x3E/0x3F lookups are no longer merged. */
-SefScriptRecord *func_00266BC8(int key, int *offset_out, int index)
+SefScriptRecord *scGetKeyRecord(int key, int *offset_out, int index)
 {
     SefScriptRecord **entry;
     SefScriptRecord *record;
@@ -148,7 +148,7 @@ SefScriptRecord *func_00266BC8(int key, int *offset_out, int index)
 
 SefScriptRecord *func_00266D40(int key, int *offset_out)
 {
-    return func_00266BC8(key, offset_out, 0);
+    return scGetKeyRecord(key, offset_out, 0);
 }
 
 int scOfsToAdr(int offset)

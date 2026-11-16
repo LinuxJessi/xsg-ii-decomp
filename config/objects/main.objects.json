@@ -84729,9 +84729,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266BC8",
+     "name": "scGetKeyRecord",
      "size": 372,
-     "splat_name": "func_00266BC8",
+     "splat_name": "scGetKeyRecord",
      "va": "0x00266bc8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84991,45 +84991,45 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00266F68",
+     "name": "sdvCheckSeqKey",
      "size": 224,
-     "splat_name": "func_00266F68",
+     "splat_name": "sdvCheckSeqKey",
      "va": "0x00266f68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00267048",
+     "name": "sdvExecSeqTbl",
      "size": 116,
-     "splat_name": "func_00267048",
+     "splat_name": "sdvExecSeqTbl",
      "va": "0x00267048",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002670C0",
+     "name": "sdvProgressKey",
      "size": 224,
-     "splat_name": "func_002670C0",
+     "splat_name": "sdvProgressKey",
      "va": "0x002670c0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002671A0",
+     "name": "sdvExecEffectSeq",
      "size": 484,
-     "splat_name": "func_002671A0",
+     "splat_name": "sdvExecEffectSeq",
      "va": "0x002671a0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00267388",
+     "name": "sdvExecShadowSeq",
      "size": 276,
-     "splat_name": "func_00267388",
+     "splat_name": "sdvExecShadowSeq",
      "va": "0x00267388",
      "name_basis": "address",
      "provenance": "estimated"
@@ -85359,9 +85359,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00268010",
+     "name": "sdvApplyCameraSlots",
      "size": 52,
-     "splat_name": "func_00268010",
+     "splat_name": "sdvApplyCameraSlots",
      "va": "0x00268010",
      "name_basis": "address",
      "provenance": "estimated"
@@ -85377,9 +85377,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002680A8",
+     "name": "sdvNearestAngle",
      "size": 316,
-     "splat_name": "func_002680A8",
+     "splat_name": "sdvNearestAngle",
      "va": "0x002680a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -85530,9 +85530,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026A718",
+     "name": "sdvDestroyOwnerAlters",
      "size": 136,
-     "splat_name": "func_0026A718",
+     "splat_name": "sdvDestroyOwnerAlters",
      "va": "0x0026a718",
      "name_basis": "address",
      "provenance": "estimated"
@@ -85566,9 +85566,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026AFB0",
+     "name": "sdvSetStripHeader",
      "size": 192,
-     "splat_name": "func_0026AFB0",
+     "splat_name": "sdvSetStripHeader",
      "va": "0x0026afb0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -85620,9 +85620,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026BB78",
+     "name": "sdvDrawOwnerAlters",
      "size": 172,
-     "splat_name": "func_0026BB78",
+     "splat_name": "sdvDrawOwnerAlters",
      "va": "0x0026bb78",
      "name_basis": "address",
      "provenance": "estimated"
@@ -85869,9 +85869,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026BD10",
+     "name": "sefUnpackBlockInit",
      "size": 40,
-     "splat_name": "func_0026BD10",
+     "splat_name": "sefUnpackBlockInit",
      "va": "0x0026bd10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -85923,9 +85923,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026C0A8",
+     "name": "sefBuildModelPacket",
      "size": 408,
-     "splat_name": "func_0026C0A8",
+     "splat_name": "sefBuildModelPacket",
      "va": "0x0026c0a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -86067,9 +86067,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026CEA8",
+     "name": "sefRotationZRows",
      "size": 112,
-     "splat_name": "func_0026CEA8",
+     "splat_name": "sefRotationZRows",
      "va": "0x0026cea8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -86103,81 +86103,81 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026D6A8",
+     "name": "sefSpawnKinds0To7",
      "size": 540,
-     "splat_name": "func_0026D6A8",
+     "splat_name": "sefSpawnKinds0To7",
      "va": "0x0026d6a8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026D8C8",
+     "name": "sefSpawnKinds8To10",
      "size": 848,
-     "splat_name": "func_0026D8C8",
+     "splat_name": "sefSpawnKinds8To10",
      "va": "0x0026d8c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026DC18",
+     "name": "sefSpawnKinds11To13",
      "size": 792,
-     "splat_name": "func_0026DC18",
+     "splat_name": "sefSpawnKinds11To13",
      "va": "0x0026dc18",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026DF30",
+     "name": "sefSpawnKinds22Up",
      "size": 856,
-     "splat_name": "func_0026DF30",
+     "splat_name": "sefSpawnKinds22Up",
      "va": "0x0026df30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026E288",
+     "name": "sefSpawnKinds14To16",
      "size": 856,
-     "splat_name": "func_0026E288",
+     "splat_name": "sefSpawnKinds14To16",
      "va": "0x0026e288",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026E5E0",
+     "name": "sefSpawnKinds17To19",
      "size": 1160,
-     "splat_name": "func_0026E5E0",
+     "splat_name": "sefSpawnKinds17To19",
      "va": "0x0026e5e0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026EA68",
+     "name": "sefSpawnKind20",
      "size": 480,
-     "splat_name": "func_0026EA68",
+     "splat_name": "sefSpawnKind20",
      "va": "0x0026ea68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026EC48",
+     "name": "sefSpawnKind21",
      "size": 412,
-     "splat_name": "func_0026EC48",
+     "splat_name": "sefSpawnKind21",
      "va": "0x0026ec48",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026EDE8",
+     "name": "sefUpdateBurstParticles",
      "size": 548,
-     "splat_name": "func_0026EDE8",
+     "splat_name": "sefUpdateBurstParticles",
      "va": "0x0026ede8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -86193,9 +86193,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026F250",
+     "name": "sefUpdateFadeOutParticles",
      "size": 632,
-     "splat_name": "func_0026F250",
+     "splat_name": "sefUpdateFadeOutParticles",
      "va": "0x0026f250",
      "name_basis": "address",
      "provenance": "estimated"
@@ -86238,36 +86238,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00270428",
+     "name": "sefUpdateKind20Particles",
      "size": 916,
-     "splat_name": "func_00270428",
+     "splat_name": "sefUpdateKind20Particles",
      "va": "0x00270428",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002707C0",
+     "name": "sefUpdateSpinParticles",
      "size": 288,
-     "splat_name": "func_002707C0",
+     "splat_name": "sefUpdateSpinParticles",
      "va": "0x002707c0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002708E0",
+     "name": "sefRunEmitters",
      "size": 508,
-     "splat_name": "func_002708E0",
+     "splat_name": "sefRunEmitters",
      "va": "0x002708e0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00270AE0",
+     "name": "sefSetupEmitterPacket",
      "size": 444,
-     "splat_name": "func_00270AE0",
+     "splat_name": "sefSetupEmitterPacket",
      "va": "0x00270ae0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -86328,9 +86328,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271398",
+     "name": "sefCollectPersistentSlots",
      "size": 192,
-     "splat_name": "func_00271398",
+     "splat_name": "sefCollectPersistentSlots",
      "va": "0x00271398",
      "name_basis": "address",
      "provenance": "estimated"
@@ -89533,9 +89533,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00274130",
+     "name": "xglPointDistanceInt",
      "size": 104,
-     "splat_name": "func_00274130",
+     "splat_name": "xglPointDistanceInt",
      "va": "0x00274130",
      "name_basis": "address",
      "provenance": "estimated"
@@ -89759,9 +89759,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002745A8",
+     "name": "xglFrameTex0",
      "size": 168,
-     "splat_name": "func_002745A8",
+     "splat_name": "xglFrameTex0",
      "va": "0x002745a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -89873,9 +89873,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002746F8",
+     "name": "xglBlendAlpha",
      "size": 60,
-     "splat_name": "func_002746F8",
+     "splat_name": "xglBlendAlpha",
      "va": "0x002746f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90145,27 +90145,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00274850",
+     "name": "recordUpdateRenderHook",
      "size": 120,
-     "splat_name": "func_00274850",
+     "splat_name": "recordUpdateRenderHook",
      "va": "0x00274850",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002748C8",
+     "name": "recordSetPreset",
      "size": 3652,
-     "splat_name": "func_002748C8",
+     "splat_name": "recordSetPreset",
      "va": "0x002748c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275710",
+     "name": "recordSetSlot",
      "size": 128,
-     "splat_name": "func_00275710",
+     "splat_name": "recordSetSlot",
      "va": "0x00275710",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90181,27 +90181,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002757F0",
+     "name": "recordClearBanks",
      "size": 60,
-     "splat_name": "func_002757F0",
+     "splat_name": "recordClearBanks",
      "va": "0x002757f0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275830",
+     "name": "recordRenderAll",
      "size": 312,
-     "splat_name": "func_00275830",
+     "splat_name": "recordRenderAll",
      "va": "0x00275830",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275968",
+     "name": "recordAnyUsed",
      "size": 96,
-     "splat_name": "func_00275968",
+     "splat_name": "recordAnyUsed",
      "va": "0x00275968",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90226,36 +90226,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002759F8",
+     "name": "recordDrawType1",
      "size": 756,
-     "splat_name": "func_002759F8",
+     "splat_name": "recordDrawType1",
      "va": "0x002759f8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275CF0",
+     "name": "recordStageSize",
      "size": 64,
-     "splat_name": "func_00275CF0",
+     "splat_name": "recordStageSize",
      "va": "0x00275cf0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275D30",
+     "name": "recordStageColor",
      "size": 212,
-     "splat_name": "func_00275D30",
+     "splat_name": "recordStageColor",
      "va": "0x00275d30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275E08",
+     "name": "recordPulseColor",
      "size": 152,
-     "splat_name": "func_00275E08",
+     "splat_name": "recordPulseColor",
      "va": "0x00275e08",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90271,45 +90271,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275EE8",
+     "name": "recordDrawType2",
      "size": 132,
-     "splat_name": "func_00275EE8",
+     "splat_name": "recordDrawType2",
      "va": "0x00275ee8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275F70",
+     "name": "recordDrawType3",
      "size": 992,
-     "splat_name": "func_00275F70",
+     "splat_name": "recordDrawType3",
      "va": "0x00275f70",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276350",
+     "name": "recordRingPoint",
      "size": 172,
-     "splat_name": "func_00276350",
+     "splat_name": "recordRingPoint",
      "va": "0x00276350",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276400",
+     "name": "recordAdvanceRingRadius",
      "size": 84,
-     "splat_name": "func_00276400",
+     "splat_name": "recordAdvanceRingRadius",
      "va": "0x00276400",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276458",
+     "name": "recordDrawType4",
      "size": 900,
-     "splat_name": "func_00276458",
+     "splat_name": "recordDrawType4",
      "va": "0x00276458",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90334,45 +90334,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276838",
+     "name": "recordDrawType5",
      "size": 1324,
-     "splat_name": "func_00276838",
+     "splat_name": "recordDrawType5",
      "va": "0x00276838",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276D68",
+     "name": "recordDrawType6",
      "size": 916,
-     "splat_name": "func_00276D68",
+     "splat_name": "recordDrawType6",
      "va": "0x00276d68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277100",
+     "name": "recordStepWarp",
      "size": 100,
-     "splat_name": "func_00277100",
+     "splat_name": "recordStepWarp",
      "va": "0x00277100",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277168",
+     "name": "recordWarpCorner",
      "size": 316,
-     "splat_name": "func_00277168",
+     "splat_name": "recordWarpCorner",
      "va": "0x00277168",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002772A8",
+     "name": "recordDrawType7",
      "size": 832,
-     "splat_name": "func_002772A8",
+     "splat_name": "recordDrawType7",
      "va": "0x002772a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90406,9 +90406,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277610",
+     "name": "recordRingStep",
      "size": 268,
-     "splat_name": "func_00277610",
+     "splat_name": "recordRingStep",
      "va": "0x00277610",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90603,18 +90603,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00277720",
+     "name": "recordDrawStrip",
      "size": 428,
-     "splat_name": "func_00277720",
+     "splat_name": "recordDrawStrip",
      "va": "0x00277720",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002778D0",
+     "name": "recordDrawCurve",
      "size": 648,
-     "splat_name": "func_002778D0",
+     "splat_name": "recordDrawCurve",
      "va": "0x002778d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90630,9 +90630,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277C28",
+     "name": "recordRotateCorner",
      "size": 412,
-     "splat_name": "func_00277C28",
+     "splat_name": "recordRotateCorner",
      "va": "0x00277c28",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90902,18 +90902,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002783D0",
+     "name": "quadDrawPreset",
      "size": 388,
-     "splat_name": "func_002783D0",
+     "splat_name": "quadDrawPreset",
      "va": "0x002783d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00278558",
+     "name": "quadDrawPresetUv",
      "size": 388,
-     "splat_name": "func_00278558",
+     "splat_name": "quadDrawPresetUv",
      "va": "0x00278558",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90929,9 +90929,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002789C8",
+     "name": "circleSpriteCorners",
      "size": 124,
-     "splat_name": "func_002789C8",
+     "splat_name": "circleSpriteCorners",
      "va": "0x002789c8",
      "name_basis": "address",
      "provenance": "estimated"

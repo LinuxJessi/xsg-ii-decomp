@@ -126,7 +126,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQueueSetTest);
 /* gsQueueSetClamp: appends CLAMP_1 (0x08). */
 INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQueueSetClamp);
 
-int func_002745A8(int value, int flag);
+int xglFrameTex0(int value, int flag);
 
 /* gsQueueTex0Value: the TEX0_1 data for a texture word, with the flag from gsQueueAlphaTest. */
 int gsQueueTex0Value(int value)
@@ -134,9 +134,9 @@ int gsQueueTex0Value(int value)
   int flag = 0;
   if ((gsQueueAlphaTest == flag) || (gsQueueAlphaTest != 1))
   {
-    return func_002745A8(value, flag);
+    return xglFrameTex0(value, flag);
   }
-  return func_002745A8(value, 1);
+  return xglFrameTex0(value, 1);
 }
 
 /* gsQueueSetTexA: appends TEXA (0x3B); bit 15 is set when gsQueueTexAlphaExpand is set. */
@@ -150,8 +150,8 @@ INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQueueSetTexFilter);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu213", func_0027BFD0);
 
-int func_002757F0(void);
+int recordClearBanks(void);
 
 void func_0027C7B8(void) {
-    func_002757F0();
+    recordClearBanks();
 }

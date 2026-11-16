@@ -153,7 +153,7 @@ extern s16 D_0069DB82;
 extern s16 D_0069DB84;
 void func_00259678(void);
 void sdvExecAlters(void);
-void func_002708E0(int);
+void sefRunEmitters(int);
 
 /* One step of the effect update. sefExecEffect calls it when sefFlagTest(1) returns 0, and sefExecEffectSteps calls
  * it per step for id 0. Clears D_00804970 first and D_0069DB80/82/84 last. */
@@ -161,7 +161,7 @@ void sefExecStep(void) {
     memset(D_00804970, 0, 0x488);
     sefAdvanceGroupKey();
     sdvExecAlters();
-    func_002708E0(0);
+    sefRunEmitters(0);
     func_00259678();
     D_0069DB80 = 0;
     D_0069DB82 = 0;
@@ -205,8 +205,8 @@ void sefExecEffect(void)
 }
 
 /* Runs the frame steps for id: stores step (argument 3) in D_0069DB94 and loops with a float time accumulator
- * from 0 up to frames (argument 2). id 0 runs sefExecStep per step, then func_002708E0(0); other ids clear
- * D_00804970 and call func_0025EBE0 or func_002708E0 with the id. */
+ * from 0 up to frames (argument 2). id 0 runs sefExecStep per step, then sefRunEmitters(0); other ids clear
+ * D_00804970 and call func_0025EBE0 or sefRunEmitters with the id. */
 INCLUDE_ASM("asm/main/nonmatchings/tu165", sefExecEffectSteps);
 
 int sefExecEffectSteps(int, float, float);
