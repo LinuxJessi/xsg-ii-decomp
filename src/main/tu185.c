@@ -596,31 +596,28 @@ void sefRotationZRows(SefRotationRow *rows, f32 angle) {
     rows[2].element[2] = 1.0f;
 }
 
-/* A rotation vector: x is the constant zero, y and z are the two angles. */
-typedef struct RotationVector {
-    int x;
-    float y;
-    float z;
-} RotationVector;
-
-void MMathRotateMatrixYXZ(u64 *matrix, int mode, const RotationVector *angles);
+Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 f32 sefRandAngle(void);
 
 void sefRandomRotateMatrix(u64 *dest)
 {
-    RotationVector angles;
-    u64 matrix[8];
+    Vector4 angles;
+    /* The rotation is copied out as doublewords (ld/sd), so the matrix is also seen as u64 words. */
+    union {
+        Matrix4 rows;
+        u64 words[8];
+    } matrix;
 
-    angles.x = 0;
+    angles.x = 0.0f;
     angles.y = sefRandAngle();
     angles.z = sefRandAngle();
-    MMathRotateMatrixYXZ(matrix, 0, &angles);
-    dest[0] = matrix[0];
-    dest[1] = matrix[1];
-    dest[2] = matrix[2];
-    dest[3] = matrix[3];
-    dest[4] = matrix[4];
-    dest[5] = matrix[5];
+    MMathRotateMatrixYXZ(&matrix.rows, 0, &angles);
+    dest[0] = matrix.words[0];
+    dest[1] = matrix.words[1];
+    dest[2] = matrix.words[2];
+    dest[3] = matrix.words[3];
+    dest[4] = matrix.words[4];
+    dest[5] = matrix.words[5];
 }
 
 /* Fires burst emitter index of slot once per frame: spawns up to count particles that fly from D_005E6EE0

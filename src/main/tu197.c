@@ -63,7 +63,7 @@ typedef void (*MSeHook)(void);
 extern MEfCameraParams D_0061B2C0;
 extern char D_0068C6D8[];
 XglCamera *xglStudioGetCamera2(int camera_index);
-void MMathRotateMatrixYXZ(Matrix4 matrix, int mode, const Vector4 *angles);
+Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 void svForceImageMapper(unsigned int index);
 
 /* Runs one pass over the busy slots of the pool: mode 0 takes the camera snapshot first, mode 2 forces each
@@ -85,7 +85,7 @@ void MSeObjProc(unsigned int mode) {
         D_0061B2C0.camera = camera;
         QuadwordCopyMatrixT0(D_0061B2C0.viewMatrix, camera->volume[0].viewMatrix);
         QuadwordCopyT0(&D_0061B2C0.rotation, &camera->travel.rotation);
-        MMathRotateMatrixYXZ(D_0061B2C0.rotationMatrix, 0, &D_0061B2C0.rotation);
+        MMathRotateMatrixYXZ(&D_0061B2C0.rotationMatrix, 0, &D_0061B2C0.rotation);
         while (slot-- != 0) {
             if (object->flags & MSE_OBJ_BUSY) {
                 if (object->modeProc[0] != 0) {

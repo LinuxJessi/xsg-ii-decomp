@@ -10,9 +10,9 @@ typedef struct GsQueueRect {
     int bottom;
 } GsQueueRect;
 
-/* The header every draw record starts with (the gsQueue functions read it; GsQueueContext in tu213.c and tu207.c
-   names the same words). */
-typedef struct GsQueueHeader {
+/* The header every draw record starts with: the gsQueue functions read it, under the name tu213.c gives it (its
+   partial view names color and halveRgb at the same offsets; tu207.c's record continues it). */
+typedef struct GsQueueContext {
     unsigned char type;
     unsigned char unmodeled_01[3];
     int frame;
@@ -22,11 +22,11 @@ typedef struct GsQueueHeader {
     int count;                          /* 0x14: how many times the primitive is drawn */
     int halveRgb;
     int blendKind;
-} GsQueueHeader;
+} GsQueueContext;
 
 /* Ring record (orbitDrawRing). */
 typedef struct GsQueueRing {
-    GsQueueHeader header;
+    GsQueueContext header;
     int endColor;
     int centerX;
     int centerY;
@@ -39,7 +39,7 @@ typedef struct GsQueueRing {
 
 /* Quad record with preset positions and a texture rectangle (quadDrawPreset). */
 typedef struct GsQueuePresetQuad {
-    GsQueueHeader header;
+    GsQueueContext header;
     int positionPreset;
     unsigned char unmodeled_24[0x30 - 0x24];
     GsQueueRect texture;
@@ -47,14 +47,14 @@ typedef struct GsQueuePresetQuad {
 
 /* Quad record with a screen rectangle and preset texture coordinates (quadDrawPresetUv). */
 typedef struct GsQueuePresetUvQuad {
-    GsQueueHeader header;
+    GsQueueContext header;
     GsQueueRect screen;
     int texturePreset;
 } GsQueuePresetUvQuad;
 
 /* Circle-of-sprites record (circleDrawSegments, circleSpriteCorners). */
 typedef struct GsQueueCircle {
-    GsQueueHeader header;
+    GsQueueContext header;
     GsQueueRect screen;
     GsQueueRect texture;
     int radiusStep;
@@ -67,7 +67,7 @@ typedef struct GsQueueCircle {
 
 /* Grid record (gridDrawCells). */
 typedef struct GsQueueGrid {
-    GsQueueHeader header;
+    GsQueueContext header;
     int endColor;
     GsQueueRect screen;
     int columns;
@@ -80,7 +80,7 @@ typedef struct GsQueueGrid {
 /* The 0x7C-byte draw record: the header is shared, the words from 0x20 on depend on the primitive. Each drawing
    function below takes the member of its primitive. */
 typedef union GsQueueRecord {
-    GsQueueHeader header;
+    GsQueueContext header;
     GsQueueRing ring;
     GsQueuePresetQuad presetQuad;
     GsQueuePresetUvQuad presetUvQuad;
@@ -94,8 +94,8 @@ extern float D_0069DE00; /* degrees to radians */
 float sinf(float angle);
 float cosf(float angle);
 void gsQueueBeginTriStrip(void *context);
-int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueHeader *record);
-void gsQueueAddColor(int packet, int color, GsQueueHeader *context);
+int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueContext *record);
+void gsQueueAddColor(int packet, int color, GsQueueContext *context);
 void gsQueueAddKickVertex(int packet, Vector4 *vector, void *context);
 void gsQueueFlush(int packet);
 
@@ -158,7 +158,7 @@ void orbitDrawRing(GsQueueRing *record, int packet) {
 }
 
 /* Stores a point: x and y from the arguments, z from the record's depth; returns that depth. */
-int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueHeader *record) {
+int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueContext *record) {
     int depth;
 
     depth = record->depth;

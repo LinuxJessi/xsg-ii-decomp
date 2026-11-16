@@ -158,9 +158,9 @@ extern SdvObjectScale D_0046E0C0;
 
 /* Camera kinds: the part (low bits, from 1) of one of the three request objects; the bare
    kind takes part 1 and a height correction from the object's kind vector. */
-#define SDV_PART_OF_OBJECT0 0x40
-#define SDV_PART_OF_OBJECT2 0x80
-#define SDV_PART_OF_OBJECT1 0x100
+#define SDV_KEY_SOURCE 0x40         /* the request's source actor (the same select bits as tu181.c) */
+#define SDV_KEY_TARGET 0x80         /* the request's target actor */
+#define SDV_KEY_OBJECT1 0x100       /* the request's second object */
 
 /* Builds a camera point from a key: angles (pitch, yaw, distance) orbit around the object that kind selects. */
 void sdvSetCameraParam(SdvCameraParam *camera, int kind, short *angles, int scaled, int mode)
@@ -208,29 +208,29 @@ void sdvSetCameraParam(SdvCameraParam *camera, int kind, short *angles, int scal
         offset = &camera->offset.vector;
         Vu0SefScaleVectorXYZNI(offset, offset, 0.01f);
     }
-    if ((kind & SDV_PART_OF_OBJECT0) && kind != SDV_PART_OF_OBJECT0) {
+    if ((kind & SDV_KEY_SOURCE) && kind != SDV_KEY_SOURCE) {
         camera->object = objects[0];
-        camera->part = kind - (SDV_PART_OF_OBJECT0 + 1);
-    } else if ((kind & SDV_PART_OF_OBJECT2) && kind != SDV_PART_OF_OBJECT2) {
+        camera->part = kind - (SDV_KEY_SOURCE + 1);
+    } else if ((kind & SDV_KEY_TARGET) && kind != SDV_KEY_TARGET) {
         camera->object = objects[2];
-        camera->part = kind - (SDV_PART_OF_OBJECT2 + 1);
-    } else if ((kind & SDV_PART_OF_OBJECT1) && kind != SDV_PART_OF_OBJECT1) {
+        camera->part = kind - (SDV_KEY_TARGET + 1);
+    } else if ((kind & SDV_KEY_OBJECT1) && kind != SDV_KEY_OBJECT1) {
         camera->object = objects[1];
-        camera->part = kind - (SDV_PART_OF_OBJECT1 + 1);
-    } else if (kind == SDV_PART_OF_OBJECT0) {
+        camera->part = kind - (SDV_KEY_OBJECT1 + 1);
+    } else if (kind == SDV_KEY_SOURCE) {
         camera->object = objects[0];
         camera->part = 1;
-        kind = SDV_PART_OF_OBJECT0 + 2;
+        kind = SDV_KEY_SOURCE + 2;
         vectorKind = 1;
-    } else if (kind == SDV_PART_OF_OBJECT2) {
+    } else if (kind == SDV_KEY_TARGET) {
         camera->object = objects[2];
         camera->part = 1;
-        kind = SDV_PART_OF_OBJECT2 + 2;
+        kind = SDV_KEY_TARGET + 2;
         vectorKind = 0;
-    } else if (kind == SDV_PART_OF_OBJECT1) {
+    } else if (kind == SDV_KEY_OBJECT1) {
         camera->object = objects[1];
         camera->part = 1;
-        kind = SDV_PART_OF_OBJECT1 + 2;
+        kind = SDV_KEY_OBJECT1 + 2;
         vectorKind = 5;
     }
     if (vectorKind >= 0) {
@@ -391,9 +391,10 @@ float sdvNearestAngle(float angle, float current)
 #define SDV_TRACK_LENS 3
 #define SDV_TRACK_SHAKE 0x41
 
-/* The time a key table ends with, and the bit that makes a key's time a hold counted from the current frame. */
-#define SDV_KEY_TIME_END 0x400
-#define SDV_KEY_TIME_HOLD 0x1000
+/* The time a key table ends with, and the bit that makes sdvProgressKey wait for the hit signal (the key's time then
+   counts from the frame the hit arrives); the same key bits as tu181.c. */
+#define SDV_KEY_END 0x400
+#define SDV_KEY_WAIT_HIT 0x1000
 
 /* The second halfword of a camera key: the ease and blend modes of the slot transition to it; the request log
    copies it whole (the union: a struct copy comes out as two byte moves, the original copies the halfword). */
@@ -407,7 +408,7 @@ typedef union SdvKeyModes {
 
 /* A key of the look-at (kind 1) and position (kind 0) tracks: 8 halfwords. Every track's key starts with time. */
 typedef struct SdvCameraKey {
-    short time;                         /* +0x00: the key's frame, or a hold (SDV_KEY_TIME_HOLD) */
+    short time;                         /* +0x00: the key's frame, or a hit wait (SDV_KEY_WAIT_HIT) */
     SdvKeyModes modes;                  /* +0x02 */
     short mode;                         /* +0x04: sdvSetCameraParam's mode; bit 0x10 anchors to the object */
     short scaled;                       /* +0x06 */
@@ -448,9 +449,9 @@ extern SdvCameraKeyLog D_005E7A98;
 /* Minus the distance from the camera position to its look-at point. */
 extern float D_0069DC38;
 
-/* Finds the key of keys (keySize halfwords each) that frame reaches, counting channel->keyIndex up; returns
-   its index, or SDV_KEY_TIME_END when the table is over. */
-int sdvProgressKey(short *keys, SdvScheduleChannel *channel, int keySize, int frame);
+/* Finds the key of keys (stride halfwords each) that elapsed reaches, counting *position up; returns its index,
+   or SDV_KEY_END when the table is over (defined in tu181.c). */
+int sdvProgressKey(short *keys, short *position, int stride, int elapsed);
 XglCamera *xglStudioGetActiveCamera(void);
 void cameraInit(void);
 /* Returns the distance between two points (tu153.c declares it void: the original reads $f0 here). */
@@ -459,7 +460,7 @@ void cameraAnglesBetween(Vector4 *angles, const Vector4 *from, const Vector4 *to
 
 /* Advances one track to frame: applies the key frame reaches (look-at, position, perspective and roll, or the
    shake waves), then starts the slot transition to the next key; counts keyIndex past the table's end marker.
-   Returns the key index, SDV_KEY_TIME_END when the track is over.
+   Returns the key index, SDV_KEY_END when the track is over.
    The key after next is an integer sum with the key size first: with `(short *)next + keySize` (or
    `(unsigned char *)next + keyBytes`) gcc emits `addu $2,$20,$3` for the original's `addu $2,$3,$20`. */
 int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame)
@@ -485,15 +486,15 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
     int bit;
     int i;
 
-    index = sdvProgressKey(keys, channel, keySize, frame);
-    if (index < SDV_KEY_TIME_END) {
+    index = sdvProgressKey(keys, &channel->keyIndex, keySize, frame);
+    if (index < SDV_KEY_END) {
         camera = &D_002B5E60;
         key = (SdvCameraKey *)&keys[index * keySize];
         keyBytes = keySize * sizeof(short);
         next = (SdvCameraKey *)((unsigned char *)key + keyBytes);
         remaining = next->time - key->time;
-        if (key->time & SDV_KEY_TIME_HOLD) {
-            if ((next->time & SDV_KEY_TIME_HOLD) == 0) {
+        if (key->time & SDV_KEY_WAIT_HIT) {
+            if ((next->time & SDV_KEY_WAIT_HIT) == 0) {
                 remaining = next->time - frame + 1;
             } else {
                 remaining = 0;
@@ -609,7 +610,7 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
                 camera->perspective = (float)lensKey->perspective * 0.017453292f;
                 camera->roll = (float)lensKey->roll * 0.017453292f;
             }
-            if (remaining >= 2 && next->time < SDV_KEY_TIME_END) {
+            if (remaining >= 2 && next->time < SDV_KEY_END) {
                 blendMode = key->modes.mode.blend;
                 easeMode = key->modes.mode.ease;
                 if (kind == SDV_TRACK_LOOK_AT) {
@@ -660,7 +661,7 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
                     }
                 }
                 after = (SdvCameraKey *)(keyBytes + (int)next);
-                if (after->time == SDV_KEY_TIME_END) {
+                if (after->time == SDV_KEY_END) {
                     /* the key after next is the end marker: step onto it now */
                     channel->keyIndex++;
                 }

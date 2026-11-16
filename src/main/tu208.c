@@ -58,14 +58,17 @@ typedef union Record {
     RecordGradient gradient;
 } Record;
 
+/* The record header the gsQueue functions read (tu213.c's partial view). */
+typedef struct GsQueueContext GsQueueContext;
+
 void gsQueueBeginTriStrip(void *context);
-void gsQueueAddColor(void *packet, int color, void *context);
-void gsQueueAddVertex(void *context, Vector4 *vectors, void *batch);
-void gsQueueAddKickVertex(void *context, Vector4 *vectors, void *batch);
-void gsQueueFlush(void *packet);
+void gsQueueAddColor(int packet, int color, GsQueueContext *context);
+void gsQueueAddVertex(int packet, Vector4 *vector, void *context);
+void gsQueueAddKickVertex(int packet, Vector4 *vector, void *context);
+void gsQueueFlush(int packet);
 
 /* Draws the record's rectangle as one two-colour strip, count times. */
-void recordDrawStrip(Record *record, void *packet)
+void recordDrawStrip(Record *record, int packet)
 {
     Vector4 corners[4];
     int depth;
@@ -106,10 +109,10 @@ void recordDrawStrip(Record *record, void *packet)
     gsQueueBeginTriStrip(record);
     for (i = 0; i < count; i++)
     {
-        gsQueueAddColor(packet, color0, record);
+        gsQueueAddColor(packet, color0, (GsQueueContext *)record);
         gsQueueAddVertex(packet, &corners[0], record);
         gsQueueAddVertex(packet, &corners[1], record);
-        gsQueueAddColor(packet, color1, record);
+        gsQueueAddColor(packet, color1, (GsQueueContext *)record);
         gsQueueAddKickVertex(packet, &corners[2], record);
         gsQueueAddKickVertex(packet, &corners[3], record);
     }
@@ -122,15 +125,15 @@ int animSampleSegment(f32 *out, AnimSegment *seg, f32 position);
 u64 xglColorLerp(u64 from, u64 to, f32 t);
 void animOffsetPoints(Vector4 *points, f32 dx, f32 dy);
 void recordProjectQuad(Vector4 *corners, RecordSource *source, void *params);
-void recordDrawBatchQuad(void *context, Vector4 *corners, RecordBatch *batch);
-void func_00277EA0(void *context, Vector4 *corners, RecordBatch *batch);
+void recordDrawBatchQuad(int packet, Vector4 *corners, RecordBatch *batch);
+void func_00277EA0(int packet, Vector4 *corners, RecordBatch *batch);
 
 /*
  * Draws the record's curve as columns of quads: one column per time step, filled in rows up to the
  * sampled value. The record is passed on untyped: each helper reads its own partial view of it
  * (RecordSource, RecordBatch, AnimSegment in tu209.c).
  */
-void recordDrawCurve(void *record, void *packet)
+void recordDrawCurve(void *record, int packet)
 {
     RecordBatch *graph;
     Vector4 corners[4];
@@ -282,7 +285,7 @@ void recordRotateCorner(Vector4 *vectors, void *params, int value, int x, int y)
 }
 
 /* Sets the depth of the four corners from the batch and runs the batch count times over them. */
-void recordDrawBatchQuad(void *context, Vector4 *corners, RecordBatch *batch)
+void recordDrawBatchQuad(int packet, Vector4 *corners, RecordBatch *batch)
 {
     float z;
     int count;
@@ -306,16 +309,16 @@ void recordDrawBatchQuad(void *context, Vector4 *corners, RecordBatch *batch)
         do
         {
             remaining = remaining - 1;
-            gsQueueAddVertex(context, corners, batch);
-            gsQueueAddVertex(context, corner1, batch);
-            gsQueueAddKickVertex(context, corner2, batch);
-            gsQueueAddKickVertex(context, corner3, batch);
+            gsQueueAddVertex(packet, corners, batch);
+            gsQueueAddVertex(packet, corner1, batch);
+            gsQueueAddKickVertex(packet, corner2, batch);
+            gsQueueAddKickVertex(packet, corner3, batch);
         }
         while (remaining != 0);
     }
 }
 
-void func_00277EA0(void *context, Vector4 *corners, RecordBatch *batch)
+void func_00277EA0(int packet, Vector4 *corners, RecordBatch *batch)
 {
     float z;
     int count;
@@ -339,10 +342,10 @@ void func_00277EA0(void *context, Vector4 *corners, RecordBatch *batch)
         do
         {
             remaining = remaining - 1;
-            gsQueueAddVertex(context, corners, batch);
-            gsQueueAddVertex(context, corner1, batch);
-            gsQueueAddKickVertex(context, corner2, batch);
-            gsQueueAddKickVertex(context, corner3, batch);
+            gsQueueAddVertex(packet, corners, batch);
+            gsQueueAddVertex(packet, corner1, batch);
+            gsQueueAddKickVertex(packet, corner2, batch);
+            gsQueueAddKickVertex(packet, corner3, batch);
         }
         while (remaining != 0);
     }
