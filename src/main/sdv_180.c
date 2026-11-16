@@ -71,7 +71,8 @@ static inline int scOfsToAdrInline(int offset)
     return offset;
 }
 
-int func_00261D50(void);
+/* Takes the effect id in a0 (tu170 0x00261D5C daddu $16,$4,$0, then srsAnalyzeEftNo(effectId, ...)). */
+int func_00261D50(int effectId);
 SefScriptRecord **func_002551D0(int key);
 int srsGetEffectSlot(int effectKey);
 extern int D_0069DC20;
@@ -99,7 +100,7 @@ SefScriptRecord *func_00266BC8(int key, int *offset_out, int index)
     int kind;
     int status;
 
-    status = func_00261D50();
+    status = func_00261D50(key);
     *offset_out = 0;
     D_0069DC2C = 0;
     D_0069DC20 = 0;
