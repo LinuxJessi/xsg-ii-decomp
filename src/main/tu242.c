@@ -27,7 +27,7 @@ typedef struct MsgSlot {
     unsigned char unmodeled_88[0x10];
 } MsgSlot;
 
-/* Timecode slot (type 3): stores the two 64-bit frame counts that func_0027DBE8 (tu224) computes and sets flag 0x80. */
+/* Timecode slot (type 3): stores the two 64-bit frame counts that timecodeSetFramePairFromHms (tu224) computes and sets flag 0x80. */
 void timecodeSetFramePair(MsgSlot *record, long long first, long long second) {
     if (record->state == 3) {
         record->wide_second = second;
@@ -36,7 +36,7 @@ void timecodeSetFramePair(MsgSlot *record, long long first, long long second) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu242", func_00286100);
+INCLUDE_ASM("asm/main/nonmatchings/tu242", timecodeSetFramesHms);
 
 /* The same slot read as an object by the type 3 and type 4 handlers below, with the fields those handlers use (offsets as in MsgSlot). */
 struct StateObject {
@@ -68,14 +68,14 @@ void timecodeClearFlag80(struct StateObject *object)
     }
 }
 
-void func_00286228(struct StateObject *object, int value)
+void timecodeSetColor(struct StateObject *object, int value)
 {
     if (object->state == STATE_THREE) {
         object->state3_value = value;
     }
 }
 
-void func_00286240(MsgSlot *record, int value) {
+void timecodeStartCounter(MsgSlot *record, int value) {
     if (record->state == 3) {
         record->stored_80 = value;
         record->stored_84 = 0;
@@ -98,14 +98,14 @@ void msgSlotSetGeometryIfState4(MsgSlot *record) {
     }
 }
 
-void func_002862C8(int value, int option, int extra);
+void msgSlotSetItem(int value, int option, int extra);
 
 void msgSlotSetAcquiredItem(int value, int option)
 {
-    func_002862C8(value, option, 0);
+    msgSlotSetItem(value, option, 0);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu242", func_002862C8);
+INCLUDE_ASM("asm/main/nonmatchings/tu242", msgSlotSetItem);
 
 void msgSlotSetTimer(struct StateObject *object, int value)
 {
@@ -132,9 +132,9 @@ void msgSlotResetCounters(MsgSlot *record) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu242", func_002863D0);
+INCLUDE_ASM("asm/main/nonmatchings/tu242", msgSlotItemTick);
 
-int func_0027EC18(void *record);
+int talkDrawFramesWithFade(void *record);
 void drawAcquiredText(void *record);
 
 int msgSlotDraw(MsgSlot *record) {
@@ -142,18 +142,18 @@ int msgSlotDraw(MsgSlot *record) {
 
     if (record->state == 4) {
         if (record->flags & 4) {
-            func_0027EC18(record);
+            talkDrawFramesWithFade(record);
         }
         if (record->flags & 2) {
-            func_0027EC18(record);
+            talkDrawFramesWithFade(record);
         }
         if (record->flags & 8) {
-            func_0027EC18(record);
+            talkDrawFramesWithFade(record);
             drawAcquiredText(record);
         }
         result = record->flags & 0x400;
         if (result != 0) {
-            result = func_0027EC18(record);
+            result = talkDrawFramesWithFade(record);
         }
         return result;
     }
@@ -207,7 +207,7 @@ int textAppendPairTag(unsigned int *cursor, int *total) {
     return new_total;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu242", func_00286958);
+INCLUDE_ASM("asm/main/nonmatchings/tu242", textFormatInsertGlyphTag);
 
 int textLineWidth(int end);
 
@@ -304,7 +304,7 @@ void msgSlotSetGeometry(struct StateObject *object, int x, int y, int extent_x, 
 
 INCLUDE_ASM("asm/main/nonmatchings/tu242", textSkipLineBreaksBack);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu242", func_00286CA0);
+INCLUDE_ASM("asm/main/nonmatchings/tu242", msgWindowFindSlotByState);
 
 void sprintf(int first, const char *text, int second);
 extern char textHanTagFormat[];
@@ -315,6 +315,6 @@ void textFormatHanTag(char *dst, const char *src)
     sprintf(dst, textHanTagFormat, src);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu242", func_00286D40);
+INCLUDE_ASM("asm/main/nonmatchings/tu242", numberToDigitsLsbFirst);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu242", func_00286E28);
+INCLUDE_ASM("asm/main/nonmatchings/tu242", digitsLsbFirstToNumber);

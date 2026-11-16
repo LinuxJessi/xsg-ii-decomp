@@ -9,8 +9,8 @@ int interpCursorFrame(int value) {
     return (value * 30) - 30;
 }
 
-/* value - 80; the constant's meaning is not read yet (caller func_0027E048, tu225). */
-int func_0027E7F8(int value) {
+/* value - 80; the constant's meaning is not read yet (caller msgTextSlotFit, tu225). */
+int textWrapWidth(int value) {
     return value - 80;
 }
 
@@ -74,22 +74,22 @@ int talkTakePending(void) {
     return value;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu229", func_0027E8B8);
+INCLUDE_ASM("asm/main/nonmatchings/tu229", talkDrawFramesBasic);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu229", func_0027E960);
+INCLUDE_ASM("asm/main/nonmatchings/tu229", talkDrawFramesWithCursor);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu229", func_0027EA80);
+INCLUDE_ASM("asm/main/nonmatchings/tu229", talkDrawFramesWithBox);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu229", func_0027EB40);
+INCLUDE_ASM("asm/main/nonmatchings/tu229", talkDrawFrameRects);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu229", func_0027EC18);
+INCLUDE_ASM("asm/main/nonmatchings/tu229", talkDrawFramesWithFade);
 
 /* Sets the talk-active flag talkActive. */
 void talkSetActive(void) {
     talkActive = 1;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu229", func_0027ED28);
+INCLUDE_ASM("asm/main/nonmatchings/tu229", talkDrawCursorWindow);
 
 /* Screen to GS primitive coordinates: 12.4 fixed point around the 2048 centre. */
 #define TALK_GS_X(x) ((int) (((float) (x) + 1792.0f) * 16.0f))
@@ -105,10 +105,10 @@ typedef union TalkGsPair {
     long qword[2];
 } TalkGsPair;
 
-/* The talk window drawn here (a TalkWork, tu228; 0x98 bytes, func_0027ED28
+/* The talk window drawn here (a TalkWork, tu228; 0x98 bytes, talkDrawCursorWindow
  * builds one on its stack). mode is 1 for the window that shows the page
  * cursor; talkSetFlag10 sets its upper bit. The structure is 8-byte aligned:
- * func_0027ED28 copies it with ld/sd and the flag word is read with ld. */
+ * talkDrawCursorWindow copies it with ld/sd and the flag word is read with ld. */
 typedef struct TalkWindow {
     int kind : 3;
     int mode : 2;
@@ -188,12 +188,12 @@ void sceVif1PkCnt(XglPacket *packet, int count);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, int mode);
 void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
-u64 func_002745A8(int buffer, int flag);
-u64 func_00274650(int buffer, int flag);
-int func_002746F8(int blend);
-void func_002803D8(int *left, int *top, int *bottom, int *right, TalkWindow *window, int mode, float scale);
-unsigned int func_002805C8(unsigned int color, float scale);
-void func_00280688(int *x, int *y, TalkWindow *window);
+u64 gsMakeTex0(int buffer, int flag);
+u64 gsMakeFrame(int buffer, int flag);
+int gsMakeAlpha(int blend);
+void talkWindowFrameRect(int *left, int *top, int *bottom, int *right, TalkWindow *window, int mode, float scale);
+unsigned int talkColorFadeAlpha(unsigned int color, float scale);
+void talkWindowCursorPos(int *x, int *y, TalkWindow *window);
 
 /*
  * Draws a talk window as one direct GS packet: the frame pieces of talkWindowPieces
@@ -249,7 +249,7 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
         rect[TALK_PIECE_STRIP_LEFT_INNER].right = rect[TALK_PIECE_STRIP_RIGHT_INNER].right = (left + right) >> 1;
     }
     if (window->state == 1 && window->mode == 1 && talkActive == 0) {
-        func_00280688(&cursor_x, &cursor_y, window);
+        talkWindowCursorPos(&cursor_x, &cursor_y, window);
     }
     packet = xglPacketGetCurrent();
     pairs = (TalkGsPair *) TALK_SCRATCHPAD;
@@ -269,8 +269,8 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
     pairs[pairCount].ad.reg = GS_ZBUF_1;
     pairs[pairCount].ad.data = (u64) 0x9880 << 17;
     pairCount++;
-    func_002803D8(&scissor_left, &scissor_top, &scissor_bottom, &scissor_right, window, mode, scale);
-    color = func_002805C8(color, scale);
+    talkWindowFrameRect(&scissor_left, &scissor_top, &scissor_bottom, &scissor_right, window, mode, scale);
+    color = talkColorFadeAlpha(color, scale);
     pairs[pairCount].ad.reg = GS_TEX1_1;
     pairs[pairCount].ad.data = 0;
     pairCount++;
@@ -373,10 +373,10 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
                     pairs[pairCount].ad.reg = GS_SCISSOR_1;
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount].ad.data = func_002746F8(0);
+                    pairs[pairCount].ad.data = gsMakeAlpha(0);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_FRAME_1;
-                    pairs[pairCount].ad.data = func_00274650(2, 0);
+                    pairs[pairCount].ad.data = gsMakeFrame(2, 0);
                     pairCount++;
                     /* A black alpha mask into the work frame: opaque at the edges, clear in the middle. */
                     pairs[pairCount].ad.data = 0x14E;
@@ -470,13 +470,13 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
                     pairCount++;
                     /* Then the work frame, masked, through the scissor of the window. */
                     pairs[pairCount].ad.reg = GS_FRAME_1;
-                    pairs[pairCount].ad.data = func_00274650(0, 0);
+                    pairs[pairCount].ad.data = gsMakeFrame(0, 0);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_TEX0_1;
-                    pairs[pairCount].ad.data = func_002745A8(2, 0);
+                    pairs[pairCount].ad.data = gsMakeTex0(2, 0);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount].ad.data = func_002746F8(1);
+                    pairs[pairCount].ad.data = gsMakeAlpha(1);
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_CLAMP_1;
                     pairs[pairCount].ad.data = 0;
@@ -507,17 +507,17 @@ void talkWindowDrawFrame(TalkWindow *window, int mode, float scale)
                     pairs[pairCount].ad.data = color;
                     pairCount++;
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount++].ad.data = func_002746F8(0);
+                    pairs[pairCount++].ad.data = gsMakeAlpha(0);
                     break;
                 case TALK_PIECE_BLEND_ZERO:
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount++].ad.data = func_002746F8(0);
+                    pairs[pairCount++].ad.data = gsMakeAlpha(0);
                     break;
                 case TALK_PIECE_BLEND_ONE_A:
                 case TALK_PIECE_BLEND_ONE_B:
                 case TALK_PIECE_BLEND_ONE_C:
                     pairs[pairCount].ad.reg = GS_ALPHA_1;
-                    pairs[pairCount++].ad.data = func_002746F8(1);
+                    pairs[pairCount++].ad.data = gsMakeAlpha(1);
                     break;
                 }
             }

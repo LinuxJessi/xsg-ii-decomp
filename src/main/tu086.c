@@ -118,7 +118,7 @@ int uwamonoFindNearbyTarget(short index)
     return bestIndex;
 }
 
-void func_0028B268(struct XenoActor *actor, Vector4 *target);
+void XenoActorSetFocusTarget(struct XenoActor *actor, Vector4 *target);
 
 void uwamonoUpdateTargetVector(int index)
 {
@@ -134,7 +134,7 @@ void uwamonoUpdateTargetVector(int index)
     state = (struct UwamonoState *) uwamonoRecords[index].motions;
     targetSlot = state->targetSlot;
     if (targetSlot == UWAMONO_NO_TARGET) {
-        func_0028B268(actor, &state->targetVector);
+        XenoActorSetFocusTarget(actor, &state->targetVector);
         return;
     }
     targetRecord = &uwamonoRecords[targetSlot];
@@ -152,7 +152,7 @@ void uwamonoUpdateTargetVector(int index)
         state->targetVector.y = y + (targetRecord->focusOffset.y + targetRecord->extent.y * 0.5f);
         state->targetVector.z = z + targetRecord->focusOffset.z;
     }
-    func_0028B268(actor, &state->targetVector);
+    XenoActorSetFocusTarget(actor, &state->targetVector);
 }
 
 /*

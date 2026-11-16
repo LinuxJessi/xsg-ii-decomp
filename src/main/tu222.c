@@ -18,7 +18,7 @@ typedef struct MsgWindow {
     MsgEntry entries[1];
 } MsgWindow;
 
-void func_0027D878(MsgEntry *entry);
+void msgEntrySetTalkFlag10(MsgEntry *entry);
 void msgEntryScrollLines(MsgEntry *entry, int value);
 void msgEntrySeekToLimit(MsgEntry *entry);
 void talkSeekToWindowEnd(void *entry);
@@ -26,11 +26,11 @@ void interpRewind(void *entry);
 void talkSetSetting(void *entry, int value);
 void msgWindowMoveCursor(MsgEntry *entry, int value);
 void msgWindowClose(MsgEntry *entry);
-int func_00286CA0(int *index, MsgWindow *window, int mode);
+int msgWindowFindSlotByState(int *index, MsgWindow *window, int mode);
 
-void func_0027D438(MsgWindow *window) {
+void msgWindowSetTalkFlag10(MsgWindow *window) {
     if (window->current_index >= 0) {
-        func_0027D878(&window->entries[window->current_index]);
+        msgEntrySetTalkFlag10(&window->entries[window->current_index]);
     }
 }
 
@@ -55,7 +55,7 @@ void msgWindowSeekToWindowEnd(MsgWindow *window) {
 void msgWindowRewindLastState1(MsgWindow *window) {
     int index;
 
-    if (func_00286CA0(&index, window, 1) != 0) {
+    if (msgWindowFindSlotByState(&index, window, 1) != 0) {
         interpRewind(&window->entries[index]);
     }
 }
@@ -77,7 +77,7 @@ void msgWindowMoveSelection(MsgWindow *window, int value) {
 void msgWindowCloseLastState2(MsgWindow *window) {
     int index;
 
-    if (func_00286CA0(&index, window, 2) != 0) {
+    if (msgWindowFindSlotByState(&index, window, 2) != 0) {
         msgWindowClose(&window->entries[index]);
     }
 }
@@ -90,7 +90,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu222", msgWindowCurrentStatus);
 
 void talkSetFlag10(void *entry);
 
-void func_0027D878(MsgEntry *entry) {
+void msgEntrySetTalkFlag10(MsgEntry *entry) {
     talkSetFlag10(entry);
 }
 

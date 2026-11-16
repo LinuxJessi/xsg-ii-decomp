@@ -402,7 +402,7 @@ void XenoActorUpdateLinkMatrix(struct XenoActor *actor) {
 /* XenoActorApplyRequestedMode: applies a pending mode request, then updates channel 0x640. */
 INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorApplyRequestedMode);
 
-INCLUDE_ASM("asm/main/nonmatchings/xenoActor", func_00288E08);
+INCLUDE_ASM("asm/main/nonmatchings/xenoActor", xenoActorSlotRangeValid);
 
 extern int XenoActorHoldFlag;
 
@@ -420,7 +420,7 @@ void XenoActorClearHoldFlag(void) {
 INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorRelease);
 
 /* XenoActorUpdateMoveState: state-driven movement (state at +0x160, angle +0x150, velocity +0x154). */
-INCLUDE_ASM("asm/main/nonmatchings/xenoActor", func_00289028);
+INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorUpdateMoveState);
 
 /* XenoActorUpdateCameraFade: fades the actor at +0x188 by its distance to the active camera. */
 INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorUpdateCameraFade);
@@ -899,11 +899,11 @@ void func_0028AF28(XenoActor *actor) {
 /* XenoActorShiftJoints: adds or subtracts the actor offset to the translation of every joint. */
 INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorShiftJoints);
 
-INCLUDE_ASM("asm/main/nonmatchings/xenoActor", func_0028B060);
+INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorWrapRotation);
 
 INCLUDE_ASM("asm/main/nonmatchings/xenoActor", func_0028B158);
 
-INCLUDE_ASM("asm/main/nonmatchings/xenoActor", func_0028B268);
+INCLUDE_ASM("asm/main/nonmatchings/xenoActor", XenoActorSetFocusTarget);
 
 void func_0028B2F0(XenoActor *actor, int value) {
     actor->handle640[1] = value;

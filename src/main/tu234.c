@@ -3,7 +3,7 @@
 #include "main/tu242.h"
 #include "main/xgl_font.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00281CA0);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", debtBoxCenterX);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", drawRemainingDebt);
 
@@ -67,7 +67,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu234", textTagBody);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", drawLineList);
 
-int func_00281CA0();
+int debtBoxCenterX();
 void drawRemainingDebt();
 void drawSellItemList();
 void drawSellCloseButtons(LabelWidget *widget);
@@ -81,7 +81,7 @@ struct TextPosition {
 void drawEmptyNotice(struct TextPosition *pos);
 void xglFontFlush();
 void xglFontPrintExtFunc();
-extern unsigned char func_00283D20[];
+extern unsigned char sellBoxScissorCallback[];
 
 /* Draws one sell slot: the action labels, the remaining debt, then the item grid when flag is set or the empty notice. */
 void drawSellPanel(LabelWidget *widget) {
@@ -91,11 +91,11 @@ void drawSellPanel(LabelWidget *widget) {
 
     state = &widget->state;
     value_ref = state->value_ref;
-    xglFontPrintExtFunc(0, func_00283D20, 1);
+    xglFontPrintExtFunc(0, sellBoxScissorCallback, 1);
     if (state->flag != 0) {
         drawSellCloseButtons(widget);
         if (value_ref != 0) {
-            debt_x = func_00281CA0(widget, *value_ref);
+            debt_x = debtBoxCenterX(widget, *value_ref);
             drawRemainingDebt(debt_x, widget->x + 0x25, widget->y + 7, *value_ref);
         }
         xglFontFlush();
@@ -104,18 +104,18 @@ void drawSellPanel(LabelWidget *widget) {
     }
     drawSellCloseButtons(widget);
     if (value_ref != 0) {
-        debt_x = func_00281CA0(widget, *value_ref);
+        debt_x = debtBoxCenterX(widget, *value_ref);
         drawRemainingDebt(debt_x, widget->x + 0x57, widget->y + 7, *value_ref);
     }
     drawEmptyNotice(widget);
     xglFontFlush();
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_002825E8);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", scaleAndRound);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", drawSellItemList);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_002827C0);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", sellCursorFilledRank);
 
 int strcat();
 char *strchr(char *s, int c);
@@ -196,14 +196,14 @@ char *appendStyledRun(char *dest, char *text, int color) {
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", sellFormatRow);
 
-int func_00282C00(void);
+int textFindRunEnd(void);
 
 int textRunLength(int used)
 {
-    return func_00282C00() - used;
+    return textFindRunEnd() - used;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00282C00);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", textFindRunEnd);
 
 extern unsigned char sellNoItemsText[];
 
@@ -221,7 +221,7 @@ void drawEmptyNotice(struct TextPosition *pos) {
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", textMaxLineWidth);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00282D50);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", textCountLinesOf);
 
 typedef unsigned int u32;
 
@@ -264,9 +264,9 @@ s32 sellCountFilled(s32 *words, s32 count) {
     return nonzero;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00282E30);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", talkBoxDrawContents);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00282EE0);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", talkBoxDrawDigitRow);
 
 void drawPlainText(s32 x, s32 y, s32 color, const char *text);
 void drawAccentText(s32 x, s32 y, s32 color, const char *text);
@@ -286,12 +286,12 @@ void drawDigit(s32 x, s32 y, s32 color, s32 digit, s32 variant) {
     drawPlainText(x, y, color, &text_buf[0]);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00283108);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", drawSwingingAccent);
 
 s32 formatEntryValue(s32 *buffer, void *entry);
-s32 func_002838F8(s32 x, s32 y, s32 color, s32 *buffer, s32 length);
-s32 func_00283AC8(void *entry);
-extern unsigned char func_00283C78[];
+s32 drawEntryCells(s32 x, s32 y, s32 color, s32 *buffer, s32 length);
+s32 entryFadeColor(void *entry);
+extern unsigned char talkBoxScissorCallback[];
 
 struct TextEntry {
     /* 0x0 */ unsigned char unmodeled_00[0xC];
@@ -304,30 +304,30 @@ void drawEntryDigits(struct TextEntry *entry, s32 x, s32 y) {
     s32 digit_count;
 
     formatEntryValue(&digits[0], entry);
-    digit_count = func_00283AC8(entry);
-    xglFontPrintExtFunc(entry->index + 1, func_00283C78, 1);
-    func_002838F8(x, y, 0x0FFFFFFF, &digits[0], digit_count);
+    digit_count = entryFadeColor(entry);
+    xglFontPrintExtFunc(entry->index + 1, talkBoxScissorCallback, 1);
+    drawEntryCells(x, y, 0x0FFFFFFF, &digits[0], digit_count);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", formatEntryValue);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", formatEntryDigits);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_002833F0);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", formatEntryHms);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00283648);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", formatEntryMsf);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_002838F8);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", drawEntryCells);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00283AC8);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", entryFadeColor);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00283BC8);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", talkBoxContentX);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00283C30);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", talkBoxContentY);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00283C78);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", talkBoxScissorCallback);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu234", func_00283D20);
+INCLUDE_ASM("asm/main/nonmatchings/tu234", sellBoxScissorCallback);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", valueDigit);
 
@@ -350,10 +350,10 @@ void drawAcquiredText(struct TextBlock *block) {
     s32 acquired_text[0x1C];
 
     formatAcquiredText(&acquired_text[0], block->name_text, block->count);
-    xglFontPrintExtFunc(block->index, func_00283C78, block);
+    xglFontPrintExtFunc(block->index, talkBoxScissorCallback, block);
     drawTextFront(block->x + 0x20, block->y + 0x20, &acquired_text[0]);
     xglFontFlush();
-    xglFontPrintExtFunc(0, func_00283C78, 1);
+    xglFontPrintExtFunc(0, talkBoxScissorCallback, 1);
 }
 
 INCLUDE_ASM("asm/main/nonmatchings/tu234", formatAcquiredText);

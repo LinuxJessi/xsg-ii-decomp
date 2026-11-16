@@ -9,10 +9,10 @@ typedef struct MsgWindow {
     unsigned char unmodeled_20[0x0C];
     int text;                        /* +0x2C: text pointer; textMaxLineWidth measures its width */
     unsigned char unmodeled_30[0x1C];
-    int line_count;                  /* +0x4C: line count of the text (func_00282D50) */
+    int line_count;                  /* +0x4C: line count of the text (textCountLinesOf) */
 } MsgWindow;
 
-int func_00282D50(int text);
+int textCountLinesOf(int text);
 void msgWindowLayoutSize(MsgWindow *window);
 void msgWindowCenter(MsgWindow *window);
 
@@ -21,13 +21,13 @@ void msgWindowSetText(MsgWindow *window, int text)
 {
     if (window->state == 2) {
         window->text = text;
-        window->line_count = func_00282D50(text);
+        window->line_count = textCountLinesOf(text);
         msgWindowLayoutSize(window);
         msgWindowCenter(window);
     }
 }
 
-/* Binds the item list of the window (func_0027CD50 in main/tu218): ready flag, cost table, count table, total. */
+/* Binds the item list of the window (msgWindowBindCurrentItems in main/tu218): ready flag, cost table, count table, total. */
 INCLUDE_ASM("asm/main/nonmatchings/tu236", msgWindowBindItems);
 
 /* Window size: height = min(line_count, 5) * 30 + 64, width = max(text width + 64, 100). */

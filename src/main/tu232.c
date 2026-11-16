@@ -4,7 +4,7 @@
 /*
  * The text box the talk window draws. Only the members these functions read
  * are named; the layout is shared with tu233 (speaker name, text buffer)
- * and tu234 (func_00283BC8, func_00283C30, textLastRowY read box members).
+ * and tu234 (talkBoxContentX, talkBoxContentY, textLastRowY read box members).
  */
 typedef struct TalkBoxOptions {
     int visible;                           /* panel height; 0 draws nothing */
@@ -29,23 +29,23 @@ typedef struct TalkTextBox {
     TalkBoxOptions options;
 } TalkTextBox;
 
-int func_00283BC8(TalkTextBox *box);
+int talkBoxContentX(TalkTextBox *box);
 
-/* Returns func_00283BC8(box) plus the box's bias. */
+/* Returns talkBoxContentX(box) plus the box's bias. */
 int talkGetBoxLayoutX(TalkTextBox *box)
 {
     TalkBoxOptions *options;
 
     options = &box->options;
-    return func_00283BC8(box) + options->bias;
+    return talkBoxContentX(box) + options->bias;
 }
 
-void func_00283C30(void);
+void talkBoxContentY(void);
 
-/* Forwards to func_00283C30; the caller's box pointer passes through in $4. */
+/* Forwards to talkBoxContentY; the caller's box pointer passes through in $4. */
 void talkGetBoxLayoutY(void)
 {
-    func_00283C30();
+    talkBoxContentY();
 }
 
 void talkStashPrefix(void *obj);
@@ -55,7 +55,7 @@ void fontPrintIntRow(int x, int y, int width, int height, void *data);
 int textLastRowY(void *obj);
 void xglFontFlush(void);
 void xglFontPrintExtFunc(int x, void *callback, void *arg);
-extern unsigned char func_00283C78[];
+extern unsigned char talkBoxScissorCallback[];
 
 /*
  * Draws one talk text box: when visible, the speaker name plate first (the
@@ -74,15 +74,15 @@ void talkDrawTextBox(TalkTextBox *box)
         if (options->second_pass != 0)
         {
             talkCopySpeakerName(&buffer[0], box);
-            xglFontPrintExtFunc(box->line, func_00283C78, (void *) 1);
+            xglFontPrintExtFunc(box->line, talkBoxScissorCallback, (void *) 1);
             drawShadowedText(box->x + 0x20, box->y - 0x12, box->line + 7, &buffer[0]);
         }
-        xglFontPrintExtFunc(box->line, func_00283C78, box);
+        xglFontPrintExtFunc(box->line, talkBoxScissorCallback, box);
         width = textLastRowY(box);
         talkStashPrefix(box);
         fontPrintIntRow(box->x + 0x20, width, box->line + 7, options->visible, options->payload);
         talkRestorePrefix(box);
         xglFontFlush();
-        xglFontPrintExtFunc(0, func_00283C78, (void *) 1);
+        xglFontPrintExtFunc(0, talkBoxScissorCallback, (void *) 1);
     }
 }

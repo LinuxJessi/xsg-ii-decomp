@@ -2,7 +2,7 @@
 
 INCLUDE_ASM("asm/main/nonmatchings/tu248", cfeDampDirOffset);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu248", func_0028B4A8);
+INCLUDE_ASM("asm/main/nonmatchings/tu248", XenoActorGetHrcPoint);
 
 /* Partial view of struct XenoActor (full definition in src/main/xenoActor.c): only the
  * flag word of the channel block at +0x650 and the slot at +0x79C are used here.
@@ -18,6 +18,6 @@ void XenoActorSetChannelFlag80(struct XenoActor *actor) {
     actor->channelFlags |= 0x80;
 }
 
-void func_0028B568(struct XenoActor *actor, int state) {
+void XenoActorSetState(struct XenoActor *actor, int state) {
     actor->state = state;
 }

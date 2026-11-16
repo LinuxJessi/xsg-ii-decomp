@@ -31,8 +31,8 @@ struct DispatchSlot {
     DispatchBody body;          /* +0x08 */
 };
 
-void func_0027E048(void *body, int first, int second, int third, int fourth);
-void func_00284338(DispatchBody *body, int first, int second, int third, int fourth);
+void msgTextSlotFit(void *body, int first, int second, int third, int fourth);
+void msgListSlotSetGeometry(DispatchBody *body, int first, int second, int third, int fourth);
 void timecodeTickIfActive(void *body, int first, int second, int third, int fourth);
 
 void msgWindowRunCurrentAt(DispatchSlot *slots, int x, int y)
@@ -50,11 +50,11 @@ void msgWindowRunCurrentAt(DispatchSlot *slots, int x, int y)
     }
     switch (body->kind) {
     case 1:
-        func_0027E048(body, x, y, body->extent_x, body->extent_y);
+        msgTextSlotFit(body, x, y, body->extent_x, body->extent_y);
         break;
 
     case 2:
-        func_00284338(body, x, y, body->extent_x, body->extent_y);
+        msgListSlotSetGeometry(body, x, y, body->extent_x, body->extent_y);
         break;
 
     case 3:
@@ -78,11 +78,11 @@ void msgWindowRunCurrentAnchored(DispatchSlot *slots, int x, int y)
     }
     switch (body->kind) {
     case 1:
-        func_0027E048(body, body->anchor_x, body->anchor_y, x, y);
+        msgTextSlotFit(body, body->anchor_x, body->anchor_y, x, y);
         break;
 
     case 2:
-        func_00284338(body, body->anchor_x, body->anchor_y, x, y);
+        msgListSlotSetGeometry(body, body->anchor_x, body->anchor_y, x, y);
         break;
 
     case 3:
@@ -99,7 +99,7 @@ void msgWindowRunCurrentCell(DispatchSlot *slots, int x, int y)
     current = slots[0].current;
     if (current >= 0) {
         body = &slots[current].body;
-        func_0027E048(body, body->anchor_x, body->anchor_y,
+        msgTextSlotFit(body, body->anchor_x, body->anchor_y,
                       x * DISPATCH_STEP_X + DISPATCH_ORIGIN,
                       y * DISPATCH_STEP_Y + DISPATCH_ORIGIN);
     }

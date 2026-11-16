@@ -12,7 +12,7 @@ typedef struct TimecodeRecord {
     unsigned char unmodeled_20[0x28 - 0x20];
     long long elapsedFrames;      /* 0x28: frames at 30 per second */
     unsigned char unmodeled_30[0x38 - 0x30];
-    int primary;                  /* 0x38: read back by func_00285AF8 */
+    int primary;                  /* 0x38: read back by timecodeGetPhase */
     unsigned char unmodeled_3C[0x74 - 0x3C];
     int mirror;                   /* 0x74: written together with primary */
 } TimecodeRecord;
@@ -51,7 +51,7 @@ void timecodeSetPhase(TimecodeRecord *timecode, int value) {
 }
 
 /* Returns primary (+0x38) while active, else 0. */
-int func_00285AF8(TimecodeRecord *timecode) {
+int timecodeGetPhase(TimecodeRecord *timecode) {
     if (timecode->state != 3) {
         return 0;
     }
@@ -59,16 +59,16 @@ int func_00285AF8(TimecodeRecord *timecode) {
 }
 
 /* Adds the argument to primary and sets flag 0x100; main 0x00285B18. Role of the two callees unread. */
-INCLUDE_ASM("asm/main/nonmatchings/tu241", func_00285B18);
+INCLUDE_ASM("asm/main/nonmatchings/tu241", timecodeStepPhase);
 
-/* Starts a timeline for the mode (+0x30): flag 0x200, then func_00285CD0 (mode 0) or func_00285E38 (mode 1 or 2); main 0x00285BF8. */
-INCLUDE_ASM("asm/main/nonmatchings/tu241", func_00285BF8);
+/* Starts a timeline for the mode (+0x30): flag 0x200, then timecodeAddToDigit (mode 0) or timecodeAddToField (mode 1 or 2); main 0x00285BF8. */
+INCLUDE_ASM("asm/main/nonmatchings/tu241", timecodeStart);
 
 /* Digit formatter: stores ASCII '0' and '9' into a buffer from a 64-bit value; main 0x00285CD0. Not yet read in full. */
-INCLUDE_ASM("asm/main/nonmatchings/tu241", func_00285CD0);
+INCLUDE_ASM("asm/main/nonmatchings/tu241", timecodeAddToDigit);
 
 /* Timecode conversion with 60 and 30 constants; main 0x00285E38. Not yet read in full. */
-INCLUDE_ASM("asm/main/nonmatchings/tu241", func_00285E38);
+INCLUDE_ASM("asm/main/nonmatchings/tu241", timecodeAddToField);
 
 /* While active: elapsedFrames = hours * 108000 + minutes * 1800 + seconds * 30, then timecodeSetFrames. */
 INCLUDE_ASM("asm/main/nonmatchings/tu241", timecodeSetHms);

@@ -5,7 +5,7 @@
 
 struct StateObject;
 
-void func_00286228(struct StateObject *object, int value);
+void timecodeSetColor(struct StateObject *object, int value);
 void msgSlotSetGeometry(struct StateObject *object, int first_value, int second_value, int third_value, int fourth_value);
 void textFormatHanTag(char *dst, const char *src);
 void textOutputReset(void);

@@ -1,9 +1,9 @@
 #include "common.h"
 #include "main/tu244.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu244", func_00286F50);
+INCLUDE_ASM("asm/main/nonmatchings/tu244", grControlPointSet);
 
-/* One of the three control points that grControlPointBlend blends (set by func_00286F50). */
+/* One of the three control points that grControlPointBlend blends (set by grControlPointSet). */
 struct ControlPoint {
     float x;
     float y;

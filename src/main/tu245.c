@@ -8,7 +8,7 @@ extern void *memset(void *destination, int value, unsigned int count);
 /*
  * One entry of the 20-entry text tag table. `kind` is the glyph index (1..5) drawn by
  * textTagDrawGlyph; 0 marks a free entry. payload[0] is compared with the current time by
- * the activity test func_002872C0; payload[1] and payload[2] are the glyph x and y.
+ * the activity test textTagIsActive; payload[1] and payload[2] are the glyph x and y.
  */
 struct TextTag {
     int key;
@@ -58,14 +58,14 @@ void msgWindowUnloadBotanXtx(void)
 }
 
 /*
- * Frame draw: finds the first tag that func_002872C0 reports active, sets up the frame
+ * Frame draw: finds the first tag that textTagIsActive reports active, sets up the frame
  * state from `info` (grSetupFrameState), draws every active tag with textTagDrawGlyph, and ends
  * the packet with grFlushQuadBatch. Does nothing when no tag is active.
  */
 INCLUDE_ASM("asm/main/nonmatchings/tu245", textTagDrawActive);
 
 /* Activity test for one tag entry at the given time (its callee is not identified). */
-INCLUDE_ASM("asm/main/nonmatchings/tu245", func_002872C0);
+INCLUDE_ASM("asm/main/nonmatchings/tu245", textTagIsActive);
 
 /* Frame state for a window described by info: GS registers set from info and sRender. */
 INCLUDE_ASM("asm/main/nonmatchings/tu245", grSetupFrameState);
@@ -118,9 +118,9 @@ void textTagRemoveKey(int key)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu245", func_002878D0);
+INCLUDE_ASM("asm/main/nonmatchings/tu245", textSkipGlyphName);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu245", func_00287920);
+INCLUDE_ASM("asm/main/nonmatchings/tu245", textStartsWithGlyphName);
 
 /*
  * The message window as msgWindowDrawListIcons reads it: only the word at +0x80, which is

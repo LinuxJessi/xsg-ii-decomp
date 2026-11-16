@@ -17,7 +17,7 @@ typedef struct MsgWindow {
 
 void msgWindowFlush(void);
 extern void *msgPendingWindow;
-extern void (*D_0064587C[])(void);
+extern void (*msgFrameHooks[])(void);
 extern int msgSlotQueue[];
 extern int msgSlotQueueCount;
 
@@ -37,7 +37,7 @@ void msgWindowReset(MsgWindow *window) {
 /* msgWindowRequestFlush: the window (passed as an int) becomes the pending window; msgWindowFlush is armed in slot 0. */
 void msgWindowRequestFlush(void *window) {
     msgPendingWindow = window;
-    D_0064587C[0] = msgWindowFlush;
+    msgFrameHooks[0] = msgWindowFlush;
 }
 
 /* msgQueueSlot: appends a slot pointer to the queue and arms msgWindowFlush in slot 0. */
@@ -45,7 +45,7 @@ void msgQueueSlot(int slot) {
     int index = msgSlotQueueCount;
 
     msgSlotQueue[index] = slot;
-    D_0064587C[0] = msgWindowFlush;
+    msgFrameHooks[0] = msgWindowFlush;
     msgSlotQueueCount = index + 1;
 }
 

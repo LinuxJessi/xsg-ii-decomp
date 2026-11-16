@@ -5,12 +5,12 @@
 #include "main/tu245.h"
 
 /* Message window update (msgWindowUpdate, called from main/tu215). Flag bits of MsgWindow.flags:
- * 0x2 closing, 0x4 opening (12 frames, then 0x48), 0x8 pulse (func_00284760), 0x20 slide,
+ * 0x2 closing, 0x4 opening (12 frames, then 0x48), 0x8 pulse (msgWindowPulseStep), 0x20 slide,
  * 0x100 sweep of the cursor. The phase counter is the unmodelled word at +0x18. */
 INCLUDE_ASM("asm/main/nonmatchings/tu238", msgWindowUpdate);
 
 /* Pulse of the list highlight: bounces two words at list+0x28 and list+0x2C between 0x10 and 0x45. */
-INCLUDE_ASM("asm/main/nonmatchings/tu238", func_00284760);
+INCLUDE_ASM("asm/main/nonmatchings/tu238", msgWindowPulseStep);
 
 #include "shared.h"
 
@@ -27,7 +27,7 @@ typedef struct MsgItemList {
     int slide_step;                 /* +0x1C: degrees per frame */
     int visible_rows;               /* +0x20: rows shown at once; no scrolling below 5 */
     int capacity;                   /* +0x24: 40 entries in counts; shares its word with MsgWindow.line_count */
-    u8 unmodeled_28[0x8];           /* +0x28: highlight pulse value and step (func_00284760) */
+    u8 unmodeled_28[0x8];           /* +0x28: highlight pulse value and step (msgWindowPulseStep) */
     int sweep_value;                /* +0x30: value of the current cosine sweep */
     int sweep_end;                  /* +0x34: sweep target, reached at 180 degrees */
     int sweep_begin;                /* +0x38: sweep start, value at 0 degrees */
@@ -51,10 +51,10 @@ typedef struct MsgWindow {
 
 f32 cosf(f32);
 extern f32 msgRadiansPerDegree;
-int func_0027E960();
+int talkDrawFramesWithCursor();
 int drawLineList();
 void drawSellPanel(void *);
-int func_00286F08();
+int easeAngleStep();
 void msgWindowSetEmptyLayout(MsgWindow *);
 void msgWindowSkipEmptyItem(MsgWindow *window);
 void msgWindowMoveCursor(MsgWindow *, int);
@@ -69,11 +69,11 @@ void msgWindowDraw(MsgWindow *window)
     {
         if (window->flags & 4)
         {
-            func_0027E960(window);
+            talkDrawFramesWithCursor(window);
         }
         if (window->flags & 2)
         {
-            func_0027E960(window);
+            talkDrawFramesWithCursor(window);
         }
         if (window->flags & 8)
         {
@@ -81,11 +81,11 @@ void msgWindowDraw(MsgWindow *window)
             {
                 if (window->list.list_active == 0)
                 {
-                    func_0027E960(window);
+                    talkDrawFramesWithCursor(window);
                     drawLineList(window);
                     break;
                 }
-                func_0027E960(window);
+                talkDrawFramesWithCursor(window);
                 drawSellPanel(window);
                 msgWindowDrawListIcons(window);
             } while (0);
@@ -119,7 +119,7 @@ void msgWindowScrollBy(MsgWindow *window, int delta)
         list->scroll = xglClampInt(list->scroll, 0, list->capacity - list->visible_rows);
         list->slide_to = msgWindowRowPixels(list->scroll);
         list->slide_angle = 0;
-        list->slide_step = func_00286F08(list->slide_from, list->slide_to);
+        list->slide_step = easeAngleStep(list->slide_from, list->slide_to);
     }
 }
 

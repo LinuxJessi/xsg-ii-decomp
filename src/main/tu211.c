@@ -6,17 +6,17 @@ INCLUDE_ASM("asm/main/nonmatchings/tu211", quadDrawTransformed);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu211", quadDrawRepeated);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_00278FC8);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", pointFadeColorStep);
 
 #include "shared.h"
 #include "vu0_macro.h"
 
 /* Linear interpolation from `from` to `to` by fraction; the same body as animLerp in tu209. */
-f32 func_00279180(f32 from, f32 to, f32 fraction) {
+f32 intLerp(f32 from, f32 to, f32 fraction) {
     return ((to - from) * fraction) + from;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_00279190);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", quadRotateCorner);
 
 
 void recordSetAlphaFlags(int *record)
@@ -65,7 +65,7 @@ void quadRotateAroundCenter(Vector4 *vectors, f32 angle, f32 centerX, f32 center
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_002796E0);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", pointGridDraw);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu211", randomPointInRect);
 
@@ -88,9 +88,9 @@ void randomRefreshSeed(void) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_00279BD0);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", quadOrbitGridDraw);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_00279EA8);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", quadOrbitPoint);
 
 /* Wraps an angle in degrees into the range 0 to 360. */
 f32 angleWrap360(f32 angle) {
@@ -103,9 +103,9 @@ f32 angleWrap360(f32 angle) {
     return angle;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_0027A130);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", gsQueueFadeToColorPhases);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_0027A1C8);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", ringWaveGridDraw);
 
 f32 func_0027A620(int sum, f32 angle);
 
@@ -116,7 +116,7 @@ int angleAdvance(int angle, int delta) {
     return (int) func_0027A620(sum, (f32) sum);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_0027A490);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", ringWavePoint);
 
 f32 func_0027A620(int sum, f32 angle) {
     if (angle > 360.0f) {
@@ -128,4 +128,4 @@ f32 func_0027A620(int sum, f32 angle) {
     return angle;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu211", func_0027A660);
+INCLUDE_ASM("asm/main/nonmatchings/tu211", gsQueueFadeToColor);

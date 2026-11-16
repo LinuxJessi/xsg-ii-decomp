@@ -4,7 +4,7 @@
 /* The direct GS queue: each gsQueue emitter appends one qword (GS register address in the high word, data in the
    low word) at gsQueueBase[gsQueueCount]. gsQueueFlush sends the queued qwords through the VIF1 direct-HL path. */
 
-INCLUDE_ASM("asm/main/nonmatchings/tu213", func_0027A960);
+INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQuadHalfScreenFill);
 
 /* gsQueueBeginTriStrip: starts a batch in the scratchpad packet (GIF tag, PRIM, state) and stores itself as the begin handler. */
 INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQueueBeginTriStrip);
@@ -126,7 +126,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQueueSetTest);
 /* gsQueueSetClamp: appends CLAMP_1 (0x08). */
 INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQueueSetClamp);
 
-int func_002745A8(int value, int flag);
+int gsMakeTex0(int value, int flag);
 
 /* gsQueueTex0Value: the TEX0_1 data for a texture word, with the flag from gsQueueAlphaTest. */
 int gsQueueTex0Value(int value)
@@ -134,9 +134,9 @@ int gsQueueTex0Value(int value)
   int flag = 0;
   if ((gsQueueAlphaTest == flag) || (gsQueueAlphaTest != 1))
   {
-    return func_002745A8(value, flag);
+    return gsMakeTex0(value, flag);
   }
-  return func_002745A8(value, 1);
+  return gsMakeTex0(value, 1);
 }
 
 /* gsQueueSetTexA: appends TEXA (0x3B); bit 15 is set when gsQueueTexAlphaExpand is set. */
@@ -148,7 +148,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQueueFlushTexture);
 /* gsQueueSetTexFilter: appends TEX1_1 (0x14), MMAG and MMIN from the argument. */
 INCLUDE_ASM("asm/main/nonmatchings/tu213", gsQueueSetTexFilter);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu213", func_0027BFD0);
+INCLUDE_ASM("asm/main/nonmatchings/tu213", effectRequestToCommand);
 
 int func_002757F0(void);
 

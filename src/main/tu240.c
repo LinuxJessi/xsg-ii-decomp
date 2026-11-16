@@ -73,16 +73,16 @@ void timecodeAdvance(TimecodeObject *timecode)
     timecode->stepper.elapsedFrames += timecode->stepper.increment;
 }
 
-void func_002853F0(TimecodeObject *timecode);
+void timecodeSelectPhaseByMode(TimecodeObject *timecode);
 
-/* Forwards to func_002853F0, the phase selector. */
+/* Forwards to timecodeSelectPhaseByMode, the phase selector. */
 void timecodeSelectPhase(TimecodeObject *timecode)
 {
-    func_002853F0(timecode);
+    timecodeSelectPhaseByMode(timecode);
 }
 
 /* Ramp step on +0x5C with +0x60 as the step, clamped at 180; returns 1 at the clamp or when flag 0x200 is clear. */
-INCLUDE_ASM("asm/main/nonmatchings/tu240", func_00285340);
+INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeRampStep);
 
 int timecodeSampleCosine(TimecodeObject *timecode);
 
@@ -105,7 +105,7 @@ int timecodeStepLevel(TimecodeObject *timecode)
 }
 
 /* Phase selector on mode (+0x30) and index (+0x3C); writes a phase code 10 to 13 into +0x38 and +0x74. */
-INCLUDE_ASM("asm/main/nonmatchings/tu240", func_002853F0);
+INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeSelectPhaseByMode);
 
 /* Wraps the counter (stepper +0x5C) to 0 at 20. */
 void timecodeStepCounter(TimecodeObject *timecode)
@@ -118,17 +118,17 @@ void timecodeStepCounter(TimecodeObject *timecode)
     }
 }
 
-/* Cosine value: the centre of the range from func_00285548 with the half-width times cos(level). */
+/* Cosine value: the centre of the range from timecodeSampleRange with the half-width times cos(level). */
 INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeSampleCosine);
 
 /* Range pair for the mode and index, read from the table D_0063D430. */
-INCLUDE_ASM("asm/main/nonmatchings/tu240", func_00285548);
+INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeSampleRange);
 
-/* Flag-driven dispatch while active: flags 0x4, 0x2 and 0x8 each run func_0027EA80 (mode 0) or func_0027EB40. */
-INCLUDE_ASM("asm/main/nonmatchings/tu240", func_00285658);
+/* Flag-driven dispatch while active: flags 0x4, 0x2 and 0x8 each run talkDrawFramesWithBox (mode 0) or talkDrawFrameRects. */
+INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeSlotDraw);
 
 /* While active: clears flag bits 0x4, 0x8, 0x40, 0x80 and 0x800, then sets 0x2. */
-INCLUDE_ASM("asm/main/nonmatchings/tu240", func_00285738);
+INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeBeginClose);
 
 /* While active: stores value in stepper +0x0C. */
 void timecodeSetValueB(TimecodeObject *timecode, int value)
@@ -138,18 +138,18 @@ void timecodeSetValueB(TimecodeObject *timecode, int value)
     }
 }
 
-void func_00285850(TimecodeObject *timecode);
+void timecodeDuration(TimecodeObject *timecode);
 
 /*
- * While active: sets the mode, then recomputes the duration (func_00285850), the
- * phase (func_002853F0) and the computed value (timecodeSampleCosine).
+ * While active: sets the mode, then recomputes the duration (timecodeDuration), the
+ * phase (timecodeSelectPhaseByMode) and the computed value (timecodeSampleCosine).
  */
 void timecodeSetMode(TimecodeObject *timecode, int mode)
 {
     if (timecode->state == 3) {
         timecode->stepper.mode = mode;
-        func_00285850(timecode);
-        func_002853F0(timecode);
+        timecodeDuration(timecode);
+        timecodeSelectPhaseByMode(timecode);
         timecode->stepper.computed_value = timecodeSampleCosine(timecode);
     }
 }
@@ -158,7 +158,7 @@ void timecodeSetMode(TimecodeObject *timecode, int mode)
 INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeSetIndex);
 
 /* Duration from mode and index, stored at +0x10. */
-INCLUDE_ASM("asm/main/nonmatchings/tu240", func_00285850);
+INCLUDE_ASM("asm/main/nonmatchings/tu240", timecodeDuration);
 
 
 /* Stores the results of sizedRecordCenterX and sizedRecordCenterY. */

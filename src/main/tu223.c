@@ -31,16 +31,16 @@ void msgChoiceSetIndex(void) {
     timecodeSetIndex();
 }
 
-void func_00285B18();
+void timecodeStepPhase();
 
 void func_0027D9D8(void) {
-    func_00285B18();
+    timecodeStepPhase();
 }
 
-void func_00285BF8();
+void timecodeStart();
 
 void func_0027D9F0(void) {
-    func_00285BF8();
+    timecodeStart();
 }
 
 long long timecodeGetFrames();

@@ -8,6 +8,8 @@
 #include "main/tu026.h"
 #include "main/tu051.h"
 #include "main/tu101.h"
+#include "main/tu214.h"
+#include "main/tu234.h"
 #include "main/tu138.h"
 #include "main/sef.h"
 #include "main/tu144.h"
@@ -167,7 +169,6 @@ int cfeStrCountChar(const char *text, char character)
 
 void *memset(void *destination, int value, unsigned int count);
 char *strcpy(char *destination, const char *source);
-char *strcat(char *destination, const char *source);
 extern const char cfeMesEmpty[];
 extern const char cfeMesFontSettings[];
 
@@ -1180,14 +1181,13 @@ void cfeRunAndWait(const char *file, int id)
     }
 }
 
-void func_0028B268(struct XenoActor *actor, Vector4 *target);
+void XenoActorSetFocusTarget(struct XenoActor *actor, Vector4 *target);
 void cfeDampDirOffset(struct XenoActor *actor, int offset);
 void xglClockSampleDayTime(void);
 void xglClockAccumulate(void);
 void pauseDrawScreen(void);
 void sefExecEffect(void);
-void func_0027C7D0(void);
-void func_0027BFD0(int slot, int kind, unsigned int value, int count);
+void effectRequestToCommand(int slot, int kind, unsigned int value, int count);
 void fadeReset(void);
 void fadeStartIn(int frames);
 void xglFontPrintDirect(const char *text);
@@ -1208,7 +1208,7 @@ int strcmp(const char *first, const char *second);
 #define CFE_SUBTITLE_Y 370
 #define CFE_SUBTITLE_Y2 348
 #define CFE_SUBTITLE_COLOR 0xFFFFFF
-/* The slot value scale for func_0027BFD0; kinds 0x22 and 0x23 take 0.03 of it as kinds 0x1A and 0x1B. */
+/* The slot value scale for effectRequestToCommand; kinds 0x22 and 0x23 take 0.03 of it as kinds 0x1A and 0x1B. */
 #define CFE_SLOT_SCALE 16777215.0f
 #define CFE_SLOT_SHORT 0.03f
 
@@ -1267,7 +1267,7 @@ int cfe_0024DF60(int handle)
     for (i = 0; i < cfeEntryCount; i++) {
         entry = &cfeEntries[i];
         if (entry->flags & CFE_ACTOR_SHOWN) {
-            func_0028B268(entry->actor, &entry->position);
+            XenoActorSetFocusTarget(entry->actor, &entry->position);
         }
         cfeDampDirOffset(entry->actor, entry->dampOffset);
     }
@@ -1332,13 +1332,13 @@ int cfe_0024DF60(int handle)
             fadeClear();
         }
         if (cfeEvalSlots[i].result_int == 0x22) {
-            func_0027BFD0(i, 0x1A, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
+            effectRequestToCommand(i, 0x1A, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
                           cfeEvalSlots[i].sample_int);
         } else if (cfeEvalSlots[i].result_int == 0x23) {
-            func_0027BFD0(i, 0x1B, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
+            effectRequestToCommand(i, 0x1B, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
                           cfeEvalSlots[i].sample_int);
         } else {
-            func_0027BFD0(i, cfeEvalSlots[i].result_int, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE,
+            effectRequestToCommand(i, cfeEvalSlots[i].result_int, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE,
                           cfeEvalSlots[i].sample_int);
         }
     }

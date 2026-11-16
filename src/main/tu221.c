@@ -52,7 +52,7 @@ int msgWindowRunCurrentValue(MsgEntry *window, int value)
     return result;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu221", func_0027D378);
+INCLUDE_ASM("asm/main/nonmatchings/tu221", msgWindowPollMoreText);
 
 /* Stores value in the current record (its value word) and returns that record. */
 void *msgWindowStoreValue(MsgEntry *window, int value) {

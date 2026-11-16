@@ -19,7 +19,7 @@ void msgSlotInit();
 
 /*
  * Initialises the body as a kind 2 dispatch body: msgSlotInit(body, 2) clears it and stores the kind
- * (main/tu219 calls func_00284338 for kind 2), then sets word_50 = 0x10 and word_54 = 3.
+ * (main/tu219 calls msgListSlotSetGeometry for kind 2), then sets word_50 = 0x10 and word_54 = 3.
  */
 void dispatchBodyInitKind2(DispatchBody *body) {
     msgSlotInit(body, 2);
@@ -27,10 +27,10 @@ void dispatchBodyInitKind2(DispatchBody *body) {
     body->word_54 = 3;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu235", func_00284338);
+INCLUDE_ASM("asm/main/nonmatchings/tu235", msgListSlotSetGeometry);
 
 
-/* Forwards its two arguments to func_00286ED0 with a fixed third argument of 0x1E. Callee still unnamed. */
-s32 func_002843B8(s32 first, s32 second) {
-    return func_00286ED0(first, second, 0x1E);
+/* Forwards its two arguments to deltaPerStep with a fixed third argument of 0x1E. Callee still unnamed. */
+s32 msgListRowsBetween(s32 first, s32 second) {
+    return deltaPerStep(first, second, 0x1E);
 }

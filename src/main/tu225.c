@@ -29,52 +29,52 @@ struct MsgEntryPayload {
 };
 
 
-void func_0027DCB0(void *object) {
+void timecodeClearFlag80Forward(void *object) {
     timecodeClearFlag80(object);
 }
 
 void timecodeSplit(void);
 
-void func_0027DCC8(void) {
+void timecodeSplitForward(void) {
     timecodeSplit();
 }
 
 
 void timecodeSetStoredValue(void *object, int value) {
-    func_00286228(object, value);
+    timecodeSetColor(object, value);
 }
 
-void func_00286240(void *record, int value);
+void timecodeStartCounter(void *record, int value);
 
 void timecodeSetWideValue(void *record, int value) {
-    func_00286240(record, value);
+    timecodeStartCounter(record, value);
 }
 
-void func_0027DD28(int first, int second, int flag);
+void msgItemSlotStart(int first, int second, int flag);
 
 void msgChoiceShowSingle(void *first, int second) {
-    func_0027DD28(first, second, 0);
+    msgItemSlotStart(first, second, 0);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu225", func_0027DD28);
+INCLUDE_ASM("asm/main/nonmatchings/tu225", msgItemSlotStart);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu225", func_0027DE28);
+INCLUDE_ASM("asm/main/nonmatchings/tu225", msgChoiceCloseByState);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu225", func_0027DEA0);
+INCLUDE_ASM("asm/main/nonmatchings/tu225", msgSlotPlaceByState);
 
 /* Nonzero when any bit of mask is set in *flags; msgChoicePoll passes the choice object's first word. */
 int msgChoiceTestFlags(int *flags, int mask) {
     return (*flags & mask) != 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu225", func_0027DF58);
+INCLUDE_ASM("asm/main/nonmatchings/tu225", msgSlotStatus);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu225", func_0027DFD8);
+INCLUDE_ASM("asm/main/nonmatchings/tu225", msgTextSlotStart);
 
-int func_0027E0C0(int start, int end);
+int textRowsBetween(int start, int end);
 
 /* In state 1: records the buffer setup of the record (the usable part of the buffer between two 0x20-byte ends). */
-void func_0027E048(MsgEntryPayload *record, int first_value, int second_value, int value, int fourth_value) {
+void msgTextSlotFit(MsgEntryPayload *record, int first_value, int second_value, int value, int fourth_value) {
     int state;
     int buffer;
 
@@ -83,14 +83,14 @@ void func_0027E048(MsgEntryPayload *record, int first_value, int second_value, i
         msgSlotSetGeometry(record, first_value, second_value, value, fourth_value);
         buffer = record->buffer;
         record->saved_state = state;
-        record->setup_result = func_0027E0C0(buffer + 0x20, buffer + record->size - 0x20);
-        record->attach_result = func_0027E7F8(value);
+        record->setup_result = textRowsBetween(buffer + 0x20, buffer + record->size - 0x20);
+        record->attach_result = textWrapWidth(value);
     }
 }
 
 
-int func_0027E0C0(int start, int end) {
-    return func_00286ED0(start, end, 30);
+int textRowsBetween(int start, int end) {
+    return deltaPerStep(start, end, 30);
 }
 
 int textLineCount(void *record);

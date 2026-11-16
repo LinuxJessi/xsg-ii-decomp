@@ -28,7 +28,7 @@ int msgWindowSetCurrentSlot(MsgEntry *window, int first, int second) {
     return offset;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu217", func_0027CBF8);
+INCLUDE_ASM("asm/main/nonmatchings/tu217", msgWindowSetCurrentFirstSlot);
 
 
 /* Close step of the message window, called from msgClose (main/tu148). */

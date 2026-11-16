@@ -87342,9 +87342,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002745A8",
+     "name": "gsMakeTex0",
      "size": 168,
-     "splat_name": "func_002745A8",
+     "splat_name": "gsMakeTex0",
      "va": "0x002745a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87438,9 +87438,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00274650",
+     "name": "gsMakeFrame",
      "size": 104,
-     "splat_name": "func_00274650",
+     "splat_name": "gsMakeFrame",
      "va": "0x00274650",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87456,9 +87456,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002746F8",
+     "name": "gsMakeAlpha",
      "size": 60,
-     "splat_name": "func_002746F8",
+     "splat_name": "gsMakeAlpha",
      "va": "0x002746f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87699,9 +87699,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00274808",
+     "name": "wrapIntRange",
      "size": 40,
-     "splat_name": "func_00274808",
+     "splat_name": "wrapIntRange",
      "va": "0x00274808",
      "name_basis": "address",
      "provenance": "estimated"
@@ -88650,27 +88650,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00278FC8",
+     "name": "pointFadeColorStep",
      "size": 440,
-     "splat_name": "func_00278FC8",
+     "splat_name": "pointFadeColorStep",
      "va": "0x00278fc8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00279180",
+     "name": "intLerp",
      "size": 16,
-     "splat_name": "func_00279180",
+     "splat_name": "intLerp",
      "va": "0x00279180",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00279190",
+     "name": "quadRotateCorner",
      "size": 404,
-     "splat_name": "func_00279190",
+     "splat_name": "quadRotateCorner",
      "va": "0x00279190",
      "name_basis": "address",
      "provenance": "estimated"
@@ -88704,9 +88704,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002796E0",
+     "name": "pointGridDraw",
      "size": 668,
-     "splat_name": "func_002796E0",
+     "splat_name": "pointGridDraw",
      "va": "0x002796e0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -88749,18 +88749,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00279BD0",
+     "name": "quadOrbitGridDraw",
      "size": 724,
-     "splat_name": "func_00279BD0",
+     "splat_name": "quadOrbitGridDraw",
      "va": "0x00279bd0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00279EA8",
+     "name": "quadOrbitPoint",
      "size": 580,
-     "splat_name": "func_00279EA8",
+     "splat_name": "quadOrbitPoint",
      "va": "0x00279ea8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -88776,18 +88776,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027A130",
+     "name": "gsQueueFadeToColorPhases",
      "size": 152,
-     "splat_name": "func_0027A130",
+     "splat_name": "gsQueueFadeToColorPhases",
      "va": "0x0027a130",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027A1C8",
+     "name": "ringWaveGridDraw",
      "size": 656,
-     "splat_name": "func_0027A1C8",
+     "splat_name": "ringWaveGridDraw",
      "va": "0x0027a1c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -88803,9 +88803,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027A490",
+     "name": "ringWavePoint",
      "size": 400,
-     "splat_name": "func_0027A490",
+     "splat_name": "ringWavePoint",
      "va": "0x0027a490",
      "name_basis": "address",
      "provenance": "estimated"
@@ -88821,9 +88821,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027A660",
+     "name": "gsQueueFadeToColor",
      "size": 144,
-     "splat_name": "func_0027A660",
+     "splat_name": "gsQueueFadeToColor",
      "va": "0x0027a660",
      "name_basis": "address",
      "provenance": "estimated"
@@ -88993,9 +88993,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0027A6F0",
+     "name": "spriteBatchDraw",
      "size": 340,
-     "splat_name": "func_0027A6F0",
+     "splat_name": "spriteBatchDraw",
      "va": "0x0027a6f0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -89011,9 +89011,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027A850",
+     "name": "clipRectFill",
      "size": 104,
-     "splat_name": "func_0027A850",
+     "splat_name": "clipRectFill",
      "va": "0x0027a850",
      "name_basis": "address",
      "provenance": "estimated"
@@ -89116,9 +89116,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0027A960",
+     "name": "gsQuadHalfScreenFill",
      "size": 220,
-     "splat_name": "func_0027A960",
+     "splat_name": "gsQuadHalfScreenFill",
      "va": "0x0027a960",
      "name_basis": "address",
      "provenance": "estimated"
@@ -89368,9 +89368,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027BFD0",
+     "name": "effectRequestToCommand",
      "size": 2020,
-     "splat_name": "func_0027BFD0",
+     "splat_name": "effectRequestToCommand",
      "va": "0x0027bfd0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90021,9 +90021,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027CBF8",
+     "name": "msgWindowSetCurrentFirstSlot",
      "size": 68,
-     "splat_name": "func_0027CBF8",
+     "splat_name": "msgWindowSetCurrentFirstSlot",
      "va": "0x0027cbf8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90126,9 +90126,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0027CC58",
+     "name": "msgWindowOpenNextSlot",
      "size": 172,
-     "splat_name": "func_0027CC58",
+     "splat_name": "msgWindowOpenNextSlot",
      "va": "0x0027cc58",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90144,9 +90144,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027CD50",
+     "name": "msgWindowBindCurrentItems",
      "size": 68,
-     "splat_name": "func_0027CD50",
+     "splat_name": "msgWindowBindCurrentItems",
      "va": "0x0027cd50",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90493,9 +90493,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027D378",
+     "name": "msgWindowPollMoreText",
      "size": 140,
-     "splat_name": "func_0027D378",
+     "splat_name": "msgWindowPollMoreText",
      "va": "0x0027d378",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90598,9 +90598,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0027D438",
+     "name": "msgWindowSetTalkFlag10",
      "size": 76,
-     "splat_name": "func_0027D438",
+     "splat_name": "msgWindowSetTalkFlag10",
      "va": "0x0027d438",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90706,9 +90706,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027D878",
+     "name": "msgEntrySetTalkFlag10",
      "size": 20,
-     "splat_name": "func_0027D878",
+     "splat_name": "msgEntrySetTalkFlag10",
      "va": "0x0027d878",
      "name_basis": "address",
      "provenance": "estimated"
@@ -90997,18 +90997,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027DBD0",
+     "name": "timecodeSetModeForward",
      "size": 20,
-     "splat_name": "func_0027DBD0",
+     "splat_name": "timecodeSetModeForward",
      "va": "0x0027dbd0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027DBE8",
+     "name": "timecodeSetFramePairFromHms",
      "size": 200,
-     "splat_name": "func_0027DBE8",
+     "splat_name": "timecodeSetFramePairFromHms",
      "va": "0x0027dbe8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -91102,18 +91102,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_0027DCB0",
+     "name": "timecodeClearFlag80Forward",
      "size": 20,
-     "splat_name": "func_0027DCB0",
+     "splat_name": "timecodeClearFlag80Forward",
      "va": "0x0027dcb0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027DCC8",
+     "name": "timecodeSplitForward",
      "size": 20,
-     "splat_name": "func_0027DCC8",
+     "splat_name": "timecodeSplitForward",
      "va": "0x0027dcc8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -91147,27 +91147,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027DD28",
+     "name": "msgItemSlotStart",
      "size": 256,
-     "splat_name": "func_0027DD28",
+     "splat_name": "msgItemSlotStart",
      "va": "0x0027dd28",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027DE28",
+     "name": "msgChoiceCloseByState",
      "size": 116,
-     "splat_name": "func_0027DE28",
+     "splat_name": "msgChoiceCloseByState",
      "va": "0x0027de28",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027DEA0",
+     "name": "msgSlotPlaceByState",
      "size": 168,
-     "splat_name": "func_0027DEA0",
+     "splat_name": "msgSlotPlaceByState",
      "va": "0x0027dea0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -91183,36 +91183,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027DF58",
+     "name": "msgSlotStatus",
      "size": 128,
-     "splat_name": "func_0027DF58",
+     "splat_name": "msgSlotStatus",
      "va": "0x0027df58",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027DFD8",
+     "name": "msgTextSlotStart",
      "size": 112,
-     "splat_name": "func_0027DFD8",
+     "splat_name": "msgTextSlotStart",
      "va": "0x0027dfd8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027E048",
+     "name": "msgTextSlotFit",
      "size": 116,
-     "splat_name": "func_0027E048",
+     "splat_name": "msgTextSlotFit",
      "va": "0x0027e048",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027E0C0",
+     "name": "textRowsBetween",
      "size": 24,
-     "splat_name": "func_0027E0C0",
+     "splat_name": "textRowsBetween",
      "va": "0x0027e0c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -91489,18 +91489,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027E2D0",
+     "name": "interpAdvanceCursor",
      "size": 240,
-     "splat_name": "func_0027E2D0",
+     "splat_name": "interpAdvanceCursor",
      "va": "0x0027e2d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027E3C0",
+     "name": "interpDrawTextSlot",
      "size": 144,
-     "splat_name": "func_0027E3C0",
+     "splat_name": "interpDrawTextSlot",
      "va": "0x0027e3c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -91833,9 +91833,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027E7F8",
+     "name": "textWrapWidth",
      "size": 8,
-     "splat_name": "func_0027E7F8",
+     "splat_name": "textWrapWidth",
      "va": "0x0027e7f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -91905,45 +91905,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027E8B8",
+     "name": "talkDrawFramesBasic",
      "size": 168,
-     "splat_name": "func_0027E8B8",
+     "splat_name": "talkDrawFramesBasic",
      "va": "0x0027e8b8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027E960",
+     "name": "talkDrawFramesWithCursor",
      "size": 288,
-     "splat_name": "func_0027E960",
+     "splat_name": "talkDrawFramesWithCursor",
      "va": "0x0027e960",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027EA80",
+     "name": "talkDrawFramesWithBox",
      "size": 192,
-     "splat_name": "func_0027EA80",
+     "splat_name": "talkDrawFramesWithBox",
      "va": "0x0027ea80",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027EB40",
+     "name": "talkDrawFrameRects",
      "size": 216,
-     "splat_name": "func_0027EB40",
+     "splat_name": "talkDrawFrameRects",
      "va": "0x0027eb40",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027EC18",
+     "name": "talkDrawFramesWithFade",
      "size": 252,
-     "splat_name": "func_0027EC18",
+     "splat_name": "talkDrawFramesWithFade",
      "va": "0x0027ec18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -91959,9 +91959,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0027ED28",
+     "name": "talkDrawCursorWindow",
      "size": 324,
-     "splat_name": "func_0027ED28",
+     "splat_name": "talkDrawCursorWindow",
      "va": "0x0027ed28",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92165,27 +92165,27 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_002803D8",
+     "name": "talkWindowFrameRect",
      "size": 492,
-     "splat_name": "func_002803D8",
+     "splat_name": "talkWindowFrameRect",
      "va": "0x002803d8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002805C8",
+     "name": "talkColorFadeAlpha",
      "size": 188,
-     "splat_name": "func_002805C8",
+     "splat_name": "talkColorFadeAlpha",
      "va": "0x002805c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00280688",
+     "name": "talkWindowCursorPos",
      "size": 156,
-     "splat_name": "func_00280688",
+     "splat_name": "talkWindowCursorPos",
      "va": "0x00280688",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92268,27 +92268,27 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00280728",
+     "name": "talkDrawFadeRect",
      "size": 1248,
-     "splat_name": "func_00280728",
+     "splat_name": "talkDrawFadeRect",
      "va": "0x00280728",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00280C08",
+     "name": "talkDrawSlotFrame",
      "size": 1536,
-     "splat_name": "func_00280C08",
+     "splat_name": "talkDrawSlotFrame",
      "va": "0x00280c08",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00281208",
+     "name": "talkDrawSelectionBox",
      "size": 2180,
-     "splat_name": "func_00281208",
+     "splat_name": "talkDrawSelectionBox",
      "va": "0x00281208",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92625,9 +92625,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00281CA0",
+     "name": "debtBoxCenterX",
      "size": 140,
-     "splat_name": "func_00281CA0",
+     "splat_name": "debtBoxCenterX",
      "va": "0x00281ca0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92733,9 +92733,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002825E8",
+     "name": "scaleAndRound",
      "size": 76,
-     "splat_name": "func_002825E8",
+     "splat_name": "scaleAndRound",
      "va": "0x002825e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92751,9 +92751,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002827C0",
+     "name": "sellCursorFilledRank",
      "size": 176,
-     "splat_name": "func_002827C0",
+     "splat_name": "sellCursorFilledRank",
      "va": "0x002827c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92805,9 +92805,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00282C00",
+     "name": "textFindRunEnd",
      "size": 64,
-     "splat_name": "func_00282C00",
+     "splat_name": "textFindRunEnd",
      "va": "0x00282c00",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92832,9 +92832,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00282D50",
+     "name": "textCountLinesOf",
      "size": 88,
-     "splat_name": "func_00282D50",
+     "splat_name": "textCountLinesOf",
      "va": "0x00282d50",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92859,18 +92859,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00282E30",
+     "name": "talkBoxDrawContents",
      "size": 172,
-     "splat_name": "func_00282E30",
+     "splat_name": "talkBoxDrawContents",
      "va": "0x00282e30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00282EE0",
+     "name": "talkBoxDrawDigitRow",
      "size": 400,
-     "splat_name": "func_00282EE0",
+     "splat_name": "talkBoxDrawDigitRow",
      "va": "0x00282ee0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92886,9 +92886,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00283108",
+     "name": "drawSwingingAccent",
      "size": 232,
-     "splat_name": "func_00283108",
+     "splat_name": "drawSwingingAccent",
      "va": "0x00283108",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92922,72 +92922,72 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002833F0",
+     "name": "formatEntryHms",
      "size": 600,
-     "splat_name": "func_002833F0",
+     "splat_name": "formatEntryHms",
      "va": "0x002833f0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00283648",
+     "name": "formatEntryMsf",
      "size": 688,
-     "splat_name": "func_00283648",
+     "splat_name": "formatEntryMsf",
      "va": "0x00283648",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002838F8",
+     "name": "drawEntryCells",
      "size": 464,
-     "splat_name": "func_002838F8",
+     "splat_name": "drawEntryCells",
      "va": "0x002838f8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00283AC8",
+     "name": "entryFadeColor",
      "size": 252,
-     "splat_name": "func_00283AC8",
+     "splat_name": "entryFadeColor",
      "va": "0x00283ac8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00283BC8",
+     "name": "talkBoxContentX",
      "size": 100,
-     "splat_name": "func_00283BC8",
+     "splat_name": "talkBoxContentX",
      "va": "0x00283bc8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00283C30",
+     "name": "talkBoxContentY",
      "size": 68,
-     "splat_name": "func_00283C30",
+     "splat_name": "talkBoxContentY",
      "va": "0x00283c30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00283C78",
+     "name": "talkBoxScissorCallback",
      "size": 164,
-     "splat_name": "func_00283C78",
+     "splat_name": "talkBoxScissorCallback",
      "va": "0x00283c78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00283D20",
+     "name": "sellBoxScissorCallback",
      "size": 164,
-     "splat_name": "func_00283D20",
+     "splat_name": "sellBoxScissorCallback",
      "va": "0x00283d20",
      "name_basis": "address",
      "provenance": "estimated"
@@ -93360,18 +93360,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00284338",
+     "name": "msgListSlotSetGeometry",
      "size": 128,
-     "splat_name": "func_00284338",
+     "splat_name": "msgListSlotSetGeometry",
      "va": "0x00284338",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002843B8",
+     "name": "msgListRowsBetween",
      "size": 24,
-     "splat_name": "func_002843B8",
+     "splat_name": "msgListRowsBetween",
      "va": "0x002843b8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -93720,9 +93720,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00284760",
+     "name": "msgWindowPulseStep",
      "size": 108,
-     "splat_name": "func_00284760",
+     "splat_name": "msgWindowPulseStep",
      "va": "0x00284760",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94190,9 +94190,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285340",
+     "name": "timecodeRampStep",
      "size": 76,
-     "splat_name": "func_00285340",
+     "splat_name": "timecodeRampStep",
      "va": "0x00285340",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94208,9 +94208,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002853F0",
+     "name": "timecodeSelectPhaseByMode",
      "size": 168,
-     "splat_name": "func_002853F0",
+     "splat_name": "timecodeSelectPhaseByMode",
      "va": "0x002853f0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94235,27 +94235,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285548",
+     "name": "timecodeSampleRange",
      "size": 272,
-     "splat_name": "func_00285548",
+     "splat_name": "timecodeSampleRange",
      "va": "0x00285548",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285658",
+     "name": "timecodeSlotDraw",
      "size": 224,
-     "splat_name": "func_00285658",
+     "splat_name": "timecodeSlotDraw",
      "va": "0x00285658",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285738",
+     "name": "timecodeBeginClose",
      "size": 76,
-     "splat_name": "func_00285738",
+     "splat_name": "timecodeBeginClose",
      "va": "0x00285738",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94289,9 +94289,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285850",
+     "name": "timecodeDuration",
      "size": 96,
-     "splat_name": "func_00285850",
+     "splat_name": "timecodeDuration",
      "va": "0x00285850",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94499,45 +94499,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285AF8",
+     "name": "timecodeGetPhase",
      "size": 32,
-     "splat_name": "func_00285AF8",
+     "splat_name": "timecodeGetPhase",
      "va": "0x00285af8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285B18",
+     "name": "timecodeStepPhase",
      "size": 224,
-     "splat_name": "func_00285B18",
+     "splat_name": "timecodeStepPhase",
      "va": "0x00285b18",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285BF8",
+     "name": "timecodeStart",
      "size": 216,
-     "splat_name": "func_00285BF8",
+     "splat_name": "timecodeStart",
      "va": "0x00285bf8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285CD0",
+     "name": "timecodeAddToDigit",
      "size": 356,
-     "splat_name": "func_00285CD0",
+     "splat_name": "timecodeAddToDigit",
      "va": "0x00285cd0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00285E38",
+     "name": "timecodeAddToField",
      "size": 504,
-     "splat_name": "func_00285E38",
+     "splat_name": "timecodeAddToField",
      "va": "0x00285e38",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94675,9 +94675,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286100",
+     "name": "timecodeSetFramesHms",
      "size": 252,
-     "splat_name": "func_00286100",
+     "splat_name": "timecodeSetFramesHms",
      "va": "0x00286100",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94693,18 +94693,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286228",
+     "name": "timecodeSetColor",
      "size": 24,
-     "splat_name": "func_00286228",
+     "splat_name": "timecodeSetColor",
      "va": "0x00286228",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286240",
+     "name": "timecodeStartCounter",
      "size": 44,
-     "splat_name": "func_00286240",
+     "splat_name": "timecodeStartCounter",
      "va": "0x00286240",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94738,9 +94738,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002862C8",
+     "name": "msgSlotSetItem",
      "size": 132,
-     "splat_name": "func_002862C8",
+     "splat_name": "msgSlotSetItem",
      "va": "0x002862c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94774,9 +94774,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002863D0",
+     "name": "msgSlotItemTick",
      "size": 260,
-     "splat_name": "func_002863D0",
+     "splat_name": "msgSlotItemTick",
      "va": "0x002863d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94846,9 +94846,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286958",
+     "name": "textFormatInsertGlyphTag",
      "size": 224,
-     "splat_name": "func_00286958",
+     "splat_name": "textFormatInsertGlyphTag",
      "va": "0x00286958",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94936,9 +94936,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286CA0",
+     "name": "msgWindowFindSlotByState",
      "size": 128,
-     "splat_name": "func_00286CA0",
+     "splat_name": "msgWindowFindSlotByState",
      "va": "0x00286ca0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94954,18 +94954,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286D40",
+     "name": "numberToDigitsLsbFirst",
      "size": 232,
-     "splat_name": "func_00286D40",
+     "splat_name": "numberToDigitsLsbFirst",
      "va": "0x00286d40",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286E28",
+     "name": "digitsLsbFirstToNumber",
      "size": 168,
-     "splat_name": "func_00286E28",
+     "splat_name": "digitsLsbFirstToNumber",
      "va": "0x00286e28",
      "name_basis": "address",
      "provenance": "estimated"
@@ -95160,36 +95160,36 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00286ED0",
+     "name": "deltaPerStep",
      "size": 56,
-     "splat_name": "func_00286ED0",
+     "splat_name": "deltaPerStep",
      "va": "0x00286ed0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286F08",
+     "name": "easeAngleStep",
      "size": 48,
-     "splat_name": "func_00286F08",
+     "splat_name": "easeAngleStep",
      "va": "0x00286f08",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286F38",
+     "name": "easeStepOverrideSet",
      "size": 16,
-     "splat_name": "func_00286F38",
+     "splat_name": "easeStepOverrideSet",
      "va": "0x00286f38",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00286F48",
+     "name": "easeStepOverrideClear",
      "size": 8,
-     "splat_name": "func_00286F48",
+     "splat_name": "easeStepOverrideClear",
      "va": "0x00286f48",
      "name_basis": "address",
      "provenance": "estimated"
@@ -95309,9 +95309,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00286F50",
+     "name": "grControlPointSet",
      "size": 56,
-     "splat_name": "func_00286F50",
+     "splat_name": "grControlPointSet",
      "va": "0x00286f50",
      "name_basis": "address",
      "provenance": "estimated"
@@ -95548,9 +95548,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002872C0",
+     "name": "textTagIsActive",
      "size": 112,
-     "splat_name": "func_002872C0",
+     "splat_name": "textTagIsActive",
      "va": "0x002872c0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -95629,18 +95629,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002878D0",
+     "name": "textSkipGlyphName",
      "size": 80,
-     "splat_name": "func_002878D0",
+     "splat_name": "textSkipGlyphName",
      "va": "0x002878d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00287920",
+     "name": "textStartsWithGlyphName",
      "size": 84,
-     "splat_name": "func_00287920",
+     "splat_name": "textStartsWithGlyphName",
      "va": "0x00287920",
      "name_basis": "address",
      "provenance": "estimated"
@@ -96308,9 +96308,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00288E08",
+     "name": "xenoActorSlotRangeValid",
      "size": 84,
-     "splat_name": "func_00288E08",
+     "splat_name": "xenoActorSlotRangeValid",
      "va": "0x00288e08",
      "name_basis": "address",
      "provenance": "estimated"
@@ -96344,9 +96344,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00289028",
+     "name": "XenoActorUpdateMoveState",
      "size": 1156,
-     "splat_name": "func_00289028",
+     "splat_name": "XenoActorUpdateMoveState",
      "va": "0x00289028",
      "name_basis": "address",
      "provenance": "estimated"
@@ -96515,9 +96515,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0028B060",
+     "name": "XenoActorWrapRotation",
      "size": 248,
-     "splat_name": "func_0028B060",
+     "splat_name": "XenoActorWrapRotation",
      "va": "0x0028b060",
      "name_basis": "address",
      "provenance": "estimated"
@@ -96533,9 +96533,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0028B268",
+     "name": "XenoActorSetFocusTarget",
      "size": 132,
-     "splat_name": "func_0028B268",
+     "splat_name": "XenoActorSetFocusTarget",
      "va": "0x0028b268",
      "name_basis": "address",
      "provenance": "estimated"
@@ -96800,9 +96800,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0028B4A8",
+     "name": "XenoActorGetHrcPoint",
      "size": 176,
-     "splat_name": "func_0028B4A8",
+     "splat_name": "XenoActorGetHrcPoint",
      "va": "0x0028b4a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -96818,9 +96818,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0028B568",
+     "name": "XenoActorSetState",
      "size": 8,
-     "splat_name": "func_0028B568",
+     "splat_name": "XenoActorSetState",
      "va": "0x0028b568",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103349,9 +103349,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A6A90",
+     "name": "__fixunssfdi",
      "size": 296,
-     "splat_name": "func_002A6A90",
+     "splat_name": "__fixunssfdi",
      "va": "0x002a6a90",
      "name_basis": "address",
      "provenance": "estimated"

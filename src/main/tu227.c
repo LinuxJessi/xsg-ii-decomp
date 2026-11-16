@@ -5,9 +5,9 @@
 
 INCLUDE_ASM("asm/main/nonmatchings/tu227", interpUpdate);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu227", func_0027E2D0);
+INCLUDE_ASM("asm/main/nonmatchings/tu227", interpAdvanceCursor);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu227", func_0027E3C0);
+INCLUDE_ASM("asm/main/nonmatchings/tu227", interpDrawTextSlot);
 
 #include "shared.h"
 
@@ -42,7 +42,7 @@ typedef struct InterpObject {
 
 extern float cosf(float x);
 extern float mathDegToRad;
-int func_00286F08(int delta, int base);
+int easeAngleStep(int delta, int base);
 
 void interpRewind(InterpObject *object)
 {
@@ -79,7 +79,7 @@ void interpAdvance(InterpObject *object, int advance)
         base = interpCursorFrame(next_cursor);
         interp->angle = 0;
         interp->base = base;
-        interp->angle_step = func_00286F08(interp->delta, base);
+        interp->angle_step = easeAngleStep(interp->delta, base);
     }
 }
 

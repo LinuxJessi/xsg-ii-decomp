@@ -12712,7 +12712,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0064587C"
+      "msgFrameHooks"
      ],
      "c_input_spans": [
       {
@@ -12726,7 +12726,7 @@
         20
        ],
        "symbols": [
-        "D_0064587C"
+        "msgFrameHooks"
        ]
       }
      ],
