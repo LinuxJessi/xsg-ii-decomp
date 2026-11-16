@@ -47286,13 +47286,13 @@
      2
     ],
     [
-     "xglFrameTex0",
+     "gsMakeTex0",
      2573736,
      168,
      2
     ],
     [
-     "xglFrameReg",
+     "gsMakeFrame",
      2573904,
      104,
      2
@@ -47304,7 +47304,7 @@
      2
     ],
     [
-     "xglBlendAlpha",
+     "gsMakeAlpha",
      2574072,
      60,
      2
@@ -47340,7 +47340,7 @@
      2
     ],
     [
-     "xglWrapInt",
+     "wrapIntRange",
      2574344,
      40,
      2

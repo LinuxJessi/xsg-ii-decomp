@@ -6,7 +6,7 @@
 #include "main/xgl_2.h"
 
 /* Wraps value once into lower..upper: one period (upper - lower + 1) down when above upper, one up when below lower. */
-int xglWrapInt(int value, int lower, int upper)
+int wrapIntRange(int value, int lower, int upper)
 {
     int period = upper - lower + 1;
 
@@ -1004,9 +1004,9 @@ typedef union GsAdPair {
 } GsAdPair;
 
 XglPacket *xglPacketGetCurrent(void);
-u64 xglFrameTex0(int buffer, int flag);
-u64 xglFrameReg(int buffer, int flag);
-int xglBlendAlpha(int blend);
+u64 gsMakeTex0(int buffer, int flag);
+u64 gsMakeFrame(int buffer, int flag);
+int gsMakeAlpha(int blend);
 void recordStepAngle(int stage);
 int recordStageSize(int mode, int fallback);
 int recordStageColor(int mode, int alpha);
@@ -1051,13 +1051,13 @@ void recordDrawType1(GsQueueContext *record)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = xglBlendAlpha(0);
+    pairs[pairCount].ad.data = gsMakeAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = xglFrameTex0(1, 0);
+    pairs[pairCount].ad.data = gsMakeTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = xglFrameReg(0, 0);
+    pairs[pairCount].ad.data = gsMakeFrame(0, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_PRIM;
     pairs[pairCount].ad.data = GS_SET_PRIM(GS_PRIM_SPRITE, 1, 1, 0, 1, 0, 1, 0, 0);
@@ -1122,7 +1122,7 @@ extern int recordAngle;
 float sinf(float angle);
 
 /* Sprite color of stage mode: grey 0x808080 under alpha at stage 1, the fixed 0x40808080 (alpha 0x40, whatever alpha
-   is) at stage 0, at stage 2 the alpha 80 + 5 * sin(recordAngle degrees) put into 0..127 by xglWrapInt; 0 for any
+   is) at stage 0, at stage 2 the alpha 80 + 5 * sin(recordAngle degrees) put into 0..127 by wrapIntRange; 0 for any
    other stage. */
 int recordStageColor(int mode, int alpha)
 {
@@ -1132,7 +1132,7 @@ int recordStageColor(int mode, int alpha)
     case 0:
         return 0x40808080;
     case 2:
-        alpha = xglWrapInt((int) (sinf(recordAngle * 3.141592 / 180.0) * 5.0f + 80.0f), 0, 0x7F);
+        alpha = wrapIntRange((int) (sinf(recordAngle * 3.141592 / 180.0) * 5.0f + 80.0f), 0, 0x7F);
         return (alpha << 24) | 0x808080;
     default:
         return 0;
@@ -1142,12 +1142,12 @@ int recordStageColor(int mode, int alpha)
 float cosf(float angle);
 
 /* Pulsing color: grey 0x808080 under the alpha 80 + 5 * cos(recordAngle degrees), put into 0..127 by
-   xglWrapInt. */
+   wrapIntRange. */
 int recordPulseColor(void)
 {
     int alpha;
 
-    alpha = xglWrapInt((int) (cosf(recordAngle * 3.141592 / 180.0) * 5.0f + 80.0f), 0, 0x7F);
+    alpha = wrapIntRange((int) (cosf(recordAngle * 3.141592 / 180.0) * 5.0f + 80.0f), 0, 0x7F);
     return (alpha << 24) | 0x808080;
 }
 
@@ -1156,11 +1156,11 @@ void recordStepAngle(int stage)
 {
     /* Block-scope declaration, a codegen device: with only the definition above in scope, fd.sh recordStepAngle
        gives bne $4,$2 where the original has bnel at 0x275EB4 (17/18 in place); with it, 18/18. */
-    int xglWrapInt(int value, int lower, int upper);
+    int wrapIntRange(int value, int lower, int upper);
 
     if (recordUpdatePaused.paused == 0 && stage == 2) {
         recordAngle += 0x5C;
-        recordAngle = xglWrapInt(recordAngle, 0, 0x168);
+        recordAngle = wrapIntRange(recordAngle, 0, 0x168);
     }
 }
 
@@ -1235,13 +1235,13 @@ void recordDrawType3(GsQueueContext *record)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = xglBlendAlpha(0);
+    pairs[pairCount].ad.data = gsMakeAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = xglFrameTex0(1, 0);
+    pairs[pairCount].ad.data = gsMakeTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = xglFrameReg(0, 0);
+    pairs[pairCount].ad.data = gsMakeFrame(0, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_PRIM;
     pairs[pairCount].ad.data = GS_SET_PRIM(5, 1, 1, 0, 1, 0, 1, 0, 0);
@@ -1482,13 +1482,13 @@ void recordDrawType5(GsQueueContext *record)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = xglBlendAlpha(0);
+    pairs[pairCount].ad.data = gsMakeAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = xglFrameTex0(2, 0);
+    pairs[pairCount].ad.data = gsMakeTex0(2, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = xglFrameReg(0, 0);
+    pairs[pairCount].ad.data = gsMakeFrame(0, 0);
     pairCount++;
     pairs[pairCount].ad.data = 0x15D;
     pairs[pairCount].ad.reg = GS_PRIM;
@@ -1603,13 +1603,13 @@ void recordDrawType6(GsQueueContext *record)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = xglBlendAlpha(0);
+    pairs[pairCount].ad.data = gsMakeAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = xglFrameTex0(1, 0);
+    pairs[pairCount].ad.data = gsMakeTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = xglFrameReg(0, 0);
+    pairs[pairCount].ad.data = gsMakeFrame(0, 0);
     pairCount++;
     pairs[pairCount].ad.data = 0x15D;
     pairs[pairCount].ad.reg = GS_PRIM;
@@ -1763,13 +1763,13 @@ void recordDrawType7(void)
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ALPHA_1;
-    pairs[pairCount].ad.data = xglBlendAlpha(0);
+    pairs[pairCount].ad.data = gsMakeAlpha(0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_TEX0_1;
-    pairs[pairCount].ad.data = xglFrameTex0(1, 0);
+    pairs[pairCount].ad.data = gsMakeTex0(1, 0);
     pairCount++;
     pairs[pairCount].ad.reg = GS_FRAME_1;
-    pairs[pairCount].ad.data = xglFrameReg(0, 0);
+    pairs[pairCount].ad.data = gsMakeFrame(0, 0);
     pairCount++;
     pairs[pairCount].ad.data = 0x15C;
     pairs[pairCount].ad.reg = GS_PRIM;

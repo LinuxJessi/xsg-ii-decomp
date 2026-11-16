@@ -87386,9 +87386,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "xglFrameTex0",
+     "name": "gsMakeTex0",
      "size": 168,
-     "splat_name": "xglFrameTex0",
+     "splat_name": "gsMakeTex0",
      "va": "0x002745a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87482,9 +87482,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "xglFrameReg",
+     "name": "gsMakeFrame",
      "size": 104,
-     "splat_name": "xglFrameReg",
+     "splat_name": "gsMakeFrame",
      "va": "0x00274650",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87500,9 +87500,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "xglBlendAlpha",
+     "name": "gsMakeAlpha",
      "size": 60,
-     "splat_name": "xglBlendAlpha",
+     "splat_name": "gsMakeAlpha",
      "va": "0x002746f8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87754,9 +87754,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "xglWrapInt",
+     "name": "wrapIntRange",
      "size": 40,
-     "splat_name": "xglWrapInt",
+     "splat_name": "wrapIntRange",
      "va": "0x00274808",
      "name_basis": "address",
      "provenance": "estimated"

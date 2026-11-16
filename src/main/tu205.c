@@ -7,7 +7,7 @@ extern u16 D_00645842;
 
 /* GS FRAME register value of a 512-pixel-wide (FBW 8) frame page: buffer 0 the display page, 1 the page D_00645842,
    2 sRenderFrameBase; flag is not read. */
-u64 xglFrameReg(int buffer, int flag)
+u64 gsMakeFrame(int buffer, int flag)
 {
     switch (buffer) {
     case 0:
@@ -34,7 +34,7 @@ void xglVectorNormalInPlace(Vector4 *v)
 /* GS ALPHA register value for a blend mode: 1 additive (Cs*As + Cd), 2 subtractive
  * (-Cs*As + Cd), 3 (Cs - Cd)*As with no destination term, anything else normal
  * alpha blending ((Cs - Cd)*As + Cd). */
-int xglBlendAlpha(int blend)
+int gsMakeAlpha(int blend)
 {
     if (blend == 1) {
         return 0x48;

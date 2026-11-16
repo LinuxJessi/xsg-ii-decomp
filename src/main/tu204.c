@@ -47,7 +47,7 @@ extern u16 sRenderFrameBase;
 
 /* GS TEX0 of a 512x512 PSMCT32 frame page (TBW 8, TW and TH 9): buffer 0 is the display page with CBP set to
  * frame_base_1, buffer 1 the page D_00645842, buffer 2 sRenderFrameBase; tex_cc goes to TCC, TFX stays 0. */
-u64 xglFrameTex0(int buffer, int tex_cc)
+u64 gsMakeTex0(int buffer, int tex_cc)
 {
     switch (buffer) {
     case 0:
