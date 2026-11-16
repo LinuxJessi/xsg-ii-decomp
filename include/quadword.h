@@ -76,6 +76,22 @@
         : "r" (destination), "r" (source) \
         : "$8", "memory")
 
+/*
+ * QuadwordCopyT0 without the "memory" clobber (the SDK sceVu0CopyVector
+ * form: only $8 is clobbered), for the copies the original lets gcc keep
+ * memory values in registers across.
+ *
+ *   QuadwordCopyT0NoClobber(d, v)         *d = *v
+ */
+
+#define QuadwordCopyT0NoClobber(destination, source) \
+    __asm__ __volatile__( \
+        "lq $8, 0(%1)\n" \
+        "sq $8, 0(%0)\n" \
+        : \
+        : "r" (destination), "r" (source) \
+        : "$8")
+
 #define QuadwordCopyMatrixT0(destination, source) \
     __asm__ __volatile__( \
         "lq $8, 0(%1)\n" \
