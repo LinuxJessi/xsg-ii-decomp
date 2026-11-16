@@ -19,7 +19,7 @@ typedef struct TiWatSimItem {
     float grid_origin_z;
     u8 unmodeled_4C[0x04];
     float cell_spacing;
-    u8 unmodeled_54[0x04];
+    float wave_speed;           /* +0x54 (tiWatSimAdvance) */
     float drop_amount;
     u8 unmodeled_5C[0x04];
     float drawPair[2];          /* +0x60: sent by tiWaterDrawItem (tiWaterSendItemPair) */
@@ -45,6 +45,7 @@ typedef struct TiWatSimTable {
 } TiWatSimTable;
 
 void tiWatSimStepRain(TiWatSimItem *item);
+void tiWatSimUpdate(float step, TiWatSimItem *item);
 void tiWatSimDisturbAll(TiWatSimTable *table, Vector4 *pPos);
 void tiWatSimStoreSourcePos(const Vector4 *position);
 

@@ -10,27 +10,12 @@ void tiWatSimSwapWords(float **first, float **second) {
 }
 
 #include "shared.h"
-
-typedef struct TiWatSimItem {
-    u8 unmodeled_00[0x08];
-    int cols;
-    int rows;
-    u8 unmodeled_10[0x40];
-    float cell_spacing;
-    float wave_speed;
-    u8 unmodeled_58[0x10];
-    float *height_buffer_a;
-    float *height_buffer_b;
-    u8 unmodeled_70[0x08];
-    u32 mask_offset;
-    u32 normals_offset;
-    u8 unmodeled_80[0x04];
-    unsigned char *block;
-} TiWatSimItem;
+#include "main/TiWatSim.h"
 
 /* One water step: buffer A drives buffer B over the interior cells, masked cells are scaled, the
- * buffers are swapped, and the normals of the interior are rebuilt from buffer B. */
-void tiWatSimAdvance(TiWatSimItem *item)
+ * buffers are swapped, and the normals of the interior are rebuilt from buffer B. The step
+ * (tiWaterStepSub passes 1.0) is not read. */
+void tiWatSimAdvance(float step, TiWatSimItem *item)
 {
     float courant;
     float courant_squared;
@@ -81,7 +66,7 @@ void tiWatSimAdvance(TiWatSimItem *item)
 }
 
 /* Runs one water simulation step (tiWatSimAdvance). */
-void tiWatSimUpdate(TiWatSimItem *item)
+void tiWatSimUpdate(float step, TiWatSimItem *item)
 {
-    tiWatSimAdvance(item);
+    tiWatSimAdvance(step, item);
 }

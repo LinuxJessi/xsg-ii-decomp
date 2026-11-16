@@ -53,7 +53,7 @@ void msgResetAll(void) {
 int msgSlotTestCurrent(int mask);
 
 void func_002512B0(void) {
-    if (msgSlotTestCurrent(4) == 0) {
+    if (msgSlotTestCurrent(MSG_SLOT_KEEP_GAME_FLAG) == 0) {
         msgGameFlagClear();
     }
 }
@@ -87,9 +87,9 @@ int msgSlotTest(int index, int mask) {
 
 int msgWindowTestCurrentFlags(void *, int);
 
-/* Nonzero while the window reports busy (flag mask 0x16). */
+/* Nonzero while the window reports busy (MSG_WINDOW_BUSY). */
 int msgWindowBusy(void) {
-    return msgWindowTestCurrentFlags(msgWindow, 0x16);
+    return msgWindowTestCurrentFlags(msgWindow, MSG_WINDOW_BUSY);
 }
 
 int func_0027D378(unsigned char *);
@@ -109,8 +109,9 @@ void func_0027D438(void *window);
 void msgWindowUpdateCurrent(void *window);
 int msgWindowCurrentStatus(void *window);
 
-/* One step of the open message: CIRCLE finishes the window's text, shows the next page or closes the
- * slot; CROSS closes a slot that allows it (flag 0x40) while the window is not locked (flag 4). */
+/* One step of the open message (nothing while the window status is 2): CIRCLE finishes the window's text,
+ * shows the next page or closes the slot; CROSS closes a slot that allows it while the window is not
+ * locked. */
 void msgUpdate(void)
 {
     if (msgSlotCurrent() < 0) {
@@ -119,8 +120,8 @@ void msgUpdate(void)
     if (msgWindowCurrentStatus(msgWindow) == 2) {
         return;
     }
-    if ((PadData[0].pressed & PAD_CIRCLE) && msgSlotTestCurrent(1) == 0) {
-        if (msgWindowTestCurrentFlags(msgWindow, 0x10) == 1) {
+    if ((PadData[0].pressed & PAD_CIRCLE) && msgSlotTestCurrent(MSG_SLOT_NO_CIRCLE) == 0) {
+        if (msgWindowTestCurrentFlags(msgWindow, MSG_WINDOW_TYPING) == 1) {
             msgWindowSeekToWindowEnd(msgWindow);
         } else if (msgWindowHasMore()) {
             if (msgWindowBusy() == 0) {
@@ -133,7 +134,8 @@ void msgUpdate(void)
             msgSlotIndex--;
         }
     }
-    if (msgSlotTestCurrent(0x40) && msgWindowTestCurrentFlags(msgWindow, 4) == 0 && (PadData[0].pressed & PAD_CROSS)) {
+    if (msgSlotTestCurrent(MSG_SLOT_CROSS_CLOSES) && msgWindowTestCurrentFlags(msgWindow, MSG_WINDOW_LOCKED) == 0
+        && (PadData[0].pressed & PAD_CROSS)) {
         func_002512B0();
         msgWindowUpdateCurrent(msgWindow);
         msgSlotIndex--;
@@ -297,12 +299,12 @@ void func_0027D9D8(void *choice, int step);
 void func_0027D9F0(void *choice, int step);
 
 /* Polls the open choice: CIRCLE closes it and returns its frame count; left/right and up/down move the
- * selection. -1 while nothing is chosen or no choice is open. */
+ * selection. -1 while no choice is open or while one of the choice bits 0x300 (not recovered) is set. */
 int msgChoicePoll(void)
 {
     int frames;
 
-    if (msgChoiceTestFlags(msgChoice, 8) == 0) {
+    if (msgChoiceTestFlags(msgChoice, MSG_CHOICE_OPEN) == 0) {
         return -1;
     }
     if (msgChoiceTestFlags(msgChoice, 0x300) != 0) {

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/pad.h"
 #include "main/tu147.h"
+#include "main/tu148.h"
 #include "main/tu149.h"
 
 extern PadRecord PadData[];
@@ -75,7 +76,7 @@ int msgPurchaseUpdate(void)
         }
         return -1;
     }
-    if (msgWindowTestCurrentFlags(msgWindow, 0x14)) {
+    if (msgWindowTestCurrentFlags(msgWindow, MSG_WINDOW_LOCKED | MSG_WINDOW_TYPING)) {
         return -1;
     }
     if (msgWindowTestCurrentFlags(msgWindow, 8) == 0 && msgWindowTestCurrentFlags(msgWindow, 2) != 0) {
