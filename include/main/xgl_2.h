@@ -7,17 +7,19 @@
  * address arithmetic of the w stores, so the casts to Vector4 * at the calls stay. */
 typedef float XglFVector[4];
 
-/* Light set built by xglLightPackBuildLightSet, cleared with xglZeroQuadwords18 (0x18 quadwords). */
+/* Light set built by xglLightPackBuildLightSet, cleared with xglZeroQuadwords18 (0x18 quadwords). The labels
+ * lightSetLogDump prints are the original's field names: seven sDir (directions and viewDirection), eight sCol
+ * (colors and the two ambient colours), three sSha (forward and reserved), three sPntP and three sPntC. */
 typedef struct XglLightSet {
-    XglFVector directions[6]; /* 0x000 */
-    Vector4 viewDirection;  /* 0x060 */
-    XglFVector colors[6];   /* 0x070 */
-    Vector4 ambientColor;       /* 0x0D0 */
-    Vector4 ambientColorLower;   /* 0x0E0 */
-    Vector4 forward;        /* 0x0F0 */
-    Vector4 reserved[2];    /* 0x100 */ 
-    XglFVector points[3];   /* 0x120 */
-    XglFVector pointDirections[3]; /* 0x150 */
+    XglFVector directions[6]; /* 0x000: sDir 0-5 */
+    Vector4 viewDirection;  /* 0x060: sDir 6 */
+    XglFVector colors[6];   /* 0x070: sCol 0-5 */
+    Vector4 ambientColor;       /* 0x0D0: sCol 6 */
+    Vector4 ambientColorLower;   /* 0x0E0: sCol 7 */
+    Vector4 forward;        /* 0x0F0: sSha 0 */
+    Vector4 reserved[2];    /* 0x100: sSha 1-2 */
+    XglFVector pointPositions[3]; /* 0x120: sPntP */
+    XglFVector pointColors[3]; /* 0x150: sPntC */
 } XglLightSet;
 
 /* The copies of the light set tu156 keeps are 16-byte aligned (their copies use ld/sd without an

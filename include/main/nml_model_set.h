@@ -5,8 +5,8 @@
 
 /* Functions of src/main/nml_model_set.c that other files call. */
 
-/* The 0x180-byte light block pxySetDefaultLight copies into pxyState (XglLightSet has the same layout). */
-struct PxyShadowLight;
+/* The light set pxySetDefaultLight copies into pxyState (0x180 bytes). */
+struct XglLightSet;
 
 void func_001BA658(void);
 void func_001BA6F4(void);
@@ -19,7 +19,7 @@ void nmlModelSetDrawMatrix(void *matrix);
 void nmlModelSetStencil(int enabled);
 void pxyAddEntryFlagged(int key, void *data, int qwc, int flag);
 void pxyAddEntryFull(int key, void *data, int qwc, int flag, int state);
-void pxySetDefaultLight(struct PxyShadowLight *light);
+void pxySetDefaultLight(struct XglLightSet *light);
 void pxySetGlobalFogDist(float fogNear, float fogFar, float fogMin, float fogMax);
 void pxySetGlobalFogColor(Vector4 *value);
 void xglDirectionFromAngles(Vector4 *direction, const Vector4 *rotation);

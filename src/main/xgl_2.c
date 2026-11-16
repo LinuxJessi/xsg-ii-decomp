@@ -1556,12 +1556,18 @@ void xglLightSetDefault(XglLightSet *lightSet)
         for (i = 0; i < 7; i++) {
             xglDirectionFromAngles((Vector4 *)lightSet + i, (Vector4 *)lightSet + i);
         }
-        lightSet->points[0][0] = lightSet->points[0][1] = lightSet->points[0][2] = lightSet->points[0][3] = 0.0f;
-        lightSet->points[1][0] = lightSet->points[1][1] = lightSet->points[1][2] = lightSet->points[1][3] = 0.0f;
-        lightSet->points[2][0] = lightSet->points[2][1] = lightSet->points[2][2] = lightSet->points[2][3] = 0.0f;
-        lightSet->pointDirections[0][0] = lightSet->pointDirections[0][1] = lightSet->pointDirections[0][2] = lightSet->pointDirections[0][3] = 0.0f;
-        lightSet->pointDirections[1][0] = lightSet->pointDirections[1][1] = lightSet->pointDirections[1][2] = lightSet->pointDirections[1][3] = 0.0f;
-        lightSet->pointDirections[2][0] = lightSet->pointDirections[2][1] = lightSet->pointDirections[2][2] = lightSet->pointDirections[2][3] = 0.0f;
+        lightSet->pointPositions[0][0] = lightSet->pointPositions[0][1] = lightSet->pointPositions[0][2]
+            = lightSet->pointPositions[0][3] = 0.0f;
+        lightSet->pointPositions[1][0] = lightSet->pointPositions[1][1] = lightSet->pointPositions[1][2]
+            = lightSet->pointPositions[1][3] = 0.0f;
+        lightSet->pointPositions[2][0] = lightSet->pointPositions[2][1] = lightSet->pointPositions[2][2]
+            = lightSet->pointPositions[2][3] = 0.0f;
+        lightSet->pointColors[0][0] = lightSet->pointColors[0][1] = lightSet->pointColors[0][2]
+            = lightSet->pointColors[0][3] = 0.0f;
+        lightSet->pointColors[1][0] = lightSet->pointColors[1][1] = lightSet->pointColors[1][2]
+            = lightSet->pointColors[1][3] = 0.0f;
+        lightSet->pointColors[2][0] = lightSet->pointColors[2][1] = lightSet->pointColors[2][2]
+            = lightSet->pointColors[2][3] = 0.0f;
         {
             register Vector4 *src = (Vector4 *)lightSet;
             register void *saved = &xglLightSetDefaultCache;
@@ -2131,9 +2137,10 @@ void xglLightPackBuildLightSet(XglLightPack *pack, XglLightSet *lightSet, Vector
                 switch (entry->type) {
                 case 19:
                     if (pointCount < 3) {
-                        xglVectorCopy((Vector4 *)lightSet->points[pointCount], &key->position);
-                        xglVectorScale((Vector4 *)lightSet->pointDirections[pointCount], &key->color, key->intensity * 128.0f);
-                        lightSet->points[pointCount][3] = 1.0f;
+                        xglVectorCopy((Vector4 *)lightSet->pointPositions[pointCount], &key->position);
+                        xglVectorScale((Vector4 *)lightSet->pointColors[pointCount], &key->color,
+                            key->intensity * 128.0f);
+                        lightSet->pointPositions[pointCount][3] = 1.0f;
                         pointCount++;
                     }
                     break;

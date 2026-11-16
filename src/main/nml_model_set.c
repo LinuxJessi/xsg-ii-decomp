@@ -1097,9 +1097,9 @@ void func_001BA278(void) {
     D_00969DB0.fields.render_status |= NML_RENDER_FOG_WHITE;
 }
 
-void pxySetDefaultLight(PxyShadowLight *light)
+void pxySetDefaultLight(XglLightSet *light)
 {
-    register PxyShadowLight *src = light;
+    register XglLightSet *src = light;
     register PxyState *dst = &pxyState;
     /* (src = src) is a dead same-value set: it adds a reference to src, so the light
      * pointer, not the address, takes the first volatile-free register as in the original */

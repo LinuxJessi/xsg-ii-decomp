@@ -1292,8 +1292,7 @@ int cfe_0024DF60(int handle)
     cfeEntryTableEvaluate(time);
     cfeSlotTableEvaluate(time);
     cfeSndSetTarget(time);
-    /* PxyShadowLight is nml_model_set.c's view of the light set. */
-    pxySetDefaultLight((struct PxyShadowLight *) &cfeLightSet);
+    pxySetDefaultLight(&cfeLightSet);
     if (cfeEvalGlobal.fogEnabled != 0) {
         pxySetGlobalFogDist(cfeEvalGlobal.evaluated[1].x, cfeEvalGlobal.evaluated[1].y, cfeEvalGlobal.evaluated[1].z,
                             cfeEvalGlobal.evaluated[1].w);

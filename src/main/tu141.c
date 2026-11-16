@@ -112,17 +112,19 @@ void cfeLightSetInit(XglLightSet *light)
     for (i = 0; i < CFE_LIGHT_ANGLE_VECTORS; i++, direction++) {
         xglDirectionFromAngles(direction, direction);
     }
-    light->points[0][0] = light->points[0][1] = light->points[0][2] = light->points[0][3] = 0.0f;
-    light->points[1][0] = light->points[1][1] = light->points[1][2] = light->points[1][3] = 0.0f;
-    light->points[2][0] = light->points[2][1] = light->points[2][2] = light->points[2][3] = 0.0f;
-    light->pointDirections[0][0] = light->pointDirections[0][1] = light->pointDirections[0][2]
-        = light->pointDirections[0][3] = 0.0f;
-    light->pointDirections[1][0] = light->pointDirections[1][1] = light->pointDirections[1][2]
-        = light->pointDirections[1][3] = 0.0f;
-    light->pointDirections[2][0] = light->pointDirections[2][1] = light->pointDirections[2][2]
-        = light->pointDirections[2][3] = 0.0f;
-    /* nml_model_set.c types the light block as its own PxyShadowLight */
-    pxySetDefaultLight((struct PxyShadowLight *) light);
+    light->pointPositions[0][0] = light->pointPositions[0][1] = light->pointPositions[0][2]
+        = light->pointPositions[0][3] = 0.0f;
+    light->pointPositions[1][0] = light->pointPositions[1][1] = light->pointPositions[1][2]
+        = light->pointPositions[1][3] = 0.0f;
+    light->pointPositions[2][0] = light->pointPositions[2][1] = light->pointPositions[2][2]
+        = light->pointPositions[2][3] = 0.0f;
+    light->pointColors[0][0] = light->pointColors[0][1] = light->pointColors[0][2]
+        = light->pointColors[0][3] = 0.0f;
+    light->pointColors[1][0] = light->pointColors[1][1] = light->pointColors[1][2]
+        = light->pointColors[1][3] = 0.0f;
+    light->pointColors[2][0] = light->pointColors[2][1] = light->pointColors[2][2]
+        = light->pointColors[2][3] = 0.0f;
+    pxySetDefaultLight(light);
 }
 
 
