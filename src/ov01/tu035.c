@@ -193,10 +193,10 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu035", func_00A97890);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu035", tgtSelectPadInput);
 
-void tgtSelectUnhighlight(int value)
+void tgtSelectUnhighlight(Ov01Object *unit)
 {
     tgtSelectCurrent->flags &= ~0x10;
-    thinkSendEnd(value);
+    thinkSendEnd(unit);
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu035", func_00A97B90);

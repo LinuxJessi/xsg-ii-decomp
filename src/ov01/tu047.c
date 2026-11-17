@@ -307,7 +307,7 @@ Ov01Object *unitEnCreate(int id);
 
 /* Native unitCreate: creates enemy unit argument 1, loads snapshot argument 2,
  * turns it to argument 3 degrees and stores arguments 4 and 5 in its stat block
- * (field_f8, field_fc); returns the unit, or 0 when it could not be created. */
+ * (spawnArgC, spawnArgD); returns the unit, or 0 when it could not be created. */
 int unitCreate(SbThread *call)
 {
     Ov01Object *unit;
@@ -322,8 +322,8 @@ int unitCreate(SbThread *call)
     }
     unitLoadSnapshot(unit, vmArgGet(call, 2));
     unitSetAngleDegrees(unit, vmArgGet(call, 3));
-    unit->stats->field_f8 = vmArgGet(call, 4);
-    unit->stats->field_fc = vmArgGet(call, 5);
+    unit->stats->spawnArgC = vmArgGet(call, 4);
+    unit->stats->spawnArgD = vmArgGet(call, 5);
     /* The script keeps the unit as its address. */
     return (int) unit;
 }
@@ -353,7 +353,6 @@ int unitLoadWait(int unused, int *waiting)
     return 1;
 }
 
-struct DataSlot *dataSlotFind(int id);
 void unitBindActors(Ov01Object *unit, struct DataSlot *slot);
 
 /* Native unitBind: binds unit (argument 2) to the data slot of argument 1, fades it

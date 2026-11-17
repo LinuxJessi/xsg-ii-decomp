@@ -32,8 +32,8 @@ typedef struct UnitSpawnRecord {
     int id;
     int spawnArgA;
     int spawnArgB;
-    int subArgC;
-    int subArgD;
+    int spawnArgC;
+    int spawnArgD;
 } UnitSpawnRecord;
 
 extern int ov01LoadDone;
@@ -42,7 +42,10 @@ extern int ov01PartyIndex;
 extern int ov01EnemyIndex;
 extern UnitSpawnRecord *ov01PartyList;
 extern UnitSpawnRecord *ov01EnemyList;
-void func_00120360(void);
+void ExitDeleteThread(void);
+/* The unit being spawned and its data slot (dataUnitLoad), kept between the spawn, load and await steps. */
+extern struct DataSlot *ov01CurSlot;
+extern Ov01Object *ov01CurUnit;
 void dataCdArenaOpen(void);
 void ov01StepSetNext(void *item, void (*next_step)(int context));
 void ov01LoadBlockStart(void);
@@ -75,28 +78,33 @@ void ov01StepAwaitEnemyLoad(int context);
 void ov01StepAwaitLoads(int context);
 
 /*
- * The request ov01LoadBlockStart and ov01LoadRequest build on the stack for the
- * main-side loader (func_00120320 takes it, func_00120340 starts what it
- * returns): completion callback, destination buffer and size, then two words
- * whose roles are not evidenced here (always D_6A2DF0 and 8).
+ * The EE kernel's ThreadParam: ov01LoadBlockStart and ov01LoadRequest fill one on the stack for CreateThread
+ * (syscall 0x20, main 0x00120320) and start the thread with StartThread (syscall 0x22). The entry ends with
+ * ExitDeleteThread (syscall 0x24).
  */
-typedef struct Ov01LoadParams {
-    unsigned char unmodeled_00[0x04];
-    void (*done)(void);       /* +0x04 */
-    void *buffer;             /* +0x08 */
-    int size;                 /* +0x0C */
-    void *unknown_10;         /* +0x10: D_6A2DF0 */
-    int unknown_14;           /* +0x14: 8 */
-    unsigned char unmodeled_18[0x30 - 0x18];
-} Ov01LoadParams;
+typedef struct ThreadParam {
+    int status;
+    void (*entry)(void);      /* +0x04 */
+    void *stack;              /* +0x08 */
+    int stackSize;            /* +0x0C */
+    void *gpReg;              /* +0x10 */
+    int initPriority;         /* +0x14 */
+    int currentPriority;      /* +0x18 */
+    unsigned int attr;        /* +0x1C */
+    unsigned int option;      /* +0x20 */
+    int waitType;             /* +0x24 */
+    int waitId;               /* +0x28 */
+    int wakeupCount;          /* +0x2C */
+} ThreadParam;
 
-/* Size of the block both loads read into D_00AC41A0. */
-#define OV01_LOAD_BLOCK_SIZE 0x1000
+/* Stack size and priority of the load threads; their stack is D_00AC41A0, their gp the main gp value D_6A2DF0. */
+#define OV01_LOAD_THREAD_STACK_SIZE 0x1000
+#define OV01_LOAD_THREAD_PRIORITY 8
 
 extern unsigned char D_00AC41A0[];
 extern unsigned char D_6A2DF0[];
-void *func_00120320(Ov01LoadParams *params);
-void func_00120340(void *load, int flags);
+int CreateThread(ThreadParam *param);
+int StartThread(int thread, void *arg);
 void ov01LoadComplete(void);
 void ov01LoadCompleteForOwner(void);
 int handleStateGet(unsigned int handle);
@@ -108,41 +116,42 @@ void sbStartImage(struct SbImageHeader *image);
 void ov01StepSceneScript(int context);
 void ov01StepInit(int context);
 
-/* Load-completion callback: marks the load done (ov01LoadDone) after dataBattleSeRelease. */
+/* Load thread entry: releases the battle sound effects (dataBattleSeRelease), marks the load done (ov01LoadDone)
+ * and ends the thread. */
 void ov01LoadComplete(void) {
     dataBattleSeRelease();
     ov01LoadDone = 1;
-    func_00120360();
+    ExitDeleteThread();
 }
 
-/* Starts a 0x1000-byte load into D_00AC41A0 whose completion is ov01LoadComplete. */
+/* Starts a load thread running ov01LoadComplete. */
 void ov01LoadBlockStart(void)
 {
-    Ov01LoadParams params;
+    ThreadParam param;
 
     ov01LoadDone = 0;
-    params.done = ov01LoadComplete;
-    params.buffer = D_00AC41A0;
-    params.unknown_10 = D_6A2DF0;
-    params.size = OV01_LOAD_BLOCK_SIZE;
-    params.unknown_14 = 8;
-    func_00120340(func_00120320(&params), 0);
+    param.entry = ov01LoadComplete;
+    param.stack = D_00AC41A0;
+    param.gpReg = D_6A2DF0;
+    param.stackSize = OV01_LOAD_THREAD_STACK_SIZE;
+    param.initPriority = OV01_LOAD_THREAD_PRIORITY;
+    StartThread(CreateThread(&param), 0);
 }
 
-/* Completion callback of ov01LoadRequest on the second path: passes the owner
- * (ov01LoadOwner) to dataSlotUnload, then marks the load done. */
+/* Load thread entry of ov01LoadRequest: passes the owner (ov01LoadOwner) to dataSlotUnload, marks the load
+ * done and ends the thread. */
 void ov01LoadCompleteForOwner(void) {
     dataSlotUnload(ov01LoadOwner);
     ov01LoadDone = 1;
-    func_00120360();
+    ExitDeleteThread();
 }
 
 /* Load request for an owner object: when handleStateGet reports the data present
  * the load is marked done at once; otherwise the owner is kept in ov01LoadOwner and
- * the 0x1000-byte load starts with completion ov01LoadCompleteForOwner. */
+ * a load thread runs ov01LoadCompleteForOwner. */
 void ov01LoadRequest(struct DataSlot *owner)
 {
-    Ov01LoadParams params;
+    ThreadParam param;
 
     if (handleStateGet(owner->handle) != 0) {
         ov01LoadDone = 1;
@@ -150,12 +159,12 @@ void ov01LoadRequest(struct DataSlot *owner)
     }
     ov01LoadOwner = owner;
     ov01LoadDone = 0;
-    params.done = ov01LoadCompleteForOwner;
-    params.buffer = D_00AC41A0;
-    params.unknown_10 = D_6A2DF0;
-    params.size = OV01_LOAD_BLOCK_SIZE;
-    params.unknown_14 = 8;
-    func_00120340(func_00120320(&params), 0);
+    param.entry = ov01LoadCompleteForOwner;
+    param.stack = D_00AC41A0;
+    param.gpReg = D_6A2DF0;
+    param.stackSize = OV01_LOAD_THREAD_STACK_SIZE;
+    param.initPriority = OV01_LOAD_THREAD_PRIORITY;
+    StartThread(CreateThread(&param), 0);
 }
 
 /* Load-done flag (ov01LoadDone), polled by the wait steps. */
@@ -275,8 +284,6 @@ void ov01StepLoadPartyIds(int context) {
 /* Spawns party member ov01PartyIndex with unitPlCreate (unitPlCreate) and sets its
  * fields; a zero id skips to ov01StepNextPartyMember. Continues to ov01StepLoadPartyMember. */
 void ov01StepSpawnPartyMember(int context) {
-    extern Ov01Object *ov01CurUnit[];
-    extern struct DataSlot *D_00AB5CD8[];
     int id;
     Ov01Object *object;
 
@@ -286,12 +293,12 @@ void ov01StepSpawnPartyMember(int context) {
         return;
     }
     object = unitPlCreate(id);
-    ov01CurUnit[0] = object;
+    ov01CurUnit = object;
     unitLoadSnapshot(object, ov01PartyList[ov01PartyIndex].spawnArgA);
-    unitSetAngleDegrees(ov01CurUnit[0], ov01PartyList[ov01PartyIndex].spawnArgB);
-    ov01CurUnit[0]->stats->field_f8 = 0;
-    ov01CurUnit[0]->stats->field_fc = 0;
-    D_00AB5CD8[0] = dataUnitLoad(id);
+    unitSetAngleDegrees(ov01CurUnit, ov01PartyList[ov01PartyIndex].spawnArgB);
+    ov01CurUnit->stats->spawnArgC = 0;
+    ov01CurUnit->stats->spawnArgD = 0;
+    ov01CurSlot = dataUnitLoad(id);
     unitEffectSlotAcquire(id);
     ov01StepSetNext(context, ov01StepLoadPartyMember);
     ov01StackPush(context, ov01StepAwaitLoads);
@@ -335,19 +342,17 @@ void ov01StepStartEnemies(int context) {
 /* Spawns enemy ov01EnemyIndex with unitEnCreate (unitEnCreate) and sets its fields and
  * sub record; continues to ov01StepLoadEnemy. */
 void ov01StepSpawnEnemy(int context) {
-    extern Ov01Object *ov01CurUnit[];
-    extern struct DataSlot *D_00AB5CD8[];
     int id;
     Ov01Object *object;
 
     id = ov01EnemyList[ov01EnemyIndex].id;
     object = unitEnCreate(id);
-    ov01CurUnit[0] = object;
+    ov01CurUnit = object;
     unitLoadSnapshot(object, ov01EnemyList[ov01EnemyIndex].spawnArgA);
-    unitSetAngleDegrees(ov01CurUnit[0], ov01EnemyList[ov01EnemyIndex].spawnArgB);
-    ov01CurUnit[0]->stats->field_f8 = ov01EnemyList[ov01EnemyIndex].subArgC;
-    ov01CurUnit[0]->stats->field_fc = ov01EnemyList[ov01EnemyIndex].subArgD;
-    D_00AB5CD8[0] = dataUnitLoad(id);
+    unitSetAngleDegrees(ov01CurUnit, ov01EnemyList[ov01EnemyIndex].spawnArgB);
+    ov01CurUnit->stats->spawnArgC = ov01EnemyList[ov01EnemyIndex].spawnArgC;
+    ov01CurUnit->stats->spawnArgD = ov01EnemyList[ov01EnemyIndex].spawnArgD;
+    ov01CurSlot = dataUnitLoad(id);
     unitEffectSlotAcquire(id);
     ov01StepSetNext(context, ov01StepLoadEnemy);
     ov01StackPush(context, ov01StepAwaitLoads);
@@ -355,12 +360,10 @@ void ov01StepSpawnEnemy(int context) {
 
 /* Binds the enemy and starts its load (ov01LoadRequest); continues to ov01StepAwaitEnemyLoad. */
 void ov01StepLoadEnemy(int context) {
-    extern Ov01Object *ov01CurUnit;
-    extern struct DataSlot *D_00AB5CD8;
 
-    unitBindActors(ov01CurUnit, D_00AB5CD8);
+    unitBindActors(ov01CurUnit, ov01CurSlot);
     unitFadeIn(ov01CurUnit);
-    ov01LoadRequest(D_00AB5CD8);
+    ov01LoadRequest(ov01CurSlot);
     ov01StepSetNext(context, ov01StepAwaitEnemyLoad);
 }
 

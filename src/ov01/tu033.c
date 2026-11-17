@@ -973,7 +973,6 @@ int unitSpawnFromRequest(Ov01Tu033Request *request)
     return 1;
 }
 
-struct DataSlot *dataSlotFind(int id);
 void unitBindActors(Ov01Object *object, struct DataSlot *slot);
 
 /* Bind event handler: binds the data slot of request id to ov01LastUnit, fades
@@ -1062,10 +1061,6 @@ int battleResolveStatus(void) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96510);
 
-/* Status row 3 bits that make battleStatusQueueWait wait for a unit's queue. */
-#define TU033_STAT3_WAIT_A 0x800
-#define TU033_STAT3_WAIT_B 0x2000
-
 void func_00A968C8(void);
 
 /* Waits (returns 0) while a side-2 unit with status bit 0x800 or 0x2000 in row 3
@@ -1081,7 +1076,7 @@ int battleStatusQueueWait(void)
     for (i = 0; i < count; i++) {
         unit = units[i];
         if (unit != 0) {
-            if (calcStatGet(unit, 3, TU033_STAT3_WAIT_A) != 0 || calcStatGet(unit, 3, TU033_STAT3_WAIT_B) != 0) {
+            if (calcStatGet(unit, 3, 0x800) != 0 || calcStatGet(unit, 3, 0x2000) != 0) {
                 if (unitQueueIsEmpty(unit) == 0) {
                     return 0;
                 }

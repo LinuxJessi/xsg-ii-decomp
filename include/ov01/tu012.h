@@ -120,8 +120,8 @@ struct StatBlock {
     int entryCount;                         /* +0xEC: entries held, at most 8 */
     int comboMask;                          /* +0xF0: status mask of the current combo (calcComboUpdate) */
     int comboHits;                          /* +0xF4: hit count of the current combo, capped at 99 */
-    int field_f8;                           /* +0xF8: written from the enemy record's subArgC (tu038) */
-    int field_fc;                           /* +0xFC: written from the enemy record's subArgD (tu038) */
+    int spawnArgC;                          /* +0xF8: the spawn record's spawnArgC (tu038), unitCreate's argument 4 */
+    int spawnArgD;                          /* +0xFC: the spawn record's spawnArgD (tu038), unitCreate's argument 5 */
     StatOwner *source;                      /* +0x100: the unit whose effect sum battleResultAdd adds; unitFaceTarget's target argument */
     unsigned char unmodeled_104[0x2];       /* +0x104..+0x105 */
     short handle;                           /* +0x106: passed to handleFree by unitCmdRelease */

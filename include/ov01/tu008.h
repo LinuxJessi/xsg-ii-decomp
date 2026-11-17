@@ -61,8 +61,9 @@ void dataStatFileLoad(void);
 /* Streams and effect slots: dataStreamOpen returns the stream record, unitEffectSlotAcquire takes an effect key. */
 struct DataStreamEntry *dataStreamOpen(int count, int small_buffer);
 int unitEffectSlotAcquire(int key);
-/* The data slot of a unit id that dataUnitLoad loads. (dataSlotFind, the lookup, has no prototype here:
- * dataSlotReset calls it without an argument.) */
+/* The data slot of a unit id that dataUnitLoad loads, and the lookup dataSlotFind: its definition is K&R
+ * and dataSlotReset calls it without an argument, so the declaration has no parameter list. */
 struct DataSlot *dataUnitLoad(int id);
+struct DataSlot *dataSlotFind();
 
 #endif /* INCLUDE_OV01_TU008_H */

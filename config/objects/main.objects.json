@@ -4362,9 +4362,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00120320",
+     "name": "CreateThread",
      "size": 16,
-     "splat_name": "func_00120320",
+     "splat_name": "CreateThread",
      "va": "0x00120320",
      "name_basis": "address",
      "provenance": "estimated"
@@ -4380,9 +4380,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00120340",
+     "name": "StartThread",
      "size": 16,
-     "splat_name": "func_00120340",
+     "splat_name": "StartThread",
      "va": "0x00120340",
      "name_basis": "address",
      "provenance": "estimated"
@@ -4398,9 +4398,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00120360",
+     "name": "ExitDeleteThread",
      "size": 16,
-     "splat_name": "func_00120360",
+     "splat_name": "ExitDeleteThread",
      "va": "0x00120360",
      "name_basis": "address",
      "provenance": "estimated"
