@@ -12,6 +12,7 @@
 #include "main/xgl_2.h"
 #include "main/xgl_studio.h"
 #include "quadword.h"
+#include "vu0_macro.h"
 
 #include "shared.h"
 #include "main/sdv_033.h"
@@ -41,8 +42,7 @@ typedef struct PxyHeader {
     unsigned char unmodeled_68[4];
     int geometryOffset;                     /* 0x6C: bytes from the pack to its PxyGeometry array */
     unsigned char unmodeled_70[0x80 - 0x70];
-    float center[3];                        /* 0x80: bounding sphere center */
-    float radius;                           /* 0x8C */
+    AlignedVector4 sphere;                  /* 0x80: bounding sphere, center xyz and radius in w */
     unsigned char unmodeled_90[0xD0 - 0x90];
     int subPackOffset;                      /* 0xD0: bytes from the pack to a second pack, 0 if none */
 } PxyHeader;
@@ -227,6 +227,10 @@ typedef struct XenoActor {
 } XenoActor;
 
 /* Bits of XenoActor.flags. */
+#define XENO_FLAG_FREEZE_A 0x1           /* XenoActorUpdateTree does not advance motion A */
+#define XENO_FLAG_UNWRAP_A 0x2           /* motion A advances through the unwrapped variant */
+#define XENO_FLAG_FREEZE_B 0x4           /* XenoActorUpdateTree does not advance motion B */
+#define XENO_FLAG_UNWRAP_B 0x8           /* motion B advances through the unwrapped variant */
 #define XENO_FLAG_BLEND_SWAPPED 0x10     /* the channel blend was swapped in; cleared when the mode is re-applied */
 #define XENO_FLAG_RANGE_SET 0x40         /* a play range was set (XenoActorSetPlayRange) */
 #define XENO_FLAG_CHANNEL_BIT20 0x80     /* either channel flag word has bit 0x20 set */
@@ -952,10 +956,6 @@ void XenoActorRelease(XenoActor *actor) {
     XenoActorInit(actor);
 }
 
-/* First three bytes of PxyHeader.magic, "pxy" read little-endian. Every check below loads 8 bytes
- * (*(long long *)pack->magic, spilling into PxyHeader.version) and masks them to 24 bits: the original
- * bytes use a doubleword load here, so the cast is kept. */
-#define PXY_MAGIC 0x797870
 void xglMatrixStackRotY(float);
 void xglMatrixStackMulVector(Vector4 *dst, Vector4 *src);
 
@@ -972,8 +972,8 @@ void XenoActorUpdateMoveState(XenoActor *actor) {
     speed = 0.0f;
     scale = 1.0f;
     actor->shadowValue2 = scale;
-    if (actor->pack != 0 && (*(long long *)actor->pack->magic & 0xFFFFFF) == PXY_MAGIC) {
-        scale = actor->pack->radius;
+    if (actor->pack != 0 && actor->pack->magic[0] == 'p' && actor->pack->magic[1] == 'x' && actor->pack->magic[2] == 'y') {
+        scale = actor->pack->sphere.w;
         if (speed < scale) {
             actor->shadowValue2 = scale;
         }
@@ -1085,18 +1085,8 @@ void XenoActorUpdateMoveState(XenoActor *actor) {
         break;
     }
     actor->shadowB.y += actor->rowB[1];
-    __asm__ __volatile__(
-        "lqc2 vf3, 0(%1)\n\t"
-        "lqc2 vf2, 0(%0)\n\t"
-        "vadd.xyz vf2, vf2, vf3\n\t"
-        "sqc2 vf2, 0(%0)"
-        : : "r"(&actor->shadowA), "r"(&actor->position) : "memory");
-    __asm__ __volatile__(
-        "lqc2 vf3, 0(%1)\n\t"
-        "lqc2 vf2, 0(%0)\n\t"
-        "vadd.xyz vf2, vf2, vf3\n\t"
-        "sqc2 vf2, 0(%0)"
-        : : "r"(&actor->shadowA), "r"(&actor->localMatrix.m[3]) : "memory");
+    Vu0AddVectorXYZ(&actor->shadowA, &actor->shadowA, &actor->position);
+    Vu0AddVectorXYZ(&actor->shadowA, &actor->shadowA, &actor->localMatrix.m[3]);
 }
 #define XENO_DRAW_PARENT_FADE 0x4000000   /* fade by alphaScale */
 
@@ -1115,19 +1105,14 @@ void XenoActorUpdateCameraFade(XenoActor *actor) {
     camera = xglStudioSelectGetActiveCamera(0);
     actor->alphaScale = 1.0f;
     if ((actor->drawFlags & XENO_DRAW_PARENT_FADE) && camera != 0 && actor->parent == 0 && (pack = actor->pack) != 0 &&
-        (*(long long *)pack->magic & 0xFFFFFF) == PXY_MAGIC && (pack->flags & 0x81) == 0) {
-        radius = pack->radius;
+        pack->magic[0] == 'p' && pack->magic[1] == 'x' && pack->magic[2] == 'y' && (pack->flags & 0x81) == 0) {
+        radius = pack->sphere.w;
         target = actor->rowA;
         cameraPosition = *(DoublewordVector4 *)&camera->travel.position;
         if (actor->fadeRadius != 0.0f) {
             radius = actor->fadeRadius;
         }
-        __asm__ __volatile__(
-            "lqc2 vf3, 0(%1)\n\t"
-            "lqc2 vf2, 0(%0)\n\t"
-            "vadd.xyz vf2, vf2, vf3\n\t"
-            "sqc2 vf2, 0(%0)"
-            : : "r"(&target), "r"(&actor->position) : "memory");
+        Vu0AddVectorXYZ(&target, &target, &actor->position);
         target.w = 1.0f;
         distance = xglPointLength(&cameraPosition.vector, &target);
         if (distance < radius) {
@@ -1172,13 +1157,8 @@ void XenoActorUpdateTree(XenoActor *actor) {
     if (actor != 0) {
         *(DoublewordAlignedVector4 *)actor->sourceBlock = actor->rowA;
         actor->drawFlags &= ~XENO_DRAW_SOURCE_DIRTY;
-        if (actor->pack != 0 && (*(long long *)actor->pack->magic & 0xFFFFFF) == PXY_MAGIC) {
-            __asm__ __volatile__(
-                "lqc2 vf3, 0(%1)\n\t"
-                "lqc2 vf2, 0(%0)\n\t"
-                "vadd.xyz vf2, vf2, vf3\n\t"
-                "sqc2 vf2, 0(%0)"
-                : : "r"(actor->sourceBlock), "r"(actor->pack->center) : "memory");
+        if (actor->pack != 0 && actor->pack->magic[0] == 'p' && actor->pack->magic[1] == 'x' && actor->pack->magic[2] == 'y') {
+            Vu0AddVectorXYZ(actor->sourceBlock, actor->sourceBlock, &actor->pack->sphere);
         }
         actor->renderValue += actor->renderValue2;
         XenoActorUpdateLinkMatrix(actor);
@@ -1274,8 +1254,8 @@ void XenoActorUpdateTree(XenoActor *actor) {
             QuadwordCopy(&scaled, actor->sourceBlock);
             /* Written back through the doubleword union view of the block. */
             ((DoublewordVector4 *)actor->sourceBlock)->vector = scaled;
-            if ((actor->flags & 1) == 0) {
-                if (actor->flags & 2) {
+            if ((actor->flags & XENO_FLAG_FREEZE_A) == 0) {
+                if (actor->flags & XENO_FLAG_UNWRAP_A) {
                     tiMRPackageAdvanceAUnwrapped(actor->handle640);
                 } else {
                     tiMRPackageAdvanceA(actor->handle640);
@@ -1283,8 +1263,8 @@ void XenoActorUpdateTree(XenoActor *actor) {
                 actor->transformScale = actor->motionTime;
             }
         }
-        if (actor->table != 0 && (actor->motionKeys[2] != 0 || actor->motionKeys[3] != 0) && (actor->flags & 4) == 0) {
-            if (actor->flags & 8) {
+        if (actor->table != 0 && (actor->motionKeys[2] != 0 || actor->motionKeys[3] != 0) && (actor->flags & XENO_FLAG_FREEZE_B) == 0) {
+            if (actor->flags & XENO_FLAG_UNWRAP_B) {
                 tiMRPackageAdvanceBUnwrapped(actor->handle640);
             } else {
                 tiMRPackageAdvanceB(actor->handle640);
@@ -1475,6 +1455,7 @@ int func_001BBB70(void);
 #define XENO_DRAW_OFFSET_B 0x80
 /* XENO_DRAW_FOCUS_LOCKED (0x100) is declared in main/xenoActor.h. */
 #define XENO_DRAW_FLAG_200 0x200
+#define XENO_DRAW_NO_TREE_UPDATE 0x400    /* XenoActorDoit skips this root actor */
 #define XENO_DRAW_ALPHA 0x10000
 #define XENO_DRAW_RENDER_2 0x20000        /* adds render flag 2 */
 #define XENO_DRAW_SHADOW_PROJECT 0x40000
@@ -1517,7 +1498,7 @@ void XenoActorDrawMotion(XenoActor *actor)
     /* original keeps this redundant actor != 0 test below; removing it moves code */
     actor->drawFlags &= ~XENO_DRAW_DREW;
     if (actor->drawFlags & (XENO_DRAW_SKIP_ONCE | XENO_DRAW_HIDDEN)) {
-        actor->drawFlags &= ~2;
+        actor->drawFlags &= ~XENO_DRAW_SKIP_ONCE;
         return;
     }
     XenoActorPushMatrix(actor);
@@ -1534,7 +1515,7 @@ void XenoActorDrawMotion(XenoActor *actor)
             XenoActorRefreshItems(actor);
         }
     }
-    if (actor != 0 && (pack = actor->pack) != 0 && (*(long long *) pack->magic & 0xFFFFFF) == PXY_MAGIC) {
+    if (actor != 0 && (pack = actor->pack) != 0 && pack->magic[0] == 'p' && pack->magic[1] == 'x' && pack->magic[2] == 'y') {
         localMatrix = &actor->localMatrix;
         if (actor->state != 0) {
             func_001BAA98(actor->state);
@@ -1557,7 +1538,7 @@ void XenoActorDrawMotion(XenoActor *actor)
                 }
             }
         } else {
-            if (actor->drawFlags & 8) {
+            if (actor->drawFlags & XENO_DRAW_LIGHT) {
                 light = &actor->light;
                 if (actor->drawFlags & XENO_DRAW_LIGHT_SOURCE) {
                     light = &actor->sourceLight;
@@ -1586,7 +1567,7 @@ void XenoActorDrawMotion(XenoActor *actor)
                 }
             }
         }
-        if (actor->drawFlags & 1) {
+        if (actor->drawFlags & XENO_DRAW_COLOR) {
             pxySetFogColor(actor->colorBlock);
             pxySetFogDist(actor->color[0], actor->color[1], actor->color[2], actor->color[3]);
         }
@@ -1627,7 +1608,7 @@ void XenoActorDrawMotion(XenoActor *actor)
                 func_001BADA8(actor->fogA, actor->fogB);
             } else {
                 scale = 1.0f;
-                if (pack->radius >= 3.0f) {
+                if (pack->sphere.w >= 3.0f) {
                     scale = 5.0f;
                 }
                 func_001BADA8(actor->fogC * scale, actor->fogD * scale);
@@ -1743,11 +1724,11 @@ void XenoActorDrawMotion(XenoActor *actor)
         if (subPack->subPackOffset != 0) {
             func_001BB678(subPack);
             nmlModelSetDrawMatrix(localMatrix);
-            if (actor->drawFlags & 1) {
+            if (actor->drawFlags & XENO_DRAW_COLOR) {
                 pxySetFogColor(actor->colorBlock);
                 pxySetFogDist(actor->color[0], actor->color[1], actor->color[2], actor->color[3]);
             }
-            if (actor->drawFlags & 8) {
+            if (actor->drawFlags & XENO_DRAW_LIGHT) {
                 func_001BB96C(&actor->light);
             }
             if (actor->effect != 0) {
@@ -1790,7 +1771,7 @@ void XenoActorDoit(void) {
     if (XenoActorHoldFlag == 0) {
         for (i = 0; i < XenoActorPoolCount; ) {
             XenoActor *actor = (XenoActor *)XenoActorActiveTable[i++];
-            if (actor != 0 && actor->parent == 0 && (actor->drawFlags & 0x400) == 0) {
+            if (actor != 0 && actor->parent == 0 && (actor->drawFlags & XENO_DRAW_NO_TREE_UPDATE) == 0) {
                 XenoActorUpdateTree(actor);
             }
         }
@@ -1836,7 +1817,7 @@ int XenoActorFindPart(XenoActor *actor, const char *name) {
     PxyGeometry *geom;
     int i;
 
-    if (actor != 0 && name != 0 && (pack = actor->pack) != 0 && (*(long long *)pack->magic & 0xFFFFFF) == PXY_MAGIC) {
+    if (actor != 0 && name != 0 && (pack = actor->pack) != 0 && pack->magic[0] == 'p' && pack->magic[1] == 'x' && pack->magic[2] == 'y') {
         geom = (PxyGeometry *)((unsigned char *)pack + pack->geometryOffset);
         for (i = 0; i < pack->geometryCount; i++) {
             if (strcmp((const char *)geom, name) == 0) {
@@ -1856,7 +1837,7 @@ int XenoActorHidePart(XenoActor *actor, const char *partName) {
     PxyGeometry *subGeom;
     int i;
 
-    if (actor != 0 && partName != 0 && (pack = actor->pack) != 0 && (*(long long *)pack->magic & 0xFFFFFF) == PXY_MAGIC) {
+    if (actor != 0 && partName != 0 && (pack = actor->pack) != 0 && pack->magic[0] == 'p' && pack->magic[1] == 'x' && pack->magic[2] == 'y') {
         geom = (PxyGeometry *)((unsigned char *)pack + pack->geometryOffset);
         if (pack->subPackOffset != 0) {
             subPack = (PxyHeader *)((unsigned char *)pack + pack->subPackOffset);
@@ -1888,7 +1869,7 @@ int XenoActorShowPart(XenoActor *actor, const char *partName) {
     PxyGeometry *subGeom;
     int i;
 
-    if (actor != 0 && partName != 0 && (pack = actor->pack) != 0 && (*(long long *)pack->magic & 0xFFFFFF) == PXY_MAGIC) {
+    if (actor != 0 && partName != 0 && (pack = actor->pack) != 0 && pack->magic[0] == 'p' && pack->magic[1] == 'x' && pack->magic[2] == 'y') {
         geom = (PxyGeometry *)((unsigned char *)pack + pack->geometryOffset);
         if (pack->subPackOffset != 0) {
             subPack = (PxyHeader *)((unsigned char *)pack + pack->subPackOffset);

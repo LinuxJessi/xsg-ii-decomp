@@ -46,13 +46,13 @@ void timecodeSplit(MsgSlot *slot, int *hours, int *minutes, int *seconds, int *f
     long long remaining = slot->u.timecode.elapsed_frames;
     int hh, mm, ss, ff;
     if (slot->state == TIMECODE_STATE) {
-        hh = __divdi3(remaining, FRAMES_PER_HOUR);
+        hh = remaining / FRAMES_PER_HOUR;
         remaining -= (long long)hh * FRAMES_PER_HOUR;
-        mm = __divdi3(remaining, FRAMES_PER_MINUTE);
+        mm = remaining / FRAMES_PER_MINUTE;
         remaining -= (long long)mm * FRAMES_PER_MINUTE;
-        ss = __divdi3(remaining, FRAMES_PER_SECOND);
+        ss = remaining / FRAMES_PER_SECOND;
         remaining -= (long long)ss * FRAMES_PER_SECOND;
-        ff = __fixdfdi(dpmul(fptodp(__floatdisf(remaining)), HUNDREDTHS_PER_FRAME));
+        ff = (long long)((float) remaining * HUNDREDTHS_PER_FRAME);
         *hours = hh; *minutes = mm; *seconds = ss; *frames = ff;
     }
 }
@@ -128,23 +128,21 @@ void timecodeStart(MsgSlot *slot, int param) {
  * Adds amountIn to the decimal digit of value at place pos (1 = ones), wrapping that digit through 0..9; main 0x00285CD0.
  * The wrap bounds are the lower digits of value with the digit set to 9 (maxValue) and to 0 (minValue).
  */
-/* A struct-wrapped buffer so that the whole-buffer copies below are 8-byte-aligned struct copies. */
-typedef struct { char t[TIMECODE_DIGIT_BUFFER]; } TimecodeDigitBuf __attribute__((aligned(8)));
 long long timecodeAddToDigit(long long value, int pos, int amountIn) {
     long long amount = amountIn;
-    TimecodeDigitBuf nines, digits, zeros;
+    char nines[TIMECODE_DIGIT_BUFFER], digits[TIMECODE_DIGIT_BUFFER], zeros[TIMECODE_DIGIT_BUFFER];
     long long maxValue;
     long long minValue;
     int last = pos - 1;
     int i;
 
-    numberToDigitsLsbFirst(digits.t, value, last);
-    nines = digits;
-    nines.t[last] = '9';
-    zeros = digits;
-    zeros.t[last] = '0';
-    digitsLsbFirstToNumber(&maxValue, nines.t);
-    digitsLsbFirstToNumber(&minValue, zeros.t);
+    numberToDigitsLsbFirst(digits, value, last);
+    __builtin_memcpy(nines, digits, sizeof(nines));
+    nines[last] = '9';
+    __builtin_memcpy(zeros, digits, sizeof(zeros));
+    zeros[last] = '0';
+    digitsLsbFirstToNumber(&maxValue, nines);
+    digitsLsbFirstToNumber(&minValue, zeros);
     for (i = 0; i < last; i++) {
         amount *= 10;
     }

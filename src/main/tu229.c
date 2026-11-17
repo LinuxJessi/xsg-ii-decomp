@@ -342,8 +342,7 @@ void talkWindowDrawFrame(MsgSlot *window, int mode, float scale)
         middleFits = 0;
         rect[TALK_PIECE_STRIP_LEFT_INNER].right = rect[TALK_PIECE_STRIP_RIGHT_INNER].right = (left + right) >> 1;
     }
-    /* The original reads the flag word here as a doubleword (ld; the slot is 8-byte aligned), hence the long long read. */
-    if (window->state == 1 && (*(long long *) window & TALK_CURSOR_FLAGS_MASK) == TALK_CURSOR_FLAGS && talkActive == 0) {
+        if (window->state == 1 && (window->flags & TALK_FLAG_OPEN) && !(window->flags & INTERP_FLAG_SCAN) && talkActive == 0) {
         talkWindowCursorPos(&cursor_x, &cursor_y, window);
     }
     packet = xglPacketGetCurrent();
@@ -619,8 +618,8 @@ void talkWindowDrawFrame(MsgSlot *window, int mode, float scale)
             piece++;
         } while (piece->kind != TALK_PIECE_END);
     }
-    /* The same doubleword read of the flag word as above. */
-    if (window->state == 1 && (*(long long *) window & TALK_CURSOR_FLAGS_MASK) == TALK_CURSOR_FLAGS && talkActive == 0) {
+    /* Same merged flag test as above. */
+    if (window->state == 1 && (window->flags & TALK_FLAG_OPEN) && !(window->flags & INTERP_FLAG_SCAN) && talkActive == 0) {
         pairs[pairCount].ad.reg = GS_TEXFLUSH;
         pairs[pairCount].ad.data = 0;
         pairCount++;

@@ -61,7 +61,6 @@ void XenoActorSetFirstWord(struct XenoActor *actor, int value);
 void XenoActorSetModeInSlot(struct XenoActor *actor, unsigned int slot, int mode);
 float XenoActorSetSelector(struct XenoActor *actor, int selector);
 void XenoActorSetHoldFlag(void);
-void XenoActorClearHoldFlag(void);
 void XenoActorDoit(void);
 void XenoActorDisp(void);
 

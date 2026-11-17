@@ -8,6 +8,8 @@
 #include "main/xgl_font.h"
 #include "gs.h"
 
+typedef int s32;
+
 /* Text layout constants shared by the sell, list and talk-box drawers. */
 #define DEBT_CAPTION_WIDTH 0xA5     /* width of the "remaining debt" caption; the digits start after it */
 #define DEBT_DIGIT_PITCH 15         /* px between the amount's text units */
@@ -94,7 +96,7 @@ int debtBoxCenterX(DebtBox *box, int value) {
 
     do {
         text_w += DEBT_DIGIT_PITCH;
-        value = dptoli(dpmul(litodp(value), 0.1));
+        value = value * 0.1;
     } while ((value < 0 ? -value : value) > 0);
     text_w += DEBT_DIGIT_PITCH;
     return box->x + (box->width >> 1) - (text_w >> 1);
@@ -135,10 +137,6 @@ void drawRemainingDebt(int x, int y, int color, int amount) {
     }
 }
 
-typedef unsigned char u8;
-
-typedef int s32;
-
 /* Partial view of the object the draw helpers take: only the members these
  * functions read are named. */
 typedef struct LabelWidgetState {
@@ -159,11 +157,9 @@ typedef struct LabelWidget {
 
 u8 *fontColorTag(s32 color);
 u8 *fontZoomTag(s32 zoom);
-extern unsigned char fontStylePrefix[];
 extern unsigned char fmtSevenStrings[];
 extern unsigned char fontShadowTagA[];
 extern unsigned char fontShadowTagB[];
-extern unsigned char fontPropTag[];
 
 /* Draws the string text with a colour tag, a zoom tag and two shadow tags. */
 void drawShadowedText(int x, int y, int z, unsigned int *text) {
@@ -422,7 +418,7 @@ extern float D_0069B54C;
 
 /* Scales an integer by a float constant and rounds to nearest. */
 int scaleAndRound(int value) {
-    return dptoli(dpadd(fptodp((float)value * D_0069B54C), 0.5));
+    return (float) value * D_0069B54C + 0.5;
 }
 
 int sellItemFirstRowY(const struct TextLayout *layout);
@@ -480,7 +476,7 @@ extern float D_0069B550;
 /* Returns how many of the SELL_LIST_SLOTS slots are walked before the rounded scaled value runs out of filled slots. */
 int sellCursorFilledRank(int value, int *slots) {
     int *end = slots + SELL_LIST_SLOTS;
-    int remaining = dptoli(dpadd(fptodp((float)value * D_0069B550), 0.5));
+    int remaining = (float) value * D_0069B550 + 0.5;
     int count;
 
     for (count = 0; slots < end; count++, slots++) {
@@ -665,8 +661,6 @@ int textCountLinesOf(int text) {
     return count;
 }
 
-typedef unsigned int u32;
-
 int sellCountFilledSlots(int *words) {
     s32 *end;
     s32 nonzero;
@@ -782,7 +776,7 @@ typedef struct TalkDigitBox {
 /* Draws the digit row of a talk box; the animated or highlighted cell is drawn through the accent path. */
 void talkBoxDrawDigitRow(TalkDigitBox *box, int x, int y) {
     TalkDigitState *state = &box->state;
-    int highlight = dptoli(dpadd(fptodp((float) state->scroll / TALK_SCROLL_DIVISOR), 0.5));
+    int highlight = (float) state->scroll / TALK_SCROLL_DIVISOR + 0.5;
     int pos;
     int cell;
     int digit;
@@ -923,7 +917,7 @@ void formatEntryDigits(char *buffer, struct TextEntry *entry) {
     place = 1;
     for (i = count - 1; i >= 0; i--) {
         if (place != 0) {
-            digits[i] = (int) __divdi3(entry->value, place) % 10;
+            digits[i] = (int) (entry->value / place) % 10;
         } else {
             digits[i] = 0;
         }
@@ -945,23 +939,23 @@ s32 formatEntryHms(s32 *buffer, struct TextEntry *entry) {
     int ones_h, ones_m, ones_s;
     float total, hours, minutes, seconds;
 
-    total = __floatdisf(entry->value);
-    hours = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_HOUR));
-    total -= __floatdisf(__fixsfdi(hours) * FRAMES_PER_HOUR);
-    minutes = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_MINUTE));
-    total -= __floatdisf(__fixsfdi(minutes) * FRAMES_PER_MINUTE);
-    seconds = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_SECOND));
-    digit[0] = dptoli(dpmul(fptodp(hours), 0.1));
+    total = entry->value;
+    hours = (long long) total / FRAMES_PER_HOUR;
+    total -= (long long) hours * FRAMES_PER_HOUR;
+    minutes = (long long) total / FRAMES_PER_MINUTE;
+    total -= (long long) minutes * FRAMES_PER_MINUTE;
+    seconds = (long long) total / FRAMES_PER_SECOND;
+    digit[0] = hours * 0.1;
     tens_h = digit[0];
     hours -= tens_h * 10;
     ones_h = hours;
     digit[1] = ones_h;
-    digit[2] = dptoli(dpmul(fptodp(minutes), 0.1));
+    digit[2] = minutes * 0.1;
     tens_m = digit[2];
     minutes -= tens_m * 10;
     ones_m = minutes;
     digit[3] = ones_m;
-    digit[4] = dptoli(dpmul(fptodp(seconds), 0.1));
+    digit[4] = seconds * 0.1;
     tens_s = digit[4];
     seconds -= tens_s * 10;
     ones_s = seconds;
@@ -974,20 +968,20 @@ s32 formatEntryMsf(s32 *buffer, struct TextEntry *entry) {
     char digit[6];
     float total, hours, minutes, seconds, frames;
 
-    total = __floatdisf(entry->value);
-    hours = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_HOUR));
-    total -= __floatdisf(__fixsfdi(hours) * FRAMES_PER_HOUR);
-    minutes = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_MINUTE));
-    total -= __floatdisf(__fixsfdi(minutes) * FRAMES_PER_MINUTE);
-    seconds = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_SECOND));
-    frames = __floatdisf(__fixdfdi(dpmul(fptodp(total - __floatdisf(__fixsfdi(seconds) * FRAMES_PER_SECOND)), HUNDREDTHS_PER_FRAME)));
-    digit[0] = dptoli(dpmul(fptodp(minutes), 0.1));
+    total = entry->value;
+    hours = (long long) total / FRAMES_PER_HOUR;
+    total -= (long long) hours * FRAMES_PER_HOUR;
+    minutes = (long long) total / FRAMES_PER_MINUTE;
+    total -= (long long) minutes * FRAMES_PER_MINUTE;
+    seconds = (long long) total / FRAMES_PER_SECOND;
+    frames = (long long) ((total - (long long) seconds * FRAMES_PER_SECOND) * HUNDREDTHS_PER_FRAME);
+    digit[0] = minutes * 0.1;
     minutes -= digit[0] * 10;
     digit[1] = minutes;
-    digit[2] = dptoli(dpmul(fptodp(seconds), 0.1));
+    digit[2] = seconds * 0.1;
     seconds -= digit[2] * 10;
     digit[3] = seconds;
-    digit[4] = dptoli(dpmul(fptodp(frames), 0.1));
+    digit[4] = frames * 0.1;
     frames -= digit[4] * 10;
     digit[5] = (int) frames - D_0063D420[digit[4]];
     digit[5] = xglClampInt(digit[5], 0, 9);
@@ -1217,6 +1211,7 @@ s32 formatAcquiredText(s32 *buffer, s32 name_text, u32 count) {
     char count_text[0x10];
     u8 *color_tag;
 
+    /* Inlined strcpy(buffer, "...") of the 0x23-byte style-prefix literal; becomes a strcpy once the string is C-owned. */
     *(StylePrefixCopy *) buffer = *(StylePrefixCopy *) fontStylePrefix;
     strcat((char *) buffer, (const char *) fontPropTag);
     strcat((char *) buffer, (const char *) sellAcquiredText);

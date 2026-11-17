@@ -5,7 +5,9 @@
 
 void xglCurSetTranslate(const Vector4 *vector);
 void xglCurMulScaleXYZ(const Vector4 *scale);
-/* Header form (tu255.h: void xglCurApplyVector(Vector4 *, const Vector4 *)) does not compile here: "void value not ignored" where the result is returned (the original returns the callee result), so int is kept. */
+/* Header form (tu255.h: void xglCurApplyVector(Vector4 *, const Vector4 *)) does not compile
+   here: "void value not ignored" where the result is returned (the original returns the
+   callee result), so int is kept. */
 int xglCurApplyVector(Vector4 *, const Vector4 *);
 
 /* Partial view of struct XenoActor (full definition in src/main/xenoActor.c): only the

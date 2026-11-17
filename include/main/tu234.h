@@ -12,21 +12,11 @@ struct LineListBox;
 struct LabelWidget;
 
 /*
- * Runtime helpers the compiler and the sell/talk text builders call; no TU of the recovered code
- * defines them (SDK strcat/strncat and libgcc soft-float). Proposal: move to include/shared.h.
+ * SDK string functions the sell/talk text builders call; no TU of the recovered code defines them.
+ * (The libgcc soft-float helpers are emitted by the compiler from plain arithmetic and are not declared.)
  */
 char *strcat(char *dst, const char *src);              /* appends src to dst (strcat); callers use the result only in formatAcquiredText */
 char *strncat(char *dst, const char *src, int count);   /* appends at most count characters of src (strncat) */
-double litodp(int value);                                     /* libgcc: int -> double */
-double fptodp(float value);                                   /* libgcc: float -> double widen */
-double dpadd(double a, double b);                             /* libgcc: double add */
-double dpmul(double a, double b);                             /* libgcc: double multiply */
-long long __divdi3(long long dividend, long long divisor);    /* libgcc: signed 64-bit divide */
-float __floatdisf(long long value);                           /* libgcc: long long -> float */
-/* The three truncating conversions have no libgcc name in main.externals.ld yet, hence the func_ names. */
-char dptoli(double value);                             /* double -> int truncate; declared char: matches the original (no sibcall) */
-long long __fixsfdi(float value);                         /* float -> long long truncate */
-long long __fixdfdi(double value);                        /* double -> long long truncate */
 
 void drawAcquiredText(struct TextBlock *block);
 void drawShadowedText(int x, int y, int z, unsigned int *text);

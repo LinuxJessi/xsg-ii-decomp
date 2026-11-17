@@ -3,8 +3,6 @@
 #include "main/tu213.h"
 #include "gs.h"
 
-typedef unsigned long long u64;
-
 /* One queued GS register write: the data word, then the register address word. */
 typedef struct GsQueueQword {
     u64 data;

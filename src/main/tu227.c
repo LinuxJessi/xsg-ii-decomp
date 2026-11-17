@@ -52,8 +52,8 @@ void interpUpdate(MsgSlot *slot)
             slot->flags &= ~INTERP_FLAG_EASE;
         }
     }
-    /* The original reads the flag word as a doubleword here (ld); only the low bits matter. Open and no longer scanning. */
-    if ((*(long long *) slot & TALK_CURSOR_FLAGS_MASK) == TALK_FLAG_OPEN) {
+    /* Open and no longer scanning (the compiler merges both tests into one doubleword read). */
+    if ((slot->flags & TALK_FLAG_OPEN) && !(slot->flags & INTERP_FLAG_SCAN)) {
         talkAdvanceCounter(slot);
     }
 }
