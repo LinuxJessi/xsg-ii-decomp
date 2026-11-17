@@ -1933,7 +1933,7 @@
       "asm/nonmatchings/ov01/tu033/eventQueueAdd.s",
       "asm/nonmatchings/ov01/tu033/eventQueueRun.s",
       "asm/nonmatchings/ov01/tu033/func_00A93708.s",
-      "asm/nonmatchings/ov01/tu033/func_00A93710.s",
+      "asm/nonmatchings/ov01/tu033/eventUnitCommand.s",
       "asm/nonmatchings/ov01/tu033/eventWaitUnitQueue.s",
       "asm/nonmatchings/ov01/tu033/func_00A938A0.s",
       "asm/nonmatchings/ov01/tu033/unitsMarkUninvolved.s",

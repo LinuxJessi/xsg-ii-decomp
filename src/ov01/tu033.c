@@ -20,6 +20,7 @@
 #include "ov01/tu011.h"
 #include "ov01/tu012.h"
 #include "ov01/tu019.h"
+#include "ov01/tu017.h"
 #include "ov01/tu020.h"
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
@@ -642,7 +643,7 @@ int func_00A93708(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93710);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu033", eventUnitCommand);
 
 
 /* Event record of kind 2: the object whose command queue the event waits on (+4). */
