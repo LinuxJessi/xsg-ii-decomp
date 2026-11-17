@@ -19,8 +19,6 @@
 
 typedef struct TgtSlot TgtSlot;
 
-typedef struct TgtSelectState TgtSelectState;
-
 /*
  * A battle candidate is a unit object (Ov01Object in ov01/tu012.h). Its flags word at +0x0c: 0x08 is set when
  * tgtSelectBegin takes it, 0x10 is the highlight (set by tgtSelectActivate, cleared by tgtSelectUnhighlight
@@ -35,39 +33,7 @@ struct TgtSlot {
     int unmodeled_0c[2];
 };
 
-/*
- * The target selection state, one block at tgtSelectState. flags holds the stage bits 1 (begin),
- * 2 (activate), 4 (cursor) and 8 (execute) that tgtSelectStep dispatches on. The words at 0x04,
- * 0x30 and 0x54 also have scaffold labels (tgtSelectCurrent, tgtSelectStatus, tgtSelectMode).  Three functions
- * reach those addresses through their labels; the others reach them through this struct.
- */
-struct TgtSelectState {
-    int flags;
-    Ov01Object *current;
-    Ov01Object *last_object;
-    int unmodeled_0c[2];
-    Ov01Object *lastPartyUnit;          /* +0x14: the last party unit whose turn ended */
-    int menuOpen;                       /* +0x18: 0 until tgtSelectManual has opened the target menu */
-    int phase;
-    int selection;                      /* +0x20: battleSelectStep's choice (0 none, TGT_SELECTION_BACK) */
-    int cleared_24;
-    int active;
-    int unmodeled_2c;
-    int status;
-    int victoryStarted;                 /* +0x34: set once battleEndCheck has started the victory */
-    Ov01Object *object;                 /* +0x38: BattleState.object, cleared at the end of a turn */
-    int first;                          /* +0x3C: BattleState.first */
-    int second;                         /* +0x40: BattleState.second */
-    unsigned char unmodeled_44[0x48 - 0x44];
-    int transition;                     /* +0x48: BattleState.transition (1 party unit, 2 enemy unit left) */
-    int sideToggle;                     /* +0x4C: flipped by L1/L2 in the cursor stage */
-    unsigned char unmodeled_50[0x54 - 0x50];
-    int mode;
-    int unmodeled_58[3];
-};
-
 extern TgtSlot ov01PartyTable[];
-extern TgtSelectState tgtSelectState;
 extern Ov01Object *tgtSelectCurrent;
 extern int tgtSelectStatus;
 extern int tgtSelectMode;
@@ -98,7 +64,7 @@ void tgtSelectInit(void)
  * returns its result (1 when the selection is done). */
 int tgtSelectStep(void)
 {
-    TgtSelectState *state = &tgtSelectState;
+    BattleState *state = &tgtSelectState;
     int inputHandled;
 
     if (state->flags & 1) {
@@ -125,7 +91,7 @@ int tgtSelectStep(void)
 /* Side argument for both tables. */
 #define TGT_SIDE_ALL 2
 
-/* Status codes tgtSelectStatusUpdate leaves in TgtSelectState.status (0 while the battle goes on). */
+/* Status codes tgtSelectStatusUpdate leaves in BattleState.status (0 while the battle goes on). */
 enum {
     TGT_STATUS_ENEMY_GONE = 1,          /* unitNumFlag4ClearStatZeroGet(enemies) is 0 */
     TGT_STATUS_PARTY_GONE = 2,          /* unitNumFlag4ClearStatZeroGet(party) is 0 */
@@ -143,7 +109,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu035", battleEndCheck);
 /* Candidate flags tgtSelectBegin sets and clears when it takes a candidate. */
 #define TGT_OBJECT_TAKEN 0x8
 #define TGT_OBJECT_CLEARED_ON_TAKE 0x200
-/* Stage bits of TgtSelectState.flags. */
+/* Stage bits of BattleState.flags. */
 #define TGT_STAGE_BEGIN 0x1
 #define TGT_STAGE_ACTIVATE 0x2
 #define TGT_STAGE_EXECUTE 0x8
@@ -185,7 +151,7 @@ void tgtSelectBegin(void)
 /* Stage 2: once unitQueueIsEmpty reports the current candidate ready, highlights it and moves to the cursor stage (flag 4). */
 void tgtSelectActivate(void)
 {
-    TgtSelectState *state = &tgtSelectState;
+    BattleState *state = &tgtSelectState;
     Ov01Object *object;
 
     if (unitQueueIsEmpty(state->current) != 0) {
@@ -206,7 +172,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu035", tgtSelectCursor);
  */
 void tgtSelectConfirm(Ov01Object *object)
 {
-    TgtSelectState *state = &tgtSelectState;
+    BattleState *state = &tgtSelectState;
     int flags;
 
     object->flags = (object->flags | 1) & ~0x1000;
@@ -216,7 +182,7 @@ void tgtSelectConfirm(Ov01Object *object)
     if (!(state->current->flags & 0x10)) {
         state->active = 0;
         state->current = 0;
-        state->cleared_24 = 0;
+        state->selectionKind = 0;
         state->selection = 0;
         state->flags = flags & ~4;
     }
@@ -224,7 +190,7 @@ void tgtSelectConfirm(Ov01Object *object)
 
 /* Candidate flag set while the picked unit's turn is over (tgtSelectConfirm clears it). */
 #define TGT_OBJECT_TURN_DONE 0x1000
-/* Phases of the execute stage (TgtSelectState.phase). */
+/* Phases of the execute stage (BattleState.phase). */
 enum {
     TGT_PHASE_RUN = 0,                  /* run the head command of the list */
     TGT_PHASE_EVENTS = 1,               /* drain the event queue */
@@ -243,7 +209,7 @@ int dataEntryBlockReset(void);
  * done and no unit is busy, ends the turn and arms the begin stage again. */
 void tgtSelectExecute(void)
 {
-    TgtSelectState *state = &tgtSelectState;
+    BattleState *state = &tgtSelectState;
     Ov01Object *unit;
 
     switch (state->phase) {
@@ -291,7 +257,7 @@ void tgtSelectExecute(void)
  * battle is over. */
 int tgtSelectStatusUpdate(void)
 {
-    TgtSelectState *state = &tgtSelectState;
+    BattleState *state = &tgtSelectState;
 
     state->status = 0;
     if (state->flags & TGT_STAGE_EXECUTE) {
@@ -501,7 +467,7 @@ void tgtSelectModeEnd(void)
     tgtSelectMode = 2;
 }
 
-/* TgtSelectState.selection value that leaves the menu without a command. */
+/* BattleState.selection value that leaves the menu without a command. */
 #define TGT_SELECTION_BACK 0x15
 
 void tgtUnitSet(void *unit);
@@ -523,7 +489,7 @@ int tgtSelectManual(Ov01Object *object)
 
     party = object->stats->key < TGT_PARTY_KEY_LIMIT;
     target = tgtUnitGet();
-    if (tgtSelectState.menuOpen == 0) {
+    if (tgtSelectState.menuMode == 0) {
         dataStateSetMode(1, 0);
         dataUnitListInit(&target, party);
         dataUnitCursorStep(&target);

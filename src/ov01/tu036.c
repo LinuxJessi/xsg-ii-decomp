@@ -370,8 +370,6 @@ s16 tableKeyEntryGet(StatOwner *owner, int index, void *target) {
     return *entry;
 }
 
-extern struct BattleState tgtSelectState;
-
 /* The target slot of the menu: targets[1] while a pair menu mode is open and its flag is set, else targets[0]. */
 BattleUnit **tgtUnitAdrGet(void)
 {

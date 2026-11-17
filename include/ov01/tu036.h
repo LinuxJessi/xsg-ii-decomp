@@ -11,33 +11,42 @@ int gattaiCodeGet(void);
 struct Ov01Object;
 
 /*
- * The battle state block battleStateGet returns, the same block as tgtSelectState (src/ov01/tu035.c
- * models the target selection words of it). Only the words the other files read are named: current
- * (+0x04) is the object under the cursor, object/first/second/third (+0x38..+0x44) are the unit and
- * the three values unitCmdBatchRun passes on, transition (+0x48) is set by unitCmdSetBattleTransition,
- * moveCmd (+0x50) by setMoveCmd, slotIndex (+0x58) is the index battleEntryActivate and
- * unitRecreate use and scale (+0x5C) the angle unitRecreate restores.
+ * The battle state block at tgtSelectState: the target selection of tu035 and the battle values the other files
+ * read through battleStateGet. flags holds the stage bits 1 (begin), 2 (activate), 4 (cursor) and 8 (execute)
+ * that tgtSelectStep dispatches on. The words at +0x04, +0x30 and +0x54 also have scaffold labels
+ * (tgtSelectCurrent, tgtSelectStatus, tgtSelectMode); three functions of tu035 reach them through those labels.
  */
+typedef struct BattleState BattleState;
+
 struct BattleState {
-    unsigned char unmodeled_00[4];
-    void *current;                          /* +0x04 */
-    unsigned char unmodeled_08[0x0C - 8];
+    int flags;                              /* +0x00: the stage bits */
+    struct Ov01Object *current;             /* +0x04: the object under the cursor */
+    struct Ov01Object *last_object;         /* +0x08: the object tgtSelectConfirm picked */
     struct BattleUnit *targets[2];          /* +0x0C: the target slots tgtUnitAdrGet hands out */
-    unsigned char unmodeled_14[0x18 - 0x14];
-    int menuMode;                           /* +0x18: the target menu mode; 7, 10, 12, 14 and 16 can use targets[1] */
-    unsigned char unmodeled_1c[0x38 - 0x1C];
-    struct Ov01Object *object;               /* +0x38 */
+    struct Ov01Object *lastPartyUnit;       /* +0x14: the last party unit whose turn ended */
+    int menuMode;                           /* +0x18: 0 until tgtSelectManual opens the target menu, then its mode;
+                                             * 7, 10, 12, 14 and 16 can use targets[1] */
+    int phase;                              /* +0x1C */
+    int selection;                          /* +0x20: battleSelectStep's choice (0 none, TGT_SELECTION_BACK) */
+    int selectionKind;                      /* +0x24: set by battleSelectStep; battleSelectionGet takes 1 and 2 */
+    int active;                             /* +0x28 */
+    unsigned char unmodeled_2c[0x30 - 0x2C];
+    int status;                             /* +0x30: TGT_STATUS_* (tu035) */
+    int victoryStarted;                     /* +0x34: set once battleEndCheck has started the victory */
+    struct Ov01Object *object;              /* +0x38: cleared at the end of a turn */
     int first;                              /* +0x3C */
     int second;                             /* +0x40 */
-    int third;                              /* +0x44 */
-    int transition;                         /* +0x48: 1 when the motion mode is below 16, else 2 */
-    unsigned char unmodeled_4c[4];
-    int moveCmd;                            /* +0x50 */
-    unsigned char unmodeled_54[4];
-    int slotIndex;                          /* +0x58 */
-    float scale;                            /* +0x5C */
+    int third;                              /* +0x44: object/first/second/third are what unitCmdBatchRun passes on */
+    int transition;                         /* +0x48: 1 when the motion mode is below 16 (a party unit left), else 2 */
+    int sideToggle;                         /* +0x4C: flipped by L1/L2 in the cursor stage */
+    int moveCmd;                            /* +0x50: set by setMoveCmd */
+    int mode;                               /* +0x54 */
+    int slotIndex;                          /* +0x58: the index battleEntryActivate and unitRecreate use */
+    float scale;                            /* +0x5C: the angle unitRecreate restores */
     unsigned char *targetFlags;             /* +0x60: bit 0 of its first byte selects targets[1] */
 };
+
+extern BattleState tgtSelectState;
 
 struct BattleState *battleStateGet(void);
 
