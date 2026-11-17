@@ -202,7 +202,6 @@ int cameraSettingGet(void)
     return D_00AE0C28;
 }
 
-void thinkDispatch(StatOwner *unit, int argTwo, int argThree, StatOwner *unitFour);
 
 int thinkSet(SbThread *thread)
 {

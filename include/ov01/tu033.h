@@ -9,8 +9,14 @@ struct Ov01Object;
  * (eventQueueAddKind1). command is its index; the pair command of cmdPairRun names its pair record in pairIndex. */
 typedef struct CmdListBody {
     int command;                        /* +0x00 */
-    unsigned char unmodeled_04[0xC];
-    int pairIndex;                      /* +0x10: the pair record unitPairPartnerFind reads */
+    unsigned char unmodeled_04[0x4];
+    int code;                           /* +0x08: the key-row entry, technique or argument thinkDispatch passes */
+    union {
+        struct Ov01Object *target;      /* the target unit of the think commands */
+        int flag;                       /* 1 for think command 14 */
+    } arg;                              /* +0x0C */
+    int pairIndex;                      /* +0x10: the pair record unitPairPartnerFind reads; the battle lookup of
+                                         * think command 3 */
     unsigned char unmodeled_14[0x4];
 } CmdListBody;
 

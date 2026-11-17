@@ -323,8 +323,8 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BC20);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BCC8);
 
-/* thinkDispatch: switch over the think opcode (argument 2, 38 cases) on the unit's +0x144 sub-struct;
- * shared by natives thinkSet and thinkSet2. */
+/* thinkDispatch: queues think command  (cmdExecute command kinds) for the unit; natives thinkSet and
+ * thinkSet2. Still asm: the C is five instruction pairs off (held/pkg3/tu042_thinkDispatch_5ranges.c). */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", thinkDispatch);
 
 /* thinkSendEnd: queues the think-end record for the unit (cmdListSet), then ends the

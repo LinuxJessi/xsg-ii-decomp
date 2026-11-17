@@ -58,6 +58,7 @@ struct BoostGauge *boostGaugeSelect(int flag);
 int calcStatBit2Idx(int statBit);
 void calcActStockSet(struct Ov01Object *unit, int slot);
 int calcBoostOk(struct Ov01Object *obj, int id);
+int calcEntryUsable(struct Ov01Object *entity, int index);
 int actLevelChanceRoll(struct Ov01Object *owner, int index);
 int actStepCounterValue(void);
 void actStockClearBoost1(void);

@@ -76,6 +76,7 @@ struct Ov01Object;
 int atkTblFieldGet(int field, AtkTbl *table, int index);
 int func_00A9BF08(struct Ov01Object *unit, AtkTbl *table, int value);
 void thinkSendEnd(struct Ov01Object *unit);
+void thinkDispatch(struct Ov01Object *unit, int command, int arg, struct Ov01Object *target);
 
 /* The records of the bat.dat tables (the getters below, numbered from 1). */
 /* The entry battleLookupGet returns. */
