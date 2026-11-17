@@ -17,11 +17,26 @@
 #include "ov01/tu008.h"
 #include "ov01/tu009.h"
 #include "ov01/tu012.h"
+#include "ov01/tu022.h"
+#include "ov01/tu036.h"
+#include "ov01/tu037.h"
 #include "ov01/tu038.h"
+#include "ov01/tu039.h"
 #include "ov01/tu040.h"
 #include "ov01/tu046.h"
+#include "ov01/tu047.h"
 #include "ov01/tu049.h"
+#include "ov01/tu050.h"
+#include "ov01/tu051.h"
+#include "ov01/tu052.h"
+#include "ov01/tu055.h"
+#include "ov01/tu056.h"
+#include "ov01/tu058.h"
+#include "ov01/tu060.h"
+#include "ov01/tu061.h"
+#include "ov01/tu062.h"
 #include "ov01/tu070.h"
+#include "ov01/tu071.h"
 
 /*
  * Spawn record of the party list ov01PartyList and the enemy list ov01EnemyList.
@@ -386,7 +401,50 @@ void ov01StepAwaitEnemyLoad(int context) {
     }
 }
 
-/* Next enemy: while the enemy list has an entry at ov01EnemyIndex it returns to
- * ov01StepSpawnEnemy; past the end it sets up the battle (menus, objects, func_00A9A2F8,
- * unitSelectPlTarget) and continues to func_00A9AF68. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu038", ov01StepNextEnemy);
+/* ov01 0x00AA4670, in a part of the overlay that has no C file yet. */
+void menuValuePanelCreate(void);
+/* tu071; its definition reads only the object (as a table key owner), the callers pass a key as well. */
+void streamPlayByKey(Ov01Object *object, int key);
+
+/* Enemies in an enemy list at most; the list ends early at a record with id 0. */
+#define OV01_ENEMY_MAX 5
+/* streamPlayByKey key of the line a party member says when the battle starts. */
+#define BATTLE_START_STREAM 6
+
+/*
+ * Next enemy: spawns the next one of the enemy list (ov01StepSpawnEnemy); after the last it builds the battle
+ * menus and panels, starts the battle music and the opening line of a party member (unitSelectPlTarget), probes
+ * the heap and continues to func_00A9AF68.
+ */
+void ov01StepNextEnemy(int context)
+{
+    Ov01Object *speaker;
+
+    ov01EnemyIndex++;
+    if (ov01EnemyIndex < OV01_ENEMY_MAX && ov01EnemyList[ov01EnemyIndex].id != 0) {
+        ov01StepSetNext(context, ov01StepSpawnEnemy);
+        return;
+    }
+    objPathInit();
+    menuCursorCreate();
+    menuIconListCreate();
+    menuValuePanelCreate();
+    func_00AA5248();
+    menuWepSpPanelNew();
+    menuTargetListNew();
+    menuUnitPanelNew();
+    menuIconListNew();
+    menuTimedSeqNew();
+    menuPanelCreate();
+    menuTgtStatusNew();
+    dataObjCreateAtOrigin();
+    func_00A9A2F8();
+    bgmPlayTrack(bgmIndexGet());
+    speaker = unitSelectPlTarget(0);
+    if (speaker != 0) {
+        streamPlayByKey(speaker, BATTLE_START_STREAM);
+    }
+    cfEventGet();
+    ov01HeapProbeLargeAlloc();
+    ov01StepSetNext(context, func_00A9AF68);
+}

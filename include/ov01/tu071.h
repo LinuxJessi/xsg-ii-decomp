@@ -6,5 +6,6 @@
 void seObjectVoiceStartDefault(void *object, int code);
 void streamSlotSetFile(int slot, int handle);
 void streamSlotStop(int index);
+void bgmPlayTrack(int track);
 
 #endif /* INCLUDE_OV01_TU071_H */

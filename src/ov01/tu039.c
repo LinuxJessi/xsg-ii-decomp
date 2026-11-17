@@ -6,6 +6,7 @@
  */
 #include "common.h"
 #include "ov01/tu037.h"
+#include "ov01/tu039.h"
 #include "ov01/tu064.h"
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu039", func_00A9AF68);

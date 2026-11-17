@@ -5,6 +5,7 @@
 #include "ov01/tu005.h"
 #include "ov01/tu023.h"
 #include "ov01/tu048.h"
+#include "ov01/tu050.h"
 #include "ov01/tu051.h"
 
 typedef MenuObject PathObject;
