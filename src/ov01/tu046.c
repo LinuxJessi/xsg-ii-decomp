@@ -4,6 +4,7 @@
 #include "common.h"
 #include "main/sef.h"
 #include "ov01/tu022.h"
+#include "ov01/tu017.h"
 #include "ov01/tu023.h"
 #include "ov01/tu041.h"
 #include "ov01/tu044.h"
@@ -200,7 +201,6 @@ int cameraSettingGet(void)
     return D_00AE0C28;
 }
 
-StatOwner *unitTblEntryGet(int unitIndex);
 void thinkDispatch(StatOwner *unit, int argTwo, int argThree, StatOwner *unitFour);
 
 int thinkSet(SbThread *thread)

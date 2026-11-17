@@ -7,11 +7,13 @@
 #include "main/tu063.h"
 #include "main/tu077.h"
 #include "main/tu079.h"
+#include "main/tu051.h"
 #include "main/pad.h"
 #include "main/sef.h"
 #include "main/xgl_font.h"
 #include "ov01/tu009.h"
 #include "ov01/tu012.h"
+#include "ov01/tu017.h"
 #include "ov01/tu022.h"
 #include "ov01/tu023.h"
 #include "ov01/tu036.h"
@@ -124,41 +126,14 @@ int runtimeSetFog(SbThread *call)
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitBodySetPosDir);
 
-/* Unit table entry: only the body pointer at +0x1D0 is used here. */
-typedef struct UnitTblEntry UnitTblEntry;
+int unitTblGet(int side, Ov01Object ***table);
 
-struct UnitTblEntry {
-    unsigned char unmodeled_000[0x1D0];
-    struct UnitBody *body;                 /* +0x1D0 */
-};
-
-int unitTblGet(int side, UnitTblEntry ***table);
-
-/* The body scale, written per component. */
-typedef union UnitBodyScale {
-    Vector4 vector;
-    float element[4];
-} UnitBodyScale;
-
-/* Partial view of the body: its light set and the vector pair at +0x490 and +0x4A0. */
-typedef struct UnitBody UnitBody;
-
-struct UnitBody {
-    unsigned char unmodeled_000[0x90];
-    UnitBodyScale scale;                   /* +0x90: objx sets x, y and z */
-    unsigned char unmodeled_0A0[0x190 - 0xA0];
-    XglLightSetDwords light;               /* +0x190 */
-    unsigned char unmodeled_310[0x490 - 0x310];
-    Vector4 pos;                           /* +0x490..+0x49F */
-    float dir[3];                          /* +0x4A0..+0x4AB */
-};
-
-/* Copies pos and dir into the body of every unit that unitTblGet(2) returns. */
+/* Copies pos and dir into the runtime vectors of the actor of every unit that unitTblGet(2) returns. */
 void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir)
 {
-    UnitTblEntry **units;
-    UnitTblEntry *unit;
-    UnitBody *body;
+    Ov01Object **units;
+    Ov01Object *unit;
+    struct XenoActor *actor;
     int count;
     int i;
 
@@ -166,14 +141,14 @@ void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir)
     for (i = 0; i < count; i++) {
         unit = units[i];
         if (unit != 0) {
-            body = unit->body;
-            body->pos.x = pos->x;
-            body->pos.y = pos->y;
-            body->pos.z = pos->z;
-            body->pos.w = pos->w;
-            body->dir[0] = dir->x;
-            body->dir[1] = dir->y;
-            body->dir[2] = dir->z;
+            actor = unit->unit;
+            actor->runtimeVecA.vector.x = pos->x;
+            actor->runtimeVecA.vector.y = pos->y;
+            actor->runtimeVecA.vector.z = pos->z;
+            actor->runtimeVecA.vector.w = pos->w;
+            actor->runtimeVecB.vector.x = dir->x;
+            actor->runtimeVecB.vector.y = dir->y;
+            actor->runtimeVecB.vector.z = dir->z;
         }
     }
 }
@@ -225,17 +200,17 @@ void *lightBlockGet(void) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", runtimeSetLight);
 
-/* Copies the light set into the body of every unit of unitTblGet(2). */
-void unitTblBodySetLight(XglLightSetDwords *light)
+/* Copies the light blocks into the actor of every unit of unitTblGet(2). */
+void unitTblBodySetLight(LightBlocks *light)
 {
-    UnitTblEntry **units;
+    Ov01Object **units;
     int count;
     int i;
 
     count = unitTblGet(2, &units);
     for (i = 0; i < count; i++) {
         if (units[i] != 0) {
-            units[i]->body->light = *light;
+            units[i]->unit->lightBlocks = *light;
         }
     }
 }
@@ -481,7 +456,7 @@ int bgmStop(void)
 /* Bit i set for each occupied entry i of the side-2 unit table. */
 int unitTblBitGet(void)
 {
-    UnitTblEntry **units;
+    Ov01Object **units;
     int count;
     int bits;
     int i;
@@ -507,7 +482,6 @@ void ETGet(void) {
     actStepCounterValue();
 }
 
-void *unitTblEntryGet(int);
 int unitIsInFacingArc(void *, void *);
 
 int unitDirChk(SbThread *call)
@@ -605,10 +579,20 @@ int namePut(SbThread *call)
     return 1;
 }
 
+/*
+ * The vector at XenoActor +0x90 as objx writes it: one float per component. Stored as
+ * actor->vector90.x/y/z the function is two instructions shorter than the original; written
+ * through this union view, each store reloads the actor pointer as the original does.
+ */
+typedef union ActorVectorElements {
+    Vector4 vector;
+    float element[4];
+} ActorVectorElements;
+
 /* Native objx: sets the scale of unit argument 1 to argument 2 percent on all three axes. */
 int objx(SbThread *call)
 {
-    UnitTblEntry *unit;
+    Ov01Object *unit;
     float scale;
 
     if (VM_PLUGIN_CNT_GET(call) < 2) {
@@ -617,9 +601,9 @@ int objx(SbThread *call)
     }
     unit = unitTblEntryGet(vmArgGet(call, 1));
     scale = vmArgGet(call, 2) / 100.0f;
-    unit->body->scale.element[0] = scale;
-    unit->body->scale.element[1] = scale;
-    unit->body->scale.element[2] = scale;
+    ((ActorVectorElements *)&unit->unit->vector90)->element[0] = scale;
+    ((ActorVectorElements *)&unit->unit->vector90)->element[1] = scale;
+    ((ActorVectorElements *)&unit->unit->vector90)->element[2] = scale;
     return 1;
 }
 
@@ -641,12 +625,12 @@ int streamPlay(SbThread *call)
     return 1;
 }
 
-int unitGetAngleDegrees(int);
+int unitGetAngleDegrees(Ov01Object *unit);
 
 int unitDirGet(SbThread *call)
 {
     int unitIndex;
-    int unit;
+    Ov01Object *unit;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
         sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
@@ -657,12 +641,12 @@ int unitDirGet(SbThread *call)
     return unitGetAngleDegrees(unit);
 }
 
-float unitDefArea(int);
+float unitDefArea(Ov01Object *unit);
 
 int unitDefAreaGet(SbThread *call)
 {
     int unitIndex;
-    int unit;
+    Ov01Object *unit;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
         sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
@@ -728,7 +712,7 @@ int unitFade(SbThread *call)
     return 1;
 }
 
-/* Partial views of a stock slot: the detail pointer at +0x144 and the count at +0x62. */
+/* Native stockGet: the key of the unit in action stock slot argument 1, or 0 for an empty or invalid slot. */
 s16 stockGet(SbThread *call)
 {
     s16 key;
@@ -750,7 +734,7 @@ s16 stockGet(SbThread *call)
     return key;
 }
 
-int unitMotWait(int call, int *waiting)
+int unitMotWait(SbThread *call, int *waiting)
 {
     Ov01Object *unit;
     int unitIndex;
@@ -770,20 +754,12 @@ int unitMotWait(int call, int *waiting)
     return 1;
 }
 
-void XenoActorHidePart(int, int);
-
-/* Partial view of the record unitTblEntryGet returns: only +0x1D0 is used here. */
-typedef struct PartsUnit PartsUnit;
-
-struct PartsUnit {
-    unsigned char unmodeled_000[0x1D0];
-    int parts;                             /* +0x1D0 */
-};
+int XenoActorHidePart(struct XenoActor *actor, int part);
 
 int partsHide(SbThread *call)
 {
     int unitIndex;
-    int parts;
+    struct XenoActor *actor;
     int value;
 
     if (VM_PLUGIN_CNT_GET(call) < 2) {
@@ -791,18 +767,18 @@ int partsHide(SbThread *call)
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
-    parts = ((PartsUnit *) unitTblEntryGet(unitIndex))->parts;
+    actor = unitTblEntryGet(unitIndex)->unit;
     value = vmKeyedEntryGet(call, vmArgGet(call, 2));
-    XenoActorHidePart(parts, value);
+    XenoActorHidePart(actor, value);
     return 1;
 }
 
-void XenoActorShowPart(int, int);
+int XenoActorShowPart(struct XenoActor *actor, int part);
 
 int partsShow(SbThread *call)
 {
     int unitIndex;
-    int parts;
+    struct XenoActor *actor;
     int value;
 
     if (VM_PLUGIN_CNT_GET(call) < 2) {
@@ -810,9 +786,9 @@ int partsShow(SbThread *call)
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
-    parts = ((PartsUnit *) unitTblEntryGet(unitIndex))->parts;
+    actor = unitTblEntryGet(unitIndex)->unit;
     value = vmKeyedEntryGet(call, vmArgGet(call, 2));
-    XenoActorShowPart(parts, value);
+    XenoActorShowPart(actor, value);
     return 1;
 }
 
