@@ -306,7 +306,19 @@ void ov01StepSpawnPartyMember(int context) {
 
 /* Binds the spawned party member and starts its load (ov01LoadRequest); continues
  * to ov01StepAwaitPartyLoad. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu038", ov01StepLoadPartyMember);
+void ov01StepAwaitPartyLoad(int context);
+
+void ov01StepLoadPartyMember(int context)
+{
+    Ov01Command command;
+
+    unitBindActors(ov01CurUnit, ov01CurSlot);
+    unitFadeIn(ov01CurUnit);
+    command.command = UNIT_CMD_FINISH;
+    unitQueueAppend(ov01CurUnit, &command);
+    ov01LoadRequest(ov01CurSlot);
+    ov01StepSetNext(context, ov01StepAwaitPartyLoad);
+}
 
 /* Waits for the party member's load, then continues to ov01StepNextPartyMember. */
 void ov01StepAwaitPartyLoad(int context) {

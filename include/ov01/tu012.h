@@ -23,6 +23,7 @@ enum {
     UNIT_CMD_MOVE_POS_HOVER = 0x1A,
     UNIT_CMD_MODE_RAMP = 0x1B,
     UNIT_CMD_MOVE_RATIO = 0x1C,
+    UNIT_CMD_FINISH = 0x1E,         /* unitCmdFinish */
     UNIT_CMD_CLEAR_ACTIVE = 0x20,
     UNIT_CMD_PHASE_2B_WAIT = 0x21,
     UNIT_CMD_DEACTIVATE = 0x22,     /* func_00A86CB0: clears UNIT_FLAG_ACTIVE */
