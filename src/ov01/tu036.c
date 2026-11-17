@@ -370,7 +370,24 @@ s16 tableKeyEntryGet(StatOwner *owner, int index, void *target) {
     return *entry;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", tgtUnitAdrGet);
+extern struct BattleState tgtSelectState;
+
+/* The target slot of the menu: targets[1] while a pair menu mode is open and its flag is set, else targets[0]. */
+BattleUnit **tgtUnitAdrGet(void)
+{
+    switch (tgtSelectState.menuMode) {
+    case 7:
+    case 10:
+    case 12:
+    case 14:
+    case 16:
+        if (tgtSelectState.targetFlags != 0 && (tgtSelectState.targetFlags[0] & 1)) {
+            return &tgtSelectState.targets[1];
+        }
+        return &tgtSelectState.targets[0];
+    }
+    return &tgtSelectState.targets[0];
+}
 
 BattleUnit *tgtUnitGet(void)
 {
@@ -381,8 +398,6 @@ void tgtUnitSet(BattleUnit *unit)
 {
     *tgtUnitAdrGet() = unit;
 }
-
-extern struct BattleState tgtSelectState;
 
 struct BattleState *battleStateGet(void) {
     return &tgtSelectState;

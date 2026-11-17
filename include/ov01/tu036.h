@@ -21,7 +21,11 @@ struct Ov01Object;
 struct BattleState {
     unsigned char unmodeled_00[4];
     void *current;                          /* +0x04 */
-    unsigned char unmodeled_08[0x38 - 8];
+    unsigned char unmodeled_08[0x0C - 8];
+    struct BattleUnit *targets[2];          /* +0x0C: the target slots tgtUnitAdrGet hands out */
+    unsigned char unmodeled_14[0x18 - 0x14];
+    int menuMode;                           /* +0x18: the target menu mode; 7, 10, 12, 14 and 16 can use targets[1] */
+    unsigned char unmodeled_1c[0x38 - 0x1C];
     struct Ov01Object *object;               /* +0x38 */
     int first;                              /* +0x3C */
     int second;                             /* +0x40 */
@@ -32,6 +36,7 @@ struct BattleState {
     unsigned char unmodeled_54[4];
     int slotIndex;                          /* +0x58 */
     float scale;                            /* +0x5C */
+    unsigned char *targetFlags;             /* +0x60: bit 0 of its first byte selects targets[1] */
 };
 
 struct BattleState *battleStateGet(void);
