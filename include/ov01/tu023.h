@@ -66,8 +66,7 @@ struct HitRecord {
 };
 
 /*
- * Command record of one attack, with the hit record of its current target. battleAttackResolve
- * and calcHitApply build one on their frame; tgtFindFirst reads its attacker and action. The tu033 command
+ * Command record of one attack (16 bytes); tgtFindFirst reads its attacker and action. The tu033 command
  * handlers (func_00A92C18 builds it, func_00A92D98, func_00A92DF0, func_00A93288) take one too.
  */
 struct AttackCommand {
@@ -75,6 +74,12 @@ struct AttackCommand {
     int kind;                               /* +0x04: 4 selects the base chance 200 in calcStatInflictRate */
     int actionIdx;                          /* +0x08: index tecRecordGet takes */
     int id;                                 /* +0x0C: the lookup key (the third argument of calcHitApply) */
+};
+
+/* An attack command with the hit record of its current target, as battleAttackResolve and calcHitApply build
+ * them on their frame. */
+struct AttackHit {
+    struct AttackCommand command;           /* +0x00 */
     struct HitRecord hit;                   /* +0x10 */
 };
 StatOwner *actStockPick(void);

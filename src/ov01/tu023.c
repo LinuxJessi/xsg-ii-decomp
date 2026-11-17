@@ -600,7 +600,7 @@ void battleContextApplyLookup(int key, int lookupKey)
 int battleAttackResolve(int attackerKey, int targetKey, int lookupKey)
 {
     int words[12];
-    struct AttackCommand command;
+    struct AttackHit attack;
     StatOwner *owner;
     BattleLookupEntry *lookup;
     struct TecRecord *technique;
@@ -609,10 +609,10 @@ int battleAttackResolve(int attackerKey, int targetKey, int lookupKey)
 
     owner = battleContextBind(attackerKey, 0);
     lookup = battleLookupGet(lookupKey);
-    command.kind = 3;
-    command.actionIdx = lookup->tecIndex;
-    command.attacker = owner;
-    command.id = lookupKey;
+    attack.command.kind = 3;
+    attack.command.actionIdx = lookup->tecIndex;
+    attack.command.attacker = owner;
+    attack.command.id = lookupKey;
     lookup = battleLookupGet(lookupKey);
     technique = tecRecordGet(lookup->tecIndex);
     if (technique->flags & 8) {
@@ -624,9 +624,9 @@ int battleAttackResolve(int attackerKey, int targetKey, int lookupKey)
     for (wordIndex = 0; wordIndex < count; wordIndex++) {
         StatOwner *unit = battleContextBind(words[wordIndex], 1);
 
-        command.hit.target = unit;
-        calcHitRecordFill(&command, &command.hit);
-        calcHpDmg(command.attacker, command.hit.target, command.hit.hitMode.word, command.hit.damage);
+        attack.hit.target = unit;
+        calcHitRecordFill(&attack.command, &attack.hit);
+        calcHpDmg(attack.command.attacker, attack.hit.target, attack.hit.hitMode.word, attack.hit.damage);
         battleSlotCommit(unit);
     }
     lookup = battleLookupGet(lookupKey);
@@ -2067,7 +2067,7 @@ int calcHpDmg(StatOwner *attacker, StatOwner *target, int hitMode, int damage)
 /* calcHitApply: applies one filled hit record to its target: HP and EP, status set and clear, flags. */
 int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
 {
-    struct AttackCommand command;
+    struct AttackHit attack;
     struct HitAction *action;
     struct TecRecord *entry;
     struct BoostGauge *gauge;
@@ -2080,19 +2080,19 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
     action = hitActionGet(lookupKey);
     entry = tecRecordGet(action->entry);
     amount = action->amount;
-    command.kind = 4;
-    command.hit.target = target;
-    command.attacker = source;
-    command.actionIdx = action->entry;
-    command.id = lookupKey;
+    attack.command.kind = 4;
+    attack.hit.target = target;
+    attack.command.attacker = source;
+    attack.command.actionIdx = action->entry;
+    attack.command.id = lookupKey;
 
     flags = entry->kindBits.effectFlags;
     if (flags & 0x1) {
-        calcHpAdjust(target, calcRestoreValue(&command, &command.hit, 1, 1));
+        calcHpAdjust(target, calcRestoreValue(&attack.command, &attack.hit, 1, 1));
         flags = entry->kindBits.effectFlags;
     }
     if (flags & 0x2) {
-        calcEpAdjust(target, calcRestoreValue(&command, &command.hit, 2, 1));
+        calcEpAdjust(target, calcRestoreValue(&attack.command, &attack.hit, 2, 1));
         flags = entry->kindBits.effectFlags;
     }
     if (flags & 0x4) {
@@ -2102,8 +2102,8 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
         }
         statBit = 1;
         do {
-            if (calcStatGet(command.hit.target, statRow, statBit) != 0 &&
-                ov01RollPercent(calcStatInflictRate(&command, &command.hit.target, statRow, statBit)) != 0) {
+            if (calcStatGet(attack.hit.target, statRow, statBit) != 0 &&
+                ov01RollPercent(calcStatInflictRate(&attack.command, &attack.hit.target, statRow, statBit)) != 0) {
                 calcStatReset(target, statRow, statBit);
             }
             statBit *= 2;
@@ -2111,7 +2111,7 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
         flags = entry->kindBits.effectFlags;
     }
     if (flags & 0x8) {
-        calcHpAdjust(target, calcRestoreValue(&command, &command.hit, 1, 1));
+        calcHpAdjust(target, calcRestoreValue(&attack.command, &attack.hit, 1, 1));
         flags = entry->kindBits.effectFlags;
     }
     if (flags & 0x10) {
@@ -2145,7 +2145,7 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
             battleSlotsRefresh();
             break;
         case 2:
-            calcHpAdjust(target, -calcRestoreValue(&command, &command.hit, 0x40, 1));
+            calcHpAdjust(target, -calcRestoreValue(&attack.command, &attack.hit, 0x40, 1));
             break;
         }
     }
