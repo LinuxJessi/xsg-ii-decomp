@@ -231,10 +231,10 @@ void enemyCursorClose(void) {
 extern int D_00AC3C80;
 /* The enemy cursor's text page list for textEntryAlloc: the text (set by
  * func_00A98960), then 0. */
-extern int D_00AC4170[2];
+extern int enemyCursorPages[2];
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C80, 0 when choiceMenuEntryFlags flags it;
- * the helper result goes to D_00AC4170 instead of D_00AC4160, the word the other pickers use. */
+ * the helper result goes to enemyCursorPages instead of D_00AC4160, the word the other pickers use. */
 int func_00A98960(void) {
     int cursor_index;
     s16 entry_id;
@@ -246,7 +246,7 @@ int func_00A98960(void) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3C80 = entry_id;
             result = func_00A9B750(entry_id, 1);
-            D_00AC4170[0] = result;
+            enemyCursorPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3C80 = 0;
             }
@@ -289,33 +289,16 @@ int func_00A98BE8(void) {
 
 extern int statBitValues[];
 
-/*
- * The owner's +0x144 pointer names a table whose halfwords at +0x92 are
- * rows of status bits, indexed by the row argument.
- */
-typedef struct StatBitTable StatBitTable;
-
-typedef struct StatBitOwner StatBitOwner;
-
-/* Rows of status bits of a unit (statBitValueGet indexes them). */
+/* Rows of status bits of a unit (StatBlock.activeMask; statBitValueGet indexes them). */
 #define STAT_BIT_ROWS 4
 
-struct StatBitTable {
-    unsigned char unmodeled_00[0x92];
-    u16 bits[STAT_BIT_ROWS];
-};
-
-struct StatBitOwner {
-    unsigned char unmodeled_00[0x144];
-    StatBitTable *table; /* +0x144 */
-};
-
-int statBitValueGet(StatBitOwner *owner, int row, int mask) {
+/* The value of status bit mask of row: -1 when the bit is not active or has no value. */
+int statBitValueGet(Ov01Object *unit, int row, int mask) {
     int *values;
     int index;
     int value;
 
-    if ((owner->table->bits[row] & mask) == 0) {
+    if ((unit->stats->activeMask[row] & mask) == 0) {
         return -1;
     }
     values = statBitValues;
@@ -335,14 +318,16 @@ int statBitValueGet(StatBitOwner *owner, int row, int mask) {
 #define ENEMY_CURSOR_STYLE 7
 
 ObjectTask *textEntryAlloc(int x, int y, int width, int height, int style, void *pages);
-extern int D_00AC4178;
-extern int D_00AC417C;
-extern int D_00AC4180;
+/* The status shown by the enemy cursor: row and bit mask (enemyCursorStep walks them with statBitValueGet) and
+ * the frames left before the next one. */
+extern int enemyCursorRow;
+extern int enemyCursorBit;
+extern int enemyCursorTimer;
 
 /* Opens the enemy cursor's text entry when the unit has any status bit set. */
-void enemyCursorOpen(StatBitOwner *unit)
+void enemyCursorOpen(Ov01Object *unit)
 {
-    u16 *bits = unit->table->bits;
+    u16 *bits = unit->stats->activeMask;
     int row;
 
     for (row = 0; row < STAT_BIT_ROWS; row++) {
@@ -351,13 +336,13 @@ void enemyCursorOpen(StatBitOwner *unit)
         }
     }
     if (row < STAT_BIT_ROWS) {
-        D_00AC4170[1] = 0;
-        D_00AC4170[0] = 0;
+        enemyCursorPages[1] = 0;
+        enemyCursorPages[0] = 0;
         pTaskEnCur = textEntryAlloc(ENEMY_CURSOR_X, ENEMY_CURSOR_Y, ENEMY_CURSOR_WIDTH, ENEMY_CURSOR_HEIGHT,
-                                    ENEMY_CURSOR_STYLE, D_00AC4170);
-        D_00AC4180 = 0;
-        D_00AC4178 = 0;
-        D_00AC417C = 1;
+                                    ENEMY_CURSOR_STYLE, enemyCursorPages);
+        enemyCursorTimer = 0;
+        enemyCursorRow = 0;
+        enemyCursorBit = 1;
     }
 }
 

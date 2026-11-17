@@ -1,14 +1,7 @@
 #include "common.h"
 #include "shared.h"
+#include "ov01/tu048.h"
 #include "ov01/tu049.h"
-
-/* grGpInit's argument: the VIF1 DIRECT packet grPacketSend transmits, a
- * data buffer and its length. grGpInit points data at the scratchpad
- * (0x70000000). */
-typedef struct GrPacket {
-    void *data;  /* +0x0 */
-    int count;   /* +0x4 */
-} GrPacket;
 
 /* GIF packet words are written as doubleword descriptors by the openers and
  * as 32-bit lanes by the vertex writers. Both are the same packet storage. */
@@ -133,8 +126,6 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatRecordsCreate);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatGaugeStep);
 
 void menuStatRecordDraw(int, GrPacket *);
-void grGpInit(GrPacket *);
-void grPacketSend(GrPacket *);
 
 /* Draw callback of a stat record (record + 0x08). `first` is the record pointer
  * passed through an int parameter: menuStatRecordDraw reads its origin at +0x10 and

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "gs.h"
+#include "ov01/tu048.h"
 
 typedef struct XglPacket XglPacket;
 
@@ -68,14 +69,6 @@ struct XglPacket {
      */
     u8 *cursor;
 };
-
-/* grGpInit's argument: the VIF1 DIRECT packet grPacketSend transmits, a
- * data buffer and its length. grGpInit points data at the scratchpad
- * (0x70000000). */
-typedef struct GrPacket {
-    void *data;  /* +0x0 */
-    int count;   /* +0x4 */
-} GrPacket;
 
 /* GIF packet words are written as doubleword descriptors by the openers and
  * as 32-bit lanes by the vertex writers. Both are the same packet storage. */

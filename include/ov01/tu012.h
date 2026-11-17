@@ -145,6 +145,11 @@ typedef struct Ov01Command {
 /* Ov01Object.slotFlags bit set while the object's slot is in use (ObjSlot.flags in tu005). */
 #define OV01_OBJECT_IN_USE 0x1
 
+/* Ov01Object.flags bits: a unit that is down (the draws and the target pickers leave it out) and a unit in the
+ * action stock. */
+#define UNIT_FLAG_DOWN 0x4
+#define UNIT_FLAG_STOCKED 0x8
+
 struct Ov01Object {
     union {
         unsigned char unmodeled_00[4];  /* tu017 reads +0x8 as a doubleword through this name */

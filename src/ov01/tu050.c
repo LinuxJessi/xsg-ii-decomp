@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ov01/tu005.h"
 #include "ov01/tu023.h"
+#include "ov01/tu048.h"
 #include "ov01/tu051.h"
 
 typedef MenuObject PathObject;
@@ -21,19 +22,9 @@ typedef struct ObjPathPoint {
 extern ObjPathPoint objPathPoints[OBJ_PATH_COUNT];
 extern PathObject *objPathTable[OBJ_PATH_COUNT];
 
-/* Ov01Object.flags bit of a unit the path draw leaves out. */
-#define PATH_UNIT_HIDDEN 0x4
 /* ActStock.pickSource value that shows the moving path object instead of point 0. */
 #define PATH_STOCK_SOURCE_MOVING 2
 
-/* The draw packet (tu048 GrPacket): data pointer and length. */
-typedef struct GrPacket {
-    void *data;
-    int count;
-} GrPacket;
-
-void grGpInit(GrPacket *packet);
-void grPacketSend(GrPacket *packet);
 void *tgtUnitGet(void);
 void func_00AA7770(GrPacket *packet, int x, int y, int key, int mode, int fade);
 
@@ -142,7 +133,7 @@ void objPathDraw(PathObject *object)
     if (unit == 0) {
         return;
     }
-    if (unit->flags & PATH_UNIT_HIDDEN) {
+    if (unit->flags & UNIT_FLAG_DOWN) {
         return;
     }
     if (!(unit->slotFlags & OV01_OBJECT_IN_USE)) {

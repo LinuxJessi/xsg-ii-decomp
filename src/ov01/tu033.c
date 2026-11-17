@@ -102,7 +102,6 @@ void cmdListPtrGet(void **fifo_out, void **list_out) {
 }
 
 /* Ov01Object.flags bit of a held (paused) unit. */
-#define CMD_UNIT_HELD 0x4
 
 /* One 0x20-byte cmdList entry: the unit, then the command body at +0x08. The
  * unit is kept as a word, as XS1's CmdListEntry (battle_init.c) keeps it. */
@@ -303,7 +302,7 @@ Ov01Object *unitPairPartnerFind(Ov01Object *unit, int value)
     count = unitTblGet(0, &units);
     for (i = 0; i < count; i++) {
         other = units[i];
-        if (other != 0 && !(other->flags & CMD_UNIT_HELD)) {
+        if (other != 0 && !(other->flags & UNIT_FLAG_DOWN)) {
             if (other->stats->key == key) {
                 return other;
             }

@@ -3,6 +3,7 @@
  */
 #include "common.h"
 #include "ov01/tu037.h"
+#include "ov01/tu048.h"
 
 /* dataTid2WepSp (already named): searches the 0xC-byte wepSpTbl entries for the technique id in $4. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu056", dataTid2WepSp);
@@ -22,7 +23,6 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu056", menuWepSpPanelNew);
  */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu056", menuWepSpPanelStep);
 
-typedef struct GrPacket GrPacket;
 
 extern void grGsRegSet(GrPacket *packet, unsigned long long register_id,
                        unsigned long long value);
