@@ -2100,7 +2100,7 @@
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu035/tgtSelectInit.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectStep.s",
-      "asm/nonmatchings/ov01/tu035/func_00A97288.s",
+      "asm/nonmatchings/ov01/tu035/battleEndCheck.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectBegin.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectActivate.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectCursor.s",

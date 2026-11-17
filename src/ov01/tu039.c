@@ -10,7 +10,7 @@
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu039", func_00A9AF68);
 
-extern int func_00A97288(void);
+extern int battleEndCheck(void);
 extern int cfEventGet(void);
 extern void screenFadeOutStart(int a, int b);
 extern void ov01CallbackSlotRelease();
@@ -21,11 +21,11 @@ void ov01StepAwaitObjectsIdle(int context);
 void ov01StepBeginFinish(int context);
 void ov01StepFinish(void);
 
-/* Battle step: waits for the menu phase (func_00A97288) to finish, then opens a
+/* Battle step: waits until battleEndCheck reports the battle over, then opens a
  * panel object (screenFadeOutStart) and moves on to ov01StepAwaitObjectsIdle. */
 void ov01StepStartFadeOut(int context)
 {
-    if (func_00A97288() == 0) {
+    if (battleEndCheck() == 0) {
         return;
     }
     cfEventGet();

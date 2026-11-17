@@ -54,7 +54,7 @@ struct TgtSelectState {
     int active;
     int unmodeled_2c;
     int status;
-    unsigned char unmodeled_34[0x38 - 0x34];
+    int victoryStarted;                 /* +0x34: set once battleEndCheck has started the victory */
     Ov01Object *object;                 /* +0x38: BattleState.object, cleared at the end of a turn */
     int first;                          /* +0x3C: BattleState.first */
     int second;                         /* +0x40: BattleState.second */
@@ -117,7 +117,26 @@ int tgtSelectStep(void)
     return tgtSelectStatusUpdate();
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu035", func_00A97288);
+/* cfEvent bit of a battle with a time limit (tu039 tests it too). */
+#define CF_EVENT_TIME_LIMIT 0x20
+/* Side arguments of the unit counts. */
+#define TGT_SIDE_PARTY 0
+#define TGT_SIDE_ENEMY 1
+/* Side argument for both tables. */
+#define TGT_SIDE_ALL 2
+
+/* Status codes tgtSelectStatusUpdate leaves in TgtSelectState.status (0 while the battle goes on). */
+enum {
+    TGT_STATUS_ENEMY_GONE = 1,          /* unitNumFlag4ClearStatZeroGet(enemies) is 0 */
+    TGT_STATUS_PARTY_GONE = 2,          /* unitNumFlag4ClearStatZeroGet(party) is 0 */
+    TGT_STATUS_PARTY_LEFT = 3,          /* transition 1 */
+    TGT_STATUS_ENEMY_LEFT = 4,          /* transition 2 */
+    TGT_STATUS_TIME_UP = 5              /* time limit reached */
+};
+
+unsigned short dataPadRead(int port);
+
+INCLUDE_ASM("asm/nonmatchings/ov01/tu035", battleEndCheck);
 
 /* Candidate flag of the highlighted candidate (tgtSelectActivate sets it). */
 #define TGT_OBJECT_HIGHLIGHT 0x10
@@ -211,8 +230,6 @@ enum {
     TGT_PHASE_EVENTS = 1,               /* drain the event queue */
     TGT_PHASE_TURN_END = 2              /* wait for the units, then end the turn */
 };
-/* Side argument for both tables. */
-#define TGT_SIDE_ALL 2
 
 void cmdListRunHead(void);
 int eventQueueRun(void);
@@ -268,20 +285,6 @@ void tgtSelectExecute(void)
     }
 }
 
-/* cfEvent bit of a battle with a time limit (tu039 tests it too). */
-#define CF_EVENT_TIME_LIMIT 0x20
-/* Side arguments of the unit counts. */
-#define TGT_SIDE_PARTY 0
-#define TGT_SIDE_ENEMY 1
-
-/* Status codes tgtSelectStatusUpdate leaves in TgtSelectState.status (0 while the battle goes on). */
-enum {
-    TGT_STATUS_ENEMY_GONE = 1,          /* unitNumFlag4ClearStatZeroGet(enemies) is 0 */
-    TGT_STATUS_PARTY_GONE = 2,          /* unitNumFlag4ClearStatZeroGet(party) is 0 */
-    TGT_STATUS_PARTY_LEFT = 3,          /* transition 1 */
-    TGT_STATUS_ENEMY_LEFT = 4,          /* transition 2 */
-    TGT_STATUS_TIME_UP = 5              /* time limit reached */
-};
 
 
 /* Sets the battle status (TGT_STATUS_*) unless the execute stage runs; 1 when the
@@ -317,7 +320,7 @@ int tgtSelectStatusUpdate(void)
     return 0;
 }
 
-/* Returns the status word at state+0x30 (codes 1 to 5), which func_00A97288 switches on. */
+/* Returns the status word at state+0x30 (codes 1 to 5), which battleEndCheck switches on. */
 int tgtSelectStatusGet(void)
 {
     return tgtSelectStatus;
@@ -405,7 +408,6 @@ void tgtSelectTurnEnd(Ov01Object *unit)
 #define TGT_BOOST_VOICE_TAG 2
 #define TGT_BOOST_VOICE_ID 1
 
-unsigned short dataPadRead(int port);
 void menuCursorShow(void);
 void menuCursorHide(void);
 

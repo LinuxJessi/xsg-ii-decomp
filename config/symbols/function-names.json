@@ -3336,6 +3336,7 @@
    "0x00a95c00": "unitSlotShowHidePart",
    "0x00a95c60": "unitSlotHideShowPart",
    "0x00a968c8": "unitsReviveDown",
+   "0x00a97288": "battleEndCheck",
    "0x00a98f30": "objCurRemove",
    "0x00a99cd8": "tgtUnitAdrGet",
    "0x00a99d50": "tgtUnitGet",
