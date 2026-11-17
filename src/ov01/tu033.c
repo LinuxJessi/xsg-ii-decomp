@@ -494,7 +494,7 @@ typedef struct Ov01Tu033Request {
 
 
 extern Ov01Object *ov01LastUnit;
-extern struct AttachRecord *ov01ModelEntry;
+extern struct DataEntry *ov01ModelEntry;
 int dataSlotRelease(s16);
 int dataSlotFlagClear(s16);
 int unitEffectSlotAcquire(int);

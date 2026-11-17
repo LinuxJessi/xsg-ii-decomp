@@ -5,6 +5,7 @@
 #include "shared.h"
 #include "main/tu051.h"
 #include "main/xenoActor.h"
+#include "ov01/tu008.h"
 #include "ov01/tu011.h"
 #include "ov01/tu012.h"
 #include "ov01/tu023.h"
@@ -118,8 +119,10 @@ int unitBindActors(Ov01Object *unit, struct SpawnRecord *spawn)
  * Attaches a new child actor to the unit's actor from the attach record's entries. The
  * record's entry index + 4 is written to every actor of the unit and to the new one.
  */
-int unitAttachChild(Ov01Object *unit, struct AttachRecord *attach, int index)
+int unitAttachChild(Ov01Object *unit, struct DataEntry *entry, int index)
 {
+    /* The file buffers are read as words (XenoActor.rsrc is int), through the AttachRecord view. */
+    struct AttachRecord *attach = (struct AttachRecord *)entry;
     struct XenoActor *child;
     int i;
 

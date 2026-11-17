@@ -12,15 +12,18 @@ struct AttachEntry {
 };
 
 /*
- * Attach record passed to unitAttachChild: its entries start at +0xC. Entries 0 to 3 give
- * the new actor's resources; entry index + 4 gives its rsrc[XAct_Rsrc_5]. The callers
- * pass indexes 0 and 1, so six entries are modelled.
+ * The model entry (DataEntry, ov01/tu008.h) as unitAttachChild reads it: from +0xC the buffer words of its file
+ * records, 12 bytes apart. Entries 0 to 3 (the model files) give the new actor's resources; entry index + 4 (the
+ * two motions, the callers pass indexes 0 and 1) gives its rsrc[XAct_Rsrc_5].
  */
 struct AttachRecord {
     unsigned char unmodeled_00[0xC];
     struct AttachEntry entries[6];
 };
 
-int unitAttachChild(struct Ov01Object *unit, struct AttachRecord *attach, int index);
+struct DataEntry;
+
+/* Attaches a new child actor to the unit from the model entry (read through AttachRecord). */
+int unitAttachChild(struct Ov01Object *unit, struct DataEntry *entry, int index);
 
 #endif /* INCLUDE_OV01_TU011_H */
