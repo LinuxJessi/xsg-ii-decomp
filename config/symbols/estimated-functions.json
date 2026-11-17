@@ -4176,25 +4176,25 @@
      1
     ],
     [
-     "func_00A9B750",
+     "battleLookupTextGet",
      11122512,
      132,
      1
     ],
     [
-     "func_00A9B7D8",
+     "itemTextGet",
      11122648,
      116,
      1
     ],
     [
-     "func_00A9B850",
+     "statusTextGet",
      11122768,
      132,
      1
     ],
     [
-     "func_00A9B8D8",
+     "hitActionTextGet",
      11122904,
      116,
      1
@@ -4212,19 +4212,19 @@
      1
     ],
     [
-     "func_00A9BA40",
+     "pairLinkTextGet",
      11123264,
      116,
      1
     ],
     [
-     "func_00A9BAB8",
+     "calcLevelTextGet",
      11123384,
      116,
      1
     ],
     [
-     "func_00A9BB30",
+     "tgtIdTextGet",
      11123504,
      116,
      1

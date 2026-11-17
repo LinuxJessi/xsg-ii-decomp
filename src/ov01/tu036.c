@@ -98,24 +98,23 @@ void choiceMenuTextClose(void) {
 
 int choiceMenuIsOpen(int);
 int choiceMenuGetResult(int);
-int func_00A9B8D8(s16, int);
 extern int D_00AC3C04;
 extern s16 choiceMenuEntryIds[];
 extern u8 choiceMenuEntryFlags[];
-extern int D_00AC4160;
+extern char *D_00AC4160;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C04, 0 when choiceMenuEntryFlags flags it. */
 int func_00A97F40(void) {
     int cursor_index;
     s16 entry_id;
-    int result;
+    char *result;
 
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3C04 = entry_id;
-            result = func_00A9B8D8(entry_id, 1);
+            result = hitActionTextGet(entry_id, 1);
             D_00AC4160 = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3C04 = 0;
@@ -133,21 +132,20 @@ void func_00A98180(void) {
     choiceMenuTextTask = 0;
 }
 
-int func_00A9B750(s16, int);
 extern int D_00AC3C08;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C08, 0 when choiceMenuEntryFlags flags it. */
 int func_00A981B8(void) {
     int cursor_index;
     s16 entry_id;
-    int result;
+    char *result;
 
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3C08 = entry_id;
-            result = func_00A9B750(entry_id, 1);
+            result = battleLookupTextGet(entry_id, 1);
             D_00AC4160 = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3C08 = 0;
@@ -165,21 +163,20 @@ void func_00A98408(void) {
     choiceMenuTextTask = 0;
 }
 
-int func_00A9BAB8(s16, int);
 extern int D_00AC3C0C;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C0C, 0 when choiceMenuEntryFlags flags it. */
 int func_00A98440(void) {
     int cursor_index;
     s16 entry_id;
-    int result;
+    char *result;
 
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3C0C = entry_id;
-            result = func_00A9BAB8(entry_id, 1);
+            result = calcLevelTextGet(entry_id, 1);
             D_00AC4160 = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3C0C = 0;
@@ -197,21 +194,20 @@ void func_00A98690(void) {
     choiceMenuTextTask = 0;
 }
 
-int func_00A9BA40(s16, int);
 extern int D_00AC3C30;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C30, 0 when choiceMenuEntryFlags flags it. */
 int func_00A986C8(void) {
     int cursor_index;
     s16 entry_id;
-    int result;
+    char *result;
 
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3C30 = entry_id;
-            result = func_00A9BA40(entry_id, 1);
+            result = pairLinkTextGet(entry_id, 1);
             D_00AC4160 = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3C30 = 0;
@@ -239,14 +235,14 @@ extern int enemyCursorPages[2];
 int func_00A98960(void) {
     int cursor_index;
     s16 entry_id;
-    int result;
+    char *result;
 
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3C80 = entry_id;
-            result = func_00A9B750(entry_id, 1);
+            result = battleLookupTextGet(entry_id, 1);
             enemyCursorPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3C80 = 0;
@@ -264,21 +260,20 @@ void func_00A98BB0(void) {
     choiceMenuTextTask = 0;
 }
 
-int func_00A9BB30(s16, int);
 extern int D_00AC3CAC;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3CAC, 0 when choiceMenuEntryFlags flags it. */
 int func_00A98BE8(void) {
     int cursor_index;
     s16 entry_id;
-    int result;
+    char *result;
 
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3CAC = entry_id;
-            result = func_00A9BB30(entry_id, 1);
+            result = tgtIdTextGet(entry_id, 1);
             D_00AC4160 = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3CAC = 0;

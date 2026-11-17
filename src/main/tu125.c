@@ -493,8 +493,8 @@ int textEncodeNewlines(unsigned char *text);
 /* sprintf-like: formats one integer value into buffer. */
 void sprintf(char *buffer, const char *format, int value);
 /* ov01: name of an item by kind (kind 2 and the others). */
-char *func_00A9B7D8(int item, int arg);
-char *func_00A9B8D8(int item, int arg);
+char *itemTextGet(int item, int arg);
+char *hitActionTextGet(int item, int arg);
 
 /* Draws the text window, the text entries, the choice menus and the ANALYZE panel. */
 void textDrawAll(void)
@@ -716,9 +716,9 @@ void textDrawAll(void)
 
     if (panel->rareItem > 0) {
         if (panel->rareItemKind == 2) {
-            textDrawSegment(x + 88, y + 164, func_00A9B7D8(panel->rareItem, 0), 0);
+            textDrawSegment(x + 88, y + 164, itemTextGet(panel->rareItem, 0), 0);
         } else {
-            textDrawSegment(x + 88, y + 164, func_00A9B8D8(panel->rareItem, 0), 0);
+            textDrawSegment(x + 88, y + 164, hitActionTextGet(panel->rareItem, 0), 0);
         }
     } else if (panel->rareItem < 0) {
         textDrawSegment(x + 88, y + 164, D_0069D9F0, 0);
@@ -727,9 +727,9 @@ void textDrawAll(void)
     }
     if (panel->item > 0) {
         if (panel->itemKind == 2) {
-            textDrawSegment(x + 88, y + 188, func_00A9B7D8(panel->item, 0), 0);
+            textDrawSegment(x + 88, y + 188, itemTextGet(panel->item, 0), 0);
         } else {
-            textDrawSegment(x + 88, y + 188, func_00A9B8D8(panel->item, 0), 0);
+            textDrawSegment(x + 88, y + 188, hitActionTextGet(panel->item, 0), 0);
         }
     } else if (panel->item < 0) {
         textDrawSegment(x + 88, y + 188, D_0069D9F0, 0);

@@ -246,6 +246,23 @@ TgtIdRecord *tgtIdRecordGet(int index);
 UnitExpEntry *unitExpTblGet(void);
 GrowthRecord *growthRecordGet(int index);
 short *stringOffsetsGet(int index);
+
+/* The two texts of a data record (the *TextGet getters below): the record's first two halfwords are their
+ * offsets from the table start. */
+enum RecordText {
+    RECORD_TEXT_NAME = 0,
+    RECORD_TEXT_INFO = 1
+};
+
+char *battleLookupTextGet(int index, int field);
+char *itemTextGet(int index, int field);
+char *statusTextGet(int index, int field);
+char *hitActionTextGet(int index, int field);
+char *func_00A9B950(int index, int field);
+char *func_00A9B9C8(int index, int field);
+char *pairLinkTextGet(int index, int field);
+char *calcLevelTextGet(int index, int field);
+char *tgtIdTextGet(int index, int field);
 char *tableStringGet(int index, int mode);
 
 /* Message, party data and table row prototypes. */

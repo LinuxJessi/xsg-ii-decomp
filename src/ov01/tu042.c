@@ -268,23 +268,149 @@ short *stringOffsetsGet(int index)
     return (short *) (table + (index - 1) * 2);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B750);
+/* Text `field` of record `index` (numbered from 1) of the battleLookupGet table; 0 for another field. */
+char *battleLookupTextGet(int index, int field)
+{
+    char *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B7D8);
+    table = (char *)battleLookupGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 12);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 12 + 2);
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B850);
+/* Text `field` of record `index` (numbered from 1) of the itemRecordGet table; 0 for another field. */
+char *itemTextGet(int index, int field)
+{
+    char *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B8D8);
+    table = (char *)itemRecordGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 16);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 16 + 2);
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B950);
+/* Text `field` of record `index` (numbered from 1) of the statusRecordGet table; 0 for another field. */
+char *statusTextGet(int index, int field)
+{
+    char *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B9C8);
+    table = (char *)statusRecordGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 12);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 12 + 2);
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BA40);
+/* Text `field` of record `index` (numbered from 1) of the hitActionGet table; 0 for another field. */
+char *hitActionTextGet(int index, int field)
+{
+    char *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BAB8);
+    table = (char *)hitActionGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 16);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 16 + 2);
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BB30);
+/* Text `field` of record `index` (numbered from 1) of the func_00A9B580 table; 0 for another field. */
+char *func_00A9B950(int index, int field)
+{
+    char *table;
+
+    table = (char *)func_00A9B580(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 4);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 4 + 2);
+    }
+    return 0;
+}
+
+/* Text `field` of record `index` (numbered from 1) of the func_00A9B5B8 table; 0 for another field. */
+char *func_00A9B9C8(int index, int field)
+{
+    char *table;
+
+    table = (char *)func_00A9B5B8(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 8);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 8 + 2);
+    }
+    return 0;
+}
+
+/* Text `field` of record `index` (numbered from 1) of the pairLinkGet table; 0 for another field. */
+char *pairLinkTextGet(int index, int field)
+{
+    char *table;
+
+    table = (char *)pairLinkGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 16);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 16 + 2);
+    }
+    return 0;
+}
+
+/* Text `field` of record `index` (numbered from 1) of the calcLevelRecordGet table; 0 for another field. */
+char *calcLevelTextGet(int index, int field)
+{
+    char *table;
+
+    table = (char *)calcLevelRecordGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 16);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 16 + 2);
+    }
+    return 0;
+}
+
+/* Text `field` of record `index` (numbered from 1) of the tgtIdRecordGet table; 0 for another field. */
+char *tgtIdTextGet(int index, int field)
+{
+    char *table;
+
+    table = (char *)tgtIdRecordGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return table + *(short *)(table + index * 16);
+    case RECORD_TEXT_INFO:
+        return table + *(short *)(table + index * 16 + 2);
+    }
+    return 0;
+}
 
 /* Message object made by msgPutObject: +0x4 release callback (msgObjRelease), +0xC ref count, +0x10 mode, +0x14 handle. */
 struct MsgObject {

@@ -927,7 +927,6 @@ extern char itemPickText[];
 extern char itemPickTextEnd[];
 
 void dataBoxIncCategory1(int item);
-char *func_00A9B8D8(int item, int mode);
 char *strcpy(char *destination, const char *source);
 char *strcat(char *destination, const char *source);
 void msgPutObject(int index, int x, char *text, int y, int width, int size);
@@ -950,7 +949,7 @@ void itemRandomPick(void)
     }
     dataBoxIncCategory1(item);
     strcpy(itemPickText, tableStringGet(1, 1));
-    strcat(itemPickText, func_00A9B8D8(item, 0));
+    strcat(itemPickText, hitActionTextGet(item, 0));
     strcat(itemPickText, itemPickTextEnd);
     msgPutObject(0x14, 0x120, itemPickText, 0x2D, 0x1AC, 0x28);
 }
@@ -1029,10 +1028,9 @@ void unitStatusTextShow(Ov01Object *unit)
  * TableKeyRecord. */
 #define UNIT_FLAG_DROP_FIRST 0x10000
 #define UNIT_FLAG_DROP_SECOND 0x8000
-/* The data box category whose names func_00A9B7D8 gives (the others: func_00A9B8D8). */
+/* The data box category whose names itemTextGet gives (the others: hitActionTextGet). */
 #define DATA_BOX_CATEGORY_2 2
 
-char *func_00A9B7D8(int item, int mode);
 
 /*
  * The data box drop of a unit: with chance percent its first pair, else (or when that is empty or taken) its
@@ -1061,9 +1059,9 @@ void unitDataBoxDrop(Ov01Object *unit, int percent)
     }
     if (id != 0) {
         if (category == DATA_BOX_CATEGORY_2) {
-            name = func_00A9B7D8(id, 0);
+            name = itemTextGet(id, 0);
         } else {
-            name = func_00A9B8D8(id, 0);
+            name = hitActionTextGet(id, 0);
         }
         strcpy(itemPickText, tableStringGet(2, 1));
         strcat(itemPickText, name);

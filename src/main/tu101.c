@@ -2397,7 +2397,7 @@ unsigned int cursorBufferGetIndex(LicenseCursor *cursor);
 int menuListPageCount(LicenseCursor *cursor);
 /* OV01 dataBoxChkCategory1 (config/symbols/ov01.txt). */
 int dataBoxChkCategory1(int value);
-void *func_00A9B8D8(int id, int unused);
+void *hitActionTextGet(int id, int unused);
 int selectionEntryIsEligible(int index);
 extern u8 selectionWindowCount;
 extern unsigned char selectionWindowList[];
@@ -2408,7 +2408,7 @@ extern unsigned char selectionWindowList[];
 const unsigned char msgStyleInit[72] = "$init;$bg2;$shadow+1,+3,000000;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
 
 /* Item window: up to ten rows of selectionWindowList from the cursor's first visible
-   row, each with its count (dataBoxChkCategory1) and name (func_00A9B8D8); ineligible entries
+   row, each with its count (dataBoxChkCategory1) and name (hitActionTextGet); ineligible entries
    are drawn dimmed. */
 void menuDrawItemList(int x, int y, LicenseCursor *cursor)
 {
@@ -2429,7 +2429,7 @@ void menuDrawItemList(int x, int y, LicenseCursor *cursor)
         if (!selectionEntryIsEligible(firstRow + i)) {
             rowStyle |= 2;
         }
-        textDrawSegment(x + 0x18, y + 0x30 + i * 0x14, func_00A9B8D8(selectionWindowList[firstRow + i], 0), rowStyle);
+        textDrawSegment(x + 0x18, y + 0x30 + i * 0x14, hitActionTextGet(selectionWindowList[firstRow + i], 0), rowStyle);
     }
     if (cursor->flags & 1) {
         menuPlaceCursor(x + 0xA, y + 0x30 + (cursor->index - firstRow) * 0x14, 0x9D, cursor->flags & 1);
@@ -2514,7 +2514,7 @@ struct ControlContext *ptGetMenuMember();
 /* OV01 battleContextStateGet (config/symbols/ov01.txt): the state record (BattleState in
    ov01/tu023.c, 0x108 bytes) of the member bound to slot key. */
 MenuPartyRecord *battleContextStateGet(int key);
-void *func_00A9B7D8(int id, int unused);
+void *itemTextGet(int id, int unused);
 /* OV01 dataBoxChkCategory2 (config/symbols/ov01.txt). */
 int dataBoxChkCategory2(int value);
 extern unsigned char selectionPlainCount;
@@ -2547,7 +2547,7 @@ void menuDrawPlainItemList(int x, int y, LicenseCursor *cursor)
         rowStyle = (firstRow + i) == cursor->index;
         textDrawDecimalShadow(x + 0xA8, y + i * 0x14 + 0x34, dataBoxChkCategory2(selectionPlainList[firstRow + i]), 2,
                               rowStyle ? LICENSE_COLOR_SELECTED : LICENSE_COLOR_IDLE);
-        textDrawSegment(x + 0x10, y + i * 0x14 + 0x32, func_00A9B7D8(selectionPlainList[firstRow + i], 0), rowStyle);
+        textDrawSegment(x + 0x10, y + i * 0x14 + 0x32, itemTextGet(selectionPlainList[firstRow + i], 0), rowStyle);
     }
     if (cursor->flags & 1) {
         menuPlaceCursor(x + 0xA, y + (cursor->index - firstRow) * 0x14 + 0x32, 0x8C, 1);
@@ -2573,7 +2573,7 @@ void menuDrawPlainItemList(int x, int y, LicenseCursor *cursor)
 
 /* OV01 battleContextApplyLookup (config/symbols/ov01.txt). */
 int battleContextApplyLookup(int id, int item);
-void *func_00A9B750(int dispatch_value, int value);
+void *battleLookupTextGet(int dispatch_value, int value);
 
 /* Item list of the selected party member: member tabs (0x166 for the selected one),
    then one row per item with its count; a row whose count exceeds the member
@@ -2626,7 +2626,7 @@ void menuDrawMemberItemList(int x, int y, LicenseCursor *cursor, unsigned char *
         if (battleContextStateGet(ptGetMenuMember()->id)->ep < count) {
             rowStyle |= 2;
         }
-        textDrawSegment(x + 0x18, y + i * 0x14 + 0x30, func_00A9B750(items[i], 0), rowStyle);
+        textDrawSegment(x + 0x18, y + i * 0x14 + 0x30, battleLookupTextGet(items[i], 0), rowStyle);
     }
     if (cursor->flags & 1) {
         menuPlaceCursor(x + 0xA, y + (cursor->index - firstRow) * 0x14 + 0x30, 0x9D, 1);
@@ -2766,7 +2766,7 @@ void menuDrawCharStats(int x, int y, struct ControlContext *member, int item, in
 
 extern unsigned char D_003EB380[];
 
-/* Equip slot list: one row per entry in items, a text label (func_00A9B7D8's text, the one
+/* Equip slot list: one row per entry in items, a text label (itemTextGet's text, the one
    menuDrawPlainItemList lists, while the party split is open, otherwise selectionRecordSetValue's
    record text) and the selection cursor box. */
 void menuDrawEquipPanel(int x, int y, LicenseCursor *cursor, unsigned char *items, unsigned char rowCount)
@@ -2783,7 +2783,7 @@ void menuDrawEquipPanel(int x, int y, LicenseCursor *cursor, unsigned char *item
     for (i = 0; i < cursor->count; i++) {
         rowStyle = (firstRow + i) == cursor->index;
         if (ptState.splitMode == PARTY_SPLIT_ON) {
-            textDrawSegment(x + 0x10, y + 0x20 + i * 0x14, func_00A9B7D8(items[i], 0), rowStyle | 4);
+            textDrawSegment(x + 0x10, y + 0x20 + i * 0x14, itemTextGet(items[i], 0), rowStyle | 4);
         } else {
             textDrawSegment(x + 0x10, y + 0x20 + i * 0x14, selectionRecordSetValue(items[i], 0), rowStyle | 4);
         }
