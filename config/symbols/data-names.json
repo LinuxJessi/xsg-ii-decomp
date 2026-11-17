@@ -1311,6 +1311,8 @@
    "0x00ac2438": "tgtTbl",
    "0x00ac2458": "tgtIdx",
    "0x00ac245c": "tgtNum",
+   "0x00ac3af8": "attackFillWait",
+   "0x00ac3b14": "attackStep",
    "0x00ac4168": "pTaskEnCur",
    "0x00ab5974": "dataObject",
    "0x00ab58b8": "dataState",

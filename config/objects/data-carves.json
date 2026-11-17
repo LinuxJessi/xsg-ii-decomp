@@ -118480,6 +118480,41 @@
     },
     {
      "range": [
+      "0x00aba510",
+      "0x00aba530"
+     ],
+     "generated": [
+      "0x00aba510",
+      "0x00aba530"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "jtbl_00ABA510"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00aba510",
+        "0x00aba530"
+       ],
+       "symbols": [],
+       "anonymous_emission": true,
+       "credit": "verified",
+       "object_range": [
+        160,
+        192
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu033.o"
+     }
+    },
+    {
+     "range": [
       "0x00aba540",
       "0x00aba564"
      ],
@@ -118502,8 +118537,8 @@
        "anonymous_emission": true,
        "credit": "verified",
        "object_range": [
-        160,
-        196
+        192,
+        228
        ]
       }
      ],

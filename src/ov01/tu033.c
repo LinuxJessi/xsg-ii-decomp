@@ -12,6 +12,7 @@
  *       eventQueueCount eventQueueCount, eventQueueCursor eventQueueCursor.
  */
 #include "common.h"
+#include "main/sef.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
 #include "main/tu051.h"
@@ -741,7 +742,174 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94260);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94500);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", attackSpecialStep);
+/* The steps of a transforming action (actionTransformSlotGet gives its model): attackStep runs through them. */
+enum {
+    ATTACK_STEP_TRANSFORM,              /* swap the attacker's model to the transform slot */
+    ATTACK_STEP_FILL_IN,                /* hold the screen fill for ATTACK_FILL_FRAMES */
+    ATTACK_STEP_RESOLVE,                /* resolve the attack (func_00A95018), start the screen fill */
+    ATTACK_STEP_RECREATE,               /* recreate the unit */
+    ATTACK_STEP_RESTORE,                /* bind the battle slot's data again, show the monster slots */
+    ATTACK_STEP_RESET,                  /* reset the battle units */
+    ATTACK_STEP_FILL_OUT                /* hold the screen fill again, then done */
+};
+#define ATTACK_FILL_FRAMES 3
+
+/* func_00A94D28's second argument for the two special actions that call it. */
+#define ATTACK_SPECIAL_VALUE_C9 50
+#define ATTACK_SPECIAL_VALUE_F6 100
+
+extern int attackStep;
+extern int attackFillWait;
+extern int D_00AC3AFC;
+void unitBindActors(Ov01Object *object, struct DataSlot *slot);
+void func_00A94D28(Ov01Object *target, int value);
+int func_00A95018(EventQueueEntry *entry, struct AttackCommand *owner);
+void unitRecreate(Ov01Object *owner);
+void battleUnitsReset(void);
+void itemRandomPick(void);
+
+/*
+ * One step of the special actions of a queued attack (attackStep counts their steps); returns 1 when the action
+ * is done. Plain actions resolve at once (func_00A93288); 0x2C4 and 0x2C9 free their effect key first,
+ * 0x2D5..0x2D7 transform the attacker, 0x2F6 waits for the text block. Unknown actions return 0.
+ */
+int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
+{
+    struct MonsSlot **slots;
+    struct HitRecord *hit;
+    TecRecord *tec;
+    struct DataSlot *slot;
+    int done;
+
+    done = 0;
+    hit = &eventQueueFindKind5(0)->data.kind5;
+    tec = tecRecordGet(command->actionIdx);
+    switch (command->actionIdx) {
+    case 0x38:
+    case 0x2A4:
+    case 0x2C3:
+    case 0x2C5:
+    case 0x2C6:
+        done = func_00A93288(command);
+        break;
+    case 0x2C4:
+        if (attackStep == 0) {
+            if (unitEffectKeyFree(command->attacker, tecEffectGroupGet(command->attacker, tec), tec->extent) != 0) {
+                itemRandomPick();
+                attackStep++;
+            }
+        } else if (msgIsIdle() != 0) {
+            done = 1;
+        }
+        break;
+    case 0x2C8:
+        if (textBlockIsActive() == 0) {
+            done = 1;
+        }
+        break;
+    case 0x2C9:
+        if (attackStep == 0) {
+            if (unitEffectKeyFree(command->attacker, tecEffectGroupGet(command->attacker, tec), tec->extent) != 0) {
+                func_00A94D28(hit->target, ATTACK_SPECIAL_VALUE_C9);
+                attackStep++;
+            }
+        } else if (msgIsIdle() != 0) {
+            done = 1;
+        }
+        break;
+    case 0x2D5:
+    case 0x2D6:
+    case 0x2D7:
+        switch (attackStep) {
+        case ATTACK_STEP_TRANSFORM:
+            if (ov01CdPendingReads() != 0) {
+                break;
+            }
+            if (loadWaitPending() != 0) {
+                break;
+            }
+            slot = dataSlotFind(actionTransformSlotGet(command->actionIdx));
+            if (slot == 0) {
+                return 1;
+            }
+            unitBindActors(ov01LastUnit, slot);
+            unitUnbind(ov01LastUnit);
+            D_00AC3AFC = 0;
+            command->attacker = ov01LastUnit;
+            unitAttachChild(ov01LastUnit, ov01ModelEntry, 0);
+            unitSetTimedPhase(ov01LastUnit, 1);
+            attackFillWait = 0;
+            attackStep++;
+            break;
+        case ATTACK_STEP_FILL_IN:
+            if (attackFillWait >= ATTACK_FILL_FRAMES) {
+                screenFillEnd();
+                attackStep++;
+            }
+            attackFillWait++;
+            break;
+        case ATTACK_STEP_RESOLVE:
+            if (func_00A95018(entry, command) == 0) {
+                break;
+            }
+            screenFillStart();
+            attackStep++;
+            break;
+        case ATTACK_STEP_RECREATE:
+            unitRecreate(ov01LastUnit);
+            attackStep++;
+            break;
+        case ATTACK_STEP_RESTORE:
+            if (ov01CdPendingReads() != 0) {
+                break;
+            }
+            if (loadWaitPending() != 0) {
+                break;
+            }
+            slot = dataSlotFind(battleStateGet()->slotIndex);
+            if (slot == 0) {
+                return 1;
+            }
+            unitBindActors(ov01LastUnit, slot);
+            func_00A955C8(ov01LastUnit);
+            command->attacker = ov01LastUnit;
+            monsActiveSlotsGet(&slots);
+            monsSlotShow(slots[0]);
+            attackStep++;
+            break;
+        case ATTACK_STEP_RESET:
+            battleUnitsReset();
+            attackFillWait = 0;
+            attackStep++;
+            break;
+        case ATTACK_STEP_FILL_OUT:
+            if (attackFillWait >= ATTACK_FILL_FRAMES) {
+                screenFillEnd();
+                done = 1;
+            }
+            attackFillWait++;
+            break;
+        }
+        break;
+    case 0x2F6:
+        switch (attackStep) {
+        case 0:
+            if (textBlockIsActive() == 0) {
+                attackStep++;
+            }
+            break;
+        case 1:
+            func_00A94D28(hit->target, ATTACK_SPECIAL_VALUE_F6);
+            attackStep++;
+            break;
+        default:
+            done = msgIsIdle() != 0;
+            break;
+        }
+        break;
+    }
+    return done;
+}
 
 /* One weighted group of itemPickGroups: a roll below threshold picks one of its count items. */
 typedef struct ItemPickGroup {
@@ -1119,7 +1287,6 @@ int func_00A95CE8(void) {
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95CF0);
 
 int ov01CdPendingReads(void);
-int loadWaitPending(void);
 
 /* 1 once no CD read and no load wait is pending. */
 int ov01LoadsIdle(void)
@@ -1179,7 +1346,6 @@ int unitSpawnFromRequest(Ov01Tu033Request *request)
     return 1;
 }
 
-void unitBindActors(Ov01Object *object, struct DataSlot *slot);
 
 /* Bind event handler: binds the data slot of request id to ov01LastUnit, fades
  * it in and starts the load (returns 0); on the next calls returns 1 once the
