@@ -1945,7 +1945,7 @@
       "asm/nonmatchings/ov01/tu033/attackSpecialStep.s",
       "asm/nonmatchings/ov01/tu033/itemRandomPick.s",
       "asm/nonmatchings/ov01/tu033/unitStatusTextShow.s",
-      "asm/nonmatchings/ov01/tu033/func_00A94D28.s",
+      "asm/nonmatchings/ov01/tu033/unitDataBoxDrop.s",
       "asm/nonmatchings/ov01/tu033/func_00A94EB0.s",
       "asm/nonmatchings/ov01/tu033/func_00A95018.s",
       "asm/nonmatchings/ov01/tu033/unitRecreate.s",

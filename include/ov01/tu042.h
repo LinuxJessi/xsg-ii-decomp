@@ -195,7 +195,8 @@ typedef struct TgtIdRecord TgtIdRecord;
 struct TgtIdRecord {
     unsigned char unmodeled_00[0x8];
     short actionIndex;                      /* +0x08: the index tecRecordGet takes */
-    unsigned char unmodeled_0a[0xe - 0xa];
+    short modelIndex;                       /* +0x0A: the model entry func_00A95CF0 loads (0: none) */
+    unsigned short modelJoint;              /* +0x0C: the joint that model is attached at (StatBlock.pairSecond[2]) */
     short minLevel;                         /* +0x0E: obj->stats->level below this gives 0 */
 };
 

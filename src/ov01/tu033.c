@@ -24,6 +24,7 @@
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
 #include "ov01/tu042.h"
+#include "ov01/tu043.h"
 #include "ov01/tu036.h"
 #include "ov01/tu038.h"
 #include "ov01/tu054.h"
@@ -754,7 +755,7 @@ enum {
 };
 #define ATTACK_FILL_FRAMES 3
 
-/* func_00A94D28's second argument for the two special actions that call it. */
+/* unitDataBoxDrop's second argument for the two special actions that call it. */
 #define ATTACK_SPECIAL_VALUE_C9 50
 #define ATTACK_SPECIAL_VALUE_F6 100
 
@@ -762,7 +763,7 @@ extern int attackStep;
 extern int attackFillWait;
 extern int D_00AC3AFC;
 void unitBindActors(Ov01Object *object, struct DataSlot *slot);
-void func_00A94D28(Ov01Object *target, int value);
+void unitDataBoxDrop(Ov01Object *target, int value);
 int func_00A95018(EventQueueEntry *entry, struct AttackCommand *owner);
 void unitRecreate(Ov01Object *owner);
 void battleUnitsReset(void);
@@ -810,7 +811,7 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
     case 0x2C9:
         if (attackStep == 0) {
             if (unitEffectKeyFree(command->attacker, tecEffectGroupGet(command->attacker, tec), tec->extent) != 0) {
-                func_00A94D28(hit->target, ATTACK_SPECIAL_VALUE_C9);
+                unitDataBoxDrop(hit->target, ATTACK_SPECIAL_VALUE_C9);
                 attackStep++;
             }
         } else if (msgIsIdle() != 0) {
@@ -899,7 +900,7 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
             }
             break;
         case 1:
-            func_00A94D28(hit->target, ATTACK_SPECIAL_VALUE_F6);
+            unitDataBoxDrop(hit->target, ATTACK_SPECIAL_VALUE_F6);
             attackStep++;
             break;
         default:
@@ -1024,7 +1025,55 @@ void unitStatusTextShow(Ov01Object *unit)
     textBlockStart(0x14, 0x64, &block);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94D28);
+/* Ov01Object.flags bits of the data box drops already taken from a unit: the first and the second pair of its
+ * TableKeyRecord. */
+#define UNIT_FLAG_DROP_FIRST 0x10000
+#define UNIT_FLAG_DROP_SECOND 0x8000
+/* The data box category whose names func_00A9B7D8 gives (the others: func_00A9B8D8). */
+#define DATA_BOX_CATEGORY_2 2
+
+char *func_00A9B7D8(int item, int mode);
+
+/*
+ * The data box drop of a unit: with chance percent its first pair, else (or when that is empty or taken) its
+ * second; a pair is taken once. Composes the drop message ("<name> ..." or the nothing text) in itemPickText and
+ * shows it.
+ */
+void unitDataBoxDrop(Ov01Object *unit, int percent)
+{
+    struct TableKeyRecord *record;
+    char *name;
+    int category;
+    int id;
+
+    record = tableKeyRecordGet(unit->stats->key);
+    if (ov01RollPercent(percent) != 0 && record->firstId != 0 && !(unit->flags & UNIT_FLAG_DROP_FIRST)) {
+        category = record->firstCategory;
+        id = record->firstId;
+        unit->flags |= UNIT_FLAG_DROP_FIRST;
+    } else if (record->secondId != 0 && !(unit->flags & UNIT_FLAG_DROP_SECOND)) {
+        category = record->secondCategory;
+        id = record->secondId;
+        unit->flags |= UNIT_FLAG_DROP_SECOND;
+    } else {
+        category = -1;
+        id = 0;
+    }
+    if (id != 0) {
+        if (category == DATA_BOX_CATEGORY_2) {
+            name = func_00A9B7D8(id, 0);
+        } else {
+            name = func_00A9B8D8(id, 0);
+        }
+        strcpy(itemPickText, tableStringGet(2, 1));
+        strcat(itemPickText, name);
+        strcat(itemPickText, itemPickTextEnd);
+        dataBoxInc(category, id);
+    } else {
+        strcpy(itemPickText, tableStringGet(3, 1));
+    }
+    msgPutObject(0x14, 0x120, itemPickText, 0x2D, 0x1AC, 0x28);
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94EB0);
 
