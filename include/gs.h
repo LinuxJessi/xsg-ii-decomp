@@ -90,6 +90,7 @@
 /* Pixel storage modes. */
 #define GS_PSMCT32 0x00
 #define GS_PSMCT24 0x01
+#define GS_PSMZ24 0x31
 #define GS_PSMT8 0x13
 #define GS_PSMT4 0x14
 

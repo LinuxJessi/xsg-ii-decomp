@@ -9,6 +9,7 @@
 #include "main/tu217.h"
 #include "main/tu220.h"
 #include "main/tu223.h"
+#include "main/tu224.h"
 
 /* Message-system state. msgWindow is the window object, msgChoice the choice
  * object and msgPanel the panel object; the init, close and show functions
@@ -92,10 +93,10 @@ int msgWindowBusy(void) {
     return msgWindowTestCurrentFlags(msgWindow, MSG_WINDOW_BUSY);
 }
 
-int func_0027D378(unsigned char *);
+int msgWindowPollMoreText(unsigned char *);
 
 int msgWindowHasMore(void) {
-    return func_0027D378(msgWindow);
+    return msgWindowPollMoreText(msgWindow);
 }
 
 /* The current slot index (-1 when no slot is open). */
@@ -105,8 +106,7 @@ int msgSlotCurrent(void) {
 
 void msgWindowSeekToWindowEnd(void *window);
 int msgWindowRunCurrentValue(void *window, int value);
-void func_0027D438(void *window);
-void msgWindowUpdateCurrent(void *window);
+void msgWindowStartScan(void *window);
 int msgWindowCurrentStatus(void *window);
 
 /* One step of the open message (nothing while the window status is 2): CIRCLE finishes the window's text,
@@ -126,7 +126,7 @@ void msgUpdate(void)
         } else if (msgWindowHasMore()) {
             if (msgWindowBusy() == 0) {
                 msgWindowRunCurrentValue(msgWindow, 1);
-                func_0027D438(msgWindow);
+                msgWindowStartScan(msgWindow);
             }
         } else if (msgWindowInUse() == 1 && msgWindowBusy() == 0) {
             func_002512B0();
@@ -142,19 +142,19 @@ void msgUpdate(void)
     }
 }
 
-int func_0027DF58(void *choice);
-void func_0027DE28(void *choice);
+int msgSlotStatus(void *choice);
+void msgChoiceCloseByState(void *choice);
 
 /* Runs msgUpdate unless the choice is in state 3, then counts the choice timer down and closes the choice
  * when it runs out. */
 void msgUpdateTimed(void)
 {
-    if (func_0027DF58(msgChoice) != 3) {
+    if (msgSlotStatus(msgChoice) != 3) {
         msgUpdate();
     }
     if (msgChoiceTimer > 0) {
         if (--msgChoiceTimer == 0) {
-            func_0027DE28(msgChoice);
+            msgChoiceCloseByState(msgChoice);
         }
     }
 }
@@ -176,7 +176,7 @@ int msgWindowAdvance(void *);
 /* Begin a message: reset the window and the choice, open slot 0. */
 void msgBegin(void) {
     msgWindowRunAll(msgWindow);
-    func_0027DE28(msgChoice);
+    msgChoiceCloseByState(msgChoice);
     msgSlotIndex = -1;
     msgWindowAdvance(msgWindow);
     msgSlotIndex += 1;
@@ -190,7 +190,7 @@ void msgWindowCloseForTalk(void) {
 
 /* Clear the choice and stop its timer. */
 void msgChoiceClear(void) {
-    func_0027DE28(msgChoice);
+    msgChoiceCloseByState(msgChoice);
     msgChoiceTimer = 0;
 }
 
@@ -209,12 +209,12 @@ void msgWindowSetScriptText(int text) {
     msgWindowLayoutText(msgWindow, text);
 }
 
-void func_0027CC58(void *);
+void msgWindowOpenNextSlot(void *);
 void msgWindowSetCurrentValue(void *, int);
 
 /* Open the next window record with the text pointer `text` and raise the game flag. */
 void msgWindowOpenText(int text) {
-    func_0027CC58(msgWindow);
+    msgWindowOpenNextSlot(msgWindow);
     msgWindowSetCurrentValue(msgWindow, text);
     msgGameFlagSet();
 }
@@ -228,7 +228,7 @@ u32 msgWindowInUse(void) {
 }
 
 void msgWindowOpenNext(void) {
-    func_0027CC58(msgWindow);
+    msgWindowOpenNextSlot(msgWindow);
 }
 
 /* Set the window's value. */
@@ -267,33 +267,29 @@ void *msgPollSelect(void) {
 }
 
 int msgChoiceShowSingle(void *, int);
-void func_0027DEA0(void *, int, int);
+void msgSlotPlaceByState(void *, int, int);
 
 /* Show the choice for `value`; its timer runs from 0x5A. */
 void msgChoiceShow(int value) {
     msgChoiceTimer = 0x5A;
     msgChoiceShowSingle(msgChoice, value);
-    func_0027DEA0(msgChoice, 0xA, 0x20);
+    msgSlotPlaceByState(msgChoice, 0xA, 0x20);
 }
 
-void func_0027DD28(void *, int, int);
 
 /* Show the choice for two values; its timer runs from 0x5A. */
 void msgChoiceShowPair(int first, int second) {
     msgChoiceTimer = 0x5A;
-    func_0027DD28(msgChoice, first, second);
-    func_0027DEA0(msgChoice, 0xA, 0x20);
+    msgItemSlotStart(msgChoice, first, second);
+    msgSlotPlaceByState(msgChoice, 0xA, 0x20);
 }
-
-void msgChoiceSetIndex(void *, int);
 
 /* Start the choice's timeline at `frame`, then the second step with `second`. */
 void msgChoiceOpen(int frame, int second) {
-    timecodeStartAtFrame(msgChoice, frame);
-    msgChoiceSetIndex(msgChoice, second);
+    timecodeStartAtFrame((MsgSlot *)msgChoice, frame);
+    msgChoiceSetIndex((MsgSlot *)msgChoice, second);
 }
 
-int msgChoiceTestFlags(void *choice, int mask);
 long long msgChoiceGetFrames(void *choice);
 void func_0027D9D8(void *choice, int step);
 void func_0027D9F0(void *choice, int step);
@@ -312,7 +308,7 @@ int msgChoicePoll(void)
     }
     if (PadData[0].pressed & PAD_CIRCLE) {
         frames = msgChoiceGetFrames(msgChoice);
-        func_0027DE28(msgChoice);
+        msgChoiceCloseByState(msgChoice);
         msgWindowRunAll(msgWindow);
         msgGameFlagClear();
         return frames;
@@ -333,19 +329,16 @@ int msgChoicePoll(void)
 }
 
 void func_00251B18(void);
-void timecodeStartAtHms(void *, int, int, int);
 
 /* Open the panel, then show its default entry. */
 void msgPanelOpen(void) {
-    timecodeStartAtHms(msgPanel, 0, 0, 0);
+    timecodeStartAtHms((MsgSlot *)msgPanel, 0, 0, 0);
     func_00251B18();
 }
 
-void timecodeSetHmsf(void *, int, int, int, int);
-
 /* Set the panel's timecode: hours, minutes, seconds and frames. */
 void msgPanelSetTimecode(int hours, int minutes, int seconds, int frames) {
-    timecodeSetHmsf(msgPanel, hours, minutes, seconds, frames);
+    timecodeSetHmsf((MsgSlot *)msgPanel, hours, minutes, seconds, frames);
 }
 
 
@@ -356,10 +349,10 @@ void func_00251B18(void) {
 
 /* Show a panel entry with `first` and `second`. */
 void msgPanelShow(int first, int second) {
-    func_0027DEA0(msgPanel, first, second);
+    msgSlotPlaceByState(msgPanel, first, second);
 }
 
 /* Clear the panel. */
 void msgPanelClear(void) {
-    func_0027DE28(msgPanel);
+    msgChoiceCloseByState(msgPanel);
 }

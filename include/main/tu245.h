@@ -3,11 +3,17 @@
 
 /* Functions of src/main/tu245.c that other files call. */
 
-struct MsgWindow;
+struct MsgSlot;
 
-void msgWindowDrawListIcons(struct MsgWindow *window);
+#define TEXT_TAG_COUNT 20      /* entries of the text tag table */
+
+void msgWindowDrawListIcons(struct MsgSlot *window);
 void msgWindowLoadBotanXtx(void);
 void msgWindowUnloadBotanXtx(void);
 void textTagTableClear(void);
+int msgWindowStepDirection(int step);
+void textTagRemoveKey(int key);
+/* Draws the glyphs of the text tags active at text (the revealed end of a text slot), yOffset pixels up. */
+void textTagDrawActive(const char *text, int yOffset, struct MsgSlot *slot);
 
 #endif /* INCLUDE_MAIN_TU245_H */

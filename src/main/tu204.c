@@ -17,4 +17,4 @@ float xglWrapDegrees(float degrees) {
 
 /* 0x002745A8: returns a 64-bit register word for mode 0, 1 or 2; mode 0 reads sRender +0x20 and +0x1A,
  * modes 1 and 2 read the halfwords D_00645842 and sRenderFrameBase. Role not yet proven, no name proposed. */
-INCLUDE_ASM("asm/main/nonmatchings/tu204", func_002745A8);
+INCLUDE_ASM("asm/main/nonmatchings/tu204", gsMakeTex0);

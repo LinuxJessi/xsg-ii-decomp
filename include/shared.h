@@ -36,6 +36,9 @@ typedef union DoublewordVector4 {
 typedef float Matrix4[4][4];
 
 
+/* The EE scratchpad (16 KB), where the GS queue and talk packets are built before they are sent. */
+#define SCRATCHPAD_BASE 0x70000000
+
 /* The end of an INTC/DMAC handler (SDK eekernel.h ExitHandler): sync, then re-enable interrupts. */
 #define ExitHandler() __asm__ volatile("sync\n\tei" ::: "memory")
 

@@ -1113,11 +1113,9 @@ void func_001BA358(int value)
   D_0096A2DC = value;
 }
 
-void xglMatrixStackUnit(void);
 void xglMatrixStackRotX(float);
 void xglMatrixStackRotY(float);
 void xglMatrixStackSave(void *);
-void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 void xglVectorCopy_001CC998(Vector4 *destination, const Vector4 *source);
 extern const u64 D_0068F018;
 
@@ -1406,6 +1404,8 @@ void pxyFogPara(PxyFogPara *out, float fogNear, float fogFar, float fogMin, floa
     out->w = (fogFar * fogNear) * (shadeMin - shadeMax) / (fogFar - fogNear);
 }
 
+/* Kept local: xgl_studio.h declares this as returning struct XglCamera *; this file views the camera as its own PxyCamera. */
+PxyCamera *xglStudioSelectGetActiveCamera(int);
 extern AlignedVector4 pxyFogParams;
 void pxyFogPara(PxyFogPara *out, float a, float b, float c, float d);
 
@@ -1414,7 +1414,6 @@ void pxySetFogDist(float fogNear, float fogFar, float fogMin, float fogMax) {
     nmlRenderStatus |= NML_RENDER_FOG;
 }
 
-PxyCamera *xglStudioSelectGetActiveCamera(int);
 void _CurMatrixSet(void *matrix);
 void _CurRotTransPersFog(AlignedVector4 *out, int a0, AlignedVector4 *ptr);
 
@@ -1762,7 +1761,6 @@ float xglPointLength(void *, void *);
 void _ModelCalcClipInitMat1(void *, void *);
 int _ModelCalcClipMat1(void *);
 int nmlModelCalcClipCulling(PxyCamera *, void *);
-void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 void xglVectorScaleXYZ(void *, void *, float);
 void xglVectorAddXYZ_001CCA30(register AlignedVector4 *dst, register AlignedVector4 *first, register AlignedVector4 *second);
 void xglVectorSubXYZ_001CCA68(register AlignedVector4 *dst, register AlignedVector4 *minuend, register AlignedVector4 *subtrahend);
@@ -3466,7 +3464,6 @@ extern int pxyDrawPass;
 extern u16 sRenderDepthBase;
 extern s16 sRenderPsm;
 void func_001CD108(int);
-void xglDirectQueueBegin(void);
 void xglDirectQueueFlush(void);
 void xglDirectQueueFlushWide(void);
 int pxyPartNotInIndexList(PxyPacket *packet, PxyDrawWork *work);
@@ -3481,7 +3478,6 @@ void func_0012B6E0(XglPacket *packet, int, int, int, int);
 void func_0012B770(XglPacket *packet);
 void func_0012BCE8(XglPacket *packet, void *, int);
 void func_0012B9F8(XglPacket *packet, XglQuadword);
-void xglMatrixMul(void *destination, void *left, void *right);
 
 /* Draws the batches of shadow caster `caster` into its shadow texture at frameBase. */
 void pxyDrawShadowCaster(int caster, u32 frameBase)
@@ -4008,9 +4004,6 @@ void pxyDrawMode3Pass(u32 frameBase)
 }
 
 extern u16 sRenderDisplayBase;
-void func_001CD1AC(void);
-void func_001CD160(void);
-void func_001CD134(void);
 void func_001D4180(void);
 
 /* Writes the GS prelude and frame state of batch into the direct queue, then the entries of the batch. */
@@ -4866,7 +4859,6 @@ void pxyDrawSeparateBatches(int mode, u32 frameBase)
 extern PxyCamera *D_0096A2E8;
 extern u16 sRenderFrameBase;
 void xglStudioSelect(int);
-void xglPacketModeReset(void);
 void xglPacketInitVuState(void);
 void xglSetFullScreenScissor(void);
 void pxyClearFrame(int, int);
@@ -5155,7 +5147,7 @@ void xglVectorSubXYZ_001CCA68(register AlignedVector4 *dst, register AlignedVect
 
 void (*D_00645874[])(void) = { 0 };
 void (*D_00645878[])(void) = { 0 };
-void (*D_0064587C[])(void) = { 0 };
+void (*msgFrameHooks[])(void) = { 0 };
 int gifStateEffectHook[] = { 0 };
 void (*pauseDrawHook[])(void) = { 0 };
 int xglRenderGlobalFadeCallback[] = { 0 };

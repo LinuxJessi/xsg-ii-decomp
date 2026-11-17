@@ -1,7 +1,7 @@
 #include "common.h"
 #include "main/tu207.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00274808);
+INCLUDE_ASM("asm/main/nonmatchings/tu207", wrapIntRange);
 
 /* Inclusive range test: lower <= value <= upper. */
 int xglIsInRange(int value, int lower, int upper)
@@ -61,7 +61,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00275D30);
 
 INCLUDE_ASM("asm/main/nonmatchings/tu207", func_00275E08);
 
-int func_00274808(int, int, int);
+int wrapIntRange(int, int, int);
 extern int recordAngle;
 
 /* At stage 2, while updates are not suspended, steps the angle recordAngle by 92 and wraps it into 0..360. */
@@ -69,7 +69,7 @@ void recordStepAngle(int stage)
 {
     if (recordUpdatePaused == 0 && stage == 2) {
         recordAngle += 0x5C;
-        recordAngle = func_00274808(recordAngle, 0, 0x168);
+        recordAngle = wrapIntRange(recordAngle, 0, 0x168);
     }
 }
 

@@ -1,58 +1,111 @@
 #include "common.h"
 #include "main/tu220.h"
-
-/*
- * The message window (main/tu148, msgWindow) as these functions read it: a
- * table of 0x98-byte records. Word 0 of the table holds the index of the record
- * to check (-1 for none); the flags word at record +0x08 and the state word at
- * record +0x24 are the only other fields these functions read.
- */
-struct MsgEntryStatus {
-    int flags;
-    unsigned char unmodeled_04[0x18];
-    int state;
-};
-
-struct MsgEntry {
-    int current_index;
-    unsigned char unmodeled_04[4];
-    struct MsgEntryStatus status;
-    unsigned char unmodeled_28[0x70];
-};
+#include "main/tu242.h"
+#include "main/tu215.h"
+#include "main/tu227.h"
+#include "main/tu238.h"
+#include "main/tu240.h"
 
 int msgWindowGetFirstWord(int *word)
 {
     return *word;
 }
 
-void msgWindowRunRecord(struct MsgEntry *window, int index);
+/* Slot flag bits tested by the message window loops (the unmodeled bits are not named yet). */
+#define MSG_SLOT_FLAG_DONE 0x20
+#define MSG_SLOT_FLAG_PAUSED 0x100
 
-/* Steps the current record unless it is already done or paused in state 2. */
-void msgWindowUpdateCurrent(struct MsgEntry *window)
+/* Steps the current slot unless it is already done or paused in state 2. */
+void msgWindowUpdateCurrent(MsgWindow *window)
 {
     int current;
-    struct MsgEntryStatus *status;
+    MsgSlot *status;
 
-    current = window[0].current_index;
+    current = window->current_index;
     if (current < 0) {
         return;
     }
-    status = &window[current].status;
-    if (status->state == 2) {
-        if (status->flags & 0x20) {
+    status = &window->slots[current];
+    if (status->state == MSG_SLOT_STATE_WINDOW) {
+        if (status->flags & MSG_SLOT_FLAG_DONE) {
             return;
         }
-        if (status->flags & 0x100) {
+        if (status->flags & MSG_SLOT_FLAG_PAUSED) {
             return;
         }
     }
     msgWindowRunRecord(window, current);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu220", msgWindowFindLastActive);
+/* Sets current_index to the last slot with flag 0x1 set (-1 when none is). */
+void msgWindowFindLastActive(MsgWindow *window)
+{
+    MsgSlot *slots = window->slots;
+    int active = window->slots[MSG_SLOT_COUNT - 1].flags & MSG_SLOT_ACTIVE;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu220", msgWindowCompact);
+    window->current_index = MSG_SLOT_COUNT - 1;
+    if (active) {
+        return;
+    }
+    do {
+        window->current_index--;
+    } while (window->current_index >= 0 && !(slots[window->current_index].flags & MSG_SLOT_ACTIVE));
+}
+/* Moves active slots down over inactive ones so the active slots are packed at the front. */
+void msgWindowCompact(MsgWindow *window)
+{
+    MsgSlot *slots = window->slots;
+    int slot;
+    int next;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu220", msgWindowRunRecord);
+    for (slot = 0; slot <= window->current_index && slot < MSG_SLOT_COUNT - 1; slot++) {
+        if (!(slots[slot].flags & MSG_SLOT_ACTIVE)) {
+            for (next = slot + 1; next <= window->current_index && next < MSG_SLOT_COUNT; next++) {
+                if (slots[next].flags & MSG_SLOT_ACTIVE) {
+                    slots[slot] = slots[next];
+                    slots[next].flags = 0;
+                    if (window->current_index == next) {
+                        window->current_index = slot;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu220", msgWindowRunAll);
+/* Runs the close/rewind handler of slot `index` for its state (text, window, timecode, item or choice). */
+void msgWindowRunRecord(MsgWindow *window, int index)
+{
+    MsgSlot *entries = window->slots;
+    MsgSlot *status;
+
+    if (index < 0 || entries[index].flags == 0) {
+        return;
+    }
+    status = &entries[index];
+    switch (status->state) {
+    case MSG_SLOT_STATE_TEXT: interpRewind(status); break;
+    case MSG_SLOT_STATE_WINDOW: msgWindowClose(status); break;
+    case MSG_SLOT_STATE_TIMECODE: timecodeBeginClose(status); break;
+    case MSG_SLOT_STATE_ITEM: msgSlotStartClosing(status); break;
+    }
+}
+
+/* Runs all five slots unless the current one is done or paused. */
+void msgWindowRunAll(MsgWindow *window)
+{
+    int index;
+    int flags;
+
+    flags = window->slots[window->current_index].flags;
+    if (flags & MSG_SLOT_FLAG_DONE) {
+        return;
+    }
+    if (flags & MSG_SLOT_FLAG_PAUSED) {
+        return;
+    }
+    for (index = 0; index < MSG_SLOT_COUNT; index++) {
+        msgWindowRunRecord(window, index);
+    }
+}

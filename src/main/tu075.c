@@ -145,11 +145,10 @@ void uwamonoSetMotion(int index, int motion, float speed);
 void uwamonoSendEvent(int kind, int id, int value);
 void cameraApplyAllSlots(int arg);
 float unduGetSlotHeight(int index, Vector4 *point, int arg2, int arg3, int arg4);
-void func_0028B060(struct XenoActor *actor);
+void XenoActorWrapRotation(struct XenoActor *actor);
 float sinf(float angle);
 float cosf(float angle);
 void Get_MiddlePoint(const Vector4 *first, const Vector4 *second, int current, int total, Vector4 *destination);
-void XenoActorSetFirstWord(struct XenoActor *actor, int word);
 extern float ladderStepHeights[];
 
 void uwamonoLadderApproach(void)
@@ -232,13 +231,11 @@ void uwamonoLadderApproach(void)
 incr:
     ladderFrame = nextFrame;
 done:
-    func_0028B060(actor);
+    XenoActorWrapRotation(actor);
 }
 
 void Get_MiddlePoint_Parabora(const Vector4 *first, const Vector4 *second, int current, int total,
                               float height, Vector4 *destination);
-void XenoActorShiftJoints(struct XenoActor *actor, int, int, int, int);
-void XenoActorSetChannelValue(struct XenoActor *actor, float value);
 
 /* The actor seen from its landing flags: hitFlags is read and written as a bit-field of this view,
  * which also holds the position, so the flag accesses alias the position copy and not the shorts. */
@@ -275,7 +272,7 @@ void uwamonoParabolaMove(void)
         }
         gameWork.exitPhase = 2;
     }
-    func_0028B060(actor);
+    XenoActorWrapRotation(actor);
 }
 
 float Get_Distance(const Vector4 *a, const Vector4 *b);
@@ -387,7 +384,7 @@ finalize:
     XenoActorSetChannelValue(actor, 4.0f);
     uwamonoSetMotion(uwamonoCurrentIndex, 0, 1.0f);
     uwamonoLadderApproach();
-    func_0028B060(actor);
+    XenoActorWrapRotation(actor);
     return 1;
     } while (0);
 }
@@ -617,7 +614,7 @@ void uwamonoLadderMove(void)
         ladderFrame = 0;
         uwamonoLadderState.state = LADDER_STATE_EXIT;
     }
-    func_0028B060(actor);
+    XenoActorWrapRotation(actor);
 }
 
 void uwamonoHaltPursuit(int);

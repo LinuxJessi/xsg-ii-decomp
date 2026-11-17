@@ -2,27 +2,46 @@
 #include "main/tu243.h"
 
 /* The change from start to target divided by divisor, as a float then truncated to int. */
-int func_00286ED0(int start, int target, int divisor) {
+int deltaPerStep(int start, int target, int divisor) {
     return (int) ((float) (target - start) / (float) divisor);
 }
 
-/*
- * Level for a distance: the override value when D_0069DD60 is set; otherwise 45 when
- * |target - start| is under 31 and 23 when it is not.
- */
-INCLUDE_ASM("asm/main/nonmatchings/tu243", func_00286F08);
+/* The ease step override: easeStepOverrideEnabled is its enable flag, easeStepOverrideValue its value (set by easeStepOverrideSet, cleared by easeStepOverrideClear). */
+extern int easeStepOverrideEnabled;
+extern int easeStepOverrideValue;
 
-/* The override: D_0069DD60 is its enable flag, D_0069DD64 its value. */
-extern int D_0069DD60;
-extern int D_0069DD64;
+/* Degrees added per frame to a cosine ease that runs from 0 to 180 degrees (tu227 interpStepCosine, tu238, tu241 count their angle up in these steps). */
+#define ANGLE_STEP_NEAR 45         /* step when the distance is under ANGLE_STEP_NEAR_LIMIT */
+#define ANGLE_STEP_FAR 23          /* step otherwise */
+#define ANGLE_STEP_NEAR_LIMIT 31   /* distance (in the caller's units) below which the near step applies */
+
+/*
+ * Angle step for an ease from start to target: the override value when easeStepOverrideEnabled is set; otherwise
+ * ANGLE_STEP_NEAR when |target - start| is under ANGLE_STEP_NEAR_LIMIT and ANGLE_STEP_FAR when it is not.
+ * __builtin_abs is required for the bytes: the plain `d < 0 ? -d : d` is if-converted, while the
+ * original branches with bltzl (the builtin keeps that shape).
+ */
+int easeAngleStep(int start, int target)
+{
+    int distance = __builtin_abs(target - start);
+    int step = ANGLE_STEP_FAR;
+
+    if (distance < ANGLE_STEP_NEAR_LIMIT) {
+        step = ANGLE_STEP_NEAR;
+    }
+    if (easeStepOverrideEnabled != 0) {
+        return easeStepOverrideValue;
+    }
+    return step;
+}
 
 /* Sets the override value and turns the override on. */
-void func_00286F38(int value) {
-    D_0069DD64 = value;
-    D_0069DD60 = 1;
+void easeStepOverrideSet(int value) {
+    easeStepOverrideValue = value;
+    easeStepOverrideEnabled = 1;
 }
 
 /* Turns the override off. */
-void func_00286F48(void) {
-    D_0069DD60 = 0;
+void easeStepOverrideClear(void) {
+    easeStepOverrideEnabled = 0;
 }

@@ -1,29 +1,28 @@
 #include "common.h"
 #include "main/tu239.h"
 
-/* Message window as msgWindowOverflows reads it. Only the state and the line count are named. */
-struct MsgWindow {
-    unsigned char unmodeled_00[0x1C];
-    int state;
-    unsigned char unmodeled_20[0x2C];
-    int line_count;                 /* +0x4C: text line count, also read by main/tu237 */
-};
-
 /* Overflow test: 1 when the window is active and its text has six lines or more (layout clamps at five). */
-int msgWindowOverflows(struct MsgWindow *window) {
-    if (window->state != 2) {
+int msgWindowOverflows(MsgSlot *window) {
+    if (window->state != MSG_SLOT_STATE_WINDOW) {
         return 0;
     }
-    if (window->line_count < 6) {
+    if (window->u.list.capacity < MSG_WINDOW_OVERFLOW_LINES) {
         return 0;
     }
     return 1;
 }
 
-/* Empty-list layout: when the item count is zero, height 0xA5, x 0x40, y 0x79 and width 0x180. */
-INCLUDE_ASM("asm/main/nonmatchings/tu239", msgWindowSetEmptyLayout);
+/* Empty-list layout: when the filled-slot count is zero, the empty list window position and size. */
+void msgWindowSetEmptyLayout(MsgSlot *window) {
+    if (window->u.list.item_count == 0) {
+        window->x = MSG_LIST_X;
+        window->y = MSG_LIST_Y_EMPTY;
+        window->extent_x = MSG_LIST_WIDTH;
+        window->extent_y = MSG_LIST_HEIGHT_EMPTY;
+    }
+}
 
-/* Row pitch of the message list: rows * 30 pixels (the step used by the list layout). */
+/* Row pitch of the message list: rows * MSG_LIST_ROW_PIXELS pixels (the step used by the list layout). */
 int msgWindowRowPixels(int rows) {
-    return rows * 0x1E;
+    return rows * MSG_LIST_ROW_PIXELS;
 }

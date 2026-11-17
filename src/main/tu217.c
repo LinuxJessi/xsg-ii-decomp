@@ -1,35 +1,41 @@
 #include "common.h"
 #include "main/tu217.h"
+#include "main/tu242.h"
 #include "main/tu228.h"
 
-/* One 0x98-byte record of the message window (main/tu148); word 0 of the
- * window is the index of the current record, -1 for none. */
-typedef struct MsgEntry {
-    int current_index;
-    unsigned char unmodeled_04[4];
-    unsigned char payload[0x90];
-} MsgEntry;
+struct SlotBlock; /* defined in tu226.c; a MsgSlot starts with the block */
 
-int slotBlockSetSlot(void *, int, int);
+/* tu226 defines slotBlockSetSlot as void; int here keeps its result in v0 for the caller below. */
+int slotBlockSetSlot(struct SlotBlock *block, int index, int value);
+void slotBlockSetFirstSlot(struct SlotBlock *block, int value);
 
-/* Forwards two values to the payload of the current record; without a
- * current record it returns the byte offset of the (negative) index. */
-int msgWindowSetCurrentSlot(MsgEntry *window, int first, int second) {
+/* Forwards two values to the slot block of the current slot; without a current slot (index -1)
+ * it returns the byte offset of that index, the product the compiler computes before the test. */
+int msgWindowSetCurrentSlot(MsgWindow *window, int first, int second) {
     int current;
     int offset;
-    unsigned char *payload;
+    MsgSlot *slot;
 
     current = window->current_index;
-    offset = current * sizeof(MsgEntry);
-    payload = (window + current)->payload;
+    offset = current * sizeof(MsgSlot);
+    slot = &window->slots[current];
     if (current >= 0) {
-        return slotBlockSetSlot(payload, first, second);
+        return slotBlockSetSlot((struct SlotBlock *) slot, first, second);
     }
     return offset;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu217", func_0027CBF8);
+/* Sets the first slot of the current record's slot block, if any. */
+void msgWindowSetCurrentFirstSlot(MsgWindow *window, int value) {
+    int current;
+    MsgSlot *slot;
 
+    current = window->current_index;
+    slot = &window->slots[current]; /* address formed before the current >= 0 test, as in the original */
+    if (current >= 0) {
+        slotBlockSetFirstSlot((struct SlotBlock *) slot, value);
+    }
+}
 
 /* Close step of the message window, called from msgClose (main/tu148). */
 void msgWindowActivateTalk(void) {

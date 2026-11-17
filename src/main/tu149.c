@@ -6,8 +6,8 @@
 
 extern PadRecord PadData[];
 
-void func_0027CC58(void *);
-void func_0027CD50(void *, void *, void *, void *, void *);
+void msgWindowOpenNextSlot(void *);
+void msgWindowBindCurrentItems(void *, void *, void *, void *, void *);
 extern unsigned char msgWindow[];
 extern int msgItemNames[];
 extern int msgItemCost[];
@@ -19,8 +19,8 @@ extern int msgBalance;
 
 /* Bind the window to its item tables and to the shown-value word. */
 void msgWindowBindTables(void) {
-    func_0027CC58(msgWindow);
-    func_0027CD50(msgWindow, msgItemNames, msgItemCost, msgItemCount, &msgShownValue);
+    msgWindowOpenNextSlot(msgWindow);
+    msgWindowBindCurrentItems(msgWindow, msgItemNames, msgItemCost, msgItemCount, &msgShownValue);
     msgGameFlagSet();
 }
 

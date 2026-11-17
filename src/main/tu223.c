@@ -1,50 +1,41 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu223.h"
+#include "main/tu240.h"
+#include "main/tu241.h"
 #include "main/tu244.h"
 
-void timecodeInit();
-void timecodeTickIfActive(void *, int, int, int, int);
-void timecodeSetFlag04(void *);
-void timecodeSetValueB(void *, int);
-void timecodeSetMode(void *, int);
-void timecodeSetIndex();
-void timecodeSetFrames(void *, long long);
+void timecodeSetFrames(MsgSlot *, long long); /* tu241 */
 
 /* Starts the timeline at a frame count (30 per second); returns 0 while the busy bit is set. */
-int timecodeStartAtFrame(int *state, int frame) {
-    if (*state & 1) {
+int timecodeStartAtFrame(MsgSlot *state, int frame) {
+    if (state->flags & MSG_SLOT_ACTIVE) {
         return 0;
     }
-    timecodeInit();
+    timecodeInit(state);
     timecodeTickIfActive(state, 0xB8, 0xB6, 0x90, 0x54);
-    sizedRecordSetValue(state, 0x7FFFFF);
+    sizedRecordSetValue(state, MSG_SLOT_FRONT_Z);
     timecodeSetFrames(state, frame);
-    timecodeSetFlag04(state);
+    timecodeStartOpening(state);
     timecodeSetMode(state, 0);
     timecodeSetIndex(state, 4);
-    timecodeSetValueB(state, 2);
+    timecodeSetEditable(state, 2);
     return 1;
 }
 
-void msgChoiceSetIndex(void) {
-    timecodeSetIndex();
+void msgChoiceSetIndex(MsgSlot *slot, int index) {
+    timecodeSetIndex(slot, index);
 }
 
-void func_00285B18();
-
-void func_0027D9D8(void) {
-    func_00285B18();
+/* Forwarders of tu148 (step is +1 or -1; see tu241 for the callees). */
+void func_0027D9D8(MsgSlot *choice, int step) {
+    timecodeStepPhase(choice, step);
 }
 
-void func_00285BF8();
-
-void func_0027D9F0(void) {
-    func_00285BF8();
+void func_0027D9F0(MsgSlot *choice, int step) {
+    timecodeStart(choice, step);
 }
 
-long long timecodeGetFrames();
-
-void msgChoiceGetFrames(void) {
-    timecodeGetFrames();
+long long msgChoiceGetFrames(MsgSlot *choice) {
+    return timecodeGetFrames(choice);
 }

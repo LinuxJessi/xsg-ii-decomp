@@ -1,40 +1,80 @@
 #include "common.h"
+#include "main/tu234.h"
+#include "main/tu236.h"
 
-/* Message window object (the msgWindow window of main/tu148 and main/tu149). Only the fields these
- * functions touch are modelled. The window's list (list at +0x28, main/tu238) starts at +0x28, so the
- * word at +0x4C is also the list's capacity (written by msgWindowBindItems); see the notes of the proposal. */
-typedef struct MsgWindow {
-    unsigned char unmodeled_00[0x1C];
-    int state;                       /* +0x1C: 2 = window active; every entry point tests it */
-    unsigned char unmodeled_20[0x0C];
-    int text;                        /* +0x2C: text pointer; textMaxLineWidth measures its width */
-    unsigned char unmodeled_30[0x1C];
-    int line_count;                  /* +0x4C: line count of the text (func_00282D50) */
-} MsgWindow;
-
-int func_00282D50(int text);
-void msgWindowLayoutSize(MsgWindow *window);
-void msgWindowCenter(MsgWindow *window);
+void msgWindowCenter(MsgSlot *window);
 
 /* Stores a new text for an active window, its line count, then sizes and centres the window. */
-void msgWindowSetText(MsgWindow *window, int text)
+void msgWindowSetText(MsgSlot *window, int text)
 {
-    if (window->state == 2) {
-        window->text = text;
-        window->line_count = func_00282D50(text);
+    if (window->state == MSG_SLOT_STATE_WINDOW) {
+        window->u.list.text = text;
+        window->u.list.capacity = textCountLinesOf(text);
         msgWindowLayoutSize(window);
         msgWindowCenter(window);
     }
 }
 
-/* Binds the item list of the window (func_0027CD50 in main/tu218): ready flag, cost table, count table, total. */
-INCLUDE_ASM("asm/main/nonmatchings/tu236", msgWindowBindItems);
+/* Binds the item list of the window (msgWindowBindCurrentItems in main/tu218): source, cost table, count table and debt
+ * word, the 40-entry capacity, then counts the filled slots and sizes and places the list window. */
+void msgWindowBindItems(MsgSlot *window, char **source, int *costs, int *counts, int *debt)
+{
+    MsgSlotList *list = &window->u.list;
 
-/* Window size: height = min(line_count, 5) * 30 + 64, width = max(text width + 64, 100). */
-INCLUDE_ASM("asm/main/nonmatchings/tu236", msgWindowLayoutSize);
+    if (window->state == MSG_SLOT_STATE_WINDOW) {
+        window->u.list.list_source = source;
+        window->u.list.item_costs = costs;
+        window->u.list.counts = counts;
+        window->u.list.debt = debt;
+        window->u.list.list_active = 1;
+        window->u.list.capacity = MSG_LIST_CAPACITY;
+        list->item_count = sellCountFilledSlots(list->counts);
+        msgWindowSizeList(window);
+        msgWindowPlaceList(window);
+    }
+}
+
+/* Window size: height = min(capacity, 5 rows) * row pitch + frame, width = max(text width + frame, minimum width). */
+void msgWindowLayoutSize(MsgSlot *window)
+{
+    int lines = window->u.list.capacity;
+    int width;
+
+    if (lines > MSG_LIST_VISIBLE_ROWS) {
+        lines = MSG_LIST_VISIBLE_ROWS;
+    }
+    window->extent_y = lines * MSG_LIST_ROW_PIXELS + MSG_LIST_FRAME_PIXELS;
+    width = textMaxLineWidth(window) + MSG_LIST_FRAME_PIXELS;
+    if (width < MSG_LIST_MIN_WIDTH) {
+        width = MSG_LIST_MIN_WIDTH;
+    }
+    window->extent_x = width;
+}
 
 /* List height and width: 0xFE or 0xA5 by whether the item count is nonzero, width 0x180. */
-INCLUDE_ASM("asm/main/nonmatchings/tu236", msgWindowSizeList);
+void msgWindowSizeList(MsgSlot *window)
+{
+    int count = sellCountFilledSlots(window->u.list.counts);
+
+    if (count != 0) {
+        window->extent_x = MSG_LIST_WIDTH;
+        window->extent_y = MSG_LIST_HEIGHT_FILLED;
+    } else {
+        window->extent_x = MSG_LIST_WIDTH;
+        window->extent_y = MSG_LIST_HEIGHT_EMPTY;
+    }
+}
 
 /* List position: x = 0x40, y = 0x79 or 0x51 by whether the item count is nonzero. */
-INCLUDE_ASM("asm/main/nonmatchings/tu236", msgWindowPlaceList);
+void msgWindowPlaceList(MsgSlot *window)
+{
+    int count = sellCountFilledSlots(window->u.list.counts);
+
+    if (count != 0) {
+        window->x = MSG_LIST_X;
+        window->y = MSG_LIST_Y_FILLED;
+    } else {
+        window->x = MSG_LIST_X;
+        window->y = MSG_LIST_Y_EMPTY;
+    }
+}
