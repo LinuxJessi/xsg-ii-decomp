@@ -566,7 +566,60 @@ void enemyCursorOpen(Ov01Object *unit)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", enemyCursorStep);
+/* Frames each status stays in the enemy cursor; statBitValueGet's result when the bit is not set. */
+#define ENEMY_CURSOR_FRAMES 30
+#define STAT_BIT_NONE -1
+
+/*
+ * Every ENEMY_CURSOR_FRAMES frames moves the enemy cursor to the next status bit unit has (from the bit after the
+ * shown one, over the rows from the shown row on, then the shown row again from bit 1) and shows its text
+ * (tableStringGet), or no text when none is set.
+ */
+void enemyCursorStep(Ov01Object *unit)
+{
+    int i;
+    int row;
+    int bit;
+    int value;
+
+    if (enemyCursorTimer <= 0) {
+        enemyCursorTimer = ENEMY_CURSOR_FRAMES;
+        enemyCursorBit <<= 1;
+        value = STAT_BIT_NONE;
+        for (i = 0; i < STAT_BIT_ROWS; i++) {
+            row = (enemyCursorRow + i) % STAT_BIT_ROWS;
+            for (bit = enemyCursorBit; bit & 0xFFFF; bit <<= 1) {
+                value = statBitValueGet(unit, row, bit);
+                if (value != STAT_BIT_NONE) {
+                    enemyCursorRow = row;
+                    enemyCursorBit = bit;
+                    break;
+                }
+            }
+            if (value != STAT_BIT_NONE) {
+                break;
+            }
+            enemyCursorBit = 1;
+        }
+        if (value == STAT_BIT_NONE) {
+            row = enemyCursorRow;
+            for (bit = enemyCursorBit; bit & 0xFFFF; bit <<= 1) {
+                value = statBitValueGet(unit, row, bit);
+                if (value != STAT_BIT_NONE) {
+                    enemyCursorRow = row;
+                    enemyCursorBit = bit;
+                    break;
+                }
+            }
+        }
+        if (value != STAT_BIT_NONE) {
+            enemyCursorPages[0] = tableStringGet(value, 1);
+        } else {
+            enemyCursorPages[0] = 0;
+        }
+    }
+    enemyCursorTimer--;
+}
 
 void objCurRemove(void)
 {
