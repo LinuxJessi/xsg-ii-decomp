@@ -15,7 +15,7 @@ void *vmEntryGet(struct SbThread *thread, int index);
 int vmSubEntryGet(struct SbThread *thread, int index, int subIndex);
 void func_00A9F2E0(struct SbThread *thread, int pc);
 
-int monsTblGet(void);
+void *monsTblGet(void);
 int posDataGet(void);
 int cameraSettingGet(void);
 

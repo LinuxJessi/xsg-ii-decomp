@@ -94,8 +94,8 @@ int ov01SceneIsDone(void);
 /*
  * Scene frame loop: each frame runs the update and draw passes (scripts, objects, camera, actors, effects, text
  * and messages) unless the wait hook func_00A9A138 holds it, counts ov01SceneFrames, and ends when the scene is
- * done or the soft-reset combination is pressed (ov01SoftResetPressed; that sets CONTROL_SOFT_RESET and stops the gif
- * effect).
+ * done or the soft-reset combination is pressed (ov01SoftResetPressed; that sets CONTROL_SOFT_RESET and stops the
+ * gif effect).
  */
 void ov01SceneLoop(void)
 {

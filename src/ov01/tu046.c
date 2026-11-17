@@ -3,6 +3,7 @@
  */
 #include "common.h"
 #include "main/sef.h"
+#include "ov01/tu020.h"
 #include "ov01/tu022.h"
 #include "ov01/tu017.h"
 #include "ov01/tu023.h"
@@ -167,13 +168,51 @@ int posDataGet(void)
     return posDataEntry;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu046", monsTblSet);
+/* The monster table entry monsTblSet selected (the enemy list, an array of spawn records); monsTblGet returns it.
+ * While monsTblSet works it is its cursor over the candidate list, entries {table, value}. */
+extern int *monsTblEntry;
 
-/* Entry monsTblSet selects: the first one whose word is zero; monsTblGet returns it. */
-extern int monsTblEntry;
+/* At most this many candidates in a monster table list (the list ends at an entry whose table word is 0). */
+#define MONS_TBL_CANDIDATES_MAX 1000
+
+/*
+ * Native monsTblSet(list, choice): counts the candidates of global list `list` (entries {table, value}, ended by a
+ * zero table word), takes candidate `choice` (0 when out of range), passes its value to monsTblValueSet and selects
+ * the first entry of its table. Jumps to SB_JUMP_ARGUMENTS without two arguments or candidates.
+ */
+int monsTblSet(SbThread *thread)
+{
+    int count;
+    int choice;
+    int *entry;
+
+    if (VM_PLUGIN_CNT_GET(thread) < 2) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    for (count = 0; count < MONS_TBL_CANDIDATES_MAX; count++) {
+        monsTblEntry = (int *)vmSubEntryGet(thread, vmArgGet(thread, 1), count);
+        if (monsTblEntry[0] == 0) {
+            break;
+        }
+    }
+    if (count <= 0) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    choice = vmArgGet(thread, 2);
+    if (choice >= count) {
+        choice = 0;
+    }
+    entry = (int *)vmSubEntryGet(thread, vmArgGet(thread, 1), choice);
+    monsTblEntry = entry;
+    monsTblValueSet(entry[1]);
+    monsTblEntry = (int *)vmSubEntryGet(thread, monsTblEntry[0], 0);
+    return 1;
+}
 
 /* Returns the monster table entry monsTblSet selected. */
-int monsTblGet(void)
+void *monsTblGet(void)
 {
     return monsTblEntry;
 }
