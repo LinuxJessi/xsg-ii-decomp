@@ -284,7 +284,61 @@ Ov01Object *unitPairPartnerFind(Ov01Object *unit, int value)
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93128);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93168);
+/* A unit command request (func_00A96510, func_00A94260): the unit, the command and its words. */
+typedef struct UnitCmdRequest {
+    Ov01Object *unit;
+    int command;
+    int words[3];
+} UnitCmdRequest;
+
+/* Queues the unit command of request (the mode, effect and activity commands; others are ignored). The mode
+ * dispatch takes words 1 and 2 of the request and the face target. When the running command and the new one
+ * are both mode or effect commands, the running one is dropped first. */
+void unitCmdRequestQueue(Ov01Object **faceTarget, UnitCmdRequest *request)
+{
+    Ov01Command command;
+    Ov01Command *current;
+
+    switch (request->command) {
+    case UNIT_CMD_MODE_DISPATCH:
+        command.command = UNIT_CMD_MODE_DISPATCH;
+        command.code = request->words[1];
+        command.arg.wait = request->words[2];
+        if (faceTarget != 0) {
+            command.faceTarget = *faceTarget;
+        } else {
+            command.faceTarget = 0;
+        }
+        break;
+    case UNIT_CMD_HOVER_EFFECT:
+        command.command = UNIT_CMD_HOVER_EFFECT;
+        break;
+    case UNIT_CMD_JUMP_EFFECT:
+        command.command = UNIT_CMD_JUMP_EFFECT;
+        break;
+    case UNIT_CMD_CLEAR_ACTIVE:
+        command.command = UNIT_CMD_CLEAR_ACTIVE;
+        break;
+    case UNIT_CMD_PHASE_2B_WAIT:
+        command.command = UNIT_CMD_PHASE_2B_WAIT;
+        break;
+    case UNIT_CMD_DEACTIVATE:
+        command.command = UNIT_CMD_DEACTIVATE;
+        break;
+    default:
+        return;
+    }
+    current = dataLookupCurrent(&request->unit->commandQueue);
+    if (current != 0
+        && (current->command == UNIT_CMD_MODE_DISPATCH || current->command == UNIT_CMD_MODE_START
+            || current->command == UNIT_CMD_HOVER_EFFECT || current->command == UNIT_CMD_MOVE_RATIO)) {
+        if (request->command == UNIT_CMD_MODE_DISPATCH || request->command == UNIT_CMD_MODE_START
+            || request->command == UNIT_CMD_HOVER_EFFECT) {
+            dataLookupNext(&request->unit->commandQueue);
+        }
+    }
+    unitQueueAppend(request->unit, &command);
+}
 
 int func_00A951D8(int, void *);
 

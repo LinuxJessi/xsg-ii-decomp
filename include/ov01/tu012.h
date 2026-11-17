@@ -13,6 +13,9 @@
 
 /* Command-table indices (unitCommandTable in src/ov01/tu012.c) that the unit move and mode handlers store as step status. */
 enum {
+    UNIT_CMD_MODE_DISPATCH = 0x0A,
+    UNIT_CMD_JUMP_EFFECT = 0x0B,    /* func_00A85EA0: issues UNIT_CMD_MOVE_CHA_JUMP and effect 0xB */
+    UNIT_CMD_HOVER_EFFECT = 0x0C,   /* func_00A85F30: issues UNIT_CMD_MOVE_CHA_HOVER and effect 0xC */
     UNIT_CMD_MOVE_CHA_RUN = 0x16,
     UNIT_CMD_MOVE_POS_JUMP = 0x17,
     UNIT_CMD_MOVE_CHA_JUMP = 0x18,
@@ -20,6 +23,9 @@ enum {
     UNIT_CMD_MOVE_POS_HOVER = 0x1A,
     UNIT_CMD_MODE_RAMP = 0x1B,
     UNIT_CMD_MOVE_RATIO = 0x1C,
+    UNIT_CMD_CLEAR_ACTIVE = 0x20,
+    UNIT_CMD_PHASE_2B_WAIT = 0x21,
+    UNIT_CMD_DEACTIVATE = 0x22,     /* func_00A86CB0: clears UNIT_FLAG_ACTIVE */
     UNIT_CMD_MODE_START = 0x27
 };
 

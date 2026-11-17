@@ -1920,7 +1920,7 @@
       "asm/nonmatchings/ov01/tu033/func_00A92E30.s",
       "asm/nonmatchings/ov01/tu033/unitPairPartnerFind.s",
       "asm/nonmatchings/ov01/tu033/func_00A93128.s",
-      "asm/nonmatchings/ov01/tu033/func_00A93168.s",
+      "asm/nonmatchings/ov01/tu033/unitCmdRequestQueue.s",
       "asm/nonmatchings/ov01/tu033/func_00A93288.s",
       "asm/nonmatchings/ov01/tu033/func_00A932E0.s",
       "asm/nonmatchings/ov01/tu033/eventQueueNext.s",
