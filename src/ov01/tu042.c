@@ -320,7 +320,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu042", thinkDispatch);
 
 /* thinkSendEnd: queues the think-end record for the unit (cmdListSet), then ends the
  * target selection mode (tgtSelectModeEnd); used by thinkSet and thinkSetEnd. */
-void thinkSendEnd(void *unit)
+void thinkSendEnd(Ov01Object *unit)
 {
     CmdListBody command;
 
@@ -331,21 +331,11 @@ void thinkSendEnd(void *unit)
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BF08);
 
-/* The script attack table the native atkTblGet reads: a row count, then
- * rows of two words. */
-typedef struct AtkTblRow {
-    int key;   /* +0x00: atkTblGet field 1 */
-    int value; /* +0x04: atkTblGet field 2 */
-} AtkTblRow;
-
-typedef struct AtkTbl {
-    int count;          /* +0x00: atkTblGet field 0 (any other field) */
-    AtkTblRow rows[1];  /* +0x04: extent given by count */
-} AtkTbl;
-
 /* Field `field` of row `index` of the attack table (native atkTblGet). */
 int atkTblFieldGet(int field, AtkTbl *table, int index)
 {
+    /* index[table->rows] rather than table->rows[index]: the plain form swaps the operands of the addu that forms
+     * the row address (0x00A9C084 and 0x00A9C090); only the reversed form keeps the original order. */
     switch (field) {
     case 1:
         return index[table->rows].key;

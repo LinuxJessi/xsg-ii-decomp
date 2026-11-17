@@ -19,20 +19,19 @@
 #include "ov01/tu038.h"
 #include "ov01/tu042.h"
 #include "ov01/tu044.h"
+#include "ov01/tu046.h"
 #include "ov01/tu054.h"
 #include "ov01/tu066.h"
 #include "ov01/tu071.h"
 
-int VM_PLUGIN_CNT_GET();
-int vmArgGet(int, int);
 
-/* Passes the low halfword of vmArgGet(call, 1) to dataVPadSet; with no plugin loaded it calls sbChainSetValue(call, 2) and returns 0. */
-int VPadSet(int call)
+/* Passes the low halfword of vmArgGet(call, 1) to dataVPadSet; with no plugin loaded it calls sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS) and returns 0. */
+int VPadSet(SbThread *call)
 {
     int padBits;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     padBits = vmArgGet(call, 1);
@@ -43,10 +42,8 @@ int VPadSet(int call)
 #include "shared.h"
 
 int msgPutObject(int, int, int, int, int, int);
-int vmArgTagIsZero(int, int);
-int vmKeyedEntryGet(int, int);
 
-int msgPut(int call)
+int msgPut(SbThread *call)
 {
     int index;
     int slot;
@@ -57,8 +54,8 @@ int msgPut(int call)
     int yIsDefault;
     int sizeIsGiven;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 3) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     posX = 0x3C;
@@ -99,12 +96,12 @@ extern Vector4 runtimePos;
 extern Vector4 runtimeDir;
 
 /* Script command: fills the runtime position and direction vectors from arguments 2 to 8, then copies them to units as flags ask. */
-int runtimeSetFog(int call)
+int runtimeSetFog(SbThread *call)
 {
     int flags;
 
-    if (VM_PLUGIN_CNT_GET() < 8) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 8) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     flags = vmArgGet(call, 1);
@@ -188,13 +185,13 @@ void runtimeVecPtrGet(void **pos, void **dir)
     *dir = &runtimeDir;
 }
 
-int setMoveCmd(int call)
+int setMoveCmd(SbThread *call)
 {
     struct BattleState *block;
     int moveCmd;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
-        sbChainSetValue(call, 2);
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     block = battleStateGet();
@@ -247,13 +244,13 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu047", pari);
 
 int partyDataGetSlot(int, int);
 
-int partyDataGet(int call)
+int partyDataGet(SbThread *call)
 {
     int partyIndex;
     int slot;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     partyIndex = vmArgGet(call, 1);
@@ -262,14 +259,14 @@ int partyDataGet(int call)
 }
 
 
-int partyDataSet(int call)
+int partyDataSet(SbThread *call)
 {
     int partyIndex;
     int slot;
     int value;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 3) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     partyIndex = vmArgGet(call, 1);
@@ -291,13 +288,13 @@ struct PlPosEntry {
 
 PlPosEntry *ov01PartyListGet();
 
-int plPosInit(int call)
+int plPosInit(SbThread *call)
 {
     int entryIndex;
     PlPosEntry *entries;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     entryIndex = vmArgGet(call, 1);
@@ -308,14 +305,14 @@ int plPosInit(int call)
 
 /* Native plDirInit: sets the direction of party entry argument 1 to argument 2,
  * brought into 0..360 degrees. */
-int plDirInit(int call)
+int plDirInit(SbThread *call)
 {
     int entryIndex;
     PlPosEntry *entries;
     int direction;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     entryIndex = vmArgGet(call, 1);
@@ -336,12 +333,12 @@ Ov01Object *unitEnCreate(int id);
 /* Native unitCreate: creates enemy unit argument 1, loads snapshot argument 2,
  * turns it to argument 3 degrees and stores arguments 4 and 5 in its stat block
  * (field_f8, field_fc); returns the unit, or 0 when it could not be created. */
-int unitCreate(int call)
+int unitCreate(SbThread *call)
 {
     Ov01Object *unit;
 
-    if (VM_PLUGIN_CNT_GET() < 5) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 5) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unit = unitEnCreate(vmArgGet(call, 1));
@@ -357,12 +354,12 @@ int unitCreate(int call)
 }
 
 
-int unitLoad(int call)
+int unitLoad(SbThread *call)
 {
     int unitIndex;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -386,13 +383,13 @@ void unitBindActors(Ov01Object *unit, struct DataSlot *slot);
 
 /* Native unitBind: binds unit (argument 2) to the data slot of argument 1, fades it
  * in and starts the slot's load; 0 when the slot is not found. */
-int unitBind(int call)
+int unitBind(SbThread *call)
 {
     struct DataSlot *slot;
     Ov01Object *unit;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     slot = dataSlotFind(vmArgGet(call, 1));
@@ -409,13 +406,13 @@ int unitBind(int call)
 }
 
 /* Native unitBind2: unitBind with unitUnbind in place of the fade-in. */
-int unitBind2(int call)
+int unitBind2(SbThread *call)
 {
     struct DataSlot *slot;
     Ov01Object *unit;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     slot = dataSlotFind(vmArgGet(call, 1));
@@ -433,14 +430,14 @@ int unitBind2(int call)
 
 void arrowCreate(int, int, int);
 
-int arrowOn(int call)
+int arrowOn(SbThread *call)
 {
     int index;
     int slot;
     int value;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 3) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     index = vmArgGet(call, 1);
@@ -459,10 +456,10 @@ int arrowOff(void)
 
 extern int bgmIndex;
 
-int bgmPlay(int call)
+int bgmPlay(SbThread *call)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     bgmIndex = vmArgGet(call, 1);
@@ -513,15 +510,15 @@ void ETGet(void) {
 void *unitTblEntryGet(int);
 int unitIsInFacingArc(void *, void *);
 
-int unitDirChk(int call)
+int unitDirChk(SbThread *call)
 {
     void *unit;
     void *target;
     int unitIndex;
     int targetIndex;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -534,10 +531,10 @@ int unitDirChk(int call)
 extern int D_00AE0C2C;
 extern int D_00AE0C30;
 
-int runEffSet(int call)
+int runEffSet(SbThread *call)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     D_00AE0C2C = 0x140;
@@ -554,10 +551,10 @@ void runEffGet(int *first, int *second)
 
 void decoFlagsSetAll(void);
 
-int decoDisp(int call)
+int decoDisp(SbThread *call)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     if (vmArgGet(call, 1) == 0) {
@@ -569,10 +566,10 @@ int decoDisp(int call)
 }
 
 
-int decoDisp2(int call)
+int decoDisp2(SbThread *call)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     if (vmArgGet(call, 1) == 0) {
@@ -585,7 +582,7 @@ int decoDisp2(int call)
 
 void textWindowShow(int, int, int, int, int);
 
-int namePut(int call)
+int namePut(SbThread *call)
 {
     int index;
     int slot;
@@ -594,8 +591,8 @@ int namePut(int call)
     int mode;
     int raw;
 
-    if (VM_PLUGIN_CNT_GET() < 5) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 5) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     raw = vmArgGet(call, 4);
@@ -609,13 +606,13 @@ int namePut(int call)
 }
 
 /* Native objx: sets the scale of unit argument 1 to argument 2 percent on all three axes. */
-int objx(int call)
+int objx(SbThread *call)
 {
     UnitTblEntry *unit;
     float scale;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unit = unitTblEntryGet(vmArgGet(call, 1));
@@ -627,13 +624,13 @@ int objx(int call)
 }
 
 
-int streamPlay(int call)
+int streamPlay(SbThread *call)
 {
     int streamId;
     int streamHandle;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     streamId = vmArgGet(call, 1);
@@ -646,13 +643,13 @@ int streamPlay(int call)
 
 int unitGetAngleDegrees(int);
 
-int unitDirGet(int call)
+int unitDirGet(SbThread *call)
 {
     int unitIndex;
     int unit;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -662,13 +659,13 @@ int unitDirGet(int call)
 
 float unitDefArea(int);
 
-int unitDefAreaGet(int call)
+int unitDefAreaGet(SbThread *call)
 {
     int unitIndex;
     int unit;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -677,13 +674,13 @@ int unitDefAreaGet(int call)
 }
 
 
-int cfFlagSet(int call)
+int cfFlagSet(SbThread *call)
 {
     int flags;
     int bits;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
-        sbChainSetValue(call, 2);
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     flags = cfEventGet();
@@ -694,13 +691,13 @@ int cfFlagSet(int call)
 
 
 /* Script command: code 0x5A starts the BGM fade through func_001EDC20; any other code goes to soundSlotSetVolume with its value. */
-int runtimeBgmFade(int call)
+int runtimeBgmFade(SbThread *call)
 {
     int code;
     int value;
 
     if (VM_PLUGIN_CNT_GET(call) < 2) {
-        sbChainSetValue(call, 2);
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     code = vmArgGet(call, 1);
@@ -714,14 +711,14 @@ int runtimeBgmFade(int call)
 }
 
 /* The second argument is the frame count passed to unitFadeTo (ov01/tu018). */
-int unitFade(int call)
+int unitFade(SbThread *call)
 {
     Ov01Object *unit;
     int unitIndex;
     int frames;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -732,14 +729,14 @@ int unitFade(int call)
 }
 
 /* Partial views of a stock slot: the detail pointer at +0x144 and the count at +0x62. */
-s16 stockGet(int call)
+s16 stockGet(SbThread *call)
 {
     s16 key;
     StatOwner *owner;
     int slot;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
-        sbChainSetValue(call, 2);
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     key = 0;
@@ -758,8 +755,8 @@ int unitMotWait(int call, int *waiting)
     Ov01Object *unit;
     int unitIndex;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -783,14 +780,14 @@ struct PartsUnit {
     int parts;                             /* +0x1D0 */
 };
 
-int partsHide(int call)
+int partsHide(SbThread *call)
 {
     int unitIndex;
     int parts;
     int value;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -802,14 +799,14 @@ int partsHide(int call)
 
 void XenoActorShowPart(int, int);
 
-int partsShow(int call)
+int partsShow(SbThread *call)
 {
     int unitIndex;
     int parts;
     int value;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -827,12 +824,12 @@ extern PadRecord PadData;
 
 /* Native sampPadRead: the d-pad bits of pad 0 - pressed (argument 1), repeated
  * (2) or held (any other value). */
-int sampPadRead(int call)
+int sampPadRead(SbThread *call)
 {
     int value;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     switch (vmArgGet(call, 1)) {
@@ -850,15 +847,15 @@ int sampPadRead(int call)
 }
 
 
-int sampFontPut(int call)
+int sampFontPut(SbThread *call)
 {
     int index;
     int slot;
     int raw;
     int key;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 3) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     index = vmArgGet(call, 1);

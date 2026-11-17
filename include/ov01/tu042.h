@@ -59,6 +59,24 @@ struct TableKeyRecord {
     unsigned char firstId;         /* +0x0D: the data box id of the first pair */
 };
 
+/* The script attack table the natives atkTbl and atkTblGet (tu046) take from the image's globals: a row count,
+ * then rows of two words. */
+typedef struct AtkTblRow {
+    int key;   /* +0x00: atkTblGet field 1 */
+    int value; /* +0x04: atkTblGet field 2 */
+} AtkTblRow;
+
+typedef struct AtkTbl {
+    int count;          /* +0x00: atkTblGet field 0 (any other field) */
+    AtkTblRow rows[1];  /* +0x04: extent given by count */
+} AtkTbl;
+
+struct Ov01Object;
+
+int atkTblFieldGet(int field, AtkTbl *table, int index);
+int func_00A9BF08(struct Ov01Object *unit, AtkTbl *table, int value);
+void thinkSendEnd(struct Ov01Object *unit);
+
 /* Table and record prototypes. */
 UnitExpEntry *unitExpTblGet(void);
 GrowthRecord *func_00A9B6E8(int index);

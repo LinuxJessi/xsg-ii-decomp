@@ -3708,7 +3708,7 @@
    "0x00a9cb48": "sbSlotFind",
    "0x00a9cb88": "sbSlotStore",
    "0x00a9cc40": "sbSlotRemove",
-   "0x00a9cc70": "sbChainSetValue",
+   "0x00a9cc70": "sbSlotJumpRequest",
    "0x00a9cc80": "sbSlotJump",
    "0x00a9cd70": "sbFatal",
    "0x00a9cdb0": "sbNativeOwnerAdd",

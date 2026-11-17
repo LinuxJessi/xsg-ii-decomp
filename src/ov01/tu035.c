@@ -5,6 +5,7 @@
 #include "ov01/tu012.h"
 #include "ov01/tu023.h"
 #include "ov01/tu035.h"
+#include "ov01/tu042.h"
 
 typedef struct TgtSlot TgtSlot;
 
@@ -53,7 +54,6 @@ extern int tgtSelectStatus;
 extern int tgtSelectMode;
 void *memset(void *s, int c, unsigned int n);
 void func_00A9BCC8(int selector, void *object);
-void thinkSendEnd(int value);
 void tgtSelectActivate(void);
 void tgtSelectBegin(void);
 void tgtSelectCursor(int inputHandled);

@@ -2779,7 +2779,7 @@
       "asm/nonmatchings/ov01/tu044/sbSlotFind.s",
       "asm/nonmatchings/ov01/tu044/sbSlotStore.s",
       "asm/nonmatchings/ov01/tu044/sbSlotRemove.s",
-      "asm/nonmatchings/ov01/tu044/sbChainSetValue.s",
+      "asm/nonmatchings/ov01/tu044/sbSlotJumpRequest.s",
       "asm/nonmatchings/ov01/tu044/sbSlotJump.s",
       "asm/nonmatchings/ov01/tu044/func_00A9CD30.s",
       "asm/nonmatchings/ov01/tu044/sbFatal.s",
