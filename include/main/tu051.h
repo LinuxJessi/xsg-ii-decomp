@@ -46,7 +46,10 @@ struct XenoActor {
     int drawFlags;                          /* 0x0BC: 0x4 hides the actor, 0x08000000 draws it translucent */
     float alpha;                            /* 0x0C0 */
     int drawMode;                           /* 0x0C4: 1 while attached as a part (uwamonoAttachPlayerParts) */
-    unsigned char unmodeled_0c8[0x150 - 0xC8];
+    unsigned char unmodeled_0c8[0x140 - 0xC8];
+    float focusX;                           /* 0x140: focus offset, damped by cfeDampDirOffset */
+    float focusY;                           /* 0x144 */
+    unsigned char unmodeled_148[0x150 - 0x148];
     float moveAngle;                        /* 0x150: XenoActorUpdateMoveState advances it to 1 (xenoActor.c names) */
     float moveVelocity;                     /* 0x154 */
     float shadowValue;                      /* 0x158 */
@@ -78,7 +81,9 @@ struct XenoActor {
     unsigned char unmodeled_61c[0x640 - 0x61C];
     int channel[4];                         /* 0x640: the tiMRPackage channel block (xenoActor.c handle640) */
     XenoMotionState motion[2];              /* 0x650, 0x6A0: the TiMRPackage states A and B of the channel block */
-    unsigned char unmodeled_6f0[0x740 - 0x6F0];
+    unsigned char unmodeled_6f0[0x710 - 0x6F0];
+    struct XenoHrc *table;                  /* 0x710: the joint table XenoActorGetHrcPoint reads */
+    unsigned char unmodeled_714[0x740 - 0x714];
     unsigned char hitBuffer[8];             /* 0x740: the result block of mapMoveProbe */
     unsigned short hitFlags;                /* 0x748 */
     unsigned short groundFlags;             /* 0x74A: 0x10 while on a slope */
@@ -99,6 +104,7 @@ struct XenoActor {
     union {
         int kind;                           /* 0x798: 0x10000..0x13FFF for an ES (the mecha the party rides) */
     };
+    int state;                              /* 0x79C: written by XenoActorSetState; XenoActorDrawMotion reads it and clears it */
 };
 
 /* The motion number table of a map object (+0x4078: one entry per walk mode). */

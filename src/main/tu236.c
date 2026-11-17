@@ -7,7 +7,7 @@ void msgWindowCenter(MsgSlot *window);
 /* Stores a new text for an active window, its line count, then sizes and centres the window. */
 void msgWindowSetText(MsgSlot *window, int text)
 {
-    if (window->state == MSG_SLOT_STATE_LIST) {
+    if (window->state == MSG_SLOT_STATE_WINDOW) {
         window->u.list.text = text;
         window->u.list.capacity = textCountLinesOf(text);
         msgWindowLayoutSize(window);
@@ -15,17 +15,17 @@ void msgWindowSetText(MsgSlot *window, int text)
     }
 }
 
-/* Binds the item list of the window (msgWindowBindCurrentItems in main/tu218): source, cost table, count table and extra
+/* Binds the item list of the window (msgWindowBindCurrentItems in main/tu218): source, cost table, count table and debt
  * word, the 40-entry capacity, then counts the filled slots and sizes and places the list window. */
-void msgWindowBindItems(MsgSlot *window, int source, int costs, int *counts, int extra)
+void msgWindowBindItems(MsgSlot *window, char **source, int *costs, int *counts, int *debt)
 {
     MsgSlotList *list = &window->u.list;
 
-    if (window->state == MSG_SLOT_STATE_LIST) {
+    if (window->state == MSG_SLOT_STATE_WINDOW) {
         window->u.list.list_source = source;
         window->u.list.item_costs = costs;
         window->u.list.counts = counts;
-        window->u.list.item_extra = extra;
+        window->u.list.debt = debt;
         window->u.list.list_active = 1;
         window->u.list.capacity = MSG_LIST_CAPACITY;
         list->item_count = sellCountFilledSlots(list->counts);
@@ -44,7 +44,7 @@ void msgWindowLayoutSize(MsgSlot *window)
         lines = MSG_LIST_VISIBLE_ROWS;
     }
     window->extent_y = lines * MSG_LIST_ROW_PIXELS + MSG_LIST_FRAME_PIXELS;
-    width = textMaxLineWidth((struct TextLineSource *)window) + MSG_LIST_FRAME_PIXELS;
+    width = textMaxLineWidth(window) + MSG_LIST_FRAME_PIXELS;
     if (width < MSG_LIST_MIN_WIDTH) {
         width = MSG_LIST_MIN_WIDTH;
     }

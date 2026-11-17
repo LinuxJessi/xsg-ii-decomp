@@ -108,7 +108,7 @@ void msgSlotSetItem(MsgSlot *slot, char *name, int count) {
         acquired->saved_extent_y = slot->extent_y;
         acquired->saved_count = acquired->count;
         acquired->name = name;
-        slot->extent_x = acquiredTextWidth((int) name, count) + ITEM_TEXT_MARGIN;
+        slot->extent_x = acquiredTextWidth(name, count) + ITEM_TEXT_MARGIN;
         acquired->count = count;
     }
 }
@@ -193,7 +193,7 @@ int msgSlotDraw(MsgSlot *record) {
         }
         if (record->flags & FLAG_08) {
             talkDrawFramesWithFade(record);
-            drawAcquiredText((struct TextBlock *) record); /* MsgSlot and TextBlock (tu234) are views of the same slot */
+            drawAcquiredText(record);
         }
         result = record->flags & FLAG_400;
         if (result != 0) {

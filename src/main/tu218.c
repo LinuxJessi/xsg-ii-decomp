@@ -28,7 +28,7 @@ int msgWindowOpenNextSlot(MsgWindow *window)
     slot = &window->slots[index];
     msgListSlotInit(slot);
     msgListSlotSetGeometry(slot, WINDOW_SLOT_X, WINDOW_SLOT_Y, WINDOW_SLOT_WIDTH, WINDOW_SLOT_HEIGHT);
-    sizedRecordSetValue((struct SizedRecord *)slot, window->current_index * MSG_SLOT_VALUE_STEP + MSG_SLOT_VALUE_BASE);
+    sizedRecordSetValue(slot, window->current_index * MSG_SLOT_VALUE_STEP + MSG_SLOT_VALUE_BASE);
     msgWindowOpen(slot);
     return 1;
 }
@@ -46,8 +46,8 @@ void msgWindowSetCurrentValue(MsgWindow *window, int text)
     }
 }
 
-/* Binds the item list of the current slot, if one is open: forwards the list source, cost table, count table and extra word (the arguments stay in their registers). */
-void msgWindowBindCurrentItems(MsgWindow *window, int source, int costs, int *counts, int extra)
+/* Binds the item list of the current slot, if one is open: forwards the list source, cost table, count table and debt word (the arguments stay in their registers). */
+void msgWindowBindCurrentItems(MsgWindow *window, char **source, int *costs, int *counts, int *debt)
 {
     int index;
     MsgSlot *slot;
@@ -55,6 +55,6 @@ void msgWindowBindCurrentItems(MsgWindow *window, int source, int costs, int *co
     index = window->current_index;
     slot = &window->slots[index];
     if (index >= 0) {
-        msgWindowBindItems(slot, source, costs, counts, extra);
+        msgWindowBindItems(slot, source, costs, counts, debt);
     }
 }

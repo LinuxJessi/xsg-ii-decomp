@@ -14,12 +14,12 @@ int timecodeStartAtFrame(MsgSlot *state, int frame) {
     }
     timecodeInit(state);
     timecodeTickIfActive(state, 0xB8, 0xB6, 0x90, 0x54);
-    sizedRecordSetValue((struct SizedRecord *)state, 0x7FFFFF);
+    sizedRecordSetValue(state, 0x7FFFFF);
     timecodeSetFrames(state, frame);
     timecodeSetFlag04(state);
     timecodeSetMode(state, 0);
     timecodeSetIndex(state, 4);
-    timecodeSetValueB(state, 2);
+    timecodeSetEditable(state, 2);
     return 1;
 }
 

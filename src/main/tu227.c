@@ -30,13 +30,13 @@ void interpUpdate(MsgSlot *slot)
     if (gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES) {
         return;
     }
-    if (slot->flags & TALK_FLAG_OPENING) {
+    if (slot->flags & MSG_SLOT_OPENING) {
         slot->reset_value++;
         if (slot->reset_value >= INTERP_OPEN_FRAMES) {
-            slot->flags = (slot->flags & ~TALK_FLAG_OPENING) | (TALK_FLAG_OPEN | INTERP_FLAG_SCAN);
+            slot->flags = (slot->flags & ~MSG_SLOT_OPENING) | (MSG_SLOT_OPEN | INTERP_FLAG_SCAN);
         }
     }
-    if (slot->flags & TALK_FLAG_CLOSING) {
+    if (slot->flags & MSG_SLOT_CLOSING) {
         slot->reset_value--;
         if (slot->reset_value <= 0) {
             slot->flags = 0;
@@ -53,7 +53,7 @@ void interpUpdate(MsgSlot *slot)
         }
     }
     /* Open and no longer scanning (the compiler merges both tests into one doubleword read). */
-    if ((slot->flags & TALK_FLAG_OPEN) && !(slot->flags & INTERP_FLAG_SCAN)) {
+    if ((slot->flags & MSG_SLOT_OPEN) && !(slot->flags & INTERP_FLAG_SCAN)) {
         talkAdvanceCounter(slot);
     }
 }
@@ -103,13 +103,13 @@ int interpAdvanceCursor(MsgSlot *slot)
 int interpDrawTextSlot(MsgSlot *slot)
 {
     if (slot->state == MSG_SLOT_STATE_TEXT) {
-        if (slot->flags & TALK_FLAG_OPENING) {
+        if (slot->flags & MSG_SLOT_OPENING) {
             talkDrawFramesBasic(slot);
         }
-        if (slot->flags & TALK_FLAG_CLOSING) {
+        if (slot->flags & MSG_SLOT_CLOSING) {
             talkDrawFramesBasic(slot);
         }
-        if (slot->flags & TALK_FLAG_OPEN) {
+        if (slot->flags & MSG_SLOT_OPEN) {
             talkDrawFramesBasic(slot);
             talkDrawTextBox(slot);
             textTagDrawActive(slot->u.text.reveal, slot->u.text.scroll_y, slot);
@@ -123,7 +123,7 @@ void interpRewind(MsgSlot *slot)
         textSetOutputCursor((int) slot->u.text.start);
         /* The original clears the two bits with two separate masks (li -5, li -9): the first AND on the flags read
          * as int and the second on the (u32) mask keep the compiler from folding them into one. */
-        slot->flags = (((int) slot->flags & ~TALK_FLAG_OPENING) & ~((u32) TALK_FLAG_OPEN)) | TALK_FLAG_CLOSING;
+        slot->flags = (((int) slot->flags & ~MSG_SLOT_OPENING) & ~((u32) MSG_SLOT_OPEN)) | MSG_SLOT_CLOSING;
     }
 }
 

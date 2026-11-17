@@ -2141,7 +2141,7 @@
    "0x00285390": "timecodeStepLevel",
    "0x00285498": "timecodeStepCounter",
    "0x002854c0": "timecodeSampleCosine",
-   "0x00285788": "timecodeSetValueB",
+   "0x00285788": "timecodeSetEditable",
    "0x002857a0": "timecodeSetMode",
    "0x002857f0": "timecodeSetIndex",
    "0x002858b0": "timecodeComputeResults",

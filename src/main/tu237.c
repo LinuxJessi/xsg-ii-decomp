@@ -21,7 +21,7 @@ int msgWindowCenterY(MsgWindow *window);
 /* Centres the window: x comes from sizedRecordCenterX (0x100 - width / 2), y from msgWindowCenterY. */
 void msgWindowCenter(MsgWindow *window)
 {
-    window->pos_x = sizedRecordCenterX(window);
+    window->pos_x = sizedRecordCenterX((struct MsgSlot *) window) /* tu237 keeps its own partial view of the window */;
     window->pos_y = msgWindowCenterY(window);
 }
 

@@ -21,21 +21,21 @@ long long timecodeAddToField(long long, int, int);
 
 /* While active: flags &= ~0x40. */
 void timecodeClearFlag40(MsgSlot *slot) {
-    if (slot->state == TIMECODE_STATE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         slot->flags &= ~TIMECODE_FLAG_PHASE;
     }
 }
 
 /* While active: elapsed_frames = frames. */
 void timecodeSetFrames(MsgSlot *slot, long long frames) {
-    if (slot->state == TIMECODE_STATE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         slot->u.timecode.elapsed_frames = frames;
     }
 }
 
 /* Returns elapsed_frames while active, else 0. */
 long long timecodeGetFrames(MsgSlot *slot) {
-    if (slot->state != TIMECODE_STATE) {
+    if (slot->state != MSG_SLOT_STATE_TIMECODE) {
         return 0;
     }
     return slot->u.timecode.elapsed_frames;
@@ -45,7 +45,7 @@ long long timecodeGetFrames(MsgSlot *slot) {
 void timecodeSplit(MsgSlot *slot, int *hours, int *minutes, int *seconds, int *frames) {
     long long remaining = slot->u.timecode.elapsed_frames;
     int hh, mm, ss, ff;
-    if (slot->state == TIMECODE_STATE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         hh = remaining / FRAMES_PER_HOUR;
         remaining -= (long long)hh * FRAMES_PER_HOUR;
         mm = remaining / FRAMES_PER_MINUTE;
@@ -59,7 +59,7 @@ void timecodeSplit(MsgSlot *slot, int *hours, int *minutes, int *seconds, int *f
 
 /* While active: stores value in phase and phase_copy. */
 void timecodeSetPhase(MsgSlot *slot, int value) {
-    if (slot->state == TIMECODE_STATE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         slot->u.timecode.phase = value;
         slot->u.timecode.phase_copy = value;
     }
@@ -67,7 +67,7 @@ void timecodeSetPhase(MsgSlot *slot, int value) {
 
 /* Returns phase while active, else 0. */
 int timecodeGetPhase(MsgSlot *slot) {
-    if (slot->state != TIMECODE_STATE) {
+    if (slot->state != MSG_SLOT_STATE_TIMECODE) {
         return 0;
     }
     return slot->u.timecode.phase;
@@ -78,7 +78,7 @@ void timecodeStepPhase(MsgSlot *slot, int delta) {
     MsgSlotTimecode *step = &slot->u.timecode;
     int phase;
 
-    if (slot->state == TIMECODE_STATE && !(slot->flags & TIMECODE_FLAG_RAMP)) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE && !(slot->flags & TIMECODE_FLAG_RAMP)) {
         if (slot->flags & TIMECODE_FLAG_LEVEL) {
             return;
         }
@@ -102,7 +102,7 @@ void timecodeStepPhase(MsgSlot *slot, int delta) {
 void timecodeStart(MsgSlot *slot, int param) {
     MsgSlotTimecode *step = &slot->u.timecode;
 
-    if (slot->state == TIMECODE_STATE && !(slot->flags & TIMECODE_FLAG_RAMP)) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE && !(slot->flags & TIMECODE_FLAG_RAMP)) {
         if (slot->flags & TIMECODE_FLAG_LEVEL) {
             return;
         }
@@ -188,7 +188,7 @@ long long timecodeAddToField(long long frames, int phase, int amount) {
 void timecodeSetHms(MsgSlot *slot, int hours, int minutes, int seconds) {
     long long frames = (long long)hours * FRAMES_PER_HOUR + (long long)minutes * FRAMES_PER_MINUTE + (long long)seconds * FRAMES_PER_SECOND;
 
-    if (slot->state == TIMECODE_STATE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         timecodeSetFrames(slot, frames);
     }
 }

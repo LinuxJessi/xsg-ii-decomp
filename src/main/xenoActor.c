@@ -87,6 +87,7 @@ typedef struct XenoSlotTable {
     int entryOffset[1];                     /* 0x0C: entryCount offsets */
 } XenoSlotTable;
 
+/* One 16-byte range record: the lower and upper bound at +0x08 (a slot-table entry, and motionKeys[] entries). */
 typedef struct XenoSlotRange {
     unsigned char unmodeled_00[8];
     float lower;                            /* 0x08 */
@@ -98,12 +99,6 @@ typedef struct XenoLight {
     float intensity;                        /* 0x12C */
     unsigned char unmodeled_130[0x180 - 0x130];
 } XenoLight;
-
-typedef struct XenoActorEntry {
-    unsigned char unmodeled_00[0x08];
-    f32 value;                      /* +0x08 */
-    f32 upper;                      /* +0x0C */
-} XenoActorEntry;
 
 typedef struct XenoActor {
     unsigned short attr;                    /* 0x000: bit 2 = has global matrices */
@@ -154,7 +149,7 @@ typedef struct XenoActor {
     XenoLight sourceLight;                  /* 0x310 */
     float color[4];                         /* 0x490 */
     unsigned char colorBlock[0x10];         /* 0x4A0 */
-    unsigned char sourceBlock[0x10];        /* 0x4B0 */
+    DoublewordAlignedVector4 sourceBlock;   /* 0x4B0 */
     u32 visibility[8];                      /* 0x4C0: one bit per geometry of the pack */
     u32 subVisibility[8];                   /* 0x4E0: one bit per geometry of the sub pack */
     u32 geometryMask[8];                    /* 0x500: one bit per shadow-casting geometry */
@@ -191,7 +186,7 @@ typedef struct XenoActor {
     void *matrixBuf628;                     /* 0x628: heap-5 buffers, one 0x40-byte matrix per hierarchy transform */
     void *matrixBuf62C;                     /* 0x62C */
     void *matrixBuf630;                     /* 0x630 */
-    int pamFrame;                           /* 0x634 */
+    void *pamFrame;                         /* 0x634 */
     void *matrixBuf638;                     /* 0x638 */
     unsigned char unmodeled_63c[4];
     int handle640[4];                       /* 0x640: its address is passed to callees (the 0x60-byte channel of XenoActorSetSelector); element 1 is stored by func_0028B2F0 */
@@ -208,7 +203,7 @@ typedef struct XenoActor {
     unsigned char unmodeled_6A4[0x6A8 - 0x6A4];
     float cachedMotionTime;                 /* 0x6A8: second channel value read back after its package advances */
     unsigned char unmodeled_6AC[0x700 - 0x6AC];
-    struct XenoActorEntry *motionKeys[4];   /* 0x700: one per mode slot; XenoActorSetSelector reads slot 2 */
+    struct XenoSlotRange *motionKeys[4];   /* 0x700: one per mode slot; XenoActorSetSelector reads slot 2 */
     XenoHrc *table;                         /* 0x710 */
     void *pamData;                          /* 0x714 */
     unsigned char unmodeled_718[4];
@@ -482,15 +477,15 @@ int XenoActorAllocMatrices(XenoActor *actor) {
         pack = actor->pack;
         if (pack != 0) {
             if (actor->pamFrame != 0) {
-                RgHeapFree((void *)actor->pamFrame, xenoActorAssertFile, 0xED);
+                RgHeapFree(actor->pamFrame, xenoActorAssertFile, 0xED);
             }
-            actor->pamFrame = (int)RgHeapAllocById(5, pack->geometryCount << 6, xenoActorAssertFile, 0xEE);
+            actor->pamFrame = RgHeapAllocById(5, pack->geometryCount << 6, xenoActorAssertFile, 0xEE);
             if (actor->pamFrame == 0) {
                 assertFailed(D_0068D760, xenoActorAssertFile, 0xF0);
             }
             package = actor->handle640;
             tiMRPackageInit(package);
-            tiMRPackageSetPamFrame(package, (void *)actor->pamFrame);
+            tiMRPackageSetPamFrame(package, actor->pamFrame);
             tiMRPackageSetClampRange(package, clampRange);
         }
     }
@@ -664,11 +659,11 @@ f32 tiMRStateSetPosition(void *channelFlags, f32 value);
 f32 tiMtnBlendSwapGlobal(void *channel, void *channelFlags);
 void tiMRPackageSetTableAndEntryA(void *channel, void *table, int mode);
 void tiMRPackageUpdate(void *channel, void *matrix);
-void tiPartsAnimSamplePose(int frame, void *channel, int count);
+void tiPartsAnimSamplePose(void *frame, void *channel, int count);
 
 /* XenoActorSetMode: sets the current mode (slot 0), clears the request and restarts channel 0x640 at the start (or end) of the mode's range. */
 void XenoActorSetMode(XenoActor *actor, int mode) {
-    XenoActorEntry *entry;
+    XenoSlotRange *entry;
 
     if (actor == 0) {
         assertFailed(xenoActorAssertExpr, xenoActorAssertFile, 0x1F6);
@@ -685,7 +680,7 @@ void XenoActorSetMode(XenoActor *actor, int mode) {
         if (actor->motionSpeed < 0.0f) {
             actor->transformScale = entry->upper;
         } else {
-            actor->transformScale = entry->value;
+            actor->transformScale = entry->lower;
         }
         tiMRStateSetPosition(&actor->flags650, actor->transformScale);
         if (!(actor->flags & XENO_FLAG_BLEND_SWAPPED) && (actor->flags650 & 2)) {
@@ -729,7 +724,7 @@ void XenoActorApplySourceValue(XenoActor *actor) {
 
 /* XenoActorSetModeInSlot: like XenoActorSetMode, for one of the four mode slots (asserts slot < 4). */
 void XenoActorSetModeInSlot(XenoActor *actor, u32 slot, int mode) {
-    XenoActorEntry *entry;
+    XenoSlotRange *entry;
 
     if (actor == 0) {
         assertFailed(xenoActorAssertExpr, xenoActorAssertFile, 0x24D);
@@ -747,7 +742,7 @@ void XenoActorSetModeInSlot(XenoActor *actor, u32 slot, int mode) {
             if (actor->motionSpeed < 0.0f) {
                 actor->transformScale = entry->upper;
             } else {
-                actor->transformScale = entry->value;
+                actor->transformScale = entry->lower;
             }
             tiMRStateSetPosition(&actor->flags650, actor->transformScale);
             if (!(actor->flags & XENO_FLAG_BLEND_SWAPPED) && (actor->flags650 & 2)) {
@@ -777,7 +772,7 @@ f32 tiMRPackageSelectEntryB(void *channel, int selector);
 /* XenoActorSetSelector: stores the selector, reads the channel value and copies the entry value into cachedValue. */
 f32 XenoActorSetSelector(XenoActor *actor, int selector)
 {
-    XenoActorEntry *entry;
+    XenoSlotRange *entry;
     f32 result;
 
     if (actor == 0) {
@@ -787,7 +782,7 @@ f32 XenoActorSetSelector(XenoActor *actor, int selector)
     result = tiMRPackageSelectEntryB(actor->handle640, selector);
     entry = actor->motionKeys[2];
     if (entry != 0) {
-        f32 entryValue = entry->value;
+        f32 entryValue = entry->lower;
 
         actor->cachedValue = entryValue;
         result = tiMRStateSetPosition(&actor->flags6A0, entryValue);
@@ -921,7 +916,7 @@ void XenoActorRelease(XenoActor *actor) {
         actor->matrixBuf630 = 0;
     }
     if (actor->pamFrame != 0) {
-        RgHeapFree((void *)actor->pamFrame, xenoActorAssertFile, 0x336);
+        RgHeapFree(actor->pamFrame, xenoActorAssertFile, 0x336);
         actor->pamFrame = 0;
     }
     if (actor->matrixBuf638 != 0) {
@@ -1155,10 +1150,10 @@ void XenoActorUpdateTree(XenoActor *actor) {
         assertFailed(xenoActorAssertExpr, xenoActorAssertFile, 0x47C);
     }
     if (actor != 0) {
-        *(DoublewordAlignedVector4 *)actor->sourceBlock = actor->rowA;
+        actor->sourceBlock = actor->rowA;
         actor->drawFlags &= ~XENO_DRAW_SOURCE_DIRTY;
         if (actor->pack != 0 && actor->pack->magic[0] == 'p' && actor->pack->magic[1] == 'x' && actor->pack->magic[2] == 'y') {
-            Vu0AddVectorXYZ(actor->sourceBlock, actor->sourceBlock, &actor->pack->sphere);
+            Vu0AddVectorXYZ(&actor->sourceBlock, &actor->sourceBlock, &actor->pack->sphere);
         }
         actor->renderValue += actor->renderValue2;
         XenoActorUpdateLinkMatrix(actor);
@@ -1245,15 +1240,15 @@ void XenoActorUpdateTree(XenoActor *actor) {
                 actor->position.w = one;
             }
         }
-        *(DoublewordAlignedVector4 *)actor->sourceBlock = actor->rowA;
+        actor->sourceBlock = actor->rowA;
         if ((actor->table != 0 && (actor->motionKeys[0] != 0 || actor->motionKeys[1] != 0)) || actor->pamActive != 0) {
-            *(DoublewordAlignedVector4 *)actor->sourceBlock = actor->position;
-            xglVectorScaleXYZ(&scaled, (Vector4 *)actor->sourceBlock, 1.0f / actor->rowC[0]);
+            actor->sourceBlock = actor->position;
+            xglVectorScaleXYZ(&scaled, &actor->sourceBlock, 1.0f / actor->rowC[0]);
             scaled.w = 1.0f;
-            xglVectorMulMat((Vector4 *)actor->sourceBlock, actor->localMatrix.m, &scaled);
-            QuadwordCopy(&scaled, actor->sourceBlock);
+            xglVectorMulMat(&actor->sourceBlock, actor->localMatrix.m, &scaled);
+            QuadwordCopy(&scaled, &actor->sourceBlock);
             /* Written back through the doubleword union view of the block. */
-            ((DoublewordVector4 *)actor->sourceBlock)->vector = scaled;
+            ((DoublewordVector4 *)&actor->sourceBlock)->vector = scaled;
             if ((actor->flags & XENO_FLAG_FREEZE_A) == 0) {
                 if (actor->flags & XENO_FLAG_UNWRAP_A) {
                     tiMRPackageAdvanceAUnwrapped(actor->handle640);
@@ -1431,7 +1426,7 @@ XenoMatrix *xglPacketReserve(int size);
 void pxySetJointMatrices(XenoMatrix *joints, XenoMatrix *global);
 void func_001BAE28(XenoMatrix *global);
 void tiMotionUpdateVisibility(int *handle, void *visibility);
-void func_001BAE58(int frame);
+void func_001BAE58(void *frame);
 void pxySetTxyBlock(int effect);
 void func_001BA9E4(void);
 void func_001BA618(float a, float b);
@@ -1542,7 +1537,7 @@ void XenoActorDrawMotion(XenoActor *actor)
                 light = &actor->light;
                 if (actor->drawFlags & XENO_DRAW_LIGHT_SOURCE) {
                     light = &actor->sourceLight;
-                    xglLightPackBuildByName(light, actor->lightSource, actor->sourceBlock);
+                    xglLightPackBuildByName(light, actor->lightSource, &actor->sourceBlock);
                 }
                 func_001BB96C(light);
                 if (light->intensity > 0.0f) {

@@ -77,13 +77,13 @@ void xglPacketTextureTrans(void *texture);
 /* Draws the talk window frame of a slot for each pending flag (2, 4, 8). */
 void talkDrawFramesBasic(MsgSlot *slot) {
     xglPacketTextureTrans(talkScriptHandle);
-    if (slot->flags & TALK_FLAG_CLOSING) {
+    if (slot->flags & MSG_SLOT_CLOSING) {
         talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->reset_value * 0.08f);
     }
-    if (slot->flags & TALK_FLAG_OPENING) {
+    if (slot->flags & MSG_SLOT_OPENING) {
         talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->reset_value * 0.08f);
     }
-    if (slot->flags & TALK_FLAG_OPEN) {
+    if (slot->flags & MSG_SLOT_OPEN) {
         talkWindowDrawFrame(slot, TALK_FRAME_FULL, 1.0f);
     }
 }
@@ -92,19 +92,19 @@ void talkDrawFramesBasic(MsgSlot *slot) {
  * when the item list is bound (list_active); flag 8 ends with talkDrawSlotFrame unless talkDrawCursorWindow ran and item_count is 0. */
 void talkDrawFramesWithCursor(MsgSlot *slot) {
     xglPacketTextureTrans(talkScriptHandle);
-    if (slot->flags & TALK_FLAG_CLOSING) {
+    if (slot->flags & MSG_SLOT_CLOSING) {
         talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->reset_value * 0.08f);
         if (slot->u.list.list_active != 0) {
             talkDrawCursorWindow(slot);
         }
     }
-    if (slot->flags & TALK_FLAG_OPENING) {
+    if (slot->flags & MSG_SLOT_OPENING) {
         talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->reset_value * 0.08f);
         if (slot->u.list.list_active != 0) {
             talkDrawCursorWindow(slot);
         }
     }
-    if (slot->flags & TALK_FLAG_OPEN) {
+    if (slot->flags & MSG_SLOT_OPEN) {
         if (slot->u.list.list_active == 0) {
             talkWindowDrawFrame(slot, TALK_FRAME_FULL, 1.0f);
             talkDrawSlotFrame(slot);
@@ -121,15 +121,15 @@ void talkDrawFramesWithCursor(MsgSlot *slot) {
 /* Like talkDrawFramesBasic, then runs talkDrawSelectionBox when flag 0x40 is set after the 0x8 frame. */
 void talkDrawFramesWithBox(MsgSlot *slot) {
     xglPacketTextureTrans(talkScriptHandle);
-    if (slot->flags & TALK_FLAG_CLOSING) {
+    if (slot->flags & MSG_SLOT_CLOSING) {
         talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->reset_value * 0.08f);
     }
-    if (slot->flags & TALK_FLAG_OPENING) {
+    if (slot->flags & MSG_SLOT_OPENING) {
         talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->reset_value * 0.08f);
     }
-    if (slot->flags & TALK_FLAG_OPEN) {
+    if (slot->flags & MSG_SLOT_OPEN) {
         talkWindowDrawFrame(slot, TALK_FRAME_FULL, 1.0f);
-        if (slot->flags & TALK_FLAG_BOX) {
+        if (slot->flags & TIMECODE_FLAG_PHASE) {
             talkDrawSelectionBox(slot);
         }
     }
@@ -137,13 +137,13 @@ void talkDrawFramesWithBox(MsgSlot *slot) {
 
 /* Draws the slot rectangle (origin plus extent) once per pending flag (2, 4, 8). */
 void talkDrawFrameRects(MsgSlot *slot) {
-    if (slot->flags & TALK_FLAG_CLOSING) {
+    if (slot->flags & MSG_SLOT_CLOSING) {
         talkDrawFadeRect(slot->reset_value * 0.08f, slot->x, slot->y, slot->x + slot->extent_x, slot->y + slot->extent_y, 0);
     }
-    if (slot->flags & TALK_FLAG_OPENING) {
+    if (slot->flags & MSG_SLOT_OPENING) {
         talkDrawFadeRect(slot->reset_value * 0.08f, slot->x, slot->y, slot->x + slot->extent_x, slot->y + slot->extent_y, 0);
     }
-    if (slot->flags & TALK_FLAG_OPEN) {
+    if (slot->flags & MSG_SLOT_OPEN) {
         talkDrawFadeRect(1.0f, slot->x, slot->y, slot->x + slot->extent_x, slot->y + slot->extent_y, 0);
     }
 }
@@ -151,13 +151,13 @@ void talkDrawFrameRects(MsgSlot *slot) {
 /* Draws the talk window frames of a slot; flag 0x400 adds a fade frame driven by the item counter (MsgSlotItem.pending). */
 void talkDrawFramesWithFade(MsgSlot *slot) {
     xglPacketTextureTrans(talkScriptHandle);
-    if (slot->flags & TALK_FLAG_CLOSING) {
+    if (slot->flags & MSG_SLOT_CLOSING) {
         talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->reset_value * 0.08f);
     }
-    if (slot->flags & TALK_FLAG_OPENING) {
+    if (slot->flags & MSG_SLOT_OPENING) {
         talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->reset_value * 0.08f);
     }
-    if (slot->flags & TALK_FLAG_OPEN) {
+    if (slot->flags & MSG_SLOT_OPEN) {
         talkWindowDrawFrame(slot, TALK_FRAME_FULL, 1.0f);
     }
     if (slot->flags & TALK_FLAG_FADE) {
@@ -173,7 +173,7 @@ void talkSetActive(void) {
 
 /* Flags, screen rectangle, frame counter and RGBA (alpha 0x98) of the fixed window of talkDrawCursorWindow:
  * active and open, its counter at the open end of the 12-frame animation. */
-#define TALK_FIXED_WINDOW_FLAGS (MSG_SLOT_ACTIVE | TALK_FLAG_OPEN)
+#define TALK_FIXED_WINDOW_FLAGS (MSG_SLOT_ACTIVE | MSG_SLOT_OPEN)
 #define TALK_FIXED_WINDOW_OPEN_FRAMES 0xC
 #define TALK_CURSOR_WINDOW_X 0x81
 #define TALK_CURSOR_WINDOW_Y 0x13B
@@ -189,13 +189,13 @@ void talkDrawCursorWindow(MsgSlot *slot) {
     float scale;
 
     scale = slot->reset_value * 0.08f;
-    if (slot->flags & TALK_FLAG_OPENING) {
+    if (slot->flags & MSG_SLOT_OPENING) {
         talkWindowDrawFrame(&window, TALK_FRAME_OPENING, scale);
     }
-    if (slot->flags & TALK_FLAG_OPEN) {
+    if (slot->flags & MSG_SLOT_OPEN) {
         talkWindowDrawFrame(&window, TALK_FRAME_FULL, 1.0f);
     }
-    if (slot->flags & TALK_FLAG_CLOSING) {
+    if (slot->flags & MSG_SLOT_CLOSING) {
         talkWindowDrawFrame(&window, TALK_FRAME_CLOSING, scale);
     }
 }
@@ -342,7 +342,7 @@ void talkWindowDrawFrame(MsgSlot *window, int mode, float scale)
         middleFits = 0;
         rect[TALK_PIECE_STRIP_LEFT_INNER].right = rect[TALK_PIECE_STRIP_RIGHT_INNER].right = (left + right) >> 1;
     }
-        if (window->state == 1 && (window->flags & TALK_FLAG_OPEN) && !(window->flags & INTERP_FLAG_SCAN) && talkActive == 0) {
+        if (window->state == 1 && (window->flags & MSG_SLOT_OPEN) && !(window->flags & INTERP_FLAG_SCAN) && talkActive == 0) {
         talkWindowCursorPos(&cursor_x, &cursor_y, window);
     }
     packet = xglPacketGetCurrent();
@@ -619,7 +619,7 @@ void talkWindowDrawFrame(MsgSlot *window, int mode, float scale)
         } while (piece->kind != TALK_PIECE_END);
     }
     /* Same merged flag test as above. */
-    if (window->state == 1 && (window->flags & TALK_FLAG_OPEN) && !(window->flags & INTERP_FLAG_SCAN) && talkActive == 0) {
+    if (window->state == 1 && (window->flags & MSG_SLOT_OPEN) && !(window->flags & INTERP_FLAG_SCAN) && talkActive == 0) {
         pairs[pairCount].ad.reg = GS_TEXFLUSH;
         pairs[pairCount].ad.data = 0;
         pairCount++;

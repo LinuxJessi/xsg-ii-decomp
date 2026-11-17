@@ -16,17 +16,8 @@ typedef union GsPair {
     long qword[2];
 } GsPair;
 
-/* Phase bits of MsgSlot.flags that the frame drawers test (same bits as msgWindowUpdate, tu238:
- * 0x2 closing, 0x4 opening, 0x8 open). The two higher bits are named by what their draw step does. */
-#define TALK_FLAG_CLOSING 0x2
-#define TALK_FLAG_OPENING 0x4
-#define TALK_FLAG_OPEN 0x8
-#define TALK_FLAG_BOX 0x40     /* talkDrawFramesWithBox also draws the selection box (talkDrawSelectionBox) */
-#define TALK_FLAG_FADE 0x400   /* talkDrawFramesWithFade adds the fade frames driven by the item counter */
 /* talkWindowDrawFrame draws the page cursor of an active text slot while it is open and no longer
  * revealing text (bit 0x10, INTERP_FLAG_SCAN of tu227.h, clear). */
-#define TALK_CURSOR_FLAGS_MASK (TALK_FLAG_OPEN | INTERP_FLAG_SCAN)
-#define TALK_CURSOR_FLAGS TALK_FLAG_OPEN
 
 /* Frame modes of talkWindowDrawFrame; 3 is the sized frame of talkWindowFrameRect. */
 #define TALK_FRAME_FULL 0

@@ -4,7 +4,6 @@
 #include "main/tu242.h"
 #include "main/tu243.h"
 
-typedef int s32;
 
 #define BODY_MARGIN 0x20          /* inset above and below the rows */
 #define BODY_HEADER_INSET 0x48    /* top inset when a header band is present */
@@ -19,7 +18,7 @@ typedef int s32;
  * minimum, rising (BODY_PULSE_START, BODY_PULSE_STEP: MSG_PULSE_MIN and MSG_PULSE_STEP of main/tu238.c).
  */
 void msgListSlotInit(MsgSlot *slot) {
-    msgSlotInit(slot, MSG_SLOT_STATE_LIST);
+    msgSlotInit(slot, MSG_SLOT_STATE_WINDOW);
     slot->u.list.pulse_value = BODY_PULSE_START;
     slot->u.list.pulse_step = BODY_PULSE_STEP;
 }
@@ -30,7 +29,7 @@ void msgListSlotInit(MsgSlot *slot) {
  * the item list is bound and adds its header band).
  */
 void msgListSlotSetGeometry(MsgSlot *slot, int x, int y, int width, int height) {
-    if (slot->state == MSG_SLOT_STATE_LIST) {
+    if (slot->state == MSG_SLOT_STATE_WINDOW) {
         msgSlotSetGeometry(slot, x, y, width, height);
         if (slot->extent_x < BODY_MIN_WIDTH) {
             slot->extent_x = BODY_MIN_WIDTH;
@@ -44,6 +43,6 @@ void msgListSlotSetGeometry(MsgSlot *slot, int x, int y, int width, int height) 
 }
 
 /* Forwards its two arguments to deltaPerStep with a fixed third argument BODY_ROW_PITCH. */
-s32 msgListRowsBetween(s32 first, s32 second) {
+int msgListRowsBetween(int first, int second) {
     return deltaPerStep(first, second, BODY_ROW_PITCH);
 }

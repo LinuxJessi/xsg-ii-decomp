@@ -52,7 +52,7 @@ void talkDrawTextBox(MsgSlot *box)
             drawShadowedText(box->x + TALK_TEXT_INDENT, box->y - TALK_NAME_RISE, box->z + TALK_TEXT_Z_BIAS, &buffer[0]);
         }
         xglFontPrintExtFunc(box->z, talkBoxScissorCallback, box);
-        row_y = textLastRowY((const struct TextLayout *) box);
+        row_y = textLastRowY(box);
         talkStashPrefix(box);
         fontPrintIntRow(box->x + TALK_TEXT_INDENT, row_y, box->z + TALK_TEXT_Z_BIAS, body->start, &body->font);
         talkRestorePrefix(box);

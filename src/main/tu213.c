@@ -96,11 +96,11 @@ void gsQuadHalfScreenFill(int kind, float quad[][4])
 /* gsQueueBeginTriStrip: starts a batch in the scratchpad packet (GIF tag, FRAME, TEST, texture state, blend,
    PRIM type 4, TEXFLUSH) and stores itself as the begin handler. */
 void gsQueueBeginTriStrip(GsQueueContext *context) {
-    int textured = context->halveRgb;
+    int textured = context->textured;
     int frame = context->frame;
     int tex0 = context->tex0;
     int color = context->color;
-    int blendKind = context->blendKind;
+    int blendKind = context->blend_kind;
     GsQueueQword *queue = GS_QUEUE_SCRATCHPAD;
 
     gsQueueCount = 0;
@@ -143,11 +143,11 @@ void gsQueueAddPrimTriStrip(int textured) {
 /* gsQueueBeginTriFan: starts a triangle fan batch (PRIM type 5) in the scratchpad packet: GIF tag, TEXFLUSH, FRAME, TEST,
    texture state when textured, PRIM, blend state; stores itself as the begin handler. */
 void gsQueueBeginTriFan(GsQueueContext *context) {
-    int textured = context->halveRgb;
+    int textured = context->textured;
     int frame = context->frame;
     int tex0 = context->tex0;
     int color = context->color;
-    int blendKind = context->blendKind;
+    int blendKind = context->blend_kind;
     GsQueueQword *queue = GS_QUEUE_SCRATCHPAD;
 
     gsQueueCount = 0;
@@ -175,11 +175,11 @@ void gsQueueBeginTriFan(GsQueueContext *context) {
 /* gsQueueBeginLines: starts a line batch (PRIM type 1) in the scratchpad packet: GIF tag, TEXFLUSH, FRAME, TEST,
    texture state when textured, PRIM, blend state; stores itself as the begin handler. */
 void gsQueueBeginLines(GsQueueContext *context) {
-    int textured = context->halveRgb;
+    int textured = context->textured;
     int frame = context->frame;
     int tex0 = context->tex0;
     int color = context->color;
-    int blendKind = context->blendKind;
+    int blendKind = context->blend_kind;
     GsQueueQword *queue = GS_QUEUE_SCRATCHPAD;
 
     gsQueueCount = 0;
@@ -207,11 +207,11 @@ void gsQueueBeginLines(GsQueueContext *context) {
 /* gsQueueBeginSprites: starts a sprite batch (PRIM type 6) in the scratchpad packet: GIF tag, TEXFLUSH, FRAME, TEST,
    texture state when textured, PRIM, blend state; stores itself as the begin handler. */
 void gsQueueBeginSprites(GsQueueContext *context) {
-    int textured = context->halveRgb;
+    int textured = context->textured;
     int frame = context->frame;
     int tex0 = context->tex0;
     int color = context->color;
-    int blendKind = context->blendKind;
+    int blendKind = context->blend_kind;
     GsQueueQword *queue = GS_QUEUE_SCRATCHPAD;
 
     gsQueueCount = 0;
@@ -236,8 +236,10 @@ void gsQueueBeginSprites(GsQueueContext *context) {
     gsQueueBeginHandler = gsQueueBeginSprites;
 }
 
-/* gsQueueAddTexturedQuad: four vertices, UV and XYZ qwords; the second row carries the kick. */
-void gsQueueAddTexturedQuad(int packet, float pos[][4], float uv[][4], void *context)
+/* gsQueueAddTexturedQuad: four vertices, UV and XYZ qwords; the second row carries the kick.
+   The rows are addressed as *(uv + n) / *(pos + n): the uv[n] / pos[n] / &uv[n][0] / n-index-variable forms compile
+   to different operand order (2 to 4 differing rows in this function). */
+void gsQueueAddTexturedQuad(XglPacket *packet, float pos[][4], float uv[][4], GsQueueContext *context)
 {
     int row, col;
     for (row = 0; row < 2; row++) {
@@ -267,7 +269,7 @@ void gsQueueAddTexturedQuad(int packet, float pos[][4], float uv[][4], void *con
    The vertices are addressed as a byte offset plus the array base, and the positions are read through the
    DoublewordVector4 union view: plain &uv[i] / &pos[i] indexing compiles to a different operand order
    (4 differing rows), so the byte-offset form is kept. */
-void gsQueueAddTriangle(int packet, DoublewordVector4 *pos, Vector4 *uv, void *context)
+void gsQueueAddTriangle(XglPacket *packet, DoublewordVector4 *pos, Vector4 *uv, GsQueueContext *context)
 {
     int i;
     for (i = 0; i < 3; i++) {
@@ -297,9 +299,9 @@ void gsQueueAddTriangle(int packet, DoublewordVector4 *pos, Vector4 *uv, void *c
 void gsQueueBeginPoints(GsQueueContext *context) {
     int frame = context->frame;
     int tex0 = context->tex0;
-    int textured = context->halveRgb;
+    int textured = context->textured;
     int color = context->color;
-    int blendKind = context->blendKind;
+    int blendKind = context->blend_kind;
 
     GsQueueQword *queue = GS_QUEUE_SCRATCHPAD;
 
@@ -326,7 +328,7 @@ void gsQueueBeginPoints(GsQueueContext *context) {
 }
 
 /* gsQueueAddTexturedKickVertex: one kick vertex, UV first when textured, flush at 901 qwords (GS_QUEUE_FLUSH_LIMIT). */
-void gsQueueAddTexturedKickVertex(int packet, float *pos, float *uv, void *context)
+void gsQueueAddTexturedKickVertex(XglPacket *packet, float *pos, float *uv, GsQueueContext *context)
 {
     if (gsQueueTextured) {
         GS_QUEUE_AT(gsQueueCount).data = (u64)(uv[0] * 16.0f) | ((u64)(uv[1] * 16.0f) << 16);
@@ -341,7 +343,7 @@ void gsQueueAddTexturedKickVertex(int packet, float *pos, float *uv, void *conte
 }
 
 /* gsQueueAddTexturedVertex: one vertex without kick, UV first when textured. */
-void gsQueueAddTexturedVertex(int unused, float *pos, float *uv, void *context)
+void gsQueueAddTexturedVertex(XglPacket *unused, float *pos, float *uv, GsQueueContext *context)
 {
     if (gsQueueTextured) {
         GS_QUEUE_AT(gsQueueCount).data = (u64)(uv[0] * 16.0f) | ((u64)(uv[1] * 16.0f) << 16);
@@ -352,7 +354,7 @@ void gsQueueAddTexturedVertex(int unused, float *pos, float *uv, void *context)
 }
 
 /* gsQueueAddKickVertex: one untextured kick vertex; flushes and restarts the batch when the queue is full. */
-void gsQueueAddKickVertex(int packet, float *pos, void *context)
+void gsQueueAddKickVertex(XglPacket *packet, float *pos, GsQueueContext *context)
 {
     int x = (pos[0] + 1792.0f) * 16.0f;
     int y = (pos[1] + 1824.0f) * 16.0f;
@@ -366,7 +368,7 @@ void gsQueueAddKickVertex(int packet, float *pos, void *context)
 }
 
 /* gsQueueAddVertex: one untextured vertex without kick. */
-void gsQueueAddVertex(int unused, float *pos, void *batch)
+void gsQueueAddVertex(XglPacket *unused, float *pos, GsQueueContext *batch)
 {
     int x = (pos[0] + 1792.0f) * 16.0f;
     int y = (pos[1] + 1824.0f) * 16.0f;
@@ -374,13 +376,12 @@ void gsQueueAddVertex(int unused, float *pos, void *batch)
     GS_QUEUE_AT(gsQueueCount++).reg = GS_XYZ3;
 }
 
-typedef int s32;
 
 void gsQueueAddRgbaq(unsigned int color, int halveRgb);
 
 /* gsQueueAddColor: appends an RGBAQ color; at 901 qwords it flushes and restarts the batch. */
-void gsQueueAddColor(s32 packet, s32 color, GsQueueContext *context) {
-    gsQueueAddRgbaq(color, context->halveRgb);
+void gsQueueAddColor(XglPacket *packet, int color, GsQueueContext *context) {
+    gsQueueAddRgbaq(color, context->textured);
     if (gsQueueCount >= GS_QUEUE_FLUSH_LIMIT) {
         gsQueueFlush(packet);
         gsQueueRestart(context);
@@ -388,8 +389,8 @@ void gsQueueAddColor(s32 packet, s32 color, GsQueueContext *context) {
 }
 
 /* gsQueueAddContextColor: as gsQueueAddColor, the color is taken from the context. */
-void gsQueueAddContextColor(s32 packet, GsQueueContext *context) {
-    gsQueueAddRgbaq(context->color, context->halveRgb);
+void gsQueueAddContextColor(XglPacket *packet, GsQueueContext *context) {
+    gsQueueAddRgbaq(context->color, context->textured);
     if (gsQueueCount >= GS_QUEUE_FLUSH_LIMIT) {
         gsQueueFlush(packet);
         gsQueueRestart(context);
@@ -397,7 +398,7 @@ void gsQueueAddContextColor(s32 packet, GsQueueContext *context) {
 }
 
 /* gsQueueRestart: calls the batch-begin handler stored in gsQueueBeginHandler. */
-void gsQueueRestart(void *context) {
+void gsQueueRestart(GsQueueContext *context) {
     gsQueueBeginHandler(context);
 }
 
@@ -408,13 +409,12 @@ extern void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int cou
 extern void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 
 /* gsQueueFlush: the first qword counts the queued qwords, then the packet is sent in direct-HL mode. */
-void gsQueueFlush(int packet) {
-    /* The packet is carried as an int handle by every GS queue function; the SCE builders take the XglPacket pointer. */
+void gsQueueFlush(XglPacket *packet) {
     *gsQueueBase += gsQueueCount - 1;
-    sceVif1PkCnt((XglPacket *) packet, 0);
-    sceVif1PkOpenDirectHLCode((XglPacket *) packet, 0);
-    sceVif1PkAddDirectDataN((XglPacket *) packet, gsQueueBase, gsQueueCount);
-    sceVif1PkCloseDirectHLCode((XglPacket *) packet);
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, gsQueueBase, gsQueueCount);
+    sceVif1PkCloseDirectHLCode(packet);
 }
 
 /* gsQueueSetFrame: appends the FRAME_1 register (GS_FRAME_1). */
@@ -494,7 +494,7 @@ void gsQueueSetTest(void) {
 }
 
 /* gsQueueSetClamp: appends CLAMP_1 (0x08). */
-void gsQueueSetClamp(int unused, int mode, int value) {
+void gsQueueSetClamp(XglPacket *unused, int mode, int value) {
     if (mode) {
         gsQueueBase[gsQueueCount * 2] = ((u64)(value ^ 0x3FF) << 24) | 0x1C0F;
     } else {

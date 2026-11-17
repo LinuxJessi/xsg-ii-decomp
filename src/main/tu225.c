@@ -64,11 +64,11 @@ int msgItemSlotStart(MsgSlot *slot, char *name, int count) {
     if (slot->state != MSG_SLOT_STATE_ITEM && (flag_set & MSG_SLOT_ACTIVE)) {
         return 0;
     }
-    reinit = msgChoiceTestFlags((int *)&slot->flags, TALK_FLAG_CLOSING) | !msgChoiceTestFlags((int *)&slot->flags, MSG_SLOT_ACTIVE);
+    reinit = msgChoiceTestFlags((int *)&slot->flags, MSG_SLOT_CLOSING) | !msgChoiceTestFlags((int *)&slot->flags, MSG_SLOT_ACTIVE);
     if (reinit) {
         msgSlotInitState4(slot);
         msgSlotSetGeometryIfState4(slot, ITEM_SLOT_X, ITEM_SLOT_Y, ITEM_SLOT_WIDTH, ITEM_SLOT_HEIGHT);
-        sizedRecordSetValue((struct SizedRecord *)slot, SLOT_START_VALUE);
+        sizedRecordSetValue(slot, SLOT_START_VALUE);
     }
     msgSlotSetItem(slot, name, count);
     msgSlotSetTimer(slot, ITEM_SLOT_TIMER_FRAMES);
@@ -210,6 +210,6 @@ void msgEntryFeedText(MsgSlot *record, char *input) {
         }
         mapped = textSkipBracketTag(input);
         textFormatWrapped(record, (int)mapped);
-        record->u.text.line_count = textLineCount((struct TextLineSource *)record);
+        record->u.text.line_count = textLineCount(record);
     }
 }

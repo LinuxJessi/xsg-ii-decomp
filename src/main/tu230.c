@@ -6,8 +6,6 @@
 #include "main/tu244.h"
 
 signed char *textSkipLineBreaksBack(signed char *text, signed char *start);
-/* Defined in tu244.c; proposal: declare in include/main/tu244.h. */
-void grControlPointBlend(int *out_x, int *out_y, float fraction);
 
 #define TALK_CURSOR_Y_OFFSET 15 /* added to the measured text height when the cursor y is placed */
 

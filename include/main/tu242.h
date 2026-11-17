@@ -17,6 +17,35 @@
 #define SECONDS_PER_MINUTE 60
 #define SECONDS_PER_HOUR (60 * SECONDS_PER_MINUTE)
 
+/* Values of MsgSlot.state: the handler family msgSlotRun picks. */
+#define MSG_SLOT_STATE_TEXT 1       /* text slot (interp*, tu227) */
+#define MSG_SLOT_STATE_WINDOW 2     /* list window slot (msgWindow*, tu238); every window entry point tests it */
+#define MSG_SLOT_STATE_TIMECODE 3   /* number entry slot (timecode*, tu240) */
+#define MSG_SLOT_STATE_ITEM 4       /* item or choice slot (msgSlot*, tu242) */
+
+/* Bits of MsgSlot.flags. The three phase bits are shared by every state (msgWindowUpdate, timecodeUpdate, the frame drawers). */
+#define MSG_SLOT_CLOSING 0x2
+#define MSG_SLOT_OPENING 0x4
+#define MSG_SLOT_OPEN 0x8
+#define INTERP_FLAG_SCAN 0x10       /* text: the cursor is still advancing (interpAdvanceCursor clears it at the end of the range) */
+#define INTERP_FLAG_EASE 0x20       /* text: the cosine ease of scroll_y is running (interpStepCosine clears it when done) */
+#define TIMECODE_FLAG_PHASE 0x40    /* timecode: timecodeUpdate runs the phase selector; the frame drawer also draws the selection box */
+#define TIMECODE_FLAG_ADVANCE 0x80  /* timecode: elapsed_frames advances by increment each update */
+#define TIMECODE_FLAG_LEVEL 0x100   /* timecode: level step in progress */
+#define TIMECODE_FLAG_RAMP 0x200    /* timecode: ramp step in progress (the digits roll) */
+#define TALK_FLAG_FADE 0x400        /* item: talkDrawFramesWithFade adds the fade frames driven by the item counter */
+#define TIMECODE_FLAG_COUNTER 0x800 /* timecode: counter step runs each update; the entry colour fade is on */
+
+/* Values of MsgSlotTimecode.mode and the phase codes of its fields. */
+#define TIMECODE_MODE_NUMBER 0
+#define TIMECODE_MODE_HMS 1         /* hours, minutes, seconds: phases 11..13 */
+#define TIMECODE_MODE_MSF 2         /* minutes, seconds, frames: phases 10..12 */
+#define TIMECODE_PHASE_FRAMES 10
+#define TIMECODE_PHASE_SECONDS 11
+#define TIMECODE_PHASE_MINUTES 12
+#define TIMECODE_PHASE_HOURS 13
+#define TIMECODE_PHASE_PIXELS 20    /* pixels per phase step in mode 0; the digit cell step of the entry box */
+
 /* State 1 (text) body, at +0x28. */
 typedef struct MsgSlotText {
     char *start;                      /* +0x28: start of the formatted text, key of the tags textFormatInsertGlyphTag adds */
@@ -60,10 +89,10 @@ typedef struct MsgSlotList {
     int sweep_angle;                  /* +0x64: sweep phase in degrees */
     int sweep_step;                   /* +0x68: degrees per frame */
     int list_active;                  /* +0x6C: set by msgWindowBindItems; the list adds a header band above the rows */
-    int list_source;                  /* +0x70: bind argument (item name table); zero keeps the cursor on the text lines */
-    int item_costs;                   /* +0x74: cost table of the item list (main/tu149 msgItemCost), kept as a word: msgWindowBindItems takes it as an int parameter and stores it unchanged */
+    char **list_source;               /* +0x70: item name table (bind argument); null keeps the cursor on the text lines */
+    int *item_costs;                  /* +0x74: cost table of the item list (main/tu149 msgItemCost) */
     int *counts;                      /* +0x78: the 40 item counts (main/tu149 msgItemCount) */
-    int item_extra;                   /* +0x7C: total pointer (main/tu149 &D_008886E0), kept as a word: msgWindowBindItems takes it as an int parameter and stores it unchanged */
+    int *debt;                        /* +0x7C: the remaining debt word (main/tu149 &D_008886E0), shown by the debt box */
     int item_count;                   /* +0x80: number of nonzero entries in counts */
     unsigned char unmodeled_84[0x14];
 } MsgSlotList;
@@ -72,9 +101,9 @@ typedef struct MsgSlotList {
 typedef struct MsgSlotTimecode {
     long long elapsed_frames;         /* +0x28: frames at 30 per second; timecodeAdvance adds increment */
     int mode;                         /* +0x30: 0 number, 1 hours/minutes/seconds, 2 minutes/seconds/frames */
-    int value_b;                      /* +0x34: stored by timecodeSetValueB; 2 starts the phase selector when the slot opens */
+    int editable;                     /* +0x34: set by timecodeSetEditable: 1 shows the entry, 2 also starts the digit selection when the slot opens */
     int phase;                        /* +0x38: phase code (the field being edited) */
-    int index;                        /* +0x3C: 1 to 9, stored by timecodeSetIndex */
+    int index;                        /* +0x3C: number of digits, 1 to 9 (timecodeSetIndex); the digit cells of the entry box */
     unsigned char unmodeled_40[8];
     long long limit;                  /* +0x48: elapsed_frames is clamped to it (timecodeSetFramePair) */
     long long increment;              /* +0x50: added to elapsed_frames by timecodeAdvance (timecodeSetFramePair) */
@@ -87,9 +116,9 @@ typedef struct MsgSlotTimecode {
     int level_step;                   /* +0x70: added to level by timecodeStepLevel */
     int phase_copy;                   /* +0x74: second copy of the phase code */
     int computed_value;               /* +0x78: the cosine value from timecodeSampleCosine; x bias of the selection box */
-    int color;                        /* +0x7C: 0xA8A8A8 after timecodeInit (timecodeSetColor) */
-    int counter_value;                /* +0x80: stored by timecodeStartCounter */
-    int counter;                      /* +0x84: wraps to 0 at 20 in timecodeStepCounter */
+    int color;                        /* +0x7C: idle colour of the entry, 0xA8A8A8 after timecodeInit (timecodeSetColor); entryFadeColor returns it while the counter flag is clear */
+    int counter_value;                /* +0x80: highlight colour the entry fades to (timecodeStartCounter) */
+    int counter;                      /* +0x84: blink phase, wraps to 0 at 20 in timecodeStepCounter (0-7 fade in, 8-11 hold, 12-19 fade out) */
     unsigned char unmodeled_88[0x10];
 } MsgSlotTimecode;
 
@@ -110,7 +139,7 @@ typedef struct MsgSlot {
     unsigned int flags;               /* +0x00: status bits (MSG_SLOT_ACTIVE, TALK_FLAG_* of tu229.h) */
     int x;                            /* +0x04: slot origin x */
     int y;                            /* +0x08: slot origin y */
-    int z;                            /* +0x0C: depth of the frame and text; the same word is written by sizedRecordSetValue (struct SizedRecord stored_value, tu244.c), which tu216/218/224/225 call on a slot through a cast */
+    int z;                            /* +0x0C: depth of the frame and text; written by sizedRecordSetValue (tu244.c) */
     int extent_x;                     /* +0x10: width, grown by msgSlotSetAcquiredItem */
     int extent_y;                     /* +0x14: height */
     int reset_value;                  /* +0x18: opening/closing frame counter, 0..12; scales the frame (* 0.08) */

@@ -3,41 +3,23 @@
 #include "main/tu213.h"
 #include "shared.h"
 
-/* Sprite batch header (the queue context gsQueueBeginSprites receives); only the
-   words this unit reads. The two rectangles are inferred from which word lands in
-   which corner component. */
-typedef struct SpriteBatch {
-    unsigned char unmodeled_00[0x10];
-    int z;                                 /* +0x10: depth shared by both corners */
-    int count;                             /* +0x14: number of times the sprite is queued */
-    unsigned char unmodeled_18[0x08];
-    int top;                               /* +0x20: screen rectangle */
-    int left;
-    int right;
-    int bottom;
-    int uvTop;                             /* +0x30: texture rectangle */
-    int uvLeft;
-    int uvRight;
-    int uvBottom;
-} SpriteBatch;
-
 /* Queues the batch's textured sprite count times: the top-left and bottom-right
    corners with their texture coordinates, then flushes the packet. The corner
    vectors are written through the DoublewordVector4 union (the original's stores
    alias the batch reads, which only a union access reproduces). */
-void spriteBatchDraw(SpriteBatch *batch, int packet) {
+void spriteBatchDraw(GsQueueContext *batch, XglPacket *packet) {
     DoublewordVector4 position[2];
     DoublewordVector4 uv[2];
     int z = batch->z;
     int count = batch->count;
-    int top = batch->top;
-    int left = batch->left;
-    int right = batch->right;
-    int bottom = batch->bottom;
-    int uvTop = batch->uvTop;
-    int uvLeft = batch->uvLeft;
-    int uvRight = batch->uvRight;
-    int uvBottom = batch->uvBottom;
+    int top = batch->kind.quad.top;
+    int left = batch->kind.quad.left;
+    int right = batch->kind.quad.right;
+    int bottom = batch->kind.quad.bottom;
+    int uvTop = batch->kind.quad.uv_top;
+    int uvLeft = batch->kind.quad.uv_left;
+    int uvRight = batch->kind.quad.uv_right;
+    int uvBottom = batch->kind.quad.uv_bottom;
     int i;
 
     position[0].vector.x = left;
@@ -50,7 +32,7 @@ void spriteBatchDraw(SpriteBatch *batch, int packet) {
     uv[1].vector.y = uvBottom;
     position[0].vector.z = z;
     position[1].vector.z = z;
-    gsQueueBeginSprites((GsQueueContext *) batch);
+    gsQueueBeginSprites(batch);
     for (i = 0; i < count; i++) {
         gsQueueAddTexturedVertex(packet, &position[0].vector.x, &uv[0].vector.x, batch);
         gsQueueAddTexturedKickVertex(packet, &position[1].vector.x, &uv[1].vector.x, batch);

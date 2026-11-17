@@ -94295,9 +94295,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeSetValueB",
+     "name": "timecodeSetEditable",
      "size": 24,
-     "splat_name": "timecodeSetValueB",
+     "splat_name": "timecodeSetEditable",
      "va": "0x00285788",
      "name_basis": "address",
      "provenance": "estimated"

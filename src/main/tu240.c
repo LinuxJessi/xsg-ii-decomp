@@ -12,7 +12,7 @@ void timecodeInit(MsgSlot *slot)
 {
     MsgSlotTimecode *stepper = &slot->u.timecode;
 
-    msgSlotInit(slot, TIMECODE_STATE);
+    msgSlotInit(slot, MSG_SLOT_STATE_TIMECODE);
     stepper->phase = 1;
     stepper->phase_copy = 1;
     stepper->computed_value = timecodeSampleCosine(slot);
@@ -22,7 +22,7 @@ void timecodeInit(MsgSlot *slot)
 /* Runs msgSlotSetGeometry with the four values while the object is active (state 3). */
 void timecodeTickIfActive(MsgSlot *slot, int first_value, int second_value, int third_value, int fourth_value)
 {
-    if (slot->state == TIMECODE_STATE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         msgSlotSetGeometry(slot, first_value, second_value, third_value, fourth_value);
     }
 }
@@ -30,8 +30,8 @@ void timecodeTickIfActive(MsgSlot *slot, int first_value, int second_value, int 
 /* While active: flags = (flags & ~closing) | opening (TIMECODE_FLAG_*). */
 void timecodeSetFlag04(MsgSlot *slot)
 {
-    if (slot->state == TIMECODE_STATE) {
-        slot->flags = (slot->flags & ~(u32) TIMECODE_FLAG_CLOSING) | TIMECODE_FLAG_OPENING;
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
+        slot->flags = (slot->flags & ~(u32) MSG_SLOT_CLOSING) | MSG_SLOT_OPENING;
     }
 }
 
@@ -45,12 +45,12 @@ extern int gameLoopFlags[];
  */
 int timecodeUpdate(MsgSlot *slot)
 {
-    if (slot->state == TIMECODE_STATE && !(gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES)) {
-        if (slot->flags & TIMECODE_FLAG_OPENING) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE && !(gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES)) {
+        if (slot->flags & MSG_SLOT_OPENING) {
             slot->reset_value += 1;
             if (slot->reset_value >= TIMECODE_OPEN_FRAMES) {
-                slot->flags = (slot->flags & ~(u32) TIMECODE_FLAG_OPENING) | TIMECODE_FLAG_OPEN;
-                switch (slot->u.timecode.value_b) {
+                slot->flags = (slot->flags & ~(u32) MSG_SLOT_OPENING) | MSG_SLOT_OPEN;
+                switch (slot->u.timecode.editable) {
                 case 1:
                     break;
                 case 2:
@@ -59,7 +59,7 @@ int timecodeUpdate(MsgSlot *slot)
                 }
             }
         }
-        if (slot->flags & TIMECODE_FLAG_CLOSING) {
+        if (slot->flags & MSG_SLOT_CLOSING) {
             slot->reset_value -= 1;
             if (slot->reset_value <= 0) {
                 slot->flags = 0;
@@ -230,21 +230,21 @@ void timecodeSampleRange(MsgSlot *slot, int *low, int *high)
 
 /*
  * Flag-driven dispatch while active: flags 0x4, 0x2 and 0x8 each run talkDrawFramesWithBox (mode 0) or
- * talkDrawFrameRects; flag 0x8 also draws the contents. talkBoxDrawContents (tu234) takes the slot as its TalkBoxPlace view.
+ * talkDrawFrameRects; flag 0x8 also draws the contents.
  * The result is never used; int keeps the final call from becoming a tail jump.
  */
 int timecodeSlotDraw(MsgSlot *slot)
 {
-    if (slot->state == TIMECODE_STATE) {
-        if (slot->flags & TIMECODE_FLAG_OPENING) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
+        if (slot->flags & MSG_SLOT_OPENING) {
             if (slot->u.timecode.mode == TIMECODE_MODE_NUMBER) { talkDrawFramesWithBox(slot); } else { talkDrawFrameRects(slot); }
         }
-        if (slot->flags & TIMECODE_FLAG_CLOSING) {
+        if (slot->flags & MSG_SLOT_CLOSING) {
             if (slot->u.timecode.mode == TIMECODE_MODE_NUMBER) { talkDrawFramesWithBox(slot); } else { talkDrawFrameRects(slot); }
         }
-        if (slot->flags & TIMECODE_FLAG_OPEN) {
+        if (slot->flags & MSG_SLOT_OPEN) {
             if (slot->u.timecode.mode == TIMECODE_MODE_NUMBER) { talkDrawFramesWithBox(slot); } else { talkDrawFrameRects(slot); }
-            talkBoxDrawContents((struct TalkBoxPlace *) slot);
+            talkBoxDrawContents(slot);
         }
     }
 }
@@ -252,21 +252,21 @@ int timecodeSlotDraw(MsgSlot *slot)
 /* While active: clears flag bits 0x4, 0x8, 0x40, 0x80 and 0x800, then sets 0x2. */
 void timecodeBeginClose(MsgSlot *slot)
 {
-    if (slot->state == TIMECODE_STATE) {
-        slot->flags &= ~TIMECODE_FLAG_OPENING;
-        slot->flags &= ~TIMECODE_FLAG_OPEN;
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
+        slot->flags &= ~MSG_SLOT_OPENING;
+        slot->flags &= ~MSG_SLOT_OPEN;
         slot->flags &= ~TIMECODE_FLAG_PHASE;
         slot->flags &= ~TIMECODE_FLAG_ADVANCE;
         slot->flags &= ~TIMECODE_FLAG_COUNTER;
-        slot->flags |= TIMECODE_FLAG_CLOSING;
+        slot->flags |= MSG_SLOT_CLOSING;
     }
 }
 
-/* While active: stores value in value_b. */
-void timecodeSetValueB(MsgSlot *slot, int value)
+/* While active: stores value in editable. */
+void timecodeSetEditable(MsgSlot *slot, int value)
 {
-    if (slot->state == TIMECODE_STATE) {
-        slot->u.timecode.value_b = value;
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
+        slot->u.timecode.editable = value;
     }
 }
 
@@ -276,7 +276,7 @@ void timecodeSetValueB(MsgSlot *slot, int value)
  */
 void timecodeSetMode(MsgSlot *slot, int mode)
 {
-    if (slot->state == TIMECODE_STATE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         slot->u.timecode.mode = mode;
         timecodeDuration(slot);
         timecodeSelectPhaseByMode(slot);
@@ -287,7 +287,7 @@ void timecodeSetMode(MsgSlot *slot, int mode)
 /* While active and index in 1 to 9: stores the index, recomputes as timecodeSetMode does and stores computed_value. */
 void timecodeSetIndex(MsgSlot *slot, int index)
 {
-    if (slot->state == TIMECODE_STATE && (unsigned)(index - 1) < TIMECODE_INDEX_MAX) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE && (unsigned)(index - 1) < TIMECODE_INDEX_MAX) {
         slot->u.timecode.index = index;
         timecodeDuration(slot);
         timecodeComputeResults(slot);
@@ -319,17 +319,15 @@ void timecodeDuration(MsgSlot *slot)
 /* Stores the results of sizedRecordCenterX and sizedRecordCenterY. */
 void timecodeComputeResults(MsgSlot *slot)
 {
-    /* SizedRecord (tu244.c) is the shared view of the slot header (z, extent_x, extent_y) that tu216/218/224/225
-     * and tu237 also pass to these helpers, so the casts stay until tu244 takes MsgSlot. Inlining the arithmetic
-     * would drop the calls and change the rows. */
-    slot->x = sizedRecordCenterX((struct SizedRecord *) slot);
-    slot->y = sizedRecordCenterY((struct SizedRecord *) slot);
+    /* Inlining the arithmetic of the two helpers would drop the calls and change the rows. */
+    slot->x = sizedRecordCenterX(slot);
+    slot->y = sizedRecordCenterY(slot);
 }
 
 /* While active: flags |= 0x40. The opposite of timecodeClearFlag40 in tu241. */
 void timecodeSetFlag40(MsgSlot *slot)
 {
-    if (slot->state == TIMECODE_STATE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         slot->flags |= TIMECODE_FLAG_PHASE;
     }
 }

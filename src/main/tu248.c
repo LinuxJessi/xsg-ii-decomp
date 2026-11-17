@@ -1,31 +1,15 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu256.h"
+#include "main/tu051.h"
 #include "main/xenoActor.h"
 
 void xglCurSetTranslate(const Vector4 *vector);
 void xglCurMulScaleXYZ(const Vector4 *scale);
-/* Header form (tu255.h: void xglCurApplyVector(Vector4 *, const Vector4 *)) does not compile
-   here: "void value not ignored" where the result is returned (the original returns the
-   callee result), so int is kept. */
+/* Not tu255.h (void): the original returns the callee result here, but an int declaration in the shared
+   header changes XenoActorUpdateTree in xenoActor.c (4 rows, v0 live across the call) and conflicts with the
+   void definition in tu255.c, so the int form stays local. */
 int xglCurApplyVector(Vector4 *, const Vector4 *);
-
-/* Partial view of struct XenoActor (full definition in src/main/xenoActor.c): only the
- * draw flags, the focus pair, the flag word of the channel block at +0x650 and the slot at +0x79C are used here.
- * XenoActorSetChannelFlag80 runs on the XenoActor that unitCreateSide allocates (stored at unit +0x1D0). */
-struct XenoActor {
-    unsigned char unmodeled_000[0xBC];
-    unsigned int drawFlags;                 /* 0x0BC */
-    unsigned char unmodeled_0c0[0x140 - 0xC0];
-    float focusX;                           /* 0x140 */
-    float focusY;                           /* 0x144 */
-    unsigned char unmodeled_148[0x650 - 0x148];
-    int channelFlags;                       /* 0x650: flag word of the channel block */
-    unsigned char unmodeled_654[0x710 - 0x654];
-    XenoHrc *table;                         /* 0x710 */
-    unsigned char unmodeled_714[0x79c - 0x714];
-    int state;                              /* 0x79C: written here; XenoActorDrawMotion reads it and clears it */
-};
 
 #define XENO_CHANNEL_BIT80 0x80  /* channel flag bit set here; its role is not recovered */
 #define CFE_DIR_COUNT 9          /* directions 0..8 index cfeDirOffsetTable */
@@ -47,7 +31,7 @@ void cfeDampDirOffset(struct XenoActor *actor, int dir) {
 
 /* Builds the current matrix from the table's translation, rotations Z/Y/X and scale, then applies it to the point stored in out. */
 int XenoActorGetHrcPoint(struct XenoActor *actor, Vector4 *out) {
-    XenoHrc *table = actor->table;
+    XenoHrc *table = (XenoHrc *) actor->table;
     XenoTransform *transform;
 
     if (table == 0) {
@@ -68,7 +52,7 @@ int XenoActorGetHrcPoint(struct XenoActor *actor, Vector4 *out) {
 
 /* Sets XENO_CHANNEL_BIT80 of the channel block flag word. */
 void XenoActorSetChannelFlag80(struct XenoActor *actor) {
-    actor->channelFlags |= XENO_CHANNEL_BIT80;
+    actor->motion[0].flags |= XENO_CHANNEL_BIT80;
 }
 
 /* Stores the state word that XenoActorDrawMotion reads and clears. */

@@ -35,7 +35,7 @@ int msgWindowAdvance(MsgWindow *window) {
     slot = &window->slots[index];
     msgTextSlotStart(slot);
     msgTextSlotFit(slot, TEXT_SLOT_X, TEXT_SLOT_Y, TEXT_SLOT_WIDTH, TEXT_SLOT_HEIGHT);
-    sizedRecordSetValue((struct SizedRecord *)slot, window->current_index * MSG_SLOT_VALUE_STEP + MSG_SLOT_VALUE_BASE);
+    sizedRecordSetValue(slot, window->current_index * MSG_SLOT_VALUE_STEP + MSG_SLOT_VALUE_BASE);
     slotBlockSetFlag04((struct SlotBlock *)slot);
     interpSetPending(slot, msgWindowStartValue);
     return 1;

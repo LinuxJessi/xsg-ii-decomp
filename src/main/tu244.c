@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/tu242.h"
 #include "main/tu244.h"
 
 /* Indices into one control point of grControlPoints. A struct {float x, y;} point type changes grControlPointSet's code (6 rows),
@@ -17,14 +18,6 @@ void grControlPointSet(int index, int x, int y) {
     grControlPoints[index][POINT_X] = x;
     grControlPoints[index][POINT_Y] = y;
 }
-
-/* A sized entry whose on-screen origin is centred by sizedRecordCenterX and sizedRecordCenterY. */
-struct SizedRecord {
-    unsigned char unmodeled_00[0xC];
-    int stored_value;
-    int size_x;
-    int size_y;
-};
 
 /*
  * Position at `fraction` (clamped to 1) along the three control points: weights are
@@ -56,13 +49,13 @@ void grControlPointBlend(int *out_x, int *out_y, float fraction) {
 }
 
 /* X origin that centres the record on a 512-pixel-wide screen. */
-int sizedRecordCenterX(struct SizedRecord *record) {
-    return SCREEN_CENTER_X - (record->size_x >> 1);
+int sizedRecordCenterX(MsgSlot *record) {
+    return SCREEN_CENTER_X - (record->extent_x >> 1);
 }
 
 /* Y origin that centres the record on a 448-line screen. */
-int sizedRecordCenterY(struct SizedRecord *record) {
-    return SCREEN_CENTER_Y - (record->size_y >> 1);
+int sizedRecordCenterY(MsgSlot *record) {
+    return SCREEN_CENTER_Y - (record->extent_y >> 1);
 }
 
 /* True when text starts with a value conversion, %d or %s. */
@@ -84,9 +77,9 @@ int textIsSpace(signed char *text) {
     return *text == ' ';
 }
 
-/* Stores value in the record's stored_value field. */
-void sizedRecordSetValue(struct SizedRecord *record, int value) {
-    record->stored_value = value;
+/* Stores value in the slot's z (its depth). */
+void sizedRecordSetValue(MsgSlot *record, int value) {
+    record->z = value;
 }
 
 /* True when text starts with a line break: a newline or the two characters backslash, n. */

@@ -5,11 +5,6 @@
 
 /* Functions of src/main/tu215.c that other files call. */
 
-/* Values of MsgSlot.state: the handler family msgSlotRun picks (proposal: move to main/tu242.h, the owner of MsgSlot). */
-#define MSG_SLOT_STATE_TEXT 1       /* text slot (interp*, tu227) */
-#define MSG_SLOT_STATE_WINDOW 2     /* window slot (msgWindow*, tu238) */
-#define MSG_SLOT_STATE_TIMECODE 3   /* timecode slot (timecode*, tu240) */
-#define MSG_SLOT_STATE_ITEM 4       /* item or choice slot (msgSlot*, tu242) */
 
 /* Status codes msgWindowCurrentStatus (tu222) and msgSlotStatus (tu225) report for a slot. */
 #define MSG_STATUS_NONE 0
