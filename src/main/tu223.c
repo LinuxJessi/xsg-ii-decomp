@@ -14,9 +14,9 @@ int timecodeStartAtFrame(MsgSlot *state, int frame) {
     }
     timecodeInit(state);
     timecodeTickIfActive(state, 0xB8, 0xB6, 0x90, 0x54);
-    sizedRecordSetValue(state, 0x7FFFFF);
+    sizedRecordSetValue(state, MSG_SLOT_FRONT_Z);
     timecodeSetFrames(state, frame);
-    timecodeSetFlag04(state);
+    timecodeStartOpening(state);
     timecodeSetMode(state, 0);
     timecodeSetIndex(state, 4);
     timecodeSetEditable(state, 2);

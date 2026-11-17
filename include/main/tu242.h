@@ -29,22 +29,22 @@
 #define MSG_SLOT_OPEN 0x8
 #define INTERP_FLAG_SCAN 0x10       /* text: the cursor is still advancing (interpAdvanceCursor clears it at the end of the range) */
 #define INTERP_FLAG_EASE 0x20       /* text: the cosine ease of scroll_y is running (interpStepCosine clears it when done) */
-#define TIMECODE_FLAG_PHASE 0x40    /* timecode: timecodeUpdate runs the phase selector; the frame drawer also draws the selection box */
+#define TIMECODE_FLAG_PHASE 0x40    /* timecode: the entry is editable: timecodeUpdate keeps the selection valid; the frame drawer also draws the selection box */
 #define TIMECODE_FLAG_ADVANCE 0x80  /* timecode: elapsed_frames advances by increment each update */
-#define TIMECODE_FLAG_LEVEL 0x100   /* timecode: level step in progress */
-#define TIMECODE_FLAG_RAMP 0x200    /* timecode: ramp step in progress (the digits roll) */
+#define TIMECODE_FLAG_LEVEL 0x100   /* timecode: the cursor is moving (cursor_angle step in progress) */
+#define TIMECODE_FLAG_RAMP 0x200    /* timecode: a digit is rolling (roll_angle step in progress) */
 #define TALK_FLAG_FADE 0x400        /* item: talkDrawFramesWithFade adds the fade frames driven by the item counter */
-#define TIMECODE_FLAG_COUNTER 0x800 /* timecode: counter step runs each update; the entry colour fade is on */
+#define TIMECODE_FLAG_COUNTER 0x800 /* timecode: blink_phase advances each update; the entry colour fade is on */
 
-/* Values of MsgSlotTimecode.mode and the phase codes of its fields. */
+/* Values of MsgSlotTimecode.mode and the field codes of selected (modes 1, 2). */
 #define TIMECODE_MODE_NUMBER 0
-#define TIMECODE_MODE_HMS 1         /* hours, minutes, seconds: phases 11..13 */
-#define TIMECODE_MODE_MSF 2         /* minutes, seconds, frames: phases 10..12 */
+#define TIMECODE_MODE_HMS 1         /* hours, minutes, seconds: field codes 11..13 */
+#define TIMECODE_MODE_MSF 2         /* minutes, seconds, frames: field codes 10..12 */
 #define TIMECODE_PHASE_FRAMES 10
 #define TIMECODE_PHASE_SECONDS 11
 #define TIMECODE_PHASE_MINUTES 12
 #define TIMECODE_PHASE_HOURS 13
-#define TIMECODE_PHASE_PIXELS 20    /* pixels per phase step in mode 0; the digit cell step of the entry box */
+#define TIMECODE_PHASE_PIXELS 20    /* pixels per digit step in mode 0; the digit cell step of the entry box */
 
 /* State 1 (text) body, at +0x28. */
 typedef struct MsgSlotText {
@@ -97,28 +97,32 @@ typedef struct MsgSlotList {
     unsigned char unmodeled_84[0x14];
 } MsgSlotList;
 
-/* State 3 (timecode) body, at +0x28. */
+/*
+ * State 3 (timecode) body, at +0x28: a number entry box. The value is shown as `digits` digits (mode 0) or as
+ * h:m:s / m:s:f fields (modes 1, 2); one digit or field is selected, a step changes it with a rolling animation
+ * (roll_angle) and a cursor eases between the previous and the selected digit (cursor_angle, cursor_x).
+ */
 typedef struct MsgSlotTimecode {
     long long elapsed_frames;         /* +0x28: frames at 30 per second; timecodeAdvance adds increment */
     int mode;                         /* +0x30: 0 number, 1 hours/minutes/seconds, 2 minutes/seconds/frames */
     int editable;                     /* +0x34: set by timecodeSetEditable: 1 shows the entry, 2 also starts the digit selection when the slot opens */
-    int phase;                        /* +0x38: phase code (the field being edited) */
-    int index;                        /* +0x3C: number of digits, 1 to 9 (timecodeSetIndex); the digit cells of the entry box */
+    int selected;                     /* +0x38: the selected digit (1-based from the right, mode 0) or field code (TIMECODE_PHASE_*) */
+    int digits;                       /* +0x3C: number of digits, 1 to 9 (timecodeSetIndex); the digit cells of the entry box */
     unsigned char unmodeled_40[8];
     long long limit;                  /* +0x48: elapsed_frames is clamped to it (timecodeSetFramePair) */
     long long increment;              /* +0x50: added to elapsed_frames by timecodeAdvance (timecodeSetFramePair) */
-    int phase_start;                  /* +0x58: phase when the timeline started */
-    int ramp;                         /* +0x5C: ramp value, clamped at 180 by timecodeRampStep */
-    int ramp_step;                    /* +0x60: added to ramp each step */
+    int phase_start;                  /* +0x58: selected digit or field when the step started */
+    int roll_angle;                   /* +0x5C: ease angle of the rolling digit in degrees, clamped at 180 by timecodeStepRollAngle */
+    int roll_angle_step;              /* +0x60: added to roll_angle each step */
     int digit;                        /* +0x64: valueDigit of elapsed_frames at the phase, taken by timecodeStart */
     int span;                         /* +0x68: the amount timecodeStart adds */
-    int level;                        /* +0x6C: angle in degrees, 0 to 180 */
-    int level_step;                   /* +0x70: added to level by timecodeStepLevel */
-    int phase_copy;                   /* +0x74: second copy of the phase code */
-    int computed_value;               /* +0x78: the cosine value from timecodeSampleCosine; x bias of the selection box */
-    int color;                        /* +0x7C: idle colour of the entry, 0xA8A8A8 after timecodeInit (timecodeSetColor); entryFadeColor returns it while the counter flag is clear */
-    int counter_value;                /* +0x80: highlight colour the entry fades to (timecodeStartCounter) */
-    int counter;                      /* +0x84: blink phase, wraps to 0 at 20 in timecodeStepCounter (0-7 fade in, 8-11 hold, 12-19 fade out) */
+    int cursor_angle;                 /* +0x6C: ease angle of the cursor in degrees, 0 to 180 */
+    int cursor_angle_step;            /* +0x70: added to cursor_angle by timecodeStepCursorAngle */
+    int previous;                     /* +0x74: the digit or field selected before the last step; the cursor eases from it */
+    int cursor_x;                     /* +0x78: x of the cursor, eased between previous and selected by timecodeCursorX; x bias of the selection box */
+    int idle_color;                   /* +0x7C: idle colour of the entry, 0xA8A8A8 after timecodeInit (timecodeSetColor); entryFadeColor returns it while the blink flag is clear */
+    int highlight_color;              /* +0x80: highlight colour the entry fades to (timecodeStartCounter) */
+    int blink_phase;                  /* +0x84: blink phase, wraps to 0 at 20 in timecodeStepCounter (0-7 fade in, 8-11 hold, 12-19 fade out) */
     unsigned char unmodeled_88[0x10];
 } MsgSlotTimecode;
 
@@ -142,9 +146,9 @@ typedef struct MsgSlot {
     int z;                            /* +0x0C: depth of the frame and text; written by sizedRecordSetValue (tu244.c) */
     int extent_x;                     /* +0x10: width, grown by msgSlotSetAcquiredItem */
     int extent_y;                     /* +0x14: height */
-    int reset_value;                  /* +0x18: opening/closing frame counter, 0..12; scales the frame (* 0.08) */
+    int open_counter;                  /* +0x18: opening/closing frame counter, 0..12; scales the frame (* 0.08) */
     int state;                        /* +0x1C: selects the body and handlers (1 text .. 4 item) */
-    unsigned int init_word;           /* +0x20: RGBA of the frame (talkWindowDrawFrame) */
+    unsigned int frame_color;           /* +0x20: RGBA of the frame (talkWindowDrawFrame) */
     unsigned char unmodeled_24[0x4];
     union {
         MsgSlotText text;             /* state 1 */
@@ -158,6 +162,7 @@ typedef char MsgSlotSizeCheck[sizeof(MsgSlot) == 0x98 ? 1 : -1]; /* MsgWindow st
 
 #define MSG_SLOT_COUNT 5
 #define MSG_SLOT_ACTIVE 0x1
+#define MSG_SLOT_FRONT_Z 0x7FFFFF  /* MsgSlot.z of the frontmost slot: the depth sizedRecordSetValue stores when a slot is started */
 typedef struct MsgWindow {
     int current_index;
     unsigned char unmodeled_04[4];
@@ -170,10 +175,10 @@ void msgSlotSetGeometry(MsgSlot *object, int first_value, int second_value, int 
 void textFormatHanTag(char *dst, const char *src);
 void textOutputReset(void);
 void textSetOutputCursor(int value);
-void timecodeClearFlag80(MsgSlot *object);
+void timecodeClearAdvance(MsgSlot *object);
 /* Clears the whole slot and sets its state. */
 void msgSlotInit(MsgSlot *slot, int state);
-void msgSlotSetFlag02(MsgSlot *slot);
+void msgSlotStartClosing(MsgSlot *slot);
 void timecodeStartCounter(MsgSlot *slot, int value);
 
 #endif /* INCLUDE_MAIN_TU242_H */

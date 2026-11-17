@@ -12,7 +12,7 @@ int talkGetBoxLayoutX(MsgSlot *box)
     MsgSlotTimecode *body;
 
     body = &box->u.timecode; /* the original keeps the body address (slot + 0x28) in a register */
-    return talkBoxContentX(box) + body->computed_value;
+    return talkBoxContentX(box) + body->cursor_x;
 }
 
 int talkBoxContentY(MsgSlot *box);

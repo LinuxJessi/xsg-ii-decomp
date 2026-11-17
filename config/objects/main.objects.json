@@ -90609,9 +90609,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "msgWindowSetTalkFlag10",
+     "name": "msgWindowStartScan",
      "size": 76,
-     "splat_name": "msgWindowSetTalkFlag10",
+     "splat_name": "msgWindowStartScan",
      "va": "0x0027d438",
      "name_basis": "address",
      "provenance": "estimated"
@@ -91113,9 +91113,9 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "timecodeClearFlag80Forward",
+     "name": "timecodeClearAdvanceForward",
      "size": 20,
-     "splat_name": "timecodeClearFlag80Forward",
+     "splat_name": "timecodeClearAdvanceForward",
      "va": "0x0027dcb0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -92766,9 +92766,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "scaleAndRound",
+     "name": "pixelsToRows",
      "size": 76,
-     "splat_name": "scaleAndRound",
+     "splat_name": "pixelsToRows",
      "va": "0x002825e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94187,9 +94187,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeSetFlag04",
+     "name": "timecodeStartOpening",
      "size": 40,
-     "splat_name": "timecodeSetFlag04",
+     "splat_name": "timecodeStartOpening",
      "va": "0x00285138",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94223,18 +94223,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeRampStep",
+     "name": "timecodeStepRollAngle",
      "size": 76,
-     "splat_name": "timecodeRampStep",
+     "splat_name": "timecodeStepRollAngle",
      "va": "0x00285340",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeStepLevel",
+     "name": "timecodeStepCursorAngle",
      "size": 96,
-     "splat_name": "timecodeStepLevel",
+     "splat_name": "timecodeStepCursorAngle",
      "va": "0x00285390",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94259,18 +94259,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeSampleCosine",
+     "name": "timecodeCursorX",
      "size": 136,
-     "splat_name": "timecodeSampleCosine",
+     "splat_name": "timecodeCursorX",
      "va": "0x002854c0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeSampleRange",
+     "name": "timecodeCursorEnds",
      "size": 272,
-     "splat_name": "timecodeSampleRange",
+     "splat_name": "timecodeCursorEnds",
      "va": "0x00285548",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94322,27 +94322,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeDuration",
+     "name": "timecodeFitBoxWidth",
      "size": 96,
-     "splat_name": "timecodeDuration",
+     "splat_name": "timecodeFitBoxWidth",
      "va": "0x00285850",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeComputeResults",
+     "name": "timecodeCenterSlot",
      "size": 52,
-     "splat_name": "timecodeComputeResults",
+     "splat_name": "timecodeCenterSlot",
      "va": "0x002858b0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeSetFlag40",
+     "name": "timecodeEnablePhase",
      "size": 36,
-     "splat_name": "timecodeSetFlag40",
+     "splat_name": "timecodeEnablePhase",
      "va": "0x002858e8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94717,9 +94717,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "timecodeClearFlag80",
+     "name": "timecodeClearAdvance",
      "size": 36,
-     "splat_name": "timecodeClearFlag80",
+     "splat_name": "timecodeClearAdvance",
      "va": "0x00286200",
      "name_basis": "address",
      "provenance": "estimated"
@@ -94825,9 +94825,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "msgSlotSetFlag02",
+     "name": "msgSlotStartClosing",
      "size": 52,
-     "splat_name": "msgSlotSetFlag02",
+     "splat_name": "msgSlotStartClosing",
      "va": "0x00286570",
      "name_basis": "address",
      "provenance": "estimated"

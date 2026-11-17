@@ -5,7 +5,7 @@
 #include "main/tu242.h"
 #include "main/tu243.h"
 
-/* Time units of the timecode object (the TIMECODE_* slot state, flags and phase codes are in main/tu240.h). */
+/* Time units of the timecode object (the TIMECODE_* slot state, flags and field codes are in main/tu242.h). */
 #define MINUTES_PER_HOUR 60
 #define HOURS_PER_DAY 24            /* the hours field wraps at 24 */
 #define TIMECODE_DIGIT_BUFFER 50    /* size of the digit string of timecodeAddToDigit */
@@ -57,48 +57,48 @@ void timecodeSplit(MsgSlot *slot, int *hours, int *minutes, int *seconds, int *f
     }
 }
 
-/* While active: stores value in phase and phase_copy. */
+/* While active: stores value in selected and previous. */
 void timecodeSetPhase(MsgSlot *slot, int value) {
     if (slot->state == MSG_SLOT_STATE_TIMECODE) {
-        slot->u.timecode.phase = value;
-        slot->u.timecode.phase_copy = value;
+        slot->u.timecode.selected = value;
+        slot->u.timecode.previous = value;
     }
 }
 
-/* Returns phase while active, else 0. */
+/* Returns the selected digit or field while active, else 0. */
 int timecodeGetPhase(MsgSlot *slot) {
     if (slot->state != MSG_SLOT_STATE_TIMECODE) {
         return 0;
     }
-    return slot->u.timecode.phase;
+    return slot->u.timecode.selected;
 }
 
-/* Steps the phase code by delta (wrapped into the range of the mode), sets flag 0x100 and restarts the level ramp; main 0x00285B18. */
+/* Moves the selection by delta (wrapped into the range of the mode), remembers the old one in previous, sets flag 0x100 and restarts the cursor ease; main 0x00285B18. */
 void timecodeStepPhase(MsgSlot *slot, int delta) {
     MsgSlotTimecode *step = &slot->u.timecode;
-    int phase;
+    int next;
 
     if (slot->state == MSG_SLOT_STATE_TIMECODE && !(slot->flags & TIMECODE_FLAG_RAMP)) {
         if (slot->flags & TIMECODE_FLAG_LEVEL) {
             return;
         }
         slot->flags |= TIMECODE_FLAG_LEVEL;
-        phase = step->phase + delta;
-        step->phase_copy = step->phase;
-        step->phase = phase;
+        next = step->selected + delta;
+        step->previous = step->selected;
+        step->selected = next;
         if (step->mode == TIMECODE_MODE_HMS) {
-            step->phase = wrapIntRange(phase, TIMECODE_PHASE_SECONDS, TIMECODE_PHASE_HOURS);
+            step->selected = wrapIntRange(next, TIMECODE_PHASE_SECONDS, TIMECODE_PHASE_HOURS);
         } else if (step->mode == TIMECODE_MODE_MSF) {
-            step->phase = wrapIntRange(phase, TIMECODE_PHASE_FRAMES, TIMECODE_PHASE_MINUTES);
+            step->selected = wrapIntRange(next, TIMECODE_PHASE_FRAMES, TIMECODE_PHASE_MINUTES);
         } else {
-            step->phase = wrapIntRange(phase, 1, step->index);
+            step->selected = wrapIntRange(next, 1, step->digits);
         }
-        step->level = 0;
-        step->level_step = easeAngleStep(step->phase_copy * TIMECODE_PHASE_PIXELS, step->phase * TIMECODE_PHASE_PIXELS);
+        step->cursor_angle = 0;
+        step->cursor_angle_step = easeAngleStep(step->previous * TIMECODE_PHASE_PIXELS, step->selected * TIMECODE_PHASE_PIXELS);
     }
 }
 
-/* Starts a timeline: flag 0x200 and ramp setup, then by mode: then timecodeAddToDigit (mode 0) or timecodeAddToField (mode 1 or 2); main 0x00285BF8. */
+/* Starts a timeline: flag 0x200 and roll angle setup, then by mode: then timecodeAddToDigit (mode 0) or timecodeAddToField (mode 1 or 2); main 0x00285BF8. */
 void timecodeStart(MsgSlot *slot, int param) {
     MsgSlotTimecode *step = &slot->u.timecode;
 
@@ -107,18 +107,18 @@ void timecodeStart(MsgSlot *slot, int param) {
             return;
         }
         slot->flags |= TIMECODE_FLAG_RAMP;
-        step->phase_start = step->phase;
-        step->digit = valueDigit(step->elapsed_frames, step->phase);
-        step->ramp = 0;
-        step->ramp_step = easeAngleStep(0, param * TIMECODE_PHASE_PIXELS);
+        step->phase_start = step->selected;
+        step->digit = valueDigit(step->elapsed_frames, step->selected);
+        step->roll_angle = 0;
+        step->roll_angle_step = easeAngleStep(0, param * TIMECODE_PHASE_PIXELS);
         step->span = param;
         switch (step->mode) {
         case 0:
-            step->elapsed_frames = timecodeAddToDigit(step->elapsed_frames, step->phase, param);
+            step->elapsed_frames = timecodeAddToDigit(step->elapsed_frames, step->selected, param);
             break;
         case 1:
         case 2:
-            step->elapsed_frames = timecodeAddToField(step->elapsed_frames, step->phase, param);
+            step->elapsed_frames = timecodeAddToField(step->elapsed_frames, step->selected, param);
             break;
         }
     }
@@ -154,8 +154,8 @@ long long timecodeAddToDigit(long long value, int pos, int amountIn) {
 }
 
 /* Applies amount to one field of a frame count split into hours, minutes, seconds and frames (30 per second),
- * wrapping inside the field; phase 10 = frames, 11 = seconds, 12 = minutes, 13 = hours. Returns the new frame count, or 0 for another phase. */
-long long timecodeAddToField(long long frames, int phase, int amount) {
+ * wrapping inside the field; field code 10 = frames, 11 = seconds, 12 = minutes, 13 = hours. Returns the new frame count, or 0 for another code. */
+long long timecodeAddToField(long long frames, int code, int amount) {
     int fields[4];
     int *field;
     int limit;
@@ -167,7 +167,7 @@ long long timecodeAddToField(long long frames, int phase, int amount) {
     fields[1] = total / FRAMES_PER_SECOND;
     total -= (int)((long long)fields[1] * FRAMES_PER_SECOND);
     fields[0] = total;
-    switch (phase) {
+    switch (code) {
     case TIMECODE_PHASE_FRAMES: field = &fields[0]; limit = FRAMES_PER_SECOND; break;
     case TIMECODE_PHASE_SECONDS: field = &fields[1]; limit = SECONDS_PER_MINUTE; break;
     case TIMECODE_PHASE_MINUTES: field = &fields[2]; limit = MINUTES_PER_HOUR; break;

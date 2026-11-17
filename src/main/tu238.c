@@ -30,7 +30,7 @@ extern int gameLoopFlags[];
 
 /* Message window update (msgWindowUpdate, called from main/tu215). Flag bits of MsgSlot.flags:
  * 0x2 closing, 0x4 opening (12 frames, then 0x48 = open | box), 0x8 pulse (msgWindowPulseStep), 0x20 slide,
- * 0x100 sweep of the cursor. The opening/closing frame counter is MsgSlot.reset_value.
+ * 0x100 sweep of the cursor. The opening/closing frame counter is MsgSlot.open_counter.
  * The result is never used; int keeps the final call from becoming a tail jump. */
 int msgWindowUpdate(MsgSlot *window)
 {
@@ -44,16 +44,16 @@ int msgWindowUpdate(MsgSlot *window)
         {
             if (window->flags & MSG_SLOT_OPENING)
             {
-                window->reset_value++;
-                if (window->reset_value >= MSG_OPEN_FRAMES)
+                window->open_counter++;
+                if (window->open_counter >= MSG_OPEN_FRAMES)
                 {
                     window->flags = (window->flags & ~MSG_SLOT_OPENING) | MSG_SLOT_OPEN | TIMECODE_FLAG_PHASE;
                 }
             }
             if (window->flags & MSG_SLOT_CLOSING)
             {
-                window->reset_value--;
-                if (window->reset_value <= 0)
+                window->open_counter--;
+                if (window->open_counter <= 0)
                 {
                     window->flags = 0;
                 }
@@ -188,7 +188,7 @@ void msgWindowScrollBy(MsgSlot *window, int delta)
 }
 
 /* Degrees-to-radians factor used by the slide (a separate copy from msgRadiansPerDegree). */
-extern f32 D_0069B558;
+extern f32 kDegToRadSlide;
 
 /* Slide step: advances slide_angle by slide_step; slide_pos moves from slide_from to slide_to on a cosine. */
 int msgWindowSlideStep(MsgSlot *window)
@@ -205,7 +205,7 @@ int msgWindowSlideStep(MsgSlot *window)
     }
     midpoint = (list->slide_to + list->slide_from) >> 1;
     amplitude = (f32) (midpoint - list->slide_to);
-    list->slide_pos = midpoint + (int) (amplitude * cosf((f32) list->slide_angle * D_0069B558));
+    list->slide_pos = midpoint + (int) (amplitude * cosf((f32) list->slide_angle * kDegToRadSlide));
     return 0;
 }
 

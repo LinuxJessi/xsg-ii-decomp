@@ -5,8 +5,6 @@
 
 /* Functions of src/main/tu224.c that other files call. */
 
-/* Value the timecode and choice slot starts store with sizedRecordSetValue (also used by tu225.c). */
-#define SLOT_START_VALUE 0x7FFFFF
 
 /* Starts the timeline at hours/minutes/seconds; returns 0 while the slot is in use or cannot start, 1 otherwise. */
 int timecodeStartAtHms(MsgSlot *state, int hours, int minutes, int seconds);

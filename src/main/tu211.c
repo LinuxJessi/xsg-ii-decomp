@@ -127,7 +127,7 @@ f32 intLerp(f32 from, f32 to, f32 fraction) {
     return ((to - from) * fraction) + from;
 }
 
-extern f32 D_0069DE04;
+extern f32 degreesToRadians;
 void xglMatrixUnit(Matrix4 matrix);
 void xglMatrixRotZ(Matrix4 destination, Matrix4 source, f32 angle);
 void xglMatrixRotX(Matrix4 destination, Matrix4 source, f32 angle);
@@ -158,9 +158,9 @@ void quadRotateCorner(Vector4 *destination, Vector4 *source, const float *rotati
     /* The original also initialises rotXY and rotXYZ to identity before xglMatrixMul overwrites them (five xglMatrixUnit calls). */
     xglMatrixUnit(rotXY);
     xglMatrixUnit(rotXYZ);
-    xglMatrixRotX(rotX, rotX, angles[0] * D_0069DE04);
-    xglMatrixRotY(rotY, rotY, angles[1] * D_0069DE04);
-    xglMatrixRotZ(rotZ, rotZ, angles[2] * D_0069DE04);
+    xglMatrixRotX(rotX, rotX, angles[0] * degreesToRadians);
+    xglMatrixRotY(rotY, rotY, angles[1] * degreesToRadians);
+    xglMatrixRotZ(rotZ, rotZ, angles[2] * degreesToRadians);
     xglMatrixMul(rotXY, rotX, rotY);
     xglMatrixMul(rotXYZ, rotZ, rotXY);
     xglVectorMulMat(&rotated, rotXYZ, &position);
@@ -183,8 +183,8 @@ void recordSetAlphaFlags(int *record)
     gsQueueSetAlphaFlags(0, 0, value);
 }
 
-extern f32 D_0069DE08;          /* wobble phase (degrees), advanced by every quadDrawRotating call */
-extern f32 D_0069B56C;          /* degrees-to-radians factor used for the wobble phase */
+extern f32 quadWobblePhase;          /* wobble phase (degrees), advanced by every quadDrawRotating call */
+extern f32 kDegToRadQuad;          /* degrees-to-radians factor used for the wobble phase */
 f32 cosf(f32 x);
 f32 sinf(f32 x);
 void quadRotateAroundCenter(Vector4 *vectors, f32 angle, f32 centerX, f32 centerY);
@@ -210,7 +210,7 @@ void quadDrawRotating(GsQueueContext *quad, XglPacket *packet)
     int angle;
     int pivotX;
     int pivotY;
-    f32 toRad = D_0069B56C;
+    f32 toRad = kDegToRadQuad;
     f32 amplitudeX;
     f32 amplitudeY;
     f32 offsetX;
@@ -225,7 +225,7 @@ void quadDrawRotating(GsQueueContext *quad, XglPacket *packet)
     count = quad->count;
     top = quad->kind.quad.top;
     left = quad->kind.quad.left;
-    D_0069DE08 = D_0069DE08 + (f32) quad->kind.quad.phase_step;
+    quadWobblePhase = quadWobblePhase + (f32) quad->kind.quad.phase_step;
     right = quad->kind.quad.right;
     bottom = quad->kind.quad.bottom;
     v0 = quad->kind.quad.uv_top;
@@ -238,9 +238,9 @@ void quadDrawRotating(GsQueueContext *quad, XglPacket *packet)
     amplitudeX = (f32) wobbleX;
     pivotX = quad->kind.quad.pivot_x;
     pivotY = quad->kind.quad.pivot_y;
-    offsetX = amplitudeX * cosf(D_0069DE08 * toRad);
+    offsetX = amplitudeX * cosf(quadWobblePhase * toRad);
     amplitudeY = (f32) wobbleY;
-    offsetY = amplitudeY * sinf(D_0069DE08 * toRad);
+    offsetY = amplitudeY * sinf(quadWobblePhase * toRad);
     leftX = ((f32) left - (f32) margin) + offsetX;
     topY = ((f32) top - (f32) margin) + offsetY;
     rightX = ((f32) right + (f32) margin) + offsetX;

@@ -72,7 +72,7 @@ char *strchr(const char *s, int c);
 void xglFontPrintExtFunc(int order, void (*callback)(struct FontScissorCtx *, MsgSlot *), void *arg);
 void xglFontFlush(void);
 int textFirstRowY(const MsgSlot *slot);
-int scaleAndRound(int value);
+int pixelsToRows(int value);
 void sellBoxScissorCallback(struct FontScissorCtx *ctx, MsgSlot *box);
 
 /* Returns the x that centres the digits of value (15 px each) inside the box. */
@@ -87,7 +87,7 @@ int debtBoxCenterX(MsgSlot *box, int value) {
     return box->x + (box->extent_x >> 1) - (text_w >> 1);
 }
 
-extern int D_0069DCA0;
+extern int sellLabelTextOff;
 extern unsigned char fmtThreeStrings[];
 extern unsigned char fontStylePrefix[];
 extern unsigned char fontPropTag[];
@@ -103,7 +103,7 @@ void drawRemainingDebt(int x, int y, int color, int amount) {
     int digit_x;
 
     memset(amount_text, 0, sizeof(amount_text));
-    if (D_0069DCA0 == 0) {
+    if (sellLabelTextOff == 0) {
         sprintf((char *) SCRATCHPAD_BASE, fmtThreeStrings, fontStylePrefix, fontPropTag, sellRemainingDebtText);
     }
     xglFontPrint(x, y, color, (char *) SCRATCHPAD_BASE);
@@ -299,7 +299,7 @@ void drawLineList(MsgSlot *box) {
         return;
     }
     xglFontPrintExtFunc(box->z + 1, talkBoxScissorCallback, box);
-    selected = scaleAndRound(box->u.list.sweep_value);
+    selected = pixelsToRows(box->u.list.sweep_value);
     xglFontPrint(0, 0, 0, fontStylePrefix);
     xglFontPrint(0, 0, 0, fontPropTag);
     if (*text != 0) {
@@ -355,11 +355,11 @@ void drawSellPanel(MsgSlot *widget) {
     xglFontFlush();
 }
 
-extern float D_0069B54C;
+extern float kPixelsToRowsScale;
 
 /* Scales an integer by a float constant and rounds to nearest. */
-int scaleAndRound(int value) {
-    return (float) value * D_0069B54C + 0.5;
+int pixelsToRows(int value) {
+    return (float) value * kPixelsToRowsScale + 0.5;
 }
 
 int sellItemFirstRowY(const MsgSlot *slot);
@@ -393,12 +393,12 @@ void drawSellItemList(MsgSlot *list) {
     }
 }
 
-extern float D_0069B550;
+extern float kPixelsToSlotsScale;
 
 /* Returns how many of the SELL_LIST_SLOTS slots are walked before the rounded scaled value runs out of filled slots. */
 int sellCursorFilledRank(int value, int *slots) {
     int *end = slots + SELL_LIST_SLOTS;
-    int remaining = (float) value * D_0069B550 + 0.5;
+    int remaining = (float) value * kPixelsToSlotsScale + 0.5;
     int count;
 
     for (count = 0; slots < end; count++, slots++) {
@@ -435,14 +435,14 @@ void drawSellCloseButtons(MsgSlot *widget) {
         color_tag = fontColorTag(FONT_COLOR_DISABLED);
         strcat((char *) SCRATCHPAD_BASE, color_tag);
     }
-    if (D_0069DCA0 == 0) {
+    if (sellLabelTextOff == 0) {
         strcat((char *) SCRATCHPAD_BASE, sellActionSell);
     }
     xglFontPrint(SELL_BUTTON_SELL_X, SELL_BUTTON_Y, line_y, (char *) SCRATCHPAD_BASE);
     *text_end = '\0';
     color_tag = fontColorTag(FONT_COLOR_ENABLED);
     strcat((char *) SCRATCHPAD_BASE, color_tag);
-    if (D_0069DCA0 == 0) {
+    if (sellLabelTextOff == 0) {
         strcat((char *) SCRATCHPAD_BASE, sellActionClose);
     }
     xglFontPrint(SELL_BUTTON_CLOSE_X, SELL_BUTTON_Y, line_y, (char *) SCRATCHPAD_BASE);
@@ -531,7 +531,7 @@ void drawEmptyNotice(MsgSlot *pos) {
 
     color_tag = fontColorTag(LIST_COLOR_SELECTED);
     sprintf((char *) SCRATCHPAD_BASE, fmtThreeStrings, fontStylePrefix, fontPropTag, color_tag);
-    if (D_0069DCA0 == 0) {
+    if (sellLabelTextOff == 0) {
         strcat((char *) SCRATCHPAD_BASE, (const char *) sellNoItemsText);
     }
     xglFontPrint(pos->x + SELL_EMPTY_NOTICE_X, pos->y + SELL_EMPTY_NOTICE_Y, pos->z, (char *) SCRATCHPAD_BASE);
@@ -654,17 +654,17 @@ void drawSwingingAccent(int x, int y, int color, int slot, MsgSlot *menu);
 /* Draws the digit row of a talk box; the animated or highlighted cell is drawn through the accent path. */
 void talkBoxDrawDigitRow(MsgSlot *box, int x, int y) {
     MsgSlotTimecode *state = &box->u.timecode;
-    int highlight = (float) state->computed_value / TALK_SCROLL_DIVISOR + 0.5;
+    int highlight = (float) state->cursor_x / TALK_SCROLL_DIVISOR + 0.5;
     int pos;
     int cell;
     int digit;
 
     xglFontPrintExtFunc(box->z, talkBoxScissorCallback, box);
-    pos = state->index;
-    for (cell = 0; cell < state->index; cell++) {
+    pos = state->digits;
+    for (cell = 0; cell < state->digits; cell++) {
         digit = valueDigit(state->elapsed_frames, pos);
         if (box->flags & TIMECODE_FLAG_RAMP) {
-            if (state->phase == pos) {
+            if (state->selected == pos) {
                 drawSwingingAccent(x, y, box->z + TEXT_ORDER_BIAS, digit, box);
             } else {
                 drawDigit(x, y, box->z + TEXT_ORDER_BIAS, digit, 0);
@@ -698,8 +698,8 @@ void drawDigit(int x, int y, int color, int digit, int variant) {
     drawPlainText(x, y, color, &text_buf[0]);
 }
 
-extern float D_0069B554;
-extern const char *D_0069DD20;
+extern float kDegToRadSwing;
+extern const char *entryAccentGlyph;
 float cosf(float x);
 
 #define SLOT_SWING_STEP 20          /* px between two slots (TIMECODE_PHASE_PIXELS) */
@@ -720,7 +720,7 @@ void drawSwingingAccent(int x, int y, int color, int slot, MsgSlot *menu) {
     }
     mid = (from + to) >> 1;
     amplitude = (float) ((from - to) >> 1);
-    drawAccentText(x, y - mid + (int) (amplitude * cosf((float) menu->u.timecode.ramp * D_0069B554)), color, D_0069DD20);
+    drawAccentText(x, y - mid + (int) (amplitude * cosf((float) menu->u.timecode.roll_angle * kDegToRadSwing)), color, entryAccentGlyph);
 }
 
 void formatEntryValue(char *buffer, MsgSlot *entry);
@@ -767,7 +767,7 @@ void formatEntryDigits(char *buffer, MsgSlot *entry) {
     long long place;
 
     memset(digits, 0, sizeof(digits));
-    count = entry->u.timecode.index;
+    count = entry->u.timecode.digits;
     place = 1;
     for (i = count - 1; i >= 0; i--) {
         if (place != 0) {
@@ -784,7 +784,7 @@ void formatEntryDigits(char *buffer, MsgSlot *entry) {
 }
 
 extern unsigned char fmtSixDigits[];
-extern unsigned char D_0063D420[];
+extern unsigned char entryFrameDigitCorrection[];
 
 /* Formats the entry's frame count (30 per second) as the six digits hh:mm:ss. */
 int formatEntryHms(char *buffer, MsgSlot *entry) {
@@ -837,13 +837,13 @@ int formatEntryMsf(char *buffer, MsgSlot *entry) {
     digit[3] = seconds;
     digit[4] = frames * 0.1;
     frames -= digit[4] * 10;
-    digit[5] = (int) frames - D_0063D420[digit[4]];
+    digit[5] = (int) frames - entryFrameDigitCorrection[digit[4]];
     digit[5] = xglClampInt(digit[5], 0, 9);
     sprintf(buffer, fmtSixDigits, digit[0], digit[1], digit[2], digit[3], digit[4], digit[5]);
 }
 
 extern unsigned char fontHanTag[];
-extern unsigned char D_0069DD30[];
+extern unsigned char entrySeparatorMark[];
 
 #define ENTRY_CELL_SHORT 0x13
 #define ENTRY_CELL_LONG 0x1D
@@ -857,8 +857,8 @@ void drawEntryCells(int x, int y, int color, int *buffer, int tag_color) {
     xglFontPrint(0, 0, 0, fontZoomTag(FONT_ZOOM_DEFAULT));
     xglFontPrint(0, 0, 0, fontColorTag(tag_color));
     xglFontPrint(0, 0, 0, fontHanTag);
-    xglFontPrint(x + ENTRY_SEP_FIRST_X, y, color, D_0069DD30);
-    xglFontPrint(x + ENTRY_SEP_SECOND_X, y, color, D_0069DD30);
+    xglFontPrint(x + ENTRY_SEP_FIRST_X, y, color, entrySeparatorMark);
+    xglFontPrint(x + ENTRY_SEP_SECOND_X, y, color, entrySeparatorMark);
     textCopyChars(ENTRY_CHAR_BUFFER, &chars[0], 1);
     xglFontPrint(x, y, color, ENTRY_CHAR_BUFFER);
     x += ENTRY_CELL_SHORT;
@@ -881,15 +881,15 @@ void drawEntryCells(int x, int y, int color, int *buffer, int tag_color) {
 /* Colour of the entry: dimmed idle colour when the 0x800 flag is clear, else a fade of its colour with a half-blend, stepped by phase (0-7 in, 8-11 hold, 12-19 out, then the blend). */
 int entryFadeColor(MsgSlot *entry) {
     MsgSlotTimecode *state = &entry->u.timecode;
-    unsigned int color = state->counter_value;
-    int plain = state->counter_value;
+    unsigned int color = state->highlight_color;
+    int plain = state->highlight_color;
     int blended = xglColorLerp(0, color, 0.5f);
     int phase;
 
     if ((entry->flags & TIMECODE_FLAG_COUNTER) == 0) {
-        return state->color;
+        return state->idle_color;
     }
-    phase = state->counter;
+    phase = state->blink_phase;
     if (phase < FADE_IN_END) {
         return xglColorLerp((unsigned int) blended, color, phase * FADE_STEP);
     }
@@ -909,7 +909,7 @@ int talkBoxContentX(MsgSlot *box)
 
     switch (box->u.timecode.mode) {
     case TIMECODE_MODE_NUMBER:
-        result = box->x + (box->extent_x >> 1) - ((box->u.timecode.index * TIMECODE_PHASE_PIXELS) >> 1);
+        result = box->x + (box->extent_x >> 1) - ((box->u.timecode.digits * TIMECODE_PHASE_PIXELS) >> 1);
         break;
     case TIMECODE_MODE_HMS:
     case TIMECODE_MODE_MSF:
@@ -1031,8 +1031,8 @@ void drawAcquiredText(MsgSlot *block) {
 extern unsigned char sellAcquiredText[];
 extern unsigned char fontGreyTag[];
 extern unsigned char fontHanCountFmt[];
-extern unsigned char D_0069DD38[];
-extern unsigned char D_0069DD40[];
+extern unsigned char acquiredCountLead[];
+extern unsigned char acquiredTextEnd[];
 typedef struct StylePrefixCopy {
     char text[0x23];
 } StylePrefixCopy;
@@ -1051,10 +1051,10 @@ int formatAcquiredText(char *buffer, char *name_text, u32 count) {
     strcat(buffer, (const char *) fontGreyTag);
     if (count >= ACQUIRED_COUNT_MIN_SHOWN) {
         sprintf(count_text, fontHanCountFmt, count);
-        strcat(buffer, (const char *) D_0069DD38);
+        strcat(buffer, (const char *) acquiredCountLead);
         strcat(buffer, count_text);
     }
-    return (int) strcat(buffer, (const char *) D_0069DD40);
+    return (int) strcat(buffer, (const char *) acquiredTextEnd);
 }
 
 /* Pixel width of the acquired-item message for (name_text, count). */

@@ -48138,7 +48138,7 @@
      2
     ],
     [
-     "msgWindowSetTalkFlag10",
+     "msgWindowStartScan",
      2610232,
      76,
      2
@@ -48300,7 +48300,7 @@
      2
     ],
     [
-     "timecodeClearFlag80Forward",
+     "timecodeClearAdvanceForward",
      2612400,
      20,
      2
@@ -48744,7 +48744,7 @@
      2
     ],
     [
-     "scaleAndRound",
+     "pixelsToRows",
      2631144,
      76,
      2
@@ -49242,7 +49242,7 @@
      2
     ],
     [
-     "timecodeSetFlag04",
+     "timecodeStartOpening",
      2642232,
      40,
      2
@@ -49266,13 +49266,13 @@
      2
     ],
     [
-     "timecodeRampStep",
+     "timecodeStepRollAngle",
      2642752,
      76,
      2
     ],
     [
-     "timecodeStepLevel",
+     "timecodeStepCursorAngle",
      2642832,
      96,
      2
@@ -49290,13 +49290,13 @@
      2
     ],
     [
-     "timecodeSampleCosine",
+     "timecodeCursorX",
      2643136,
      136,
      2
     ],
     [
-     "timecodeSampleRange",
+     "timecodeCursorEnds",
      2643272,
      272,
      2
@@ -49332,19 +49332,19 @@
      2
     ],
     [
-     "timecodeDuration",
+     "timecodeFitBoxWidth",
      2644048,
      96,
      2
     ],
     [
-     "timecodeComputeResults",
+     "timecodeCenterSlot",
      2644144,
      52,
      2
     ],
     [
-     "timecodeSetFlag40",
+     "timecodeEnablePhase",
      2644200,
      36,
      2
@@ -49428,7 +49428,7 @@
      2
     ],
     [
-     "timecodeClearFlag80",
+     "timecodeClearAdvance",
      2646528,
      36,
      2
@@ -49500,7 +49500,7 @@
      2
     ],
     [
-     "msgSlotSetFlag02",
+     "msgSlotStartClosing",
      2647408,
      52,
      2

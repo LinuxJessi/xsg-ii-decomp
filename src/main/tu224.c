@@ -30,9 +30,9 @@ int timecodeStartAtHms(MsgSlot *state, int hours, int minutes, int seconds) {
     }
     timecodeInit(state);
     timecodeTickIfActive(state, TIMECODE_BOX_X, TIMECODE_BOX_Y, TIMECODE_BOX_WIDTH, TIMECODE_BOX_HEIGHT);
-    sizedRecordSetValue(state, SLOT_START_VALUE);
+    sizedRecordSetValue(state, MSG_SLOT_FRONT_Z);
     timecodeSetFrames(state, frames);
-    timecodeSetFlag04(state);
+    timecodeStartOpening(state);
     timecodeSetMode(state, TIMECODE_MODE_MSF);
     timecodeSetEditable(state, 1);
     timecodeSetPhase(state, TIMECODE_PHASE_SECONDS);

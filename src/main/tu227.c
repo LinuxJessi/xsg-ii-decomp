@@ -31,14 +31,14 @@ void interpUpdate(MsgSlot *slot)
         return;
     }
     if (slot->flags & MSG_SLOT_OPENING) {
-        slot->reset_value++;
-        if (slot->reset_value >= INTERP_OPEN_FRAMES) {
+        slot->open_counter++;
+        if (slot->open_counter >= INTERP_OPEN_FRAMES) {
             slot->flags = (slot->flags & ~MSG_SLOT_OPENING) | (MSG_SLOT_OPEN | INTERP_FLAG_SCAN);
         }
     }
     if (slot->flags & MSG_SLOT_CLOSING) {
-        slot->reset_value--;
-        if (slot->reset_value <= 0) {
+        slot->open_counter--;
+        if (slot->open_counter <= 0) {
             slot->flags = 0;
         }
     }

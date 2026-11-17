@@ -17,7 +17,7 @@ void talkSetSetting(void *entry, int value);
 int msgWindowFindSlotByState(int *index, MsgWindow *window, int mode);
 
 /* Forwards the current slot to msgEntrySetTalkFlag10 (talkSetFlag10), if there is one. */
-void msgWindowSetTalkFlag10(MsgWindow *window) {
+void msgWindowStartScan(MsgWindow *window) {
     if (window->current_index >= 0) {
         msgEntrySetTalkFlag10(&window->slots[window->current_index]);
     }

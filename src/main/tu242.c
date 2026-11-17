@@ -38,9 +38,6 @@ void timecodeSetFramePair(MsgSlot *record, long long first, long long second) {
     }
 }
 
-#define FRAMES_PER_SECOND 30
-#define FRAMES_PER_MINUTE (60 * FRAMES_PER_SECOND)
-#define FRAMES_PER_HOUR (60 * FRAMES_PER_MINUTE)
 
 /* Sets the two frame counts of a timecode slot (type 3) from two hours/minutes/seconds triples at 30 frames per second. */
 void timecodeSetFramesHms(MsgSlot *slot, int hours1, int minutes1, int seconds1, int hours2, int minutes2, int seconds2) {
@@ -52,29 +49,29 @@ void timecodeSetFramesHms(MsgSlot *slot, int hours1, int minutes1, int seconds1,
     }
 }
 
-void timecodeClearFlag80(MsgSlot *object)
+void timecodeClearAdvance(MsgSlot *object)
 {
     if (object->state == STATE_THREE) {
         object->flags &= ~FLAG_80;
     }
 }
 
-/* While active (state 3): stores value in the timecode colour (MsgSlotTimecode.color, +0x7C). */
+/* While active (state 3): stores value in the timecode colour (MsgSlotTimecode.idle_color, +0x7C). */
 void timecodeSetColor(MsgSlot *object, int value)
 {
     if (object->state == STATE_THREE) {
-        object->u.timecode.color = value;
+        object->u.timecode.idle_color = value;
     }
 }
 
 /*
- * While active (state 3): stores value in counter_value (+0x80), resets the timecode counter (+0x84) and sets
+ * While active (state 3): stores value in highlight_color (+0x80), resets blink_phase (+0x84) and sets
  * flag 0x800, which makes timecodeUpdate run timecodeStepCounter.
  */
 void timecodeStartCounter(MsgSlot *record, int value) {
     if (record->state == STATE_THREE) {
-        record->u.timecode.counter_value = value;
-        record->u.timecode.counter = 0;
+        record->u.timecode.highlight_color = value;
+        record->u.timecode.blink_phase = 0;
         record->flags |= FLAG_800;
     }
 }
@@ -132,7 +129,7 @@ void msgSlotResetCounters(MsgSlot *record) {
 
     if (record->state == STATE_FOUR) {
         record->u.item.pending = 0;
-        record->reset_value = MSG_SLOT_OPEN_FRAMES;
+        record->open_counter = MSG_SLOT_OPEN_FRAMES;
         flags_without_4 = record->flags & ~FLAG_04;
         record->flags = (flags_without_4 & ~FLAG_08) | FLAG_400;
     }
@@ -151,18 +148,18 @@ void msgSlotItemTick(MsgSlot *slot) {
         flags = slot->flags;
         if (flags & FLAG_08) {
             if (--slot->u.item.timer <= 0) {
-                msgSlotSetFlag02(slot);
+                msgSlotStartClosing(slot);
                 flags = slot->flags;
             }
         }
         if (flags & FLAG_04) {
-            if (++slot->reset_value >= MSG_SLOT_OPEN_FRAMES) {
+            if (++slot->open_counter >= MSG_SLOT_OPEN_FRAMES) {
                 slot->flags = (flags & ~FLAG_04) | FLAG_08;
                 flags = slot->flags;
             }
         }
         if (flags & FLAG_02) {
-            if (--slot->reset_value <= 0) {
+            if (--slot->open_counter <= 0) {
                 slot->flags = 0;
                 flags = 0;
             }
@@ -203,7 +200,7 @@ int msgSlotDraw(MsgSlot *record) {
     }
 }
 
-void msgSlotSetFlag02(MsgSlot *record) {
+void msgSlotStartClosing(MsgSlot *record) {
     int clear_mask;
 
     clear_mask = ~FLAG_04;
@@ -461,7 +458,7 @@ void msgSlotInit(MsgSlot *record, int state) {
     memset(record, 0, MSG_SLOT_SIZE);
     record->flags = 1;
     record->state = state;
-    record->init_word = MSG_SLOT_INIT_COLOR;
+    record->frame_color = MSG_SLOT_INIT_COLOR;
 }
 
 /*

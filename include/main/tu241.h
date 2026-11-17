@@ -7,9 +7,9 @@
 
 /* The frame count of a timecode slot (30 per second), 0 unless the slot is a timecode slot. */
 long long timecodeGetFrames(MsgSlot *slot);
-/* Steps the phase code of a timecode slot by delta, wrapped into the range of its mode. */
+/* Moves the selected digit or field of a timecode slot by delta, wrapped into the range of its mode. */
 void timecodeStepPhase(MsgSlot *slot, int delta);
-/* Starts a timeline on a timecode slot (flag 0x200 and ramp setup, then by mode). */
+/* Starts a timeline on a timecode slot (flag 0x200 and roll angle setup, then by mode). */
 void timecodeStart(MsgSlot *slot, int param);
 
 #endif /* INCLUDE_MAIN_TU241_H */

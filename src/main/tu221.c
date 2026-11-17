@@ -62,7 +62,7 @@ int msgWindowPollMoreText(MsgWindow *window) {
     return pending;
 }
 
-/* Stores value in the current slot (its init_word) and returns the record base. */
+/* Stores value in the current slot (its frame_color) and returns the record base. */
 void *msgWindowStoreValue(MsgWindow *window, int value) {
     int current;
     void *result;
@@ -71,7 +71,7 @@ void *msgWindowStoreValue(MsgWindow *window, int value) {
     result = (void *) (current * 4); /* computed before the current >= 0 test, as in the original */
     if (current >= 0) {
         MsgSlot *slot = &window->slots[current];
-        slot->init_word = value;
+        slot->frame_color = value;
         result = (char *) slot - 8; /* the record base, 8 bytes before the slot, as the original returns */
     }
     return result;

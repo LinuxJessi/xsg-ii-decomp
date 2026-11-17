@@ -12,9 +12,9 @@
 #include "main/tu244.h"
 #include "main/tu243.h"
 
-/* Forwards to timecodeClearFlag80. */
-void timecodeClearFlag80Forward(void *object) {
-    timecodeClearFlag80(object);
+/* Forwards to timecodeClearAdvance. */
+void timecodeClearAdvanceForward(void *object) {
+    timecodeClearAdvance(object);
 }
 
 void timecodeSplit(void);
@@ -68,7 +68,7 @@ int msgItemSlotStart(MsgSlot *slot, char *name, int count) {
     if (reinit) {
         msgSlotInitState4(slot);
         msgSlotSetGeometryIfState4(slot, ITEM_SLOT_X, ITEM_SLOT_Y, ITEM_SLOT_WIDTH, ITEM_SLOT_HEIGHT);
-        sizedRecordSetValue(slot, SLOT_START_VALUE);
+        sizedRecordSetValue(slot, MSG_SLOT_FRONT_Z);
     }
     msgSlotSetItem(slot, name, count);
     msgSlotSetTimer(slot, ITEM_SLOT_TIMER_FRAMES);
@@ -90,7 +90,7 @@ void msgChoiceCloseByState(MsgSlot *slot) {
         timecodeBeginClose(slot);
         break;
     case MSG_SLOT_STATE_ITEM:
-        msgSlotSetFlag02(slot);
+        msgSlotStartClosing(slot);
         slot = 0; /* dead store: keeps the call from becoming a tail call, as in the original */
         break;
     }

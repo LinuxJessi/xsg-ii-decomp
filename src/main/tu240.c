@@ -7,16 +7,16 @@
 
 #include "shared.h"
 
-/* Initialises the slot (state 3), sets phase and phase copy to 1, samples the cosine and sets the colour. */
+/* Initialises the slot (state 3), selects digit 1 (selected and previous), places the cursor and sets the idle colour. */
 void timecodeInit(MsgSlot *slot)
 {
     MsgSlotTimecode *stepper = &slot->u.timecode;
 
     msgSlotInit(slot, MSG_SLOT_STATE_TIMECODE);
-    stepper->phase = 1;
-    stepper->phase_copy = 1;
-    stepper->computed_value = timecodeSampleCosine(slot);
-    stepper->color = TIMECODE_COLOR_INIT;
+    stepper->selected = 1;
+    stepper->previous = 1;
+    stepper->cursor_x = timecodeCursorX(slot);
+    stepper->idle_color = TIMECODE_COLOR_INIT;
 }
 
 /* Runs msgSlotSetGeometry with the four values while the object is active (state 3). */
@@ -28,7 +28,7 @@ void timecodeTickIfActive(MsgSlot *slot, int first_value, int second_value, int 
 }
 
 /* While active: flags = (flags & ~closing) | opening (TIMECODE_FLAG_*). */
-void timecodeSetFlag04(MsgSlot *slot)
+void timecodeStartOpening(MsgSlot *slot)
 {
     if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         slot->flags = (slot->flags & ~(u32) MSG_SLOT_CLOSING) | MSG_SLOT_OPENING;
@@ -47,8 +47,8 @@ int timecodeUpdate(MsgSlot *slot)
 {
     if (slot->state == MSG_SLOT_STATE_TIMECODE && !(gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES)) {
         if (slot->flags & MSG_SLOT_OPENING) {
-            slot->reset_value += 1;
-            if (slot->reset_value >= TIMECODE_OPEN_FRAMES) {
+            slot->open_counter += 1;
+            if (slot->open_counter >= TIMECODE_OPEN_FRAMES) {
                 slot->flags = (slot->flags & ~(u32) MSG_SLOT_OPENING) | MSG_SLOT_OPEN;
                 switch (slot->u.timecode.editable) {
                 case 1:
@@ -60,8 +60,8 @@ int timecodeUpdate(MsgSlot *slot)
             }
         }
         if (slot->flags & MSG_SLOT_CLOSING) {
-            slot->reset_value -= 1;
-            if (slot->reset_value <= 0) {
+            slot->open_counter -= 1;
+            if (slot->open_counter <= 0) {
                 slot->flags = 0;
             }
         }
@@ -81,12 +81,12 @@ int timecodeUpdate(MsgSlot *slot)
             timecodeSelectPhase(slot);
         }
         if (slot->flags & TIMECODE_FLAG_RAMP) {
-            if (timecodeRampStep(slot)) {
+            if (timecodeStepRollAngle(slot)) {
                 slot->flags &= ~(u32) TIMECODE_FLAG_RAMP;
             }
         }
         if (slot->flags & TIMECODE_FLAG_LEVEL) {
-            if (timecodeStepLevel(slot)) {
+            if (timecodeStepCursorAngle(slot)) {
                 slot->flags &= ~(u32) TIMECODE_FLAG_LEVEL;
             }
         }
@@ -102,90 +102,90 @@ void timecodeAdvance(MsgSlot *slot)
     slot->u.timecode.elapsed_frames += slot->u.timecode.increment;
 }
 
-/* Forwards to timecodeSelectPhaseByMode, the phase selector. */
+/* Forwards to timecodeSelectPhaseByMode, which keeps the selected digit or field valid for the mode. */
 void timecodeSelectPhase(MsgSlot *slot)
 {
     timecodeSelectPhaseByMode(slot);
 }
 
-/* Ramp step of ramp by ramp_step, clamped at 180; returns 1 at the clamp or when flag 0x200 is clear. */
-int timecodeRampStep(MsgSlot *slot)
+/* Advances the roll angle of the rolling digit by roll_angle_step, clamped at 180; returns 1 at the clamp or when the roll flag is clear. */
+int timecodeStepRollAngle(MsgSlot *slot)
 {
     if (!(slot->flags & TIMECODE_FLAG_RAMP)) {
         return 1;
     }
-    slot->u.timecode.ramp += slot->u.timecode.ramp_step;
-    if (slot->u.timecode.ramp >= TIMECODE_ANGLE_END + 1) {
-        slot->u.timecode.ramp = TIMECODE_ANGLE_END;
+    slot->u.timecode.roll_angle += slot->u.timecode.roll_angle_step;
+    if (slot->u.timecode.roll_angle >= TIMECODE_ANGLE_END + 1) {
+        slot->u.timecode.roll_angle = TIMECODE_ANGLE_END;
         return 1;
     }
     return 0;
 }
 
 /*
- * Steps the level (angle) by level_step, clamps it at 180 and returns 1 when it
- * went past 180. Also stores the timecodeSampleCosine value in computed_value.
+ * Advances the cursor ease angle by cursor_angle_step, clamps it at 180 and returns 1 when it
+ * went past 180. Also stores the new cursor x (timecodeCursorX) in cursor_x.
  */
-int timecodeStepLevel(MsgSlot *slot)
+int timecodeStepCursorAngle(MsgSlot *slot)
 {
     MsgSlotTimecode *stepper = &slot->u.timecode;
     int clamped = 0;
 
-    stepper->level += stepper->level_step;
-    if (stepper->level >= TIMECODE_ANGLE_END + 1) {
+    stepper->cursor_angle += stepper->cursor_angle_step;
+    if (stepper->cursor_angle >= TIMECODE_ANGLE_END + 1) {
         clamped = 1;
-        stepper->level = TIMECODE_ANGLE_END;
+        stepper->cursor_angle = TIMECODE_ANGLE_END;
     }
-    stepper->computed_value = timecodeSampleCosine(slot);
+    stepper->cursor_x = timecodeCursorX(slot);
     return clamped;
 }
 
-/* Phase selector on mode and index; writes a phase code 10 to 13 into phase and phase_copy. */
+/* Keeps the selection valid for the mode and digit count: resets selected and previous to digit 1 (mode 0) or to the leftmost field (modes 1, 2). */
 void timecodeSelectPhaseByMode(MsgSlot *slot)
 {
-    int *phase = &slot->u.timecode.phase;
-    int *phase_copy = &slot->u.timecode.phase_copy;
+    int *selected = &slot->u.timecode.selected;
+    int *previous = &slot->u.timecode.previous;
 
     switch (slot->u.timecode.mode) {
     case TIMECODE_MODE_NUMBER:
-        if (*phase <= 0 || slot->u.timecode.index + 1 < *phase) {
-            *phase = 1;
-            *phase_copy = 1;
+        if (*selected <= 0 || slot->u.timecode.digits + 1 < *selected) {
+            *selected = 1;
+            *previous = 1;
         }
         break;
     case TIMECODE_MODE_HMS:
-        if ((unsigned)(*phase - TIMECODE_PHASE_SECONDS) < 3) {
+        if ((unsigned)(*selected - TIMECODE_PHASE_SECONDS) < 3) {
             return;
         }
-        *phase = TIMECODE_PHASE_HOURS;
-        *phase_copy = TIMECODE_PHASE_HOURS;
+        *selected = TIMECODE_PHASE_HOURS;
+        *previous = TIMECODE_PHASE_HOURS;
         break;
     case TIMECODE_MODE_MSF:
-        if ((unsigned)(*phase - TIMECODE_PHASE_FRAMES) < 3) {
+        if ((unsigned)(*selected - TIMECODE_PHASE_FRAMES) < 3) {
             return;
         }
-        *phase = TIMECODE_PHASE_MINUTES;
-        *phase_copy = TIMECODE_PHASE_MINUTES;
+        *selected = TIMECODE_PHASE_MINUTES;
+        *previous = TIMECODE_PHASE_MINUTES;
         break;
     }
 }
 
-/* Wraps counter to 0 at 20. */
+/* Advances the blink phase of the entry colour fade, wrapping to 0 at 20. */
 void timecodeStepCounter(MsgSlot *slot)
 {
     MsgSlotTimecode *stepper = &slot->u.timecode;
 
-    stepper->counter += 1;
-    if (stepper->counter >= TIMECODE_COUNTER_WRAP) {
-        stepper->counter = 0;
+    stepper->blink_phase += 1;
+    if (stepper->blink_phase >= TIMECODE_COUNTER_WRAP) {
+        stepper->blink_phase = 0;
     }
 }
 
-/* Cosine value: the centre of the range from timecodeSampleRange with the half-width times cos(level). */
-extern float D_0069B560;
+/* X of the cursor: eased between the previous and the selected digit, the centre of the range from timecodeCursorEnds offset by the half-width times cos(cursor_angle). */
+extern float kDegToRad;
 extern float cosf(float angle);
 
-int timecodeSampleCosine(MsgSlot *slot)
+int timecodeCursorX(MsgSlot *slot)
 {
     MsgSlotTimecode *stepper = &slot->u.timecode;
     int low;
@@ -194,36 +194,36 @@ int timecodeSampleCosine(MsgSlot *slot)
     float amplitude;
     float angle;
 
-    timecodeSampleRange(slot, &low, &high);
-    angle = stepper->level * D_0069B560;
+    timecodeCursorEnds(slot, &low, &high);
+    angle = stepper->cursor_angle * kDegToRad;
     amplitude = -((high - low) >> 1);
     centre = (high + low) >> 1;
     return centre + (int)(amplitude * cosf(angle));
 }
 
 /*
- * Low/high range for the cosine sample: mode 0 scales the distance of the two phase
- * codes from index by TIMECODE_PHASE_PIXELS; modes 1 and 2 use the D_0063D430 pair for the mode, scaled by TIMECODE_FIELD_PIXELS.
+ * Cursor x range: the pixel positions of the previous (low) and selected (high) digit. Mode 0 scales their distance
+ * from the digit count by TIMECODE_PHASE_PIXELS; modes 1 and 2 use the kTimecodeFieldLayout row for the mode, scaled by TIMECODE_FIELD_PIXELS.
  */
-/* Per-mode pair for modes 1 and 2: { base, phase offset }. */
-extern int D_0063D430[2][2];
+/* Field layout of the two time modes (row 0 hours/minutes/seconds, row 1 minutes/seconds/frames): { field count base, first field code }. */
+extern int kTimecodeFieldLayout[2][2];
 
-void timecodeSampleRange(MsgSlot *slot, int *low, int *high)
+void timecodeCursorEnds(MsgSlot *slot, int *low, int *high)
 {
     MsgSlotTimecode *stepper = &slot->u.timecode;
 
     switch (stepper->mode) {
     case TIMECODE_MODE_NUMBER:
-        *low = (stepper->index - stepper->phase_copy) * TIMECODE_PHASE_PIXELS;
-        *high = (stepper->index - stepper->phase) * TIMECODE_PHASE_PIXELS;
+        *low = (stepper->digits - stepper->previous) * TIMECODE_PHASE_PIXELS;
+        *high = (stepper->digits - stepper->selected) * TIMECODE_PHASE_PIXELS;
         break;
     case TIMECODE_MODE_HMS:
-        *low = (D_0063D430[0][0] - (stepper->phase_copy - D_0063D430[0][1])) * TIMECODE_FIELD_PIXELS;
-        *high = (D_0063D430[0][0] - (stepper->phase - D_0063D430[0][1])) * TIMECODE_FIELD_PIXELS;
+        *low = (kTimecodeFieldLayout[0][0] - (stepper->previous - kTimecodeFieldLayout[0][1])) * TIMECODE_FIELD_PIXELS;
+        *high = (kTimecodeFieldLayout[0][0] - (stepper->selected - kTimecodeFieldLayout[0][1])) * TIMECODE_FIELD_PIXELS;
         break;
     case TIMECODE_MODE_MSF:
-        *low = (D_0063D430[1][0] - (stepper->phase_copy - D_0063D430[1][1])) * TIMECODE_FIELD_PIXELS;
-        *high = (D_0063D430[1][0] - (stepper->phase - D_0063D430[1][1])) * TIMECODE_FIELD_PIXELS;
+        *low = (kTimecodeFieldLayout[1][0] - (stepper->previous - kTimecodeFieldLayout[1][1])) * TIMECODE_FIELD_PIXELS;
+        *high = (kTimecodeFieldLayout[1][0] - (stepper->selected - kTimecodeFieldLayout[1][1])) * TIMECODE_FIELD_PIXELS;
         break;
     }
 }
@@ -271,53 +271,53 @@ void timecodeSetEditable(MsgSlot *slot, int value)
 }
 
 /*
- * While active: sets the mode, then recomputes the duration (timecodeDuration), the
- * phase (timecodeSelectPhaseByMode) and the computed value (timecodeSampleCosine).
+ * While active: sets the mode, then recomputes the box width (timecodeFitBoxWidth), the
+ * selection (timecodeSelectPhaseByMode) and the cursor x (timecodeCursorX).
  */
 void timecodeSetMode(MsgSlot *slot, int mode)
 {
     if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         slot->u.timecode.mode = mode;
-        timecodeDuration(slot);
+        timecodeFitBoxWidth(slot);
         timecodeSelectPhaseByMode(slot);
-        slot->u.timecode.computed_value = timecodeSampleCosine(slot);
+        slot->u.timecode.cursor_x = timecodeCursorX(slot);
     }
 }
 
-/* While active and index in 1 to 9: stores the index, recomputes as timecodeSetMode does and stores computed_value. */
-void timecodeSetIndex(MsgSlot *slot, int index)
+/* While active and digits in 1 to 9: stores the digit count, recomputes as timecodeSetMode does and stores cursor_x. */
+void timecodeSetIndex(MsgSlot *slot, int digits)
 {
-    if (slot->state == MSG_SLOT_STATE_TIMECODE && (unsigned)(index - 1) < TIMECODE_INDEX_MAX) {
-        slot->u.timecode.index = index;
-        timecodeDuration(slot);
-        timecodeComputeResults(slot);
+    if (slot->state == MSG_SLOT_STATE_TIMECODE && (unsigned)(digits - 1) < TIMECODE_INDEX_MAX) {
+        slot->u.timecode.digits = digits;
+        timecodeFitBoxWidth(slot);
+        timecodeCenterSlot(slot);
         timecodeSelectPhaseByMode(slot);
-        slot->u.timecode.computed_value = timecodeSampleCosine(slot);
+        slot->u.timecode.cursor_x = timecodeCursorX(slot);
     }
 }
 
-/* Duration: TIMECODE_DURATION_TIME for modes 1 and 2; for mode 0, TIMECODE_DURATION_BASE + TIMECODE_PHASE_PIXELS per index step, at least TIMECODE_DURATION_MIN. */
-void timecodeDuration(MsgSlot *slot)
+/* Box width: TIMECODE_WIDTH_TIME for modes 1 and 2; for mode 0, TIMECODE_WIDTH_BASE + TIMECODE_PHASE_PIXELS per digit after the first, at least TIMECODE_WIDTH_MIN. */
+void timecodeFitBoxWidth(MsgSlot *slot)
 {
-    int n;
+    int digits;
 
     switch (slot->u.timecode.mode) {
     case TIMECODE_MODE_NUMBER:
-        n = slot->u.timecode.index - 1;
-        slot->extent_x = n * TIMECODE_PHASE_PIXELS + TIMECODE_DURATION_BASE;
-        if (slot->extent_x < TIMECODE_DURATION_MIN) {
-            slot->extent_x = TIMECODE_DURATION_MIN;
+        digits = slot->u.timecode.digits - 1;
+        slot->extent_x = digits * TIMECODE_PHASE_PIXELS + TIMECODE_WIDTH_BASE;
+        if (slot->extent_x < TIMECODE_WIDTH_MIN) {
+            slot->extent_x = TIMECODE_WIDTH_MIN;
         }
         break;
     case TIMECODE_MODE_HMS:
     case TIMECODE_MODE_MSF:
-        slot->extent_x = TIMECODE_DURATION_TIME;
+        slot->extent_x = TIMECODE_WIDTH_TIME;
         break;
     }
 }
 
 /* Stores the results of sizedRecordCenterX and sizedRecordCenterY. */
-void timecodeComputeResults(MsgSlot *slot)
+void timecodeCenterSlot(MsgSlot *slot)
 {
     /* Inlining the arithmetic of the two helpers would drop the calls and change the rows. */
     slot->x = sizedRecordCenterX(slot);
@@ -325,7 +325,7 @@ void timecodeComputeResults(MsgSlot *slot)
 }
 
 /* While active: flags |= 0x40. The opposite of timecodeClearFlag40 in tu241. */
-void timecodeSetFlag40(MsgSlot *slot)
+void timecodeEnablePhase(MsgSlot *slot)
 {
     if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         slot->flags |= TIMECODE_FLAG_PHASE;

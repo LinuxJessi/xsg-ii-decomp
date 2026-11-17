@@ -78,10 +78,10 @@ void xglPacketTextureTrans(void *texture);
 void talkDrawFramesBasic(MsgSlot *slot) {
     xglPacketTextureTrans(talkScriptHandle);
     if (slot->flags & MSG_SLOT_CLOSING) {
-        talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->reset_value * 0.08f);
+        talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->open_counter * 0.08f);
     }
     if (slot->flags & MSG_SLOT_OPENING) {
-        talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->reset_value * 0.08f);
+        talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->open_counter * 0.08f);
     }
     if (slot->flags & MSG_SLOT_OPEN) {
         talkWindowDrawFrame(slot, TALK_FRAME_FULL, 1.0f);
@@ -93,13 +93,13 @@ void talkDrawFramesBasic(MsgSlot *slot) {
 void talkDrawFramesWithCursor(MsgSlot *slot) {
     xglPacketTextureTrans(talkScriptHandle);
     if (slot->flags & MSG_SLOT_CLOSING) {
-        talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->reset_value * 0.08f);
+        talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->open_counter * 0.08f);
         if (slot->u.list.list_active != 0) {
             talkDrawCursorWindow(slot);
         }
     }
     if (slot->flags & MSG_SLOT_OPENING) {
-        talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->reset_value * 0.08f);
+        talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->open_counter * 0.08f);
         if (slot->u.list.list_active != 0) {
             talkDrawCursorWindow(slot);
         }
@@ -122,10 +122,10 @@ void talkDrawFramesWithCursor(MsgSlot *slot) {
 void talkDrawFramesWithBox(MsgSlot *slot) {
     xglPacketTextureTrans(talkScriptHandle);
     if (slot->flags & MSG_SLOT_CLOSING) {
-        talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->reset_value * 0.08f);
+        talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->open_counter * 0.08f);
     }
     if (slot->flags & MSG_SLOT_OPENING) {
-        talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->reset_value * 0.08f);
+        talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->open_counter * 0.08f);
     }
     if (slot->flags & MSG_SLOT_OPEN) {
         talkWindowDrawFrame(slot, TALK_FRAME_FULL, 1.0f);
@@ -138,10 +138,10 @@ void talkDrawFramesWithBox(MsgSlot *slot) {
 /* Draws the slot rectangle (origin plus extent) once per pending flag (2, 4, 8). */
 void talkDrawFrameRects(MsgSlot *slot) {
     if (slot->flags & MSG_SLOT_CLOSING) {
-        talkDrawFadeRect(slot->reset_value * 0.08f, slot->x, slot->y, slot->x + slot->extent_x, slot->y + slot->extent_y, 0);
+        talkDrawFadeRect(slot->open_counter * 0.08f, slot->x, slot->y, slot->x + slot->extent_x, slot->y + slot->extent_y, 0);
     }
     if (slot->flags & MSG_SLOT_OPENING) {
-        talkDrawFadeRect(slot->reset_value * 0.08f, slot->x, slot->y, slot->x + slot->extent_x, slot->y + slot->extent_y, 0);
+        talkDrawFadeRect(slot->open_counter * 0.08f, slot->x, slot->y, slot->x + slot->extent_x, slot->y + slot->extent_y, 0);
     }
     if (slot->flags & MSG_SLOT_OPEN) {
         talkDrawFadeRect(1.0f, slot->x, slot->y, slot->x + slot->extent_x, slot->y + slot->extent_y, 0);
@@ -152,10 +152,10 @@ void talkDrawFrameRects(MsgSlot *slot) {
 void talkDrawFramesWithFade(MsgSlot *slot) {
     xglPacketTextureTrans(talkScriptHandle);
     if (slot->flags & MSG_SLOT_CLOSING) {
-        talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->reset_value * 0.08f);
+        talkWindowDrawFrame(slot, TALK_FRAME_CLOSING, slot->open_counter * 0.08f);
     }
     if (slot->flags & MSG_SLOT_OPENING) {
-        talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->reset_value * 0.08f);
+        talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->open_counter * 0.08f);
     }
     if (slot->flags & MSG_SLOT_OPEN) {
         talkWindowDrawFrame(slot, TALK_FRAME_FULL, 1.0f);
@@ -188,7 +188,7 @@ void talkDrawCursorWindow(MsgSlot *slot) {
                       TALK_CURSOR_WINDOW_W, TALK_CURSOR_WINDOW_H, TALK_FIXED_WINDOW_OPEN_FRAMES, 0, TALK_CURSOR_WINDOW_COLOR};
     float scale;
 
-    scale = slot->reset_value * 0.08f;
+    scale = slot->open_counter * 0.08f;
     if (slot->flags & MSG_SLOT_OPENING) {
         talkWindowDrawFrame(&window, TALK_FRAME_OPENING, scale);
     }
@@ -299,7 +299,7 @@ void talkWindowDrawFrame(MsgSlot *window, int mode, float scale)
     int right = left + window->extent_x;
     int bottom = top + window->extent_y;
     int z = window->z;
-    unsigned int color = window->init_word;
+    unsigned int color = window->frame_color;
     TalkPiece *piece = talkWindowPieces;
     int middleFits = 1;
     GsPair *pairs;

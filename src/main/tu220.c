@@ -88,7 +88,7 @@ void msgWindowRunRecord(MsgWindow *window, int index)
     case MSG_SLOT_STATE_TEXT: interpRewind(status); break;
     case MSG_SLOT_STATE_WINDOW: msgWindowClose(status); break;
     case MSG_SLOT_STATE_TIMECODE: timecodeBeginClose(status); break;
-    case MSG_SLOT_STATE_ITEM: msgSlotSetFlag02(status); break;
+    case MSG_SLOT_STATE_ITEM: msgSlotStartClosing(status); break;
     }
 }
 

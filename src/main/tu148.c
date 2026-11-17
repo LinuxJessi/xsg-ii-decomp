@@ -106,7 +106,7 @@ int msgSlotCurrent(void) {
 
 void msgWindowSeekToWindowEnd(void *window);
 int msgWindowRunCurrentValue(void *window, int value);
-void msgWindowSetTalkFlag10(void *window);
+void msgWindowStartScan(void *window);
 int msgWindowCurrentStatus(void *window);
 
 /* One step of the open message (nothing while the window status is 2): CIRCLE finishes the window's text,
@@ -126,7 +126,7 @@ void msgUpdate(void)
         } else if (msgWindowHasMore()) {
             if (msgWindowBusy() == 0) {
                 msgWindowRunCurrentValue(msgWindow, 1);
-                msgWindowSetTalkFlag10(msgWindow);
+                msgWindowStartScan(msgWindow);
             }
         } else if (msgWindowInUse() == 1 && msgWindowBusy() == 0) {
             func_002512B0();

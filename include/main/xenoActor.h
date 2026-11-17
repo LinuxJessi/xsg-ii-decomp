@@ -21,11 +21,11 @@ typedef struct XenoTransform {
 typedef struct XenoHrc {
     unsigned char unmodeled_00[0xC];
     unsigned int numTransform;              /* 0x0C */
-    int index10;                            /* 0x10: the three indices sum to the focus joint */
-    int index14;                            /* 0x14 */
-    int index18;                            /* 0x18 */
+    int leadCountA;                         /* 0x10: leading entries before the focus joint; the three counts sum to its matrix index */
+    int leadCountB;                         /* 0x14 */
+    int leadCountC;                         /* 0x18 */
     int focus;                              /* 0x1C */
-    int index20;                            /* 0x20: the fourth term of the joint index sum */
+    int jointRecordCount;                   /* 0x20: number of joint records (XenoActor.jointRecords); also the fourth term of the child joint index */
     unsigned int jointCount;                /* 0x24 */
     unsigned char unmodeled_28[0x3C - 0x28];
     unsigned int count;                     /* 0x3C: item count */
