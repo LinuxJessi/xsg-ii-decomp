@@ -5090,7 +5090,7 @@
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/18",
+   "accepted_functions": "0/19",
    "assembler_options": [
     "-g"
    ]

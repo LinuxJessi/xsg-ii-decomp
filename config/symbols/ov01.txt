@@ -8005,6 +8005,7 @@ msgWindowPollCurrent = 0x0027D620; // type:func
 msgWindowMoveSelection = 0x0027D670; // type:func
 msgWindowCloseLastState2 = 0x0027D6C0; // type:func
 msgWindowTestCurrentFlags = 0x0027D718; // type:func
+msgEntryTestFlags = 0x0027D750; // type:func
 msgWindowAllInactive = 0x0027D790; // type:func
 msgWindowCurrentStatus = 0x0027D7D0; // type:func
 msgEntrySetTalkFlag10 = 0x0027D878; // type:func

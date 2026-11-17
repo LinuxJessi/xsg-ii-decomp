@@ -3315,7 +3315,8 @@
    "0x00297980": "tiDynamicsNodeConstrainNormal",
    "0x00297cf8": "tiDynamicsNodeStep",
    "0x00297da0": "tiDynamicsNodeSolveNext",
-   "0x0012b9a0": "sceVif1PkAddCode"
+   "0x0012b9a0": "sceVif1PkAddCode",
+   "0x0027d750": "msgEntryTestFlags"
   },
   "ov01": {
    "0x00a80d88": "rnd",

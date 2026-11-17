@@ -48194,7 +48194,13 @@
     [
      "msgWindowTestCurrentFlags",
      2610968,
-     116,
+     52,
+     2
+    ],
+    [
+     "msgEntryTestFlags",
+     2611024,
+     60,
      2
     ],
     [

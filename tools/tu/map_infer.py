@@ -70,7 +70,8 @@ MAIN_O0_ZONES = ((0x1a75a8, 0x1d5440),)
 # Function entries the bytes do not state (no jal, no prologue, no taken address), keyed by image file name.
 # cfeFileLogIndentSet (0x24F130) is reached only by the tail jump of cfeFileTempInit; the published C defines it as
 # its own function (cfeFileControl.c, upstream 7ffbd0d0), so the function table must start one there.
-KNOWN_STARTS = {'SLUS_208.92': {0x24F130}}
+# msgEntryTestFlags (0x27D750) is reached only by the tail jump of msgWindowTestCurrentFlags (src/main/tu222.c).
+KNOWN_STARTS = {'SLUS_208.92': {0x24F130, 0x27D750}}
 FP_FROM_SP = 0x03a0f02d           # daddu $fp, $sp, $zero
 LOG_ODDS_EDGES = (-3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5)
 

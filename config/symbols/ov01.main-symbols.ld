@@ -6747,6 +6747,7 @@ msgWindowPollCurrent = 0x0027D620;
 msgWindowMoveSelection = 0x0027D670;
 msgWindowCloseLastState2 = 0x0027D6C0;
 msgWindowTestCurrentFlags = 0x0027D718;
+msgEntryTestFlags = 0x0027D750;
 msgWindowAllInactive = 0x0027D790;
 msgWindowCurrentStatus = 0x0027D7D0;
 msgEntrySetTalkFlag10 = 0x0027D878;

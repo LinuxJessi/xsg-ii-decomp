@@ -90483,7 +90483,7 @@
    "in_scope": true,
    "boundary_kind": "inferred",
    "boundary_evidence": [
-    "model log-odds -1.80",
+    "model log-odds -1.81",
     "precision of this score band on X1, held out: 0.227 (17/75)"
    ],
    "boundary_confidence": "low",
@@ -90635,7 +90635,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 18,
+    "of": 19,
     "migration_hints": [],
     "records": []
    },
@@ -90724,9 +90724,18 @@
     {
      "binding": "GLOBAL",
      "name": "msgWindowTestCurrentFlags",
-     "size": 116,
+     "size": 52,
      "splat_name": "msgWindowTestCurrentFlags",
      "va": "0x0027d718",
+     "name_basis": "address",
+     "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "msgEntryTestFlags",
+     "size": 60,
+     "splat_name": "msgEntryTestFlags",
+     "va": "0x0027d750",
      "name_basis": "address",
      "provenance": "estimated"
     },
