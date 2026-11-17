@@ -137,7 +137,6 @@ void battleEntryLoad(StatBlock *entry, int key);
  * cap and ep cap.
  */
 StatOwner *battleContextBind(int key, int contextIndex);
-int calcEpCost(StatOwner *owner, int index);
 int calcHpDmg(StatOwner *attacker, StatOwner *target, int hitMode, int damage);
 int calcEpAdjust(StatOwner *unit, int delta);
 int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey);
@@ -175,7 +174,6 @@ int slotFlagSet(StatOwner *owner, int bit);
 int slotFlagTest(StatOwner *owner, int bit);
 int slotFlagClear(StatOwner *owner, int bit);
 int slotCodeSet(StatOwner *owner, int bit);
-int slotCodeTest(StatOwner *owner, int bit);
 int slotPairTest(int index);
 int slotMarkSet(StatOwner *owner, int bit);
 int slotMarkTest(StatOwner *owner, int bit);

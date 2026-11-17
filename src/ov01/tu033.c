@@ -168,7 +168,6 @@ void cmdPairRun(Ov01Object *unit, CmdListBody *command, EventQueueArgs *args)
     eventQueueAdd(EVENT_KIND_PAIR_END, args);
 }
 
-int calcEpCost(Ov01Object *unit, int value);
 int calcEpAdjust(Ov01Object *unit, int delta);
 
 /* A stock command: the stocked unit (args target) gets the stock begin and motion 3,

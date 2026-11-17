@@ -105,6 +105,18 @@ int calcStatGet(struct Ov01Object *owner, int row, int mask);
 int calcStatReset(struct Ov01Object *owner, int row, int mask);
 int calcStatAltReset(struct Ov01Object *owner, int statIdx, int mask);
 void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
+int calcEpCost(struct Ov01Object *owner, int index);
+int slotCodeTest(struct Ov01Object *owner, int bit);
+int tgtRecordCanTarget(struct Ov01Object *target, int id);
+/* The record finders below write the indices they find to found and return their count. */
+int calcKeyBandRecords(struct Ov01Object *entity, int *found);
+int calcCurrentMeetsRecord(struct Ov01Object *entity, int index);
+int calcKeyPairRecords(struct Ov01Object *entity, int *found);
+int calcLevelsMeetRecord(struct Ov01Object *entity, int record_index);
+int calcPairedRecords(int unused_arg0, int code, int *found);
+int calcPairEntryUsable(struct Ov01Object *entity, int index);
+int slotFlagCollect(struct Ov01Object *subject, int *found);
+int tgtSideAccepts(struct Ov01Object *obj, int id);
 int actLevelChanceRoll(struct Ov01Object *owner, int index);
 int actStepCounterValue(void);
 void actStockClearBoost1(void);

@@ -84,10 +84,75 @@ extern ObjectTask *pTaskEnCur;
 extern ObjectTask *objEntry2(void *argument, void (*callback)(ObjectTask *task));
 extern void objRemove(ObjectTask *task);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A97D68);
-
 /* Text task that the choice-menu openers allocate (the textEntryAlloc result) and the close functions remove. */
 extern ObjectTask *choiceMenuTextTask;
+/* The choice menu's text page list for textEntryAlloc: the text of the entry under the cursor (set by the pickers),
+ * then 0. */
+extern char *choiceMenuPages[2];
+
+/* main/tu124 (its header has no prototypes for these; tu127 keeps its own differently typed copies). */
+int choiceMenuOpen(unsigned int index, int x, int y, int width, int height, int style_index, unsigned char unit_size,
+                   unsigned int flags, char **items, short *values, unsigned char *itemFlags);
+void choiceMenuSetActive(int index, int enable);
+ObjectTask *textEntryAlloc(int x, int y, int width, int height, int style, void *pages);
+
+/* The lists the choice-menu openers fill for choice slot 0: the entry texts (0 after the last), the value shown with
+ * each entry, its id and its flag (CHOICE_ENTRY_DISABLED greys it out). The pickers index ids and flags with the
+ * 1-based cursor. */
+extern char *choiceMenuItems[];
+extern short choiceMenuValues[];
+extern short choiceMenuEntryIds[];
+extern unsigned char choiceMenuEntryFlags[];
+
+#define CHOICE_ENTRY_DISABLED 3
+/* Layout of the openers' choice menu (slot 0) and of their text entry below it. */
+#define CHOICE_MENU_X 0x14
+#define CHOICE_MENU_Y 0x6C
+#define CHOICE_MENU_WIDTH 0x1AC
+#define CHOICE_MENU_HEIGHT 0x70
+#define CHOICE_MENU_STYLE 2
+#define CHOICE_MENU_UNIT_SIZE 2
+#define CHOICE_TEXT_X 0x14
+#define CHOICE_TEXT_Y 0x118
+#define CHOICE_TEXT_WIDTH 0x1AC
+#define CHOICE_TEXT_HEIGHT 0x28
+#define CHOICE_TEXT_STYLE 8
+
+/* Items 1..ITEM_ID_LAST; an item can be picked in battle when its HitAction flags have ITEM_BATTLE_USE. */
+#define ITEM_ID_LAST 40
+#define ITEM_BATTLE_USE 0x4000
+
+/*
+ * Item menu: lists the items the data box holds (dataBoxChkCategory1) that can be used in battle, with their
+ * count, greyed out when unit cannot use them on any target (tgtRecordCanTarget), and opens it.
+ */
+void choiceMenuOpenItems(Ov01Object *unit)
+{
+    int id;
+    int count;
+    int n;
+
+    n = 0;
+    for (id = 1; id <= ITEM_ID_LAST; id++) {
+        count = dataBoxChkCategory1(id);
+        if (count > 0 && (hitActionGet(id)->flags & ITEM_BATTLE_USE)) {
+            choiceMenuItems[n] = hitActionTextGet(id, RECORD_TEXT_NAME);
+            choiceMenuValues[n] = count;
+            choiceMenuEntryIds[n] = id;
+            choiceMenuEntryFlags[n] = tgtRecordCanTarget(unit, id) ? 0 : CHOICE_ENTRY_DISABLED;
+            n++;
+        }
+    }
+    choiceMenuItems[n] = 0;
+    choiceMenuSetActive(0, 1);
+    choiceMenuOpen(0, CHOICE_MENU_X, CHOICE_MENU_Y, CHOICE_MENU_WIDTH, CHOICE_MENU_HEIGHT, CHOICE_MENU_STYLE,
+                   CHOICE_MENU_UNIT_SIZE, 0, choiceMenuItems, choiceMenuValues, choiceMenuEntryFlags);
+    choiceMenuPages[1] = 0;
+    choiceMenuPages[0] = 0;
+    choiceMenuTextTask = textEntryAlloc(CHOICE_TEXT_X, CHOICE_TEXT_Y, CHOICE_TEXT_WIDTH, CHOICE_TEXT_HEIGHT,
+                                        CHOICE_TEXT_STYLE, choiceMenuPages);
+}
+
 
 /* Closes choice slot 0 and removes the text task choiceMenuTextTask (the five identical close bodies of this TU). */
 void choiceMenuTextClose(void) {
@@ -99,9 +164,6 @@ void choiceMenuTextClose(void) {
 int choiceMenuIsOpen(int);
 int choiceMenuGetResult(int);
 extern int D_00AC3C04;
-extern s16 choiceMenuEntryIds[];
-extern u8 choiceMenuEntryFlags[];
-extern char *D_00AC4160;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C04, 0 when choiceMenuEntryFlags flags it. */
 int func_00A97F40(void) {
@@ -112,11 +174,11 @@ int func_00A97F40(void) {
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
-            entry_id = choiceMenuEntryIds[cursor_index];
+            entry_id = choiceMenuEntryIds[cursor_index - 1];
             D_00AC3C04 = entry_id;
             result = hitActionTextGet(entry_id, 1);
-            D_00AC4160 = result;
-            if (choiceMenuEntryFlags[cursor_index] != 0) {
+            choiceMenuPages[0] = result;
+            if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
                 D_00AC3C04 = 0;
             }
         }
@@ -143,11 +205,11 @@ int func_00A981B8(void) {
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
-            entry_id = choiceMenuEntryIds[cursor_index];
+            entry_id = choiceMenuEntryIds[cursor_index - 1];
             D_00AC3C08 = entry_id;
             result = battleLookupTextGet(entry_id, 1);
-            D_00AC4160 = result;
-            if (choiceMenuEntryFlags[cursor_index] != 0) {
+            choiceMenuPages[0] = result;
+            if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
                 D_00AC3C08 = 0;
             }
         }
@@ -174,11 +236,11 @@ int func_00A98440(void) {
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
-            entry_id = choiceMenuEntryIds[cursor_index];
+            entry_id = choiceMenuEntryIds[cursor_index - 1];
             D_00AC3C0C = entry_id;
             result = calcLevelTextGet(entry_id, 1);
-            D_00AC4160 = result;
-            if (choiceMenuEntryFlags[cursor_index] != 0) {
+            choiceMenuPages[0] = result;
+            if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
                 D_00AC3C0C = 0;
             }
         }
@@ -205,11 +267,11 @@ int func_00A986C8(void) {
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
-            entry_id = choiceMenuEntryIds[cursor_index];
+            entry_id = choiceMenuEntryIds[cursor_index - 1];
             D_00AC3C30 = entry_id;
             result = pairLinkTextGet(entry_id, 1);
-            D_00AC4160 = result;
-            if (choiceMenuEntryFlags[cursor_index] != 0) {
+            choiceMenuPages[0] = result;
+            if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
                 D_00AC3C30 = 0;
             }
         }
@@ -231,7 +293,7 @@ extern int D_00AC3C80;
 extern int enemyCursorPages[2];
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C80, 0 when choiceMenuEntryFlags flags it;
- * the helper result goes to enemyCursorPages instead of D_00AC4160, the word the other pickers use. */
+ * the helper result goes to enemyCursorPages instead of choiceMenuPages, the list the other pickers use. */
 int func_00A98960(void) {
     int cursor_index;
     s16 entry_id;
@@ -240,11 +302,11 @@ int func_00A98960(void) {
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
-            entry_id = choiceMenuEntryIds[cursor_index];
+            entry_id = choiceMenuEntryIds[cursor_index - 1];
             D_00AC3C80 = entry_id;
             result = battleLookupTextGet(entry_id, 1);
             enemyCursorPages[0] = result;
-            if (choiceMenuEntryFlags[cursor_index] != 0) {
+            if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
                 D_00AC3C80 = 0;
             }
         }
@@ -271,11 +333,11 @@ int func_00A98BE8(void) {
     if (choiceMenuIsOpen(0) == 1) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
-            entry_id = choiceMenuEntryIds[cursor_index];
+            entry_id = choiceMenuEntryIds[cursor_index - 1];
             D_00AC3CAC = entry_id;
             result = tgtIdTextGet(entry_id, 1);
-            D_00AC4160 = result;
-            if (choiceMenuEntryFlags[cursor_index] != 0) {
+            choiceMenuPages[0] = result;
+            if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
                 D_00AC3CAC = 0;
             }
         }
@@ -313,7 +375,6 @@ int statBitValueGet(Ov01Object *unit, int row, int mask) {
 #define ENEMY_CURSOR_HEIGHT 0x14
 #define ENEMY_CURSOR_STYLE 7
 
-ObjectTask *textEntryAlloc(int x, int y, int width, int height, int style, void *pages);
 /* The status shown by the enemy cursor: row and bit mask (enemyCursorStep walks them with statBitValueGet) and
  * the frames left before the next one. */
 extern int enemyCursorRow;

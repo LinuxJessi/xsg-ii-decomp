@@ -2170,7 +2170,7 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu036/func_00A97D68.s",
+      "asm/nonmatchings/ov01/tu036/choiceMenuOpenItems.s",
       "asm/nonmatchings/ov01/tu036/choiceMenuTextClose.s",
       "asm/nonmatchings/ov01/tu036/func_00A97F40.s",
       "asm/nonmatchings/ov01/tu036/func_00A97FE0.s",

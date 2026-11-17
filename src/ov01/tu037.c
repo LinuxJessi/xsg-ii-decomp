@@ -2,6 +2,7 @@
  * OV01 original TU 37: 0x00a99ec0..0x00a9a4b0 (11 functions)
  */
 #include "common.h"
+#include "main/pad.h"
 #include "main/face_point.h"
 #include "main/tu092.h"
 #include "main/tu093.h"
