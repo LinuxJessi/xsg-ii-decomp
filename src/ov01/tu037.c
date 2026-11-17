@@ -10,6 +10,7 @@
 #include "ov01/tu017.h"
 #include "ov01/tu022.h"
 #include "ov01/tu023.h"
+#include "ov01/tu040.h"
 #include "ov01/tu037.h"
 #include "ov01/tu044.h"
 #include "ov01/tu075.h"
@@ -55,7 +56,6 @@ void ov01SceneEnd(void) {
 /* Scene release: culling ignore off, counters cleared, records of the scene key
  * released (sbThreadsRelease), actors released, tables cleared. */
 void partySnapshotBuild(void);
-struct SbImageHeader *ov01ScriptKeyGet(void);
 
 void ov01SceneRelease(void) {
     xglCullingIgnoreOff();

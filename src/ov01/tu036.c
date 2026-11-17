@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu048.h"
 #include "main/tu124.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
@@ -413,34 +414,24 @@ void thinkNoSet(int value) {
 }
 
 /*
- * The fields of gameWork (main) this file reads: the battle's enemy group
- * number (the MONSTER SET debug row of tu072 sets it, monsSetNoGet of tu046
- * reads it) and the cf event bits (XS1 keeps cfEvent in its game loop state;
+ * gameWork (main): encounterTarget is the battle's enemy group number (the MONSTER SET debug row of tu072 sets it,
+ * monsSetNoGet of tu046 reads it), encounterFlags the cf event bits (XS1 keeps cfEvent in its game loop state;
  * tu039 tests bit 0x20 for the time limit).
  */
-typedef struct CfGameWork {
-    unsigned char unmodeled_000[0x31C];
-    short monsSetNo;                      /* +0x31C */
-    unsigned char unmodeled_31e[0x324 - 0x31E];
-    int cfEvent;                          /* +0x324 */
-} CfGameWork;
-
-extern CfGameWork gameWork;
-
 short cfMonsSetNoGet(void) {
-    return gameWork.monsSetNo;
+    return gameWork.encounterTarget;
 }
 
 void cfMonsSetNoSet(int monsSetNo) {
-    gameWork.monsSetNo = monsSetNo;
+    gameWork.encounterTarget = monsSetNo;
 }
 
 int cfEventGet(void) {
-    return gameWork.cfEvent;
+    return gameWork.encounterFlags;
 }
 
 void cfEventSet(int cfEvent) {
-    gameWork.cfEvent = cfEvent;
+    gameWork.encounterFlags = cfEvent;
 }
 
 extern unsigned char ov01PartyTable[];

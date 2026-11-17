@@ -18,6 +18,7 @@
 #include "ov01/tu009.h"
 #include "ov01/tu012.h"
 #include "ov01/tu038.h"
+#include "ov01/tu040.h"
 #include "ov01/tu046.h"
 #include "ov01/tu049.h"
 #include "ov01/tu070.h"
@@ -102,8 +103,6 @@ int handleStateGet(unsigned int handle);
 extern int ov01SceneDone;
 struct SaveStack *ov01StackNew(void);
 void runtimeInit(void);
-struct SbImageHeader *ov01ScriptKeyGet(void);
-struct SbImageHeader *ov01ScriptImageGet(void);
 int func_00A9CEE8(struct SbImageHeader *key, struct SbImageHeader *library);
 void sbStartImage(struct SbImageHeader *image);
 void ov01StepSceneScript(int context);

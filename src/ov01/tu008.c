@@ -3,10 +3,12 @@
  */
 #include "common.h"
 #include "main/tu021.h"
+#include "main/tu048.h"
 #include "main/tu092.h"
 #include "ov01/tu008.h"
 #include "ov01/tu009.h"
 #include "ov01/tu023.h"
+#include "ov01/tu040.h"
 #include "ov01/tu070.h"
 
 /*
@@ -655,38 +657,28 @@ void dataBatDatLoad(void) {
     ov01CdReadFileSync(dataBatDatPath, &D_61D040);
 }
 
-/* Word at 0x2B5DBC: the address of the scene data buffer (tu037 reads the same word as a key and declares it int). */
-char *ov01ScriptKeyGet(void);
 int sprintf(char *, const char *, ...);
 extern char dataPathBuf[];
 extern char *dataThinkPath;
 extern char *dataThinkJpPath;
 
-struct GameWorkThinkView {
-    unsigned char unmodeled_00[0x2C];
-    char *think_buffer;
-    unsigned char unmodeled_30[0xB8 - 0x30];
-    char *think_data_end;
-};
-
-extern struct GameWorkThinkView gameWork;
 extern struct DataFileRecord D_00AC0E28;
 
 void dataThinkScriptLoad(int index)
 {
-    char *buffer;
+    void *buffer;
     int size;
 
     sprintf(dataPathBuf, "%s%03d.sb", dataThinkPath, index);
     buffer = ov01HeapAlloc(DATA_THINK_BUF_SIZE);
-    gameWork.think_buffer = buffer;
+    gameWork.resBuffer = buffer;
     ov01CdReadFileSync(dataPathBuf, ov01ScriptKeyGet());
     D_00AC0E28.buffer = buffer;
     D_00AC0E28.size = DATA_THINK_BUF_SIZE;
     size = (xglCdGetFileSize(dataPathBuf) + (DATA_CD_SECTOR_SIZE - 1)) / DATA_CD_SECTOR_SIZE * DATA_CD_SECTOR_SIZE;
     sprintf(dataPathBuf, "%s%03d.sbl", dataThinkJpPath, index);
-    ov01CdReadFileSync(dataPathBuf, ov01ScriptKeyGet() + size);
-    gameWork.think_data_end = ov01ScriptKeyGet() + size;
+    ov01CdReadFileSync(dataPathBuf, (char *)ov01ScriptKeyGet() + size);
+    gameWork.imageEnd = (int)ov01ScriptKeyGet() + size;
 }
 
 extern char *dataStatPath;
