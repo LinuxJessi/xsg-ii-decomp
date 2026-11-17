@@ -5,5 +5,6 @@
 
 int textBlockIsActive(void);
 void textBlockClear(void);
+void textUpdate(void);
 
 #endif /* INCLUDE_MAIN_TU125_H */

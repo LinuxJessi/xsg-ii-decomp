@@ -2268,7 +2268,7 @@
       "asm/nonmatchings/ov01/tu037/ov01SceneInit.s",
       "asm/nonmatchings/ov01/tu037/ov01SceneEnter.s",
       "asm/nonmatchings/ov01/tu037/ov01SceneLoop.s",
-      "asm/nonmatchings/ov01/tu037/func_00A9A100.s",
+      "asm/nonmatchings/ov01/tu037/ov01SoftResetPressed.s",
       "asm/nonmatchings/ov01/tu037/func_00A9A138.s",
       "asm/nonmatchings/ov01/tu037/ov01SceneEnd.s",
       "asm/nonmatchings/ov01/tu037/ov01SceneRelease.s",

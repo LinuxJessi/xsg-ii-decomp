@@ -101,5 +101,6 @@ void sbSlotJumpRequest(SbThread *thread, int key);
 void sbFatal(SbThread *thread);
 void sbResetNativeCounts(void);
 void sbThreadsRelease(struct SbImageHeader *key);
+void sbRunAll(void);
 
 #endif /* INCLUDE_OV01_TU044_H */

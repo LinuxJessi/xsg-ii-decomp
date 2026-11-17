@@ -27,5 +27,7 @@ void msgStateReset(void);
 int msgWindowBusy(void);
 void msgWindowCloseForTalk(void);
 int msgWindowHasMore(void);
+void msgUpdateTimed(void);
+void msgClose(void);
 
 #endif /* INCLUDE_MAIN_TU148_H */

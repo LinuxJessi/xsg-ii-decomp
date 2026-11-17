@@ -3,17 +3,22 @@
  */
 #include "common.h"
 #include "main/TiWindBase.h"
+#include "main/gifState.h"
+#include "main/nml_model_set.h"
 #include "main/pad.h"
 #include "main/face_point.h"
+#include "main/sef.h"
 #include "main/tu051.h"
 #include "main/tu092.h"
 #include "main/tu093.h"
 #include "main/tu123.h"
 #include "main/tu124.h"
 #include "main/tu125.h"
+#include "main/tu148.h"
 #include "main/tu156.h"
 #include "main/xenoActor.h"
 #include "main/xgl_2.h"
+#include "main/xgl_render.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
 #include "ov01/tu010.h"
@@ -79,15 +84,57 @@ void ov01SceneEnter(void) {
     ov01StepChainStart();
 }
 
-/*
- * Scene frame loop: each pass counts ov01SceneFrames, runs the update and draw
- * passes (ov01UpdateAll, the actors, the text and message systems) and ends
- * when the scene done flag (ov01SceneIsDone) is set or a pad combination asks
- * for the exit (func_00A9A100).
- */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu037", ov01SceneLoop);
+/* Cleared when the scene loop starts; no code of the overlay reads it. */
+extern int D_00AC4190;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu037", func_00A9A100);
+int ov01SoftResetPressed(void);
+int func_00A9A138(void);
+int ov01SceneIsDone(void);
+
+/*
+ * Scene frame loop: each frame runs the update and draw passes (scripts, objects, camera, actors, effects, text
+ * and messages) unless the wait hook func_00A9A138 holds it, counts ov01SceneFrames, and ends when the scene is
+ * done or the soft-reset combination is pressed (ov01SoftResetPressed; that sets CONTROL_SOFT_RESET and stops the gif
+ * effect).
+ */
+void ov01SceneLoop(void)
+{
+    D_00AC4190 = 0;
+    xglRenderClearSkipOn();
+    for (;;) {
+        if (ov01SoftResetPressed()) {
+            gameWork.control |= CONTROL_SOFT_RESET;
+            gifStateDisableEffect();
+            break;
+        }
+        pxySetMode4Flag();
+        if (gifStateEffectReady() == 1) {
+            func_001BA68C();
+        }
+        if (!func_00A9A138()) {
+            sbRunAll();
+            ov01UpdateAll();
+            cameraApplyView();
+            tiWindAdvanceAll();
+            XenoActorDoit();
+            XenoActorDisp();
+            ov01LastValueSet(0);
+            sefExecEffect();
+            textUpdate();
+            msgUpdateTimed();
+            msgClose();
+            if (ov01SceneIsDone() == 1) {
+                break;
+            }
+            ov01SceneFrames++;
+        }
+        GameSnapShotCheck();
+        xglSleep();
+    }
+    xglRenderClearSkipOff();
+}
+
+INCLUDE_ASM("asm/nonmatchings/ov01/tu037", ov01SoftResetPressed);
 
 /* Wait hook polled by the frame loop; it never reports a wait. */
 int func_00A9A138(void) {

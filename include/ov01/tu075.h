@@ -5,5 +5,6 @@
 
 void ov01SceneSystemsShutdown(void);
 void ov01SceneStateReset(void);
+void ov01LastValueSet(s16 value);
 
 #endif /* INCLUDE_OV01_TU075_H */

@@ -7,5 +7,7 @@ void xglRenderClearDepth(void);
 void xglRenderClearFrame(void);
 void xglRenderFrame(void);
 void xglRenderGlobalFadeReset(void);
+void xglRenderClearSkipOn(void);
+void xglRenderClearSkipOff(void);
 
 #endif /* INCLUDE_MAIN_XGL_RENDER_H */

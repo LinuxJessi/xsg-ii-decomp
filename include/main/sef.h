@@ -221,5 +221,6 @@ typedef struct SefEntryCounts {
 extern SefEntryCounts sefEntryCounts[];
 /* Address of the counter entry entry_index (tu163.c). */
 void *func_00259638(int entry_index);
+void sefExecEffect(void);
 
 #endif /* INCLUDE_MAIN_SEF_H */
