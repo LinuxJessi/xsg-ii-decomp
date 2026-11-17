@@ -13,11 +13,11 @@
  */
 #include "common.h"
 #include "ov01/tu005.h"
+#include "main/tu051.h"
 #include "ov01/tu012.h"
-#include "ov01/tu019.h"
-#include "ov01/tu031.h"
-#include "ov01/tu032.h"
+#include "ov01/tu023.h"
 #include "ov01/tu033.h"
+#include "ov01/tu036.h"
 #include "ov01/tu066.h"
 #include "ov01/tu070.h"
 
@@ -26,39 +26,6 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdSystemInit);
 
 extern char cmdList[];   /* cmdList: 0x20-byte entries, unit then command body */
 extern char cmdFifo[];   /* cmdFifo: fifo control block */
-
-struct UnitSub {
-    unsigned char unmodeled_00[0x1E];
-    short page;
-    unsigned char unmodeled_20[0x3C];
-    int state;
-    unsigned char unmodeled_60[2];
-    short key;
-    unsigned char unmodeled_64[6];
-    short level;
-};
-
-/* Unit slot of a table: flags bit 0x4 is the pause bit, aux the speed (1.0 running, 0 paused). */
-struct UnitSlot {
-    unsigned char unmodeled_00[0xBC];
-    int flags;
-    float aux;
-};
-
-struct UnitTable {
-    unsigned char unmodeled_000[0x144];
-    struct UnitSub *sub;
-    unsigned char unmodeled_148[0x1D0 - 0x148];
-    int handle;
-    unsigned char unmodeled_1d4[0x1DC - 0x1D4];
-    /* extent of slots not recovered; indexed by the caller's index */
-    struct UnitSlot *slots[1];
-};
-
-struct UnitActor {
-    unsigned char unmodeled_00[0x1D0];
-    struct UnitSlot *unit;
-};
 
 /* cmdListPtrGet: the command fifo and the command list, through two out pointers. */
 void cmdListPtrGet(void **fifo_out, void **list_out) {
@@ -171,11 +138,11 @@ int func_00A93288(struct Tu033Owner *owner) {
 
     entry = func_00A9B3B8(owner->handle);
     status = func_00A951D8(owner->key, entry);
-    return func_00A84D80(owner->key, status, entry->extent) != 0;
+    return unitEffectKeyFree(owner->key, status, entry->extent) != 0;
 }
 
 struct Tu033Request {
-    struct Tu033Object *object;
+    Ov01Object *object;
     unsigned char unmodeled_04[4];
     int second;
     unsigned char unmodeled_0c[0xC];
@@ -217,46 +184,13 @@ void *eventQueueReserve(void) {
 
 #include "shared.h"
 
-/* Object at the owner's +0x1D0; its flags word at +0xBC gets bit 1 in battleUnitsReset. */
-typedef struct Ov01Tu033Object {
-    unsigned char unmodeled_00[0xBC];
-    int flags;
-} Ov01Tu033Object;
-
-/* Handle from unitPlCreate and unitEnCreate; its flags word at +0xC gets bit 8 in unitSpawnFromRequest. */
-typedef struct Ov01Tu033Handle {
-    unsigned char unmodeled_00[0xC];
-    int flags;
-} Ov01Tu033Handle;
-
 /* Slot from func_00A9B3B8; its state byte at +0x1C is compared with 1 in unitAttachRequest. */
 typedef struct Ov01Tu033Slot {
     unsigned char unmodeled_00[0x1C];
     signed char state;
 } Ov01Tu033Slot;
 
-struct Tu033Global {
-    unsigned char unmodeled_00[0x38];
-    struct Tu033Object *object;
-    int first;
-    int second;
-    int third;
-    unsigned char unmodeled_48[0x10];
-    int index;
-    f32 scale;
-};
 
-typedef struct Tu033Global Tu033Global;
-
-
-
-/* Owner passed to unitRecreate and func_00A95608 and listed by unitTblGet. */
-typedef struct Ov01Tu033Owner {
-    unsigned char unmodeled_00[0x144];
-    struct UnitSub *sub;
-    unsigned char unmodeled_148[0x88];
-    Ov01Tu033Object *object;
-} Ov01Tu033Owner;
 
 /* Request record: the four-word argument of unitAttachRequest and unitSpawnFromRequest. */
 typedef struct Ov01Tu033Request {
@@ -267,25 +201,20 @@ typedef struct Ov01Tu033Request {
 } Ov01Tu033Request;
 
 
-extern Ov01Tu033Handle *ov01LastUnit;
+extern Ov01Object *ov01LastUnit;
 extern int ov01ModelEntry;
 int dataSlotRelease(s16);
 int dataSlotFlagClear(s16);
 int dataUnitLoad(int);
-int func_00A82E18(int);
-int unitRemove(Ov01Tu033Owner *);
-void unitUnbind(Ov01Tu033Owner *);
-int unitLoadSnapshot(void *, int);
-void unitSetAngleDegrees(void *, int);
-void unitSetAngleRadians(void *, f32);
+int unitEffectSlotAcquire(int);
+int unitRemove(Ov01Object *);
 int unitAttachChild(int, int, int);
 int func_00A93080(int, int);
-int sefApplyRecordMode(void *, int, int);
+int sefApplyRecordMode(struct XenoActor *, int, int);
 int sefSetGateForId(int, int);
-int unitTblGet(int, void ***);
-Ov01Tu033Handle *unitPlCreate(int);
-Ov01Tu033Handle *unitEnCreate(int);
-Tu033Global *battleStateGet(void);
+int unitTblGet(int, Ov01Object ***);
+Ov01Object *unitPlCreate(int);
+Ov01Object *unitEnCreate(int);
 
 /*
  * eventQueueFindKind4: the ordinal'th kind-4 record counting back from the last
@@ -374,7 +303,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93710);
 /* Event record of kind 2: the object whose command queue the event waits on (+4). */
 struct EventWaitRecord {
     unsigned char unmodeled_00[4];
-    int object;
+    Ov01Object *object;
 };
 
 /*
@@ -392,10 +321,10 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A938A0);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93B70);
 
 void func_00A93CF0(void) {
-    struct UnitActor **actors;
-    struct UnitActor **cursor;
-    struct UnitActor *actor;
-    struct UnitSlot *unit;
+    Ov01Object **actors;
+    Ov01Object **cursor;
+    Ov01Object *actor;
+    struct XenoActor *unit;
     int count;
     int remaining;
 
@@ -408,7 +337,7 @@ void func_00A93CF0(void) {
             cursor += 1;
             if (actor != 0) {
                 unit = actor->unit;
-                unit->flags &= 0xFBFFFFFF;
+                unit->drawFlags &= 0xFBFFFFFF;
             }
             remaining -= 1;
         } while (remaining != 0);
@@ -418,15 +347,6 @@ void func_00A93CF0(void) {
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93D50);
 
 int unitHasEffectCode(void *, int);
-int calcBoostOk(void *, int);
-void func_00A954D8(void *, int, int);
-
-typedef struct Tu033Object {
-    u8 unmodeled_00[0xC];
-    int flags;
-    u8 unmodeled_10[0x134];
-    struct UnitSub *sub;
-} Tu033Object;
 
 
 /*
@@ -435,7 +355,7 @@ typedef struct Tu033Object {
  * when a roll hits and calcBoostOk accepts the unit.
  */
 int unitTryActStock(struct SlotEntry *entry, struct Tu033Request *request) {
-    Tu033Object *object;
+    Ov01Object *object;
     int chanceHit;
     int flags;
     int requestFlags;
@@ -444,7 +364,7 @@ int unitTryActStock(struct SlotEntry *entry, struct Tu033Request *request) {
     if (func_00A9B3B8(entry->index)->flags & 8) {
         return 0;
     }
-    if (object->sub->key < 0x10) {
+    if (object->stats->key < 0x10) {
         chanceHit = actLevelChanceRoll(object, entry->index) != 0;
         if (unitHasEffectCode(object, 0x2B) != 0) {
             flags = request->flags;
@@ -500,23 +420,23 @@ void func_00A95018(int unused_arg0, struct Tu033Owner *owner) {
  * the battle index, keeping the owner's level and the battle scale; the data slot of
  * the owner's key is released first.
  */
-void unitRecreate(Ov01Tu033Owner *owner)
+void unitRecreate(Ov01Object *owner)
 {
     f32 scale;
     int level;
     int index;
 
-    level = owner->sub->level;
+    level = owner->stats->posIndex;
     scale = battleStateGet()->scale;
-    dataSlotFlagClear(owner->sub->key);
-    dataSlotRelease(owner->sub->key);
+    dataSlotFlagClear(owner->stats->key);
+    dataSlotRelease(owner->stats->key);
     unitRemove(owner);
-    index = battleStateGet()->index;
+    index = battleStateGet()->slotIndex;
     ov01LastUnit = unitPlCreate(index);
     unitLoadSnapshot(owner, level);
     unitSetAngleRadians(ov01LastUnit, scale);
     dataUnitLoad(index);
-    func_00A82E18(index);
+    unitEffectSlotAcquire(index);
 }
 
 /*
@@ -525,10 +445,10 @@ void unitRecreate(Ov01Tu033Owner *owner)
  */
 void battleUnitsReset(void)
 {
-    void **items;
+    Ov01Object **items;
     int count;
     int index;
-    Ov01Tu033Owner *owner;
+    Ov01Object *owner;
 
     index = 0;
     count = unitTblGet(2, &items);
@@ -537,12 +457,12 @@ void battleUnitsReset(void)
             owner = items[index];
             index += 1;
             if (owner != 0) {
-                owner->object->flags |= 1;
+                owner->unit->drawFlags |= 1;
                 unitUnbind(owner);
             }
         } while (index < count);
     }
-    battleStateGet()->index = 0;
+    battleStateGet()->slotIndex = 0;
     sefSetGateForId(1, 0x37);
     decoFlagsClearAll();
 }
@@ -557,69 +477,67 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A954D8);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95540);
 
-int func_00A95680(struct UnitTable *);
-
-void func_00A955C8(struct UnitTable *table) {
-    sefApplyRecordMode(table->handle, (table->sub->page << 0xc) | 8, 3);
-    func_00A95680(table);
+void func_00A955C8(Ov01Object *object) {
+    sefApplyRecordMode(object->unit, (object->stats->sequenceIndex << 0xc) | 8, 3);
+    func_00A95680(object);
 }
 
-void func_00A95608(Ov01Tu033Owner *owner)
+void func_00A95608(Ov01Object *object)
 {
-    sefApplyRecordMode(owner->object, (owner->sub->page << 0xC) | 8, 2);
-    sefApplyRecordMode(owner->object, 0x12C001, 1);
-    sefApplyRecordMode(owner->object, 0x12C002, 1);
-    sefApplyRecordMode(owner->object, 0x12C003, 1);
+    sefApplyRecordMode(object->unit, (object->stats->sequenceIndex << 0xC) | 8, 2);
+    sefApplyRecordMode(object->unit, 0x12C001, 1);
+    sefApplyRecordMode(object->unit, 0x12C002, 1);
+    sefApplyRecordMode(object->unit, 0x12C003, 1);
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95680);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95810);
 
-/* unitSlotResume: clears the pause bit of the slot and sets its speed to 1.0. */
-void unitSlotResume(struct UnitTable *table, int index)
+/* unitSlotResume: clears the pause bit of the slot and sets its alpha to 1.0. */
+void unitSlotResume(Ov01Object *object, int index)
 {
-    struct UnitSlot *unit;
+    struct XenoActor *unit;
 
-    unit = table->slots[index];
+    unit = object->children[index];
     if (unit != 0)
     {
-        unit->flags &= ~4;
-        unit->aux = 1.0f;
+        unit->drawFlags &= ~4;
+        unit->alpha = 1.0f;
     }
 }
 
-/* unitSlotPause: sets the pause bit of the slot and its speed to 0. */
-void unitSlotPause(struct UnitTable *table, int index) {
-    struct UnitSlot *unit;
+/* unitSlotPause: sets the pause bit of the slot and its alpha to 0. */
+void unitSlotPause(Ov01Object *object, int index) {
+    struct XenoActor *unit;
 
-    unit = table->slots[index];
+    unit = object->children[index];
     if (unit != 0) {
-        unit->aux = 0;
-        unit->flags |= 4;
+        unit->alpha = 0;
+        unit->drawFlags |= 4;
     }
 }
 
-int XenoActorShowPart(struct UnitSlot *, int);
+int XenoActorShowPart(struct XenoActor *, int);
 extern int ov01Slot1Part;
 
 /* unitSlotShowPart (proposed unitSlotShowPart): shows part ov01Slot1Part of slot 1 when the slot exists. */
-void unitSlotShowPart(struct UnitTable *table) {
-    struct UnitSlot *unit;
+void unitSlotShowPart(Ov01Object *object) {
+    struct XenoActor *unit;
 
-    unit = table->slots[1];
+    unit = object->children[1];
     if (unit != 0) {
         XenoActorShowPart(unit, ov01Slot1Part);
     }
 }
 
-int XenoActorHidePart(struct UnitSlot *, int);
+int XenoActorHidePart(struct XenoActor *, int);
 
 /* unitSlotHidePart (proposed unitSlotHidePart): hides part ov01Slot1Part of slot 1 when the slot exists. */
-void unitSlotHidePart(struct UnitTable *table) {
-    struct UnitSlot *unit;
+void unitSlotHidePart(Ov01Object *object) {
+    struct XenoActor *unit;
 
-    unit = table->slots[1];
+    unit = object->children[1];
     if (unit != 0) {
         XenoActorHidePart(unit, ov01Slot1Part);
     }
@@ -696,7 +614,7 @@ int unitSpawnFromRequest(Ov01Tu033Request *request)
     unitLoadSnapshot(ov01LastUnit, index);
     unitSetAngleDegrees(ov01LastUnit, value);
     dataUnitLoad(id);
-    func_00A82E18(id);
+    unitEffectSlotAcquire(id);
     ov01LastUnit->flags |= 8;
     return 1;
 }
@@ -719,9 +637,9 @@ void func_00A96510(void *, int, int, int);
  * for bit 0x4000 of row 3, HP adjust for bit 0x400, and both bits are cleared.
  */
 int battleResolveStatus(void) {
-    Tu033Object **units;
-    Tu033Object *object;
-    Tu033Object *unit;
+    Ov01Object **units;
+    Ov01Object *object;
+    Ov01Object *unit;
     int first;
     int second;
     int third;
@@ -743,7 +661,7 @@ int battleResolveStatus(void) {
     count = unitTblGet(2, &units);
     for (i = 0; i < count; i++) {
         unit = units[i];
-        if (unit != 0 && unit->sub->state == 0) {
+        if (unit != 0 && unit->stats->hp == 0) {
             if (calcStatGet(unit, 3, 0x4000) != 0) {
                 calcHpAdjust(units[i], 1);
                 unitLevelAdd(units[i], 3);
@@ -771,6 +689,8 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96810);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A968C8);
 
 void *dataStreamOpen(int, int);
+/* monsSlotCreate (tu019.c) returns a record pointer; this caller keeps its int view (the int global), see tu019.h. */
+int monsSlotCreate(void);
 extern int ov01StreamSlot;
 
 /*

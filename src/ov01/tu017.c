@@ -1,198 +1,83 @@
 #include "common.h"
 #include "shared.h"
-
-typedef struct ObjectTask ObjectTask;
-
-typedef struct XglTaskPrefix XglTaskPrefix;
-
-typedef struct XglTaskScheduler XglTaskScheduler;
+#include "main/tu051.h"
+#include "ov01/tu010.h"
+#include "ov01/tu017.h"
 
 /*
- * Only the link/callback prefix is evidenced by this allocation.  The
- * complete task records are allocated with a 0x80-byte stride, and callers
- * write task-specific payload beyond this 0x10-byte prefix.  This declaration
- * must not be read as the complete task layout or allocation size.
+ * The u64 read at object +8 (the word before flags): its high word is Ov01Object.flags, so flag bit 0x1 is bit 32
+ * and bit 0x4 is bit 34 of the u64. Ov01Object (tu012.h) has no 8-byte view of that pair, hence the one cast.
  */
-struct XglTaskPrefix {
-    XglTaskScheduler *scheduler;
-    XglTaskPrefix *next;
-    XglTaskPrefix *previous;
-    int (*callback)(XglTaskPrefix *task);
-};
+#define UNIT_CALLBACK_FLAG1_ONLY 0x100000000ULL
+#define UNIT_CALLBACK_FLAG1_FLAG4_MASK 0x500000000ULL
 
-struct XglTaskScheduler {
-    XglTaskPrefix *free_tasks;
-    XglTaskPrefix *active_head;
-    XglTaskPrefix *active_tail;
-    XglTaskPrefix *next_to_visit;
-};
+/* Slot layout of unitTbl: players use slots 0 to UNIT_PL_SLOTS - 1, enemies the next UNIT_EN_SLOTS of UNIT_TBL_SLOTS. */
+#define UNIT_PL_SLOTS 3
+#define UNIT_EN_SLOTS 5
+#define UNIT_TBL_SLOTS 8
 
-struct ObjectTask {
-    XglTaskPrefix task; /* the scheduler header xglTaskEntryNext maintains. */
-    void *work; /* objRemove passes this slot to objWorkFree. */
-};
-
-extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
-                                int (*callback)(XglTaskPrefix *task),
-                                XglTaskPrefix *entry);
-
-/*
- * Actor.cmdTarget's type: unitCmdPosAdj saves and restores the whole command
- * target with aligned ld/sd pairs (0x00a04aa4..0x00a04ab8,
- * 0x00a04aec..0x00a04af8), where a plain Vector4 (4-byte aligned) copies
- * through ldl/ldr/sdl/sdr. The u64 pair is the alignment spelling of
- * MCamVector (src/ov01/m_cam.c) and GameVector8 (src/main/game.c) and carries
- * no meaning of its own; the components are read through `vector` and the whole is copied as one 8-byte value (unitCmdPosAdj's savedTarget). Its 8-byte
- * alignment rounds the partial Actor view's sizeof from 0x76C to 0x770;
- * no offset moves and nothing in this TU takes sizeof(Actor).
- */
-typedef union UnitVector {
-    Vector4 vector;
-    u64 pair[2];
-} UnitVector;
-
-/*
- * unitCmdDirSet/unitCmdDivSet (0x00a05a60, 0x00a05ba8) also read and blend
- * the x/z components of the Vector4 at +0x90 against a move command's target
- * coordinate; y and w of that Vector4 are untouched by any function this TU
- * claims.
- */
-typedef struct Actor {
-    u32 flags;
-    void (*update)(struct Actor *actor);
-    void (*draw)(struct Actor *actor);
-    u32 quadword_alignment_gap;
-    Vector4 position;
-    Vector4 previous_position;
-    Vector4 velocity;
-    Vector4 acceleration;
-    Vector4 rotation;
-    Vector4 scale;
-    int runFrameCounter;   /* +0x70: unitCmdRun tests it modulo 3 to space
-                             * out its footstep decoEffCall. */
-    int moveState;         /* +0x74: unitCmdMove's own move-command step;
-                             * 0 issues the move (unitCmdDstSet/unitCmdVASet
-                             * and, for a jump, unitCmdDirSet) and advances to
-                             * 1, which then waits for unitCmdJump/unitCmdWarp
-                             * to report arrival before calling
-                             * unitCmdMoveNext. */
-    int movePhase;          /* +0x78: reset to 0 by unitCmdMove when a move
-                             * starts; unitCmdJump/unitCmdWarp (still asm)
-                             * advance it through their own per-move-kind
-                             * phases. */
-    int movePhaseTimer;     /* +0x7C: unitCmdWarp zeroes it every time it
-                             * advances movePhase; no claimed function here
-                             * reads it. */
-    ObjectTask *targetUnit; /* +0x80: unitCmdDstSet's mode-0 path reads the
-                             * command target's own CalcUnitParam/table
-                             * position through it. */
-    unsigned char unmodeled_84[0x90 - 0x84];
-    UnitVector cmdTarget; /* +0x90: unitCmdDirSet reads x/z against
-                            * motionActor->position to face the pending move
-                            * command; unitCmdDivSet blends x/z toward that
-                            * position by a supplied ratio. y and w are
-                            * untouched by any function this TU claims. */
-    unsigned char unmodeled_a0[0xC0 - 0xA0];
-    float transparency;   /* +0xC0: unitActdraw draws translucent below 1.0 */
-    unsigned char unmodeled_c4[0xD0 - 0xC4];
-    float posSnapX;        /* +0xD0: unitCmdJump's arrival check rounds it
-                             * and compares against posSnapZ*0.5 rounded. */
-    float hopLength;       /* +0xD4: replaces four bytes of filler
-                             * (unmodeled_d4) in this existing local Actor
-                             * view. unitCmdMoveChaJump2 takes its address
-                             * (`addiu $19,$2,0xD4`, 0x00a040dc), stores the
-                             * command distance divided by 3 (`swc1 $f13,0($19)`,
-                             * 0x00a04114) and reloads it to aim each
-                             * intermediate hop (`lwc1 $f0,0($19)`, 0x00a04170). */
-    float posSnapZ;        /* +0xD8 */
-    unsigned char unmodeled_dc[0xE0 - 0xDC];
-    int motionFrame;      /* +0xE0: unitActupdate advances it before
-                             ACT_updateMotion */
-    unsigned char unmodeled_e4[0xF0 - 0xE4];
-    int motion;            /* +0xF0: unitMotGet returns it plus one */
-    float moveOriginY;     /* +0xF4: unitCmdRun/unitCmdJump save cmdTarget's
-                             * y/z here before a stand/attack phase and
-                             * restore them afterward; the paired x value at
-                             * this same phase reuses the four bytes of
-                             * `motion` above through a cast (see the .c
-                             * file), never through a new field here. */
-    float moveOriginZ;     /* +0xF8 */
-    unsigned char unmodeled_fc[0x6F0 - 0xFC];
-    int moveFlags;          /* +0x6F0: unitCmdRun/unitCmdHover/unitCmdFloat/
-                              * unitCmdJump test bit 0x1000 of it to detect
-                              * that a move command has reached its target. */
-    float moveElapsed;      /* +0x6F4: unitCmdJump reads it as a frame count
-                              * source for its arrival check. */
-    float moveStepRate;      /* +0x6F8: unitCmdFloat/unitCmdJump write a
-                              * per-frame interpolation rate here. */
-    unsigned char unmodeled_6fc[0x714 - 0x6FC];
-    float interpTime;      /* +0x714: unitSetInterpTime's write target */
-    unsigned char unmodeled_718[0x760 - 0x718];
-    float floatStepX;      /* +0x760: unitCmdFloat adds it to its motion
-                             * actor's position.x each step while floating. */
-    unsigned char unmodeled_764[0x768 - 0x764];
-    float floatStepZ;      /* +0x768 */
-} Actor;
-
-/*
- * Partial view of the unit record beyond the published ObjectTask prefix
- * (task+work, ending at +0x14, include/shared.h): unitSetInterpTime and
- * unitMotGet both follow a pointer immediately after that prefix, and
- * unitWpnMotSet reads a 4-entry pointer array starting eight bytes further.
- * Both point at Actor objects: unitWpnMotSet forwards the entry it reads to
- * ACT_animGetData/ACT_setMotion, whose first parameter is already
- * Actor-typed (src/main/act_2.c). No other byte of this wider record is
- * claimed, and the relationship between this pointer and ObjectTask.work is
- * not evidenced here.
- */
-typedef struct UnitRecord UnitRecord;
-
-struct UnitRecord {
-    ObjectTask task;                   /* +0x00..+0x13: the ObjectTask
-                                         * prefix, opaque here */
-    Actor *motionActor;                /* +0x14 */
-    unsigned char unmodeled_018[0x1c - 0x18]; /* +0x18..+0x1b */
-    Actor *wpnActor[4];                /* +0x1c */
-    Actor *subActor;                   /* +0x2c: unitRemoveActor disposes it
-                                         * first when it is set */
-};
-
-/* The same eight unit pointers have full-record and scheduler-prefix views. */
-typedef union UnitTableStorage {
-    UnitRecord *records[8];
-    ObjectTask *tasks[8];
-} UnitTableStorage;
-
-extern UnitTableStorage unitTbl;
+/* The unit objects of the battle: players first, then enemies. */
+extern Ov01Object *unitTbl[UNIT_TBL_SLOTS];
 extern int unitPlNum;
 extern int unitEnNum;
-extern int unitTblGet(int side, UnitRecord ***table);
 
-int unitTblGet(int side, UnitRecord ***table)
+int unitTblGet(int side, Ov01Object ***table)
 {
-    if (side == 0) {
-        *table = unitTbl.records;
-        return 3;
+    if (side == UNIT_SIDE_PLAYER) {
+        *table = unitTbl;
+        return UNIT_PL_SLOTS;
     }
-    if (side == 1) {
-        *table = &unitTbl.records[3];
-        return 5;
+    if (side == UNIT_SIDE_ENEMY) {
+        *table = &unitTbl[UNIT_PL_SLOTS];
+        return UNIT_EN_SLOTS;
     }
-    *table = unitTbl.records;
-    return 8;
+    *table = unitTbl;
+    return UNIT_TBL_SLOTS;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu017", unitTblSet);
-
-int unitTblRemove(ObjectTask *unit)
+/*
+ * Stores object in the first empty slot of the side's range: side 0 uses
+ * slots 0..2 (player units), side 1 uses slots 3..7 (enemy units). Other
+ * sides are rejected. Returns 1 when a slot was filled, 0 otherwise.
+ */
+int unitTblSet(int side, Ov01Object *object)
 {
-    ObjectTask **units = unitTbl.tasks;
+    int first;
+    int end;
     int i;
 
-    for (i = 0; i < 8; i++) {
-        if (units[i] == unit) {
+    if (side == UNIT_SIDE_PLAYER) {
+        first = 0;
+        end = UNIT_PL_SLOTS;
+    } else if (side == UNIT_SIDE_ENEMY) {
+        first = UNIT_PL_SLOTS;
+        end = UNIT_TBL_SLOTS;
+    } else {
+        return 0;
+    }
+    for (i = first; i < end; i++) {
+        if (unitTbl[i] == 0) {
+            unitTbl[i] = object;
+            if (i < UNIT_PL_SLOTS) {
+                unitPlNum++;
+            } else {
+                unitEnNum++;
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int unitTblRemove(Ov01Object *object)
+{
+    Ov01Object **units = unitTbl;
+    int i;
+
+    for (i = 0; i < UNIT_TBL_SLOTS; i++) {
+        if (units[i] == object) {
             units[i] = 0;
-            if (i < 3) {
+            if (i < UNIT_PL_SLOTS) {
                 unitPlNum--;
             } else {
                 unitEnNum--;
@@ -207,9 +92,9 @@ int unitNumGet(int side)
 {
     int count;
 
-    if (side == 0) {
+    if (side == UNIT_SIDE_PLAYER) {
         count = unitPlNum;
-    } else if (side == 1) {
+    } else if (side == UNIT_SIDE_ENEMY) {
         count = unitEnNum;
     } else {
         count = unitPlNum + unitEnNum;
@@ -220,8 +105,8 @@ int unitNumGet(int side)
 /* Counts the non-null units of side whose callback word has bit 0x4 clear. */
 int unitNumFlag4ClearGet(int side)
 {
-    UnitRecord **records;
-    UnitRecord **cursor;
+    Ov01Object **records;
+    Ov01Object **cursor;
     int count;
     int remaining;
     int flagClearCount;
@@ -232,10 +117,10 @@ int unitNumFlag4ClearGet(int side)
         cursor = records;
         remaining = count;
         do {
-            UnitRecord *record = *cursor;
+            Ov01Object *record = *cursor;
 
             cursor++;
-            if (record != 0 && !((int) record->task.task.callback & 4)) {
+            if (record != 0 && !(record->flags & 4)) {
                 flagClearCount++;
             }
             remaining--;
@@ -244,12 +129,12 @@ int unitNumFlag4ClearGet(int side)
     return flagClearCount;
 }
 
-int calcStatGet(UnitRecord *record, int, int);
+int calcStatGet(Ov01Object *record, int, int);
 
 /* Counts the units of side with bit 0x4 clear that calcStatGet accepts (returns 0) for (2, 1). */
 int unitNumFlag4ClearStatZeroGet(int side)
 {
-    UnitRecord **records;
+    Ov01Object **records;
     int count;
     int i;
     int acceptedCount;
@@ -259,10 +144,10 @@ int unitNumFlag4ClearStatZeroGet(int side)
     count = unitTblGet(side, &records);
     if (count > 0) {
         do {
-            UnitRecord *record = records[i];
+            Ov01Object *record = records[i];
 
             i++;
-            if (record != 0 && !((int) record->task.task.callback & 4)) {
+            if (record != 0 && !(record->flags & 4)) {
                 if (calcStatGet(record, 2, 1) == 0) {
                     acceptedCount++;
                 }
@@ -275,8 +160,8 @@ int unitNumFlag4ClearStatZeroGet(int side)
 /* Counts the non-null units of side whose callback word has bit 0x4 set. */
 int unitNumFlag4SetGet(int side)
 {
-    UnitRecord **records;
-    UnitRecord **cursor;
+    Ov01Object **records;
+    Ov01Object **cursor;
     int count;
     int remaining;
     int flagSetCount;
@@ -287,10 +172,10 @@ int unitNumFlag4SetGet(int side)
         cursor = records;
         remaining = count;
         do {
-            UnitRecord *record = *cursor;
+            Ov01Object *record = *cursor;
 
             cursor++;
-            if (record != 0 && ((int) record->task.task.callback & 4)) {
+            if (record != 0 && (record->flags & 4)) {
                 flagSetCount++;
             }
             remaining--;
@@ -299,24 +184,77 @@ int unitNumFlag4SetGet(int side)
     return flagSetCount;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A88158);
+/*
+ * Counts the non-null units of side whose callback word has bit 0x1 set and
+ * bit 0x4 clear.
+ */
+int unitNumFlag1Flag4ClearGet(int side)
+{
+    Ov01Object **records;
+    Ov01Object **cursor;
+    int count;
+    int remaining;
+    int flag1ClearCount;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu017", func_00A881C8);
+    count = unitTblGet(side, &records);
+    flag1ClearCount = 0;
+    if (count > 0) {
+        cursor = records;
+        remaining = count;
+        do {
+            Ov01Object *record = *cursor;
+
+            cursor++;
+            if (record != 0 && (*(u64 *) &record->unmodeled_00[8] & UNIT_CALLBACK_FLAG1_FLAG4_MASK) == UNIT_CALLBACK_FLAG1_ONLY) {
+                flag1ClearCount++;
+            }
+            remaining--;
+        } while (remaining != 0);
+    }
+    return flag1ClearCount;
+}
+
+/*
+ * Counts the non-null units of side whose command queue is not empty, plus
+ * the ones whose key lookup (unitEffectKeyFree) reports nothing pending.
+ */
+int unitNumBusyGet(int side)
+{
+    Ov01Object **records;
+    int keyHigh;
+    int keyLow;
+    int count;
+    int i;
+    int busyCount;
+
+    count = unitTblGet(side, &records);
+    busyCount = 0;
+    for (i = 0; i < count; i++) {
+        if (records[i] != 0) {
+            unitMoveKey(records[i], &keyHigh, &keyLow);
+            if (unitQueueIsEmpty(records[i]) == 0 ||
+                unitEffectKeyFree(records[i], keyHigh, keyLow) == 0) {
+                busyCount++;
+            }
+        }
+    }
+    return busyCount;
+}
 
 /* Index of target in the combined unit table (side 2), or -1 when absent. */
-int unitTblIndexOf(UnitRecord *target)
+int unitTblIndexOf(Ov01Object *target)
 {
-    UnitRecord **records;
-    UnitRecord **cursor;
+    Ov01Object **records;
+    Ov01Object **cursor;
     int count;
     int i;
 
-    count = unitTblGet(2, &records);
+    count = unitTblGet(UNIT_SIDE_ALL, &records);
     i = 0;
     if (count > 0) {
         cursor = records;
         do {
-            UnitRecord *record = *cursor;
+            Ov01Object *record = *cursor;
 
             cursor++;
             if (record != 0 && record == target) {
@@ -330,12 +268,12 @@ int unitTblIndexOf(UnitRecord *target)
 
 /* Entry index of the combined unit table (side 2). The check is index > count,
  * so index == count is not rejected by it. */
-UnitRecord *unitTblEntryGet(int index)
+Ov01Object *unitTblEntryGet(int index)
 {
-    UnitRecord **records;
+    Ov01Object **records;
     int count;
 
-    count = unitTblGet(2, &records);
+    count = unitTblGet(UNIT_SIDE_ALL, &records);
     if (count < index || index < 0) {
         return 0;
     }

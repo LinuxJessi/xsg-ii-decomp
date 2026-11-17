@@ -7606,3 +7606,5 @@ func_002B3080 = 0x002B3080;
 func_002B30E0 = 0x002B30E0;
 func_002B3140 = 0x002B3140;
 func_002B31A0 = 0x002B31A0;
+D_0069DC7C = 0x0069DC7C; /* main .sdata byte (tu110 SaveData.word2E6C source); read by ov01 tu023 battleWorkTablesReset */
+dataPadRawWords = 0x0063EDB0; /* main .data pad state halfwords (xgl_dma.c / tu100.c); read by ov01 tu022 dataPadRead */

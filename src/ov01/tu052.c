@@ -19,14 +19,14 @@ struct MenuCursor {
     int enabled;                /* +0x94 */
 };
 
-int func_00A91750(void);
+int actStockHasBoost(void);
 extern MenuCursor *menuCursor;
 
-/* Show the cursor: enabled, and when func_00A91750 is clear, ready at the home position. */
+/* Show the cursor: enabled, and when actStockHasBoost is clear, ready at the home position. */
 void menuCursorShow(void)
 {
     menuCursor->enabled = 1;
-    if (func_00A91750() == 0) {
+    if (actStockHasBoost() == 0) {
         menuCursor->ready = 1;
         menuCursor->target_x = 288.0f;
         menuCursor->target_y = 390.0f;

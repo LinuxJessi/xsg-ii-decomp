@@ -3,65 +3,37 @@
  */
 #include "common.h"
 #include "shared.h"
+#include "ov01/tu012.h"
+#include "ov01/tu016.h"
+#include "ov01/tu033.h"
 #include "ov01/tu041.h"
+#include "ov01/tu071.h"
 
-/*
- * Unit parameter record reached through the unit's pointer at +0x144. index
- * (+0x6A) selects a row of the percentage table effectPosGet returns; mode
- * (+0x70) is the move-mode byte the step functions set and compare.
- */
-struct UnitParam {
-    unsigned char unmodeled_00[0x6A];
-    s16 index;
-    unsigned char unmodeled_6C[0x04];
-    signed char mode;
+/* Values of Ov01Motion.moveMode: unitCmdMoveRatio sets RATIO, the pose ramp (unitCmdMoveRamp) sets RAMP. */
+enum {
+    UNIT_PARAM_MODE_RATIO = 0,
+    UNIT_PARAM_MODE_RAMP = 2
 };
 
-/*
- * Three-float record at the unit's +0x150. primary and secondary are the two
- * table percentages divided by 100 (unitCmdMoveRatio sets them). ramp (+0x4) is
- * zeroed when a step starts there and is written each frame by the eight-frame
- * ramp in func_00A85A80 (src/ov01/tu013.c).
- */
-struct UnitMoveRatio {
-    f32 primary;
-    int ramp;
-    f32 secondary;
-};
+/* Frames of the pose ramp: unitCmdMoveRamp advances poseIndex up to this value. */
+#define UNIT_POSE_RAMP_FRAMES 8
 
-/* The unit's work record, the first argument of every function in this TU. */
-struct UnitActor {
-    unsigned char unmodeled_00[0x0C];
-    int flags;
-    unsigned char unmodeled_10[0x134];
-    struct UnitParam *param;
-    unsigned char unmodeled_148[0x08];
-    struct UnitMoveRatio ratio;
+/* The pose index viewed as a plain int through a union (alias set 0), so its store keeps its place in the block. */
+union UnitPoseIndexWord {
+    int value;
 };
-
-/* Step record passed as the second argument: status is the command code, phase the step index. */
-struct UnitStep {
-    int status;
-    int phase;
-};
-
-void func_00A849C8(struct UnitActor *object, int code);
-int func_00A849B8(void *object);
-void unitRefreshPhase(void *object);
-int unitIsDone(void *object);
-int objPosePublish(struct UnitActor *object);
 
 /* Command 0xE, then waits for unitIsDone to report done. */
-int func_00A865D8(struct UnitActor *object, struct UnitStep *step)
+int unitCmdPhase0EWait(Ov01Object *object, Ov01Command *step)
 {
-    switch (step->phase) {
+    switch (step->state) {
     case 0:
-        func_00A849C8(object, 0xE);
-        step->phase++;
+        unitSetPhase(object, 0xE);
+        step->state++;
         /* fall through */
     case 1:
         if (unitIsDone(object) != 0) {
-            step->phase++;
+            step->state++;
         }
         return 0;
     default:
@@ -70,35 +42,103 @@ int func_00A865D8(struct UnitActor *object, struct UnitStep *step)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu015", func_00A86658);
+/* Command 0x12 on the first call, then advances the step without waiting; later calls wait for unitIsDone. */
+int unitCmdPhase12Wait(Ov01Object *object, Ov01Command *step)
+{
+    switch (step->state) {
+    case 0:
+        unitSetPhase(object, 0x12);
+        step->state++;
+        /* fall through */
+    case 1:
+        step->state++;
+        break;
+    default:
+        if (unitIsDone(object) != 0) {
+            return 1;
+        }
+        break;
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu015", func_00A866E0);
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu015", func_00A86790);
 
 /*
- * Percentage-driven move start: reads the row at param->index of the table,
- * stores primary and secondary as fractions, picks command 0x29 or 0x26 from
- * func_00A849B8, and waits for the move to finish.
+ * Phase 0 starts the pose: the setup calls, the +0x70 float copied to +0x24,
+ * the publish, command 0xF, then the step advances. Later calls report 1 once
+ * objPoseStep reports arrival.
  */
-int unitCmdMoveRatio(struct UnitActor *object, struct UnitStep *step)
+int unitCmdPoseArrive(Ov01Object *object, Ov01Command *step)
 {
-    struct UnitMoveRatio *ratio;
-    s16 index;
+    Ov01Pose *pose;
+
+    pose = &object->pose;
+    if (step->state == 0) {
+        unitCmdDstSet(object, 3, 0);
+        objPoseSetSteps(object, 3, 0);
+        objPoseHeadingUpdate(object, 0);
+        pose->angle = pose->heading;
+        objPosePublish(object);
+        unitSetPhase(object, 0xF);
+        step->state++;
+    } else if (objPoseStep(object) != 0) {
+        return 1;
+    }
+    return 0;
+}
+
+/*
+ * Phase 0 sets the pose up and sends command 0x12, then falls into the arrival
+ * test. The test sends 0x13 and advances once objPoseStep reports arrival; later
+ * phases wait for unitIsDone.
+ */
+int unitCmdPoseArriveWait(Ov01Object *object, Ov01Command *step)
+{
+    switch (step->state) {
+    case 0:
+        unitCmdDstSet(object, 4, 1);
+        objPoseSetSteps(object, 4, 0);
+        unitSetPhase(object, 0x12);
+        step->state++;
+        /* fall through */
+    case 1:
+        if (objPoseStep(object) != 0) {
+            unitSetPhase(object, 0x13);
+            step->state++;
+        }
+        break;
+    default:
+        if (unitIsDone(object) != 0) {
+            return 1;
+        }
+        break;
+    }
+    return 0;
+}
+
+/*
+ * Percentage-driven move start: reads the row at motion->posIndex of the table,
+ * stores the two row percentages as fractions in the snapshot x and z, picks command 0x29 or 0x26 from
+ * unitCurrentPhase, and waits for the move to finish.
+ */
+int unitCmdMoveRatio(Ov01Object *object, Ov01Command *step)
+{
+    Ov01Pose *pose;
+    s16 effectPosIndex;
     f32 primary;
 
-    ratio = &object->ratio;
-    if (step->phase == 0) {
-        object->param->mode = 0;
-        index = object->param->index;
-        primary = (f32) *effectPosGet(index);
-        ratio->ramp = 0;
-        ratio->primary = primary / 100.0f;
-        ratio->secondary = (f32) effectPosGet(index)[2] / 100.0f;
+    pose = &object->pose;
+    if (step->state == 0) {
+        object->stats->state70 = UNIT_PARAM_MODE_RATIO;
+        effectPosIndex = object->stats->posIndex;
+        primary = (f32) *effectPosGet(effectPosIndex);
+        pose->snapshot.vector.y = 0.0f;
+        pose->snapshot.vector.x = primary / 100.0f;
+        pose->snapshot.vector.z = (f32) effectPosGet(effectPosIndex)[2] / 100.0f;
         objPosePublish(object);
-        func_00A849C8(object, (func_00A849B8(object) ^ 0x27) == 0 ? 0x29 : 0x26);
+        unitSetPhase(object, (unitCurrentPhase(object) ^ 0x27) == 0 ? 0x29 : 0x26);
         object->flags &= ~1;
-        step->phase += 1;
+        step->state += 1;
     } else if (unitIsDone(object) != 0) {
         unitRefreshPhase(object);
         return 1;
@@ -106,10 +146,71 @@ int unitCmdMoveRatio(struct UnitActor *object, struct UnitStep *step)
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu015", func_00A86968);
+void func_00A9BC20(int code, void *message);
+void sefApplyRecordMode(void *source, int id, int flag);
+void *memset(void *dst, int value, unsigned int size);
+
+/*
+ * Phase 0 turns the unit toward its target, sets the pose blend and starts command
+ * 0x23 or 0x22 with source sound 0x136015. Each call advances the eight-frame ramp
+ * while poseIndex is below UNIT_POSE_RAMP_FRAMES. Once objPoseStep reports arrival, the step plays
+ * command 0x27 or 0x24, the voice, and clears the active flag.
+ */
+int unitCmdMoveRamp(Ov01Object *object, Ov01Command *step)
+{
+    Ov01Pose *pose;
+    void *message[4];
+    int facing;
+    int code;
+    f32 zero;
+
+    pose = &object->pose;
+    if (step->state == 0) {
+        object->stats->state70 = UNIT_PARAM_MODE_RAMP;
+        facing = 0;
+        if (unitCurrentPhase(object) != 0x20) {
+            facing = 1;
+        }
+        unitFaceTarget(object, facing, object->stats->source);
+        zero = 0.0f;
+        pose->stepX = (pose->point.x - pose->snapshot.vector.x) * 0.125f;
+        pose->stepZ = (pose->point.z - pose->snapshot.vector.z) * 0.125f;
+        pose->easeZ = zero;
+        pose->easeY = zero;
+        pose->easeX = zero;
+        pose->stepY = zero;
+        ((union UnitPoseIndexWord *)&step->poseIndex)->value = 0;
+        if (unitCurrentPhase(object) == 0x20) {
+            code = 0x22;
+        } else {
+            code = 0x23;
+        }
+        unitSetPhase(object, code);
+        sefApplyRecordMode(object->unit, (310 << 12) | 21, 1);
+        step->state++;
+    }
+    if (step->poseIndex < UNIT_POSE_RAMP_FRAMES) {
+        pose->snapshot.vector.y = unitPoseRamp(step->poseIndex, 1);
+        objPosePublish(object);
+        step->poseIndex = step->poseIndex + 1;
+    }
+    if (objPoseStep(object) != 0) {
+        unitSetPhase(object, (unitCurrentPhase(object) ^ 0x22) == 0 ? 0x24 : 0x27);
+        func_00A954D8(object, 310, 20);
+        seObjectVoiceStartDefault(object, 14);
+        if ((object->flags & 0x20) != 0) {
+            memset(message, 0, sizeof(message));
+            message[0] = object;
+            func_00A9BC20(2, message);
+        }
+        object->flags &= ~1;
+        return 1;
+    }
+    return 0;
+}
 
 /* Finishes at once: unitRefreshPhase, clears the active flag, reports done. */
-int unitCmdFinish(struct UnitActor *object)
+int unitCmdFinish(Ov01Object *object)
 {
     unitRefreshPhase(object);
     object->flags &= ~1;
@@ -117,11 +218,11 @@ int unitCmdFinish(struct UnitActor *object)
 }
 
 /* Command 0x2C, then waits for unitIsDone; clears the active flag when done. */
-int func_00A86B68(struct UnitActor *object, struct UnitStep *step)
+int unitCmdPhase2CWait(Ov01Object *object, Ov01Command *step)
 {
-    if (step->phase == 0) {
-        func_00A849C8(object, 0x2C);
-        step->phase++;
+    if (step->state == 0) {
+        unitSetPhase(object, 0x2C);
+        step->state++;
     } else if (unitIsDone(object) != 0) {
         object->flags &= ~1;
         return 1;
@@ -130,26 +231,26 @@ int func_00A86B68(struct UnitActor *object, struct UnitStep *step)
 }
 
 /* Clears the active flag and reports done at once. */
-int func_00A86BE8(struct UnitActor *object)
+int unitCmdClearActive(Ov01Object *object)
 {
     object->flags &= ~1;
     return 1;
 }
 
 /*
- * Command 0x2B, then waits. When param->mode is 2 it sets step->status to
+ * Command 0x2B, then waits. When motion->state70 is 2 it sets step->command to
  * 0x1C instead and returns without issuing the command.
  */
-int func_00A86C00(struct UnitActor *object, struct UnitStep *step)
+int unitCmdPhase2BWait(Ov01Object *object, Ov01Command *step)
 {
-    if (step->phase == 0) {
+    if (step->state == 0) {
         object->flags &= ~4;
-        if (object->param->mode == 2) {
-            step->status = 0x1C;
+        if (object->stats->state70 == UNIT_PARAM_MODE_RAMP) {
+            step->command = UNIT_CMD_MOVE_RATIO;
             return 0;
         }
-        func_00A849C8(object, 0x2B);
-        step->phase++;
+        unitSetPhase(object, 0x2B);
+        step->state++;
     } else if (unitIsDone(object) != 0) {
         unitRefreshPhase(object);
         object->flags &= ~1;

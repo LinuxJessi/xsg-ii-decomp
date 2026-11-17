@@ -7,7 +7,7 @@
 
 typedef struct ScreenFlashTask ScreenFlashTask;
 
-/* Task returned by func_00A802F8. Only the fields these three functions touch are named.
+/* Task returned by ov01TaskClaim. Only the fields these three functions touch are named.
  * +0x04 is called with the task on each update pass (update); +0x08 is the draw callback.
  * The first and second handler slots of the tu001 record have the same offsets. */
 struct ScreenFlashTask {
@@ -17,7 +17,6 @@ struct ScreenFlashTask {
     int framesLeft;                             /* +0x0C, set to 10 when started */
 };
 
-ScreenFlashTask *func_00A802F8(void);
 void screenFlashTick(ScreenFlashTask *task);
 void grPacketScreenFill(int, int, int);
 
@@ -26,7 +25,7 @@ void screenFlashStart(void)
 {
     ScreenFlashTask *task;
 
-    task = func_00A802F8();
+    task = ov01TaskClaim();
     if (task != 0) {
         task->update = screenFlashTick;
         task->draw = screenFillGray;

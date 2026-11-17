@@ -47,7 +47,9 @@ int XenoActorAttachChild(struct XenoActor *parent, struct XenoActor *child);
 void XenoActorUpdateTree(struct XenoActor *actor);
 void XenoActorPushMatrix(struct XenoActor *actor);
 void XenoActorShiftJoints(struct XenoActor *actor, int sign, int x, int y, int z);
-/* XenoActorSetMode, XenoActorSetSelector and XenoActorRelease are hand-declared elsewhere with other parameter types (int handle, void *, void return): not published here until those agree. */
+/* XenoActorSetMode and XenoActorSetSelector are hand-declared elsewhere with other parameter types (int handle, void *, void return): not published here until those agree. */
+struct XenoActor *XenoActorAlloc(void);
+void XenoActorRelease(struct XenoActor *actor);
 void XenoActorEnableChannel(struct XenoActor *actor);
 void XenoActorEnableChannelB(struct XenoActor *actor);
 void XenoActorPoolInitDefault(void);

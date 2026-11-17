@@ -18,10 +18,10 @@
   "tools": {
     "ee-gcc2.96-realconv-lp7": {
       "role": "cc1 of every GCC 2.96-family compile contract (game and runtime C)",
-      "dir": "ee-gcc2.96-realconv-lp7-fsv14-v1/bin",
-      "version": "gcc 2.96-ee-001003-1 (cc1), locally patched: realconv + lp7 + fsv3 + fsv4 + fsv5 + fsv6 + fsv7 + fsv8 + fsv9 + fsv10 + fsv12 + fsv13 + fsv14",
+      "dir": "ee-gcc2.96-realconv-lp7-fsv16-v1/bin",
+      "version": "gcc 2.96-ee-001003-1 (cc1), locally patched: realconv + lp7 + fsv3 + fsv4 + fsv5 + fsv6 + fsv7 + fsv8 + fsv9 + fsv10 + fsv12 + fsv13 + fsv14 + fsv15 + fsv16",
       "files": {
-        "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+        "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
         "cpp0": "f6f6b598f39649edfe171d6da8c7f91d07f2b87c2aeeffffbc5f566bfb1a39a9",
         "ee-gcc": "b8c284d16c9c0a0e8788e9522c46881e224ad01fa1c732aed43f821cc32f168b"
       },
@@ -40,13 +40,13 @@
         },
         "rebuild": [
           "Download the base archive and check its SHA-256.",
-          "Extract lib/gcc-lib/ee/2.96-ee-001003-1/{cc1,cpp0} and bin/ee-gcc into <root>/ee-gcc2.96-realconv-lp7-fsv14-v1/bin/.",
+          "Extract lib/gcc-lib/ee/2.96-ee-001003-1/{cc1,cpp0} and bin/ee-gcc into <root>/ee-gcc2.96-realconv-lp7-fsv16-v1/bin/.",
           "cpp0 and ee-gcc are used unmodified.",
-          "Apply the patches below to cc1, in file-offset order (nine single-byte patches and twenty-four multi-byte patches: fsv1, fsv3, fsv4, fsv5, fsv6, fsv7, fsv8, fsv9, fsv10, fsv12, fsv13 and fsv14; an entry whose offset repeats an earlier one patches the bytes that entry left); the result must hash to the cc1 SHA-256 above."
+          "Apply the patches below to cc1, in file-offset order (nine single-byte patches and twenty-six multi-byte patches: fsv1, fsv3, fsv4, fsv5, fsv6, fsv7, fsv8, fsv9, fsv10, fsv12, fsv13, fsv14, fsv15 and fsv16; an entry whose offset repeats an earlier one patches the bytes that entry left); the result must hash to the cc1 SHA-256 above."
         ],
         "cc1_byte_patches": {
           "note": [
-            "Each entry patches the bytes of the extracted cc1 at `file_offset` (one byte, except the fsv1, fsv3 and fsv4 entries, the 86-byte fsv5 gen_extendqidi2 entry, the three fsv6 entries, the four fsv7 entries, the two fsv8 entries, the fsv9 entry, the two fsv10 entries, the two fsv12 entries, the two fsv13 entries and the two fsv14 entries, which replace the given hex strings).",
+            "Each entry patches the bytes of the extracted cc1 at `file_offset` (one byte, except the fsv1, fsv3 and fsv4 entries, the 86-byte fsv5 gen_extendqidi2 entry, the three fsv6 entries, the four fsv7 entries, the two fsv8 entries, the fsv9 entry, the two fsv10 entries, the two fsv12 entries, the two fsv13 entries, the two fsv14 entries, the fsv15 entry and the fsv16 entry, which replace the given hex strings).",
             "`old` must be the byte already there; `new` replaces it.",
             "The six `realconv` patches turn the six MASK_MIPS5900 conversion gates",
             "of the bundled e-type float code into unconditional jumps, so decimal",
@@ -156,6 +156,21 @@
             "address is a SYMBOL_REF and the load MEM has a non-zero alias set equal to the store's, it returns",
             "canon_true_dependence with rtx_addr_varies_p (the FSF decision). Empirical, two positive cases (X2 main",
             "sef func_0025EBE0 and func_0025CAB8); neutral on every C TU of X2 (3,491 functions) and X1 (5,959).",
+            "The `fsv15` patch (release ee-gcc2.96-realconv-lp7-fsv15-v1, user decision 2026-11-16,",
+            "reports/cc1-fsv15-typedkillmirror.md) supersedes fsv14 on top of it (\"typedkill mirror\"): it rewrites",
+            "transp_dep2 at 0x08170508 (file 0x128508, the bytes the fsv14 entry left plus 34 more bytes of",
+            "debug_reg_vector) as a 113-byte function that keeps the fsv14 test (T) and adds its mirror (S): when",
+            "transp_dep says transparent, the store's canonical address is a SYMBOL_REF, the store MEM is not",
+            "in-struct, the load MEM is in-struct and both carry the same non-zero alias set, it returns",
+            "canon_true_dependence with rtx_addr_varies_p (the FSF decision). Empirical, one positive case (X2 main",
+            "TiWater tiWaterRegisterSub); neutral on every C TU of X2 (4,051 functions) and X1 (5,959).",
+            "The `fsv16` patch (release ee-gcc2.96-realconv-lp7-fsv16-v1, user decision 2026-11-17,",
+            "reports/cc1-fsv16-alias0kill.md) supersedes fsv15 on top of it (\"alias0kill\"): it rewrites transp_dep2",
+            "at 0x08170508 (file 0x128508, the bytes the fsv15 entry left plus 30 more bytes of debug_reg_vector) as",
+            "a 143-byte function that tests U2 before T and S: when transp_dep says transparent, the store MEM is",
+            "in-struct with alias set 0, the load MEM is not in-struct and its address is a SYMBOL_REF, it returns",
+            "canon_true_dependence with rtx_addr_varies_p (the FSF decision). Empirical, one positive case (X2 main",
+            "tu048 func_001D6070); neutral on every C TU of X2 (4,056 functions) and X1 (5,959).",
             "Why this is a patched binary and not a published one (public-compiler hunt,",
             "2026-09-12, .work/attempts/tu-public-compiler-hunt/attempt-1/artifact.json):",
             "all 15 public ee-gcc* entries of the pinned decompme catalog revision were",
@@ -398,6 +413,24 @@
               "governs": "transp_dep2: transp_dep's decision; when it is transparent, an in-struct store kills a SYMBOL_REF load whose non-zero alias set equals the store's (canon_true_dependence with rtx_addr_varies_p)"
             },
             {
+              "group": "fsv15",
+              "file_offset": 1213704,
+              "old": "5589e5ff7518ff7514ff7510ff750cff7508e87952060083c41485c0752f8b55088b4d148b410480384c751ff642031074198b410c85c074123b420c750dc74518b0970d08c9e9b9e2f7ff31c0c9c38b45f009d08b55f8428955ec85c07478837dfc3f77728d76008b45f08b55f48a4dfc",
+              "new": "5589e5ff7518ff7514ff7510ff750cff7508e87952060083c41485c075518b55088b4d148b410480384c7512f6420310740c8b410c85c074053b420c74228b451080384c7527f64203107521f6410310741b8b410c85c074143b420c7402eb0dc74518b0970d08c9e997e2f7ff31c0c9c3",
+              "length": 113,
+              "function": "debug_reg_vector (unreferenced: cave)",
+              "governs": "transp_dep2 rewritten: transp_dep's decision; when it is transparent, an in-struct store kills a SYMBOL_REF load (T) and a store at a canonical SYMBOL_REF address that is not in-struct kills an in-struct load (S), when both carry the same non-zero alias set (canon_true_dependence with rtx_addr_varies_p); patches the bytes left by the fsv14 entry at this offset"
+            },
+            {
+              "group": "fsv16",
+              "file_offset": 1213704,
+              "old": "5589e5ff7518ff7514ff7510ff750cff7508e87952060083c41485c075518b55088b4d148b410480384c7512f6420310740c8b410c85c074053b420c74228b451080384c7527f64203107521f6410310741b8b410c85c074143b420c7402eb0dc74518b0970d08c9e997e2f7ff31c0c9c3bb01000000be000000000fa5ded3e3f6c120740489de31db21d821f289c1",
+              "new": "5589e5ff7518ff7514ff7510ff750cff7508e87952060083c41485c0756f8b55088b420c85c07517f642031074118b4d14f641031075088b410480384c743f8b4d148b410480384c7512f6420310740c8b410c85c074053b420c74228b451080384c7527f64203107521f6410310741b8b410c85c074143b420c7402eb0dc74518b0970d08c9e979e2f7ff31c0c9c3",
+              "length": 143,
+              "function": "debug_reg_vector (unreferenced: cave)",
+              "governs": "transp_dep2 rewritten: transp_dep's decision; when it is transparent, an in-struct alias-set-0 store kills a non-in-struct SYMBOL_REF load (U2), then T and S as in fsv15 (canon_true_dependence with rtx_addr_varies_p)"
+            },
+            {
               "group": "fsv5",
               "file_offset": 1279858,
               "old": "74",
@@ -489,7 +522,9 @@
             "realconv_lp7_fsv9_cc1": "e46cdd442e2f606d9633b3c025833d75fea299eb66167271f0d685972551c824",
             "realconv_lp7_fsv10_cc1": "f9b0c7f4506f9aacea2b43602a6e5beedd97a74d42c1191dad195eb48dd72844",
             "realconv_lp7_fsv12_cc1": "58a63b84ed4385101b1135a71919a2516f2d6c61b80258b5917ccd47bc56b1f4",
-            "realconv_lp7_fsv13_cc1": "e6cd0ed23b7f5b5766ea5fdabdcba47f7980146e8c4b766a8834d19e64a10dc6"
+            "realconv_lp7_fsv13_cc1": "e6cd0ed23b7f5b5766ea5fdabdcba47f7980146e8c4b766a8834d19e64a10dc6",
+            "realconv_lp7_fsv14_cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+            "realconv_lp7_fsv15_cc1": "070dc3edaafa1e95fb0d44d8324e9d9d61df394724416280f2e2e42ddd1713c8"
           }
         },
         "license": "GPL-2.0-or-later (GCC).  The published binary ships without corresponding source; no 2.96-ee-001003 source tree is available, so this is a license reference, not corresponding-source proof.",

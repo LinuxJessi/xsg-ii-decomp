@@ -36539,7 +36539,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -36714,7 +36714,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -36896,7 +36896,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -37045,7 +37045,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -37727,7 +37727,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -37954,7 +37954,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -38127,7 +38127,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -38267,7 +38267,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -38458,7 +38458,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -39130,7 +39130,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -39451,7 +39451,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -39564,7 +39564,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -39659,7 +39659,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -39844,7 +39844,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -40106,7 +40106,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -40345,7 +40345,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -40732,7 +40732,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -40872,7 +40872,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -41206,7 +41206,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -41558,7 +41558,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -41753,7 +41753,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -42001,7 +42001,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -42398,7 +42398,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -42538,7 +42538,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -42885,7 +42885,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -44239,7 +44239,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -44730,7 +44730,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -45054,7 +45054,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -45506,7 +45506,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -45893,7 +45893,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -45989,7 +45989,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -46103,7 +46103,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -46226,7 +46226,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -46358,7 +46358,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -46602,7 +46602,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -46785,7 +46785,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -48257,7 +48257,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -49120,7 +49120,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -49225,7 +49225,7 @@
    "path": "src/main/tu048.c",
    "scaffold_path": "scaffold/src/main/tu048.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -49244,7 +49244,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -49323,7 +49323,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".data": "asm",
     ".rodata": "asm",
     ".sdata": "asm"
@@ -49413,6 +49413,17 @@
      "0x001d7250"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "user order 2026-11-16: bancando lo que no hayan a\u00fan bancado, luego integra las funciones bancadas",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu048.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -49441,7 +49452,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -49626,7 +49637,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -49886,7 +49897,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -50511,7 +50522,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -50676,7 +50687,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -50816,7 +50827,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -51963,7 +51974,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -52190,7 +52201,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -52505,7 +52516,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -52706,7 +52717,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -52986,7 +52997,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -53365,7 +53376,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -53582,7 +53593,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -53921,7 +53932,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -54085,7 +54096,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -54302,7 +54313,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -54742,7 +54753,7 @@
    "path": "src/main/tu068.c",
    "scaffold_path": "scaffold/src/main/tu068.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -54762,7 +54773,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -54823,7 +54834,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".rodata": "asm",
     ".sdata": "asm"
    },
@@ -54888,6 +54899,17 @@
      "0x001f34a8"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "user order 2026-11-16: bancando lo que no hayan a\u00fan bancado, luego integra las funciones bancadas",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu068.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -54916,7 +54938,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -55223,7 +55245,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -55346,7 +55368,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -55505,7 +55527,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -55722,7 +55744,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -55961,7 +55983,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -56212,7 +56234,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -56513,7 +56535,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -56645,7 +56667,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -57346,7 +57368,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -57495,7 +57517,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -57660,7 +57682,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -57783,7 +57805,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -57915,7 +57937,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -58130,7 +58152,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -58525,7 +58547,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -59086,7 +59108,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -59499,7 +59521,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -59666,7 +59688,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -59806,7 +59828,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -60120,7 +60142,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -60337,7 +60359,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -60830,7 +60852,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -60971,7 +60993,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -61307,7 +61329,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -61484,7 +61506,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -61812,7 +61834,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -61970,7 +61992,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -62145,7 +62167,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -62875,7 +62897,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -63088,7 +63110,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -63575,7 +63597,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -64489,7 +64511,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -65978,7 +66000,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -66213,7 +66235,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -66702,7 +66724,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -67261,7 +67283,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -67401,7 +67423,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -67542,7 +67564,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -67754,7 +67776,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -67989,7 +68011,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -68138,7 +68160,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -68252,7 +68274,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -68774,7 +68796,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -69309,7 +69331,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -69423,7 +69445,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -69615,7 +69637,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -69755,7 +69777,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -70019,7 +70041,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -70324,7 +70346,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -70897,7 +70919,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -71139,7 +71161,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -71608,7 +71630,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -71816,7 +71838,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -71930,7 +71952,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -72044,7 +72066,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -72311,7 +72333,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -72425,7 +72447,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -72688,7 +72710,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -72998,7 +73020,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -73521,7 +73543,7 @@
    "path": "src/main/glow.c",
    "scaffold_path": "scaffold/src/main/glow.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -73539,7 +73561,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -73591,7 +73613,7 @@
     }
    ],
    "owners": {
-    ".text": "asm",
+    ".text": "c",
     ".rodata": "asm"
    },
    "sections": {
@@ -73631,6 +73653,17 @@
      "0x00247518"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "user order 2026-11-16: bancando lo que no hayan a\u00fan bancado, luego integra las funciones bancadas",
+    "source": {
+     "kind": "file",
+     "path": "src/main/glow.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -73661,7 +73694,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -73907,7 +73940,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -74287,7 +74320,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -74785,7 +74818,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -75051,7 +75084,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -75288,7 +75321,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -75402,7 +75435,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -75579,7 +75612,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -75899,7 +75932,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -76075,7 +76108,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -76207,7 +76240,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -76633,7 +76666,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -76834,7 +76867,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -76974,7 +77007,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -77115,7 +77148,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -77247,7 +77280,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -77442,7 +77475,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -77668,7 +77701,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -77809,7 +77842,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -77958,7 +77991,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -78970,7 +79003,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -79138,7 +79171,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -79252,7 +79285,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -81542,7 +81575,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -81944,7 +81977,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -82181,7 +82214,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -82295,7 +82328,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -82584,7 +82617,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -82731,7 +82764,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -82923,7 +82956,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -83424,7 +83457,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -84157,7 +84190,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -84378,7 +84411,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -84665,7 +84698,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -84832,7 +84865,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -84964,7 +84997,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -85067,7 +85100,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -85288,7 +85321,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -85402,7 +85435,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -85559,7 +85592,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -85673,7 +85706,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -85850,7 +85883,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -85999,7 +86032,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -86234,7 +86267,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -86471,7 +86504,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -86665,7 +86698,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -86805,7 +86838,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -86970,7 +87003,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -87084,7 +87117,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -87290,7 +87323,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -87404,7 +87437,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -87507,7 +87540,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -87665,7 +87698,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -88141,7 +88174,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -88308,7 +88341,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -88422,7 +88455,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -88598,7 +88631,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -88959,7 +88992,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -89082,7 +89115,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -89541,7 +89574,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -89724,7 +89757,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -89838,7 +89871,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -89978,7 +90011,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -90092,7 +90125,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -90170,7 +90203,7 @@
    },
    "import": {
     "mode": "c",
-    "note": "tu218 registered as C when its first functions were recovered (same shape as main/tu217)",
+    "note": "upstream PR #23 recovered tu218/tu230/tu231 as C (pull 2026-11-17)",
     "source": {
      "kind": "file",
      "path": "src/main/tu218.c",
@@ -90206,7 +90239,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -90320,7 +90353,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -90461,7 +90494,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -90575,7 +90608,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -90824,7 +90857,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -90956,7 +90989,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -91079,7 +91112,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -91343,7 +91376,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -91457,7 +91490,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -91633,7 +91666,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -91801,7 +91834,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -92142,7 +92175,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -92220,7 +92253,7 @@
    },
    "import": {
     "mode": "c",
-    "note": "tu230 registered as C when its first functions were recovered (same shape as main/tu217 and main/tu218)",
+    "note": "upstream PR #23 recovered tu218/tu230/tu231 as C (pull 2026-11-17)",
     "source": {
      "kind": "file",
      "path": "src/main/tu230.c",
@@ -92256,7 +92289,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -92334,7 +92367,7 @@
    },
    "import": {
     "mode": "c",
-    "note": "tu231 registered as C when its first functions were recovered (same shape as main/tu217, tu218 and tu230)",
+    "note": "upstream PR #23 recovered tu218/tu230/tu231 as C (pull 2026-11-17)",
     "source": {
      "kind": "file",
      "path": "src/main/tu231.c",
@@ -92370,7 +92403,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -92484,7 +92517,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -92624,7 +92657,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -93350,7 +93383,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -93464,7 +93497,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -93596,7 +93629,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -93710,7 +93743,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -94021,7 +94054,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -94135,7 +94168,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -94453,7 +94486,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -94665,7 +94698,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -95159,7 +95192,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -95308,7 +95341,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -95502,7 +95535,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -95818,7 +95851,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -96028,7 +96061,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -96790,7 +96823,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -96964,7 +96997,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -97237,7 +97270,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -97404,7 +97437,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -97672,7 +97705,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -98064,7 +98097,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -98258,7 +98291,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -98470,7 +98503,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -98646,7 +98679,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -98820,7 +98853,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -99086,7 +99119,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -99253,7 +99286,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -99488,7 +99521,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -99602,7 +99635,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -99788,7 +99821,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -100002,7 +100035,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -100347,7 +100380,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -100487,7 +100520,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -100661,7 +100694,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -100828,7 +100861,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -100968,7 +101001,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -101117,7 +101150,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -101320,7 +101353,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -101539,7 +101572,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -101970,7 +102003,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -104983,7 +105016,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -105051,7 +105084,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [
@@ -105119,7 +105152,7 @@
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
     "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818",
+    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
     "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
     "compiler_profile": "ee-gcc2_96-realconv-lp7",
     "flags": [

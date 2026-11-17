@@ -15,6 +15,7 @@
 #include "main/sdv_033.h"
 #include "gs.h"
 #include "main/pad.h"
+#include "main/pad_raw.h"
 #include "main/tu093.h"
 
 /* Initialized data read by menuSceneInit and by other TUs (0x002B5DA8, .data). */
@@ -1353,7 +1354,6 @@ void xglActiveCameraSetup(void) {
     xglCameraSetWindow(camera, 0, 0, 512, 448);
 }
 
-void xglCdArenaOpen(int first, int second);
 void xglCdBufferAlloc(int value);
 void menuUmnImageReset(void);
 /* Sets up the two 11-entry tables (menuSkillModelPxyBuffers and menuSkillModelTxyBuffers) from the size pairs at menuSkillModelSizes: the first four entries use the sector allocator, the rest the buffer reserve; then clears menuSkillModelLoadTally and menuSkillModelsReady. */
@@ -1490,7 +1490,7 @@ void menuSceneInit(void) {
     } else {
         D_0069D50C = 1;
         for (i = 0; i < 16; i++) {
-            if (func_00A8F478(i + 1)) {
+            if (slotPairTest(i + 1)) {
                 D_0069D50C |= 1 << i;
             }
         }
@@ -2662,8 +2662,6 @@ struct SelectionContext {
     struct SelectionKeys *keys;
 };
 
-void battleSlotSetByte(int first, int index, int dispatch_value);
-
 void selectionPlaceKey(struct SelectionContext *context, int key, int count) {
     struct SelectionRecord *record;
     int index;
@@ -2984,7 +2982,6 @@ void menuTutorialPageReset(void) {
 }
 
 extern u8 menuTutorialTimer;
-extern u16 D_0063EDB4[];
 extern u8 D_006A51F4[];
 extern u8 D_006A5208[];
 int msgRangeIsRevealed(void *range);
@@ -3215,7 +3212,7 @@ void menuTutorialStep(void) {
                     fontTrackSetBoth(D_006A5360, 0x1C, 0x1B0);
                     menuTutorialStage = 2;
                 }
-                if (D_0063EDB4[0] & (PAD_UP | PAD_DOWN)) {
+                if (dataPadRawWords[0].port[2] & (PAD_UP | PAD_DOWN)) {
                     seVoiceStartDefault(MENU_SE_CURSOR);
                     menuTutorialStage = ((menuTutorialStage - 2) ^ 1) + 2;
                     fontTrackSetTarget(D_006A5360, 0x1C, menuTutorialStage * 20 + 0x188);
@@ -3451,9 +3448,6 @@ int selectionWindowListDropAt(int key);
 SelectionEntry *menuItemMemberEntry(SelectionEntry *entry);
 int selectionCountedMemberNeedsHpEp(void);
 int selectionEntryIsUseful(int key, SelectionEntry *entry);
-int func_00A8B658(int key, int value);
-int func_00A8F3C0(int value);
-int func_00A8F478(int value);
 
 int menuItemListStep(ControlSlot *slot) {
     SelectionEntry *entry;
@@ -3522,12 +3516,12 @@ int menuItemListStep(ControlSlot *slot) {
                 countdownInit(menuMainTxdEntry(selectionWindowList[((CursorBuffer *) slot->link)->cursor] + 0x193), 0x12C);
                 countdownActive = 1;
                 entry = menuItemMemberEntry(&((SelectionBlock *) D_006A4D28)->entries[((SelectionBlock *) D_006A4D28)->current]);
-                func_00A8B658(entry->key, selectionWindowList[((CursorBuffer *) slot->link)->cursor]);
-                func_00A8F3C0(map[selectionWindowList[((CursorBuffer *) slot->link)->cursor] - 0x25]);
+                battleItemUse(entry->key, selectionWindowList[((CursorBuffer *) slot->link)->cursor]);
+                slotPairSet(map[selectionWindowList[((CursorBuffer *) slot->link)->cursor] - 0x25]);
                 if (!D_0069D4E0) {
                     D_0069D50C = 1;
                     for (i = 0; i < 16; i++) {
-                        if (func_00A8F478(i + 1) != 0) {
+                        if (slotPairTest(i + 1) != 0) {
                             D_0069D50C |= 1 << i;
                         }
                     }
@@ -3575,7 +3569,7 @@ int menuItemListStep(ControlSlot *slot) {
                 }
                 seVoiceStartDefault(MENU_SE_CONFIRM);
                 entry = menuItemMemberEntry(&((SelectionBlock *) D_006A4D28)->entries[((SelectionBlock *) D_006A4D28)->current]);
-                func_00A8B658(entry->key, selectionWindowList[((CursorBuffer *) slot->link)->cursor]);
+                battleItemUse(entry->key, selectionWindowList[((CursorBuffer *) slot->link)->cursor]);
                 if (selectionWindowListDropAt(((CursorBuffer *) slot->link)->cursor) > 0) {
                     return 0;
                 }
@@ -3593,7 +3587,7 @@ int menuItemListStep(ControlSlot *slot) {
             }
             seVoiceStartDefault(MENU_SE_CONFIRM);
             entry = menuItemMemberEntry(&((SelectionBlock *) D_006A4D28)->entries[((SelectionBlock *) D_006A4D28)->current]);
-            func_00A8B658(entry->key, selectionWindowList[((CursorBuffer *) slot->link)->cursor]);
+            battleItemUse(entry->key, selectionWindowList[((CursorBuffer *) slot->link)->cursor]);
             if (selectionWindowListDropAt(((CursorBuffer *) slot->link)->cursor) > 0) {
                 return 0;
             }
@@ -3688,8 +3682,8 @@ int menuLayoutPlaceStep(ControlSlot *slot) {
                     }
                 }
             }
-        } else if (D_0069D4ED != 0 && (D_0063EDB4[0] & (PAD_LEFT | PAD_RIGHT))) {
-            if (D_0063EDB4[0] & PAD_LEFT) {
+        } else if (D_0069D4ED != 0 && (dataPadRawWords[0].port[2] & (PAD_LEFT | PAD_RIGHT))) {
+            if (dataPadRawWords[0].port[2] & PAD_LEFT) {
                 menuMoveCursor(&D_006A4940, -1);
             } else {
                 menuMoveCursor(&D_006A4940, 1);
@@ -3735,7 +3729,7 @@ int menuLayoutPlaceStep(ControlSlot *slot) {
                 seVoiceStartDefault(MENU_SE_REFUSE);
             }
         } else {
-            unsigned short pad = D_0063EDB4[0];
+            unsigned short pad = dataPadRawWords[0].port[2];
             if ((pad & PAD_DOWN) != 0) {
                 menuMoveCursor(D_006A4D28, 1);
             } else if ((pad & PAD_UP) != 0) {
@@ -3750,7 +3744,6 @@ int menuLayoutPlaceStep(ControlSlot *slot) {
 int selectionCanOpenSlot(struct ControlContext *ctx, int a, int b);
 int selectionCanTakeSub(struct ControlContext *ctx, int a, int b, int c);
 int selectionApplyEntry(struct ControlContext *ctx, int a, int b, int c);
-extern u64 D_0063EDB0[];
 
 /* PadPort: folded into PadDirections. */
 /* The menu-slot state machine: idle, cursor, confirm and selection states, one step per call. */
@@ -3817,7 +3810,7 @@ int menuLicenseChargeStep(ControlSlot *slot) {
         }
         break;
     case 4:
-        if ((D_0063EDB0[0] & 0x200000005000ULL) == 0x200000000000ULL) {
+        if ((dataPadRawWords[0].all & 0x200000005000ULL) == 0x200000000000ULL) {
             if (D_006A51E0[0] == 3) {
                 cursorBufferSetCapacity((CursorBuffer *) ((CursorEntry *) D_006A51E0 + 1), 4);
             } else {
@@ -3834,11 +3827,11 @@ int menuLicenseChargeStep(ControlSlot *slot) {
                 selectionHolderCharge(ptGetMenuMember(), D_006A51E0[0], D_006A51E0[5]);
             }
             D_0069D4E4 = 0;
-        } else if ((D_0063EDB0[0] & 0x200000005000ULL) == 0x200000000000ULL) {
+        } else if ((dataPadRawWords[0].all & 0x200000005000ULL) == 0x200000000000ULL) {
             seVoiceStartDefault(MENU_SE_CURSOR);
             func_00211918((ControlLink *) D_006A5208);
             slot->state = 6;
-        } else if ((D_0063EDB0[0] & 0x800000005000ULL) == 0x800000000000ULL) {
+        } else if ((dataPadRawWords[0].all & 0x800000005000ULL) == 0x800000000000ULL) {
             seVoiceStartDefault(MENU_SE_CURSOR);
             func_00211918((ControlLink *) D_006A51E0);
             slot->state = 4;
@@ -3889,7 +3882,7 @@ int menuLicenseChargeStep(ControlSlot *slot) {
                 }
             }
             D_0069D4E4 = 0;
-        } else if ((D_0063EDB0[0] & 0x800000005000ULL) == 0x800000000000ULL) {
+        } else if ((dataPadRawWords[0].all & 0x800000005000ULL) == 0x800000000000ULL) {
             seVoiceStartDefault(MENU_SE_CURSOR);
             func_00211918((ControlLink *) D_006A51F4);
             slot->state = 5;
@@ -3969,7 +3962,6 @@ void selectionRebuildList(void);
 void selectionTakePlainEntry(struct ControlContext *context, int index, int n);
 void selectionPlaceKey(struct SelectionContext *context, int value, int count);
 void dataBoxIncCategory2(int item);
-void battleSlotSetShort(int battle, int slot, int value);
 
 int menuEquipAssignStep(ControlSlot *slot) {
     PadRecord *pad;

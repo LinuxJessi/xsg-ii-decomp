@@ -11,17 +11,12 @@
 #define DATA_BOX_SLOTS 255
 #define DATA_BOX_QUANTITY_MAX 99
 
-extern int dataBoxInc(int category, int id);
-extern int dataBoxChk(int category, int id);
-int dataBoxDec(int category, int id);
-extern u16 *dataBoxPtrGet(int category);
 /* X1 box table names. This overlay's code reaches the tables through dataBoxPtrGet and uses none of these. */
 extern u16 accBox[DATA_BOX_SLOTS];
 extern u16 bltBox[DATA_BOX_SLOTS];
 extern u16 evtBox[DATA_BOX_SLOTS];
 extern u16 itmBox[DATA_BOX_SLOTS];
 extern u16 wpnBox[DATA_BOX_SLOTS];
-u16 *dataBoxPtrGet(int category);
 extern void *memset(void *destination, int value, unsigned int count);
 extern u16 D_61C800[DATA_BOX_SLOTS];
 extern u16 D_61CA00[DATA_BOX_SLOTS];

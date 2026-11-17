@@ -47,7 +47,7 @@ void menuPulseAlphaSet(GrPacket *packet)
 /*
  * menuWepSpPanelDraw (proposed menuWepSpPanelDraw): draws the panel while its flag
  * is set: a header, then one row per entry of the battle list from
- * func_00A89538, each row's wep-special record from dataTid2WepSp, and a footer
+ * dataSlotRowGet, each row's wep-special record from dataTid2WepSp, and a footer
  * at count * 21 below the rows. Calls func_00AA60B8 for the units with keys 11 to 15.
  */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu056", menuWepSpPanelDraw);
@@ -92,7 +92,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu056", menuTargetListStep);
 
 /*
  * menuTargetListDraw (proposed menuTargetListDraw): while the flag is set, draws one
- * row per entry of the list from func_00A90A88. Each entry is looked up as a
+ * row per entry of the list from battleMaskWordsUnmatched. Each entry is looked up as a
  * battle entry (battleEntryFindByKey battleEntryFindByKey, battleSlotGet battleSlotGet)
  * and its values are printed with menuNumDrawTarget.
  */

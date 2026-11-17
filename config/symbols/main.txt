@@ -7910,6 +7910,7 @@ test_15 = 0x0063ED30;
 tbl = 0x0063ED50;
 PadData = 0x0063ED80;
 textOptionFlags = 0x0063EDAA;
+dataPadRawWords = 0x0063EDB0;
 menutbl = 0x0063EE80;
 monthday = 0x0063F680;
 xenosaga00FileName = 0x0063F6B0;

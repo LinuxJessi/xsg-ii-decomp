@@ -5,6 +5,7 @@
 #include "shared.h"
 #include "main/sef.h"
 #include "ov01/tu001.h"
+#include "ov01/tu023.h"
 #include "ov01/tu042.h"
 
 extern int dataModelKeyTbl[];
@@ -65,7 +66,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B660);
 /* Self-relative table at tableKeyRecordsOffset: 16-byte entries, valid for index 16..143. */
 extern int tableKeyRecordsOffset;
 
-void *tableKeyRecordGet(int key)
+struct TableKeyRecord *tableKeyRecordGet(int key)
 {
     u32 offset = key - 16;
     unsigned char *table;
@@ -82,8 +83,8 @@ void *tableKeyRecordGet(int key)
 /* Base of the self-relative table at unitExpTableOffset. */
 extern int unitExpTableOffset;
 
-u8 *unitExpTblGet(void) {
-    return (u8 *)&unitExpTableOffset - 72 + unitExpTableOffset;
+UnitExpEntry *unitExpTblGet(void) {
+    return (UnitExpEntry *)((u8 *)&unitExpTableOffset - 72 + unitExpTableOffset);
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B6E8);
@@ -201,7 +202,7 @@ void effectSendValue(int high, int low, Vector4 *position) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9C328);
 
-/* msgPutObject (core of native msgPut): makes a MsgObject from func_00A802F8, installs msgObjRelease as its
+/* msgPutObject (core of native msgPut): makes a MsgObject from ov01TaskClaim, installs msgObjRelease as its
  * release callback, submits the request block through textEntryAlloc and sets the busy flag. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", msgPutObject);
 
@@ -242,22 +243,20 @@ int msgIsIdle(void) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", partyDataGetSlot);
 
-void *func_00A91730(int id);
-
-/* Writes one of the three slot bytes of record `id`; slot 0 is byte 1, slot 1 byte 2, slot 2 byte 0. */
+/* Writes one of the three slot bytes of record `id`; slot 0 is stock, slot 1 progress, slot 2 maxStock. */
 void partyDataSetSlot(int id, int slot, int value) {
-    signed char *slots;
+    struct BoostGauge *gauge;
 
-    slots = func_00A91730(id);
+    gauge = boostGaugeSelect(id);
     switch (slot) {
     case 0:
-        slots[1] = (signed char) value;
+        gauge->stock = (signed char) value;
         return;
     case 1:
-        slots[2] = (signed char) value;
+        gauge->progress = (signed char) value;
         break;
     case 2:
-        slots[0] = (signed char) value;
+        gauge->maxStock = (signed char) value;
         break;
     }
 }

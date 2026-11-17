@@ -9,8 +9,10 @@
 #include "main/sef.h"
 #include "main/xgl_font.h"
 #include "ov01/tu009.h"
+#include "ov01/tu012.h"
 #include "ov01/tu022.h"
-#include "ov01/tu032.h"
+#include "ov01/tu023.h"
+#include "ov01/tu036.h"
 #include "ov01/tu037.h"
 #include "ov01/tu038.h"
 #include "ov01/tu042.h"
@@ -174,17 +176,9 @@ void runtimeVecPtrGet(void **pos, void **dir)
     *dir = &runtimeDir;
 }
 
-/* Only the word setMoveCmd stores is evidenced; the rest of the block is not modeled. */
-struct MoveCmdBlock {
-    unsigned char unmodeled_00[0x50];
-    int move_cmd; /* +0x50 */
-};
-
-struct MoveCmdBlock *battleStateGet(void);
-
 int setMoveCmd(int call)
 {
-    struct MoveCmdBlock *block;
+    struct BattleState *block;
     int moveCmd;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
@@ -193,7 +187,7 @@ int setMoveCmd(int call)
     }
     block = battleStateGet();
     moveCmd = vmArgGet(call, 1);
-    block->move_cmd = moveCmd;
+    block->moveCmd = moveCmd;
     return 1;
 }
 
@@ -291,7 +285,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu047", plDirInit);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitCreate);
 
 int dataUnitLoad(int);
-int func_00A82E18(int);
+int unitEffectSlotAcquire(int);
 
 int unitLoad(int call)
 {
@@ -303,7 +297,7 @@ int unitLoad(int call)
     }
     unitIndex = vmArgGet(call, 1);
     dataUnitLoad(unitIndex);
-    func_00A82E18(unitIndex);
+    unitEffectSlotAcquire(unitIndex);
     return 1;
 }
 
@@ -385,7 +379,7 @@ void ETGet(void) {
 }
 
 void *unitTblEntryGet(int);
-int func_00A8D9E8(void *, void *);
+int unitIsInFacingArc(void *, void *);
 
 int unitDirChk(int call)
 {
@@ -402,7 +396,7 @@ int unitDirChk(int call)
     unit = unitTblEntryGet(unitIndex);
     targetIndex = vmArgGet(call, 2);
     target = unitTblEntryGet(targetIndex);
-    return func_00A8D9E8(unit, target);
+    return unitIsInFacingArc(unit, target);
 }
 
 extern int D_00AE0C2C;
@@ -518,7 +512,7 @@ int unitDirGet(int call)
     return unitGetAngleDegrees(unit);
 }
 
-float func_00A87390(int);
+float unitDefArea(int);
 
 int unitDefAreaGet(int call)
 {
@@ -531,7 +525,7 @@ int unitDefAreaGet(int call)
     }
     unitIndex = vmArgGet(call, 1);
     unit = unitTblEntryGet(unitIndex);
-    return (int) (func_00A87390(unit) * 100.0f);
+    return (int) (unitDefArea(unit) * 100.0f);
 }
 
 int cfEventGet(void);
@@ -573,12 +567,10 @@ int runtimeBgmFade(int call)
     return 1;
 }
 
-int unitFadeTo(void *, int, int);
-
 /* The second argument is the frame count passed to unitFadeTo (ov01/tu018). */
 int unitFade(int call)
 {
-    void *unit;
+    Ov01Object *unit;
     int unitIndex;
     int frames;
 
@@ -635,19 +627,9 @@ s16 stockGet(int call)
     return stock;
 }
 
-int unitIsDone(void *);
-
-/* Partial view of the unit record: only the flags word at +0x0C is used here. */
-typedef struct UnitMotRecord UnitMotRecord;
-
-struct UnitMotRecord {
-    unsigned char unmodeled_000[0xC];
-    int flags;                             /* +0x0C; bit 0x10 */
-};
-
 int unitMotWait(int call, int *waiting)
 {
-    UnitMotRecord *unit;
+    Ov01Object *unit;
     int unitIndex;
 
     if (VM_PLUGIN_CNT_GET() <= 0) {

@@ -21,8 +21,10 @@
 #include "main/xgl_studio.h"
 #include "main/xgl_render.h"
 
-extern int tiWaterDebugMode;      /* debug panel mode, toggled by select in the scene loop */
-extern int tiWaterDebugIndex;      /* selected debug parameter, 0..11 */
+extern int tiWaterDebugMode;
+/* debug panel mode, toggled by select in the scene loop */
+extern int tiWaterDebugIndex;
+/* selected debug parameter, 0..11 */
 extern float tiWaterEffectNum;
 extern int tiWaterSubCount;
 extern struct TiWaterSub *tiWaterSubList[];
@@ -42,7 +44,6 @@ extern float tiWaterDebugSteps[];
 
 /* Number of debug parameters the panel cycles through. */
 #define TI_WATER_DEBUG_PARAMS 12
-
 /* Parameters shown at once, and the line height. */
 #define TI_WATER_DEBUG_LINES 3
 #define TI_WATER_DEBUG_LINE_HEIGHT 9
@@ -112,8 +113,61 @@ void tiWaterDebugUpdate(void)
     nmlModelUseSubWindow(3, tiWaterIntVals[3]);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/TiWater", tiWaterRegisterSub);
+void xglCurSetTranslate(const Vector4 *vector);
+void xglCurMulRotateY(float angle);
+void xglCurMulScaleXYZ(const Vector4 *scale);
+void xglCurMatrixGet(Matrix4 matrix);
+void xglMatrixInverse(Matrix4 *destination, Matrix4 *matrix);
+void tiWatSimRandomizeItem(TiWatSimItem *item, int range);
 
+/* The "WAT " tag at the start of a water table. */
+#define TI_WATER_SUB_MAGIC 0x20544157
+/* Most water tables tiWaterSubList holds. */
+#define TI_WATER_MAX_SUBS 64
+/* Item flag: the item is set up (its block, height buffers, transforms and random heights). */
+#define TI_WATER_ITEM_SET_UP 0x100
+/* Range of the random heights given to a new item. */
+#define TI_WATER_RANDOM_RANGE 30
+
+/* Registers a water table in tiWaterSubList and sets each of its items up once: the block and the height
+ * buffers (offsets from the table), the translate, rotate and scale transform, its inverse and random heights.
+ * Returns 0 when the list is full or the table is not a water table, 1 otherwise. */
+int tiWaterRegisterSub(struct TiWaterSub *sub)
+{
+    unsigned int i;
+    int index;
+    unsigned int flags;
+    int range;
+    TiWatSimItem *item;
+
+    if (tiWaterSubCount >= TI_WATER_MAX_SUBS) {
+        return 0;
+    }
+    if (sub->magic != TI_WATER_SUB_MAGIC) {
+        return 0;
+    }
+    if (!sub->active) {
+        return 1;
+    }
+    range = TI_WATER_RANDOM_RANGE;
+    tiWaterSubList[tiWaterSubCount++] = sub;
+    item = sub->items;
+    for (i = 0; i < sub->active; i += 1, item++) {
+        if ((item->flags & TI_WATER_ITEM_SET_UP) == 0) {
+            item->height_buffer_a = (float *) ((char *) sub + item->height_offset_a);
+            item->height_buffer_b = (float *) ((char *) sub + item->height_offset_b);
+            item->block = (u8 *) sub;
+            xglCurSetTranslate(&item->translate);
+            xglCurMulRotateY(item->rotateY);
+            xglCurMulScaleXYZ(&item->scale);
+            xglCurMatrixGet(item->transform);
+            xglMatrixInverse(item->matrix, item->transform);
+            tiWatSimRandomizeItem(item, TI_WATER_RANDOM_RANGE);
+            item->flags |= TI_WATER_ITEM_SET_UP;
+        }
+    }
+    return 1;
+}
 
 XglPacket *xglPacketGetCurrent(void);
 void sceVif1PkCnt(XglPacket *packet, int flag);
@@ -122,9 +176,9 @@ void sceVif1PkAddDataN(XglPacket *packet, void *data, int count);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 void gifStateReset(void);
 void gifStateFlush(void);
-
 /* The water state template sent by tiWaterSendStateTemplate, and its length for sceVif1PkAddDataN. */
 extern u64 tiWaterStateTemplate[];
+
 #define TI_WATER_STATE_TEMPLATE_COUNT 0x3C
 /* The two words tiWaterSendStateTemplate patches: the data of the FRAME_1 and TEX0_1 A+D pairs. */
 #define TI_WATER_TEMPLATE_FRAME_1 (0x60 / 8)
@@ -150,19 +204,20 @@ void tiWaterSendItemPair(float first, float second);
 void tiWaterSendDirection(XglCamera *camera, Matrix4 transform);
 void tiWaterSendGrid(TiWatSimItem *item, void *program);
 void sceVif1PkAddCode(XglPacket *packet, unsigned int code);
-
 /* VU1 microprogram entry points of the water drawing (VU1 micro memory addresses, linked as absolute symbols
  * like sv_get_image_item.c's D_50 / D_80) and the grid tables sent with them. */
-extern unsigned char D_688[]; /* the surface pass */
-extern unsigned char D_7F0[]; /* the depth pass while tiWaterDepthProgramSelect is set */
-extern unsigned char D_9F0[]; /* the depth pass otherwise */
+extern unsigned char D_688[];
+/* the surface pass */
+extern unsigned char D_7F0[];
+/* the depth pass while tiWaterDepthProgramSelect is set */
+extern unsigned char D_9F0[];
+/* the depth pass otherwise */
 extern int tiWaterDepthProgramSelect;
 extern unsigned char tiWaterSurfaceGridHeader[];
 extern unsigned char tiWaterDepthGridHeader[];
 
 /* VIF MSCAL: start the VU1 microprogram at the given address (in 8-byte units). */
 #define TI_WATER_VIF_MSCAL(address) (0x14000000 | ((unsigned int) (address) >> 3))
-
 /* Item flags: the two draw passes. */
 #define TI_WATER_ITEM_DRAW_SURFACE 0x4
 #define TI_WATER_ITEM_DRAW_DEPTH 0x2
@@ -329,7 +384,6 @@ void tiWaterSetEffectMode(void) {
 }
 
 void tiWaterInitStudio(void);
-struct XenoActor *XenoActorAlloc(void);
 void XenoActorAllocMatrices(struct XenoActor *actor);
 void XenoActorSetMode(struct XenoActor *actor, int mode);
 void func_001BA68C(void);
@@ -453,7 +507,7 @@ void tiWaterSceneLoop(void)
 }
 
 void pxySetDrawCallback(void (*callback)(int pass));
-int tiWaterRegisterSub(struct TiWaterSub *sub);
+/* Registers a water table in tiWaterSubList and sets each of its items up once: the block and the height * buffers (offsets from the table), the translate, rotate and scale transform, its inverse and random heights. * Returns 0 when the list is full or the table is not a water table, 1 otherwise. */ int tiWaterRegisterSub(struct TiWaterSub *sub);
 
 /* Per-object update: registers the sub-table when it has items, steps it when stepMode is 0,
  * and installs the draw callback tiWaterDrawAll. */
@@ -500,7 +554,6 @@ float sinf(float angle);
 /* The fine camera steps: distance per frame and angle per frame. */
 #define TI_WATER_CAMERA_FINE_STEP 0.2f
 #define TI_WATER_CAMERA_FINE_TURN 0.02f
-
 /* The coarse camera step (the turn step is the fine one). */
 #define TI_WATER_CAMERA_STEP 5.0f
 

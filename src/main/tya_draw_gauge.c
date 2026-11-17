@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/xenoActor.h"
 #include "main/xgl_timer0.h"
 #include "debug_break.h"
 #include "shared.h"
@@ -370,7 +371,6 @@ int xglCdReadFile(const char *name, void *buffer, int mode, int flags);
 int func_A9CEE8(unsigned char *scene, unsigned char *end);
 void func_A9CAD0(unsigned char *scene);
 void uwamonoResetRecords(int index, signed char mode);
-void XenoActorRelease(struct XenoActor *actor);
 void uwamonoClearMoveResetWord(int index);
 void uwamonoClearRotateResetWord(int index);
 void xglMatrixStackUnit(void);

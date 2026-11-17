@@ -1,4 +1,5 @@
 #include "common.h"
+#include "main/xenoActor.h"
 #include "shared.h"
 #include "main/tu051.h"
 
@@ -157,7 +158,6 @@ int uwamonoCountLeadingInUse(void)
 
 short uwamonoFindSelected(void);
 void uwamonoResetRecords(int index, int flag);
-void XenoActorRelease(struct XenoActor *actor);
 extern int D_002B7CA8[];
 extern int D_002B7C88[];
 

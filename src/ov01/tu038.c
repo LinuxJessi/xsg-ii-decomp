@@ -16,8 +16,7 @@
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
 #include "ov01/tu009.h"
-#include "ov01/tu019.h"
-#include "ov01/tu020.h"
+#include "ov01/tu012.h"
 #include "ov01/tu038.h"
 #include "ov01/tu046.h"
 #include "ov01/tu049.h"
@@ -36,19 +35,6 @@ typedef struct UnitSpawnRecord {
     int subArgD;
 } UnitSpawnRecord;
 
-/* The unit object ov01CurUnit[0] holds; this TU reads only its sub-record pointer.
- * It may be the same object as tu017's UnitRecord (integrator to reconcile). */
-typedef struct UnitObject {
-    unsigned char unmodeled_00[0x144];
-    struct UnitSub *sub; /* +0x144 */
-} UnitObject;
-
-typedef struct UnitSub {
-    unsigned char unmodeled_00[0xF8];
-    int subF8; /* +0xF8: written from the enemy record's subArgC */
-    int subFC; /* +0xFC: written from the enemy record's subArgD */
-} UnitSub;
-
 extern int ov01LoadDone;
 extern int ov01LoadOwner;
 extern int ov01PartyIndex;
@@ -56,28 +42,26 @@ extern int ov01EnemyIndex;
 extern UnitSpawnRecord *ov01PartyList;
 extern UnitSpawnRecord *ov01EnemyList;
 void func_00120360(void);
-void func_00A81D30(void);
+void dataCdArenaOpen(void);
 void ov01StepSetNext(void *item, int next_step);
 void ov01LoadBlockStart(void);
 void ov01LoadRequest(int value);
 void ov01StepLoadPartyMember(int context);
 void ov01StepNextEnemy(int context);
-void *dataStreamOpen(int count, int small_buffer);
-void func_00A88B60(int first, int second);
+void monsSlotCopyParams(int first, int second);
+/* Both views stay local: tu038 keeps its record handles as int (D_00AB5CD4), see tu019.h and tu020.h. */
+int monsSlotCreate(void);
 void monsSlotShow(void *slot);
+int monsTblValueGet(void);
 void func_00A9BCC8(int first, int *out);
 void menuStatRecordsCreate(void);
 unsigned char *ptGetStatusBlock(void);
 UnitSpawnRecord *ov01PartyListGet(void);
 void effectPosTableSet(int value);
 int dataUnitLoad(int id);
-void func_00A82E18(int id);
-UnitObject *unitPlCreate(int id);
-UnitObject *unitEnCreate(int id);
-void unitLoadSnapshot(UnitObject *object, int value);
-void unitSetAngleDegrees(void *object, int degrees);
-void func_00A84518(UnitObject *object, int value);
-void unitFadeIn(UnitObject *object);
+Ov01Object *unitPlCreate(int id);
+Ov01Object *unitEnCreate(int id);
+void unitBindActors(Ov01Object *object, int value);
 void ov01StepStartBlockLoad(int context);
 void ov01StepAwaitBlockLoad(int context);
 void ov01StepOpenHandles(int context);
@@ -141,7 +125,7 @@ void ov01StepInit(int context) {
     gifStateEnableEffect();
     dataFaceFileLoad();
     dataStatFileLoad();
-    func_00A81D30();
+    dataCdArenaOpen();
     dataBattleSeLoad();
     ov01StepSetNext(context, ov01StepStartBlockLoad);
     ov01StackPush(context, ov01StepAwaitLoads);
@@ -181,7 +165,7 @@ void ov01StepBindAndShow(int context) {
     extern int ov01StreamBuffer;
     extern int D_00AB5CD4;
 
-    func_00A88B60(D_00AB5CD4, ov01StreamBuffer);
+    monsSlotCopyParams(D_00AB5CD4, ov01StreamBuffer);
     monsSlotShow(D_00AB5CD4);
     nmlModelEnableSubWindow0();
     ov01StepSetNext(context, ov01StepLoadPartyIds);
@@ -215,11 +199,10 @@ void ov01StepLoadPartyIds(int context) {
 /* Spawns party member ov01PartyIndex with unitPlCreate (unitPlCreate) and sets its
  * fields; a zero id skips to ov01StepNextPartyMember. Continues to ov01StepLoadPartyMember. */
 void ov01StepSpawnPartyMember(int context) {
-    extern UnitObject *ov01CurUnit[];
+    extern Ov01Object *ov01CurUnit[];
     extern int D_00AB5CD8[];
     int id;
-    UnitSub *sub;
-    UnitObject *object;
+    Ov01Object *object;
 
     id = ov01PartyList[ov01PartyIndex].id;
     if (id == 0) {
@@ -230,11 +213,10 @@ void ov01StepSpawnPartyMember(int context) {
     ov01CurUnit[0] = object;
     unitLoadSnapshot(object, ov01PartyList[ov01PartyIndex].spawnArgA);
     unitSetAngleDegrees(ov01CurUnit[0], ov01PartyList[ov01PartyIndex].spawnArgB);
-    sub = ov01CurUnit[0]->sub;
-    sub->subF8 = 0;
-    sub->subFC = 0;
+    ov01CurUnit[0]->stats->field_f8 = 0;
+    ov01CurUnit[0]->stats->field_fc = 0;
     D_00AB5CD8[0] = dataUnitLoad(id);
-    func_00A82E18(id);
+    unitEffectSlotAcquire(id);
     ov01StepSetNext(context, ov01StepLoadPartyMember);
     ov01StackPush(context, ov01StepAwaitLoads);
 }
@@ -277,32 +259,30 @@ void ov01StepStartEnemies(int context) {
 /* Spawns enemy ov01EnemyIndex with unitEnCreate (unitEnCreate) and sets its fields and
  * sub record; continues to ov01StepLoadEnemy. */
 void ov01StepSpawnEnemy(int context) {
-    extern UnitObject *ov01CurUnit[];
+    extern Ov01Object *ov01CurUnit[];
     extern int D_00AB5CD8[];
     int id;
-    UnitObject *object;
-    UnitSub *sub;
+    Ov01Object *object;
 
     id = ov01EnemyList[ov01EnemyIndex].id;
     object = unitEnCreate(id);
     ov01CurUnit[0] = object;
     unitLoadSnapshot(object, ov01EnemyList[ov01EnemyIndex].spawnArgA);
     unitSetAngleDegrees(ov01CurUnit[0], ov01EnemyList[ov01EnemyIndex].spawnArgB);
-    sub = ov01CurUnit[0]->sub;
-    sub->subF8 = ov01EnemyList[ov01EnemyIndex].subArgC;
-    sub->subFC = ov01EnemyList[ov01EnemyIndex].subArgD;
+    ov01CurUnit[0]->stats->field_f8 = ov01EnemyList[ov01EnemyIndex].subArgC;
+    ov01CurUnit[0]->stats->field_fc = ov01EnemyList[ov01EnemyIndex].subArgD;
     D_00AB5CD8[0] = dataUnitLoad(id);
-    func_00A82E18(id);
+    unitEffectSlotAcquire(id);
     ov01StepSetNext(context, ov01StepLoadEnemy);
     ov01StackPush(context, ov01StepAwaitLoads);
 }
 
 /* Binds the enemy and starts its load (ov01LoadRequest); continues to ov01StepAwaitEnemyLoad. */
 void ov01StepLoadEnemy(int context) {
-    extern UnitObject *ov01CurUnit;
+    extern Ov01Object *ov01CurUnit;
     extern int D_00AB5CD8;
 
-    func_00A84518(ov01CurUnit, D_00AB5CD8);
+    unitBindActors(ov01CurUnit, D_00AB5CD8);
     unitFadeIn(ov01CurUnit);
     ov01LoadRequest(D_00AB5CD8);
     ov01StepSetNext(context, ov01StepAwaitEnemyLoad);

@@ -61,7 +61,8 @@ extern int uwamonoCurrentIndex;
 extern struct UwamonoSlot uwamonoSlotTable[];
 extern struct ElevatorState gameWork;
 extern struct ElevatorRecord elvRecords[];
-extern struct MainActive *D_002B5DB8[]; /* gameWork.active (gameWork+0x28) */
+extern struct MainActive *D_002B5DB8[];
+/* gameWork.active (gameWork+0x28) */
 extern unsigned char D_0069D1C0[];
 extern unsigned char D_002BD478[];
 extern unsigned char elvActiveMask;
@@ -77,14 +78,16 @@ extern float xglCos(float angle);
 int mapFindBlockEntry(int id, int index);
 int func_A9F0C0(int call, int index);
 int func_A9F1C0(int call, int index);
+extern const char D_006894A8[];
+/* the assert format: expression, file, line */
+extern const char D_00689508[];
+/* "(no > 0) && (no < 9)" */
+extern const char D_00689520[];
+/* "../elevator.euc.c" */
+extern const char D_00689538[];
 
-extern const char D_006894A8[]; /* the assert format: expression, file, line */
-extern const char D_00689508[]; /* "(no > 0) && (no < 9)" */
-extern const char D_00689520[]; /* "../elevator.euc.c" */
-extern const char D_00689538[]; /* "(no > 0) && (no < UNDUFLAGKEEPOFF_MAX)" */
-
+/* "(no > 0) && (no < UNDUFLAGKEEPOFF_MAX)" */
 #define UNDUFLAGKEEPOFF_MAX 32
-
 /* The original assert: prints the expression, file and line, then traps.
  * A bare if, not do { } while (0): its loop notes change the schedule. */
 #define ELV_ASSERT(condition, expression, line)                     \
@@ -114,10 +117,86 @@ void elvSetStatusFlag(int elevator_index)
     }
 }
 
+/* gameWork.active (gameWork+0x28) */
+extern int gameLoopFlags[];
+
 /* Per-frame motion of one elevator: interpolates the record position toward
  * its target by elapsed/duration (VU0 lerp), and calls elvSetStatusFlag at the
  * end. Called by DispMapObject with the object that holds the elevator index. */
-INCLUDE_ASM("asm/main/nonmatchings/elevator", elvUpdateMotion);
+/* The part of an elevator holder this function reads and writes back. */
+struct ElevatorHolder {
+    unsigned char unmodeled_00[0x10];
+    float position[3];                      /* +0x10: written back from the record */
+    unsigned char unmodeled_1C[0x592 - 0x1C];
+    short elevator_index;                   /* +0x592 (1426) */
+};
+
+void elvUpdateMotion(struct ElevatorHolder *holder)
+{
+    struct ElevatorRecord *record;
+    int progress_bits;
+    float value;
+
+    if (gameLoopFlags[0] & 1) {
+        return;
+    }
+    record = &elvRecords[holder->elevator_index - 1];
+    if (record->axis_moves[0] == 0) {
+        value = holder->position[0];
+        record->position[0] = value;
+        record->target[0] = value;
+        record->start[0] = value;
+    }
+    if (record->axis_moves[1] == 0) {
+        value = holder->position[1];
+        record->position[1] = value;
+        record->target[1] = value;
+        record->start[1] = value;
+    }
+    if (record->axis_moves[2] == 0) {
+        value = holder->position[2];
+        record->position[2] = value;
+        record->target[2] = value;
+        record->start[2] = value;
+    }
+    record->reference[0] = record->position[0];
+    record->reference[1] = record->position[1];
+    record->reference[2] = record->position[2];
+    if (record->elapsed < record->duration) {
+        record->elapsed = record->elapsed + 1.0f;
+        if (0.0f < record->duration) {
+            record->progress = I2F((int)record->elapsed) / I2F((int)record->duration);
+        } else {
+            record->progress = 1.0f;
+        }
+        __asm__ __volatile__(
+            "mfc1 %0, %1\n\t"
+            "lqc2 $vf2, 0(%3)\n\t"
+            "lqc2 $vf1, 0(%2)\n\t"
+            "qmtc2 %0, $vf3\n\t"
+            "vsub.xyz $vf2xyz, $vf2xyz, $vf1xyz\n\t"
+            "vmulx.xyz $vf2xyz, $vf2xyz, $vf3x\n\t"
+            "vadd.xyz $vf3xyz, $vf2xyz, $vf1xyz\n\t"
+            "sqc2 $vf3, 0(%4)"
+            : "=&r"(progress_bits)
+            : "f"(record->progress), "r"(record->start), "r"(record->target), "r"(record->position)
+            : "memory");
+    }
+    if (record->duration <= record->elapsed) {
+        if (record->duration != 0.0f) {
+            elvSetStatusFlag(holder->elevator_index - 1);
+        }
+        record->elapsed = 0.0f;
+        record->duration = 0.0f;
+        record->progress = 1.0f;
+        record->start[0] = record->position[0];
+        record->start[1] = record->position[1];
+        record->start[2] = record->position[2];
+    }
+    holder->position[0] = record->position[0];
+    holder->position[1] = record->position[1];
+    holder->position[2] = record->position[2];
+}
 
 /* Copies elevator position_out[] and, when asked, the offset of the position
  * from the reference point to delta_out[]. Either pointer may be null. */

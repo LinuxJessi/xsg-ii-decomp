@@ -4,7 +4,7 @@
 #include "common.h"
 #include "main/sef.h"
 #include "ov01/tu022.h"
-#include "ov01/tu031.h"
+#include "ov01/tu023.h"
 #include "ov01/tu041.h"
 #include "ov01/tu044.h"
 #include "ov01/tu046.h"
@@ -51,17 +51,6 @@ enum {
     VM_ARG_SLOT_BYTES = 8,
     VM_ARG_TAG_BASE = -8
 };
-
-/*
- * Partial view of the object unitTblEntryGet returns (dereferenced here, layout
- * otherwise not evidenced in this TU). Only actorGet's field at +0x1D0 is read.
- * tu017 declares unitTblEntryGet as returning UnitRecord *; its layout ends at
- * +0x2c, so the +0x1D0 actor belongs to that record once it is extended.
- */
-typedef struct UnitView {
-    unsigned char unmodeled_000[0x1D0];
-    void *actor;      /* +0x1D0: actorGet returns it */
-} UnitView;
 
 /* Callers pass no argument: the VM context is already in $a0 from the script dispatcher. */
 int VM_PLUGIN_CNT_GET();
@@ -190,14 +179,14 @@ int cameraSettingGet(void)
     return D_00AE0C28;
 }
 
-UnitView *unitTblEntryGet(int unitIndex);
-void thinkDispatch(UnitView *unit, int argTwo, int argThree, UnitView *unitFour);
-void thinkSendEnd(UnitView *unit);
+StatOwner *unitTblEntryGet(int unitIndex);
+void thinkDispatch(StatOwner *unit, int argTwo, int argThree, StatOwner *unitFour);
+void thinkSendEnd(StatOwner *unit);
 
 int thinkSet(VmPluginContext *vm)
 {
-    UnitView *unitOne;
-    UnitView *unitFour;
+    StatOwner *unitOne;
+    StatOwner *unitFour;
     int argTwo;
     int argThree;
 
@@ -216,8 +205,8 @@ int thinkSet(VmPluginContext *vm)
 
 int thinkSet2(VmPluginContext *vm)
 {
-    UnitView *unitOne;
-    UnitView *unitFour;
+    StatOwner *unitOne;
+    StatOwner *unitFour;
     int argTwo;
     int argThree;
 
@@ -235,7 +224,7 @@ int thinkSet2(VmPluginContext *vm)
 
 int thinkSetEnd(VmPluginContext *vm)
 {
-    UnitView *unit;
+    StatOwner *unit;
 
     if (VM_PLUGIN_CNT_GET() <= 0) {
         sbChainSetValue(vm, 2);
@@ -246,11 +235,11 @@ int thinkSetEnd(VmPluginContext *vm)
     return 1;
 }
 
-int func_00A9BF08(UnitView *unit, int argTwoValue, int value);
+int func_00A9BF08(StatOwner *unit, int argTwoValue, int value);
 
 int atkTbl(VmPluginContext *vm)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int value;
     int entryIndex;
     int entry;
@@ -295,14 +284,14 @@ void *actorGet(VmPluginContext *vm)
         sbChainSetValue(vm, 2);
         return 0;
     }
-    return unitTblEntryGet(vmArgGet(vm, 1))->actor;
+    return unitTblEntryGet(vmArgGet(vm, 1))->unit;
 }
 
-int unitParaFieldGet(UnitView *unit, int argTwo);
+int unitParaFieldGet(StatOwner *unit, int argTwo);
 
 int unitParaGet(VmPluginContext *vm)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int argTwo;
 
     if (VM_PLUGIN_CNT_GET() < 2) {
@@ -314,11 +303,11 @@ int unitParaGet(VmPluginContext *vm)
     return unitParaFieldGet(unit, argTwo);
 }
 
-void unitParaFieldSet(UnitView *unit, int argTwo, int argThree);
+void unitParaFieldSet(StatOwner *unit, int argTwo, int argThree);
 
 int unitParaSet(VmPluginContext *vm)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int argTwo;
     int argThree;
 
@@ -404,11 +393,11 @@ int tecParaGet(VmPluginContext *vm)
     return func_00A9C328(argOne, argTwo);
 }
 
-int calcStatGet(UnitView *unit, int argTwo, int argThree);
+int calcStatGet(StatOwner *unit, int argTwo, int argThree);
 
 int unitStatGet(VmPluginContext *vm)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int argTwo;
     int argThree;
 
@@ -422,11 +411,11 @@ int unitStatGet(VmPluginContext *vm)
     return calcStatGet(unit, argTwo, argThree);
 }
 
-int calcStatSet(UnitView *unit, int argTwo, int argThree);
+int calcStatSet(StatOwner *unit, int argTwo, int argThree);
 
 int unitStatSet(VmPluginContext *vm)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int argTwo;
     int argThree;
 
@@ -441,12 +430,11 @@ int unitStatSet(VmPluginContext *vm)
     return 1;
 }
 
-int calcBoostOk(UnitView *unit, int mode);
-int func_00A954D8(UnitView *unit, int width, int height);
+int func_00A954D8(StatOwner *unit, int width, int height);
 
 int counterBoost(VmPluginContext *vm)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int applied;
 
     if (VM_PLUGIN_CNT_GET() <= 0) {
@@ -466,7 +454,7 @@ int counterBoost(VmPluginContext *vm)
 
 int boost(VmPluginContext *vm)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int applied;
 
     if (VM_PLUGIN_CNT_GET() <= 0) {

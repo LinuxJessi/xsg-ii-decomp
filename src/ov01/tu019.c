@@ -2,104 +2,181 @@
  * OV01 original TU 19: 0x00a88a50..0x00a88c60 (9 functions)
  */
 #include "common.h"
+#include "ov01/tu002.h"
 #include "ov01/tu003.h"
+#include "main/xenoActor.h"
+#include "ov01/tu010.h"
 #include "ov01/tu019.h"
 
-void *memset(void *, int, unsigned int);
-
 /*
- * Two-entry table of MonsSlot records (proposed monsSlotTable) and its count
- * (proposed monsSlotCount). func_00A88BB0 fills a free entry and bumps the
- * count, func_00A88C08 clears one and drops the count.
+ * The actor as monsSlotNew and monsSlotCopyParams touch it (the full record is struct XenoActor of main/tu051.h, which
+ * this file does not include): the position zeroed through a float array, an alias-0 access that keeps the stores
+ * after the slot's pointer store. A union around XenoActor.position would give main's code alias set 0 too and
+ * change uwamonoPlayerUpdate and uwamonoParabolaMove. resource = rsrc[XAct_Rsrc_MDL], rsrc[XAct_Rsrc_TEX].
  */
-extern int monsActiveSlots[2];
+struct XenoActor {
+    unsigned char unmodeled_00[0x10];
+    union {
+        Vector4 position;
+        float coords[4]; /* +0x10 */
+    };
+    unsigned char unmodeled_20[0x9C];
+    unsigned int drawFlags; /* +0xBC: bit 0x4 hides the actor */
+    unsigned char unmodeled_c0[0x52C];
+    unsigned int resource[2]; /* +0x5EC */
+};
+
+void *memset(void *, int, unsigned int);
+#include "shared.h"
+
+/* Entries of monsActiveSlots, the table of record pointers that monsSlotInsert fills. */
+#define MONS_ACTIVE_SLOT_COUNT 2
+/*
+ * Two-entry table of MonsSlot records and its count
+ *. monsSlotInsert fills a free entry and bumps the
+ * count, monsSlotRemove clears one and drops the count.
+ */
+extern struct MonsSlot *monsActiveSlots[MONS_ACTIVE_SLOT_COUNT];
 extern int monsActiveCount;
 
+struct MonsSlot *monsSlotNew(void);
+void monsSlotEmptyUpdate(void);
+int monsSlotInsert(struct MonsSlot *record);
+int monsSlotRemove(struct MonsSlot *slot);
+
 /*
- * monsSlotReset (proposed monsSlotReset): empties the two-entry table and
- * sets its count to 0. Called by ov01SceneInit (unnamed).
+ * monsSlotReset: empties the two-entry table and
+ * sets its count to 0. Called by ov01SceneInit.
  */
 void monsSlotReset(void) {
-    memset(monsActiveSlots, 0, 8);
+    memset(monsActiveSlots, 0, MONS_ACTIVE_SLOT_COUNT * sizeof(struct MonsSlot *));
     monsActiveCount = 0;
 }
 
-int func_00A88AC0(void);
-int func_00A88BB0(int);
 
 /*
- * monsSlotCreate (proposed monsSlotCreate): makes a new MonsSlot with
- * func_00A88AC0 and inserts it with func_00A88BB0. Returns the record, or 0
- * when func_00A88AC0 fails. Callers: ov01StreamOpen, ov01StepOpenHandles.
+ * monsSlotCreate: makes a new MonsSlot with
+ * monsSlotNew and inserts it with monsSlotInsert. Returns the record, or 0
+ * when monsSlotNew fails. Callers: ov01StreamOpen, ov01StepOpenHandles.
  */
-int monsSlotCreate(void) {
-    int slot;
+struct MonsSlot *monsSlotCreate(void) {
+    struct MonsSlot *slot;
 
-    slot = func_00A88AC0();
+    slot = monsSlotNew();
     if (slot != 0) {
-        func_00A88BB0(slot);
+        monsSlotInsert(slot);
     }
     return slot;
 }
 
 /*
- * func_00A88AC0 (proposed monsSlotNew): allocates a MonsSlot with the empty
- * callback func_00A88B90, creates an actor with XenoActorAlloc and stores it
+ * monsSlotNew: allocates a MonsSlot with the empty
+ * callback monsSlotEmptyUpdate, creates an actor with XenoActorAlloc and stores it
  * at +0x90, then hides it (bit 0x4 of +0xBC) and puts it at the origin.
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu019", func_00A88AC0);
+struct MonsSlot *monsSlotNew(void) {
+    struct XenoActor *actor;
+    struct MonsSlot *slot;
+    unsigned int stateFlags;
 
-void XenoActorRelease(int);
-int func_00A88C08(void *);
-
-/* A MonsSlot record: the callback and link words are not modeled here. */
-struct MonsSlot {
-    unsigned char unmodeled_00[0x90];
-    int actor; /* +0x90: the actor the record drives; typed int here because
-                * this TU only passes it on. tu020 types it as a pointer. */
-};
+    slot = monsSlotClaim();
+    if (slot == 0) {
+        return 0;
+    }
+    slot->callback = monsSlotEmptyUpdate;
+    slot->initWord08 = 0;
+    slot->initWord0C = 0;
+    actor = XenoActorAlloc();
+    slot->actor = actor;
+    stateFlags = actor->drawFlags;
+    /* The float-array view of the position keeps the zeroing stores after the flags load. */
+    actor->coords[0] = actor->coords[1] =
+        actor->coords[2] = 0.0F;
+    actor->drawFlags = stateFlags | ACTOR_STATE_HIDDEN;
+    return slot;
+}
 
 /*
- * monsSlotRelease (proposed monsSlotRelease): releases the actor (XenoActorRelease),
- * removes the record from the table (func_00A88C08) and calls monsSlotReleaseRecord
+ * monsSlotRelease: releases the actor (XenoActorRelease),
+ * removes the record from the table (monsSlotRemove) and calls monsSlotReleaseRecord
  * first. Called by func_00A96E38.
  */
 void monsSlotRelease(struct MonsSlot *slot) {
     monsSlotReleaseRecord();
     XenoActorRelease(slot->actor);
-    func_00A88C08(slot);
+    monsSlotRemove(slot);
 }
 
+/* The second argument of monsSlotCopyParams: two words at +0x10 and +0x1C. */
+struct MonsParams {
+    unsigned char unmodeled_00[0x10];
+    unsigned int paramA; /* +0x10 */
+    unsigned char unmodeled_14[0x8];
+    unsigned int paramB; /* +0x1C */
+};
+
 /*
- * func_00A88B60 (proposed monsSlotCopyParams): copies two words of the
+ * monsSlotCopyParams: copies two words of the
  * second argument (+0x10 and +0x1C) into the record's actor at +0x5EC and
  * +0x5F0. Returns 1, or 0 when either argument is null. Caller: ov01StepBindAndShow
  * (tu038).
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu019", func_00A88B60);
+int monsSlotCopyParams(struct MonsSlot *slot, struct MonsParams *params) {
+    struct XenoActor *actor;
 
-void func_00A88B90(void) {
+    if (slot == 0 || params == 0) {
+        return 0;
+    }
+    actor = slot->actor;
+    actor->resource[0] = params->paramA;
+    actor->resource[1] = params->paramB;
+    return 1;
+}
+
+void monsSlotEmptyUpdate(void) {
 }
 
 /*
- * monsActiveSlotsGet (proposed monsSlotTableGet): hands back the two-entry table
+ * monsActiveSlotsGet: hands back the two-entry table
  * and returns its length, 2. Callers: func_00A946C0, func_00A94EB0,
  * func_00A95810, func_00A96AA8, func_00A96E38, unitBodySetPosDir.
  */
-int monsActiveSlotsGet(int **table) {
+int monsActiveSlotsGet(struct MonsSlot ***table) {
     *table = monsActiveSlots;
-    return 2;
+    return MONS_ACTIVE_SLOT_COUNT;
 }
 
 /*
- * func_00A88BB0 (proposed monsSlotInsert): stores the record in the first
+ * monsSlotInsert: stores the record in the first
  * free entry of the table and increments the count. Returns 1 when stored,
  * 0 when the table is full.
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu019", func_00A88BB0);
+int monsSlotInsert(struct MonsSlot *record) {
+    int entry;
+
+    for (entry = 0; entry < MONS_ACTIVE_SLOT_COUNT; entry++) {
+        if (monsActiveSlots[entry] == 0) {
+            monsActiveSlots[entry] = record;
+            monsActiveCount++;
+            return 1;
+        }
+    }
+    return 0;
+}
 
 /*
- * func_00A88C08 (proposed monsSlotRemove): clears the entry that holds the
+ * monsSlotRemove: clears the entry that holds the
  * record and decrements the count. Returns 1 when found, 0 otherwise.
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu019", func_00A88C08);
+int monsSlotRemove(struct MonsSlot *slot) {
+    int entry;
+
+    for (entry = 0; entry < MONS_ACTIVE_SLOT_COUNT; entry++) {
+        if (monsActiveSlots[entry] == slot) {
+            monsActiveSlots[entry] = 0;
+            monsActiveCount--;
+            return 1;
+        }
+    }
+    return 0;
+}

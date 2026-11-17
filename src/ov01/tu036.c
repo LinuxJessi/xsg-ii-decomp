@@ -3,13 +3,13 @@
 #include "main/tu124.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
-#include "ov01/tu026.h"
-#include "ov01/tu032.h"
+#include "main/tu051.h"
+#include "ov01/tu010.h"
+#include "ov01/tu023.h"
 #include "ov01/tu036.h"
 #include "ov01/tu042.h"
 #include "ov01/tu043.h"
 
-typedef struct ObjectTask ObjectTask;
 
 typedef struct XglTaskPrefix XglTaskPrefix;
 
@@ -44,32 +44,7 @@ extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
                                 int (*callback)(XglTaskPrefix *task),
                                 XglTaskPrefix *entry);
 
-/*
- * The battle actor object a unit's actor/weapon slots point to. src/main/
- * chr.h, src/main/near_dir.h, src/main/set_motion.h and src/ov01/unit_cmd.h
- * all restate this same 0x70-byte head verbatim (a TU-local header cannot be
- * included from another TU); this TU adds only the words its own code
- * touches: the float at +0xC0 (transWepIn/transWepOut set it to 0.0/1.0, the
- * same "transparency" member src/ov01/unit_cmd.h restates at that offset)
- * and the flags word at +0x6F0 (hairWindOn ORs in HAIR_WIND_BIT there for
- * every other unit's actor and hairWindOff clears it again).
- */
-typedef struct Actor {
-    u32 flags;
-    void (*update)(struct Actor *actor);
-    void (*draw)(struct Actor *actor);
-    u32 quadword_alignment_gap;
-    Vector4 position;
-    Vector4 previous_position;
-    Vector4 velocity;
-    Vector4 acceleration;
-    Vector4 rotation;
-    Vector4 scale;
-    unsigned char unmodeled_70[0xC0 - 0x70];
-    float transparency; /* +0xC0 */
-    unsigned char unmodeled_c4[0x6F0 - 0xC4];
-    u32 windFlags; /* +0x6F0 */
-} Actor;
+/* The unit's actor and weapon slots point at XenoActors (main/tu051.h). */
 
 /*
  * The unit record scenarioMtd, transWepIn/transWepOut and spWepDispOn
@@ -83,10 +58,10 @@ typedef struct BattleUnit BattleUnit;
 
 struct BattleUnit {
     unsigned char unmodeled_00[0x10];
-    Actor *work;       /* +0x10 */
-    Actor *actor;      /* +0x14 */
+    struct XenoActor *work;       /* +0x10 */
+    struct XenoActor *actor;      /* +0x14 */
     unsigned char unmodeled_18[0x1C - 0x18];
-    Actor *weapon[4];  /* +0x1C */
+    struct XenoActor *weapon[4];  /* +0x1C */
 };
 
 BattleUnit **tgtUnitAdrGet(void);
@@ -363,26 +338,10 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectStep);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectionGet);
 
-/* Only the members tableKeyEntryGet reads are modeled; the rest of the block is
- * left unmodeled. */
-typedef struct TableKey TableKey;
+/* Returns the entry of the key row of the unit's table at index (1-based); the target the callers pass is not used. */
 
-struct TableKey {
-    unsigned char unmodeled_00[0x62];
-    s16 table_id; /* +0x62: the id tableKeyRowGet maps to a table */
-};
-
-typedef struct TableKeyOwner TableKeyOwner;
-
-struct TableKeyOwner {
-    unsigned char unmodeled_00[0x144];
-    TableKey *key; /* +0x144 */
-};
-
-/* Returns the record table for the key: the caller adds the byte offset itself. */
-
-s16 tableKeyEntryGet(TableKeyOwner *owner, int index) {
-    unsigned char *record_table = tableKeyRowGet(owner->key->table_id);
+s16 tableKeyEntryGet(StatOwner *owner, int index, void *target) {
+    unsigned char *record_table = tableKeyRowGet(owner->stats->key);
 
     s16 *entry = (s16 *)(record_table + (index - 1) * sizeof(s16));
 
@@ -401,9 +360,9 @@ void tgtUnitSet(BattleUnit *unit)
     *tgtUnitAdrGet() = unit;
 }
 
-extern unsigned char tgtSelectState[];
+extern struct BattleState tgtSelectState;
 
-void *battleStateGet(void) {
+struct BattleState *battleStateGet(void) {
     return &tgtSelectState;
 }
 

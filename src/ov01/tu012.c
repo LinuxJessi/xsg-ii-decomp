@@ -5,80 +5,25 @@
 #include "shared.h"
 #include "main/xenoActor.h"
 #include "ov01/tu005.h"
+#include "main/tu051.h"
 #include "ov01/tu012.h"
+#include "ov01/tu016.h"
 #include "ov01/tu033.h"
+#include "ov01/tu036.h"
 
-typedef struct Ov01Pose {
-    long long snapshot[2]; /* +0x0: vector words; unitUpdate copies Ov01Unit.snapshot here */
-    unsigned char unmodeled_10[0x14];
-    f32 angle; /* +0x24: radians, see unitSetAngleRadians */
-} Ov01Pose;
+/* keyHigh of the high modes (mode 16 and up): unitActionKey uses 320, unitMoveKey uses 330. */
+#define ACTION_KEY_BASE 320
+#define MOVE_KEY_BASE 330
 
-typedef struct Ov01Motion {
-    unsigned char unmodeled_00[0x14];
-    signed char state;
-    unsigned char unmodeled_15[0x4D];
-    u16 mode;
-    unsigned char unmodeled_64[0x8];
-    f32 angle;
-    unsigned char unmodeled_70[0xA];
-    u16 slot_flags[3];
-} Ov01Motion;
-
-typedef struct Ov01Unit {
-    unsigned char unmodeled_00[0x10];
-    long long snapshot[2];
-    unsigned char unmodeled_20[0x9C];
-    u32 flags;
-    unsigned char unmodeled_c0[0x50C];
-    u32 status;
-} Ov01Unit;
-
-typedef struct Ov01Object {
-    unsigned char unmodeled_00[0xC];
-    u32 flags;
-    unsigned char unmodeled_10[0x134];
-    Ov01Motion *motion;
-    unsigned char unmodeled_148[0x8];
-    Ov01Pose pose;
-    unsigned char unmodeled_178[0x58];
-    Ov01Unit *unit;
-    unsigned char unmodeled_1d4[0x8];
-    Ov01Unit *children[3];
-} Ov01Object;
-
-void unitRunCommands(void *);
-void func_00A95680(void *);
+void unitRunCommands(Ov01Object *object);
 
 /* Per-frame step: clears flag 0x20000, runs the command queue, copies the unit's snapshot into the pose, then calls func_00A95680. */
 void unitUpdate(Ov01Object *object) {
     object->flags &= ~0x00020000u;
     unitRunCommands(object);
-    object->pose.snapshot[0] = object->unit->snapshot[0];
-    object->pose.snapshot[1] = object->unit->snapshot[1];
+    object->pose.snapshot.vector = object->unit->position;
     func_00A95680(object);
 }
-
-/*
- * Ov01Owner: the object whose +0x1D0 holds its unit. Ov01Object has the same
- * pointer at that offset; the functions below read only that pointer.
- * Ov01UnitTail: the unit's record from +0x5D4 on. Its int count is read by
- * func_00A849B8 (which returns count + 1) and compared by func_00A849C8.
- * Bytes between the evidenced members are untouched here.
- */
-typedef struct Ov01UnitTail Ov01UnitTail;
-
-typedef struct Ov01Owner Ov01Owner;
-
-struct Ov01UnitTail {
-    unsigned char unmodeled_00[0x5D4];
-    int count; /* +0x5D4 */
-};
-
-struct Ov01Owner {
-    unsigned char unmodeled_00[0x1D0];
-    Ov01UnitTail *unit; /* +0x1D0 */
-};
 
 void func_00A84880(void) {
 
@@ -93,21 +38,20 @@ void unitUnbind(Ov01Object *object) {
 
 /* Clears bits 0x10004 of the unit and of each child whose slot flag 0x4000 is clear, and bit 2 of the object. */
 void unitClearBindFlags(Ov01Object *object) {
-    Ov01Unit *child;
+    struct XenoActor *child;
     int i;
 
-    object->unit->flags &= ~0x00010004u;
+    object->unit->drawFlags &= ~0x00010004u;
     object->flags &= ~0x00000002u;
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < UNIT_CHILD_COUNT; i++) {
         child = object->children[i];
-        if (child != 0 && !(object->motion->slot_flags[i] & 0x4000)) {
-            child->flags &= ~0x00010004u;
+        if (child != 0 && !(object->stats->pairSecond[i] & 0x4000)) {
+            child->drawFlags &= ~0x00010004u;
         }
     }
 }
 
 void unitSetBindFlags(Ov01Object *object);
-void func_00A95608(void *owner);
 
 void unitBindSetup(Ov01Object *object) {
     unitSetBindFlags(object);
@@ -116,38 +60,96 @@ void unitBindSetup(Ov01Object *object) {
 
 /* Sets bit 4 of the unit and of each child, and bit 2 of the object: the mirror of unitClearBindFlags. */
 void unitSetBindFlags(Ov01Object *object) {
-    Ov01Unit *child;
+    struct XenoActor *child;
     int i;
 
-    object->unit->flags |= 4;
+    object->unit->drawFlags |= 4;
     object->flags |= 2;
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < UNIT_CHILD_COUNT; i++) {
         child = object->children[i];
         if (child != 0) {
-            child->flags |= 4;
+            child->drawFlags |= 4;
         }
     }
 }
 
-/* Returns the unit's count plus one; func_00A849C8 compares that with 2 and 0xB. */
-int func_00A849B8(Ov01Owner *owner) {
-    return owner->unit->count + 1;
+/* Returns the unit's count plus one; unitSetPhase compares that with 2 and 0xB. */
+int unitCurrentPhase(Ov01Object *object) {
+    return object->unit->mode + 1;
 }
 
 /* Phase setter: the callers pass fixed phase numbers, and it updates the unit's status bit 2 and its children. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A849C8);
+void XenoActorSetMode(struct XenoActor *actor, int mode);
 
-/* Does nothing for value 0; else sets status bit 2 on the unit and calls the timing helpers on it and on children with 0x600 set. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A84B68);
+void unitSetPhase(Ov01Object *object, int phase) {
+    struct XenoActor *unit;
+    f32 channelValue;
+    int i;
 
+    if (phase == 0) {
+        return;
+    }
+    unit = object->unit;
+    if (unit->phaseLock == 0 && unit->mode == phase - 1) {
+        if ((unsigned int) (phase - 28) >= 4 && phase != 25 && phase != 4 && (unsigned int) (phase - 49) >= 3 && phase != 36 && phase != 39) {
+            return;
+        }
+    }
+    if (phase == 1 || phase == 2 || (phase == 5 && object->stats->subState != 4)) {
+        unit->flags &= ~2;
+    } else {
+        unit->flags |= 2;
+    }
+    if ((unit->flags & 0x200) == 0 && unit->phaseLock == 0 && ((phase == 2 && unitCurrentPhase(object) != 11) || unitCurrentPhase(object) == 2)) {
+        channelValue = 8.0f;
+    } else {
+        channelValue = 0.0f;
+    }
+    XenoActorSetChannelValue(unit, channelValue);
+    XenoActorEnableChannel(unit);
+    XenoActorSetMode(unit, phase - 1);
+    /* The loop walks the children through the same variable, which then holds each child in turn. */
+    for (i = 0; i < UNIT_CHILD_COUNT; i++) {
+        unit = object->children[i];
+        if (unit != 0 && unit->rsrc[XAct_Rsrc_XAP] != 0) {
+            unit->flags |= 2;
+            XenoActorSetMode(unit, phase - 1);
+        }
+    }
+}
+
+/* Does nothing for phase 0; else sets status bit 2 on the unit and calls the timing helpers on it and on children with 0x600 set. */
+int xenoActorSlotRangeValid(void *, int, int);
+
+void unitSetTimedPhase(Ov01Object *object, int phase) {
+    struct XenoActor *unit;
+    int i;
+
+    if (phase == 0) {
+        return;
+    }
+    unit = object->unit;
+    unit->flags |= 2;
+    XenoActorEnableChannel(unit);
+    XenoActorSetModeInSlot(unit, 1, phase - 1);
+    for (i = 0; i < UNIT_CHILD_COUNT; i++) {
+        unit = object->children[i];
+        if ((unit != 0) && (unit->rsrc[XAct_Rsrc_5] != 0)) {
+            if (xenoActorSlotRangeValid(unit, 1, phase + i) != 0) {
+                unit->flags |= 2;
+                XenoActorSetModeInSlot(unit, 1, phase + i);
+            }
+        }
+    }
+}
 
 /* For motion modes 1 to 10: the unit's timing call with 7.0f, then XenoActorSetSelector with the selector. */
 void unitSetSelector(Ov01Object *object, int selector) {
-    Ov01Unit *unit;
+    struct XenoActor *unit;
 
-    if ((unsigned int) (object->motion->mode - 1) < 10) {
+    if ((unsigned int) (object->stats->keyUnsigned - 1) < 10) {
         unit = object->unit;
-        if (!(unit->status & 0x200)) {
+        if (!(unit->flags & 0x200)) {
             XenoActorSetChannelValueB(unit, 7.0f);
             XenoActorEnableChannelB(unit);
         }
@@ -155,47 +157,61 @@ void unitSetSelector(Ov01Object *object, int selector) {
     }
 }
 
-void func_00A849C8(void *, int);
-int func_00A907B0(void);
+/* Called through an unprototyped declaration: ov01/tu023.c defines partyUnitHpLow(StatOwner *), but the original call here passed no unit (tu062 declares it the same way). */
+int partyUnitHpLow();
 
-/* Picks phase 2 with selector 6 when func_00A907B0 holds and the mode is 1 to 10, else phase 1 with selector 0. */
+/* Picks phase 2 with selector 6 when partyUnitHpLow holds and the mode is 1 to 10, else phase 1 with selector 0. */
 void unitRefreshPhase(Ov01Object *object) {
     int phase;
     int selector;
 
-    if ((func_00A907B0() != 0) && ((unsigned int) (object->motion->mode - 1) < 10)) {
+    if ((partyUnitHpLow() != 0) && ((unsigned int) (object->stats->keyUnsigned - 1) < 10)) {
         phase = 2;
         selector = 6;
     } else {
         phase = 1;
         selector = 0;
     }
-    func_00A849C8(object, phase);
+    unitSetPhase(object, phase);
     unitSetSelector(object, selector);
 }
 
-void XenoActorSetVector(void *child, float, float, float);
+void XenoActorSetVector(struct XenoActor *actor, float, float, float);
 
 /* Calls XenoActorSetVector on the unit with x and y scale 1.0 and the third component scaleZ. */
-void unitSetVectorZ(Ov01Owner *owner, float scaleZ) {
-    XenoActorSetVector(owner->unit, 1.0f, 1.0f, scaleZ);
+void unitSetVectorZ(Ov01Object *object, float scaleZ) {
+    XenoActorSetVector(object->unit, 1.0f, 1.0f, scaleZ);
 }
 
-
 /* Returns XenoActorIsDone's result: the state handlers test it as a done flag. */
-int unitIsDone(Ov01Owner *owner) {
-    return XenoActorIsDone(owner->unit);
+int unitIsDone(Ov01Object *object) {
+    return XenoActorIsDone(object->unit);
 }
 
 int sefNoOwnerFlaggedRecords(int key);
 
 /* The key is keyHigh << 12 | keyLow; the unused first argument is kept for the calling convention. */
-int func_00A84D80(int unused, int keyHigh, int keyLow) {
+int unitEffectKeyFree(int unused, int keyHigh, int keyLow) {
     return sefNoOwnerFlaggedRecords((keyHigh << 0xC) | keyLow) != 0;
 }
 
+#include "ov01/tu041.h"
+
 /* Loads the snapshot vector from the table entry for id (three ints divided by 100) and records id in the motion. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", unitLoadSnapshot);
+void unitLoadSnapshot(Ov01Object *object, int id) {
+    int *entry;
+    Ov01Pose *pose;
+
+    entry = effectPosGet(id);
+    if (entry != 0) {
+        pose = &object->pose;
+        pose->snapshot.vector.x = (f32) entry[0] / 100.0f;
+        pose->snapshot.vector.y = (f32) entry[1] / 100.0f;
+        pose->snapshot.vector.z = (f32) entry[2] / 100.0f;
+        objPosePublish(object);
+        object->stats->posIndex = id;
+    }
+}
 
 void unitSetAngleRadians(Ov01Object *object, f32 angle);
 
@@ -203,8 +219,6 @@ void unitSetAngleRadians(Ov01Object *object, f32 angle);
 void unitSetAngleDegrees(Ov01Object *object, int degrees) {
     unitSetAngleRadians(object, (f32) degrees * 0.017453292f);
 }
-
-void objPosePublish(void);
 
 /* Stores the angle in radians, wrapped to [0, 2 pi), in the pose and in the motion. */
 void unitSetAngleRadians(Ov01Object *object, f32 angle) {
@@ -215,8 +229,8 @@ void unitSetAngleRadians(Ov01Object *object, f32 angle) {
     if (angle < 0.0f) {
         pose->angle = angle + 6.2831855f;
     }
-    objPosePublish();
-    object->motion->angle = pose->angle;
+    objPosePublish(object);
+    object->stats->facing = pose->angle;
 }
 
 /* The motion angle in degrees (radians times 180 / pi), truncated; 0 for a null object. */
@@ -224,53 +238,169 @@ int unitGetAngleDegrees(Ov01Object *object) {
     if (object == 0) {
         return 0;
     }
-    return (int) (object->motion->angle * 57.295776f);
+    return (int) (object->stats->facing * 57.295776f);
 }
 
 /* Zeroes the snapshot's first three words, then calls objPosePublish. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", unitClearSnapshot);
+void unitClearSnapshot(Ov01Object *object) {
+    Ov01Pose *pose = &object->pose;
+
+    pose->snapshot.vector.x = 0.0f;
+    pose->snapshot.vector.y = 0.0f;
+    pose->snapshot.vector.z = 0.0f;
+    objPosePublish(object);
+}
 
 /* Speed factor by motion state: 2.0 for state 3, 3.0 for state 4, else 1.0. */
 f32 unitStateScale(Ov01Object *object) {
-    if (object->motion->state == 3) {
+    if (object->stats->state == 3) {
         return 2.0f;
     }
-    if (object->motion->state == 4) {
+    if (object->stats->state == 4) {
         return 3.0f;
     }
     return 1.0f;
 }
 
+/* Union view: the float is stored through the value member (alias 0) so the matching form keeps its store order. */
+typedef union Ov01FloatAlias {
+    f32 value;
+    u32 bits;
+} Ov01FloatAlias;
+
 /*
  * With a target: heading = atan2 of the pose-minus-target x and z offsets,
- * plus pi when the flag is zero, wrapped to [0, 2 pi); stored in the pose,
- * the unit's +0x54 and the motion. Then a point from the unit's matrix is
- * written to pose+0x60 (xglVectorMulMat on a vector built from unitStateScale).
+ * plus pi when facesTarget is zero (the unit turns its back on the target),
+ * wrapped to [0, 2 pi); stored in the pose, the unit's +0x54 and the motion.
+ * Then a point from the unit's matrix is written to pose+0x60
+ * (xglVectorMulMat on a vector built from unitStateScale).
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", unitFaceTarget);
+float atan2f(float, float);
+void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
+void XenoActorPushMatrix(struct XenoActor *actor);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A85098);
+void unitFaceTarget(Ov01Object *object, int facesTarget, Ov01Object *target) {
+    DoublewordVector4 *targetWords;
+    Ov01Pose *pose;
+    f32 heading;
+    Vector4 offset;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A85118);
+    pose = &object->pose;
+    targetWords = &target->pose.snapshot;
+    if (target != 0) {
+        DoublewordVector4 *words;
+        StatBlock *motion;
 
-void dataLookupAppend(int value);
-
-/* objectAddr is the Ov01Object address; its +0x10 is the command queue. The asm also forwards a second argument this prototype does not declare. */
-void unitQueueAppend(int objectAddr) {
-    dataLookupAppend(objectAddr + 0x10);
+        words = &pose->snapshot;
+        heading = atan2f(words->vector.x - targetWords->vector.x, words->vector.z - targetWords->vector.z);
+        if (facesTarget == 0) {
+            heading += 3.14159265f;
+        }
+        if (heading > 6.28318548f) {
+            heading -= 6.28318548f;
+        }
+        if (heading < 0.0f) {
+            heading += 6.28318548f;
+        }
+        ((Ov01FloatAlias *) &pose->angle)->value = heading;
+        ((Ov01FloatAlias *) &object->unit->rotation.y)->value = heading;
+        motion = object->stats;
+        motion->facing = heading;
+        XenoActorPushMatrix(object->unit);
+    }
+    offset.x = 0.0f;
+    offset.y = -3.0f;
+    offset.z = unitStateScale(object);
+    offset.w = 1.0f;
+    if (facesTarget == 0) {
+        offset.z = -offset.z;
+    }
+    xglVectorMulMat(&pose->point, object->unit->matrix, &offset);
 }
 
+/*
+ * Writes the effect key pair (keyHigh, keyLow) of the action named by the
+ * motion: keyHigh is the sequence index, or 320 for the high-mode sequences;
+ * keyLow picks the variant from the sequence flags. Its mirror is unitMoveKey
+ * (the move key, base 330, variants 1 to 3 and default 11).
+ */
+void unitActionKey(Ov01Object *object, int *keyHigh, int *keyLow) {
+    StatBlock *motion;
+    s16 mode;
 
-/* Empties the command queue at +0x10 of the object. */
-void unitQueueClear(int objectAddr) {
-    dataLookupReset(objectAddr + 0x10);
+    motion = object->stats;
+    mode = motion->key;
+    if (mode >= 16) {
+        *keyHigh = motion->sequenceIndex;
+        if ((unsigned int) (motion->sequenceIndex - 701) < 33) {
+            *keyLow = 10;
+            return;
+        }
+        switch (motion->flags & 3) {
+        case 2:
+            *keyLow = 6;
+            break;
+        case 1:
+            *keyLow = 5;
+            break;
+        default:
+            *keyLow = 4;
+            break;
+        }
+        *keyHigh = ACTION_KEY_BASE;
+    } else {
+        *keyHigh = motion->sequenceIndex;
+        *keyLow = 10;
+    }
 }
 
-int dataLookupCurrent(int value);
+/*
+ * The move key pair (keyHigh, keyLow), the mirror of unitActionKey: base 330
+ * and variants 1 to 3, default 11 (the move dispatchers in tu013 start it).
+ */
+void unitMoveKey(Ov01Object *object, int *keyHigh, int *keyLow) {
+    StatBlock *motion;
+    s16 mode;
 
-/* Nonzero when the command queue at +0x10 of the object has no pending entry. */
-int unitQueueIsEmpty(int objectAddr) {
-    return dataLookupCurrent(objectAddr + 0x10) == 0;
+    motion = object->stats;
+    mode = motion->key;
+    if (mode >= 16) {
+        *keyHigh = motion->sequenceIndex;
+        if ((unsigned int) (motion->sequenceIndex - 701) < 33) {
+            *keyLow = 11;
+            return;
+        }
+        switch (motion->flags & 3) {
+        case 2:
+            *keyLow = 3;
+            break;
+        case 1:
+            *keyLow = 2;
+            break;
+        default:
+            *keyLow = 1;
+            break;
+        }
+        *keyHigh = MOVE_KEY_BASE;
+    } else {
+        *keyHigh = motion->sequenceIndex;
+        *keyLow = 11;
+    }
+}
+
+/* Appends the command record to the object's command queue. */
+void unitQueueAppend(Ov01Object *object, Ov01Command *command) {
+    dataLookupAppend(&object->commandQueue, command);
+}
+
+/* Empties the object's command queue. */
+void unitQueueClear(Ov01Object *object) {
+    dataLookupReset(&object->commandQueue);
+}
+
+/* Nonzero when the object's command queue has no pending entry. */
+int unitQueueIsEmpty(Ov01Object *object) {
+    return dataLookupCurrent(&object->commandQueue) == 0;
 }
 
 /*
@@ -279,34 +409,315 @@ int unitQueueIsEmpty(int objectAddr) {
  * retires the entry and resets the wait counter at +0x138, a zero return
  * keeps it and counts.
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", unitRunCommands);
+extern int (*unitCommandTable[UNIT_COMMAND_COUNT])(Ov01Object *, Ov01Command *);
+
+void unitRunCommands(Ov01Object *object) {
+    Ov01Command *command;
+
+    command = dataLookupCurrent(&object->commandQueue);
+    while (command != 0 && command->command < UNIT_COMMAND_COUNT) {
+        if (command->command != 0 && object->commandQueue.flag == 0) {
+            object->flags |= 1;
+        }
+        if (unitCommandTable[command->command](object, command) == 0) {
+            object->commandQueue.flag++;
+            break;
+        }
+        object->commandQueue.flag = 0;
+        dataLookupNext(&object->commandQueue);
+        command = dataLookupCurrent(&object->commandQueue);
+    }
+}
 
 /* Handler table unitCommandTable entry 0: no operation, always done. */
 int unitCmdNoop(void) {
     return 1;
 }
 
-/* Handler table unitCommandTable entry 1. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A852B8);
+struct Ov01Record {
+    unsigned char unmodeled_00[8];
+    u16 setFlags; /* +8: bit 0x100 raises object flag 0x2000 */
+    unsigned char unmodeled_0a[8];
+    unsigned char holdFlags; /* +0x12: bit 0x10 clears object flag 0x2000 */
+    unsigned char unmodeled_13[0xA];
+    signed char phase; /* +0x1D */
+    s16 timer;         /* +0x1E: nonzero selects unitSetTimedPhase */
+};
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A853A0);
+struct Ov01Record *func_00A9B3B8(int key);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A855D8);
+int unitCmdSetPhase(Ov01Object *object, Ov01Command *step) {
+    struct Ov01Record *record;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A856B8);
+    record = func_00A9B3B8(step->code);
+    switch (step->state) {
+    case 0:
+        if (record->timer == 0) {
+            unitSetPhase(object, record->phase);
+        } else {
+            unitSetTimedPhase(object, record->phase);
+        }
+        if (record->setFlags & 0x100) {
+            object->flags |= 0x2000;
+        }
+        if (record->holdFlags & 0x10) {
+            object->flags &= ~0x2000;
+        }
+        step->state++;
+        break;
+    case 1:
+        if (unitIsDone(object) != 0) {
+            return 1;
+        }
+        break;
+    default:
+        return 0;
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A85788);
+int ov01RollPercent(int percent);
+int seVoiceStartTagged(int tag, int id);
+int calcStatEffectSum(Ov01Object *object, int effectMask, int statMask);
+void calcEpAdjust(Ov01Object *object, int amount);
+void calcHpAdjust(Ov01Object *object, int amount);
+void func_00AA4DB8(Ov01Object *object, int amount, int kind, int sign);
+void unitLevelAdd(Ov01Object *object, int level);
+void unitCurrentAdd(Ov01Object *object, int amount);
+int unitHasEffectCode(Ov01Object *object, int code);
+void calcStatResetCha(Ov01Object *object);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A85848);
+/* Stat-effect step: state 0 starts the object; later states wait for unitIsDone, then apply the hp and ep effects and the level or current change, and set flag 0x4000. */
+int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
+    int effect;
+    int amount;
+    int hpKind; /* -50 or -100: the kind argument of func_00AA4DB8 for the hit-point effect */
+    int level;
+    int magnitude;
+    unsigned int value;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A85910);
+    hpKind = -50;
+    if (step->state == 0) {
+        func_00A954D8(object, 0x140, 9);
+        seVoiceStartTagged(2, 3);
+        if (object->stats->key >= 0x10) {
+            object->flags |= 0x4000;
+            return 1;
+        }
+        unitSetPhase(object, 0x1A);
+        step->state++;
+    } else if (unitIsDone(object) != 0) {
+        effect = calcStatEffectSum(object, 0x200, 0x8000);
+        if (effect > 0) {
+            int epDelta;
 
-void unitRefreshPhase(Ov01Object *object);
+            hpKind = -100;
+            epDelta = object->stats->maxEp;
+            epDelta = epDelta * effect;
+            epDelta = epDelta / 100;
+            calcEpAdjust(object, epDelta);
+            magnitude = epDelta;
+            if (epDelta < 0) {
+                magnitude = -epDelta;
+            }
+            func_00AA4DB8(object, magnitude, 4, -50);
+        }
+        effect = calcStatEffectSum(object, 0x200, 0x800);
+        if (effect > 0) {
+            int hpDelta;
+
+            hpDelta = object->stats->maxHp;
+            hpDelta = hpDelta * effect;
+            hpDelta = hpDelta / 100;
+            calcHpAdjust(object, hpDelta);
+            magnitude = hpDelta;
+            if (hpDelta < 0) {
+                magnitude = -hpDelta;
+            }
+            func_00AA4DB8(object, magnitude, 2, hpKind);
+        }
+        value = object->stats->keyUnsigned;
+        if (value - 1 < 10) {
+            level = 1;
+            effect = calcStatEffectSum(object, 0x200, 0x2000);
+            if (effect > 0) {
+                if (ov01RollPercent(50) != 0) {
+                    level = effect;
+                }
+            }
+            unitLevelAdd(object, level);
+        } else if (((value - 11) & 0xFFFF) < 5) {
+            amount = 100;
+            effect = calcStatEffectSum(object, 0x200, 0x1000);
+            if (effect > 0) {
+                amount = amount + effect;
+            }
+            unitCurrentAdd(object, amount);
+            if (unitHasEffectCode(object, 0x51) != 0) {
+                calcStatResetCha(object);
+            }
+        }
+        value = object->flags;
+        object->flags = value | 0x4000;
+        return 1;
+    }
+    return 0;
+}
+
+int func_001EDCA8(void);
+void seObjectVoiceStart(void *, int, int);
+
+int unitCmdAction(Ov01Object *object, Ov01Command *command) {
+    StatBlock *motion;
+    s16 mode;
+    int keyHigh;
+    int keyLow;
+
+    switch (command->state) {
+    case 0:
+        unitSetPhase(object, 20);
+        unitActionKey(object, &keyHigh, &keyLow);
+        func_00A954D8(object, keyHigh, keyLow);
+        unitSetSelector(object, 9);
+        seObjectVoiceStart(object, 8, func_001EDCA8());
+        command->state++;
+        break;
+    case 1:
+        motion = object->stats;
+        mode = motion->key;
+        if (mode < 16) {
+            if (unitIsDone(object) != 0) {
+                unitSetSelector(object, 0);
+                unitRefreshPhase(object);
+                return 1;
+            }
+        } else {
+            if (unitIsDone(object) != 0) {
+                unitSetSelector(object, 0);
+                unitRefreshPhase(object);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+int func_001EDCA0(void);
+void streamPlayByKey(void *owner, int mode);
+
+int unitCmdPlayVoice(Ov01Object *object, Ov01Command *step) {
+    func_00A9B3B8(step->code);
+    switch (step->state) {
+    case 0:
+        unitSetPhase(object, 23);
+        seObjectVoiceStart(object, 9, func_001EDCA0());
+        streamPlayByKey(object, (step->arg.owner == object) ? 1 : 2);
+        step->state++;
+        break;
+    case 1:
+        if (unitIsDone(object) != 0) {
+            unitRefreshPhase(object);
+            return 1;
+        }
+        break;
+    }
+    return 0;
+}
+
+int func_00A95540(void *object, int a, int b);
+int unitRemove(Ov01Object *object);
+void sefReleaseWaitSlot(int key);
+int handleFree(s16 handle);
+int dataSlotFlagClear(s16 key);
+int dataSlotReset(s16 key);
+
+/* Command step: state 0 starts the fade-out and moves to state 1; state 1 releases the unit once no fade runs. */
+int unitCmdRelease(Ov01Object *object, Ov01Command *command) {
+    switch (command->state) {
+    case 0:
+        func_00A95540(object, 320, 8);
+        unitFadeOut(object);
+        command->state++;
+        break;
+    case 1:
+        if (object->fade != 0) {
+            break;
+        }
+        dataSlotFlagClear(object->stats->keyUnsigned);
+        sefReleaseWaitSlot(object->stats->sequenceIndex);
+        handleFree(object->stats->handle);
+        dataSlotReset(object->stats->keyUnsigned);
+        unitRemove(object);
+        return 1;
+    }
+    return 0;
+}
+
+/* Command step: state 0 fades out, state 1 loads the snapshot once no fade runs, state 2 fades in, state 3 completes once no fade runs. */
+int unitCmdLoadSnapshot(Ov01Object *object, Ov01Command *step) {
+    switch (step->state) {
+    case 0:
+        unitFadeOut(object);
+        step->state++;
+        break;
+    case 1:
+        if (object->fade == 0) {
+            unitLoadSnapshot(object, step->code);
+            step->state++;
+        }
+        break;
+    case 2:
+        unitFadeIn(object);
+        step->state++;
+        break;
+    case 3:
+        if (object->fade == 0) {
+            return 1;
+        }
+        break;
+    }
+    return 0;
+}
+
+/* Command step for the second command: state 0 starts the fade-out; state 1 sets the battle transition and clears the object's flag bit 2. */
+int unitCmdSetBattleTransition(Ov01Object *object, Ov01Command *command) {
+    int state;
+
+    state = command->state;
+    switch (state) {
+    case 0:
+        unitFadeOut(object);
+        command->state++;
+        break;
+    case 1:
+        if (object->fade == 0) {
+            if (object->stats->key < 16) {
+                battleStateGet()->transition = 1;
+            } else {
+                battleStateGet()->transition = 2;
+            }
+            object->flags &= ~1;
+            return 1;
+        }
+        break;
+    }
+    return 0;
+}
 
 /* Handler table unitCommandTable entry 8: calls unitRefreshPhase, then done. */
-int unitCmdRefreshPhase(Ov01Object *object) {
+int unitCmdRefreshPhase(Ov01Object *object, int unusedArg) {
     unitRefreshPhase(object);
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu012", func_00A859F8);
+/* Handler table unitCommandTable entry 9: sets flag 0x1000, clears flag 1, calls func_00A955C8 (the unbind side) when flag 4 is clear, then refreshes the phase unless the phase kind is 2 or 3. */
+int unitCmdUnbind(Ov01Object *object, int unusedArg) {
+    object->flags = (object->flags | 0x1000) & ~1;
+    if ((object->flags & 4) == 0) {
+        func_00A955C8(object);
+    }
+    if ((unsigned int) ((unsigned char) object->stats->state70 - 2) < 2) {
+        return 1;
+    }
+    return unitCmdRefreshPhase(object, unusedArg);
+}

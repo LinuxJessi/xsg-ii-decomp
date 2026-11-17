@@ -54,7 +54,7 @@
      1
     ],
     [
-     "func_00A80170",
+     "ov01CallbackSlotClaim",
      11010416,
      88,
      1
@@ -84,7 +84,7 @@
      1
     ],
     [
-     "func_00A802F8",
+     "ov01TaskClaim",
      11010808,
      88,
      1
@@ -96,7 +96,7 @@
      1
     ],
     [
-     "func_00A80368",
+     "monsSlotClearAll",
      11010920,
      72,
      1
@@ -114,7 +114,7 @@
      1
     ],
     [
-     "func_00A80480",
+     "monsSlotClaim",
      11011200,
      88,
      1
@@ -144,7 +144,7 @@
      1
     ],
     [
-     "func_00A80608",
+     "unitSideClaim",
      11011592,
      88,
      1
@@ -498,7 +498,7 @@
      1
     ],
     [
-     "func_00A81D30",
+     "dataCdArenaOpen",
      11017520,
      44,
      1
@@ -582,7 +582,7 @@
      1
     ],
     [
-     "func_00A82560",
+     "dataSlotReclaim",
      11019616,
      260,
      1
@@ -624,13 +624,13 @@
      1
     ],
     [
-     "func_00A82D50",
+     "dataModelMotLoad",
      11021648,
      200,
      1
     ],
     [
-     "func_00A82E18",
+     "unitEffectSlotAcquire",
      11021848,
      96,
      1
@@ -726,25 +726,25 @@
      1
     ],
     [
-     "func_00A83428",
+     "dataBattleCodePathGet",
      11023400,
      420,
      1
     ],
     [
-     "func_00A835D0",
+     "dataBattleActionPathGet",
      11023824,
      168,
      1
     ],
     [
-     "func_00A83678",
+     "dataBattleRandomPathGet",
      11023992,
      292,
      1
     ],
     [
-     "func_00A837A0",
+     "battleCodeMatches",
      11024288,
      1412,
      1
@@ -828,7 +828,7 @@
      1
     ],
     [
-     "func_00A840A8",
+     "ov01HeapProbeLargeAlloc",
      11026600,
      60,
      1
@@ -870,7 +870,7 @@
      1
     ],
     [
-     "func_00A84518",
+     "unitBindActors",
      11027736,
      480,
      1
@@ -918,19 +918,19 @@
      1
     ],
     [
-     "func_00A849B8",
+     "unitCurrentPhase",
      11028920,
      16,
      1
     ],
     [
-     "func_00A849C8",
+     "unitSetPhase",
      11028936,
      416,
      1
     ],
     [
-     "func_00A84B68",
+     "unitSetTimedPhase",
      11029352,
      204,
      1
@@ -960,7 +960,7 @@
      1
     ],
     [
-     "func_00A84D80",
+     "unitEffectKeyFree",
      11029888,
      36,
      1
@@ -1008,13 +1008,13 @@
      1
     ],
     [
-     "func_00A85098",
+     "unitActionKey",
      11030680,
      128,
      1
     ],
     [
-     "func_00A85118",
+     "unitMoveKey",
      11030808,
      128,
      1
@@ -1050,43 +1050,43 @@
      1
     ],
     [
-     "func_00A852B8",
+     "unitCmdSetPhase",
      11031224,
      228,
      1
     ],
     [
-     "func_00A853A0",
+     "unitCmdStatEffect",
      11031456,
      568,
      1
     ],
     [
-     "func_00A855D8",
+     "unitCmdAction",
      11032024,
      224,
      1
     ],
     [
-     "func_00A856B8",
+     "unitCmdPlayVoice",
      11032248,
      208,
      1
     ],
     [
-     "func_00A85788",
+     "unitCmdRelease",
      11032456,
      192,
      1
     ],
     [
-     "func_00A85848",
+     "unitCmdLoadSnapshot",
      11032648,
      200,
      1
     ],
     [
-     "func_00A85910",
+     "unitCmdSetBattleTransition",
      11032848,
      196,
      1
@@ -1098,25 +1098,25 @@
      1
     ],
     [
-     "func_00A859F8",
+     "unitCmdUnbind",
      11033080,
      132,
      1
     ],
     [
-     "func_00A85A80",
+     "unitCmdModeRamp",
      11033216,
      232,
      1
     ],
     [
-     "func_00A85B68",
+     "unitCmdModeStart",
      11033448,
      364,
      1
     ],
     [
-     "func_00A85CD8",
+     "unitCmdModeDispatch",
      11033816,
      276,
      1
@@ -1152,7 +1152,7 @@
      1
     ],
     [
-     "func_00A86270",
+     "unitCmdCodeWait",
      11035248,
      100,
      1
@@ -1170,13 +1170,13 @@
      1
     ],
     [
-     "func_00A86328",
+     "unitCmdMovePosJump",
      11035432,
      68,
      1
     ],
     [
-     "func_00A86370",
+     "unitCmdMoveChaJump",
      11035504,
      68,
      1
@@ -1206,25 +1206,25 @@
      1
     ],
     [
-     "func_00A865D8",
+     "unitCmdPhase0EWait",
      11036120,
      128,
      1
     ],
     [
-     "func_00A86658",
+     "unitCmdPhase12Wait",
      11036248,
      132,
      1
     ],
     [
-     "func_00A866E0",
+     "unitCmdPoseArrive",
      11036384,
      172,
      1
     ],
     [
-     "func_00A86790",
+     "unitCmdPoseArriveWait",
      11036560,
      184,
      1
@@ -1236,7 +1236,7 @@
      1
     ],
     [
-     "func_00A86968",
+     "unitCmdMoveRamp",
      11037032,
      452,
      1
@@ -1248,19 +1248,19 @@
      1
     ],
     [
-     "func_00A86B68",
+     "unitCmdPhase2CWait",
      11037544,
      128,
      1
     ],
     [
-     "func_00A86BE8",
+     "unitCmdClearActive",
      11037672,
      24,
      1
     ],
     [
-     "func_00A86C00",
+     "unitCmdPhase2BWait",
      11037696,
      176,
      1
@@ -1272,7 +1272,7 @@
      1
     ],
     [
-     "func_00A86CC8",
+     "unitCmdTurnAim",
      11037896,
      200,
      1
@@ -1290,13 +1290,13 @@
      1
     ],
     [
-     "func_00A86DF0",
+     "unitCmdFinishRefresh",
      11038192,
      84,
      1
     ],
     [
-     "func_00A86E48",
+     "unitSlotsClear",
      11038280,
      212,
      1
@@ -1308,7 +1308,7 @@
      1
     ],
     [
-     "func_00A86F38",
+     "unitQueueMoveCommands",
      11038520,
      184,
      1
@@ -1320,7 +1320,7 @@
      1
     ],
     [
-     "func_00A87030",
+     "unitCmdDstSet",
      11038768,
      412,
      1
@@ -1356,7 +1356,7 @@
      1
     ],
     [
-     "func_00A87390",
+     "unitDefArea",
      11039632,
      256,
      1
@@ -1374,19 +1374,19 @@
      1
     ],
     [
-     "func_00A87508",
+     "unitCmdRun",
      11040008,
      468,
      1
     ],
     [
-     "func_00A876E0",
+     "unitCmdMoveJump",
      11040480,
      588,
      1
     ],
     [
-     "func_00A87930",
+     "unitCmdHoverFade",
      11041072,
      384,
      1
@@ -1404,7 +1404,7 @@
      1
     ],
     [
-     "func_00A87DB8",
+     "unitPoseRamp",
      11042232,
      128,
      1
@@ -1452,13 +1452,13 @@
      1
     ],
     [
-     "func_00A88158",
+     "unitNumFlag1Flag4ClearGet",
      11043160,
      112,
      1
     ],
     [
-     "func_00A881C8",
+     "unitNumBusyGet",
      11043272,
      192,
      1
@@ -1548,7 +1548,7 @@
      1
     ],
     [
-     "func_00A88AC0",
+     "monsSlotNew",
      11045568,
      108,
      1
@@ -1560,13 +1560,13 @@
      1
     ],
     [
-     "func_00A88B60",
+     "monsSlotCopyParams",
      11045728,
      48,
      1
     ],
     [
-     "func_00A88B90",
+     "monsSlotEmptyUpdate",
      11045776,
      8,
      1
@@ -1578,13 +1578,13 @@
      1
     ],
     [
-     "func_00A88BB0",
+     "monsSlotInsert",
      11045808,
      84,
      1
     ],
     [
-     "func_00A88C08",
+     "monsSlotRemove",
      11045896,
      84,
      1
@@ -1650,19 +1650,19 @@
      1
     ],
     [
-     "func_00A88EB0",
+     "dataKeyInputStep",
      11046576,
      388,
      1
     ],
     [
-     "func_00A89038",
+     "dataKeyCheck",
      11046968,
      388,
      1
     ],
     [
-     "func_00A891C0",
+     "dataKeyValueGet",
      11047360,
      164,
      1
@@ -1674,13 +1674,13 @@
      1
     ],
     [
-     "func_00A89280",
+     "dataKeyRegister",
      11047552,
      192,
      1
     ],
     [
-     "func_00A89340",
+     "dataKeyFind",
      11047744,
      264,
      1
@@ -1710,19 +1710,19 @@
      1
     ],
     [
-     "func_00A89538",
+     "dataSlotRowGet",
      11048248,
      72,
      1
     ],
     [
-     "func_00A89580",
+     "menuWepSpPanelUpdate",
      11048320,
      400,
      1
     ],
     [
-     "func_00A89710",
+     "dataSlotKeyTest",
      11048720,
      376,
      1
@@ -1746,7 +1746,7 @@
      1
     ],
     [
-     "func_00A898B8",
+     "menuTargetListUpdate",
      11049144,
      224,
      1
@@ -1800,13 +1800,13 @@
      1
     ],
     [
-     "func_00A89CB0",
+     "dataObjDrawSprite",
      11050160,
      184,
      1
     ],
     [
-     "func_00A89D68",
+     "dataTargetShow",
      11050344,
      144,
      1
@@ -1836,7 +1836,7 @@
      1
     ],
     [
-     "func_00A89F08",
+     "dataTargetApply",
      11050760,
      272,
      1
@@ -1860,49 +1860,49 @@
      1
     ],
     [
-     "func_00A8A160",
+     "dataStateModeToggle",
      11051360,
      124,
      1
     ],
     [
-     "func_00A8A1E0",
+     "dataUnitListInit",
      11051488,
      264,
      1
     ],
     [
-     "func_00A8A2E8",
+     "dataUnitCursorStep",
      11051752,
      196,
      1
     ],
     [
-     "func_00A8A3B0",
+     "dataEntryListInit",
      11051952,
      220,
      1
     ],
     [
-     "func_00A8A490",
+     "dataEntryCursorStep",
      11052176,
      168,
      1
     ],
     [
-     "func_00A8A538",
+     "dataTargetListInit",
      11052344,
      500,
      1
     ],
     [
-     "func_00A8A730",
+     "dataUnitCursorCycle",
      11052848,
      324,
      1
     ],
     [
-     "func_00A8A878",
+     "dataSelectedGet",
      11053176,
      56,
      1
@@ -2034,7 +2034,7 @@
      1
     ],
     [
-     "func_00A8B658",
+     "battleItemUse",
      11056728,
      196,
      1
@@ -2172,13 +2172,13 @@
      1
     ],
     [
-     "func_00A8BCD8",
+     "calcHitRateGet",
      11058392,
      112,
      1
     ],
     [
-     "func_00A8BD48",
+     "calcEvadeRate",
      11058504,
      144,
      1
@@ -2208,31 +2208,31 @@
      1
     ],
     [
-     "func_00A8C1C8",
+     "calcActionPower",
      11059656,
      32,
      1
     ],
     [
-     "func_00A8C1E8",
+     "calcStatResist",
      11059688,
      144,
      1
     ],
     [
-     "func_00A8C278",
+     "calcAttackStatusMask",
      11059832,
      184,
      1
     ],
     [
-     "func_00A8C330",
+     "calcEpCost",
      11060016,
      148,
      1
     ],
     [
-     "func_00A8C3C8",
+     "calcHitRecordFill",
      11060168,
      244,
      1
@@ -2256,43 +2256,43 @@
      1
     ],
     [
-     "func_00A8CF88",
+     "calcCritDamage",
      11063176,
      388,
      1
     ],
     [
-     "func_00A8D110",
+     "calcHitInflict",
      11063568,
      304,
      1
     ],
     [
-     "func_00A8D240",
+     "calcHitCure",
      11063872,
      224,
      1
     ],
     [
-     "func_00A8D320",
+     "calcKindHitMode",
      11064096,
      92,
      1
     ],
     [
-     "func_00A8D380",
+     "calcRestoreValue",
      11064192,
      420,
      1
     ],
     [
-     "func_00A8D528",
+     "calcHitStateStep",
      11064616,
      436,
      1
     ],
     [
-     "func_00A8D6E0",
+     "calcHitRowGate",
      11065056,
      428,
      1
@@ -2304,37 +2304,37 @@
      1
     ],
     [
-     "func_00A8D8C0",
+     "unitEntryKindAdd",
      11065536,
      48,
      1
     ],
     [
-     "func_00A8D8F0",
+     "unitEntriesAllMarked",
      11065584,
      92,
      1
     ],
     [
-     "func_00A8D950",
+     "calcFollowKind",
      11065680,
      116,
      1
     ],
     [
-     "func_00A8D9C8",
+     "calcBackAttack",
      11065800,
      28,
      1
     ],
     [
-     "func_00A8D9E8",
+     "unitIsInFacingArc",
      11065832,
      332,
      1
     ],
     [
-     "func_00A8DB38",
+     "unitStateAdvance",
      11066168,
      84,
      1
@@ -2352,13 +2352,13 @@
      1
     ],
     [
-     "func_00A8DD00",
+     "calcHitApply",
      11066624,
      752,
      1
     ],
     [
-     "func_00A8DFF0",
+     "calcStatusHitRoll",
      11067376,
      212,
      1
@@ -2436,7 +2436,7 @@
      1
     ],
     [
-     "func_00A8E808",
+     "unitStatsRefresh",
      11069448,
      424,
      1
@@ -2520,31 +2520,31 @@
      1
     ],
     [
-     "func_00A8F3C0",
+     "slotPairSet",
      11072448,
      180,
      1
     ],
     [
-     "func_00A8F478",
+     "slotPairTest",
      11072632,
      108,
      1
     ],
     [
-     "func_00A8F4E8",
+     "slotMarkSet",
      11072744,
      116,
      1
     ],
     [
-     "func_00A8F560",
+     "slotMarkTest",
      11072864,
      124,
      1
     ],
     [
-     "func_00A8F5E0",
+     "slotMarkClear",
      11072992,
      120,
      1
@@ -2562,7 +2562,7 @@
      1
     ],
     [
-     "func_00A8F690",
+     "battleResultAdd",
      11073168,
      396,
      1
@@ -2580,25 +2580,25 @@
      1
     ],
     [
-     "func_00A8F948",
+     "battleReviveDownedParty",
      11073864,
      204,
      1
     ],
     [
-     "func_00A8FA18",
+     "battleResultApply",
      11074072,
      536,
      1
     ],
     [
-     "func_00A8FC30",
+     "battleAbsentUnitsApply",
      11074608,
      568,
      1
     ],
     [
-     "func_00A8FE68",
+     "battleGainsAdd",
      11075176,
      468,
      1
@@ -2610,7 +2610,7 @@
      1
     ],
     [
-     "func_00A90118",
+     "unitGrowthStep",
      11075864,
      588,
      1
@@ -2640,7 +2640,7 @@
      1
     ],
     [
-     "func_00A90500",
+     "unitValueDecay",
      11076864,
      100,
      1
@@ -2664,13 +2664,13 @@
      1
     ],
     [
-     "func_00A90660",
+     "battleEffectApplies",
      11077216,
      332,
      1
     ],
     [
-     "func_00A907B0",
+     "partyUnitHpLow",
      11077552,
      88,
      1
@@ -2682,25 +2682,25 @@
      1
     ],
     [
-     "func_00A90858",
+     "battleEffectResolve",
      11077720,
      300,
      1
     ],
     [
-     "func_00A90988",
+     "effectPosIsFree",
      11078024,
      144,
      1
     ],
     [
-     "func_00A90A18",
+     "effectPosCountFree",
      11078168,
      108,
      1
     ],
     [
-     "func_00A90A88",
+     "battleMaskWordsUnmatched",
      11078280,
      332,
      1
@@ -2712,7 +2712,7 @@
      1
     ],
     [
-     "func_00A90CD8",
+     "calcEntryUsable",
      11078872,
      184,
      1
@@ -2730,19 +2730,19 @@
      1
     ],
     [
-     "func_00A90E38",
+     "calcKeyBandRecords",
      11079224,
      308,
      1
     ],
     [
-     "func_00A90F70",
+     "calcCurrentMeetsRecord",
      11079536,
      60,
      1
     ],
     [
-     "func_00A90FB0",
+     "calcKeyPairRecords",
      11079600,
      228,
      1
@@ -2760,7 +2760,7 @@
      1
     ],
     [
-     "func_00A911F0",
+     "calcPairEntryUsable",
      11080176,
      96,
      1
@@ -2772,13 +2772,13 @@
      1
     ],
     [
-     "func_00A912D0",
+     "tgtSideAccepts",
      11080400,
      244,
      1
     ],
     [
-     "func_00A913C8",
+     "calcCfEventKeyTest",
      11080648,
      80,
      1
@@ -2802,19 +2802,19 @@
      1
     ],
     [
-     "func_00A91708",
+     "boostGaugeGet",
      11081480,
      40,
      1
     ],
     [
-     "func_00A91730",
+     "boostGaugeSelect",
      11081520,
      32,
      1
     ],
     [
-     "func_00A91750",
+     "actStockHasBoost",
      11081552,
      64,
      1
@@ -2844,7 +2844,7 @@
      1
     ],
     [
-     "func_00A91978",
+     "actStepCounterSet",
      11082104,
      132,
      1

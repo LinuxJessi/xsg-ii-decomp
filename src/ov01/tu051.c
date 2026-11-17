@@ -36,14 +36,14 @@ void menuCursorUpdate(MenuCursor *cursor) {
     }
 }
 
-int func_00A91750(void);
+int actStockHasBoost(void);
 void menuUnitListDraw(MenuCursor *);
 void menuCursorTargetDraw(MenuCursor *cursor);
 
 /* Cursor draw (callback +8): parks the cursor at the home position and draws the target
- * status when func_00A91750 is set, otherwise draws the unit list when substate is 1. */
+ * status when actStockHasBoost is set, otherwise draws the unit list when substate is 1. */
 void menuCursorDraw(MenuCursor *cursor) {
-    if (func_00A91750() != 0) {
+    if (actStockHasBoost() != 0) {
         cursor->x = 288.0f;
         cursor->y = 390.0f;
         menuCursorTargetDraw(cursor);

@@ -4,21 +4,15 @@
 #include "common.h"
 #include "ov01/tu012.h"
 
-typedef struct TgtObject TgtObject;
-
 typedef struct TgtSlot TgtSlot;
 
 typedef struct TgtSelectState TgtSelectState;
 
 /*
- * A battle candidate. Its flags word at +0x0c: 0x08 is set when tgtSelectBegin takes it, 0x10 is the
- * highlight (set by tgtSelectActivate, cleared by tgtSelectUnhighlight below), 0x20 gates the cursor stage,
- * 0x01 is set and 0x1000 cleared when tgtSelectConfirm picks it.
+ * A battle candidate is a unit object (Ov01Object in ov01/tu012.h). Its flags word at +0x0c: 0x08 is set when
+ * tgtSelectBegin takes it, 0x10 is the highlight (set by tgtSelectActivate, cleared by tgtSelectUnhighlight
+ * below), 0x20 gates the cursor stage, 0x01 is set and 0x1000 cleared when tgtSelectConfirm picks it.
  */
-struct TgtObject {
-    int unmodeled_00[3];
-    int flags;
-};
 
 /* Three-entry table set up by tgtSelectInit: index is the slot number, value starts at 180. */
 struct TgtSlot {
@@ -36,8 +30,8 @@ struct TgtSlot {
  */
 struct TgtSelectState {
     int flags;
-    TgtObject *current;
-    TgtObject *last_object;
+    Ov01Object *current;
+    Ov01Object *last_object;
     int unmodeled_0c[4];
     int phase;
     int cleared_20;
@@ -52,7 +46,7 @@ struct TgtSelectState {
 
 extern TgtSlot ov01PartyTable[];
 extern TgtSelectState tgtSelectState;
-extern TgtObject *tgtSelectCurrent;
+extern Ov01Object *tgtSelectCurrent;
 extern int tgtSelectStatus;
 extern int tgtSelectMode;
 void *memset(void *s, int c, unsigned int n);
@@ -109,7 +103,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu035", tgtSelectBegin);
 void tgtSelectActivate(void)
 {
     TgtSelectState *state = &tgtSelectState;
-    TgtObject *object;
+    Ov01Object *object;
 
     if (unitQueueIsEmpty(state->current) != 0) {
         object = state->current;
@@ -127,7 +121,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu035", tgtSelectCursor);
  * Confirms object: it becomes last_object and the execute stage (flag 8) is armed. If the current
  * candidate has lost its highlight, the selection is dropped and the cursor stage (flag 4) cleared.
  */
-void tgtSelectConfirm(TgtObject *object)
+void tgtSelectConfirm(Ov01Object *object)
 {
     TgtSelectState *state = &tgtSelectState;
     int flags;

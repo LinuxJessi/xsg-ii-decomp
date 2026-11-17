@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "main/control_entry.h"
 #include "main/gifState.h"
+#include "main/tu051.h"
 #include "main/tu092.h"
 #include "main/tu094.h"
 #include "main/tu097.h"
@@ -331,8 +332,8 @@ void yg2PathLoadCitizens(void)
 
 extern float D_0069D830[4];
 
-/* Partial view of the XenoActor record the path scene creates (the full record is in main/xenoActor):
-   the fields this file touches. */
+/* Partial view of the XenoActor record the path scene creates, for the accesses below that the original makes through
+   a union view (alias set 0: it reloads the handle after each store; struct XenoActor's plain vectors would not). */
 typedef struct YgPathActor {
     unsigned char unmodeled_00[0x10];
     DoublewordVector4 position;      /* 0x010 */
@@ -340,16 +341,8 @@ typedef struct YgPathActor {
     DoublewordVector4 rotation;      /* 0x050 */
     unsigned char unmodeled_60[0xBC - 0x60];
     int drawFlags;                   /* 0x0BC */
-    unsigned char unmodeled_c0[0xC4 - 0xC0];
-    int drawMode;                    /* 0x0C4 */
-    unsigned char unmodeled_c8[0x4C0 - 0xC8];
+    unsigned char unmodeled_c0[0x4C0 - 0xC0];
     unsigned int visibilityFlags;    /* 0x4C0: first word of the visibility block */
-    unsigned char unmodeled_4c4[0x5EC - 0x4C4];
-    int pack;                        /* 0x5EC */
-    int effect;                      /* 0x5F0 */
-    int motion;                      /* 0x5F4 */
-    unsigned char unmodeled_5f8[4];
-    int resource;                    /* 0x5FC */
 } YgPathActor;
 
 /* Partial view of the xgl camera (main/sdv_033.h XglCamera) with the travel vectors this file writes. */
@@ -386,15 +379,14 @@ typedef struct Yg2PathFlag {
 extern int yg2PathScroll;
 unsigned short xglSRand(void);
 void cfeFileTempInit(void *buffer, int size);
-YgPathActor *XenoActorAlloc(void);
-void XenoActorAllocMatrices(YgPathActor *actor);
+void XenoActorAllocMatrices(struct XenoActor *actor);
 YgPathCamera *xglStudioSelectGetActiveCamera(int index);
 void xglCameraSetWindow(YgPathCamera *camera, int x, int y, int width, int height);
 void *ysegfAllocFileBuffer(unsigned char *name);
 
 void yg2PathLoadScene(void) {
     int modelFiles[4];
-    YgPathActor *actor;
+    struct XenoActor *actor;
     YgPathCamera *camera;
     Yg2PathFlag *pageMode;
     Yg2PathFlag *menuChoice;
@@ -429,12 +421,12 @@ void yg2PathLoadScene(void) {
         assertFailed(D_0069D828, yg2PathSourceName, 845);
     }
     actor = XenoActorAlloc();
-    actor->pack = modelFiles[0];
+    actor->rsrc[XAct_Rsrc_MDL] = modelFiles[0];
     actor->drawMode = 0;
     yg2PathModelHandles[0] = (int) actor;
-    actor->effect = modelFiles[1];
-    actor->motion = modelFiles[2];
-    actor->resource = modelFiles[3];
+    actor->rsrc[XAct_Rsrc_TEX] = modelFiles[1];
+    actor->rsrc[XAct_Rsrc_XHR] = modelFiles[2];
+    actor->rsrc[XAct_Rsrc_XAP] = modelFiles[3];
     XenoActorAllocMatrices(actor);
     XenoActorSetChannelValue((struct XenoActor *) yg2PathModelHandles[0], 0.0f);
     XenoActorEnableChannel((struct XenoActor *) yg2PathModelHandles[0]);
@@ -476,11 +468,10 @@ void yg2PathLoadScene(void) {
 }
 
 void pxySetCameraEnable(int first, int second);
-void XenoActorRelease(int handle);
 
 void yg2PathUnload(void) {
     if (yg2PathModelHandles[0] != 0) {
-        XenoActorRelease(yg2PathModelHandles[0]);
+        XenoActorRelease((struct XenoActor *) yg2PathModelHandles[0]);
         yg2PathModelHandles[0] = 0;
     }
     yg2PathPortraitBuffer = 0;

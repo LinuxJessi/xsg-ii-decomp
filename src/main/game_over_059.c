@@ -11,7 +11,6 @@
 #include "main/tu051.h"
 #include "gs.h"
 
-
 extern void sceVif1PkRef(XglPacket *packet, const void *environment,
                          int count, int mode, int offset, int flags);
 extern void sceVif1PkCnt(XglPacket *packet, int count);
@@ -53,8 +52,6 @@ void DrawImage(void *framebuffer);
 void DrawBack(int alpha);
 void redraw_frame(void *framebuffer);
 extern void FlushCache(int mode);
-
-
 extern DrawImageRenderState sRender;
 extern void sceVif1PkAddDataN(XglPacket *packet, const void *data, int count);
 extern GameOverDmaPacket12 TestEnv_0_002BCD00;
@@ -65,7 +62,6 @@ XglCamera *xglStudioGetCamera2(int camera_index);
 void uwamonoResetRecords(int index, signed char mode);
 void saveScreenRun(int);
 void fadeReset(void);
-
 
 /* The fields of gameWork this file reads and writes. */
 typedef struct GameOverWork {
@@ -95,36 +91,27 @@ typedef struct JpegDecodeRequest {
  * that DrawImage presents. */
 #define IMAGE_LOAD_BUFFER 0x010e0000
 #define IMAGE_FRAME_BUFFER 0x01000000
-
 /* EE scratchpad RAM, where GameCopyFrame builds its packet. */
 #define SCRATCHPAD_BASE 0x70000000
-
 /* EE RAM buffers of the synopsis screen: the panel archive, the compressed
  * background image and the decoded background. */
 #define SYNOPSIS_ARCHIVE ((u32 *)0x01E00000) /* lui 0x1E0 */
 #define SYNOPSIS_IMAGE_BUFFER 0x01D00000
 #define SYNOPSIS_FRAME_BUFFER 0x01C00000
-
 /* The 8-bit story progress flag (GameSynopsis asks for disc 2 from 0x4C on). */
 #define STORY_PROGRESS_FLAG 0x191
-
 /* Intermission and GameDiskChange load their image file this far past
  * the framebuffer. */
 #define IMAGE_LOAD_OFFSET 0x100000
-
 /* The GameEnd map: GameOver shows the ending screen when gameWork.mapId is this. */
 #define MAP_ID_GAME_END 0x1B91
-
 /* The first map of a new game: Title's New Game writes it to gameWork.state. */
 #define MAP_ID_NEW_GAME 0x1B59
-
 /* The state Title's Load Game writes after menuRequestLoad. */
 #define GAME_STATE_LOAD_SAVE 10
-
 /* GameEnd's prompt outcome. */
 #define END_CHOICE_SAVE 1
 #define END_CHOICE_QUIT 2
-
 /* Sound effects of the prompts. */
 #define SE_DECIDE 0x1000002
 #define SE_CANCEL 0x1000008
@@ -168,10 +155,14 @@ extern void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 extern const char D_00688648[];
 extern const char D_00688660[];
 /* The disc messages; GameDiskSetDiscDigit rewrites their disc digit. */
-extern u8 D_002BD030[]; /* "Please insert DISC 2 of\nXenosaga Episode II." */
-extern u8 D_002BD060[]; /* "Incorrect disc.\n\nPlease insert DISC 2 ..." */
-extern u8 D_002BD0A0[]; /* "There is no disc inserted.\n\nPlease insert DISC 2 ..." */
-extern u8 D_002BD0F0[]; /* "Checking disc..." */
+extern u8 D_002BD030[];
+/* "Please insert DISC 2 of\nXenosaga Episode II." */
+extern u8 D_002BD060[];
+/* "Incorrect disc.\n\nPlease insert DISC 2 ..." */
+extern u8 D_002BD0A0[];
+/* "There is no disc inserted.\n\nPlease insert DISC 2 ..." */
+extern u8 D_002BD0F0[];
+/* "Checking disc..." */
 /* Message by identification status -3..0: checking, insert, wrong disc, no disc. */
 extern char *D_002BD108[4];
 extern const char D_0069D018[];
@@ -221,7 +212,66 @@ void DrawImage(void *framebuffer)
     sceVif1PkRef(packet, FlushEnv_2_002BCD80.words, 3, 0, 0, 0);
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/game_over_059", GameSynopsisDrawPanel);
+/* The 28-word VIF payload at 0x002BCDB0 that GameSynopsisDrawPanel sends first. */
+typedef struct GameSynopsisPanelHeader {
+    u8 unmodeled_00[0x40];
+    u64 extent;                 /* +0x40: width in the low word, height in the high word */
+    u8 unmodeled_48[0x18];
+    int qwc;                    /* +0x60: the image's quadword count */
+    u8 unmodeled_64[0x0C];
+} GameSynopsisPanelHeader;
+
+/* The 44-word VIF payload at 0x002BCE20 that GameSynopsisDrawPanel sends second. */
+typedef struct GameSynopsisPanelRect {
+    u8 unmodeled_00[0x6C];
+    int alpha;                  /* +0x6C */
+    u8 unmodeled_70[0x10];
+    int top_left_x;             /* +0x80 */
+    int top_left_y;             /* +0x84 */
+    u8 unmodeled_88[0x08];
+    int width;                  /* +0x90 */
+    int height;                 /* +0x94 */
+    u8 unmodeled_98[0x08];
+    int bottom_right_x;         /* +0xA0 */
+    int bottom_right_y;         /* +0xA4 */
+    u8 unmodeled_A8[0x08];
+} GameSynopsisPanelRect;
+
+extern GameSynopsisPanelHeader D_002BCDB0;
+extern GameSynopsisPanelRect D_002BCE20;
+
+void GameSynopsisDrawPanel(GameSynopsisPanel *panel, int x, int y, int alpha)
+{
+    XglPacket *packet;
+    u64 extent;
+    int origin_x;
+    int origin_y;
+
+    if (panel->image == 0) {
+        return;
+    }
+    if (alpha == 0) {
+        return;
+    }
+    packet = xglPacketGetCurrent();
+    origin_x = 0x6FF8;
+    origin_y = 0x71F7;
+    extent = (u64)panel->width | ((u64)panel->height << 32);
+    D_002BCDB0.qwc = panel->qwc;
+    D_002BCE20.alpha = alpha;
+    D_002BCDB0.extent = extent;
+    D_002BCE20.width = panel->width * 16;
+    D_002BCE20.height = panel->height * 16;
+    D_002BCE20.top_left_x = x * 16 + origin_x;
+    D_002BCE20.top_left_y = y * 16 + origin_y;
+    D_002BCE20.bottom_right_x = (x + panel->width) * 16 + origin_x;
+    D_002BCE20.bottom_right_y = (y + panel->height) * 16 + origin_y;
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkAddDataN(packet, &D_002BCDB0, 28);
+    sceVif1PkRef(packet, panel->image, panel->qwc, 0, 0x51000000 | panel->qwc, 0);
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkAddDataN(packet, &D_002BCE20, 44);
+}
 
 void DrawBack(int alpha)
 {
@@ -244,7 +294,6 @@ void DrawBack(int alpha)
 #define GS_TRXPOS 0x51
 #define GS_TRXREG 0x52
 #define GS_TRXDIR 0x53
-
 /* TRXDIR 2: local-to-local transfer. */
 #define GS_TRXDIR_LOCAL_TO_LOCAL 2
 

@@ -32,7 +32,7 @@ ANNOTATIONS = (('main', 'SLUS_208.92', 'annotations/slus_208.92_annotations.csv'
                ('ov02', 'OV02.OVL', 'annotations/overlays/ov02_annotations.csv'))
 AS_SWAP = '.work/toolchains/ee-legacy-binutils-la29-vsqrt-nolabel-laimm-swap-v1/bin/ee-as'
 AS_NO_SWAP = '.work/toolchains/ee-legacy-binutils-la29-vsqrt-nolabel-laimm-v1/bin/ee-as'
-CC_FSV12 = '.work/toolchains/ee-gcc2.96-realconv-lp7-fsv14-v1/bin'   # the contract cc1 (name kept; fsv14 since 2026-11-15)
+CC_FSV12 = '.work/toolchains/ee-gcc2.96-realconv-lp7-fsv16-v1/bin'   # the contract cc1 (name kept; fsv16 since 2026-11-17)
 # name -> (compiler dir, assembler, assembler -g, -G rule). None keeps the X1 TU's own value.
 CONTRACTS = {
     'x1': (CC_FSV12, AS_SWAP, None, None),
@@ -45,7 +45,7 @@ CONTRACTS = {
 }
 # The patch ladder: each earlier compiler, with the rest of the contract unchanged.
 for ladder in sorted((ROOT / '.work/toolchains').glob('ee-gcc2.96-realconv-lp7-fsv*')):
-    if (ladder / 'bin/ee-gcc').exists() and 'fsv14' not in ladder.name:
+    if (ladder / 'bin/ee-gcc').exists() and 'fsv16' not in ladder.name:
         CONTRACTS.setdefault(ladder.name.removeprefix('ee-gcc2.96-realconv-lp7-'),
                              (str(ladder.relative_to(ROOT) / 'bin'), AS_SWAP, None, None))
 R_MIPS_MASK = {2: 0xffffffff, 4: 0x03ffffff, 5: 0xffff, 6: 0xffff, 7: 0xffff, 8: 0xffff}

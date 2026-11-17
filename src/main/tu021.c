@@ -90,12 +90,12 @@ int seBankLoadDefault(int slot, const char *name) {
     return seBankLoad(slot, name, 0);
 }
 
-int func_0013A098(int slot, int vsf);
-int func_0013A128(int slot, int prj);
-int func_0013A578(int slot, int vsf, int bank_size);
+int func_0013A098(int slot, void *vsf);
+int func_0013A128(int slot, void *prj);
+int func_0013A578(int slot, void *vsf, int bank_size);
 
 /* The memory form of seBankLoadFile: `vsf` and `prj` are the two bank files already in memory. */
-int seBankLoadMemory(int slot, int vsf, int prj, int bank_size)
+int seBankLoadMemory(int slot, void *vsf, void *prj, int bank_size)
 {
     int result;
 
@@ -194,7 +194,7 @@ void func_0013A1B8(int, int);
 
 /* The memory form of seBgmLoad: selects song `first`, loads its bank from the files `vsf` and `prj`
  * already in memory into slot 0 and, when `second` is set, passes it on with the song. */
-void seBgmLoadMemory(int first, int second, int vsf, int prj, int bank_size) {
+void seBgmLoadMemory(int first, int second, void *vsf, void *prj, int bank_size) {
     func_00139AF0(first);
     seBankLoadMemory(0, vsf, prj, bank_size);
     if (second != 0) {

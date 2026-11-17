@@ -2202,29 +2202,29 @@
     {
      "range": [
       "0x0063edb0",
-      "0x0063edb4"
+      "0x0063edb8"
      ],
      "generated": [
       "0x0063edb0",
-      "0x0063edb4"
+      "0x0063edb8"
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0063EDB0"
+      "dataPadRawWords"
      ],
      "c_input_spans": [
       {
        "section": ".sdata",
        "range": [
         "0x0063edb0",
-        "0x0063edb4"
+        "0x0063edb8"
        ],
        "object_range": [
         8,
-        12
+        16
        ],
        "symbols": [
-        "D_0063EDB0"
+        "dataPadRawWords"
        ]
       }
      ],
@@ -2236,30 +2236,30 @@
     },
     {
      "range": [
-      "0x0063edb4",
+      "0x0063edb8",
       "0x0063edd0"
      ],
      "generated": [
-      "0x0063edb4",
+      "0x0063edb8",
       "0x0063edd0"
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0063EDB4"
+      "D_0063EDB8"
      ],
      "c_input_spans": [
       {
        "section": ".data",
        "range": [
-        "0x0063edb4",
+        "0x0063edb8",
         "0x0063edd0"
        ],
        "object_range": [
         96,
-        124
+        120
        ],
        "symbols": [
-        "D_0063EDB4"
+        "D_0063EDB8"
        ]
       }
      ],
@@ -2290,8 +2290,8 @@
         "0x0063edd1"
        ],
        "object_range": [
-        12,
-        13
+        16,
+        17
        ],
        "symbols": [
         "D_0063EDD0"
@@ -2325,8 +2325,8 @@
         "0x0063ede0"
        ],
        "object_range": [
-        128,
-        143
+        120,
+        135
        ],
        "symbols": [
         "D_0063EDD1"
@@ -15201,6 +15201,66 @@
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/main/build/c/tu045.o"
+     }
+    }
+   ]
+  },
+  "main/tu048": {
+   ".rodata": [
+    {
+     "range": [
+      "0x006851d0",
+      "0x006851f0"
+     ],
+     "generated": [
+      "0x006851d0",
+      "0x006851e4"
+     ],
+     "generated_by": [
+      "func_001D6070"
+     ],
+     "c_owned_symbols": [
+      "jtbl_006851D0"
+     ],
+     "also_referenced_by_c": [
+      "D_00685180",
+      "D_00685190",
+      "D_006851A0",
+      "D_006851B0",
+      "D_006851C0"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu048.o"
+     }
+    }
+   ],
+   ".sdata": [
+    {
+     "range": [
+      "0x0069b950",
+      "0x0069b960"
+     ],
+     "generated": [
+      "0x0069b950",
+      "0x0069b95f"
+     ],
+     "generated_by": [
+      "func_001D6070"
+     ],
+     "c_owned_symbols": [
+      "D_0069B950",
+      "D_0069B958"
+     ],
+     "also_referenced_by_c": [
+      "mapObjectTable",
+      "uwamonoEntries"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu048.o"
      }
     }
    ]
@@ -55625,15 +55685,29 @@
       "jtbl_00688970"
      ],
      "also_referenced_by_c": [
+      "D_006886B0",
       "D_006886C0",
       "D_006886E0",
       "D_006886F0",
       "D_00688730",
       "D_00688770",
+      "D_00688780",
+      "D_006887A0",
+      "D_006887B0",
+      "D_006887E0",
+      "D_00688810",
+      "D_00688840",
+      "D_00688850",
+      "D_00688860",
+      "D_00688890",
+      "D_006888A0",
+      "D_006888B0",
       "D_00688900",
       "D_00688910",
       "D_00688938",
       "D_00688960",
+      "D_00688988",
+      "D_00688998",
       "D_006889B8",
       "D_006889C8"
      ],
@@ -55718,7 +55792,18 @@
       "jtbl_00689090"
      ],
      "also_referenced_by_c": [
-      "D_00689378"
+      "D_00689360",
+      "D_00689378",
+      "D_00689390",
+      "D_006893C0",
+      "D_006893D0",
+      "D_006893F0",
+      "D_00689400",
+      "D_00689418",
+      "D_00689428",
+      "D_00689440",
+      "D_00689458",
+      "D_00689470"
      ],
      "basis": {
       "kind": "derived",
@@ -55744,7 +55829,13 @@
       "D_0069D088"
      ],
      "also_referenced_by_c": [
+      "D_0069D020",
       "D_0069D028",
+      "D_0069D030",
+      "D_0069D038",
+      "D_0069D040",
+      "D_0069D048",
+      "D_0069D050",
       "D_0069D060",
       "D_0069D068",
       "D_0069D070",
@@ -55781,8 +55872,20 @@
      "also_referenced_by_c": [
       "D_0069D0D0",
       "D_0069D0D8",
+      "CdSlotCursor",
+      "D_0069D0E8",
+      "D_0069D0F0",
+      "D_0069D0F8",
+      "D_0069D100",
+      "D_0069D108",
+      "D_0069D110",
       "D_0069D118",
-      "D_0069D120"
+      "D_0069D120",
+      "D_0069D128",
+      "D_0069D130",
+      "D_0069D138",
+      "D_0069D140",
+      "D_0069D148"
      ],
      "basis": {
       "kind": "derived",
@@ -56127,6 +56230,33 @@
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/main/build/c/tu063.o"
+     }
+    }
+   ]
+  },
+  "main/tu065": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00689590",
+      "0x006895c0"
+     ],
+     "generated": [
+      "0x00689590",
+      "0x006895bc"
+     ],
+     "generated_by": [
+      "tyaDisplaySetting"
+     ],
+     "c_owned_symbols": [
+      "D_00689590",
+      "D_006895A8"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/game_over_065.o"
      }
     }
    ]
@@ -56644,16 +56774,19 @@
     {
      "range": [
       "0x0069af28",
-      "0x0069af58"
+      "0x0069af78"
      ],
      "generated": [
       "0x0069af28",
-      "0x0069af58"
+      "0x0069af78"
      ],
      "generated_by": [
       "func_001EF6E0",
       "objxGetParam",
       "objxRotate",
+      "runtimeSetLocater",
+      "runtimeSetPlayer",
+      "uwamonoCreateRecord",
       "uwamonoSetTarget",
       "uwamonoStartMove"
      ],
@@ -56669,29 +56802,12 @@
       "D_0069AF48",
       "D_0069AF4C",
       "D_0069AF50",
-      "D_0069AF54"
-     ],
-     "also_referenced_by_c": [],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu067.o"
-     }
-    },
-    {
-     "range": [
-      "0x0069af6c",
-      "0x0069af78"
-     ],
-     "generated": [
-      "0x0069af6c",
-      "0x0069af78"
-     ],
-     "generated_by": [
-      "runtimeSetLocater",
-      "runtimeSetPlayer"
-     ],
-     "c_owned_symbols": [
+      "D_0069AF54",
+      "D_0069AF58",
+      "D_0069AF5C",
+      "D_0069AF60",
+      "D_0069AF64",
+      "D_0069AF68",
       "D_0069AF6C",
       "D_0069AF70",
       "D_0069AF74"
@@ -56729,6 +56845,58 @@
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/main/build/c/tu067.o"
+     }
+    },
+    {
+     "range": [
+      "0x006896e0",
+      "0x00689700"
+     ],
+     "generated": [
+      "0x006896e0",
+      "0x00689700"
+     ],
+     "generated_by": [
+      "uwamonoCreateRecord"
+     ],
+     "c_owned_symbols": [
+      "jtbl_006896E0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu067.o"
+     }
+    }
+   ]
+  },
+  "main/tu068": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00689720",
+      "0x00689760"
+     ],
+     "generated": [
+      "0x00689720",
+      "0x00689754"
+     ],
+     "generated_by": [
+      "runtime_001F2DF8",
+      "runtime_001F32E0"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00689720",
+      "jtbl_00689740"
+     ],
+     "also_referenced_by_c": [
+      "D_00689700"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu068.o"
      }
     }
    ]
@@ -69215,8 +69383,8 @@
       "0x0069b294"
      ],
      "generated_by": [
-      "func_0021DE60",
-      "func_0021E7B0"
+      "menuDrawTitledWindow",
+      "menuDrawWindowFrame"
      ],
      "c_owned_symbols": [
       "D_0069B28C",
@@ -69241,9 +69409,9 @@
       "0x0068a9b0"
      ],
      "generated_by": [
-      "func_0021AFE8",
       "textDrawGlyphString",
-      "textDrawStringAlt"
+      "textDrawStringAlt",
+      "textDrawTitle"
      ],
      "c_owned_symbols": [
       "jtbl_0068A630",
@@ -78541,7 +78709,10 @@
       "D_0068CAF0",
       "D_0068CAF8"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "gifStatePacketAssert",
+      "gifStateSourceFile"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
@@ -78652,6 +78823,31 @@
    ]
   },
   "main/tu154": {
+   ".lit4": [
+    {
+     "range": [
+      "0x0069b2a8",
+      "0x0069b2b0"
+     ],
+     "generated": [
+      "0x0069b2a8",
+      "0x0069b2b0"
+     ],
+     "generated_by": [
+      "func_00252AB8"
+     ],
+     "c_owned_symbols": [
+      "D_0069B2A8",
+      "D_0069B2AC"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/tu154.o"
+     }
+    }
+   ],
    ".rodata": [
     {
      "range": [
@@ -85666,6 +85862,180 @@
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/main/build/c/tu273.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu008": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba210",
+      "0x00aba260"
+     ],
+     "generated": [
+      "0x00aba210",
+      "0x00aba260"
+     ],
+     "generated_by": [
+      "battleCodeMatches"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA210"
+     ],
+     "also_referenced_by_c": [
+      "D_00AB8F98",
+      "D_00AB8FC8",
+      "dataThinkFmt",
+      "dataThinkJpFmt",
+      "D_00ABA1F0",
+      "dataEmptyName",
+      "dataIntFmt"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu008.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu013": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba260",
+      "0x00aba280"
+     ],
+     "generated": [
+      "0x00aba260",
+      "0x00aba274"
+     ],
+     "generated_by": [
+      "unitCmdCodeGet"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA260"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu013.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu014": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba280",
+      "0x00aba2a0"
+     ],
+     "generated": [
+      "0x00aba280",
+      "0x00aba294"
+     ],
+     "generated_by": [
+      "unitCmdMoveCha"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA280"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu014.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu016": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba2a0",
+      "0x00aba340"
+     ],
+     "generated": [
+      "0x00aba2a0",
+      "0x00aba340"
+     ],
+     "generated_by": [
+      "func_00A86FF0",
+      "unitPoseRamp"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA2A0",
+      "D_00ABA320"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu016.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu022": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba340",
+      "0x00aba370"
+     ],
+     "generated": [
+      "0x00aba340",
+      "0x00aba364"
+     ],
+     "generated_by": [
+      "dataSlotKeyTest"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA340"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu022.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu023": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba390",
+      "0x00aba420"
+     ],
+     "generated": [
+      "0x00aba390",
+      "0x00aba420"
+     ],
+     "generated_by": [
+      "calcAttackDamage",
+      "calcHitMode",
+      "calcHpDmg",
+      "unitGrowthStep"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA390",
+      "jtbl_00ABA3B0",
+      "jtbl_00ABA3D0",
+      "jtbl_00ABA400"
+     ],
+     "also_referenced_by_c": [
+      "calcComboMaskBits"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu023.o"
      }
     }
    ]

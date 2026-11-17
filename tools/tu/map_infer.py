@@ -1506,6 +1506,26 @@ JOINED_KEEPS_LATER_ORDINAL = {
 }
 
 JOINED_CUTS = [
+    # OV01 battle code, user 2026-11-17 ("unir tu025-tu032, por favor, hazlo"; the evidence starts at tu023):
+    # four callers match only when their callee is an earlier C definition of the same file (reorg
+    # nothrow annul rows, stub-definition probes exact): func_00A8F948 (old tu028) -> battleSlotGet
+    # (0xA8AF10, old tu023); unitCanAct (old tu029) -> calcStatGet (0xA8E0C8, old tu026); actStockMaxGet
+    # and actStockMake (old tu032) -> unitCanAct (old tu029); calcAttackDamage (old tu026) -> unitLevelAdd
+    # (old tu025). So 0xA8A8B8-0xA92150 is one file.
+    (0x00A8B930, 'ov01 battle file: battleSlotSet* (old tu024) inside the battleSlotGet (old tu023) -> '
+                 'func_00A8F948 (old tu028) nothrow span 0xA8A8B8-0xA92150, user 2026-11-17'),
+    (0x00A8BA68, 'ov01 battle file: unitLevelAdd (old tu025) must precede calcAttackDamage (old tu026), '
+                 'nothrow annul row 0xA8CF34; user 2026-11-17'),
+    (0x00A8BC60, 'ov01 battle file: old tu026 inside the span (see 0x00A8BA68)'),
+    (0x00A8F100, 'ov01 battle file: old tu027 inside the span (see 0x00A8B930)'),
+    (0x00A8F658, 'ov01 battle file: func_00A8F948 (old tu028) needs battleSlotGet (old tu023) as an earlier '
+                 'definition (beql/beq annul row; stub probe 51/51); user 2026-11-17'),
+    (0x00A90368, 'ov01 battle file: unitCanAct (old tu029) needs calcStatGet (old tu026) as an earlier '
+                 'definition (bnel/bne at 0xA90604; stub probe 30/30); user 2026-11-17'),
+    (0x00A90660, 'ov01 battle file: old tu030 inside the span (see 0x00A90368)'),
+    (0x00A912D0, 'ov01 battle file: old tu031 inside the span (see 0x00A90368)'),
+    (0x00A91910, 'ov01 battle file: actStockMaxGet/actStockMake (old tu032) need unitCanAct (old tu029) as '
+                 'an earlier definition (annul rows 0xA91C9C, 0xA91E54); user 2026-11-17'),
     (0x00292C40,
      'tiMRPackageSetTableAndEntryA (0x292CA0) is exact only when tiMRPackageSetTableA (0x2920C8, TiMRPackage.c) is an '
      'already compiled definition of the same file (reorg nothrow: beqz, not beqzl); the merged TiMRPackage.c + old '
@@ -1779,6 +1799,44 @@ def render_overlay_tu(unit, unit_name, tu, names, homologs, model_file):
         x1_homologs=sorted({homologs[unit.vas[i]][1] for i in indices if unit.vas[i] in homologs}))
 
 
+# The `.rodata` output section inside an overlay's data half: (first byte, why). The overlay headers merge
+# every section into one, so the edge is read from the data: references from code restart the TU order where
+# one output section ends and the next begins (.data, .rodata, .bss, each in link order). The section runs to
+# the `.bss` start (the 8-aligned zero tail), and each TU's piece is cut as main's data families are
+# (x2_scaffold.data_cuts): at its first address only that TU references, the first piece at the section start.
+OVERLAY_RODATA = {
+    'ov01': (0x00AB8CA0,
+             'the code references of the data half increase by TU from tu008 (0xAB4500) to tu082 (0xAB8C50-0xAB8C9F, '
+             'floats), then restart at tu008 with the string pool 0xAB8CA0.. that the pointer table of tu008\'s .data '
+             '(0xAB4500..) names and its jump table 0xABA210, and increase again through the 24 switch jump tables '
+             '0xABA210-0xABA8F0 and the literals of tu047-tu090 up to 0xABB870, where .bss restarts at tu000; '
+             'found banking unitCmdCodeGet (ov01/tu013), whose C jump table had no piece to land in, 2026-11-17'),
+}
+
+
+def overlay_rodata_pieces(unit, tus, low, high):
+    """[(ordinal, start, end, anchors)] of the `.rodata` section [low, high) of an overlay, and its TU order."""
+    owner = {i: tu['ordinal'] for tu in tus for i in tu['_indices']}
+    users = collections.defaultdict(set)
+    for table in (unit.users, unit.indexed_users):
+        for target, who in table.items():
+            if low <= target < high:
+                users[target] |= who
+    claims = collections.defaultdict(list)
+    for target, who in users.items():
+        ordinals = {owner[i] for i in who if i in owner}
+        if len(ordinals) == 1 and all(i in owner for i in who):
+            claims[next(iter(ordinals))].append(target)
+    cuts = sorted(((min(targets) & ~3, ordinal) for ordinal, targets in claims.items()))
+    order = [ordinal for _, ordinal in cuts]
+    monotonic = order == sorted(order)
+    if cuts:
+        cuts[0] = (low, cuts[0][1])
+    pieces = [(ordinal, start, cuts[k + 1][0] if k + 1 < len(cuts) else high, len(claims[ordinal]))
+              for k, (start, ordinal) in enumerate(cuts)]
+    return pieces, monotonic
+
+
 def close_gaps(unit, tus, zones):
     """Each TU runs to the next one's first function, so the records cover the zone with no hole."""
     for position, tu in enumerate(tus):
@@ -1896,6 +1954,25 @@ def generate(root=ROOT):
         while zero_from > section['offset'] and image.data[zero_from - 1] == 0:
             zero_from -= 1
         body = image.data[section['offset']:tail]
+        section_end = section['va'] + section['size']
+        bss_start = min((zero_from - section['offset'] + section['va'] + 7) & ~7, section_end)
+        families = [dict(family='unsplit', start=hex32(image.text_end), end=hex32(section_end),
+                         size=section_end - image.text_end, anchors_kept=0, owners=[], evidence_kinds={})]
+        monotonic = None
+        if unit_name in OVERLAY_RODATA:
+            rodata_start, why = OVERLAY_RODATA[unit_name]
+            pieces, monotonic = overlay_rodata_pieces(unit, tus, rodata_start, bss_start)
+            ids = {r['ordinal']: r['id'] for r in records}
+            families = [
+                dict(family='unsplit', section='.data', start=hex32(image.text_end), end=hex32(rodata_start),
+                     size=rodata_start - image.text_end, anchors_kept=0, owners=[], evidence_kinds={}),
+                dict(family='rodata', section='.rodata', start=hex32(rodata_start), end=hex32(bss_start),
+                     size=bss_start - rodata_start, anchors_kept=sum(p[3] for p in pieces),
+                     owners=[dict(ordinal=o, id=ids[o], start=hex32(a), end=hex32(b), anchors=dict(code_ref_single_tu=n))
+                             for o, a, b, n in pieces],
+                     evidence_kinds=dict(code_ref_single_tu=len(pieces)), evidence=why),
+                dict(family='unsplit', section='.bss', start=hex32(bss_start), end=hex32(section_end),
+                     size=section_end - bss_start, anchors_kept=0, owners=[], evidence_kinds={})]
         overlays[unit_name] = dict(
             unit=unit_name, path=f'game/extracted-iso/{file_name}', sha256=image.sha256,
             section=dict(name=unit_name, index=section['index'], va=hex32(section['va']), size=section['size'],
@@ -1906,11 +1983,8 @@ def generate(root=ROOT):
             layout=dict(text_start=hex32(section['va']), text_end=hex32(image.text_end),
                         data_half_start=hex32(image.text_end), section_end=hex32(section['va'] + section['size']),
                         zero_tail_start=hex32(zero_from - section['offset'] + section['va']),
-                        families=[dict(family='unsplit', start=hex32(image.text_end),
-                                       end=hex32(section['va'] + section['size']),
-                                       size=section['va'] + section['size'] - image.text_end, anchors_kept=0, owners=[],
-                                       evidence_kinds={})],
-                        family_boundary_windows=[], link_order_monotonic=None, unowned_windows=[], unsymbolised_text=[]),
+                        families=families,
+                        family_boundary_windows=[], link_order_monotonic=monotonic, unowned_windows=[], unsymbolised_text=[]),
             tus=records, global_data_symbols=[], source_file_strings=sorted({f for r in records for f in r['source_file_strings']}),
             cross_tu_calls=[], link=dict(vma=hex32(section['va']), size=section['size'], end=hex32(section['va'] + section['size']),
                                          file_offset=section['offset']), provisional_comparison={}, anomalies=[])
@@ -2043,6 +2117,25 @@ def check_maps(root=ROOT):
                 names.add(function['name'])
         if position != int(record['layout']['text_end'], 16):
             problems.append(f'{unit}: TUs end at {position:#x}')
+        # The families tile the data half, and a .rodata family's TU pieces tile it in link order.
+        families = record['layout']['families']
+        cursor = int(record['layout']['text_end'], 16)
+        for family in families:
+            if int(family['start'], 16) != cursor:
+                problems.append(f'{unit}: family {family["family"]} starts at {family["start"]}, expected {cursor:#x}')
+            cursor = int(family['end'], 16)
+            if family['family'] == 'rodata':
+                at = int(family['start'], 16)
+                for piece in family['owners']:
+                    if int(piece['start'], 16) != at:
+                        problems.append(f'{unit}: .rodata piece of {piece["id"]} starts at {piece["start"]}, expected {at:#x}')
+                    at = int(piece['end'], 16)
+                if at != cursor:
+                    problems.append(f'{unit}: .rodata pieces end at {at:#x}, the family at {cursor:#x}')
+                if not record['layout']['link_order_monotonic']:
+                    problems.append(f'{unit}: .rodata pieces are not in TU order')
+        if cursor != int(record['layout']['section_end'], 16):
+            problems.append(f'{unit}: families end at {cursor:#x}')
     return problems
 
 
@@ -2214,7 +2307,7 @@ def write_report(root=ROOT):
               'boundary can cost a match as well as readability.', '',
               '## Not done here', '',
               '- Compiler evidence from matching is not recorded yet, so nothing corrects the map as functions match.',
-              '- Overlay data is one unsplit family: `.data`, `.rodata` and `.bss` still need separating.',
+              '- Overlay data: ov01 has a per-TU `.rodata` family (0xAB8CA0-0xABB870, OVERLAY_RODATA); its `.data` and `.bss`, and all of ov02\'s data, are still one unsplit family each.',
               '- VU programs are listed, not split, and the VU tools have not been tried on X2.',
               '- `section_order` covers code-referenced data only. `binding` is `unknown` for every function.', '']
     (root / 'reports/x2-tu-map.md').write_text('\n'.join(lines))

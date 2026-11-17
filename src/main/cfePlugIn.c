@@ -252,7 +252,6 @@ void cfeMesUnescape(char *destination, const char *source)
 }
 
 typedef struct XenoActor XenoActor;
-XenoActor *XenoActorAlloc(void);
 void xglCullingMapSet(int map);
 extern unsigned char cfeResLoadAssertMsg[];
 
@@ -656,7 +655,6 @@ void resUpdatePathSlot(int slot);
 void cfeInit(void);
 void tiGlobalCollClearHandle(void);
 void func_001B2724(void);
-void XenoActorRelease(struct XenoActor *actor);
 void fadeClear(void);
 XglCamera *xglStudioGetCamera2(int index);
 extern signed char pxyTickScaleDouble;

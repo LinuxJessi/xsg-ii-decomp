@@ -257,7 +257,7 @@ void menuNumDraw(int *packet, s32 x, s32 y, s32 value, s32 digits, s32 style) {
     menuNumDrawMode(packet, x, y, value, digits, style, 0);
 }
 
-s32 func_00A907B0();
+s32 partyUnitHpLow();
 
 /* Same printer with the glyph mode taken from the target (proposed menuNumDrawTarget). */
 void menuNumDrawTarget(s32 packet, s32 x, s32 y, s32 value, s32 digits, s32 style, MenuTarget *target) {
@@ -265,7 +265,7 @@ void menuNumDrawTarget(s32 packet, s32 x, s32 y, s32 value, s32 digits, s32 styl
 
     mode = 2;
     if (!(target->flags & 4)) {
-        mode = func_00A907B0(target) != 0;
+        mode = partyUnitHpLow(target) != 0;
     }
     menuNumDrawMode(packet, x, y, value, digits, style, mode);
 }
