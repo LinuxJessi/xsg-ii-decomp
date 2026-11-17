@@ -553,7 +553,6 @@ int dataUnitListInit(void **selected, int side);
 int dataUnitCursorStep(void **out);
 void dataTargetShow(void *unit, unsigned char *targetFlags);
 void battleSelectStep(Ov01Object *object);
-void battleSelectionGet(Ov01Object *object, CmdListBody *command, void *target);
 
 /* Manual candidate: opens the target menu on the first call (the unit list of the
  * candidate's side), runs the battle menu and, once a command was chosen, queues it;

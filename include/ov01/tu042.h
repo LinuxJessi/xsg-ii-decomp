@@ -172,7 +172,8 @@ struct HitAction {
 typedef struct PairLink PairLink;
 
 struct PairLink {
-    unsigned char unmodeled_00[0xA];
+    unsigned char unmodeled_00[0x8];
+    short tecIndex;                         /* +0x8: the technique a pair selection uses (battleSelectionGet) */
     short requiredLevel;                    /* +0xA */
     short slotFirst;                        /* +0xC */
     short slotSecond;                       /* +0xE */
@@ -182,7 +183,8 @@ typedef struct CalcLevelRecord CalcLevelRecord;
 
 /* The record calcLevelRecordGet returns; +0xA is its required level, +0xC the entry mask calcEntryMaskTest tests. */
 struct CalcLevelRecord {
-    unsigned char unmodeled_000[0xA];
+    unsigned char unmodeled_000[0x8];
+    short tecIndex;                         /* +0x8: the technique a level selection uses (battleSelectionGet) */
     short requiredLevel;
     short entryMask;
 };

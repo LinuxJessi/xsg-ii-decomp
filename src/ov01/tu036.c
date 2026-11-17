@@ -7,6 +7,7 @@
 #include "main/tu051.h"
 #include "ov01/tu010.h"
 #include "ov01/tu023.h"
+#include "ov01/tu033.h"
 #include "ov01/tu036.h"
 #include "ov01/tu042.h"
 #include "ov01/tu043.h"
@@ -358,7 +359,112 @@ void objCurRemove(void)
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectStep);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectionGet);
+/* Menu selections of the battle menu (BattleState.selection) and the commands (CmdListBody.command) they give. */
+enum {
+    SELECT_TARGET_LAST = 10,                /* 1..10: key-row entries (tableKeyEntryGet) */
+    SELECT_WAIT = 11,
+    SELECT_LOOKUP,
+    SELECT_HIT_ACTION,
+    SELECT_PAIR,
+    SELECT_INDEX_6,
+    SELECT_INDEX_5,
+    SELECT_LEVEL,
+    SELECT_COMMAND_7,
+    SELECT_TGT_ID,
+    SELECT_END = 20
+};
+
+/* The command of the battle menu's selection for the unit: key-row entries 1..10 (entries 1 and 2 are no command
+ * for party keys 1..10), the record-based selections with their technique and record index, and the end of the
+ * turn (command 8 for a party unit with selection kind 1 or 2, else CMD_KIND_THINK_END). Returns 1. */
+int battleSelectionGet(Ov01Object *unit, CmdListBody *command, Ov01Object *target)
+{
+    int selection;
+    short code;
+    BattleLookupEntry *lookup;
+    HitAction *hitAction;
+    CalcLevelRecord *level;
+    PairLink *pair;
+    TgtIdRecord *tgtId;
+
+    selection = tgtSelectState.selection;
+    if (selection == 0) {
+    } else if (selection == SELECT_END) {
+        if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10
+            && (unsigned int)(tgtSelectState.selectionKind - 1) < 2) {
+            command->command = 8;
+            tgtSelectState.selectionKind = 0;
+            tgtSelectState.selection = 0;
+        } else {
+            command->command = CMD_KIND_THINK_END;
+        }
+    } else if (selection <= SELECT_TARGET_LAST) {
+        if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10 && (unsigned int)(selection - 1) < 2) {
+            command->command = 0;
+        } else {
+            code = tableKeyEntryGet(unit, tgtSelectState.selection, target);
+            command->command = 1;
+            command->code = code;
+            command->arg.target = target;
+        }
+    } else {
+        switch (selection) {
+        case SELECT_WAIT:
+            command->command = 2;
+            break;
+        case SELECT_LOOKUP:
+            command->command = 3;
+            lookup = battleLookupGet(tgtSelectState.selectionIndex);
+            command->arg.target = target;
+            command->code = lookup->tecIndex;
+            command->pairIndex = tgtSelectState.selectionIndex;
+            break;
+        case SELECT_HIT_ACTION:
+            command->command = 4;
+            hitAction = hitActionGet(tgtSelectState.selectionIndex);
+            command->arg.target = target;
+            command->code = hitAction->entry;
+            command->pairIndex = tgtSelectState.selectionIndex;
+            break;
+        case SELECT_LEVEL:
+            command->command = 1;
+            level = calcLevelRecordGet(tgtSelectState.selectionIndex);
+            command->arg.target = target;
+            command->code = level->tecIndex;
+            command->pairIndex = tgtSelectState.selectionIndex;
+            break;
+        case SELECT_PAIR:
+            command->command = 1;
+            pair = pairLinkGet(tgtSelectState.selectionIndex);
+            command->arg.target = target;
+            command->code = pair->tecIndex;
+            command->pairIndex = tgtSelectState.selectionIndex;
+            break;
+        case SELECT_TGT_ID:
+            command->command = 1;
+            tgtId = tgtIdRecordGet(tgtSelectState.selectionIndex);
+            command->arg.target = target;
+            command->code = tgtId->actionIndex;
+            command->pairIndex = tgtSelectState.selectionIndex;
+            break;
+        case SELECT_INDEX_6:
+            command->command = 6;
+            command->code = tgtSelectState.selectionIndex;
+            break;
+        case SELECT_INDEX_5:
+            command->command = 5;
+            command->code = tgtSelectState.selectionIndex;
+            break;
+        case SELECT_COMMAND_7:
+            command->command = 7;
+            break;
+        default:
+            command->command = 0;
+            break;
+        }
+    }
+    return 1;
+}
 
 /* Returns the entry of the key row of the unit's table at index (1-based); the target the callers pass is not used. */
 

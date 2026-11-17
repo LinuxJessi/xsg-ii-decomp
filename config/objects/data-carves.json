@@ -118545,17 +118545,19 @@
    ".rodata": [
     {
      "range": [
-      "0x00aba670",
+      "0x00aba640",
       "0x00aba698"
      ],
      "generated": [
-      "0x00aba670",
+      "0x00aba640",
       "0x00aba698"
      ],
      "generated_by": [
+      "battleSelectionGet",
       "tgtUnitAdrGet"
      ],
      "c_owned_symbols": [
+      "jtbl_00ABA640",
       "jtbl_00ABA670"
      ],
      "also_referenced_by_c": [],

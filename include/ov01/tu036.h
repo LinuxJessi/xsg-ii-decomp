@@ -30,7 +30,7 @@ struct BattleState {
     int selection;                          /* +0x20: battleSelectStep's choice (0 none, TGT_SELECTION_BACK) */
     int selectionKind;                      /* +0x24: set by battleSelectStep; battleSelectionGet takes 1 and 2 */
     int active;                             /* +0x28 */
-    unsigned char unmodeled_2c[0x30 - 0x2C];
+    int selectionIndex;                     /* +0x2C: the record the menu selection picked (battleSelectionGet) */
     int status;                             /* +0x30: TGT_STATUS_* (tu035) */
     int victoryStarted;                     /* +0x34: set once battleEndCheck has started the victory */
     struct Ov01Object *object;              /* +0x38: cleared at the end of a turn */
@@ -49,6 +49,8 @@ struct BattleState {
 extern BattleState tgtSelectState;
 
 struct BattleState *battleStateGet(void);
+struct CmdListBody;
+int battleSelectionGet(struct Ov01Object *unit, struct CmdListBody *command, struct Ov01Object *target);
 
 short tableKeyEntryGet(struct Ov01Object *owner, int index, void *target);
 void gattaiCodeSet(int code);
