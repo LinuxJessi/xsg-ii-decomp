@@ -93,7 +93,9 @@ typedef struct TecRecord TecRecord;
 
 /* The 0x20-byte technique record tecRecordGet returns for an action index. */
 struct TecRecord {
-    unsigned char flags;                    /* +0x00: target flags (1, 2, 3 side, 4 self, 8 all, 0x10 flagged units); bit 0x20 is tested with calcStatGet(unit, 4, 0x2000) */
+    /* +0x00: target flags (1, 2, 3 side, 4 self, 8 all, 0x10 flagged units); bit 0x20 is tested with
+     * calcStatGet(unit, 4, 0x2000) */
+    unsigned char flags;
     signed char code;                       /* +0x01: func_00252CD8's code; must be 0 for calcStatusHitRoll */
     short scale;                            /* +0x02: percent scale battleEffectApplies passes to func_00252CD8 */
     signed char rollThreshold;              /* +0x04: a first roll below this goes to the second roll */
@@ -104,18 +106,24 @@ struct TecRecord {
         unsigned char effectFlags;          /* the same byte as flags 0x1 to 0x40, read by calcHitApply */
         signed char slot;                   /* the slot func_00A92D98 (tu033) accepts below 8 */
     } kindBits;                             /* +0x07 */
-    unsigned short hitFlags;                /* +0x08: bits 0x4, 0x8, 0x10 and 0x20 are tested */
+    unsigned short hitFlags;                /* +0x08: bits 0x4, 0x8, 0x10 and 0x20 are tested; 0x100 sets object
+                                             * flag 0x2000 (unitCmdSetPhase) */
     signed char epCost;                     /* +0x0A: the EP cost calcEpCost scales */
     signed char levelDelta;                 /* +0x0B: unitRecordStateGet's result */
-    unsigned short actionBits;              /* +0x0C: tested against 0x100, 0x200, 0x500 and 0x600 by calcHitStateStep; low five bits are calcComboUpdate's mask */
+    /* +0x0C: tested against 0x100, 0x200, 0x500 and 0x600 by calcHitStateStep; the low five bits are
+     * calcComboUpdate's mask */
+    unsigned short actionBits;
     unsigned char power;                    /* +0x0E */
     signed char modeGuard[3];               /* +0x0F..+0x11: bit 0 of modeGuard[mode] blocks the hit */
-    signed char rowGate[4];                 /* +0x12..+0x15: one gate byte per row slot (calcHitRowGate), the unit-state codes battleEffectApplies tests */
+    /* +0x12..+0x15: one gate byte per row slot (calcHitRowGate), the unit-state codes battleEffectApplies
+     * tests; bit 0x10 of the first clears object flag 0x2000 (unitCmdSetPhase) */
+    signed char rowGate[4];
     signed char inflictRate;                /* +0x16: chance the value of calcStatResist is taken from */
     signed char row;                        /* +0x17 */
     unsigned short bits;                    /* +0x18: one bit per status of the row */
     short extent;                           /* +0x1A: the extent func_00A93288 (tu033) passes to unitEffectKeyFree */
-    signed char gateFlag;                   /* +0x1C: zero lets calcHitRowGate walk its row gates; unitSlotsClear tests 5, unitAttachRequest 1 */
+    /* +0x1C: zero lets calcHitRowGate walk its row gates; unitSlotsClear tests 5, unitAttachRequest 1 */
+    signed char gateFlag;
     signed char phase;                      /* +0x1D: the phase unitCmdSetPhase (tu012) sets */
     short timer;                            /* +0x1E: nonzero selects unitSetTimedPhase */
 };
@@ -125,7 +133,9 @@ typedef struct StatusRecord StatusRecord;
 
 struct StatusRecord {
     unsigned char unmodeled_00[0x6];        /* +0x00..+0x05 */
-    unsigned short slotFlags;               /* +0x06: bit 0x2000 marks an effect that lives in the slot table; 0x8000 and 0x4000 are tested by battleSlotExport */
+    /* +0x06: bit 0x2000 marks an effect that lives in the slot table; 0x8000 and 0x4000 are tested by
+     * battleSlotExport */
+    unsigned short slotFlags;
     unsigned short flags;                   /* +0x08: tested with the caller's mask */
     unsigned short code;                    /* +0x0a: low 7 bits are the result */
 };

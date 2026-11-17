@@ -11,6 +11,7 @@
 #include "main/pad.h"
 #include "main/sef.h"
 #include "main/xgl_font.h"
+#include "ov01/tu008.h"
 #include "ov01/tu009.h"
 #include "ov01/tu012.h"
 #include "ov01/tu017.h"
@@ -27,7 +28,8 @@
 #include "ov01/tu071.h"
 
 
-/* Passes the low halfword of vmArgGet(call, 1) to dataVPadSet; with no plugin loaded it calls sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS) and returns 0. */
+/* Passes the low halfword of vmArgGet(call, 1) to dataVPadSet; without an argument it requests the
+ * SB_JUMP_ARGUMENTS jump and returns 0. */
 int VPadSet(SbThread *call)
 {
     int padBits;
@@ -175,27 +177,29 @@ int setMoveCmd(SbThread *call)
     return 1;
 }
 
-int xglLightSetDefault(int);
-int pxySetDefaultLight(int);
-int func_00253048(int);
-void *lightBlockGet(void);
+void xglLightSetDefault(XglLightSet *lightSet);
+void pxySetDefaultLight(XglLightSet *light);
+void func_00253048(XglLightSet *lights);
+LightBlocks *lightBlockGet(void);
 
+/* Native initLight: makes the light block the default light set of xgl, the pxy models and tu156. The block is
+ * the 0x180-byte light set the battle actors copy as LightBlocks (unitCreateSide, unitTblBodySetLight). */
 int initLight(void)
 {
-    int lightBlock;
+    XglLightSet *lightSet;
 
-    lightBlock = lightBlockGet();
-    xglLightSetDefault(lightBlock);
-    pxySetDefaultLight(lightBlock);
-    func_00253048(lightBlock);
+    lightSet = (XglLightSet *)lightBlockGet();
+    xglLightSetDefault(lightSet);
+    pxySetDefaultLight(lightSet);
+    func_00253048(lightSet);
     return 1;
 }
 
-extern unsigned char lightBlock[];
+extern LightBlocks lightBlock;
 
-/* Returns the 0x180-byte light block that initLight and runtime.setLight start from. */
-void *lightBlockGet(void) {
-    return lightBlock;
+/* Returns the light block that initLight and runtime.setLight start from. */
+LightBlocks *lightBlockGet(void) {
+    return &lightBlock;
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", runtimeSetLight);
@@ -856,7 +860,7 @@ void runtimeInitState(void)
     D_00AE0C2C = 0;
     D_00AE0C30 = 0;
     bgmIndex = 0;
-    memset(lightBlock, 0, 0x180);
+    memset(&lightBlock, 0, sizeof(LightBlocks));
     memset(&runtimePos, 0, sizeof(Vector4));
     memset(&runtimeDir, 0, sizeof(Vector4));
 }
@@ -870,7 +874,7 @@ void runtimeInit(void)
 {
     sbResetNativeCounts();
     runtimeInitState();
-    sbNativeOwnerAdd(&D_00ABACA0, &D_00AB60A0);
+    sbNativeOwnerAdd(D_00ABACA0, D_00AB60A0);
     mathInit();
     cameraRegisterNatives();
 }
