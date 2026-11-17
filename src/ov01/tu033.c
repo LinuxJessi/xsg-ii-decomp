@@ -220,9 +220,9 @@ int cmdFindFirstTarget(int target, struct Tu033CallSource *source)
 }
 
 /* The command record func_00A92C18 builds for func_00A92D98 / func_00A92DF0:
- * the unit (as a word), the command kind and two command words. */
+ * the unit, the command kind and two command words. */
 struct Tu033Owner {
-    int key;
+    Ov01Object *unit;
     int kind;                            /* +0x04 */
     int handle;                          /* +0x08 */
     int target;                          /* +0x0C */
@@ -340,15 +340,15 @@ void unitCmdRequestQueue(Ov01Object **faceTarget, UnitCmdRequest *request)
     unitQueueAppend(request->unit, &command);
 }
 
-int func_00A951D8(int, void *);
+int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec);
 
 int func_00A93288(struct Tu033Owner *owner) {
     TecRecord *entry;
     int status;
 
     entry = tecRecordGet(owner->handle);
-    status = func_00A951D8(owner->key, entry);
-    return unitEffectKeyFree(owner->key, status, entry->extent) != 0;
+    status = tecEffectGroupGet(owner->unit, entry);
+    return unitEffectKeyFree(owner->unit, status, entry->extent) != 0;
 }
 
 struct Tu033Request {
@@ -851,7 +851,48 @@ int func_00A95198(int id)
     return value;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A951D8);
+/* Effect key ranges of the unit's own sequence: keys 700..733 move up by 100 for a technique of extent below 8. */
+#define TEC_EFFECT_SEQUENCE_FIRST 700
+#define TEC_EFFECT_SEQUENCE_COUNT 34
+#define TEC_EFFECT_SEQUENCE_SHIFT 100
+
+/* The effect group a technique uses for the unit (the high half of the key unitEffectKeyFree tests), by the
+ * technique's gateFlag: fixed groups, the unit's sequence + 10, or the unit's sequence. */
+int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec)
+{
+    int group;
+
+    switch (tec->gateFlag) {
+    case 2:
+    case 3:
+        group = 0;
+        break;
+    case 9:
+        group = 200;
+        break;
+    case 4:
+        group = unit->stats->sequenceIndex + 10;
+        break;
+    case 1:
+        group = 50;
+        break;
+    case 5:
+        group = 14;
+        break;
+    case 6:
+    case 7:
+    case 8:
+    default:
+        group = unit->stats->sequenceIndex;
+        if ((unsigned int)(group - TEC_EFFECT_SEQUENCE_FIRST) < TEC_EFFECT_SEQUENCE_COUNT) {
+            if (tec->extent < 8) {
+                group += TEC_EFFECT_SEQUENCE_SHIFT;
+            }
+        }
+        break;
+    }
+    return group;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95268);
 

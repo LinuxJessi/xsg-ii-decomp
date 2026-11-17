@@ -1951,7 +1951,7 @@
       "asm/nonmatchings/ov01/tu033/unitRecreate.s",
       "asm/nonmatchings/ov01/tu033/battleUnitsReset.s",
       "asm/nonmatchings/ov01/tu033/func_00A95198.s",
-      "asm/nonmatchings/ov01/tu033/func_00A951D8.s",
+      "asm/nonmatchings/ov01/tu033/tecEffectGroupGet.s",
       "asm/nonmatchings/ov01/tu033/func_00A95268.s",
       "asm/nonmatchings/ov01/tu033/unitEffectStart.s",
       "asm/nonmatchings/ov01/tu033/func_00A95540.s",

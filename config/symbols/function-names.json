@@ -3331,6 +3331,7 @@
    "0x00a916a0": "tgtFindNext",
    "0x00a91a78": "sdvInitSpecialWork",
    "0x00a93168": "unitCmdRequestQueue",
+   "0x00a951d8": "tecEffectGroupGet",
    "0x00a95c00": "unitSlotShowHidePart",
    "0x00a95c60": "unitSlotHideShowPart",
    "0x00a98f30": "objCurRemove",

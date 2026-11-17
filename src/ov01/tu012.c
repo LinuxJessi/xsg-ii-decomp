@@ -191,8 +191,8 @@ int unitIsDone(Ov01Object *object) {
 
 int sefNoOwnerFlaggedRecords(int key);
 
-/* The key is keyHigh << 12 | keyLow; the unused first argument is kept for the calling convention. */
-int unitEffectKeyFree(int unused, int keyHigh, int keyLow) {
+/* The key is keyHigh << 12 | keyLow; the unit is not read. */
+int unitEffectKeyFree(Ov01Object *unit, int keyHigh, int keyLow) {
     return sefNoOwnerFlaggedRecords((keyHigh << 0xC) | keyLow) != 0;
 }
 

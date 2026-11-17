@@ -191,7 +191,7 @@ void unitSetSelector(Ov01Object *object, int selector);
 void unitRefreshPhase(Ov01Object *object);
 void unitSetVectorZ(Ov01Object *object, float scaleZ);
 int unitIsDone(Ov01Object *object);
-int unitEffectKeyFree(int unused, int keyHigh, int keyLow);
+int unitEffectKeyFree(Ov01Object *unit, int keyHigh, int keyLow);
 void unitLoadSnapshot(Ov01Object *object, int id);
 void unitSetAngleDegrees(Ov01Object *object, int degrees);
 void unitSetAngleRadians(Ov01Object *object, f32 angle);
