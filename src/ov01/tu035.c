@@ -38,7 +38,7 @@ extern Ov01Object *tgtSelectCurrent;
 extern int tgtSelectStatus;
 extern int tgtSelectMode;
 void *memset(void *s, int c, unsigned int n);
-void func_00A9BCC8(int selector, void *object);
+void unitScriptEventSend(int selector, void *object);
 void tgtSelectActivate(void);
 void tgtSelectBegin(void);
 void tgtSelectCursor(int inputHandled);
@@ -108,7 +108,7 @@ unsigned short dataPadRead(int port);
 #define UNIT_CMD_PHASE_2C_WAIT 0x1F
 /* bgmPlayTrack track of the victory. */
 #define TGT_VICTORY_BGM 6
-/* streamPlayByKey key of the victory line and func_00A9BCC8 selector of the victory camera. */
+/* streamPlayByKey key of the victory line and unitScriptEventSend selector of the victory camera. */
 #define TGT_VICTORY_STREAM 7
 #define TGT_VICTORY_CAMERA 7
 
@@ -152,7 +152,7 @@ int battleEndCheck(void)
             if (focus.unit == 0 || (focus.unit->flags & UNIT_FLAG_DOWN)) {
                 focus.unit = speaker;
             }
-            func_00A9BCC8(TGT_VICTORY_CAMERA, &focus);
+            unitScriptEventSend(TGT_VICTORY_CAMERA, &focus);
             count = unitTblGet(TGT_SIDE_PARTY, &units);
             for (i = 0; i < count; i++) {
                 if (units[i] != 0 && !(units[i]->flags & UNIT_FLAG_DOWN)) {
@@ -238,7 +238,7 @@ void tgtSelectActivate(void)
         state->active = 1;
         state->mode = 0;
         state->flags = (state->flags & ~2) | 4;
-        func_00A9BCC8(4, &object);
+        unitScriptEventSend(4, &object);
     }
 }
 
@@ -313,7 +313,7 @@ void tgtSelectExecute(void)
         menuPanelHide();
         unitValueRefresh(state->last_object);
         unit = state->current;
-        func_00A9BCC8(5, &unit);
+        unitScriptEventSend(5, &unit);
         actStepCounterAdvance();
         dataEntryBlockReset();
         if (state->last_object->stats->key < TGT_PARTY_KEY_LIMIT) {

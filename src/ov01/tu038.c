@@ -56,7 +56,7 @@ void monsSlotCopyParams(int first, int second);
 int monsSlotCreate(void);
 void monsSlotShow(void *slot);
 int monsTblValueGet(void);
-void func_00A9BCC8(int first, int *out);
+void unitScriptEventSend(int first, int *out);
 void menuStatRecordsCreate(void);
 unsigned char *ptGetStatusBlock(void);
 UnitSpawnRecord *ov01PartyListGet(void);
@@ -240,7 +240,7 @@ void ov01StepOpenHandles(int context) {
     D_00AB5CD4[0] = monsSlotCreate();
     ov01StreamBuffer[0] = dataStreamOpen(monsTblValueGet(), 0);
     out_value = 0;
-    func_00A9BCC8(6, &out_value);
+    unitScriptEventSend(6, &out_value);
     ov01StepSetNext(context, ov01StepBindAndShow);
     ov01StackPush(context, ov01StepAwaitLoads);
 }

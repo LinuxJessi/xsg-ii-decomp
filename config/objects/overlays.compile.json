@@ -2625,7 +2625,7 @@
       "asm/nonmatchings/ov01/tu042/tableStringGet.s",
       "asm/nonmatchings/ov01/tu042/msgReset.s",
       "asm/nonmatchings/ov01/tu042/func_00A9BC20.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9BCC8.s",
+      "asm/nonmatchings/ov01/tu042/unitScriptEventSend.s",
       "asm/nonmatchings/ov01/tu042/thinkDispatch.s",
       "asm/nonmatchings/ov01/tu042/thinkSendEnd.s",
       "asm/nonmatchings/ov01/tu042/func_00A9BF08.s",

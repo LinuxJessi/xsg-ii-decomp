@@ -73,7 +73,7 @@ typedef struct AtkTbl {
 
 struct Ov01Object;
 
-/* The 16-byte record func_00A9BCC8 takes: the unit and three words it passes on, with the selector, as a script
+/* The 16-byte record unitScriptEventSend takes: the unit and three words it passes on, with the selector, as a script
  * message (sbThreadEnqueue). */
 typedef struct UnitScriptEvent {
     struct Ov01Object *unit;

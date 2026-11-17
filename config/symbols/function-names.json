@@ -3367,6 +3367,7 @@
    "0x00a9ba40": "pairLinkTextGet",
    "0x00a9bab8": "calcLevelTextGet",
    "0x00a9bb30": "tgtIdTextGet",
+   "0x00a9bcc8": "unitScriptEventSend",
    "0x00a9c670": "dataBoxPtrGet",
    "0x00a9c6d8": "dataBoxChk",
    "0x00aa1be0": "grGpInit",

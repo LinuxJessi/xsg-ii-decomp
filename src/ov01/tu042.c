@@ -5,10 +5,13 @@
 #include "shared.h"
 #include "main/sef.h"
 #include "ov01/tu001.h"
+#include "ov01/tu017.h"
 #include "ov01/tu033.h"
 #include "ov01/tu035.h"
 #include "ov01/tu023.h"
+#include "ov01/tu040.h"
 #include "ov01/tu042.h"
+#include "ov01/tu044.h"
 
 extern int dataModelKeyTbl[];
 
@@ -447,7 +450,27 @@ void msgReset(void) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BC20);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BCC8);
+int cameraSettingGet(void);
+
+/*
+ * Sends event (the unit and three words) as a kind message to the unit's script (the battle block's spawnArgD),
+ * or, without a unit or script, to the camera setting's script. The message's first word is the unit index with
+ * words[0] in the high half, its second words[1] | words[2] << 16.
+ */
+void unitScriptEventSend(int kind, UnitScriptEvent *event)
+{
+    SbMessage message;
+    int entry;
+    int script;
+
+    message.kind = kind;
+    message.args[0] = unitTblIndexOf(event->unit) | (event->words[0] << 16);
+    message.args[1] = event->words[1] | (event->words[2] << 16);
+    entry = event->unit != 0 && (script = event->unit->stats->spawnArgD) != 0 ? script : cameraSettingGet();
+    if (entry != 0) {
+        sbThreadEnqueue(ov01ScriptKeyGet(), entry, &message, 0);
+    }
+}
 
 /* thinkDispatch: queues think command  (cmdExecute command kinds) for the unit; natives thinkSet and
  * thinkSet2. Still asm: the C is five instruction pairs off (held/pkg3/tu042_thinkDispatch_5ranges.c). */
