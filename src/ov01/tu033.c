@@ -884,9 +884,33 @@ void unitSlotHidePart(Ov01Object *object) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95C00);
+/* The part of the unit's own actor that stands in for a slot actor (unitSlotShowHidePart hides it while the slot
+ * is shown, unitSlotHideShowPart shows it while the slot is paused). */
+extern int ov01UnitSlotPart;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95C60);
+/* Shows slot index of the unit (clears the pause bit, alpha 1) and hides part ov01UnitSlotPart of its actor. */
+void unitSlotShowHidePart(Ov01Object *object, int index) {
+    struct XenoActor *unit;
+
+    unit = object->children[index];
+    if (unit != 0) {
+        unit->drawFlags &= ~4;
+        unit->alpha = 1.0f;
+        XenoActorHidePart(object->unit, ov01UnitSlotPart);
+    }
+}
+
+/* Pauses slot index of the unit (alpha 0, pause bit) and shows part ov01UnitSlotPart of its actor. */
+void unitSlotHideShowPart(Ov01Object *object, int index) {
+    struct XenoActor *unit;
+
+    unit = object->children[index];
+    if (unit != 0) {
+        unit->alpha = 0;
+        unit->drawFlags |= 4;
+        XenoActorShowPart(object->unit, ov01UnitSlotPart);
+    }
+}
 
 int unitSlotFadeIn(void);
 

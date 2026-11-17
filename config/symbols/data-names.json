@@ -1300,6 +1300,7 @@
    "0x0061d090": "stringTableOffset",
    "0x00645820": "sRender",
    "0x00ab5838": "padConvTbl",
+   "0x00ab5a40": "ov01UnitSlotPart",
    "0x00ab5cd8": "ov01CurSlot",
    "0x00ab62a0": "fb",
    "0x00ac1040": "unitTbl",
