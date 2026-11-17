@@ -27,7 +27,6 @@ u64 gsMakeFrame(int buffer, int flag);
 
 /* A batch starts in the scratchpad (SCRATCHPAD_BASE) with a GIF tag qword: the tag (NLOOP 0, patched in by
    gsQueueFlush, EOP set, NREG 1) in the low dword and its register list (GIF_AD) in the high dword. */
-#define SCRATCHPAD_BASE 0x70000000
 #define GS_QUEUE_SCRATCHPAD ((GsQueueQword *)SCRATCHPAD_BASE)
 #define GS_QUEUE_GIFTAG 0x1000000000008000ULL
 

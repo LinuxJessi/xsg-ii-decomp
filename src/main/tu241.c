@@ -6,10 +6,6 @@
 #include "main/tu243.h"
 
 /* Time units of the timecode object (the TIMECODE_* slot state, flags and phase codes are in main/tu240.h). */
-#define FRAMES_PER_SECOND 30
-#define FRAMES_PER_MINUTE (60 * FRAMES_PER_SECOND)
-#define FRAMES_PER_HOUR (60 * FRAMES_PER_MINUTE)
-#define SECONDS_PER_MINUTE 60
 #define MINUTES_PER_HOUR 60
 #define HOURS_PER_DAY 24            /* the hours field wraps at 24 */
 #define TIMECODE_DIGIT_BUFFER 50    /* size of the digit string of timecodeAddToDigit */
@@ -56,7 +52,7 @@ void timecodeSplit(MsgSlot *slot, int *hours, int *minutes, int *seconds, int *f
         remaining -= (long long)mm * FRAMES_PER_MINUTE;
         ss = __divdi3(remaining, FRAMES_PER_SECOND);
         remaining -= (long long)ss * FRAMES_PER_SECOND;
-        ff = func_002A6A18(dpmul(fptodp(__floatdisf(remaining)), HUNDREDTHS_PER_FRAME));
+        ff = __fixdfdi(dpmul(fptodp(__floatdisf(remaining)), HUNDREDTHS_PER_FRAME));
         *hours = hh; *minutes = mm; *seconds = ss; *frames = ff;
     }
 }

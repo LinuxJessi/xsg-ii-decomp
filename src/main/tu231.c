@@ -54,7 +54,7 @@ void talkDrawFadeRect(float scale, int x0, int y0, int x1, int y1, unsigned int 
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ZBUF_1;
-    pairs[pairCount].ad.data = GS_SET_ZBUF(0, TALK_PSMZ24, 1);
+    pairs[pairCount].ad.data = GS_SET_ZBUF(0, GS_PSMZ24, 1);
     pairCount++;
     pairs[pairCount].ad.reg = GS_SCISSOR_1;
     pairs[pairCount].ad.data = GS_SET_SCISSOR(0, TALK_SCREEN_RIGHT, 0, TALK_SCREEN_BOTTOM);
@@ -201,7 +201,7 @@ void talkDrawSlotFrame(MsgSlot *slot) {
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ZBUF_1;
-    pairs[pairCount].ad.data = GS_SET_ZBUF(0, TALK_PSMZ24, 1);
+    pairs[pairCount].ad.data = GS_SET_ZBUF(0, GS_PSMZ24, 1);
     pairCount++;
     pairs[pairCount].ad.reg = GS_SCISSOR_1;
     pairs[pairCount].ad.data = GS_SET_SCISSOR(0, TALK_SCREEN_RIGHT, 0, TALK_SCREEN_BOTTOM);
@@ -363,7 +363,7 @@ void talkDrawSelectionBox(MsgSlot *slot) {
     pairs[pairCount].ad.data = 0;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ZBUF_1;
-    pairs[pairCount].ad.data = GS_SET_ZBUF(0, TALK_PSMZ24, 1);
+    pairs[pairCount].ad.data = GS_SET_ZBUF(0, GS_PSMZ24, 1);
     pairCount++;
     pairs[pairCount].ad.reg = GS_SCISSOR_1;
     pairs[pairCount].ad.data = GS_SET_SCISSOR(0, TALK_SCREEN_RIGHT, 0, TALK_SCREEN_BOTTOM);

@@ -11,19 +11,12 @@ void timecodeSetFrames(MsgSlot *slot, long long frames);
 void timecodeSetFramePair(MsgSlot *slot, long long first, long long second);
 
 /* Time units, as in tu241.c. */
-#define FRAMES_PER_SECOND 30
-#define FRAMES_PER_MINUTE (60 * FRAMES_PER_SECOND)
-#define FRAMES_PER_HOUR (60 * FRAMES_PER_MINUTE)
-#define SECONDS_PER_MINUTE 60
-#define SECONDS_PER_HOUR (60 * SECONDS_PER_MINUTE)
 
 /* Setup of a timecode started by timecodeStartAtHms (values as tu241.c's TIMECODE_* names). */
 #define TIMECODE_BOX_X 0x151       /* x, y, width and height passed to timecodeTickIfActive */
 #define TIMECODE_BOX_Y 0x14
 #define TIMECODE_BOX_WIDTH 0x96
 #define TIMECODE_BOX_HEIGHT 0x23
-#define TIMECODE_MODE_MSF 2
-#define TIMECODE_PHASE_SECONDS 11
 
 /* Starts the timeline at hours/minutes/seconds (30 frames per second); returns 0 while the in-use bit (MSG_SLOT_ACTIVE) is set. */
 int timecodeStartAtHms(MsgSlot *state, int hours, int minutes, int seconds) {

@@ -10,6 +10,13 @@
  * rest is the per-state body in the union u. Offsets in the body comments are absolute (slot +).
  */
 
+/* Frame and second counts of the message slots (30 frames per second). */
+#define FRAMES_PER_SECOND 30
+#define FRAMES_PER_MINUTE (60 * FRAMES_PER_SECOND)
+#define FRAMES_PER_HOUR (60 * FRAMES_PER_MINUTE)
+#define SECONDS_PER_MINUTE 60
+#define SECONDS_PER_HOUR (60 * SECONDS_PER_MINUTE)
+
 /* State 1 (text) body, at +0x28. */
 typedef struct MsgSlotText {
     char *start;                      /* +0x28: start of the formatted text, key of the tags textFormatInsertGlyphTag adds */

@@ -362,7 +362,7 @@ void talkWindowDrawFrame(MsgSlot *window, int mode, float scale)
     pairs[pairCount].ad.data = 1;
     pairCount++;
     pairs[pairCount].ad.reg = GS_ZBUF_1;
-    pairs[pairCount].ad.data = GS_SET_ZBUF(0, TALK_PSMZ24, 1);
+    pairs[pairCount].ad.data = GS_SET_ZBUF(0, GS_PSMZ24, 1);
     pairCount++;
     talkWindowFrameRect(&scissor_left, &scissor_top, &scissor_bottom, &scissor_right, window, mode, scale);
     color = talkColorFadeAlpha(color, scale);

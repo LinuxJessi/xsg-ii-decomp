@@ -406,7 +406,7 @@ int textLineWidth(int end) {
     *scratch = 0;
     strcat(scratch, (const char *) textPropTag);
     strcat(scratch, (const char *) D_0069DD58);
-    func_002AAE40(scratch, (const char *) start, end - start + 1);
+    strncat(scratch, (const char *) start, end - start + 1);
     return xglFontGetStringWidth(scratch);
 }
 

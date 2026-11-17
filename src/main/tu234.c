@@ -37,9 +37,6 @@
 #define SELL_ROW_COUNT_X 0x122
 #define SELL_LIST_SLOTS 40          /* item slots of a sell list */
 #define ASCII_ZERO '0'
-#define FRAMES_PER_SECOND 30
-#define FRAMES_PER_MINUTE (60 * FRAMES_PER_SECOND)
-#define FRAMES_PER_HOUR (60 * FRAMES_PER_MINUTE)
 #define ENTRY_KIND_NUMBER 0         /* kind of a TextEntry (same word as the talk box mode): a plain number */
 #define ENTRY_KIND_HMS 1            /* frame count shown as hh:mm:ss */
 #define ENTRY_KIND_MSF 2            /* frame count shown as mm:ss:ff */
@@ -97,7 +94,7 @@ int debtBoxCenterX(DebtBox *box, int value) {
 
     do {
         text_w += DEBT_DIGIT_PITCH;
-        value = func_002A7618(dpmul(litodp(value), 0.1));
+        value = dptoli(dpmul(litodp(value), 0.1));
     } while ((value < 0 ? -value : value) > 0);
     text_w += DEBT_DIGIT_PITCH;
     return box->x + (box->width >> 1) - (text_w >> 1);
@@ -293,7 +290,7 @@ void textBoxMeasure(int *width, int *height, signed char *text, int *font, signe
     line[0] = 0;
     strcat(line, fontStylePrefix);
     strcat(line, fontPropTag);
-    func_002AAE40(line, (const char *) line_start, end - line_start + 1);
+    strncat(line, (const char *) line_start, end - line_start + 1);
     *width = xglFontGetStringWidth(line) + xglFontWidthGetSum() + TEXT_BOX_PAD_X;
 }
 
@@ -425,7 +422,7 @@ extern float D_0069B54C;
 
 /* Scales an integer by a float constant and rounds to nearest. */
 int scaleAndRound(int value) {
-    return func_002A7618(dpadd(fptodp((float)value * D_0069B54C), 0.5));
+    return dptoli(dpadd(fptodp((float)value * D_0069B54C), 0.5));
 }
 
 int sellItemFirstRowY(const struct TextLayout *layout);
@@ -483,7 +480,7 @@ extern float D_0069B550;
 /* Returns how many of the SELL_LIST_SLOTS slots are walked before the rounded scaled value runs out of filled slots. */
 int sellCursorFilledRank(int value, int *slots) {
     int *end = slots + SELL_LIST_SLOTS;
-    int remaining = func_002A7618(dpadd(fptodp((float)value * D_0069B550), 0.5));
+    int remaining = dptoli(dpadd(fptodp((float)value * D_0069B550), 0.5));
     int count;
 
     for (count = 0; slots < end; count++, slots++) {
@@ -785,7 +782,7 @@ typedef struct TalkDigitBox {
 /* Draws the digit row of a talk box; the animated or highlighted cell is drawn through the accent path. */
 void talkBoxDrawDigitRow(TalkDigitBox *box, int x, int y) {
     TalkDigitState *state = &box->state;
-    int highlight = func_002A7618(dpadd(fptodp((float) state->scroll / TALK_SCROLL_DIVISOR), 0.5));
+    int highlight = dptoli(dpadd(fptodp((float) state->scroll / TALK_SCROLL_DIVISOR), 0.5));
     int pos;
     int cell;
     int digit;
@@ -949,22 +946,22 @@ s32 formatEntryHms(s32 *buffer, struct TextEntry *entry) {
     float total, hours, minutes, seconds;
 
     total = __floatdisf(entry->value);
-    hours = __floatdisf(__divdi3(func_002A6BB8(total), FRAMES_PER_HOUR));
-    total -= __floatdisf(func_002A6BB8(hours) * FRAMES_PER_HOUR);
-    minutes = __floatdisf(__divdi3(func_002A6BB8(total), FRAMES_PER_MINUTE));
-    total -= __floatdisf(func_002A6BB8(minutes) * FRAMES_PER_MINUTE);
-    seconds = __floatdisf(__divdi3(func_002A6BB8(total), FRAMES_PER_SECOND));
-    digit[0] = func_002A7618(dpmul(fptodp(hours), 0.1));
+    hours = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_HOUR));
+    total -= __floatdisf(__fixsfdi(hours) * FRAMES_PER_HOUR);
+    minutes = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_MINUTE));
+    total -= __floatdisf(__fixsfdi(minutes) * FRAMES_PER_MINUTE);
+    seconds = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_SECOND));
+    digit[0] = dptoli(dpmul(fptodp(hours), 0.1));
     tens_h = digit[0];
     hours -= tens_h * 10;
     ones_h = hours;
     digit[1] = ones_h;
-    digit[2] = func_002A7618(dpmul(fptodp(minutes), 0.1));
+    digit[2] = dptoli(dpmul(fptodp(minutes), 0.1));
     tens_m = digit[2];
     minutes -= tens_m * 10;
     ones_m = minutes;
     digit[3] = ones_m;
-    digit[4] = func_002A7618(dpmul(fptodp(seconds), 0.1));
+    digit[4] = dptoli(dpmul(fptodp(seconds), 0.1));
     tens_s = digit[4];
     seconds -= tens_s * 10;
     ones_s = seconds;
@@ -978,19 +975,19 @@ s32 formatEntryMsf(s32 *buffer, struct TextEntry *entry) {
     float total, hours, minutes, seconds, frames;
 
     total = __floatdisf(entry->value);
-    hours = __floatdisf(__divdi3(func_002A6BB8(total), FRAMES_PER_HOUR));
-    total -= __floatdisf(func_002A6BB8(hours) * FRAMES_PER_HOUR);
-    minutes = __floatdisf(__divdi3(func_002A6BB8(total), FRAMES_PER_MINUTE));
-    total -= __floatdisf(func_002A6BB8(minutes) * FRAMES_PER_MINUTE);
-    seconds = __floatdisf(__divdi3(func_002A6BB8(total), FRAMES_PER_SECOND));
-    frames = __floatdisf(func_002A6A18(dpmul(fptodp(total - __floatdisf(func_002A6BB8(seconds) * FRAMES_PER_SECOND)), HUNDREDTHS_PER_FRAME)));
-    digit[0] = func_002A7618(dpmul(fptodp(minutes), 0.1));
+    hours = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_HOUR));
+    total -= __floatdisf(__fixsfdi(hours) * FRAMES_PER_HOUR);
+    minutes = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_MINUTE));
+    total -= __floatdisf(__fixsfdi(minutes) * FRAMES_PER_MINUTE);
+    seconds = __floatdisf(__divdi3(__fixsfdi(total), FRAMES_PER_SECOND));
+    frames = __floatdisf(__fixdfdi(dpmul(fptodp(total - __floatdisf(__fixsfdi(seconds) * FRAMES_PER_SECOND)), HUNDREDTHS_PER_FRAME)));
+    digit[0] = dptoli(dpmul(fptodp(minutes), 0.1));
     minutes -= digit[0] * 10;
     digit[1] = minutes;
-    digit[2] = func_002A7618(dpmul(fptodp(seconds), 0.1));
+    digit[2] = dptoli(dpmul(fptodp(seconds), 0.1));
     seconds -= digit[2] * 10;
     digit[3] = seconds;
-    digit[4] = func_002A7618(dpmul(fptodp(frames), 0.1));
+    digit[4] = dptoli(dpmul(fptodp(frames), 0.1));
     frames -= digit[4] * 10;
     digit[5] = (int) frames - D_0063D420[digit[4]];
     digit[5] = xglClampInt(digit[5], 0, 9);

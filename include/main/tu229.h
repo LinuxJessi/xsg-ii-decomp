@@ -7,9 +7,6 @@
 
 /* Functions of src/main/tu229.c that other files call. */
 
-/* The EE scratchpad, where the talk and frame packets are built before they are sent. */
-#define SCRATCHPAD_BASE 0x70000000
-
 /* One A+D pair of a packet built in the scratchpad (also used by tu231.c). */
 typedef union GsPair {
     struct {
@@ -44,8 +41,6 @@ typedef union GsPair {
 /* GIF tag of the A+D packets the talk code builds in the scratchpad: GIF_TAG_ONE_AD_EOP (gs.h) with
  * NLOOP 0; the pair count is added to it when the packet is sent. */
 #define TALK_GIF_TAG_AD_EOP (GIF_TAG_ONE_AD_EOP - 1)
-/* Z buffer pixel format 24 bit (proposal: GS_PSMZ24 in gs.h). */
-#define TALK_PSMZ24 0x31
 
 #include "main/tu242.h"
 

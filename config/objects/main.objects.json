@@ -103373,9 +103373,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A6A18",
+     "name": "__fixdfdi",
      "size": 120,
-     "splat_name": "func_002A6A18",
+     "splat_name": "__fixdfdi",
      "va": "0x002a6a18",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103391,9 +103391,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A6BB8",
+     "name": "__fixsfdi",
      "size": 68,
-     "splat_name": "func_002A6BB8",
+     "splat_name": "__fixsfdi",
      "va": "0x002a6bb8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103499,9 +103499,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A7618",
+     "name": "dptoli",
      "size": 156,
-     "splat_name": "func_002A7618",
+     "splat_name": "dptoli",
      "va": "0x002a7618",
      "name_basis": "address",
      "provenance": "estimated"
@@ -104120,9 +104120,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AAE40",
+     "name": "strncat",
      "size": 428,
-     "splat_name": "func_002AAE40",
+     "splat_name": "strncat",
      "va": "0x002aae40",
      "name_basis": "address",
      "provenance": "estimated"
