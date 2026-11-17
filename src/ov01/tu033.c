@@ -36,15 +36,17 @@ extern char cmdFifo[];   /* cmdFifo: fifo control block */
 
 /* The four-word payload of eventQueueAdd and eventQueueAddKind4. */
 typedef struct EventQueueArgs {
-    unsigned char unmodeled_00[0x4];
-    int tecIndex;                       /* +0x04: the tec whose EP cost cmdStockRun charges */
+    union {
+        struct Ov01Object *unit;        /* the acting unit of a kind-4 record (the attack's attacker) */
+        int actions;                    /* kind 3: the kind-4 records of the attack */
+    };                                  /* +0x00 */
+    union {
+        int tecIndex;                   /* the tec whose EP cost cmdStockRun charges */
+        int hits;                       /* kind 3: the kind-5 records (targets) of the attack */
+    };                                  /* +0x04 */
     unsigned char unmodeled_08[0x4];
     Ov01Object *target;                 /* +0x0C: the partner / stocked unit of events 0x10 and 0x12 */
 } EventQueueArgs;
-
-typedef struct EventQueueArgs11 {
-    int words[11];
-} EventQueueArgs11;
 
 /* One 0x30-byte record of eventQueueTable (eventQueueTable); kind is its first word,
  * the payload layout depends on the appender. */
@@ -56,13 +58,14 @@ typedef struct EventQueueEntry {
             void *object;
             CmdListBody args;
         } kind1;                      /* eventQueueAddKind1 */
-        EventQueueArgs11 kind5;       /* eventQueueAddKind5 */
+        struct HitRecord kind5;       /* eventQueueAddKind5: the hit record of one target */
     } data;
 } EventQueueEntry;
 
 /* Record kinds by their handler in eventQueueHandlers (the kinds the code here queues). */
 enum {
     EVENT_KIND_WAIT_UNIT_QUEUE = 2,     /* eventWaitUnitQueue */
+    EVENT_KIND_ATTACK = 3,              /* func_00A938A0: shows the attack (unitsMarkUninvolved) */
     EVENT_KIND_LOADS_IDLE = 7,          /* ov01LoadsIdle */
     EVENT_KIND_STREAM_OPEN = 14,        /* ov01StreamOpen */
     EVENT_KIND_STREAM_BIND = 15,        /* ov01StreamBind */
@@ -223,9 +226,9 @@ int cmdFindFirstTarget(int target, struct Tu033CallSource *source)
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92C18);
 
 
-int func_00A92E30(struct AttackCommand *owner, int value, TecRecord *tec);
+int attackQueue(struct AttackCommand *command, struct Ov01Object *target, TecRecord *tec);
 
-int func_00A92D98(struct AttackCommand *owner, int value) {
+int func_00A92D98(struct AttackCommand *owner, struct Ov01Object *value) {
     TecRecord *entry;
     int slot;
     int result;
@@ -234,16 +237,107 @@ int func_00A92D98(struct AttackCommand *owner, int value) {
     slot = entry->kindBits.slot;
     result = slot < 8;
     if (result != 0 && slot >= 0) {
-        result = func_00A92E30(owner, value, entry);
+        result = attackQueue(owner, value, entry);
     }
     return result;
 }
 
-void func_00A92DF0(struct AttackCommand *owner, int value) {
-    func_00A92E30(owner, value, tecRecordGet(owner->actionIdx));
+void func_00A92DF0(struct AttackCommand *owner, struct Ov01Object *value) {
+    attackQueue(owner, value, tecRecordGet(owner->actionIdx));
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92E30);
+void *memset(void *destination, int value, unsigned int count);
+struct Ov01Object *tgtFindNext(void);
+signed char unitRecordStateGet(struct Ov01Object *unit, int index);
+int func_00A95198(int id);
+void eventQueueAddKind4(EventQueueArgs *args);
+void eventQueueAddKind5(struct HitRecord *args);
+extern int D_00AC3AFC;
+
+/* Queues an attack: a kind-5 record per target (tgtFindNext walks them) with its hit record and the unit command
+ * the target answers with, the attack itself as a kind-4 record (twice with the partner for a pair technique), and
+ * a kind-3 record with both counts. Returns 0 for an unknown hit kind. */
+int attackQueue(struct AttackCommand *command, struct Ov01Object *target, TecRecord *tec)
+{
+    struct HitRecord hit;
+    EventQueueArgs counts;
+    EventQueueArgs pair;
+    int kind;
+    int flags;
+    int hits;
+
+    hits = 0;
+    do {
+        if (tec->kindBits.kind != 0) {
+            hit.target = target;
+            calcHitRecordFill(command, &hit);
+            kind = hit.hitMode.word & 0xFF;
+            flags = (hit.hitMode.word >> 8) & 0xFF;
+            battleStateGet()->second = hit.damage;
+            battleStateGet()->third = hit.hitMode.word;
+            switch (kind) {
+            case 0:
+                hit.reaction = UNIT_CMD_JUMP_EFFECT;
+                break;
+            case 1:
+            case 3:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+                if (flags & 2) {
+                    hit.reaction = UNIT_CMD_HOVER_EFFECT;
+                } else {
+                    hit.reaction = UNIT_CMD_MODE_DISPATCH;
+                }
+                break;
+            case 2:
+            case 4:
+                if (flags & 8) {
+                    hit.reaction = UNIT_CMD_PHASE_2B_WAIT;
+                } else {
+                    hit.reaction = UNIT_CMD_CLEAR_ACTIVE;
+                }
+                break;
+            case 5:
+            case 6:
+                hit.reaction = UNIT_CMD_DEACTIVATE;
+                break;
+            default:
+                return 0;
+            }
+            target->stats->source = command->attacker;
+            target->stats->sourceAction = command->actionIdx;
+        } else {
+            memset(&hit, 0, sizeof(hit));
+            hit.target = target;
+            hit.reaction = 0;
+            hit.hitMode.word = (hit.hitMode.word & 0xFF00) | 0xB;
+        }
+        eventQueueAddKind5(&hit);
+        hits++;
+    } while ((target = tgtFindNext()) != 0);
+    /* A kind-4 record keeps the first four words of the attack command (attacker, kind, action, id); the pair
+     * copy below is one 16-byte struct copy in the original (ldl/sdl), so both go through that view. */
+    eventQueueAddKind4((EventQueueArgs *)command);
+    kind = 1;
+    command->attacker->stats->valueLevel += unitRecordStateGet(command->attacker, command->actionIdx);
+    if (tecRecordGet(command->actionIdx)->gateFlag == 1) {
+        kind = 2;
+        pair = *(EventQueueArgs *)command;
+        pair.unit = unitPairPartnerFind(command->attacker, command->id);
+        eventQueueAddKind4(&pair);
+    }
+    if (func_00A95198(command->actionIdx) != 0) {
+        D_00AC3AFC = 1;
+    } else {
+        D_00AC3AFC = 0;
+    }
+    counts.actions = kind;
+    counts.hits = hits;
+    eventQueueAdd(EVENT_KIND_ATTACK, &counts);
+    return 1;
+}
 
 /* The partner of unit in pair record value: the first unit of side 0 that is
  * not held and has the other key of the pair; 0 when there is none. */
@@ -489,7 +583,7 @@ void eventQueueAddKind4(EventQueueArgs *args)
 }
 
 /* eventQueueAddKind5: appends a kind-5 record with a 0x2C-byte payload. */
-void eventQueueAddKind5(EventQueueArgs11 *args)
+void eventQueueAddKind5(struct HitRecord *args)
 {
     EventQueueEntry *entry = eventQueueReserve();
 
@@ -887,7 +981,6 @@ int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec)
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95268);
 
-void *memset(void *destination, int value, unsigned int count);
 void sefStartEffectDefault(void *object);
 
 /* Starts effect (keyHigh, keyLow) on the unit's actor. */

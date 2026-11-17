@@ -3330,6 +3330,7 @@
    "0x00a8e6d8": "calcStatIdx2Bit",
    "0x00a916a0": "tgtFindNext",
    "0x00a91a78": "sdvInitSpecialWork",
+   "0x00a92e30": "attackQueue",
    "0x00a93168": "unitCmdRequestQueue",
    "0x00a93b70": "unitsMarkUninvolved",
    "0x00a951d8": "tecEffectGroupGet",

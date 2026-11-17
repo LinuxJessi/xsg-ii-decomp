@@ -129,7 +129,7 @@ struct StatBlock {
     int spawnArgC;                          /* +0xF8: the spawn record's spawnArgC (tu038), unitCreate's argument 4 */
     int spawnArgD;                          /* +0xFC: the spawn record's spawnArgD (tu038), unitCreate's argument 5 */
     StatOwner *source;                      /* +0x100: the unit whose effect sum battleResultAdd adds; unitFaceTarget's target argument */
-    unsigned char unmodeled_104[0x2];       /* +0x104..+0x105 */
+    short sourceAction;                     /* +0x104: the action index of source (attackQueue) */
     short handle;                           /* +0x106: passed to handleFree by unitCmdRelease */
 };
 

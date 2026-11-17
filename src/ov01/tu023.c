@@ -138,7 +138,6 @@ void battleEntryLoad(StatBlock *entry, int key);
  */
 StatOwner *battleContextBind(int key, int contextIndex);
 int calcEpCost(StatOwner *owner, int index);
-struct TecRecord *calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
 int calcHpDmg(StatOwner *attacker, StatOwner *target, int hitMode, int damage);
 int calcEpAdjust(StatOwner *unit, int delta);
 int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey);
@@ -1157,8 +1156,10 @@ int calcEpCost(StatOwner *owner, int index)
     return cost;
 }
 
-/* calcHitRecordFill: fills a hit record for one target (its mode is set by calcHitMode). */
-struct TecRecord *calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit)
+/* calcHitRecordFill: fills a hit record for one target (its mode is set by calcHitMode). It returns nothing: its
+ * callers' code needs a void result (attackQueue keeps the hit word in $2), and the closing tecRecordGet call,
+ * whose result is unused, compiles to the same tail call. */
+void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit)
 {
     struct TecRecord *command;
     int packedMode;
@@ -1188,7 +1189,7 @@ struct TecRecord *calcHitRecordFill(struct AttackCommand *action, struct HitReco
             hit->damage = calcAttackDamage(action, hit);
         }
     }
-    return tecRecordGet(action->actionIdx);
+    tecRecordGet(action->actionIdx);
 }
 
 /* calcHitRoll: rnd(99) rolls checked against the record's bytes at +0x4 and +0x5 and the target's flags; returns 0, 1 or 2. Returns 0 when the unit's state byte at +0x70 is set. */
@@ -3423,7 +3424,7 @@ s32 unitValueDecay(StatOwner *obj)
 
 /*
  * Returns the signed state byte of record index, or 0 when unit has effect code 0x13.
- * The caller (func_00A92E30) adds the result to the unit's valueLevel (+0x64).
+ * The caller (attackQueue) adds the result to the unit's valueLevel (+0x64).
  */
 s8 unitRecordStateGet(StatOwner *unit, s32 index)
 {

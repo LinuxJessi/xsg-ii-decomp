@@ -50,7 +50,7 @@ struct ActStock *actStockGet(void);
  */
 struct HitRecord {
     struct Ov01Object *target;                      /* +0x00 */
-    unsigned char unmodeled_04[0x8 - 0x4];  /* +0x04..+0x07 */
+    int reaction;                           /* +0x04: the UNIT_CMD_* the target answers with (attackQueue) */
     int damage;                             /* +0x08: calcAttackDamage result, or the calcRestoreValue result for type 2 */
     int followResult;                       /* +0x0c: calcFollowKind result, stored by calcAttackDamage */
     int backAttack;                         /* +0x10: calcBackAttack's facing test for kind 1; 1 skips calcHitRoll and adds 50 to calcCritDamage's chance */
@@ -63,7 +63,6 @@ struct HitRecord {
     int inflictMask;                        /* +0x20: bits calcHitInflict inflicts */
     int cureRow;                            /* +0x24: row calcHitCure clears */
     int cureMask;                           /* +0x28: bits calcHitCure clears */
-    unsigned char unmodeled_2c[0x30 - 0x2C]; /* +0x2c..+0x2f */
 };
 
 /*
@@ -94,6 +93,7 @@ int calcStatBit2Idx(int statBit);
 void calcActStockSet(struct Ov01Object *unit, int slot);
 int calcBoostOk(struct Ov01Object *obj, int id);
 int calcEntryUsable(struct Ov01Object *entity, int index);
+void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
 int actLevelChanceRoll(struct Ov01Object *owner, int index);
 int actStepCounterValue(void);
 void actStockClearBoost1(void);
