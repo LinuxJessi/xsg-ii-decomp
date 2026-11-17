@@ -572,7 +572,7 @@ void eventWaitUnitQueue(struct EventWaitRecord *record) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A938A0);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93B70);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu033", unitsMarkUninvolved);
 
 void func_00A93CF0(void) {
     Ov01Object **actors;

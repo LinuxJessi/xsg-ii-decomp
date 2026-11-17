@@ -1936,7 +1936,7 @@
       "asm/nonmatchings/ov01/tu033/func_00A93710.s",
       "asm/nonmatchings/ov01/tu033/eventWaitUnitQueue.s",
       "asm/nonmatchings/ov01/tu033/func_00A938A0.s",
-      "asm/nonmatchings/ov01/tu033/func_00A93B70.s",
+      "asm/nonmatchings/ov01/tu033/unitsMarkUninvolved.s",
       "asm/nonmatchings/ov01/tu033/func_00A93CF0.s",
       "asm/nonmatchings/ov01/tu033/func_00A93D50.s",
       "asm/nonmatchings/ov01/tu033/unitTryActStock.s",
