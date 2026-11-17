@@ -187,6 +187,7 @@ void unitUpdate(Ov01Object *object);
 void unitUnbind(Ov01Object *object);
 int unitCurrentPhase(Ov01Object *object);
 void unitSetPhase(Ov01Object *object, int phase);
+void unitSetTimedPhase(Ov01Object *object, int phase);
 void unitSetSelector(Ov01Object *object, int selector);
 void unitRefreshPhase(Ov01Object *object);
 void unitSetVectorZ(Ov01Object *object, float scaleZ);

@@ -129,6 +129,7 @@ extern unsigned short textOptionFlags[];
 #include "main/tu097.h"
 #include "main/tu101.h"
 #include "main/tu110.h"
+#include "main/tu125.h"
 #include "main/xgl_font.h"
 
 /* Text window: the box at the bottom of the screen and its single line of text. */

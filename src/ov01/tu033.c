@@ -15,7 +15,11 @@
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
 #include "main/tu051.h"
+#include "ov01/tu009.h"
+#include "ov01/tu011.h"
 #include "ov01/tu012.h"
+#include "ov01/tu019.h"
+#include "ov01/tu020.h"
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
 #include "ov01/tu042.h"
@@ -23,6 +27,7 @@
 #include "ov01/tu038.h"
 #include "ov01/tu054.h"
 #include "ov01/tu066.h"
+#include "ov01/tu068.h"
 #include "ov01/tu070.h"
 
 extern char cmdList[];   /* cmdList: 0x20-byte entries, unit then command body */
@@ -249,7 +254,7 @@ void func_00A92DF0(struct AttackCommand *owner, struct Ov01Object *value) {
 void *memset(void *destination, int value, unsigned int count);
 struct Ov01Object *tgtFindNext(void);
 signed char unitRecordStateGet(struct Ov01Object *unit, int index);
-int func_00A95198(int id);
+int actionTransformSlotGet(int id);
 void eventQueueAddKind4(EventQueueArgs *args);
 void eventQueueAddKind5(struct HitRecord *args);
 extern int D_00AC3AFC;
@@ -328,7 +333,7 @@ int attackQueue(struct AttackCommand *command, struct Ov01Object *target, TecRec
         pair.unit = unitPairPartnerFind(command->attacker, command->id);
         eventQueueAddKind4(&pair);
     }
-    if (func_00A95198(command->actionIdx) != 0) {
+    if (actionTransformSlotGet(command->actionIdx) != 0) {
         D_00AC3AFC = 1;
     } else {
         D_00AC3AFC = 0;
@@ -468,6 +473,7 @@ void *eventQueueReserve(void) {
 }
 
 #include "shared.h"
+#include "main/tu125.h"
 
 /* Slot from tecRecordGet; its state byte at +0x1C is compared with 1 in unitAttachRequest. */
 typedef struct Ov01Tu033Slot {
@@ -487,12 +493,11 @@ typedef struct Ov01Tu033Request {
 
 
 extern Ov01Object *ov01LastUnit;
-extern int ov01ModelEntry;
+extern struct AttachRecord *ov01ModelEntry;
 int dataSlotRelease(s16);
 int dataSlotFlagClear(s16);
 int unitEffectSlotAcquire(int);
 int unitRemove(Ov01Object *);
-int unitAttachChild(int, int, int);
 int sefApplyRecordMode(struct XenoActor *, int, int);
 int sefSetGateForId(int, int);
 int unitTblGet(int, Ov01Object ***);
@@ -736,7 +741,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94260);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94500);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A946C0);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu033", attackSpecialStep);
 
 /* One weighted group of itemPickGroups: a roll below threshold picks one of its count items. */
 typedef struct ItemPickGroup {
@@ -857,9 +862,9 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94EB0);
 
 int func_00A94260();
 
-void func_00A95018(int unused_arg0, struct AttackCommand *owner) {
+int func_00A95018(EventQueueEntry *entry, struct AttackCommand *owner) {
     func_00A94260();
-    func_00A93288(owner);
+    return func_00A93288(owner);
 }
 
 /*
@@ -915,7 +920,7 @@ void battleUnitsReset(void)
 }
 
 /* Maps the ids 0x2D5..0x2D7 to 0x8D..0x8F, any other id to 0. */
-int func_00A95198(int id)
+int actionTransformSlotGet(int id)
 {
     int value;
 
@@ -1134,16 +1139,14 @@ int ov01LoadsIdle(void)
  */
 int unitAttachRequest(Ov01Tu033Request *request)
 {
-    int id;
-    int matchedHandle;
+    Ov01Object *unit;
 
     if (ov01ModelEntry != 0) {
-        id = request->id;
-        unitAttachChild(id, ov01ModelEntry, 0);
+        /* The kind-8 request carries the unit as its word. */
+        unit = (Ov01Object *) request->id;
+        unitAttachChild(unit, ov01ModelEntry, 0);
         if (tecRecordGet(request->index)->gateFlag == 1) {
-            /* The kind-8 request carries the unit as its word, and unitAttachChild takes words. */
-            matchedHandle = (int) unitPairPartnerFind((Ov01Object *) id, request->value);
-            unitAttachChild(matchedHandle, ov01ModelEntry, 1);
+            unitAttachChild(unitPairPartnerFind(unit, request->value), ov01ModelEntry, 1);
         }
     }
     return 1;
@@ -1337,9 +1340,7 @@ int unitsReviveDown(void)
     return 1;
 }
 
-/* monsSlotCreate (tu019.c) returns a record pointer; this caller keeps its int view (the int global), see tu019.h. */
-int monsSlotCreate(void);
-extern int ov01StreamSlot;
+extern struct MonsSlot *ov01StreamSlot;
 
 /*
  * ov01StreamOpen (proposed ov01StreamOpen): the kind-14 event handler. It stores the
@@ -1353,7 +1354,6 @@ int ov01StreamOpen(void) {
 }
 
 void *dataStreamFind(int id);
-void monsSlotCopyParams(int slot, void *stream);
 
 /* Once data stream 0x43 (opened by ov01StreamOpen) is found, hands it to the
  * MonsSlot in ov01StreamSlot (monsSlotCopyParams) and returns 1; 0 until then. */

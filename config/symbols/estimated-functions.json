@@ -3174,7 +3174,7 @@
      1
     ],
     [
-     "func_00A946C0",
+     "attackSpecialStep",
      11093696,
      1112,
      1
@@ -3222,7 +3222,7 @@
      1
     ],
     [
-     "func_00A95198",
+     "actionTransformSlotGet",
      11096472,
      60,
      1
