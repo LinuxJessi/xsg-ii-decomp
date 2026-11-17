@@ -186,7 +186,8 @@ typedef struct GameWork {
     signed char rowFlags[2][512];               /* +0x1720: key row flags, [0] while control bit 11 is clear, [1] while set */
     signed char panelMode;                      /* +0x1B20: the kind of the last panel command */
     unsigned char unmodeled_1B21[0x3];
-    int panelValue;                             /* +0x1B24 */
+    int panelValue;                             /* +0x1B24: counted down per frame and shown as a timecode; ov01's
+                                                 * tgtSelectStatusUpdate ends a time-limited battle at 0 */
     unsigned char unmodeled_1B28[0x8];
 } GameWork;
 

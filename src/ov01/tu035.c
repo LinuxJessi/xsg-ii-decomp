@@ -3,6 +3,7 @@
  */
 #include "common.h"
 #include "main/pad.h"
+#include "main/tu048.h"
 #include "ov01/tu005.h"
 #include "ov01/tu012.h"
 #include "ov01/tu017.h"
@@ -282,13 +283,6 @@ enum {
     TGT_STATUS_TIME_UP = 5              /* time limit reached */
 };
 
-/* The word of gameWork (main) this file reads: the time left of a time-limited battle. */
-typedef struct TgtGameWork {
-    unsigned char unmodeled_0000[0x1B24];
-    int timeLeft;                       /* +0x1B24 */
-} TgtGameWork;
-
-extern TgtGameWork gameWork;
 
 /* Sets the battle status (TGT_STATUS_*) unless the execute stage runs; 1 when the
  * battle is over. */
@@ -300,7 +294,7 @@ int tgtSelectStatusUpdate(void)
     if (state->flags & TGT_STAGE_EXECUTE) {
         return 0;
     }
-    if ((cfEventGet() & CF_EVENT_TIME_LIMIT) && gameWork.timeLeft <= 0) {
+    if ((cfEventGet() & CF_EVENT_TIME_LIMIT) && gameWork.panelValue <= 0) {
         state->status = TGT_STATUS_TIME_UP;
         return 1;
     }
