@@ -6,6 +6,7 @@
 struct MonsSlot;
 
 void monsSlotShow(struct MonsSlot *slot);
+void monsSlotHide(struct MonsSlot *slot);
 int monsTblValueGet(void);
 
 #endif /* INCLUDE_OV01_TU020_H */

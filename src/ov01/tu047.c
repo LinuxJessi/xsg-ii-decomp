@@ -526,7 +526,6 @@ void runEffGet(int *first, int *second)
     *second = D_00AE0C30;
 }
 
-void decoFlagsSetAll(void);
 
 int decoDisp(SbThread *call)
 {

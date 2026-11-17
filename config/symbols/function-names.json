@@ -3335,6 +3335,7 @@
    "0x00a93b70": "unitsMarkUninvolved",
    "0x00a946c0": "attackSpecialStep",
    "0x00a94d28": "unitDataBoxDrop",
+   "0x00a94eb0": "unitTransformBegin",
    "0x00a95198": "actionTransformSlotGet",
    "0x00a951d8": "tecEffectGroupGet",
    "0x00a95c00": "unitSlotShowHidePart",

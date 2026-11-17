@@ -501,7 +501,6 @@ int dataSlotFlagClear(s16);
 int unitEffectSlotAcquire(int);
 int unitRemove(Ov01Object *);
 int sefApplyRecordMode(struct XenoActor *, int, int);
-int sefSetGateForId(int, int);
 int unitTblGet(int, Ov01Object ***);
 Ov01Object *unitPlCreate(int);
 Ov01Object *unitEnCreate(int);
@@ -1075,7 +1074,53 @@ void unitDataBoxDrop(Ov01Object *unit, int percent)
     msgPutObject(0x14, 0x120, itemPickText, 0x2D, 0x1AC, 0x28);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94EB0);
+/* XenoActor.drawFlags bit unitTransformBegin clears on every side-2 actor before binding it again. */
+#define ACTOR_DRAW_BIT0 0x1
+/* The sef gate the transform closes (owner 0). */
+#define TRANSFORM_SEF_GATE 0x37
+
+/*
+ * Starts the transform of unit by action: keeps its key as the battle slot index and its facing as the battle
+ * scale, rebinds the side-2 units, removes the unit and creates the transformed one (actionTransformSlotGet) as
+ * ov01LastUnit facing pi, loads its data and hides the first monster slot.
+ */
+void unitTransformBegin(Ov01Object *unit, int action)
+{
+    struct MonsSlot **slots;
+    Ov01Object **units;
+    Ov01Object *other;
+    int count;
+    int i;
+    int key;
+    int posIndex;
+    int model;
+
+    battleStateGet()->slotIndex = unit->stats->key;
+    count = unitTblGet(2, &units);
+    for (i = 0; i < count; i++) {
+        other = units[i];
+        if (other != 0) {
+            other->unit->drawFlags &= ~ACTOR_DRAW_BIT0;
+            unitBindSetup(other);
+        }
+    }
+    posIndex = unit->stats->posIndex;
+    key = unit->stats->key;
+    battleStateGet()->scale = unit->stats->facing;
+    sefReleaseWaitSlot(unit->stats->sequenceIndex);
+    unitRemove(unit);
+    model = actionTransformSlotGet(action);
+    ov01LastUnit = unitPlCreate(model);
+    unitClearSnapshot(unit);
+    unit->stats->posIndex = posIndex;
+    unitSetAngleRadians(ov01LastUnit, 3.1415927f);
+    dataUnitLoad(model);
+    dataSlotFlagClear(key);
+    monsActiveSlotsGet(&slots);
+    monsSlotHide(slots[0]);
+    sefSetGateForId(0, TRANSFORM_SEF_GATE);
+    decoFlagsSetAll();
+}
 
 int func_00A94260();
 
