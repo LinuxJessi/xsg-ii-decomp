@@ -25,7 +25,7 @@ typedef union MenuCursorSlide {
 
 /* A sliding menu object, an objSlotAlloc slot: the menu cursor (menuCursor),
  * the icon list (menuIconListObj) and the five path objects of objPathTable
- * (tu050) are built this way. From +0x94 on the fields depend on the kind. */
+ * (tu050) and the stat records of menuStatRecords (tu049) are built this way. From +0x94 on the fields depend on the kind. */
 typedef struct MenuObject MenuObject;
 
 struct MenuObject {
@@ -39,6 +39,11 @@ struct MenuObject {
         struct {
             int visible;                  /* +0x94: menuCursorDraw draws the unit list when 1 */
         } cursor;
+        struct {
+            struct Ov01Object *unit;      /* +0x94: the unit the record shows */
+            float shown[3];               /* +0x98: the gauge values shown, eased towards the unit's by
+                                           * menuStatGaugeStep */
+        } stat;
         struct {
             int slot;                     /* +0x94: its index in objPathTable (and actStockGet's table) */
             int index;                    /* +0x98: current point of objPathPoints */
