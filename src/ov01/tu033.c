@@ -21,6 +21,7 @@
 #include "ov01/tu042.h"
 #include "ov01/tu036.h"
 #include "ov01/tu038.h"
+#include "ov01/tu054.h"
 #include "ov01/tu066.h"
 #include "ov01/tu070.h"
 
@@ -359,7 +360,6 @@ struct Tu033Request {
     int flags;
 };
 
-int func_00AA4DB8(Ov01Object *unit, int value, int flags, int option);
 
 /* func_00A932E0: forwards a request's object, second word and flags to func_00AA4DB8 (fourth argument 0). */
 void func_00A932E0(int unused_arg0, struct Tu033Request *request) {

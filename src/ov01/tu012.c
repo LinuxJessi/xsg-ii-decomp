@@ -197,6 +197,7 @@ int unitEffectKeyFree(Ov01Object *unit, int keyHigh, int keyLow) {
 }
 
 #include "ov01/tu041.h"
+#include "ov01/tu054.h"
 
 /* Loads the snapshot vector from the table entry for id (three ints divided by 100) and records id in the motion. */
 void unitLoadSnapshot(Ov01Object *object, int id) {
@@ -471,7 +472,6 @@ int seVoiceStartTagged(int tag, int id);
 int calcStatEffectSum(Ov01Object *object, int effectMask, int statMask);
 void calcEpAdjust(Ov01Object *object, int amount);
 void calcHpAdjust(Ov01Object *object, int amount);
-void func_00AA4DB8(Ov01Object *object, int amount, int kind, int sign);
 void unitLevelAdd(Ov01Object *object, int level);
 void unitCurrentAdd(Ov01Object *object, int amount);
 int unitHasEffectCode(Ov01Object *object, int code);
