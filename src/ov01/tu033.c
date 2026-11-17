@@ -1267,7 +1267,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95540);
 
 void func_00A955C8(Ov01Object *object) {
     sefApplyRecordMode(object->unit, (object->stats->sequenceIndex << 0xc) | 8, 3);
-    func_00A95680(object);
+    unitStatusAuraUpdate(object);
 }
 
 void func_00A95608(Ov01Object *object)
@@ -1278,7 +1278,44 @@ void func_00A95608(Ov01Object *object)
     sefApplyRecordMode(object->unit, 0x12C003, 1);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95680);
+/* Status aura effects of a unit: effect group 0x12C, records 1..3 (one per state unitStatusAuraUpdate tells apart). */
+#define AURA_GROUP 0x12C
+#define AURA_KEY(record) ((AURA_GROUP << 12) | (record))
+
+/*
+ * Shows the status aura that matches the unit's state (stat 2 at level 1, stat 2 at any level, stat 1 at any
+ * level), starting it when it does not run yet, and switches the other two auras off (mode 1). Nothing for a unit
+ * with flag 2.
+ */
+void unitStatusAuraUpdate(Ov01Object *object)
+{
+    if (object->flags & 2) {
+        return;
+    }
+    if (calcStatGet(object, 2, 1)) {
+        if (!sefOwnerPairInUse((int)object->unit, AURA_KEY(3))) {
+            unitEffectStart(object, AURA_GROUP, 3);
+        }
+        sefApplyRecordMode(object->unit, AURA_KEY(2), 1);
+        sefApplyRecordMode(object->unit, AURA_KEY(1), 1);
+    } else if (calcStatGet(object, 2, 0xFFFF)) {
+        if (!sefOwnerPairInUse((int)object->unit, AURA_KEY(2))) {
+            unitEffectStart(object, AURA_GROUP, 2);
+        }
+        sefApplyRecordMode(object->unit, AURA_KEY(3), 1);
+        sefApplyRecordMode(object->unit, AURA_KEY(1), 1);
+    } else if (calcStatGet(object, 1, 0xFFFF)) {
+        if (!sefOwnerPairInUse((int)object->unit, AURA_KEY(1))) {
+            unitEffectStart(object, AURA_GROUP, 1);
+        }
+        sefApplyRecordMode(object->unit, AURA_KEY(3), 1);
+        sefApplyRecordMode(object->unit, AURA_KEY(2), 1);
+    } else {
+        sefApplyRecordMode(object->unit, AURA_KEY(1), 1);
+        sefApplyRecordMode(object->unit, AURA_KEY(2), 1);
+        sefApplyRecordMode(object->unit, AURA_KEY(3), 1);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95810);
 

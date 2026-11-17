@@ -206,6 +206,7 @@ int sefCountMarkedEntries(SefEffectRecord *record);
 int sefCountOwnerValue(int owner, unsigned short value);
 void sefClearOwnerValueFlags(int owner, unsigned short value, int mask);
 void sefReleaseOwnedRecords(int owner);
+int sefOwnerPairInUse(int owner, int ownerKey);
 void sefPruneHandleSlots(void);
 void sefRegisterHandle(int handle, int value);
 

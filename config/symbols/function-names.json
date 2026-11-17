@@ -3339,6 +3339,7 @@
    "0x00a94eb0": "unitTransformBegin",
    "0x00a95198": "actionTransformSlotGet",
    "0x00a951d8": "tecEffectGroupGet",
+   "0x00a95680": "unitStatusAuraUpdate",
    "0x00a95c00": "unitSlotShowHidePart",
    "0x00a95c60": "unitSlotHideShowPart",
    "0x00a968c8": "unitsReviveDown",
