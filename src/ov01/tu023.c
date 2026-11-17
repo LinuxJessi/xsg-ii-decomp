@@ -48,41 +48,6 @@ struct PtStatusBlock {
 
 
 /*
- * Hit record of one target: calcHitRoll rolls for it and calcHitRecordFill fills it; the status
- * steps (calcCritDamage, calcHitStateStep, calcHitRowGate, calcFollowKind) read it.
- */
-struct HitRecord {
-    StatOwner *target;                      /* +0x00 */
-    unsigned char unmodeled_04[0x8 - 0x4];  /* +0x04..+0x07 */
-    int damage;                             /* +0x08: calcAttackDamage result, or the calcRestoreValue result for type 2 */
-    int followResult;                       /* +0x0c: calcFollowKind result, stored by calcAttackDamage */
-    int backAttack;                         /* +0x10: calcBackAttack's facing test for kind 1; 1 skips calcHitRoll and adds 50 to calcCritDamage's chance */
-    int stepState;                          /* +0x14: 1 to 3, written by calcHitRowGate and calcHitStateStep */
-    union {
-        int word;                           /* calcHitMode result, or the calcKindHitMode result for type 2: bit 8 set once taken, bit 9 blocks it */
-        unsigned char kind;                 /* its low byte: the hit kind calcHitInflict tests */
-    } hitMode;                              /* +0x18 */
-    int inflictRow;                         /* +0x1c: row calcHitInflict inflicts */
-    int inflictMask;                        /* +0x20: bits calcHitInflict inflicts */
-    int cureRow;                            /* +0x24: row calcHitCure clears */
-    int cureMask;                           /* +0x28: bits calcHitCure clears */
-    unsigned char unmodeled_2c[0x30 - 0x2C]; /* +0x2c..+0x2f */
-};
-
-/*
- * Command record of one attack, with the hit record of its current target. battleAttackResolve
- * and calcHitApply build one on their frame; tgtFindFirst reads its attacker and action.
- */
-struct AttackCommand {
-    StatOwner *attacker;                    /* +0x00 */
-    int kind;                               /* +0x04: 4 selects the base chance 200 in calcStatInflictRate */
-    int actionIdx;                          /* +0x08: index tecRecordGet takes */
-    int id;                                 /* +0x0C: the lookup key (the third argument of calcHitApply) */
-    struct HitRecord hit;                   /* +0x10 */
-};
-
-
-/*
  * Slot records: 0x40-byte records in slotRecordTable. Record k (k = slot index 0..15)
  * starts at D_61C3C0 + k * 0x40, so slotRecordTable is record 1. slotRecordGet takes
  * the slot index from the owner's key (+0x62 of its block). The bit numbers passed in

@@ -220,26 +220,17 @@ int cmdFindFirstTarget(int target, struct Tu033CallSource *source)
     return tgtFindFirst(&record, source->from_0c);
 }
 
-/* The command record func_00A92C18 builds for func_00A92D98 / func_00A92DF0:
- * the unit, the command kind and two command words. */
-struct Tu033Owner {
-    Ov01Object *unit;
-    int kind;                            /* +0x04 */
-    int handle;                          /* +0x08 */
-    int target;                          /* +0x0C */
-};
-
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92C18);
 
 
-int func_00A92E30(void *, int, void *);
+int func_00A92E30(struct AttackCommand *owner, int value, TecRecord *tec);
 
-int func_00A92D98(struct Tu033Owner *owner, int value) {
+int func_00A92D98(struct AttackCommand *owner, int value) {
     TecRecord *entry;
     int slot;
     int result;
 
-    entry = tecRecordGet(owner->handle);
+    entry = tecRecordGet(owner->actionIdx);
     slot = entry->kindBits.slot;
     result = slot < 8;
     if (result != 0 && slot >= 0) {
@@ -248,8 +239,8 @@ int func_00A92D98(struct Tu033Owner *owner, int value) {
     return result;
 }
 
-void func_00A92DF0(struct Tu033Owner *owner, int value) {
-    func_00A92E30(owner, value, tecRecordGet(owner->handle));
+void func_00A92DF0(struct AttackCommand *owner, int value) {
+    func_00A92E30(owner, value, tecRecordGet(owner->actionIdx));
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92E30);
@@ -343,13 +334,13 @@ void unitCmdRequestQueue(Ov01Object **faceTarget, UnitCmdRequest *request)
 
 int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec);
 
-int func_00A93288(struct Tu033Owner *owner) {
+int func_00A93288(struct AttackCommand *owner) {
     TecRecord *entry;
     int status;
 
-    entry = tecRecordGet(owner->handle);
-    status = tecEffectGroupGet(owner->unit, entry);
-    return unitEffectKeyFree(owner->unit, status, entry->extent) != 0;
+    entry = tecRecordGet(owner->actionIdx);
+    status = tecEffectGroupGet(owner->attacker, entry);
+    return unitEffectKeyFree(owner->attacker, status, entry->extent) != 0;
 }
 
 struct Tu033Request {
@@ -772,7 +763,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94EB0);
 
 int func_00A94260();
 
-void func_00A95018(int unused_arg0, struct Tu033Owner *owner) {
+void func_00A95018(int unused_arg0, struct AttackCommand *owner) {
     func_00A94260();
     func_00A93288(owner);
 }
