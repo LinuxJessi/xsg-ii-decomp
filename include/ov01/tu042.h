@@ -73,6 +73,13 @@ typedef struct AtkTbl {
 
 struct Ov01Object;
 
+/* The 16-byte record func_00A9BCC8 takes: the unit and three words it passes on, with the selector, as a script
+ * message (sbThreadEnqueue). */
+typedef struct UnitScriptEvent {
+    struct Ov01Object *unit;
+    int words[3];
+} UnitScriptEvent;
+
 int atkTblFieldGet(int field, AtkTbl *table, int index);
 int func_00A9BF08(struct Ov01Object *unit, AtkTbl *table, int value);
 void thinkSendEnd(struct Ov01Object *unit);

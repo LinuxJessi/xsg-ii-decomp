@@ -118515,6 +118515,32 @@
     }
    ]
   },
+  "ov01/tu035": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba590",
+      "0x00aba5b0"
+     ],
+     "generated": [
+      "0x00aba590",
+      "0x00aba5a4"
+     ],
+     "generated_by": [
+      "battleEndCheck"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA590"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu035.o"
+     }
+    }
+   ]
+  },
   "ov01/tu036": {
    ".rodata": [
     {

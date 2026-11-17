@@ -102,7 +102,85 @@ enum {
 
 unsigned short dataPadRead(int port);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu035", battleEndCheck);
+/* cfEvent bit of a battle that ends without the victory sequence. */
+#define CF_EVENT_SKIP_VICTORY 0x200
+/* Unit command the party units get when the victory starts (unitCmdPhase2CWait). */
+#define UNIT_CMD_PHASE_2C_WAIT 0x1F
+/* bgmPlayTrack track of the victory. */
+#define TGT_VICTORY_BGM 6
+/* streamPlayByKey key of the victory line and func_00A9BCC8 selector of the victory camera. */
+#define TGT_VICTORY_STREAM 7
+#define TGT_VICTORY_CAMERA 7
+
+int tgtSelectStatusGet(void);
+void bgmPlayTrack(int track);
+Ov01Object *unitSelectPlTarget(Ov01Object *last);
+void streamPlayByKey(Ov01Object *object, int key);
+/* Declared int on purpose: battleEndCheck matches only when this call counts as setting  (with a void
+ * prototype the victoryStarted store is scheduled differently), although decoFlagsSetAll returns nothing
+ * meaningful; tu066.h does not list it. */
+int decoFlagsSetAll();
+
+/* Returns 1 once the battle is over. While a unit is busy it returns 0. An enemy-gone status starts the victory
+ * once (BGM, the line of a party unit, the camera on the last party unit, UNIT_CMD_PHASE_2C_WAIT for every
+ * party unit that is not down) and then ends on circle or when no party unit is still moving; the other statuses
+ * end at once. */
+int battleEndCheck(void)
+{
+    Ov01Command command;
+    UnitScriptEvent focus;
+    Ov01Object **units;
+    Ov01Object *speaker;
+    int count;
+    int i;
+
+    if (unitNumBusyGet(TGT_SIDE_ALL) > 0) {
+        return 0;
+    }
+    switch (tgtSelectStatusGet()) {
+    case TGT_STATUS_ENEMY_GONE:
+        if (cfEventGet() & CF_EVENT_SKIP_VICTORY) {
+            return 1;
+        }
+        if (tgtSelectState.victoryStarted == 0) {
+            bgmPlayTrack(TGT_VICTORY_BGM);
+            speaker = unitSelectPlTarget(tgtSelectState.lastPartyUnit);
+            if (speaker != 0) {
+                streamPlayByKey(speaker, TGT_VICTORY_STREAM);
+            }
+            focus.unit = tgtSelectState.lastPartyUnit;
+            if (focus.unit == 0 || (focus.unit->flags & UNIT_FLAG_DOWN)) {
+                focus.unit = speaker;
+            }
+            func_00A9BCC8(TGT_VICTORY_CAMERA, &focus);
+            count = unitTblGet(TGT_SIDE_PARTY, &units);
+            for (i = 0; i < count; i++) {
+                if (units[i] != 0 && !(units[i]->flags & UNIT_FLAG_DOWN)) {
+                    command.command = UNIT_CMD_PHASE_2C_WAIT;
+                    unitQueueAppend(units[i], &command);
+                }
+            }
+            tgtSelectState.victoryStarted = 1;
+            decoFlagsSetAll();
+            return 0;
+        }
+        if (!(dataPadRead(1) & PAD_CIRCLE)) {
+            if (unitNumFlag1Flag4ClearGet(TGT_SIDE_PARTY) != 0) {
+                return 0;
+            }
+        }
+        /* fall through: the battle is over */
+    case TGT_STATUS_PARTY_GONE:
+        return 1;
+    case TGT_STATUS_PARTY_LEFT:
+        return 1;
+    case TGT_STATUS_ENEMY_LEFT:
+        return 1;
+    case TGT_STATUS_TIME_UP:
+        return 1;
+    }
+    return 0;
+}
 
 /* Candidate flag of the highlighted candidate (tgtSelectActivate sets it). */
 #define TGT_OBJECT_HIGHLIGHT 0x10
