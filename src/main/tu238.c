@@ -15,9 +15,6 @@ f32 cosf(f32);
 extern f32 msgRadiansPerDegree;
 int wrapIntRange(int, int, int);
 
-extern int gameLoopFlags[];
-/* Bit 0 of the global flag word gameLoopFlags: while set, msgWindowUpdate skips its opening, closing, pulse, slide, sweep and list updates (the item count is still refreshed). */
-#define SYS_FLAG_HOLD_UPDATES 0x1
 
 #define MSG_OPEN_FRAMES 12
 /* Flag bits of MsgSlot.flags beyond the TALK_FLAG_* ones of tu229.h (closing, opening, open, box). */

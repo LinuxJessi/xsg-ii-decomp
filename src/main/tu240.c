@@ -35,9 +35,6 @@ void timecodeStartOpening(MsgSlot *slot)
     }
 }
 
-extern int gameLoopFlags[];
-/* Bit 0 of the global flag word gameLoopFlags: while set, timecodeUpdate does nothing. */
-#define SYS_FLAG_HOLD_UPDATES 0x1
 
 /*
  * Per-frame update, main 0x00285160. Does nothing unless the object is active and gameLoopFlags bit 0 is clear.

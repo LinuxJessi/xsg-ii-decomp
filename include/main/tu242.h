@@ -33,7 +33,7 @@
 #define TIMECODE_FLAG_ADVANCE 0x80  /* timecode: elapsed_frames advances by increment each update */
 #define TIMECODE_FLAG_LEVEL 0x100   /* timecode: the cursor is moving (cursor_angle step in progress) */
 #define TIMECODE_FLAG_RAMP 0x200    /* timecode: a digit is rolling (roll_angle step in progress) */
-#define TALK_FLAG_FADE 0x400        /* item: talkDrawFramesWithFade adds the fade frames driven by the item counter */
+#define MSG_SLOT_FADE 0x400        /* item: talkDrawFramesWithFade adds the fade frames driven by the item counter */
 #define TIMECODE_FLAG_COUNTER 0x800 /* timecode: blink_phase advances each update; the entry colour fade is on */
 
 /* Values of MsgSlotTimecode.mode and the field codes of selected (modes 1, 2). */
@@ -162,6 +162,10 @@ typedef char MsgSlotSizeCheck[sizeof(MsgSlot) == 0x98 ? 1 : -1]; /* MsgWindow st
 
 #define MSG_SLOT_COUNT 5
 #define MSG_SLOT_ACTIVE 0x1
+
+/* Bit 0 of the global flag word gameLoopFlags: while set, the slot update functions do nothing. */
+extern int gameLoopFlags[];
+#define SYS_FLAG_HOLD_UPDATES 0x1
 #define MSG_SLOT_FRONT_Z 0x7FFFFF  /* MsgSlot.z of the frontmost slot: the depth sizedRecordSetValue stores when a slot is started */
 typedef struct MsgWindow {
     int current_index;

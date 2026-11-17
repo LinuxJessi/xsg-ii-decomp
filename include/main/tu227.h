@@ -6,7 +6,7 @@
 
 /* Functions of src/main/tu227.c: the state 1 (text) slot (MsgSlot of tu242.h, body MsgSlotText). */
 
-/* Flag bits of MsgSlot.flags of a text slot beyond the phase bits shared with TALK_FLAG_* (tu229.h). */
+/* Flag bits of MsgSlot.flags of a text slot beyond the phase bits shared with MSG_SLOT_* (tu242.h). */
 #define INTERP_OPEN_FRAMES 12   /* frames the opening phase (flag 0x4) lasts before the slot is open */
 #define INTERP_ANGLE_END 180    /* degrees at which the cosine ease reaches its end value */
 

@@ -10,16 +10,6 @@ extern void *memset(void *destination, int value, unsigned int count);
 extern char *strchr(const char *string, int c);
 int sprintf(char *destination, const char *format, ...);
 
-/* Slot types (MsgSlot.state) handled in this TU. */
-#define STATE_THREE 3               /* timecode slot */
-#define STATE_FOUR 4                /* acquired-item slot */
-/* Bits of MsgSlot.flags. */
-#define FLAG_02 0x2                 /* closing */
-#define FLAG_04 0x4                 /* opening */
-#define FLAG_08 0x8                 /* open */
-#define FLAG_80 0x80                /* timecode: frame pair advances */
-#define FLAG_400 0x400              /* item: fade frames */
-#define FLAG_800 0x800              /* timecode: counter step runs */
 #define MSG_SLOT_MIN_WIDTH 0x5E     /* msgSlotSetGeometry raises extent_x to this */
 #define MSG_SLOT_OPEN_FRAMES 12     /* frames of the opening and closing animation */
 #define MSG_SLOT_FADE_FRAMES 13     /* the item fade counter stops here (pending is then set back to 12) */
@@ -31,10 +21,10 @@ int sprintf(char *destination, const char *format, ...);
 
 /* Timecode slot (type 3): stores the two 64-bit frame counts that timecodeSetFramePairFromHms (tu224) computes and sets flag 0x80. */
 void timecodeSetFramePair(MsgSlot *record, long long first, long long second) {
-    if (record->state == STATE_THREE) {
+    if (record->state == MSG_SLOT_STATE_TIMECODE) {
         record->u.timecode.increment = second;
         record->u.timecode.limit = first;
-        record->flags |= FLAG_80;
+        record->flags |= TIMECODE_FLAG_ADVANCE;
     }
 }
 
@@ -44,22 +34,22 @@ void timecodeSetFramesHms(MsgSlot *slot, int hours1, int minutes1, int seconds1,
     long long first = (long long) hours1 * FRAMES_PER_HOUR + (long long) minutes1 * FRAMES_PER_MINUTE + (long long) seconds1 * FRAMES_PER_SECOND;
     long long second = (long long) hours2 * FRAMES_PER_HOUR + (long long) minutes2 * FRAMES_PER_MINUTE + (long long) seconds2 * FRAMES_PER_SECOND;
 
-    if (slot->state == STATE_THREE) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE) {
         timecodeSetFramePair(slot, first, second);
     }
 }
 
 void timecodeClearAdvance(MsgSlot *object)
 {
-    if (object->state == STATE_THREE) {
-        object->flags &= ~FLAG_80;
+    if (object->state == MSG_SLOT_STATE_TIMECODE) {
+        object->flags &= ~TIMECODE_FLAG_ADVANCE;
     }
 }
 
 /* While active (state 3): stores value in the timecode colour (MsgSlotTimecode.idle_color, +0x7C). */
 void timecodeSetColor(MsgSlot *object, int value)
 {
-    if (object->state == STATE_THREE) {
+    if (object->state == MSG_SLOT_STATE_TIMECODE) {
         object->u.timecode.idle_color = value;
     }
 }
@@ -69,10 +59,10 @@ void timecodeSetColor(MsgSlot *object, int value)
  * flag 0x800, which makes timecodeUpdate run timecodeStepCounter.
  */
 void timecodeStartCounter(MsgSlot *record, int value) {
-    if (record->state == STATE_THREE) {
+    if (record->state == MSG_SLOT_STATE_TIMECODE) {
         record->u.timecode.highlight_color = value;
         record->u.timecode.blink_phase = 0;
-        record->flags |= FLAG_800;
+        record->flags |= TIMECODE_FLAG_COUNTER;
     }
 }
 
@@ -83,7 +73,7 @@ void msgSlotInitState4(MsgSlot *record)
 
 /* Forwards its arguments to msgSlotSetGeometry while the slot is of type 4. */
 void msgSlotSetGeometryIfState4(MsgSlot *record, int x, int y, int extent_x, int extent_y) {
-    if (record->state == STATE_FOUR) {
+    if (record->state == MSG_SLOT_STATE_ITEM) {
         msgSlotSetGeometry(record, x, y, extent_x, extent_y);
     }
 }
@@ -99,7 +89,7 @@ void msgSlotSetAcquiredItem(MsgSlot *slot, char *name)
 void msgSlotSetItem(MsgSlot *slot, char *name, int count) {
     MsgSlotItem *acquired = &slot->u.item;
 
-    if (slot->state == STATE_FOUR) {
+    if (slot->state == MSG_SLOT_STATE_ITEM) {
         acquired->saved_extent_x = slot->extent_x;
         acquired->saved_name = acquired->name;
         acquired->saved_extent_y = slot->extent_y;
@@ -112,63 +102,60 @@ void msgSlotSetItem(MsgSlot *slot, char *name, int count) {
 
 void msgSlotSetTimer(MsgSlot *object, int value)
 {
-    if (object->state == STATE_FOUR) {
+    if (object->state == MSG_SLOT_STATE_ITEM) {
         object->u.item.timer = value;
     }
 }
 
 void msgSlotSetFlag04(MsgSlot *object)
 {
-    if (object->state == STATE_FOUR) {
-        object->flags = (object->flags & ~FLAG_02) | FLAG_04;
+    if (object->state == MSG_SLOT_STATE_ITEM) {
+        object->flags = (object->flags & ~MSG_SLOT_CLOSING) | MSG_SLOT_OPENING;
     }
 }
 
 void msgSlotResetCounters(MsgSlot *record) {
     u32 flags_without_4;
 
-    if (record->state == STATE_FOUR) {
+    if (record->state == MSG_SLOT_STATE_ITEM) {
         record->u.item.pending = 0;
         record->open_counter = MSG_SLOT_OPEN_FRAMES;
-        flags_without_4 = record->flags & ~FLAG_04;
-        record->flags = (flags_without_4 & ~FLAG_08) | FLAG_400;
+        flags_without_4 = record->flags & ~MSG_SLOT_OPENING;
+        record->flags = (flags_without_4 & ~MSG_SLOT_OPEN) | MSG_SLOT_FADE;
     }
 }
 
-/* Pause flags word; bit 0 set suspends the slot tick (name unknown, defined elsewhere). */
-extern int gameLoopFlags[];
-#define SYS_FLAG_HOLD_UPDATES 0x1
 
 /* Per-frame tick of an item slot (type 4) while the game is not paused: counts down the display timer and steps the flag-driven counters. */
 void msgSlotItemTick(MsgSlot *slot) {
     MsgSlotItem *acquired;
     u32 flags;
 
-    if (slot->state == STATE_FOUR && !(gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES)) {
+    if (slot->state == MSG_SLOT_STATE_ITEM && !(gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES)) {
         flags = slot->flags;
-        if (flags & FLAG_08) {
+        if (flags & MSG_SLOT_OPEN) {
             if (--slot->u.item.timer <= 0) {
                 msgSlotStartClosing(slot);
                 flags = slot->flags;
             }
         }
-        if (flags & FLAG_04) {
+        if (flags & MSG_SLOT_OPENING) {
             if (++slot->open_counter >= MSG_SLOT_OPEN_FRAMES) {
-                slot->flags = (flags & ~FLAG_04) | FLAG_08;
+                slot->flags = (flags & ~MSG_SLOT_OPENING) | MSG_SLOT_OPEN;
                 flags = slot->flags;
             }
         }
-        if (flags & FLAG_02) {
+        if (flags & MSG_SLOT_CLOSING) {
             if (--slot->open_counter <= 0) {
                 slot->flags = 0;
                 flags = 0;
             }
         }
-        if (flags & FLAG_400) {
+        if (flags & MSG_SLOT_FADE) {
             acquired = &slot->u.item;
             if (++acquired->pending >= MSG_SLOT_FADE_FRAMES) {
                 acquired->pending = MSG_SLOT_FADE_FRAMES - 1;
-                slot->flags = (slot->flags & ~FLAG_400) | FLAG_08;
+                slot->flags = (slot->flags & ~MSG_SLOT_FADE) | MSG_SLOT_OPEN;
             }
         }
     }
@@ -181,18 +168,18 @@ int talkDrawFramesWithFade(void *record);
 int msgSlotDraw(MsgSlot *record) {
     int result;
 
-    if (record->state == STATE_FOUR) {
-        if (record->flags & FLAG_04) {
+    if (record->state == MSG_SLOT_STATE_ITEM) {
+        if (record->flags & MSG_SLOT_OPENING) {
             talkDrawFramesWithFade(record);
         }
-        if (record->flags & FLAG_02) {
+        if (record->flags & MSG_SLOT_CLOSING) {
             talkDrawFramesWithFade(record);
         }
-        if (record->flags & FLAG_08) {
+        if (record->flags & MSG_SLOT_OPEN) {
             talkDrawFramesWithFade(record);
             drawAcquiredText(record);
         }
-        result = record->flags & FLAG_400;
+        result = record->flags & MSG_SLOT_FADE;
         if (result != 0) {
             result = talkDrawFramesWithFade(record);
         }
@@ -203,9 +190,9 @@ int msgSlotDraw(MsgSlot *record) {
 void msgSlotStartClosing(MsgSlot *record) {
     int clear_mask;
 
-    clear_mask = ~FLAG_04;
-    if (record->state == STATE_FOUR) {
-        record->flags = ((record->flags & clear_mask) & ~FLAG_08) | FLAG_02;
+    clear_mask = ~MSG_SLOT_OPENING;
+    if (record->state == MSG_SLOT_STATE_ITEM) {
+        record->flags = ((record->flags & clear_mask) & ~MSG_SLOT_OPEN) | MSG_SLOT_CLOSING;
     }
 }
 

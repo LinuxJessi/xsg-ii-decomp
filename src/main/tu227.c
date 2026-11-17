@@ -16,9 +16,6 @@ extern float cosf(float x);
 extern float mathDegToRad;
 const char *func_0027E7A0(const char *text);
 
-/* Global flag word gameLoopFlags; bit 0 set suspends the text update (same bit as tu238/tu240). */
-extern int gameLoopFlags[];
-#define SYS_FLAG_HOLD_UPDATES 0x1
 void talkAdvanceCounter(MsgSlot *slot);
 
 /* Per-frame update of a text slot: ramps the timer, steps the scan and the cosine easing, advances the counter. */

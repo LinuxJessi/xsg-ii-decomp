@@ -160,7 +160,7 @@ void talkDrawFramesWithFade(MsgSlot *slot) {
     if (slot->flags & MSG_SLOT_OPEN) {
         talkWindowDrawFrame(slot, TALK_FRAME_FULL, 1.0f);
     }
-    if (slot->flags & TALK_FLAG_FADE) {
+    if (slot->flags & MSG_SLOT_FADE) {
         talkWindowDrawFrame(slot, TALK_FRAME_OPENING, slot->u.item.pending * 0.08f);
         talkWindowDrawFrame(slot, TALK_FRAME_SIZED, 1.0f - slot->u.item.pending * 0.08f);
     }
