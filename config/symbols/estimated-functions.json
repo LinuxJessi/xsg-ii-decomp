@@ -4074,7 +4074,7 @@
      1
     ],
     [
-     "func_00A9B3B8",
+     "tecRecordGet",
      11121592,
      48,
      1
@@ -4086,37 +4086,37 @@
      1
     ],
     [
-     "func_00A9B418",
+     "effectIdListGet",
      11121688,
      56,
      1
     ],
     [
-     "func_00A9B450",
+     "slotPairRowGet",
      11121744,
      60,
      1
     ],
     [
-     "func_00A9B490",
+     "battleLookupGet",
      11121808,
      60,
      1
     ],
     [
-     "func_00A9B4D0",
+     "itemRecordGet",
      11121872,
      52,
      1
     ],
     [
-     "func_00A9B508",
+     "statusRecordGet",
      11121928,
      60,
      1
     ],
     [
-     "func_00A9B548",
+     "hitActionGet",
      11121992,
      52,
      1
@@ -4134,19 +4134,19 @@
      1
     ],
     [
-     "func_00A9B5F0",
+     "pairLinkGet",
      11122160,
      52,
      1
     ],
     [
-     "func_00A9B628",
+     "calcLevelRecordGet",
      11122216,
      52,
      1
     ],
     [
-     "func_00A9B660",
+     "tgtIdRecordGet",
      11122272,
      52,
      1
@@ -4164,13 +4164,13 @@
      1
     ],
     [
-     "func_00A9B6E8",
+     "growthRecordGet",
      11122408,
      52,
      1
     ],
     [
-     "func_00A9B720",
+     "stringOffsetsGet",
      11122464,
      48,
      1

@@ -651,10 +651,10 @@ int dataFileSlotLoad(struct DataFileRecord *file_record, char *path, char **next
 }
 
 extern char *dataBatDatPath;
-extern int D_61D040;
+extern int batDat;
 
 void dataBatDatLoad(void) {
-    ov01CdReadFileSync(dataBatDatPath, &D_61D040);
+    ov01CdReadFileSync(dataBatDatPath, &batDat);
 }
 
 int sprintf(char *, const char *, ...);

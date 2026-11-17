@@ -29,21 +29,41 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B2A8);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B338);
 
-/* 32-byte record `index` of the self-relative table at D_61D050 (entries numbered from 1), or 0. */
-extern int D_61D050;
+/*
+ * The tables of bat.dat: dataBatDatLoad (tu008) reads the file to batDat (0x0061D040). Its header holds, from
+ * +0x10, 17 words, each the offset of one table from the start of the file; a getter takes the address of its
+ * word, subtracts the word's offset in the header and adds the word. With one header struct,
+ * (unsigned char *)&batDat + batDat.offsets[n], the getters are two instructions shorter, so each keeps the
+ * address of its own word.
+ */
+extern int tecTableOffset;
+extern int effectIdListTableOffset;
+extern int slotPairTableOffset;
+extern int battleLookupTableOffset;
+extern int statusTableOffset;
+extern int itemTableOffset;
+extern int hitActionTableOffset;
+extern int batTable70Offset;
+extern int batTable74Offset;
+extern int pairLinkTableOffset;
+extern int calcLevelTableOffset;
+extern int tgtIdTableOffset;
+extern int growthTableOffset;
+extern int stringTableOffset;
 
-void *func_00A9B3B8(int index)
+/* Technique records (0x20 bytes); index 0 and below give 0. */
+TecRecord *tecRecordGet(int index)
 {
     unsigned char *table;
 
     if (index <= 0) {
         return 0;
     }
-    table = (unsigned char *)&D_61D050 - 16 + D_61D050;
-    return table + (index - 1) * 32;
+    table = (unsigned char *)&tecTableOffset - 16 + tecTableOffset;
+    return (TecRecord *) (table + (index - 1) * 32);
 }
 
-/* tableKeyRowsOffset holds a self-relative offset to a table of 20-byte records; entry numbers start at 1. */
+/* tableKeyRowsOffset: the table of 20-byte key rows; entry numbers start at 1. */
 extern int tableKeyRowsOffset;
 
 /* Row of the table for a key: the key is halfword +0x62 of the unit sub record, and
@@ -55,92 +75,85 @@ void *tableKeyRowGet(int key)
     return table + (key - 1) * 20;
 }
 
-/* 6-byte record `index` of the self-relative table at D_61D058 (entries numbered from 1), or 0. */
-extern int D_61D058;
+/* Records of effectIdListTableOffset (entries numbered from 1). */
 
-void *func_00A9B418(int index)
+short *effectIdListGet(int index)
 {
     unsigned char *table;
 
     if (index <= 0) {
         return 0;
     }
-    table = (unsigned char *)&D_61D058 - 24 + D_61D058;
-    return table + (index - 1) * 6;
+    table = (unsigned char *)&effectIdListTableOffset - 24 + effectIdListTableOffset;
+    return (short *) (table + (index - 1) * 6);
 }
 
-/* 12-byte record `index` of the self-relative table at D_61D05C (entries 1..0xF), or 0. */
-extern int D_61D05C;
+/* Records of slotPairTableOffset (entries 1..0xF). */
 
-ShortPair *func_00A9B450(int index)
+ShortPair *slotPairRowGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0x10)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D05C - 28 + D_61D05C;
+    table = (unsigned char *)&slotPairTableOffset - 28 + slotPairTableOffset;
     return (ShortPair *) (table + (index - 1) * 12);
 }
 
-/* 12-byte record `index` of the self-relative table at D_61D060 (entries 1..0x6D), or 0. */
-extern int D_61D060;
+/* Records of battleLookupTableOffset (entries 1..0x6D). */
 
-void *func_00A9B490(int index)
+BattleLookupEntry *battleLookupGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0x6E)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D060 - 32 + D_61D060;
-    return table + (index - 1) * 12;
+    table = (unsigned char *)&battleLookupTableOffset - 32 + battleLookupTableOffset;
+    return (BattleLookupEntry *) (table + (index - 1) * 12);
 }
 
-/* 16-byte record `index` of the self-relative table at D_61D068 (entries 1..0x28), or 0. */
-extern int D_61D068;
+/* Records of itemTableOffset (entries 1..0x28). */
 
-void *func_00A9B4D0(int index)
+ItemRecord *itemRecordGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0x29)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D068 - 40 + D_61D068;
-    return table + (index - 1) * 16;
+    table = (unsigned char *)&itemTableOffset - 40 + itemTableOffset;
+    return (ItemRecord *) (table + (index - 1) * 16);
 }
 
-/* 12-byte record `index` of the self-relative table at D_61D064 (entries 1..0x68), or 0. */
-extern int D_61D064;
+/* Records of statusTableOffset (entries 1..0x68). */
 
-void *func_00A9B508(int index)
+StatusRecord *statusRecordGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0x69)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D064 - 36 + D_61D064;
-    return table + (index - 1) * 12;
+    table = (unsigned char *)&statusTableOffset - 36 + statusTableOffset;
+    return (StatusRecord *) (table + (index - 1) * 12);
 }
 
-/* 16-byte record `index` of the self-relative table at D_61D06C (entries 1..0x28), or 0. */
-extern int D_61D06C;
+/* Records of hitActionTableOffset (entries 1..0x28). */
 
-void *func_00A9B548(int index)
+HitAction *hitActionGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0x29)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D06C - 44 + D_61D06C;
-    return table + (index - 1) * 16;
+    table = (unsigned char *)&hitActionTableOffset - 44 + hitActionTableOffset;
+    return (HitAction *) (table + (index - 1) * 16);
 }
 
-/* 4-byte record `index` of the self-relative table at D_61D070 (entries 1..0x63), or 0. */
-extern int D_61D070;
+/* Records of batTable70Offset (entries 1..0x63). */
 
 void *func_00A9B580(int index)
 {
@@ -149,12 +162,11 @@ void *func_00A9B580(int index)
     if (!(index < 0x64)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D070 - 48 + D_61D070;
+    table = (unsigned char *)&batTable70Offset - 48 + batTable70Offset;
     return table + (index - 1) * 4;
 }
 
-/* 8-byte record `index` of the self-relative table at D_61D074 (entries 1..0x63), or 0. */
-extern int D_61D074;
+/* Records of batTable74Offset (entries 1..0x63). */
 
 void *func_00A9B5B8(int index)
 {
@@ -163,50 +175,47 @@ void *func_00A9B5B8(int index)
     if (!(index < 0x64)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D074 - 52 + D_61D074;
+    table = (unsigned char *)&batTable74Offset - 52 + batTable74Offset;
     return table + (index - 1) * 8;
 }
 
-/* 16-byte record `index` of the self-relative table at D_61D078 (entries 1..0x10), or 0. */
-extern int D_61D078;
+/* Records of pairLinkTableOffset (entries 1..0x10). */
 
-void *func_00A9B5F0(int index)
+PairLink *pairLinkGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0x11)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D078 - 56 + D_61D078;
-    return table + (index - 1) * 16;
+    table = (unsigned char *)&pairLinkTableOffset - 56 + pairLinkTableOffset;
+    return (PairLink *) (table + (index - 1) * 16);
 }
 
-/* 16-byte record `index` of the self-relative table at D_61D07C (entries 1..0x15), or 0. */
-extern int D_61D07C;
+/* Records of calcLevelTableOffset (entries 1..0x15). */
 
-void *func_00A9B628(int index)
+CalcLevelRecord *calcLevelRecordGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0x16)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D07C - 60 + D_61D07C;
-    return table + (index - 1) * 16;
+    table = (unsigned char *)&calcLevelTableOffset - 60 + calcLevelTableOffset;
+    return (CalcLevelRecord *) (table + (index - 1) * 16);
 }
 
-/* 16-byte record `index` of the self-relative table at D_61D080 (entries 1..0xA), or 0. */
-extern int D_61D080;
+/* Records of tgtIdTableOffset (entries 1..0xA). */
 
-void *func_00A9B660(int index)
+TgtIdRecord *tgtIdRecordGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0xB)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D080 - 64 + D_61D080;
-    return table + (index - 1) * 16;
+    table = (unsigned char *)&tgtIdTableOffset - 64 + tgtIdTableOffset;
+    return (TgtIdRecord *) (table + (index - 1) * 16);
 }
 
 /* Self-relative table at tableKeyRecordsOffset: 16-byte entries, valid for index 16..143. */
@@ -233,31 +242,29 @@ UnitExpEntry *unitExpTblGet(void) {
     return (UnitExpEntry *)((u8 *)&unitExpTableOffset - 72 + unitExpTableOffset);
 }
 
-/* 32-byte record `index` of the self-relative table at D_61D08C (entries 1..0xF), or 0. */
-extern int D_61D08C;
+/* Records of growthTableOffset (entries 1..0xF). */
 
-GrowthRecord *func_00A9B6E8(int index)
+GrowthRecord *growthRecordGet(int index)
 {
     unsigned char *table;
 
     if (!(index < 0x10)) {
         return 0;
     }
-    table = (unsigned char *)&D_61D08C - 76 + D_61D08C;
+    table = (unsigned char *)&growthTableOffset - 76 + growthTableOffset;
     return (GrowthRecord *) (table + (index - 1) * 32);
 }
 
-/* 2-byte record `index` of the self-relative table at D_61D090 (entries numbered from 1), or 0. */
-extern int D_61D090;
+/* Records of stringTableOffset (entries numbered from 1). */
 
-short *func_00A9B720(int index)
+short *stringOffsetsGet(int index)
 {
     unsigned char *table;
 
     if (index <= 0) {
         return 0;
     }
-    table = (unsigned char *)&D_61D090 - 80 + D_61D090;
+    table = (unsigned char *)&stringTableOffset - 80 + stringTableOffset;
     return (short *) (table + (index - 1) * 2);
 }
 
@@ -287,14 +294,16 @@ struct MsgObject {
     int handle;
 };
 
-/* The string table: record 1 of the table at D_61D090 is its offset list; each offset counts from the list. */
-int tableStringGet(int index, int mode)
+/* The string table: record 1 of the table at stringTableOffset is its offset list; each offset counts from the list. */
+char *tableStringGet(int index, int mode)
 {
     int base;
 
-    base = (int)func_00A9B720(1);
+    /* The list address is added as an int: with char * arithmetic (base + offset, &base[offset],
+     * offsets[index - 1]) the original keeps base in another register. */
+    base = (int)stringOffsetsGet(1);
     if (mode == 1) {
-        return base + *(short *)(((index - 1) << 1) + base);
+        return (char *)(base + *(short *)(((index - 1) << 1) + base));
     }
     return 0;
 }
@@ -324,7 +333,7 @@ void thinkSendEnd(Ov01Object *unit)
 {
     CmdListBody command;
 
-    command.words[0] = CMD_KIND_THINK_END;
+    command.command = CMD_KIND_THINK_END;
     cmdListSet(unit, &command);
     tgtSelectModeEnd();
 }
@@ -375,37 +384,28 @@ void effectSendValue(int high, int low, Vector4 *position) {
     sefStartEffectWithValue(&request, (int) position);
 }
 
-/* The 32-byte technique record of the func_00A9B3B8 table as the native
+/* The 32-byte technique record of the tecRecordGet table as the native
  * tecParaGet reads it (fields 0 to 3). */
-typedef struct TecPara {
-    unsigned char para0;               /* +0x00: tecParaGet field 0 */
-    unsigned char unmodeled_01[0x05];
-    signed char para1;                 /* +0x06: tecParaGet field 1 */
-    signed char para2;                 /* +0x07: tecParaGet field 2 */
-    unsigned char unmodeled_08[0x04];
-    unsigned short para3;              /* +0x0C: tecParaGet field 3 */
-    unsigned char unmodeled_0e[0x20 - 0x0E];
-} TecPara;
 
 /* Field `field` of technique `index` (native tecParaGet); 0 for technique 0
  * or another field. */
 int tecParaFieldGet(int index, int field)
 {
-    TecPara *tec;
+    TecRecord *tec;
 
     if (index == 0) {
         return 0;
     }
-    tec = func_00A9B3B8(index);
+    tec = tecRecordGet(index);
     switch (field) {
     case 0:
-        return tec->para0;
+        return tec->flags;
     case 1:
-        return tec->para1;
+        return tec->type;
     case 2:
-        return tec->para2;
+        return tec->kindBits.kind;
     case 3:
-        return tec->para3;
+        return tec->actionBits;
     }
     return 0;
 }

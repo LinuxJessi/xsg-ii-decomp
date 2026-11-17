@@ -8,6 +8,7 @@
 #include "ov01/tu012.h"
 #include "ov01/tu016.h"
 #include "ov01/tu033.h"
+#include "ov01/tu042.h"
 #include "ov01/tu070.h"
 #include "ov01/tu071.h"
 
@@ -90,7 +91,6 @@ int objStdMove(void *block);
 float objPoseHorizontalDistance(Ov01Object *object);
 float objPoseSlideLimit(Ov01Object *unusedFirst, Ov01Object *value, int rowKey);
 float unitDefArea(Ov01Object *object);
-short *func_00A9B3B8(int key);
 int *effectPosGet(int index);
 void streamPlayByKey(int, int);
 void unitRemove(void);
@@ -161,15 +161,15 @@ void unitSlotsClear(Ov01Object *object, int rowKey) {
     void *fifo;
     void *list;
     struct XenoActor *source;
-    short *row;
+    TecRecord *row;
     int slot;
 
     cmdListPtrGet(&fifo, &list);
     if (ov01FifoGetUsed(fifo) == 0) {
         object->flags |= 0x800;
     }
-    row = func_00A9B3B8(rowKey);
-    if (((signed char *) row)[28] == 5) {
+    row = tecRecordGet(rowKey);
+    if (row->gateFlag == 5) {
         source = object->children[2];
         if (source != 0) {
             source->timing_flag = 0;
@@ -332,7 +332,7 @@ float objPoseSlideLimit(Ov01Object *unusedFirst, Ov01Object *value, int rowKey) 
     } else {
         base = 0.0f;
     }
-    return base + ((float) func_00A9B3B8(rowKey)[1] / 100.0f);
+    return base + ((float) tecRecordGet(rowKey)->scale / 100.0f);
 }
 
 /* Half the summed absolute extents of the limit's two axis pairs, the larger

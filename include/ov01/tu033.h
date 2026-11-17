@@ -5,9 +5,13 @@
 
 struct Ov01Object;
 
-/* A queued command record: six words, copied whole into the list. */
+/* A unit command: six words, copied whole into the command list (cmdListSet) and into kind-1 events
+ * (eventQueueAddKind1). command is its index; the pair command of cmdPairRun names its pair record in pairIndex. */
 typedef struct CmdListBody {
-    int words[6];
+    int command;                        /* +0x00 */
+    unsigned char unmodeled_04[0xC];
+    int pairIndex;                      /* +0x10: the pair record unitPairPartnerFind reads */
+    unsigned char unmodeled_14[0x4];
 } CmdListBody;
 
 /* Command record kind thinkSendEnd queues: the end of a unit's think step. */

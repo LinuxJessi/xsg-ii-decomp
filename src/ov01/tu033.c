@@ -41,15 +41,6 @@ typedef struct EventQueueArgs {
     Ov01Object *target;                 /* +0x0C: the partner / stocked unit of events 0x10 and 0x12 */
 } EventQueueArgs;
 
-/* The six-word unit command of a kind-1 record (eventQueueAddKind1): the command index
- * and, for the pair command of cmdPairRun, the pair record at +0x10. */
-typedef struct EventQueueArgs6 {
-    int command;                        /* +0x00 */
-    unsigned char unmodeled_04[0xC];
-    int pairIndex;                      /* +0x10: the pair record unitPairPartnerFind reads */
-    unsigned char unmodeled_14[0x4];
-} EventQueueArgs6;
-
 typedef struct EventQueueArgs11 {
     int words[11];
 } EventQueueArgs11;
@@ -62,7 +53,7 @@ typedef struct EventQueueEntry {
         EventQueueArgs args;          /* eventQueueAdd, eventQueueAddKind4 */
         struct {
             void *object;
-            EventQueueArgs6 args;
+            CmdListBody args;
         } kind1;                      /* eventQueueAddKind1 */
         EventQueueArgs11 kind5;       /* eventQueueAddKind5 */
     } data;
@@ -135,21 +126,21 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdListRunHead);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdExecute);
 
 void eventQueueAdd(int kind, EventQueueArgs *args);
-void eventQueueAddKind1(void *object, EventQueueArgs6 *args);
-void func_00A92C18(Ov01Object *unit, EventQueueArgs6 *command);
+void eventQueueAddKind1(void *object, CmdListBody *args);
+void func_00A92C18(Ov01Object *unit, CmdListBody *command);
 Ov01Object *unitPairPartnerFind(Ov01Object *unit, int value);
 
-/* Unit command indices (EventQueueArgs6.command) the two command handlers below queue. */
+/* Unit command indices (CmdListBody.command) the two command handlers below queue. */
 #define CMD_EVENT_MOTION_3 3
 #define CMD_EVENT_MOTION_9 9
 
 /* A pair command: queues stream open, loads idle, stream bind and pair begin (args target
  * set to the partner unitPairPartnerFind finds for the command's pair record), the command
  * for the unit and the partner, motion 9 for the partner, the follow-up and the pair end. */
-void cmdPairRun(Ov01Object *unit, EventQueueArgs6 *command, EventQueueArgs *args)
+void cmdPairRun(Ov01Object *unit, CmdListBody *command, EventQueueArgs *args)
 {
     Ov01Object *partner;
-    EventQueueArgs6 motion;
+    CmdListBody motion;
 
     partner = unitPairPartnerFind(unit, command->pairIndex);
     eventQueueAdd(EVENT_KIND_STREAM_OPEN, args);
@@ -172,10 +163,10 @@ int calcEpAdjust(Ov01Object *unit, int delta);
  * pays the EP calcEpCost gives for the args tec, then the command runs for the unit
  * (wait for its queue, then the follow-up) and the stocked unit ends with motion 9 and
  * the boost clear. */
-void cmdStockRun(Ov01Object *unit, EventQueueArgs6 *command, EventQueueArgs *args)
+void cmdStockRun(Ov01Object *unit, CmdListBody *command, EventQueueArgs *args)
 {
     Ov01Object *stocked;
-    EventQueueArgs6 motion;
+    CmdListBody motion;
 
     stocked = actStockGet()->boost[1];
     args->target = stocked;
@@ -237,29 +228,18 @@ struct Tu033Owner {
     int target;                          /* +0x0C */
 };
 
-struct SlotEntry {
-    unsigned char flags;
-    unsigned char unmodeled_01[6];
-    signed char slot;
-    int index;
-    unsigned char unmodeled_0c[0xE];
-    short extent;
-    signed char state;
-};
-
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92C18);
 
 
 int func_00A92E30(void *, int, void *);
-struct SlotEntry *func_00A9B3B8(int);
 
 int func_00A92D98(struct Tu033Owner *owner, int value) {
-    struct SlotEntry *entry;
+    TecRecord *entry;
     int slot;
     int result;
 
-    entry = func_00A9B3B8(owner->handle);
-    slot = entry->slot;
+    entry = tecRecordGet(owner->handle);
+    slot = entry->kindBits.slot;
     result = slot < 8;
     if (result != 0 && slot >= 0) {
         result = func_00A92E30(owner, value, entry);
@@ -268,36 +248,27 @@ int func_00A92D98(struct Tu033Owner *owner, int value) {
 }
 
 void func_00A92DF0(struct Tu033Owner *owner, int value) {
-    func_00A92E30(owner, value, func_00A9B3B8(owner->handle));
+    func_00A92E30(owner, value, tecRecordGet(owner->handle));
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92E30);
-
-/* The 16-byte pair record func_00A9B5F0 returns: two unit keys. */
-typedef struct Tu033KeyPair {
-    unsigned char unmodeled_00[0xC];
-    short first;                         /* +0x0C */
-    short second;                        /* +0x0E */
-} Tu033KeyPair;
-
-Tu033KeyPair *func_00A9B5F0(int index);
 
 /* The partner of unit in pair record value: the first unit of side 0 that is
  * not held and has the other key of the pair; 0 when there is none. */
 Ov01Object *unitPairPartnerFind(Ov01Object *unit, int value)
 {
-    Tu033KeyPair *pair;
+    PairLink *pair;
     Ov01Object **units;
     Ov01Object *other;
     int key;
     int count;
     int i;
 
-    pair = func_00A9B5F0(value);
-    if (pair->first == unit->stats->key) {
-        key = pair->second;
+    pair = pairLinkGet(value);
+    if (pair->slotFirst == unit->stats->key) {
+        key = pair->slotSecond;
     } else {
-        key = pair->first;
+        key = pair->slotFirst;
     }
     count = unitTblGet(0, &units);
     for (i = 0; i < count; i++) {
@@ -318,10 +289,10 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93168);
 int func_00A951D8(int, void *);
 
 int func_00A93288(struct Tu033Owner *owner) {
-    struct SlotEntry *entry;
+    TecRecord *entry;
     int status;
 
-    entry = func_00A9B3B8(owner->handle);
+    entry = tecRecordGet(owner->handle);
     status = func_00A951D8(owner->key, entry);
     return unitEffectKeyFree(owner->key, status, entry->extent) != 0;
 }
@@ -359,7 +330,7 @@ void *eventQueueReserve(void) {
 
 #include "shared.h"
 
-/* Slot from func_00A9B3B8; its state byte at +0x1C is compared with 1 in unitAttachRequest. */
+/* Slot from tecRecordGet; its state byte at +0x1C is compared with 1 in unitAttachRequest. */
 typedef struct Ov01Tu033Slot {
     unsigned char unmodeled_00[0x1C];
     signed char state;
@@ -452,7 +423,7 @@ EventQueueEntry *eventQueueFindKind5(int ordinal)
 }
 
 /* eventQueueAddKind1: appends a kind-1 record holding a pointer and an 0x18-byte payload. */
-void eventQueueAddKind1(void *object, EventQueueArgs6 *args)
+void eventQueueAddKind1(void *object, CmdListBody *args)
 {
     EventQueueEntry *entry = eventQueueReserve();
 
@@ -583,18 +554,18 @@ int unitHasEffectCode(void *, int);
  * of an entry, with two effect-code rolls for the low keys, and grants act stock
  * when a roll hits and calcBoostOk accepts the unit.
  */
-int unitTryActStock(struct SlotEntry *entry, struct Tu033Request *request) {
+int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request) {
     Ov01Object *object;
     int chanceHit;
     int flags;
     int requestFlags;
 
     object = request->object;
-    if (func_00A9B3B8(entry->index)->flags & 8) {
+    if (tecRecordGet(source->tec_id)->flags & 8) {
         return 0;
     }
     if (object->stats->key < 0x10) {
-        chanceHit = actLevelChanceRoll(object, entry->index) != 0;
+        chanceHit = actLevelChanceRoll(object, source->tec_id) != 0;
         if (unitHasEffectCode(object, 0x2B) != 0) {
             flags = request->flags;
             if ((flags >> 8) & 1) {
@@ -612,7 +583,7 @@ int unitTryActStock(struct SlotEntry *entry, struct Tu033Request *request) {
             }
         }
     } else {
-        chanceHit = actLevelChanceRoll(object, entry->index) != 0;
+        chanceHit = actLevelChanceRoll(object, source->tec_id) != 0;
     }
     if (chanceHit == 1 && calcBoostOk(object, 0) != 0) {
         calcActStockSet(object, 0);
@@ -643,7 +614,6 @@ extern char itemPickText[];
 extern char itemPickTextEnd[];
 
 void dataBoxIncCategory1(int item);
-char *tableStringGet(int index, int mode);
 char *func_00A9B8D8(int item, int mode);
 char *strcpy(char *destination, const char *source);
 char *strcat(char *destination, const char *source);
@@ -967,7 +937,7 @@ int unitAttachRequest(Ov01Tu033Request *request)
     if (ov01ModelEntry != 0) {
         id = request->id;
         unitAttachChild(id, ov01ModelEntry, 0);
-        if (func_00A9B3B8(request->index)->state == 1) {
+        if (tecRecordGet(request->index)->gateFlag == 1) {
             /* The kind-8 request carries the unit as its word, and unitAttachChild takes words. */
             matchedHandle = (int) unitPairPartnerFind((Ov01Object *) id, request->value);
             unitAttachChild(matchedHandle, ov01ModelEntry, 1);
