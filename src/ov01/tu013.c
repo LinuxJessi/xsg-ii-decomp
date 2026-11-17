@@ -22,7 +22,7 @@ int unitCmdModeGet(int mode);
 /*
  * Command 0x1B: sets the mode from the step code, then ramps pose->snapshot.vector.y over
  * UNIT_POSE_RAMP_FRAMES frames (unitPoseRamp and objPosePublish each frame). The
- * last step clears flags bit 0 and calls func_00A954D8(object, 310, 21).
+ * last step clears flags bit 0 and calls unitEffectStart(object, 310, 21).
  */
 int unitCmdModeRamp(Ov01Object *object, Ov01Command *step)
 {
@@ -46,7 +46,7 @@ int unitCmdModeRamp(Ov01Object *object, Ov01Command *step)
         break;
     default:
         object->flags &= ~1;
-        func_00A954D8(object, 310, 21);
+        unitEffectStart(object, 310, 21);
         return 1;
     }
     return 0;
@@ -276,7 +276,7 @@ int func_00A85FC0(Ov01Object *object, Ov01Command *step)
             step->state = step->state + 1;
         } else {
             unitMoveKey(object, &keyHigh, &keyLow);
-            func_00A954D8(object, keyHigh, keyLow);
+            unitEffectStart(object, keyHigh, keyLow);
             step->state = step->state + 1;
         }
         return 0;

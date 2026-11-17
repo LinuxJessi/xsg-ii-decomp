@@ -8,13 +8,27 @@ void func_00A9B0F8(void) {
 }
 
 /*
- * Returns the word at 0x002B5DBC (a main-ELF global, name unknown).
- * ov01SceneRelease passes it to sbThreadsRelease as a key.
+ * The fields of gameWork (main) this file reads: the SB script image of the
+ * scene (the key of its threads) and an SBL library image. ov01StepSceneScript links the library under the key
+ * (func_00A9CEE8 calls sbLinkImage and keeps the image when sbIsSblImage
+ * accepts it); ov01SceneRelease releases the key's threads
+ * (sbThreadsRelease).
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu040", func_00A9B100);
+typedef struct SceneGameWork {
+    unsigned char unmodeled_00[0x2C];
+    struct SbImageHeader *script;     /* +0x2C */
+    unsigned char unmodeled_30[0xB8 - 0x30];
+    struct SbImageHeader *library;    /* +0xB8 */
+} SceneGameWork;
 
-/*
- * Returns the word at 0x002B5E48 (a main-ELF global, name unknown).
- * func_00A9A6A0 passes it to func_00A9CEE8 with the value of func_00A9B100.
- */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu040", func_00A9B110);
+extern SceneGameWork gameWork;
+
+/* The scene's SB script image (gameWork +0x2C). */
+struct SbImageHeader *ov01ScriptKeyGet(void) {
+    return gameWork.script;
+}
+
+/* The scene's SBL library image (gameWork +0xB8). */
+struct SbImageHeader *ov01ScriptImageGet(void) {
+    return gameWork.library;
+}

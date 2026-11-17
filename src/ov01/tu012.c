@@ -498,7 +498,7 @@ int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
 
     hpKind = -50;
     if (step->state == 0) {
-        func_00A954D8(object, 0x140, 9);
+        unitEffectStart(object, 0x140, 9);
         seVoiceStartTagged(2, 3);
         if (object->stats->key >= 0x10) {
             object->flags |= 0x4000;
@@ -577,7 +577,7 @@ int unitCmdAction(Ov01Object *object, Ov01Command *command) {
     case 0:
         unitSetPhase(object, 20);
         unitActionKey(object, &keyHigh, &keyLow);
-        func_00A954D8(object, keyHigh, keyLow);
+        unitEffectStart(object, keyHigh, keyLow);
         unitSetSelector(object, 9);
         seObjectVoiceStart(object, 8, func_001EDCA8());
         command->state++;

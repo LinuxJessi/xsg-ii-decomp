@@ -26,6 +26,13 @@ typedef struct XglLightSet {
  * alignment test). */
 typedef XglLightSet AlignedXglLightSet __attribute__((aligned(16)));
 
+/* A light set reached through a pointer that is known to be 8-byte aligned: ov01's unit bodies keep
+ * one at +0x190 and unitTblBodySetLight copies it with ld/sd without an alignment test. */
+typedef union XglLightSetDwords {
+    XglLightSet set;
+    unsigned long long dwords[sizeof(XglLightSet) / 8];
+} XglLightSetDwords;
+
 /* A 4x4 matrix as xgl_2.c and nml_model_set.c read it: floats, rows, words or quadwords. */
 typedef unsigned int XglMatrixQuadword __attribute__((mode(TI)));
 

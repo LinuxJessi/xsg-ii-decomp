@@ -442,7 +442,7 @@ int unitCmdRun(Ov01Object *object, int cmdId, int flip) {
                 effect.record = 9;
                 effect.group = object->stats->sequenceIndex;
             }
-            func_00A954D8(object, effect.group, effect.record);
+            unitEffectStart(object, effect.group, effect.record);
             seObjectVoiceStartDefault(object, 1);
             sequence->step++;
         } else {

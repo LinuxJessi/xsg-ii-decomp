@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "ov01/tu005.h"
 #include "ov01/tu063.h"
+#include "ov01/tu049.h"
 
 /*
  * grGpInit's argument, restated from src/ov01/gr_gp_init.c (the owner keeps
@@ -79,7 +80,6 @@ typedef struct MenuTarget {
 s32 objSlotRelease(void *);
 s32 objStdMove(void *);
 s32 slideSetStep(void *, s32);
-s32 menuPanelRowFree(s32);
 
 /* Update step of the timed panel (proposed menuTimedPanelStep): state 1 slides
  * the origin with slideSetStep until objStdMove reports arrival; state 0
@@ -180,7 +180,6 @@ void menuPanelDraw(MenuState *menu)
   }
 }
 
-s32 menuPanelRowAlloc();
 
 /* Shows the menu panel (proposed menuPanelShow): slides in from x = -152 on a row
  * taken from menuPanelRowAlloc. */

@@ -27,9 +27,20 @@ typedef struct VmPluginContext {
 
 typedef struct VmPluginHeader VmPluginHeader;
 
+/* The keyed table vmKeyedEntryGet reads: count entries, an index array of
+ * offsets and the data they point into (both offsets from the table start). */
+typedef struct VmKeyTable {
+    unsigned char unmodeled_00[0x08];
+    int count;        /* +0x08 */
+    unsigned char unmodeled_0c[0x14 - 0x0C];
+    int indexOffset;  /* +0x14 */
+    int dataOffset;   /* +0x18 */
+} VmKeyTable;
+
 struct VmPluginHeader {
     unsigned char unmodeled_00[0x18];
     int entryOffset; /* +0x18: distance from this header to the entry array */
+    VmKeyTable *keys; /* +0x1C */
 };
 
 int VM_PLUGIN_CNT_GET(vm)
@@ -39,6 +50,7 @@ VmPluginContext *vm;
 }
 
 #include "shared.h"
+#include "ov01/tu036.h"
 
 
 
@@ -70,7 +82,19 @@ int vmArgGet(VmPluginContext *vm, int argIndex)
     return frameTop[-3 - 2 * (argCount - argIndex)];
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu046", vmArgGetHigh);
+/* Returns the high word of argument argIndex (1-based) of the current call. */
+int vmArgGetHigh(VmPluginContext *vm, int argIndex)
+{
+    int *frameTop;
+    int argCount;
+
+    frameTop = vm->stack + vm->stackCount;
+    argCount = frameTop[-1];
+    if (argCount < argIndex || argIndex == 0) {
+        sbFatal(vm);
+    }
+    return frameTop[-2 - 2 * (argCount - argIndex)];
+}
 
 /*
  * Reports whether argument argIndex has a zero tag byte: the first byte of
@@ -92,7 +116,26 @@ int vmArgTagIsZero(VmPluginContext *vm, int argIndex)
     return ((unsigned char *) frameTop)[VM_ARG_TAG_BASE - (argCount - argIndex) * VM_ARG_SLOT_BYTES] == 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu046", vmKeyedEntryGet);
+/* Script values tagged VM_KEY_TAG_ENTRY in bits 20..23 are keys of the keyed table. */
+#define VM_KEY_TAG_MASK 0xF00000
+#define VM_KEY_TAG_ENTRY 0x200000
+
+/* Address of the keyed-table entry a tagged key names, or 0 for an untagged
+ * value or a key past the table. */
+int vmKeyedEntryGet(VmPluginContext *vm, int key)
+{
+    VmKeyTable *table = vm->header->keys;
+    int index;
+
+    if ((key & VM_KEY_TAG_MASK) != VM_KEY_TAG_ENTRY) {
+        return 0;
+    }
+    index = key & ~VM_KEY_TAG_MASK;
+    if (!(index < table->count)) {
+        return 0;
+    }
+    return (int) ((char *)table + table->dataOffset + ((int *)((char *)table + table->indexOffset))[index]);
+}
 
 /* Address of word-sized entry `index` of the header's entry array. */
 int vmEntryGet(VmPluginContext *vm, int index)
@@ -153,11 +196,9 @@ int monsTblGet(void)
     return monsTblEntry;
 }
 
-void func_00A99DC8(void);
-
 void monsSetNoGet(void)
 {
-    func_00A99DC8();
+    cfMonsSetNoGet();
 }
 
 /* First argument of the last cameraSet call, stored as given. */
@@ -258,7 +299,7 @@ int atkTbl(VmPluginContext *vm)
     return func_00A9BF08(unit, entry, value);
 }
 
-int func_00A9C070(int argOne, int argTwoValue, int argThree);
+int atkTblFieldGet(int argOne, int argTwoValue, int argThree);
 
 int atkTblGet(VmPluginContext *vm)
 {
@@ -275,7 +316,7 @@ int atkTblGet(VmPluginContext *vm)
     entry = vmEntryGet(vm, entryIndex);
     argOne = vmArgGet(vm, 1);
     argThree = vmArgGet(vm, 3);
-    return func_00A9C070(argOne, entry, argThree);
+    return atkTblFieldGet(argOne, entry, argThree);
 }
 
 void *actorGet(VmPluginContext *vm)
@@ -349,7 +390,28 @@ int loadWaitEffect(int unused, int *flag)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu046", createEffect);
+void effectSendOwned(int high, int low, StatOwner *owner);
+
+/* Native createEffect: starts effect (argument 1, argument 2), on the actor of
+ * the unit of argument 3 when that argument is given. */
+int createEffect(VmPluginContext *vm)
+{
+    StatOwner *owner;
+    int high;
+
+    if (VM_PLUGIN_CNT_GET() < 2) {
+        sbChainSetValue(vm, 2);
+        return 0;
+    }
+    if (vmArgTagIsZero(vm, 3) != 0) {
+        owner = 0;
+    } else {
+        owner = unitTblEntryGet(vmArgGet(vm, 3));
+    }
+    high = vmArgGet(vm, 1);
+    effectSendOwned(high, vmArgGet(vm, 2), owner);
+    return 1;
+}
 
 void effectSendValue(int argOne, int argTwo, Vector4 *position);
 
@@ -377,7 +439,7 @@ int createEffectPos(VmPluginContext *vm)
     return 1;
 }
 
-int func_00A9C328(int argOne, int argTwo);
+int tecParaFieldGet(int argOne, int argTwo);
 
 int tecParaGet(VmPluginContext *vm)
 {
@@ -390,7 +452,7 @@ int tecParaGet(VmPluginContext *vm)
     }
     argOne = vmArgGet(vm, 1);
     argTwo = vmArgGet(vm, 2);
-    return func_00A9C328(argOne, argTwo);
+    return tecParaFieldGet(argOne, argTwo);
 }
 
 int calcStatGet(StatOwner *unit, int argTwo, int argThree);
@@ -430,7 +492,7 @@ int unitStatSet(VmPluginContext *vm)
     return 1;
 }
 
-int func_00A954D8(StatOwner *unit, int width, int height);
+int unitEffectStart(StatOwner *unit, int width, int height);
 
 int counterBoost(VmPluginContext *vm)
 {
@@ -445,7 +507,7 @@ int counterBoost(VmPluginContext *vm)
     applied = calcBoostOk(unit, 0);
     if (applied != 0) {
         calcActStockSet(unit, 0);
-        func_00A954D8(unit, 0x140, 7);
+        unitEffectStart(unit, 0x140, 7);
         seVoiceStartTagged(2, 1);
         applied = 1;
     }
@@ -465,7 +527,7 @@ int boost(VmPluginContext *vm)
     applied = calcBoostOk(unit, 1);
     if (applied != 0) {
         calcActStockSet(unit, 1);
-        func_00A954D8(unit, 0x140, 7);
+        unitEffectStart(unit, 0x140, 7);
         seVoiceStartTagged(2, 1);
         applied = 1;
     }

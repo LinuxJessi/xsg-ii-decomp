@@ -2,48 +2,61 @@
  * OV01 original TU 52: 0x00aa4280..0x00aa4670 (5 functions)
  */
 #include "common.h"
-
-typedef struct MenuCursor MenuCursor;
-
-/* State block addressed through menuCursor.  Only the fields these three
- * functions write are named; their roles are the names' only evidence. */
-struct MenuCursor {
-    unsigned char unmodeled_00[0x10];
-    float origin_x;             /* +0x10 */
-    float origin_y;             /* +0x14 */
-    unsigned char unmodeled_18[0x58];
-    float target_x;             /* +0x70 */
-    float target_y;             /* +0x74 */
-    unsigned char unmodeled_78[0x18];
-    int ready;                  /* +0x90 */
-    int enabled;                /* +0x94 */
-};
+#include "ov01/tu005.h"
+#include "ov01/tu051.h"
 
 int actStockHasBoost(void);
-extern MenuCursor *menuCursor;
+void *objSlotAlloc(void);
 
 /* Show the cursor: enabled, and when actStockHasBoost is clear, ready at the home position. */
 void menuCursorShow(void)
 {
-    menuCursor->enabled = 1;
+    menuCursor->kind.cursor.visible = 1;
     if (actStockHasBoost() == 0) {
-        menuCursor->ready = 1;
-        menuCursor->target_x = 288.0f;
-        menuCursor->target_y = 390.0f;
+        menuCursor->moving = 1;
+        menuCursor->slide.pos.target_x = MENU_CURSOR_HOME_X;
+        menuCursor->slide.pos.target_y = MENU_CURSOR_HOME_Y;
     }
 }
 
 /* Hide the cursor: disabled and parked at (288, 454). */
 void menuCursorHide(void)
 {
-    menuCursor->origin_x = 288.0f;
-    menuCursor->origin_y = 454.0f;
-    menuCursor->enabled = 0;
+    menuCursor->slide.pos.x = MENU_CURSOR_HOME_X;
+    menuCursor->slide.pos.y = MENU_CURSOR_PARKED_Y;
+    menuCursor->kind.cursor.visible = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu052", menuIconListCreate);
+extern MenuObject *menuIconListObj;
 
-void func_00AA43A0(void)
+/* Position of the icon list. */
+#define MENU_ICON_LIST_X 8.0f
+#define MENU_ICON_LIST_Y 312.0f
+
+void menuIconListUpdate(MenuObject *list);
+void menuIconTableDraw(MenuObject *list);
+
+/* Creates the icon list object: no update step (menuIconListUpdate is empty), drawn
+ * by menuIconTableDraw, with a cleared slide block at the list position. */
+void menuIconListCreate(void)
+{
+    MenuObject *list;
+
+    list = objSlotAlloc();
+    if (list != 0) {
+        list->update = menuIconListUpdate;
+        list->draw = menuIconTableDraw;
+        menuIconListObj = list;
+        ov01MatrixBlockInit(&list->slide.block);
+        list->slide.pos.x = MENU_ICON_LIST_X;
+        list->slide.pos.y = MENU_ICON_LIST_Y;
+        list->slide.pos.z = 0;
+        list->moving = 0;
+    }
+}
+
+/* Update step of the icon list: nothing to do. */
+void menuIconListUpdate(MenuObject *list)
 {
 }
 

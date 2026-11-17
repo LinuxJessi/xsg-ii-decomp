@@ -11,7 +11,6 @@
 #include "ov01/tu036.h"
 
 /* Callees defined outside this allocation. Results are declared only where a caller reads them. */
-void func_00A99DD8(int);
 void cfEventSet(int);
 void debugValLR(int *, int, int, int);
 int configPlayer(int slot);
@@ -142,7 +141,7 @@ int configThink(void)
 /* MONSTER SET row: edits the enemy group number (0..999) and passes it on. */
 int configMonsSet(void) {
     debugValLR(&configMonsSetNo, 0, 999, 1);
-    func_00A99DD8(configMonsSetNo);
+    cfMonsSetNoSet(configMonsSetNo);
     return 0;
 }
 
@@ -248,14 +247,14 @@ int configCpUDisp(void) {
     return 0;
 }
 
-int func_00A99E18();
+int gattaiCodeGet();
 
 /* GATTAI row: an id offset by 0x16000 in 1..0x51. */
 int configGattai(void)
 {
     int gattaiId;
 
-    gattaiId = func_00A99E18() - 0x16000;
+    gattaiId = gattaiCodeGet() - 0x16000;
     debugValLR(&gattaiId, 1, 0x51, 1);
     gattaiCodeSet(gattaiId + 0x16000);
     return 0;

@@ -24,6 +24,28 @@ struct BoostGauge {
     signed char progress;                   /* +0x02 */
 };
 
+/* Slots of the action stock: four stocked units and two boost units. */
+#define ACT_STOCK_SLOTS 4
+#define ACT_STOCK_BOOST_SLOTS 2
+
+/*
+ * The action-stock record (the global actStock, X1 ActStock layout): stock[4] at +0x00,
+ * boost[2] at +0x10 (calcActStockSet fills them), max at +0x18, pickCursor at +0x1C,
+ * lastPicked at +0x20, pickSource at +0x24.
+ */
+struct ActStock {
+    StatOwner *stock[ACT_STOCK_SLOTS];
+    StatOwner *boost[ACT_STOCK_BOOST_SLOTS];
+    int max;
+    int pickCursor;
+    StatOwner *lastPicked;
+    int pickSource;
+};
+
+struct ActStock *actStockGet(void);
+StatOwner *actStockPick(void);
+int unitCanAct(StatOwner *unit);
+
 /* Battle unit and action-stock prototypes. */
 int battleSlotFlagTest(int key, int flag);
 struct StatBlock *battleSlotGet(int index);

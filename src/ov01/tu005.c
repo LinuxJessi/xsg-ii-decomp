@@ -46,11 +46,7 @@ struct FifoRing {
     int count;
 };
 
-/* A 4x4 float matrix followed by 0x40 bytes; ov01MatrixBlockInit clears the 0x80 bytes. */
-struct MatrixBlock {
-    float m[4][4];
-    unsigned char unmodeled_40[0x40];
-};
+void ov01SlotRelease(void *slot);
 
 /* Releases the data object (dataObjRelease): its only caller is dataObjRemove (tu022), which clears dataObject
  * after the call. Byte-identical to objSlotRelease (same body, same callee); the caller tells them apart. */

@@ -228,7 +228,9 @@ void enemyCursorClose(void) {
 }
 
 extern int D_00AC3C80;
-extern int D_00AC4170;
+/* The enemy cursor's text page list for textEntryAlloc: the text (set by
+ * func_00A98960), then 0. */
+extern int D_00AC4170[2];
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C80, 0 when choiceMenuEntryFlags flags it;
  * the helper result goes to D_00AC4170 instead of D_00AC4160, the word the other pickers use. */
@@ -243,7 +245,7 @@ int func_00A98960(void) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3C80 = entry_id;
             result = func_00A9B750(entry_id, 1);
-            D_00AC4170 = result;
+            D_00AC4170[0] = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3C80 = 0;
             }
@@ -287,17 +289,19 @@ int func_00A98BE8(void) {
 extern int statBitValues[];
 
 /*
- * The owner's +0x144 pointer names a table whose halfword at +0x92 is
- * indexed by the row argument. bits[1] models only the element this
- * function reads.
+ * The owner's +0x144 pointer names a table whose halfwords at +0x92 are
+ * rows of status bits, indexed by the row argument.
  */
 typedef struct StatBitTable StatBitTable;
 
 typedef struct StatBitOwner StatBitOwner;
 
+/* Rows of status bits of a unit (statBitValueGet indexes them). */
+#define STAT_BIT_ROWS 4
+
 struct StatBitTable {
     unsigned char unmodeled_00[0x92];
-    u16 bits[1];
+    u16 bits[STAT_BIT_ROWS];
 };
 
 struct StatBitOwner {
@@ -322,7 +326,39 @@ int statBitValueGet(StatBitOwner *owner, int row, int mask) {
     return -1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", enemyCursorOpen);
+/* Enemy cursor text entry: position, size and style passed to textEntryAlloc. */
+#define ENEMY_CURSOR_X 10
+#define ENEMY_CURSOR_Y 0x58
+#define ENEMY_CURSOR_WIDTH 0x90
+#define ENEMY_CURSOR_HEIGHT 0x14
+#define ENEMY_CURSOR_STYLE 7
+
+ObjectTask *textEntryAlloc(int x, int y, int width, int height, int style, void *pages);
+extern int D_00AC4178;
+extern int D_00AC417C;
+extern int D_00AC4180;
+
+/* Opens the enemy cursor's text entry when the unit has any status bit set. */
+void enemyCursorOpen(StatBitOwner *unit)
+{
+    u16 *bits = unit->table->bits;
+    int row;
+
+    for (row = 0; row < STAT_BIT_ROWS; row++) {
+        if (bits[row] != 0) {
+            break;
+        }
+    }
+    if (row < STAT_BIT_ROWS) {
+        D_00AC4170[1] = 0;
+        D_00AC4170[0] = 0;
+        pTaskEnCur = textEntryAlloc(ENEMY_CURSOR_X, ENEMY_CURSOR_Y, ENEMY_CURSOR_WIDTH, ENEMY_CURSOR_HEIGHT,
+                                    ENEMY_CURSOR_STYLE, D_00AC4170);
+        D_00AC4180 = 0;
+        D_00AC4178 = 0;
+        D_00AC417C = 1;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", enemyCursorStep);
 
@@ -376,13 +412,36 @@ void thinkNoSet(int value) {
     thinkNo = value;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DC8);
+/*
+ * The fields of gameWork (main) this file reads: the battle's enemy group
+ * number (the MONSTER SET debug row of tu072 sets it, monsSetNoGet of tu046
+ * reads it) and the cf event bits (XS1 keeps cfEvent in its game loop state;
+ * tu039 tests bit 0x20 for the time limit).
+ */
+typedef struct CfGameWork {
+    unsigned char unmodeled_000[0x31C];
+    short monsSetNo;                      /* +0x31C */
+    unsigned char unmodeled_31e[0x324 - 0x31E];
+    int cfEvent;                          /* +0x324 */
+} CfGameWork;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DD8);
+extern CfGameWork gameWork;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", cfEventGet);
+short cfMonsSetNoGet(void) {
+    return gameWork.monsSetNo;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", cfEventSet);
+void cfMonsSetNoSet(int monsSetNo) {
+    gameWork.monsSetNo = monsSetNo;
+}
+
+int cfEventGet(void) {
+    return gameWork.cfEvent;
+}
+
+void cfEventSet(int cfEvent) {
+    gameWork.cfEvent = cfEvent;
+}
 
 extern unsigned char ov01PartyTable[];
 
@@ -391,10 +450,29 @@ void *ov01PartyListGet(void) {
     return &ov01PartyTable;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99E18);
-
-/* Gattai code word: 0x16000 plus the gattai id. func_00A99E18 reads it back. */
+/* Gattai code word: GATTAI_CODE_BASE plus the gattai id. gattaiCodeGet reads it back. */
 extern int gattaiCode;
+
+#define GATTAI_CODE_BASE 0x16000
+/* Story flag field (8 bits at flag 0x1EE) holding the current gattai id. */
+#define GATTAI_ID_FLAG 0x1EE
+#define GATTAI_ID_FLAG_BITS 8
+
+int xglFlagsGet(int bit_offset, int bit_count);
+
+/* The gattai code: from the story flag when a gattai id is set there,
+ * else the code gattaiCodeSet stored. */
+int gattaiCodeGet(void) {
+    int id = xglFlagsGet(GATTAI_ID_FLAG, GATTAI_ID_FLAG_BITS);
+    int code;
+
+    if (id == 0) {
+        code = gattaiCode;
+    } else {
+        code = id + GATTAI_CODE_BASE;
+    }
+    return code;
+}
 
 void gattaiCodeSet(int code) {
     gattaiCode = code;

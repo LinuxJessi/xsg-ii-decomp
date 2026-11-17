@@ -3,9 +3,11 @@
  */
 #include "common.h"
 #include "main/tu022.h"
+#include "main/xgl_2.h"
 #include "main/tu063.h"
 #include "main/tu077.h"
 #include "main/tu079.h"
+#include "main/pad.h"
 #include "main/sef.h"
 #include "main/xgl_font.h"
 #include "ov01/tu009.h"
@@ -91,7 +93,7 @@ int msgPutWait(int unused, int *waiting)
 }
 
 void sefSetOverrideVectors(void *, void *);
-void unitBodySetPosDir(void *, void *);
+void unitBodySetPosDir(Vector4 *pos, Vector4 *dir);
 void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir);
 extern Vector4 runtimePos;
 extern Vector4 runtimeDir;
@@ -135,11 +137,21 @@ struct UnitTblEntry {
 
 int unitTblGet(int side, UnitTblEntry ***table);
 
-/* Partial view of the body: the vector pair at +0x490 and +0x4A0. */
+/* The body scale, written per component. */
+typedef union UnitBodyScale {
+    Vector4 vector;
+    float element[4];
+} UnitBodyScale;
+
+/* Partial view of the body: its light set and the vector pair at +0x490 and +0x4A0. */
 typedef struct UnitBody UnitBody;
 
 struct UnitBody {
-    unsigned char unmodeled_000[0x490];
+    unsigned char unmodeled_000[0x90];
+    UnitBodyScale scale;                   /* +0x90: objx sets x, y and z */
+    unsigned char unmodeled_0A0[0x190 - 0xA0];
+    XglLightSetDwords light;               /* +0x190 */
+    unsigned char unmodeled_310[0x490 - 0x310];
     Vector4 pos;                           /* +0x490..+0x49F */
     float dir[3];                          /* +0x4A0..+0x4AB */
 };
@@ -216,7 +228,20 @@ void *lightBlockGet(void) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", runtimeSetLight);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitTblBodySetLight);
+/* Copies the light set into the body of every unit of unitTblGet(2). */
+void unitTblBodySetLight(XglLightSetDwords *light)
+{
+    UnitTblEntry **units;
+    int count;
+    int i;
+
+    count = unitTblGet(2, &units);
+    for (i = 0; i < count; i++) {
+        if (units[i] != 0) {
+            units[i]->body->light = *light;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", pari);
 
@@ -254,13 +279,14 @@ int partyDataSet(int call)
     return 1;
 }
 
-/* One 0x14-byte entry of the table ov01PartyListGet returns: only +0x04 is written here. */
+/* One 0x14-byte entry of the table ov01PartyListGet returns: only +0x04 and +0x08 are written here. */
 typedef struct PlPosEntry PlPosEntry;
 
 struct PlPosEntry {
     unsigned char unmodeled_000[4];
     int position;                          /* +0x04: written from script argument 2 by plPosInit */
-    unsigned char unmodeled_008[0x14 - 0x08];
+    int direction;                         /* +0x08: degrees 0..360, written by plDirInit */
+    unsigned char unmodeled_00C[0x14 - 0x0C];
 };
 
 PlPosEntry *ov01PartyListGet();
@@ -280,12 +306,56 @@ int plPosInit(int call)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", plDirInit);
+/* Native plDirInit: sets the direction of party entry argument 1 to argument 2,
+ * brought into 0..360 degrees. */
+int plDirInit(int call)
+{
+    int entryIndex;
+    PlPosEntry *entries;
+    int direction;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitCreate);
+    if (VM_PLUGIN_CNT_GET() < 2) {
+        sbChainSetValue(call, 2);
+        return 0;
+    }
+    entryIndex = vmArgGet(call, 1);
+    entries = ov01PartyListGet();
+    direction = vmArgGet(call, 2);
+    while (direction < 0) {
+        direction += 360;
+    }
+    if (direction > 360) {
+        direction %= 360;
+    }
+    entries[entryIndex].direction = direction;
+    return 1;
+}
 
-int dataUnitLoad(int);
-int unitEffectSlotAcquire(int);
+Ov01Object *unitEnCreate(int id);
+
+/* Native unitCreate: creates enemy unit argument 1, loads snapshot argument 2,
+ * turns it to argument 3 degrees and stores arguments 4 and 5 in its stat block
+ * (field_f8, field_fc); returns the unit, or 0 when it could not be created. */
+int unitCreate(int call)
+{
+    Ov01Object *unit;
+
+    if (VM_PLUGIN_CNT_GET() < 5) {
+        sbChainSetValue(call, 2);
+        return 0;
+    }
+    unit = unitEnCreate(vmArgGet(call, 1));
+    if (unit == 0) {
+        return 0;
+    }
+    unitLoadSnapshot(unit, vmArgGet(call, 2));
+    unitSetAngleDegrees(unit, vmArgGet(call, 3));
+    unit->stats->field_f8 = vmArgGet(call, 4);
+    unit->stats->field_fc = vmArgGet(call, 5);
+    /* The script keeps the unit as its address. */
+    return (int) unit;
+}
+
 
 int unitLoad(int call)
 {
@@ -311,9 +381,55 @@ int unitLoadWait(int unused, int *waiting)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitBind);
+struct DataSlot *dataSlotFind(int id);
+void unitBindActors(Ov01Object *unit, struct DataSlot *slot);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitBind2);
+/* Native unitBind: binds unit (argument 2) to the data slot of argument 1, fades it
+ * in and starts the slot's load; 0 when the slot is not found. */
+int unitBind(int call)
+{
+    struct DataSlot *slot;
+    Ov01Object *unit;
+
+    if (VM_PLUGIN_CNT_GET() < 2) {
+        sbChainSetValue(call, 2);
+        return 0;
+    }
+    slot = dataSlotFind(vmArgGet(call, 1));
+    if (slot == 0) {
+        return 0;
+    }
+    /* Script argument 2 is the unit's address. */
+    unit = (Ov01Object *) vmArgGet(call, 2);
+    unitBindActors(unit, slot);
+    unitFadeIn(unit);
+    func_00A955C8(unit);
+    ov01LoadRequest(slot);
+    return 1;
+}
+
+/* Native unitBind2: unitBind with unitUnbind in place of the fade-in. */
+int unitBind2(int call)
+{
+    struct DataSlot *slot;
+    Ov01Object *unit;
+
+    if (VM_PLUGIN_CNT_GET() < 2) {
+        sbChainSetValue(call, 2);
+        return 0;
+    }
+    slot = dataSlotFind(vmArgGet(call, 1));
+    if (slot == 0) {
+        return 0;
+    }
+    /* Script argument 2 is the unit's address. */
+    unit = (Ov01Object *) vmArgGet(call, 2);
+    unitBindActors(unit, slot);
+    unitUnbind(unit);
+    func_00A955C8(unit);
+    ov01LoadRequest(slot);
+    return 1;
+}
 
 void arrowCreate(int, int, int);
 
@@ -365,7 +481,23 @@ int bgmStop(void)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitTblBitGet);
+/* Bit i set for each occupied entry i of the side-2 unit table. */
+int unitTblBitGet(void)
+{
+    UnitTblEntry **units;
+    int count;
+    int bits;
+    int i;
+
+    count = unitTblGet(2, &units);
+    bits = 0;
+    for (i = 0; i < count; i++) {
+        if (units[i] != 0) {
+            bits |= 1 << i;
+        }
+    }
+    return bits;
+}
 
 
 void frameCntGet(void)
@@ -476,7 +608,23 @@ int namePut(int call)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", objx);
+/* Native objx: sets the scale of unit argument 1 to argument 2 percent on all three axes. */
+int objx(int call)
+{
+    UnitTblEntry *unit;
+    float scale;
+
+    if (VM_PLUGIN_CNT_GET() < 2) {
+        sbChainSetValue(call, 2);
+        return 0;
+    }
+    unit = unitTblEntryGet(vmArgGet(call, 1));
+    scale = vmArgGet(call, 2) / 100.0f;
+    unit->body->scale.element[0] = scale;
+    unit->body->scale.element[1] = scale;
+    unit->body->scale.element[2] = scale;
+    return 1;
+}
 
 
 int streamPlay(int call)
@@ -528,8 +676,6 @@ int unitDefAreaGet(int call)
     return (int) (unitDefArea(unit) * 100.0f);
 }
 
-int cfEventGet(void);
-int cfEventSet(int);
 
 int cfFlagSet(int call)
 {
@@ -586,45 +732,25 @@ int unitFade(int call)
 }
 
 /* Partial views of a stock slot: the detail pointer at +0x144 and the count at +0x62. */
-typedef struct StockDetail StockDetail;
-
-struct StockDetail {
-    unsigned char unmodeled_000[0x62];
-    s16 stock;                             /* +0x62 */
-};
-
-typedef struct StockOwner StockOwner;
-
-struct StockOwner {
-    unsigned char unmodeled_000[0x144];
-    StockDetail *detail;                   /* +0x144 */
-};
-
-StockOwner **actStockGet();
-
 s16 stockGet(int call)
 {
-    s16 stock;
-    StockOwner **owners;
-    StockOwner *owner;
-    StockOwner **ownerSlot;
+    s16 key;
+    StatOwner *owner;
     int slot;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
         sbChainSetValue(call, 2);
         return 0;
     }
-    stock = 0;
+    key = 0;
     slot = vmArgGet(call, 1);
-    if (slot < 4) {
-        owners = actStockGet();
-        ownerSlot = owners + slot;
-        owner = *ownerSlot;
+    if (slot < ACT_STOCK_SLOTS) {
+        owner = actStockGet()->stock[slot];
         if (owner != 0) {
-            stock = owner->detail->stock;
+            key = owner->stats->key;
         }
     }
-    return stock;
+    return key;
 }
 
 int unitMotWait(int call, int *waiting)
@@ -697,7 +823,31 @@ int put(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", sampPadRead);
+extern PadRecord PadData;
+
+/* Native sampPadRead: the d-pad bits of pad 0 - pressed (argument 1), repeated
+ * (2) or held (any other value). */
+int sampPadRead(int call)
+{
+    int value;
+
+    if (VM_PLUGIN_CNT_GET() <= 0) {
+        sbChainSetValue(call, 2);
+        return 0;
+    }
+    switch (vmArgGet(call, 1)) {
+    case 1:
+        value = PadData.directionPressed;
+        break;
+    case 2:
+        value = PadData.directionRepeated;
+        break;
+    default:
+        value = PadData.directionHeld;
+        break;
+    }
+    return value;
+}
 
 
 int sampFontPut(int call)

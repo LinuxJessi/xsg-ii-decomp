@@ -3,10 +3,11 @@
 
 /* Functions of src/ov01/tu044.c that other files call. */
 
-struct SlotChain;
+struct SbImageHeader;
+struct SbThread;
 
-void sbChainSetValue(struct SlotChain *chain, int value);
+void sbChainSetValue(struct SbThread *thread, int key);
 void sbResetNativeCounts(void);
-void sbThreadsRelease(int key);
+void sbThreadsRelease(struct SbImageHeader *key);
 
 #endif /* INCLUDE_OV01_TU044_H */

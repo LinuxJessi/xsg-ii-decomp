@@ -2,35 +2,46 @@
  * OV01 original TU 51: 0x00aa3e28..0x00aa4280 (5 functions)
  */
 #include "common.h"
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu051", menuCursorCreate);
+#include "ov01/tu005.h"
+#include "ov01/tu051.h"
 
 int objStdMove(void *);
 void slideSetStep(void *, int);
+void *objSlotAlloc(void);
+void menuCursorUpdate(MenuCursor *cursor);
+void menuCursorDraw(MenuCursor *cursor);
 
-/* Fields this TU reads or writes; the object is larger than this view. */
-typedef struct MenuCursor MenuCursor;
+/* Creates the menu cursor: update and draw callbacks, a cleared slide block
+ * with the cursor parked below the home position, not moving and hidden. */
+void menuCursorCreate(void)
+{
+    MenuCursor *cursor;
 
-struct MenuCursor {
-    unsigned char unmodeled_00[0x10];
-    float x; /* +0x10: menuCursorDraw stores 288.0f here */
-    float y; /* +0x14: menuCursorDraw stores 390.0f here */
-    unsigned char unmodeled_18[0x90 - 0x18];
-    int state; /* +0x90 */
-    int substate; /* +0x94: menuCursorDraw tests it against 1 */
-};
+    cursor = objSlotAlloc();
+    if (cursor != 0) {
+        cursor->update = menuCursorUpdate;
+        cursor->draw = menuCursorDraw;
+        menuCursor = cursor;
+        ov01MatrixBlockInit(&cursor->slide.block);
+        cursor->slide.pos.x = MENU_CURSOR_HOME_X;
+        cursor->slide.pos.y = MENU_CURSOR_PARKED_Y;
+        cursor->slide.pos.z = 0;
+        cursor->moving = 0;
+        cursor->kind.cursor.visible = 0;
+    }
+}
 
 /* Cursor update (callback +4 of menuCursor): state 1 steps the cursor position and clears
  * state on arrival. */
 void menuCursorUpdate(MenuCursor *cursor) {
     void *pos;
 
-    if (cursor->state != 0) {
-        if (cursor->state == 1) {
-            pos = &cursor->x;
+    if (cursor->moving != 0) {
+        if (cursor->moving == 1) {
+            pos = &cursor->slide;
             slideSetStep(pos, 2);
             if (objStdMove(pos) != 0) {
-                cursor->state = 0;
+                cursor->moving = 0;
             }
         }
     }
@@ -44,18 +55,16 @@ void menuCursorTargetDraw(MenuCursor *cursor);
  * status when actStockHasBoost is set, otherwise draws the unit list when substate is 1. */
 void menuCursorDraw(MenuCursor *cursor) {
     if (actStockHasBoost() != 0) {
-        cursor->x = 288.0f;
-        cursor->y = 390.0f;
+        cursor->slide.pos.x = MENU_CURSOR_HOME_X;
+        cursor->slide.pos.y = MENU_CURSOR_HOME_Y;
         menuCursorTargetDraw(cursor);
         return;
     }
-    if (cursor->substate != 1) {
+    if (cursor->kind.cursor.visible != 1) {
         return;
     }
     menuUnitListDraw(cursor);
 }
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu051", menuUnitListDraw);
 
 /* The two 4-byte colours at D_00ABACC8, copied as one 8-byte block. */
 typedef struct ColourPair {
@@ -75,9 +84,14 @@ struct UnitModel {
 typedef struct UnitActor UnitActor;
 
 struct UnitActor {
-    unsigned char unmodeled_00[0x144];
+    unsigned char unmodeled_00[0x0C];
+    int flags;        /* +0x0C: UNIT_ACTOR_HIDDEN */
+    unsigned char unmodeled_10[0x144 - 0x10];
     UnitModel *model; /* +0x144 */
 };
+
+/* UnitActor.flags bit of a unit menuUnitListDraw leaves out. */
+#define UNIT_ACTOR_HIDDEN 0x4
 
 typedef struct UnitSlots UnitSlots;
 
@@ -100,6 +114,59 @@ extern void func_00AA7750(void *packet, int x, int y, short value, int);
 extern void menuStatSpriteRGB(void *packet, int x, int y, int width, int height,
                               int srcX, int srcY, const void *colour);
 
+/* Screen offset of each party slot in the unit list (x, y). */
+typedef struct MenuUnitSlotOffset {
+    int x;
+    int y;
+} MenuUnitSlotOffset;
+
+extern MenuUnitSlotOffset menuUnitSlotOffsets[];
+/* Frame colour of each party slot (R, G, B, A). */
+extern unsigned char menuUnitSlotColours[][4];
+
+int unitTblGet(int side, UnitActor ***table);
+int calcBoostOk(UnitActor *unit, int mode);
+extern void menuStatSprite(void *packet, int x, int y, int width, int height,
+                           int srcX, int srcY);
+
+/* Unit list at the cursor: the list frame, then per party unit its slot frame
+ * and, when the unit is shown and calcBoostOk(unit, 1) allows it, its status. */
+void menuUnitListDraw(MenuCursor *cursor)
+{
+    unsigned int packet[4];
+    UnitActor **table;
+    UnitActor *unit;
+    int count;
+    int i;
+    int x;
+    int y;
+
+    grGpInit(packet);
+    x = (int) cursor->slide.pos.x;
+    y = (int) cursor->slide.pos.y;
+    func_00AA84D0(packet);
+    grPutSprOpen(packet);
+    menuStatSprite(packet, x - 42, y - 14, 110, 14, 146, 0);
+    grPutSprClose();
+    count = unitTblGet(0, &table);
+    for (i = 0; i < count; i++) {
+        func_00AA84D0(packet);
+        grPutSprOpen(packet);
+        menuStatSpriteRGB(packet, x + menuUnitSlotOffsets[i].x - 2, y + menuUnitSlotOffsets[i].y - 2, 28, 42, 227, 77,
+                          menuUnitSlotColours[i]);
+        grPutSprClose();
+        unit = table[i];
+        if (unit == 0 || (unit->flags & UNIT_ACTOR_HIDDEN)) {
+            continue;
+        }
+        if (calcBoostOk(unit, 1) != 0) {
+            func_00AA7750(packet, x + menuUnitSlotOffsets[i].x, y + menuUnitSlotOffsets[i].y,
+                          table[i]->model->value, 1);
+        }
+    }
+    grPacketSend(packet);
+}
+
 /* Status sprite for the work unit (else the actor unit) at the cursor position. */
 void menuCursorTargetDraw(MenuCursor *cursor) {
     unsigned int packet[4];
@@ -119,8 +186,8 @@ void menuCursorTargetDraw(MenuCursor *cursor) {
     } else {
         return;
     }
-    x = (int) cursor->x;
-    y = (int) cursor->y;
+    x = (int) cursor->slide.pos.x;
+    y = (int) cursor->slide.pos.y;
     grGpInit(packet);
     func_00AA84D0(packet);
     grPutSprOpen(packet);

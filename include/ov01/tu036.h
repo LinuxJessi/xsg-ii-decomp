@@ -3,6 +3,11 @@
 
 /* Functions of src/ov01/tu036.c that other files call. */
 
+int cfEventGet(void);
+void cfEventSet(int cfEvent);
+short cfMonsSetNoGet(void);
+void cfMonsSetNoSet(int monsSetNo);
+int gattaiCodeGet(void);
 struct Ov01Object;
 
 /*

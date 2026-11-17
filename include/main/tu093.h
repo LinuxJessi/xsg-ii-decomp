@@ -1,6 +1,8 @@
 #ifndef INCLUDE_MAIN_TU093_H
 #define INCLUDE_MAIN_TU093_H
 
+struct XglPacket;
+
 /* sRender (0x00645820) as the main render code reads it (src/main/tu093.c, tu094.c, tu100.c). The map names
  * sRenderPsm (+0x02), sRenderFrameBase (+0x14), sRenderDisplayBase (+0x20). The width and height at +0x04 and
  * +0x06 are the main frame size; game_over_095.c and ov02 read other fields at +0x10..+0x20 (local views).
@@ -20,7 +22,11 @@ typedef struct RenderFrameState {
     unsigned char unmodeled_1c[4];
     unsigned short display_base;    /* +0x20: sRenderDisplayBase */
     unsigned short copy_base;       /* +0x22 */
-    unsigned char unmodeled_24[0x84 - 0x24];
+    unsigned char unmodeled_24[0x44 - 0x24];
+    /* +0x44: xgl_render.c's fade_callback; ov01SceneInit sets it to ov01DrawAll and
+     * ov01SceneEnd clears it. */
+    void (*fade_callback)(struct XglPacket *packet);
+    unsigned char unmodeled_48[0x84 - 0x48];
     unsigned char errorScreenActive; /* +0x84: set while xglHddErrorScreen owns the display */
 } RenderFrameState;
 

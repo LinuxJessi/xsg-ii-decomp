@@ -33,8 +33,6 @@
 #define UNIT_FLAG_DOWN 0x4
 #define UNIT_FLAG_STOCKED 0x8
 #define STAT_FLAG_PERCENT_GATE 0x800
-#define ACT_STOCK_SLOTS 4
-#define ACT_STOCK_BOOST_SLOTS 2
 #define ACT_STEP_COUNT 4
 #define ACT_STEP_HOLD 3
 
@@ -206,20 +204,6 @@ struct ActStepCounter {
     int stepState;                          /* +0x14: 1 to 3, set by calcHitStateStep and calcHitRowGate */
 };
 
-/*
- * The action-stock record (the global actStock, X1 ActStock layout): stock[4] at +0x00,
- * boost[2] at +0x10 (calcActStockSet fills them), max at +0x18, pickCursor at +0x1C,
- * lastPicked at +0x20, pickSource at +0x24.
- */
-struct ActStock {
-    StatOwner *stock[ACT_STOCK_SLOTS];
-    StatOwner *boost[ACT_STOCK_BOOST_SLOTS];
-    int max;
-    int pickCursor;
-    StatOwner *lastPicked;
-    int pickSource;
-};
-
 extern StatBlock battleSlotTable[];
 extern StatBlock battleEntryPoolA[BATTLE_ENTRY_POOL_A_COUNT];
 extern StatBlock battleEntryPoolB[BATTLE_ENTRY_POOL_B_COUNT];
@@ -324,7 +308,6 @@ struct ActStepCounter *actStepCounterGet(void);
 void sdvSpecialBitSet(int index);
 signed char actEntryFlagGet(int index);
 signed char func_00A91B90(int index);
-struct ActStock *actStockGet(void);
 /* Refreshes the hp and ep of the slots 1 to 15 from their battle blocks, then commits each. */
 void battleSlotsRefresh(void);
 /* Defined in other files. */

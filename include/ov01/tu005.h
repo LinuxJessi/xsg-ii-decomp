@@ -5,7 +5,15 @@
 
 #define DATA_LOOKUP_CAPACITY 12 /* items in a DataLookup block */
 
-struct MatrixBlock;
+/* A 4x4 float matrix followed by 0x40 bytes; ov01MatrixBlockInit clears the 0x80 bytes. */
+struct MatrixBlock {
+    float m[4][4];
+    unsigned char unmodeled_40[0x40];
+};
+
+struct DataLookup;
+struct DataLookupItem;
+struct FifoRing;
 struct SaveStack;
 
 /* One 0x18-byte item of a lookup block. nextStep is the successor step ov01StepSetNext stores; dataLookupAppend clears
@@ -36,8 +44,11 @@ void *dataLookupNext(struct DataLookup *lookup);
 void dataObjRelease(void *object);
 void ov01MatrixBlockInit(struct MatrixBlock *mat);
 void ov01ClearTables(void);
+int ov01FifoGetTail(struct FifoRing *ring);
+int ov01FifoPush(struct FifoRing *ring);
 void ov01ResetAll(void);
 int ov01RollPercent(int percent);
+int rnd(int max);
 struct SaveStack *ov01StackNew(void);
 void ov01StackPop(struct SaveStack *stack);
 

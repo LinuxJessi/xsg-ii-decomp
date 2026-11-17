@@ -2988,13 +2988,13 @@
      1
     ],
     [
-     "func_00A92A48",
+     "cmdPairRun",
      11086408,
      196,
      1
     ],
     [
-     "func_00A92B10",
+     "cmdStockRun",
      11086608,
      200,
      1
@@ -3030,7 +3030,7 @@
      1
     ],
     [
-     "func_00A93080",
+     "unitPairPartnerFind",
      11088000,
      164,
      1
@@ -3186,7 +3186,7 @@
      1
     ],
     [
-     "func_00A94C20",
+     "unitStatusTextShow",
      11095072,
      260,
      1
@@ -3240,7 +3240,7 @@
      1
     ],
     [
-     "func_00A954D8",
+     "unitEffectStart",
      11097304,
      104,
      1
@@ -3342,7 +3342,7 @@
      1
     ],
     [
-     "func_00A95E40",
+     "ov01LoadsIdle",
      11099712,
      56,
      1
@@ -3360,7 +3360,7 @@
      1
     ],
     [
-     "func_00A95FB0",
+     "unitBindRequest",
      11100080,
      156,
      1
@@ -3384,7 +3384,7 @@
      1
     ],
     [
-     "func_00A96810",
+     "battleStatusQueueWait",
      11102224,
      180,
      1
@@ -3402,7 +3402,7 @@
      1
     ],
     [
-     "func_00A96A70",
+     "ov01StreamBind",
      11102832,
      56,
      1
@@ -3720,13 +3720,13 @@
      1
     ],
     [
-     "func_00A99DC8",
+     "cfMonsSetNoGet",
      11115976,
      12,
      1
     ],
     [
-     "func_00A99DD8",
+     "cfMonsSetNoSet",
      11115992,
      12,
      1
@@ -3750,7 +3750,7 @@
      1
     ],
     [
-     "func_00A99E18",
+     "gattaiCodeGet",
      11116056,
      64,
      1
@@ -3876,7 +3876,7 @@
      1
     ],
     [
-     "func_00A9A6A0",
+     "ov01StepSceneScript",
      11118240,
      152,
      1
@@ -4008,13 +4008,13 @@
      1
     ],
     [
-     "func_00A9B100",
+     "ov01ScriptKeyGet",
      11120896,
      12,
      1
     ],
     [
-     "func_00A9B110",
+     "ov01ScriptImageGet",
      11120912,
      12,
      1
@@ -4272,7 +4272,7 @@
      1
     ],
     [
-     "func_00A9C070",
+     "atkTblFieldGet",
      11124848,
      56,
      1
@@ -4302,7 +4302,7 @@
      1
     ],
     [
-     "func_00A9C328",
+     "tecParaFieldGet",
      11125544,
      120,
      1
@@ -4506,7 +4506,7 @@
      1
     ],
     [
-     "func_00A9CC80",
+     "sbSlotJump",
      11127936,
      172,
      1
@@ -4620,7 +4620,7 @@
      1
     ],
     [
-     "func_00A9D608",
+     "sbThreadEnqueueByName",
      11130376,
      100,
      1
@@ -4830,13 +4830,13 @@
      1
     ],
     [
-     "func_00A9E1A0",
+     "sbOpStoreGlobalKeep",
      11133344,
      124,
      1
     ],
     [
-     "func_00A9E220",
+     "sbOpStoreLocalKeep",
      11133472,
      124,
      1
@@ -4944,13 +4944,13 @@
      1
     ],
     [
-     "func_00A9E9E0",
+     "sbOpSend",
      11135456,
      160,
      1
     ],
     [
-     "func_00A9EA80",
+     "sbOpReceive",
      11135616,
      196,
      1
@@ -5772,7 +5772,7 @@
      1
     ],
     [
-     "func_00AA3AA0",
+     "objPathDraw",
      11156128,
      344,
      1
@@ -5790,13 +5790,13 @@
      1
     ],
     [
-     "func_00AA3CF8",
+     "objPathSendLast",
      11156728,
      92,
      1
     ],
     [
-     "func_00AA3D58",
+     "objPathShift",
      11156824,
      208,
      1
@@ -5850,7 +5850,7 @@
      1
     ],
     [
-     "func_00AA43A0",
+     "menuIconListUpdate",
      11158432,
      8,
      1

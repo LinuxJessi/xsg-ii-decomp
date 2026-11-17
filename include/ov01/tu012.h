@@ -142,8 +142,14 @@ typedef struct Ov01Command {
     unsigned char unmodeled_18[0x8];
 } Ov01Command;
 
+/* Ov01Object.slotFlags bit set while the object's slot is in use (ObjSlot.flags in tu005). */
+#define OV01_OBJECT_IN_USE 0x1
+
 struct Ov01Object {
-    unsigned char unmodeled_00[4];
+    union {
+        unsigned char unmodeled_00[4];  /* tu017 reads +0x8 as a doubleword through this name */
+        u32 slotFlags;                  /* the slot word (OV01_OBJECT_IN_USE); func_00AA3AA0 draws only units in use */
+    };                                  /* +0x0 */
     void (*update)(Ov01Object *object); /* +0x4: unitUpdate (unitCreateSide) */
     void (*draw)(Ov01Object *object); /* +0x8: func_00A84880 */
     u32 flags; /* +0xC: unitEnCreate ORs in 0x60 for an enemy-side unit, unitCreateSide clears it */

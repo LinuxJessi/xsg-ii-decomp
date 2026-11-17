@@ -123,7 +123,7 @@ int unitBindActors(Ov01Object *unit, struct SpawnRecord *spawn)
             }
         }
     }
-    func_00A954D8(unit, unit->stats->sequenceIndex, 8);
+    unitEffectStart(unit, unit->stats->sequenceIndex, 8);
     func_00A95608(unit);
     unit->stats->handle = spawn->flags;
     return 1;

@@ -35,6 +35,6 @@ int effectPosGetCount(void) {
 /*
  * Resolves an index to a value over four ranges: below 0xB, 0xB..0xF,
  * 0x10..0x8C (tables ov01PartyList and D_00AB5CF0) and 0x8D and up
- * (func_00A99E18). The meaning of the index is not known yet.
+ * (gattaiCodeGet). The meaning of the index is not known yet.
  */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu041", func_00A9B1B8);

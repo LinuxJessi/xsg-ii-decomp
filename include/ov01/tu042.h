@@ -3,6 +3,19 @@
 
 /* Functions of src/ov01/tu042.c that other files call. */
 
+/* Effect request block sent to the main-side effect queue (sefStartEffectDefault /
+ * sefStartEffectWithValue); the senders clear it first. */
+struct EffectRequest {
+    struct XenoActor *head;            /* +0x00: the actor of the owner unit (Ov01Object.unit) */
+    unsigned char unmodeled_04[0x04];
+    struct XenoActor *target;          /* +0x08: the same actor again (tu033 senders) */
+    unsigned char unmodeled_0c[0x1C - 0x0C];
+    int key;                           /* +0x1C: (high << 12) | low, see createEffect */
+    unsigned char unmodeled_20[0x2C - 0x20];
+    short mode;                        /* +0x2C: 2 or 3 (func_00A95540) */
+    unsigned char unmodeled_2e[0x38 - 0x2E];
+};
+
 /* Unaligned signed word: the record's word sits at a 2-byte offset. */
 typedef signed int UnalignedS32 __attribute__((aligned(1)));
 
