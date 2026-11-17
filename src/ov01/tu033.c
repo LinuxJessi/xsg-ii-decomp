@@ -1204,10 +1204,6 @@ int unitBindRequest(Ov01Tu033Request *request)
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96050);
 
 void unitLevelAdd(void *, int);
-void calcHpAdjust(void *, int);
-int calcStatGet(void *, int, int);
-void calcStatReset(void *, int, int);
-int calcStatAltReset(void *, int, int);
 void func_00A96510(void *, int, int, int);
 
 /*
@@ -1295,7 +1291,51 @@ int battleStatusQueueWait(void)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", unitsReviveDown);
+/* Brings back every down side-2 unit with a revive status: clears the status, queues
+ * UNIT_CMD_PHASE_2B_WAIT, restores maxHp (or half of it), clears UNIT_FLAG_DOWN and shows the amount
+ * (func_00AA4DB8 with flags 0x802). Returns 1. */
+int unitsReviveDown(void)
+{
+    Ov01Command command;
+    Ov01Object **units;
+    Ov01Object *unit;
+    int count;
+    int i;
+    int amount;
+    int shown;
+
+    count = unitTblGet(2, &units);
+    for (i = 0; i < count; i++) {
+        unit = units[i];
+        amount = 0;
+        if (unit == 0) {
+            continue;
+        }
+        if (unit->flags & UNIT_FLAG_DOWN) {
+            if (calcStatGet(unit, 3, STAT3_REVIVE_FULL) != 0) {
+                amount = unit->stats->maxHp;
+                calcStatReset(unit, 3, STAT3_REVIVE_FULL);
+                calcStatAltReset(unit, 3, STAT3_REVIVE_FULL);
+            } else if (calcStatGet(unit, 3, STAT3_REVIVE_HALF) != 0) {
+                amount = unit->stats->maxHp / 2;
+                calcStatReset(unit, 3, STAT3_REVIVE_HALF);
+                calcStatAltReset(unit, 3, STAT3_REVIVE_HALF);
+            }
+        }
+        if (amount != 0) {
+            command.command = UNIT_CMD_PHASE_2B_WAIT;
+            unitQueueAppend(unit, &command);
+            calcHpAdjust(unit, amount);
+            unit->flags &= ~UNIT_FLAG_DOWN;
+            shown = -amount;
+            if (amount >= 0) {
+                shown = amount;
+            }
+            func_00AA4DB8(unit, shown, 0x802, 0);
+        }
+    }
+    return 1;
+}
 
 /* monsSlotCreate (tu019.c) returns a record pointer; this caller keeps its int view (the int global), see tu019.h. */
 int monsSlotCreate(void);

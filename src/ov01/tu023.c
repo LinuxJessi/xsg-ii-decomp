@@ -143,7 +143,6 @@ int calcEpAdjust(StatOwner *unit, int delta);
 int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey);
 int unitHasEffectCode(StatOwner *unit, int effectCode);
 /* calcHpAdjust: HP at +0x5C moves by delta, clamped to [0, max] (max is the unaligned int at +0x2); returns 1 while HP stays above 0. calcHpDmg calls it. */
-int calcHpAdjust(StatOwner *unit, int delta);
 int calcHitRateGet(StatOwner *owner);
 int calcEvadeRate(StatOwner *owner);
 int calcStatResist(StatOwner *owner, int row, int statBit);
@@ -161,8 +160,6 @@ void unitEntryKindAdd(StatOwner *owner, int kind);
 int calcBackAttack(int *attackerSlot, int *targetSlot);
 int unitIsInFacingArc(int originAddress, int targetAddress);
 int unitStatsRefresh(StatOwner *unit);
-int calcStatGet(StatOwner *owner, int row, int mask);
-int calcStatReset(StatOwner *owner, int row, int mask);
 void calcStatTurn(StatOwner *owner);
 signed char calcStatDefTurnGet(int row, int statBit);
 int calcStatIdx2Bit(int statIdx);

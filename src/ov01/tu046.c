@@ -430,7 +430,6 @@ int tecParaGet(SbThread *thread)
     return tecParaFieldGet(argOne, argTwo);
 }
 
-int calcStatGet(StatOwner *unit, int argTwo, int argThree);
 
 int unitStatGet(SbThread *thread)
 {

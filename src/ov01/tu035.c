@@ -421,7 +421,6 @@ void tgtSelectUnhighlight(Ov01Object *unit)
 /* Percent chance of that. */
 #define TGT_SKIP_PERCENT 20
 
-int calcStatGet(Ov01Object *object, int kind, int mask);
 void tgtSelectUnhighlight(Ov01Object *unit);
 
 /* The script request func_00A9BC20 queues for a candidate: the unit and a zero word. */

@@ -93,6 +93,12 @@ int calcStatBit2Idx(int statBit);
 void calcActStockSet(struct Ov01Object *unit, int slot);
 int calcBoostOk(struct Ov01Object *obj, int id);
 int calcEntryUsable(struct Ov01Object *entity, int index);
+/* Unit HP and status rows: calcHpAdjust returns 1 while HP stays above 0, calcStatGet the set bits of mask in
+ * row, calcStatReset/calcStatAltReset clear them (both return 1). */
+int calcHpAdjust(struct Ov01Object *unit, int delta);
+int calcStatGet(struct Ov01Object *owner, int row, int mask);
+int calcStatReset(struct Ov01Object *owner, int row, int mask);
+int calcStatAltReset(struct Ov01Object *owner, int statIdx, int mask);
 void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
 int actLevelChanceRoll(struct Ov01Object *owner, int index);
 int actStepCounterValue(void);
