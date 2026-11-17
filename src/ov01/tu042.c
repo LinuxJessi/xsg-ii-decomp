@@ -12,6 +12,7 @@
 #include "ov01/tu040.h"
 #include "ov01/tu042.h"
 #include "ov01/tu044.h"
+#include "ov01/tu046.h"
 
 extern int dataModelKeyTbl[];
 
@@ -449,8 +450,6 @@ void msgReset(void) {
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BC20);
-
-int cameraSettingGet(void);
 
 /*
  * Sends event (the unit and three words) as a kind message to the unit's script (the battle block's spawnArgD),

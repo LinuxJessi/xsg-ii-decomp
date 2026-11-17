@@ -17,5 +17,6 @@ void func_00A9F2E0(struct SbThread *thread, int pc);
 
 int monsTblGet(void);
 int posDataGet(void);
+int cameraSettingGet(void);
 
 #endif /* INCLUDE_OV01_TU046_H */
