@@ -416,13 +416,18 @@ char *tgtIdTextGet(int index, int field)
     return 0;
 }
 
-/* Message object made by msgPutObject: +0x4 release callback (msgObjRelease), +0xC ref count, +0x10 mode, +0x14 handle. */
+/* Message object made by msgPutObject: an ov01 task record (ov01TaskClaim) whose update is msgObjRelease. */
 struct MsgObject {
-    unsigned char unmodeled_00[0xC];
-    int ref_count;
-    int mode;
-    int handle;
+    int flags;                                  /* +0x00: the task record's flags */
+    void (*update)(struct MsgObject *object);   /* +0x04: msgObjRelease */
+    void (*draw)(struct MsgObject *object);     /* +0x08: none */
+    int ref_count;                              /* +0x0C: frames the message stays (0: until its voice is done) */
+    int mode;                                   /* +0x10: MSG_MODE_VOICE when ref_count was 0 */
+    int handle;                                 /* +0x14: the text entry (textEntryAlloc) */
 };
+
+/* MsgObject.mode of a message that stays until its voice is done. */
+#define MSG_MODE_VOICE 1
 
 /* The string table: record 1 of the table at stringTableOffset is its offset list; each offset counts from the list. */
 char *tableStringGet(int index, int mode)
@@ -438,14 +443,14 @@ char *tableStringGet(int index, int mode)
     return 0;
 }
 
-/* Message globals: D_00AC51B0 is the two-word request block {arg, 0} that msgPutObject passes to textEntryAlloc;
- * msgBusy is the busy flag (1 while a message is outstanding). */
-extern int D_00AC51B0;
+/* Message globals: msgPages is the text page list {text, 0} that msgPutObject passes to textEntryAlloc; msgBusy
+ * is the busy flag (1 while a message is outstanding). */
+extern char *msgPages[2];
 extern int msgBusy;
 
 /* Clears the message request block and the busy flag. */
 void msgReset(void) {
-    D_00AC51B0 = 0;
+    msgPages[0] = 0;
     msgBusy = 0;
 }
 

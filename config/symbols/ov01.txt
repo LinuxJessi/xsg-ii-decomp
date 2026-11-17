@@ -9072,6 +9072,7 @@ ov01LoadDone = 0x00AC51A0;
 ov01LoadOwner = 0x00AC51A4;
 effectPosTable = 0x00AC51A8;
 effectPosCount = 0x00AC51AC;
+msgPages = 0x00AC51B0;
 msgBusy = 0x00AC51B8;
 sbFlags = 0x00AC51C0;
 sbThreadTable = 0x00AC51C8;

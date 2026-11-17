@@ -1332,6 +1332,7 @@
    "0x00ac4178": "enemyCursorRow",
    "0x00ac417c": "enemyCursorBit",
    "0x00ac4180": "enemyCursorTimer",
+   "0x00ac51b0": "msgPages",
    "0x00ae0edc": "menuPanelCurrent",
    "0x00ab6658": "menuStatRects",
    "0x00ab6718": "menuStyleTable",
