@@ -89,6 +89,9 @@ extern ObjectTask *choiceMenuTextTask;
 /* The choice menu's text page list for textEntryAlloc: the text of the entry under the cursor (set by the pickers),
  * then 0. */
 extern char *choiceMenuPages[2];
+/* The text page list of the enemy cursor (and of the paired technique menu): the text (set by func_00A98960 and
+ * enemyCursorStep), then 0. */
+extern char *enemyCursorPages[2];
 
 /* main/tu124 (its header has no prototypes for these; tu127 keeps its own differently typed copies). */
 int choiceMenuOpen(unsigned int index, int x, int y, int width, int height, int style_index, unsigned char unit_size,
@@ -105,13 +108,12 @@ extern short choiceMenuEntryIds[];
 extern unsigned char choiceMenuEntryFlags[];
 
 #define CHOICE_ENTRY_DISABLED 3
-/* Layout of the openers' choice menu (slot 0) and of their text entry below it. */
+/* Layout of the openers' choice menu (slot 0) and of their text entry below it; each opener has its own style
+ * index and unit size. */
 #define CHOICE_MENU_X 0x14
 #define CHOICE_MENU_Y 0x6C
 #define CHOICE_MENU_WIDTH 0x1AC
 #define CHOICE_MENU_HEIGHT 0x70
-#define CHOICE_MENU_STYLE 2
-#define CHOICE_MENU_UNIT_SIZE 2
 #define CHOICE_TEXT_X 0x14
 #define CHOICE_TEXT_Y 0x118
 #define CHOICE_TEXT_WIDTH 0x1AC
@@ -121,6 +123,8 @@ extern unsigned char choiceMenuEntryFlags[];
 /* Items 1..ITEM_ID_LAST; an item can be picked in battle when its HitAction flags have ITEM_BATTLE_USE. */
 #define ITEM_ID_LAST 40
 #define ITEM_BATTLE_USE 0x4000
+#define ITEM_MENU_STYLE 2
+#define ITEM_MENU_UNIT_SIZE 2
 
 /*
  * Item menu: lists the items the data box holds (dataBoxChkCategory1) that can be used in battle, with their
@@ -145,8 +149,8 @@ void choiceMenuOpenItems(Ov01Object *unit)
     }
     choiceMenuItems[n] = 0;
     choiceMenuSetActive(0, 1);
-    choiceMenuOpen(0, CHOICE_MENU_X, CHOICE_MENU_Y, CHOICE_MENU_WIDTH, CHOICE_MENU_HEIGHT, CHOICE_MENU_STYLE,
-                   CHOICE_MENU_UNIT_SIZE, 0, choiceMenuItems, choiceMenuValues, choiceMenuEntryFlags);
+    choiceMenuOpen(0, CHOICE_MENU_X, CHOICE_MENU_Y, CHOICE_MENU_WIDTH, CHOICE_MENU_HEIGHT, ITEM_MENU_STYLE,
+                   ITEM_MENU_UNIT_SIZE, 0, choiceMenuItems, choiceMenuValues, choiceMenuEntryFlags);
     choiceMenuPages[1] = 0;
     choiceMenuPages[0] = 0;
     choiceMenuTextTask = textEntryAlloc(CHOICE_TEXT_X, CHOICE_TEXT_Y, CHOICE_TEXT_WIDTH, CHOICE_TEXT_HEIGHT,
@@ -186,7 +190,39 @@ int func_00A97F40(void) {
     return D_00AC3C04;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A97FE0);
+/* Techniques 1..TEC_LOOKUP_LAST of the battle lookup table. */
+#define TEC_LOOKUP_LAST 59
+#define TEC_MENU_STYLE 1
+#define TEC_MENU_UNIT_SIZE 2
+
+/*
+ * Technique menu: lists the techniques unit has (slotCodeTest) with their EP cost, greyed out when unit cannot
+ * use them now (calcEntryUsable), and opens it.
+ */
+void choiceMenuOpenTecs(Ov01Object *unit)
+{
+    int id;
+    int n;
+
+    n = 0;
+    for (id = 1; id <= TEC_LOOKUP_LAST; id++) {
+        if (slotCodeTest(unit, id)) {
+            choiceMenuItems[n] = battleLookupTextGet(id, RECORD_TEXT_NAME);
+            choiceMenuValues[n] = calcEpCost(unit, battleLookupGet(id)->tecIndex);
+            choiceMenuEntryIds[n] = id;
+            choiceMenuEntryFlags[n] = calcEntryUsable(unit, id) ? 0 : CHOICE_ENTRY_DISABLED;
+            n++;
+        }
+    }
+    choiceMenuItems[n] = 0;
+    choiceMenuSetActive(0, 1);
+    choiceMenuOpen(0, CHOICE_MENU_X, CHOICE_MENU_Y, CHOICE_MENU_WIDTH, CHOICE_MENU_HEIGHT, TEC_MENU_STYLE,
+                   TEC_MENU_UNIT_SIZE, 0, choiceMenuItems, choiceMenuValues, choiceMenuEntryFlags);
+    choiceMenuPages[1] = 0;
+    choiceMenuPages[0] = 0;
+    choiceMenuTextTask = textEntryAlloc(CHOICE_TEXT_X, CHOICE_TEXT_Y, CHOICE_TEXT_WIDTH, CHOICE_TEXT_HEIGHT,
+                                        CHOICE_TEXT_STYLE, choiceMenuPages);
+}
 
 void func_00A98180(void) {
     choiceMenuClose(0);
@@ -194,9 +230,9 @@ void func_00A98180(void) {
     choiceMenuTextTask = 0;
 }
 
-extern int D_00AC3C08;
+extern int tecMenuChoice;
 
-/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C08, 0 when choiceMenuEntryFlags flags it. */
+/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in tecMenuChoice, 0 when choiceMenuEntryFlags flags it. */
 int func_00A981B8(void) {
     int cursor_index;
     s16 entry_id;
@@ -206,18 +242,52 @@ int func_00A981B8(void) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index - 1];
-            D_00AC3C08 = entry_id;
+            tecMenuChoice = entry_id;
             result = battleLookupTextGet(entry_id, 1);
             choiceMenuPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
-                D_00AC3C08 = 0;
+                tecMenuChoice = 0;
             }
         }
     }
-    return D_00AC3C08;
+    return tecMenuChoice;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98258);
+/* The level record indices calcKeyBandRecords wrote for the level menu, and their count (each record menu has
+ * its own pair). */
+extern int levelMenuIds[];
+extern int levelMenuCount;
+
+#define LEVEL_MENU_STYLE 4
+#define LEVEL_MENU_UNIT_SIZE 1
+
+/*
+ * Level record menu: lists the level records of unit's key band (calcKeyBandRecords) with their required level,
+ * greyed out while unit's current value does not reach it (calcCurrentMeetsRecord), and opens it.
+ */
+void choiceMenuOpenLevels(Ov01Object *unit)
+{
+    int i;
+    int n;
+
+    n = 0;
+    levelMenuCount = calcKeyBandRecords(unit, levelMenuIds);
+    for (i = 0; i < levelMenuCount; i++) {
+        choiceMenuItems[n] = calcLevelTextGet(levelMenuIds[i], RECORD_TEXT_NAME);
+        choiceMenuValues[n] = calcLevelRecordGet(levelMenuIds[i])->requiredLevel;
+        choiceMenuEntryIds[n] = levelMenuIds[i];
+        choiceMenuEntryFlags[n] = calcCurrentMeetsRecord(unit, levelMenuIds[i]) ? 0 : CHOICE_ENTRY_DISABLED;
+        n++;
+    }
+    choiceMenuItems[n] = 0;
+    choiceMenuSetActive(0, 1);
+    choiceMenuOpen(0, CHOICE_MENU_X, CHOICE_MENU_Y, CHOICE_MENU_WIDTH, CHOICE_MENU_HEIGHT, LEVEL_MENU_STYLE,
+                   LEVEL_MENU_UNIT_SIZE, 0, choiceMenuItems, choiceMenuValues, choiceMenuEntryFlags);
+    choiceMenuPages[1] = 0;
+    choiceMenuPages[0] = 0;
+    choiceMenuTextTask = textEntryAlloc(CHOICE_TEXT_X, CHOICE_TEXT_Y, CHOICE_TEXT_WIDTH, CHOICE_TEXT_HEIGHT,
+                                        CHOICE_TEXT_STYLE, choiceMenuPages);
+}
 
 void func_00A98408(void) {
     choiceMenuClose(0);
@@ -248,7 +318,39 @@ int func_00A98440(void) {
     return D_00AC3C0C;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A984E0);
+extern int pairMenuIds[];
+extern int pairMenuCount;
+
+#define PAIR_MENU_STYLE 3
+#define PAIR_MENU_UNIT_SIZE 1
+
+/*
+ * Pair link menu: lists the pair links of unit's key (calcKeyPairRecords) with their required level, greyed out
+ * while the levels of the pair do not reach it (calcLevelsMeetRecord), and opens it.
+ */
+void choiceMenuOpenPairs(Ov01Object *unit)
+{
+    int i;
+    int n;
+
+    n = 0;
+    pairMenuCount = calcKeyPairRecords(unit, pairMenuIds);
+    for (i = 0; i < pairMenuCount; i++) {
+        choiceMenuItems[n] = pairLinkTextGet(pairMenuIds[i], RECORD_TEXT_NAME);
+        choiceMenuValues[n] = pairLinkGet(pairMenuIds[i])->requiredLevel;
+        choiceMenuEntryIds[n] = pairMenuIds[i];
+        choiceMenuEntryFlags[n] = calcLevelsMeetRecord(unit, pairMenuIds[i]) ? 0 : CHOICE_ENTRY_DISABLED;
+        n++;
+    }
+    choiceMenuItems[n] = 0;
+    choiceMenuSetActive(0, 1);
+    choiceMenuOpen(0, CHOICE_MENU_X, CHOICE_MENU_Y, CHOICE_MENU_WIDTH, CHOICE_MENU_HEIGHT, PAIR_MENU_STYLE,
+                   PAIR_MENU_UNIT_SIZE, 0, choiceMenuItems, choiceMenuValues, choiceMenuEntryFlags);
+    choiceMenuPages[1] = 0;
+    choiceMenuPages[0] = 0;
+    choiceMenuTextTask = textEntryAlloc(CHOICE_TEXT_X, CHOICE_TEXT_Y, CHOICE_TEXT_WIDTH, CHOICE_TEXT_HEIGHT,
+                                        CHOICE_TEXT_STYLE, choiceMenuPages);
+}
 
 void func_00A98690(void) {
     choiceMenuClose(0);
@@ -279,7 +381,39 @@ int func_00A986C8(void) {
     return D_00AC3C30;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98768);
+extern int pairedMenuIds[];
+extern int pairedMenuCount;
+
+#define PAIRED_MENU_STYLE 1
+#define PAIRED_MENU_UNIT_SIZE 1
+
+/*
+ * Paired technique menu (its text entry is the enemy cursor's): lists the techniques paired with the one picked last (tecMenuChoice, calcPairedRecords)
+ * with their EP cost, greyed out when unit cannot use them now (calcPairEntryUsable), and opens it.
+ */
+void choiceMenuOpenPaired(Ov01Object *unit)
+{
+    int i;
+    int n;
+
+    n = 0;
+    pairedMenuCount = calcPairedRecords(unit, tecMenuChoice, pairedMenuIds);
+    for (i = 0; i < pairedMenuCount; i++) {
+        choiceMenuItems[n] = battleLookupTextGet(pairedMenuIds[i], RECORD_TEXT_NAME);
+        choiceMenuValues[n] = calcEpCost(unit, battleLookupGet(pairedMenuIds[i])->tecIndex);
+        choiceMenuEntryIds[n] = pairedMenuIds[i];
+        choiceMenuEntryFlags[n] = calcPairEntryUsable(unit, pairedMenuIds[i]) ? 0 : CHOICE_ENTRY_DISABLED;
+        n++;
+    }
+    choiceMenuItems[n] = 0;
+    choiceMenuSetActive(0, 1);
+    choiceMenuOpen(0, CHOICE_MENU_X, CHOICE_MENU_Y, CHOICE_MENU_WIDTH, CHOICE_MENU_HEIGHT, PAIRED_MENU_STYLE,
+                   PAIRED_MENU_UNIT_SIZE, 0, choiceMenuItems, choiceMenuValues, choiceMenuEntryFlags);
+    enemyCursorPages[1] = 0;
+    enemyCursorPages[0] = 0;
+    pTaskEnCur = textEntryAlloc(CHOICE_TEXT_X, CHOICE_TEXT_Y, CHOICE_TEXT_WIDTH, CHOICE_TEXT_HEIGHT,
+                                CHOICE_TEXT_STYLE, enemyCursorPages);
+}
 
 void enemyCursorClose(void) {
     choiceMenuClose(0);
@@ -288,9 +422,6 @@ void enemyCursorClose(void) {
 }
 
 extern int D_00AC3C80;
-/* The enemy cursor's text page list for textEntryAlloc: the text (set by
- * func_00A98960), then 0. */
-extern int enemyCursorPages[2];
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C80, 0 when choiceMenuEntryFlags flags it;
  * the helper result goes to enemyCursorPages instead of choiceMenuPages, the list the other pickers use. */
@@ -314,7 +445,39 @@ int func_00A98960(void) {
     return D_00AC3C80;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A98A00);
+extern int tgtIdMenuIds[];
+extern int tgtIdMenuCount;
+
+#define TGT_ID_MENU_STYLE 4
+#define TGT_ID_MENU_UNIT_SIZE 1
+
+/*
+ * Target id menu: lists the ids of unit's set slot flags (slotFlagCollect) with their minimum level, greyed out
+ * when unit's side does not accept them (tgtSideAccepts), and opens it.
+ */
+void choiceMenuOpenTgtIds(Ov01Object *unit)
+{
+    int i;
+    int n;
+
+    n = 0;
+    tgtIdMenuCount = slotFlagCollect(unit, tgtIdMenuIds);
+    for (i = 0; i < tgtIdMenuCount; i++) {
+        choiceMenuItems[n] = tgtIdTextGet(tgtIdMenuIds[i], RECORD_TEXT_NAME);
+        choiceMenuValues[n] = tgtIdRecordGet(tgtIdMenuIds[i])->minLevel;
+        choiceMenuEntryIds[n] = tgtIdMenuIds[i];
+        choiceMenuEntryFlags[n] = tgtSideAccepts(unit, tgtIdMenuIds[i]) ? 0 : CHOICE_ENTRY_DISABLED;
+        n++;
+    }
+    choiceMenuItems[n] = 0;
+    choiceMenuSetActive(0, 1);
+    choiceMenuOpen(0, CHOICE_MENU_X, CHOICE_MENU_Y, CHOICE_MENU_WIDTH, CHOICE_MENU_HEIGHT, TGT_ID_MENU_STYLE,
+                   TGT_ID_MENU_UNIT_SIZE, 0, choiceMenuItems, choiceMenuValues, choiceMenuEntryFlags);
+    choiceMenuPages[1] = 0;
+    choiceMenuPages[0] = 0;
+    choiceMenuTextTask = textEntryAlloc(CHOICE_TEXT_X, CHOICE_TEXT_Y, CHOICE_TEXT_WIDTH, CHOICE_TEXT_HEIGHT,
+                                        CHOICE_TEXT_STYLE, choiceMenuPages);
+}
 
 void func_00A98BB0(void) {
     choiceMenuClose(0);

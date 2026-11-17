@@ -113,7 +113,7 @@ int calcKeyBandRecords(struct Ov01Object *entity, int *found);
 int calcCurrentMeetsRecord(struct Ov01Object *entity, int index);
 int calcKeyPairRecords(struct Ov01Object *entity, int *found);
 int calcLevelsMeetRecord(struct Ov01Object *entity, int record_index);
-int calcPairedRecords(int unused_arg0, int code, int *found);
+int calcPairedRecords(struct Ov01Object *unused, int code, int *found);
 int calcPairEntryUsable(struct Ov01Object *entity, int index);
 int slotFlagCollect(struct Ov01Object *subject, int *found);
 int tgtSideAccepts(struct Ov01Object *obj, int id);

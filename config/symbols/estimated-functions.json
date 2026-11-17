@@ -3552,7 +3552,7 @@
      1
     ],
     [
-     "func_00A97FE0",
+     "choiceMenuOpenTecs",
      11108320,
      412,
      1
@@ -3570,7 +3570,7 @@
      1
     ],
     [
-     "func_00A98258",
+     "choiceMenuOpenLevels",
      11108952,
      428,
      1
@@ -3588,7 +3588,7 @@
      1
     ],
     [
-     "func_00A984E0",
+     "choiceMenuOpenPairs",
      11109600,
      428,
      1
@@ -3606,7 +3606,7 @@
      1
     ],
     [
-     "func_00A98768",
+     "choiceMenuOpenPaired",
      11110248,
      444,
      1
@@ -3624,7 +3624,7 @@
      1
     ],
     [
-     "func_00A98A00",
+     "choiceMenuOpenTgtIds",
      11110912,
      428,
      1

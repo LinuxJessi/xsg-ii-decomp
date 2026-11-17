@@ -3910,7 +3910,7 @@ int calcLevelsMeetRecord(StatOwner *entity, int record_index)
  * Collects into found the pair records 60..89 that hold code and whose partner code the acting unit satisfies,
  * and returns how many.
  */
-int calcPairedRecords(int unused_arg0, int code, int *found)
+int calcPairedRecords(StatOwner *unused, int code, int *found)
 {
     StatOwner *actingUnit;
     unsigned char pairFirst;
