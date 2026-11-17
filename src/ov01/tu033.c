@@ -359,11 +359,11 @@ struct Tu033Request {
     int flags;
 };
 
-int func_00AA4DB8(int, int, int, int);
+int func_00AA4DB8(Ov01Object *unit, int value, int flags, int option);
 
 /* func_00A932E0: forwards a request's object, second word and flags to func_00AA4DB8 (fourth argument 0). */
 void func_00A932E0(int unused_arg0, struct Tu033Request *request) {
-    func_00AA4DB8((int) request->object, request->second, request->flags, 0);
+    func_00AA4DB8(request->object, request->second, request->flags, 0);
 }
 
 /* eventQueueNext: the record at the read cursor, or 0 when the queue is drained. */
@@ -1180,10 +1180,15 @@ int battleResolveStatus(void) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96510);
 
-void func_00A968C8(void);
+/* Row-3 statuses that bring a down unit back when the battle step ends (unitsReviveDown): with its full
+ * maxHp, or with half of it. */
+#define STAT3_REVIVE_FULL 0x800
+#define STAT3_REVIVE_HALF 0x2000
 
-/* Waits (returns 0) while a side-2 unit with status bit 0x800 or 0x2000 in row 3
- * still has queued commands; then runs func_00A968C8 and returns 1. */
+int unitsReviveDown(void);
+
+/* Waits (returns 0) while a side-2 unit with a revive status (row 3) still has queued commands; then runs
+ * unitsReviveDown and returns 1. */
 int battleStatusQueueWait(void)
 {
     Ov01Object **units;
@@ -1195,18 +1200,18 @@ int battleStatusQueueWait(void)
     for (i = 0; i < count; i++) {
         unit = units[i];
         if (unit != 0) {
-            if (calcStatGet(unit, 3, 0x800) != 0 || calcStatGet(unit, 3, 0x2000) != 0) {
+            if (calcStatGet(unit, 3, STAT3_REVIVE_FULL) != 0 || calcStatGet(unit, 3, STAT3_REVIVE_HALF) != 0) {
                 if (unitQueueIsEmpty(unit) == 0) {
                     return 0;
                 }
             }
         }
     }
-    func_00A968C8();
+    unitsReviveDown();
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A968C8);
+INCLUDE_ASM("asm/nonmatchings/ov01/tu033", unitsReviveDown);
 
 /* monsSlotCreate (tu019.c) returns a record pointer; this caller keeps its int view (the int global), see tu019.h. */
 int monsSlotCreate(void);

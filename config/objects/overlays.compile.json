@@ -1978,7 +1978,7 @@
       "asm/nonmatchings/ov01/tu033/battleResolveStatus.s",
       "asm/nonmatchings/ov01/tu033/func_00A96510.s",
       "asm/nonmatchings/ov01/tu033/battleStatusQueueWait.s",
-      "asm/nonmatchings/ov01/tu033/func_00A968C8.s",
+      "asm/nonmatchings/ov01/tu033/unitsReviveDown.s",
       "asm/nonmatchings/ov01/tu033/ov01StreamOpen.s",
       "asm/nonmatchings/ov01/tu033/ov01StreamBind.s",
       "asm/nonmatchings/ov01/tu033/func_00A96AA8.s",
