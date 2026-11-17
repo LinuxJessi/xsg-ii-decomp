@@ -120,8 +120,8 @@ struct StatBlock {
     int entryCount;                         /* +0xEC: entries held, at most 8 */
     int comboMask;                          /* +0xF0: status mask of the current combo (calcComboUpdate) */
     int comboHits;                          /* +0xF4: hit count of the current combo, capped at 99 */
-    int field_f8;                           /* +0xF8: written from the enemy record's subArgC (tu038) */
-    int field_fc;                           /* +0xFC: written from the enemy record's subArgD (tu038) */
+    int spawnArgC;                          /* +0xF8: the spawn record's spawnArgC (tu038), unitCreate's argument 4 */
+    int spawnArgD;                          /* +0xFC: the spawn record's spawnArgD (tu038), unitCreate's argument 5 */
     StatOwner *source;                      /* +0x100: the unit whose effect sum battleResultAdd adds; unitFaceTarget's target argument */
     unsigned char unmodeled_104[0x2];       /* +0x104..+0x105 */
     short handle;                           /* +0x106: passed to handleFree by unitCmdRelease */
@@ -142,8 +142,19 @@ typedef struct Ov01Command {
     unsigned char unmodeled_18[0x8];
 } Ov01Command;
 
+/* Ov01Object.slotFlags bit set while the object's slot is in use (ObjSlot.flags in tu005). */
+#define OV01_OBJECT_IN_USE 0x1
+
+/* Ov01Object.flags bits: a unit that is down (the draws and the target pickers leave it out) and a unit in the
+ * action stock. */
+#define UNIT_FLAG_DOWN 0x4
+#define UNIT_FLAG_STOCKED 0x8
+
 struct Ov01Object {
-    unsigned char unmodeled_00[4];
+    union {
+        unsigned char unmodeled_00[4];  /* tu017 reads +0x8 as a doubleword through this name */
+        u32 slotFlags;                  /* the slot word (OV01_OBJECT_IN_USE); func_00AA3AA0 draws only units in use */
+    };                                  /* +0x0 */
     void (*update)(Ov01Object *object); /* +0x4: unitUpdate (unitCreateSide) */
     void (*draw)(Ov01Object *object); /* +0x8: func_00A84880 */
     u32 flags; /* +0xC: unitEnCreate ORs in 0x60 for an enemy-side unit, unitCreateSide clears it */

@@ -3,10 +3,12 @@
  */
 #include "common.h"
 #include "main/tu021.h"
+#include "main/tu048.h"
 #include "main/tu092.h"
 #include "ov01/tu008.h"
 #include "ov01/tu009.h"
 #include "ov01/tu023.h"
+#include "ov01/tu040.h"
 #include "ov01/tu070.h"
 
 /*
@@ -563,52 +565,6 @@ void dataFileBufAlloc(void);
 int dataEntryBlockReset(void);
 void *memset(void *, int, unsigned int);
 
-struct DataFileRecord {
-    int loaded_index;
-    char *buffer;
-    int size;
-};
-
-/* Two adjacent 0x0c-byte file records: the .prj and .vsf of a sound bank (the battle bank bts_se, and the voice of a slot). */
-struct DataFileRecordPair {
-    struct DataFileRecord prj;
-    struct DataFileRecord vsf;
-};
-
-/* First two words of every file table (slot, stream entry, entry block): the cursor the next file is read to
- * (dataFileSlotLoad advances it) and the heap block the table owns (the same address, the heap block of ov01HeapBlockOf). */
-struct DataFileHead {
-    char *next_buffer;
-    union {
-        char *buffer;
-    } base;
-};
-
-/* The four files of a model: pxy, txy, xhr, epf (0x30 bytes). */
-struct DataModelFiles {
-    struct DataFileRecord pxy;
-    struct DataFileRecord txy;
-    struct DataFileRecord xhr;
-    struct DataFileRecord epf;
-};
-
-/* A motion file record and the 0x0c bytes after it that nothing reads. */
-struct DataMotionFile {
-    struct DataFileRecord file;
-    unsigned char unmodeled_0C[0xC];
-};
-
-/* The voice files of a slot at +0x130: the prj record (loaded_index is the voice) and the vsf record. */
-struct DataSlot {
-    struct DataFileHead head;
-    int id;
-    int handle;
-    /* Up to four models, one DataModelFiles from +0x10 (index 0 is the unit itself) and one motion file from +0xD0. */
-    struct DataModelFiles models[4];
-    struct DataMotionFile motions[4];
-    struct DataFileRecordPair voice_files;
-};
-
 /* One map of a stream: the pxy and txy files (0x18 bytes). */
 struct DataMapFiles {
     struct DataFileRecord pxy;
@@ -695,44 +651,34 @@ int dataFileSlotLoad(struct DataFileRecord *file_record, char *path, char **next
 }
 
 extern char *dataBatDatPath;
-extern int D_61D040;
+extern int batDat;
 
 void dataBatDatLoad(void) {
-    ov01CdReadFileSync(dataBatDatPath, &D_61D040);
+    ov01CdReadFileSync(dataBatDatPath, &batDat);
 }
 
-/* Word at 0x2B5DBC: the address of the scene data buffer (tu037 reads the same word as a key and declares it int). */
-char *func_00A9B100(void);
 int sprintf(char *, const char *, ...);
 extern char dataPathBuf[];
 extern char *dataThinkPath;
 extern char *dataThinkJpPath;
 
-struct GameWorkThinkView {
-    unsigned char unmodeled_00[0x2C];
-    char *think_buffer;
-    unsigned char unmodeled_30[0xB8 - 0x30];
-    char *think_data_end;
-};
-
-extern struct GameWorkThinkView D_2B5D90;
 extern struct DataFileRecord D_00AC0E28;
 
 void dataThinkScriptLoad(int index)
 {
-    char *buffer;
+    void *buffer;
     int size;
 
     sprintf(dataPathBuf, "%s%03d.sb", dataThinkPath, index);
     buffer = ov01HeapAlloc(DATA_THINK_BUF_SIZE);
-    D_2B5D90.think_buffer = buffer;
-    ov01CdReadFileSync(dataPathBuf, func_00A9B100());
+    gameWork.resBuffer = buffer;
+    ov01CdReadFileSync(dataPathBuf, ov01ScriptKeyGet());
     D_00AC0E28.buffer = buffer;
     D_00AC0E28.size = DATA_THINK_BUF_SIZE;
     size = (xglCdGetFileSize(dataPathBuf) + (DATA_CD_SECTOR_SIZE - 1)) / DATA_CD_SECTOR_SIZE * DATA_CD_SECTOR_SIZE;
     sprintf(dataPathBuf, "%s%03d.sbl", dataThinkJpPath, index);
-    ov01CdReadFileSync(dataPathBuf, func_00A9B100() + size);
-    D_2B5D90.think_data_end = func_00A9B100() + size;
+    ov01CdReadFileSync(dataPathBuf, (char *)ov01ScriptKeyGet() + size);
+    gameWork.imageEnd = (int)ov01ScriptKeyGet() + size;
 }
 
 extern char *dataStatPath;
@@ -1009,7 +955,7 @@ int dataSlotReclaim(int min_size) {
     return 0;
 }
 
-int dataUnitLoad(int id)
+struct DataSlot *dataUnitLoad(int id)
 {
     struct DataSlot *slot;
     int index;
@@ -1062,7 +1008,7 @@ int dataUnitLoad(int id)
         for (;;) {
         }
     }
-    return (int)slot;
+    return slot;
 }
 
 int func_00A9B1B8(int value);

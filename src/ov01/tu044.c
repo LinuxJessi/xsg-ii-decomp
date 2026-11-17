@@ -3,76 +3,61 @@
  *
  * The SB script VM of overlay 01: thread records, operand stacks, image
  * headers ("SB  " / "SBL " magic), a 46-entry opcode table and a native
- * name table. The same 0x40-byte record is viewed through the Tu044 structs
- * below (control, object, record); the views are named for their use here.
+ * name table. A thread is one 0x40-byte SbThread record of sbThreadTable.
  */
 #include "common.h"
 #include "shared.h"
 #include "ov01/tu044.h"
+#include "ov01/tu046.h"
 
-struct SlotEntry {
-    unsigned char unmodeled_00[0x10];
-};
-
-/*
- * entries is a table of 0x10-byte records that starts at +0x14; its length is
- * not evidenced here, so only the first record is declared.
- */
-struct SlotChain {
-    int state;
-    int mask;
-    int pending;
-    int value;
-    int previous_state;
-    struct SlotEntry entries[1];
-};
-
-/* The SB image header: magic at +0, the code offset at +0x14, the global table offset at +0x18. */
-struct SbImageHeader {
-    unsigned char unmodeled_00[0x14];
-    int code_offset;
-    int global_offset;
-};
-
-struct SlotTable {
-    unsigned char unmodeled_00[0x8];
-    int count;
-    unsigned char unmodeled_0c[0x14 - 0xC];
-    struct SbImageHeader *layout;
-    unsigned char unmodeled_18[0x1C - 0x18];
-    int *slots;
-    unsigned char unmodeled_20[0x28 - 0x20];
-    struct SlotChain *chain;
-};
-
-/*
- * One 0x40-byte record of sbThreadTable. Only the fields these functions use
- * are named; the gaps keep the record's size and field offsets. The word at
- * +0x14 is the lookup key of a record (the link word of the in-use test);
- * the word at +0x18 is its value, which the update path also reads as the
- * replacement total.
- */
-typedef struct SbThread {
-    int total;
-    int count;
-    int limit;
-    unsigned char unmodeled_0C[0x8];
-    int key;
-    int value;
-    unsigned char unmodeled_1C[0x10];
-    int status;
-    unsigned char unmodeled_30[0x10];
-} SbThread;
-
-extern SbThread sbThreadTable[80];
+extern SbThread sbThreadTable[SB_THREAD_COUNT];
 
 SbThread *sbThreadTableGet(void) {
     return sbThreadTable;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbInit);
+extern int sbFlags;
+/* The per-thread areas: operand stack, slot table and message queue of thread index. */
+extern int sbStacks[SB_THREAD_COUNT][SB_STACK_WORDS];
+extern SbSlot sbSlotTables[SB_THREAD_COUNT][SB_SLOT_COUNT];
+extern SbQueue sbChains[SB_THREAD_COUNT];
+void *memset(void *destination, int value, unsigned int count);
 
+/* Frees every thread record and clears the per-thread areas and the native counts. */
+void sbInit(void)
+{
+    int index;
+
+    sbFlags = 0;
+    for (index = SB_THREAD_COUNT - 1; index >= 0; index--) {
+        sbThreadTable[index].image = 0;
+    }
+    memset(sbStacks, 0, sizeof(sbStacks));
+    memset(sbSlotTables, 0, sizeof(sbSlotTables));
+    memset(sbChains, 0, sizeof(sbChains));
+    sbResetNativeCounts();
+}
+
+/* A native method scripts call by owner and method index (sbOpCallNative); a
+ * table of them ends with a null name. status 1 from func keeps the frame waiting. */
+typedef struct SbNativeMethod {
+    const char *name;
+    int (*func)(SbThread *thread, int *status);
+} SbNativeMethod;
+
+/* A named table of native methods, registered by sbNativeOwnerAdd. */
+typedef struct SbNativeOwner {
+    const char *name;
+    SbNativeMethod *methods;
+    int count;
+} SbNativeOwner;
+
+#define SB_NATIVE_OWNER_MAX 0x600
+#define SB_NATIVE_METHOD_MAX 0x800
+
+extern SbNativeOwner sbNativeOwners[SB_NATIVE_OWNER_MAX];
 extern int sbNativeOwnerCount;
+extern SbNativeMethod sbNativeMethods[SB_NATIVE_METHOD_MAX];
 extern int sbNativeMethodCount;
 
 void sbResetNativeCounts(void) {
@@ -83,135 +68,170 @@ void sbResetNativeCounts(void) {
 
 
 extern int (*sbOpHandlers[])(SbThread *, unsigned int);
-/* The span a control points at: begin (0x14) and end (0x18) are read together as 32-bit values. */
-typedef struct SbCodeRange {
-    unsigned char unmodeled_00[0x14];
-    int begin;
-    int end;
-} SbCodeRange;
+void sbRun(SbThread *thread);
+u16 sbCodeU16(SbThread *thread, int index);
+int sbCodeS32(SbThread *thread, int value);
+void sbLocalSet(SbThread *thread, int index, int value);
+void sbStackPush(SbThread *thread, int value);
+int sbStackPop(SbThread *thread);
+int sbOpLength(unsigned short opcode, int count);
 
-typedef struct SbRunner {
-    int count;
-    unsigned char unmodeled_04[0x10];
-    SbCodeRange *span;
-    unsigned char unmodeled_18[0x14];
-    int state;
-    int remaining;
-} SbRunner;
-
-void sbRun(SbRunner *control);
-void sbFatal(SbThread *record);
-u16 sbCodeU16(struct SlotTable *table, int index);
-int sbCodeS32(SbThread *record, int value);
-int sbLocalSet(struct SlotTable *table, int index, int value);
-void sbStackPush(SbThread *record, int value);
-typedef struct SbCursor {
-    int first;                                  /* +0x00 */
-    int last;                                   /* +0x04 */
-    unsigned char unmodeled_08[0x0C - 0x08];
-    int index;                                  /* +0x0C */
-    int used;                                   /* +0x10 */
-} SbCursor;
-
-typedef struct SbFrame {
-    int sum;                                    /* +0x00 */
-    int count;                                  /* +0x04 */
-    int tag;                                    /* +0x08 */
-    int state;                                  /* +0x0C */
-    int counter;                                /* +0x10 */
-    unsigned char unmodeled_14[0x1C - 0x14];
-    int *stack;                                 /* +0x1C */
-    unsigned char unmodeled_20[0x28 - 0x20];
-    SbCursor *cursor;                        /* +0x28 */
-} SbFrame;
-
-int sbStackPop(SbFrame *obj);
-int sbOpLength(int id, int index);
-
-int sbRunAll(void)
+void sbRunAll(void)
 {
-  SbThread *first_record;
-  int *status_field;
-  SbThread *record;
-  int index;
-  int more;
+    int index;
 
-  first_record = sbThreadTable;
-  status_field = &sbThreadTable[0].status;
-  record = first_record;
-  index = 0;
-  do
-  {
-    /* status_field[-6] is the key word of the same record (offset 0x14). */
-    if (status_field[-6] != 0 && !(*status_field & 0x80000000))
-    {
-      sbRun(record);
+    for (index = 0; index < SB_THREAD_COUNT; index++) {
+        if (sbThreadTable[index].image != 0 && !(sbThreadTable[index].status & SB_THREAD_SUSPENDED)) {
+            sbRun(&sbThreadTable[index]);
+        }
     }
-    index += 1;
-    status_field += 16;
-    more = index < 80;
-    record += 1;
-  }
-  while (more != 0);
-  return more;
 }
 
 
 
 
 
-void func_00A9CC80(SbRunner *);
-int sbStep(SbThread *record);
+int sbSlotJump(SbThread *thread);
+int sbStep(SbThread *thread);
 
-void sbRun(SbRunner *control)
+void sbRun(SbThread *thread)
 {
     unsigned int available;
 
-    available = (unsigned int) (control->span->end - control->span->begin) >> 1;
+    available = (unsigned int) (thread->image->global_offset - thread->image->code_offset) >> 1;
     do {
-        if ((int) available < control->count) {
-            sbFatal(control);
+        if ((int) available < thread->pc) {
+            sbFatal(thread);
         }
-        func_00A9CC80(control);
-    } while (sbStep(control) == 0);
+        sbSlotJump(thread);
+    } while (sbStep(thread) == 0);
 }
 
+int sbIsSbImage(int *header);
+int sbThreadStart(struct SbImageHeader *key, int entry);
+
+/* sbStartImage starts a thread at the image's entry and stops for good on an image without the SB
+ * magic; it stays asm: the original calls sbThreadStart with jal, every plain C form gives a tail call. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbStartImage);
 
-extern unsigned char sbSlotTables[];
-
-void *sbSlotTableGet(int index) {
-    return sbSlotTables + (index << 7);
+SbSlot *sbSlotTableGet(int index) {
+    return sbSlotTables[index];
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbSlotFind);
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbSlotStore);
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbSlotRemove);
-
-void sbChainSetValue(struct SlotChain *chain, int value) {
-    chain->value = value;
-    chain->previous_state = chain->state;
-}
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", func_00A9CC80);
-
-
-
-
-
-void func_00A9CD30(SbFrame *obj)
+/* The thread's slot with this key, or 0. */
+SbSlot *sbSlotFind(SbThread *thread, int key)
 {
-    if (obj->state == 1) {
+    SbSlot *slot = thread->slots;
+    int i;
+
+    for (i = 0; i < SB_SLOT_COUNT; i++, slot++) {
+        if (slot->key == key) {
+            return slot;
+        }
+    }
+    return 0;
+}
+
+/* Copies entry into the slot with its key, else into the first free slot;
+ * returns 0 when the table is full. */
+int sbSlotStore(SbThread *thread, SbSlot *entry)
+{
+    SbSlot *slot = sbSlotFind(thread, entry->key);
+    SbSlot *slots;
+    int i;
+
+    if (slot == 0) {
+        slots = thread->slots;
+        for (i = 0; i < SB_SLOT_COUNT; i++) {
+            if (slots[i].key == 0) {
+                slot = &slots[i];
+                break;
+            }
+        }
+    }
+    if (slot != 0) {
+        *slot = *entry;
+        return 1;
+    }
+    return 0;
+}
+
+/* Frees the slot with this key; returns 0 when there is none. */
+int sbSlotRemove(SbThread *thread, int key)
+{
+    SbSlot *slot = sbSlotFind(thread, key);
+
+    if (slot == 0) {
+        return 0;
+    }
+    slot->key = 0;
+    return 1;
+}
+
+/* Requests a jump to slot key at the current position (sbSlotJump runs it); natives
+ * request SB_JUMP_ARGUMENTS when they get too few arguments. */
+void sbSlotJumpRequest(SbThread *thread, int key) {
+    thread->jumpKey = key;
+    thread->jumpPosition = thread->pc;
+}
+
+void func_00A9CD30(SbThread *thread);
+
+/* Runs the thread's pending slot jump (jumpKey at jumpPosition): an unknown key is
+ * fatal; a position inside the slot's range jumps to its target. */
+int sbSlotJump(SbThread *thread)
+{
+    int key;
+    SbSlot *slot;
+    int position;
+
+    key = thread->jumpKey;
+    if (key == 0) {
+        return 0;
+    }
+    slot = sbSlotFind(thread, key);
+    if (slot == 0) {
+        thread->pc = thread->jumpPosition;
+        if (key < 3) {
+            func_00A9CD30(thread);
+        }
+        sbFatal(thread);
+        return 1;
+    }
+    position = thread->jumpPosition;
+    thread->jumpKey = 0;
+    thread->jumpPosition = 0;
+    if (position >= slot->low) {
+        if (slot->high >= position) {
+            thread->pc = slot->target;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+
+
+
+void func_00A9CD30(SbThread *thread)
+{
+    if (thread->jumpKey == 1) {
         return;
     }
-    if (obj->state == 2) {
-        sbCodeS32(obj, obj->counter + 1);
+    if (thread->jumpKey == 2) {
+        sbCodeS32(thread, thread->jumpPosition + 1);
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbFatal);
+
+/* Fatal VM error (stack overflow in sbRun): reports the thread, then stops for good. */
+void sbFatal(SbThread *thread)
+{
+    func_00A9F2E0(thread, thread->pc);
+    for (;;) {
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNativeOwnerAdd);
 
@@ -233,7 +253,26 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu044", func_00A9CEE8);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbLinkImage);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbFindNative);
+int strcmp(const char *a, const char *b);
+
+/* Native id of a method: owner index in the high half, method index in the low
+ * half; -1 when the owner or the method is not registered. */
+int sbFindNative(const char *ownerName, const char *methodName)
+{
+    int owner;
+    int method;
+
+    for (owner = 0; owner < sbNativeOwnerCount; owner++) {
+        if (strcmp(ownerName, sbNativeOwners[owner].name) == 0) {
+            for (method = 0; method < sbNativeOwners[owner].count; method++) {
+                if (strcmp(methodName, sbNativeOwners[owner].methods[method].name) == 0) {
+                    return (owner << 16) + method;
+                }
+            }
+        }
+    }
+    return -1;
+}
 
 extern int sbFlags;
 
@@ -249,387 +288,554 @@ void sbFlagsClear(int bits) {
     sbFlags &= ~bits;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbThreadStart);
+int *sbStackGet(int index);
+SbSlot *sbSlotTableGet(int index);
+SbQueue *sbChainGet(int index);
+void sbChainReset(SbThread *thread);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbFindThread);
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbThreadRelease);
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbThreadEnqueue);
-
-int sbFindThread(void);
-int sbCursorPop(int);
-int sbChainPreviousState(struct SlotTable *table);
-int sbChainEntryGet(struct SlotTable *table, int index);
-
-/* Dequeue side of sbThreadEnqueue: pops the next cursor index of the thread and takes its chain entry. */
-void sbThreadDequeue(void)
+/* Starts a thread in the first free record: key and entry name it, the pc starts at entry. */
+int sbThreadStart(struct SbImageHeader *key, int entry)
 {
-    int thread;
+    SbThread *thread;
     int index;
 
-    thread = sbFindThread();
-    if (thread != 0 && sbChainPreviousState(thread) != 0) {
-        index = sbCursorPop(thread);
-        sbChainEntryGet(thread, index);
+    thread = sbThreadTable;
+    for (index = 0; index < SB_THREAD_COUNT; index++) {
+        if (thread->image == 0) {
+            memset(thread->wait, 0, sizeof(thread->wait));
+            thread->pc = entry;
+            thread->frame = 3;
+            thread->image = key;
+            thread->value = entry;
+            thread->sp = 0;
+            thread->jumpKey = 0;
+            thread->jumpPosition = 0;
+            thread->stack = sbStackGet(index);
+            thread->stackLimit = SB_STACK_WORDS;
+            thread->slots = sbSlotTableGet(index);
+            thread->queue = sbChainGet(index);
+            memset(thread->slots, 0, sizeof(sbSlotTables[0]));
+            sbChainReset(thread);
+            thread->status = 0;
+            return 1;
+        }
+        thread++;
     }
+    return 0;
+}
+
+/* The thread record with this key and value, or 0. */
+SbThread *sbFindThread(struct SbImageHeader *key, int value)
+{
+    int index;
+
+    for (index = 0; index < SB_THREAD_COUNT; index++) {
+        if (sbThreadTable[index].image == key && sbThreadTable[index].value == value) {
+            return &sbThreadTable[index];
+        }
+    }
+    return 0;
+}
+
+/* Frees the thread record with this key and value; 0 when there is none. */
+int sbThreadRelease(struct SbImageHeader *key, int value)
+{
+    SbThread *thread = sbFindThread(key, value);
+
+    if (thread == 0) {
+        return 0;
+    }
+    thread->image = 0;
+    return 1;
+}
+
+int sbCursorPush(SbThread *thread);
+SbMessage *sbChainEntryGet(SbThread *thread, int index);
+
+/* Queues a copy of message on the thread with this key and value; sender, when
+ * given, is named in the copy by its value. 0 when there is no such thread or
+ * its queue is full. */
+int sbThreadEnqueue(struct SbImageHeader *key, int value, SbMessage *message, SbThread *sender)
+{
+    SbThread *thread;
+    SbMessage *entry;
+    int index;
+
+    thread = sbFindThread(key, value);
+    if (thread == 0) {
+        return 0;
+    }
+    index = sbCursorPush(thread);
+    if (index == -1) {
+        return 0;
+    }
+    entry = sbChainEntryGet(thread, index);
+    *entry = *message;
+    if (sender != 0) {
+        entry->sender = sender->value;
+    } else {
+        entry->sender = -1;
+    }
+    return 1;
+}
+
+int sbCursorPop(SbThread *thread);
+int sbChainPreviousState(SbThread *thread);
+
+/* Dequeue side of sbThreadEnqueue: pops the next cursor index of the thread and takes its chain entry. */
+SbMessage *sbThreadDequeue(struct SbImageHeader *key, int value)
+{
+    SbThread *thread;
+    int index;
+
+    thread = sbFindThread(key, value);
+    if (thread == 0) {
+        return 0;
+    }
+    if (sbChainPreviousState(thread) == 0) {
+        return 0;
+    }
+    index = sbCursorPop(thread);
+    return sbChainEntryGet(thread, index);
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNameTableFind);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNameTableNameOf);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", func_00A9D608);
+int sbNameTableFind(struct SbImageHeader *image, const char *name);
+int sbThreadEnqueue(struct SbImageHeader *key, int value, SbMessage *message, SbThread *sender);
 
-#define TU044_RECORD_COUNT 80
+/* Enqueues a thread at the entry the image's name table gives for name; 0 when
+ * the name is not there. */
+int sbThreadEnqueueByName(struct SbImageHeader *image, const char *name, SbMessage *message)
+{
+    int entry = sbNameTableFind(image, name);
 
-void sbThreadRelease(int, int);
+    if (entry == -1) {
+        return 0;
+    }
+    return sbThreadEnqueue(image, entry, message, 0);
+}
 
-void sbThreadsRelease(int key)
+void sbThreadsRelease(struct SbImageHeader *key)
 {
     int index;
 
-    for (index = 0; index < TU044_RECORD_COUNT; index++) {
-        if (sbThreadTable[index].key == key) {
+    for (index = 0; index < SB_THREAD_COUNT; index++) {
+        if (sbThreadTable[index].image == key) {
             sbThreadRelease(key, sbThreadTable[index].value);
         }
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbThreadSuspend);
+/* Sets the suspended bit of the thread with this key and value; 0 when there is none. */
+int sbThreadSuspend(struct SbImageHeader *key, int value)
+{
+    SbThread *thread = sbFindThread(key, value);
 
-void sbThreadSuspend(int, int);
+    if (thread == 0) {
+        return 0;
+    }
+    thread->status |= SB_THREAD_SUSPENDED;
+    return 1;
+}
 
-void sbThreadsSuspend(int key)
+void sbThreadsSuspend(struct SbImageHeader *key)
 {
     int index;
 
-    for (index = 0; index < TU044_RECORD_COUNT; index++) {
-        if (sbThreadTable[index].key == key) {
+    for (index = 0; index < SB_THREAD_COUNT; index++) {
+        if (sbThreadTable[index].image == key) {
             sbThreadSuspend(key, sbThreadTable[index].value);
         }
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbThreadResume);
+/* Clears the suspended bit of the thread with this key and value; 0 when there is none. */
+int sbThreadResume(struct SbImageHeader *key, int value)
+{
+    SbThread *thread = sbFindThread(key, value);
 
-void sbThreadResume(int, int);
+    if (thread == 0) {
+        return 0;
+    }
+    thread->status &= ~SB_THREAD_SUSPENDED;
+    return 1;
+}
 
-void sbThreadsResume(int key)
+void sbThreadsResume(struct SbImageHeader *key)
 {
     int index;
 
-    for (index = 0; index < TU044_RECORD_COUNT; index++) {
-        if (sbThreadTable[index].key == key) {
+    for (index = 0; index < SB_THREAD_COUNT; index++) {
+        if (sbThreadTable[index].image == key) {
             sbThreadResume(key, sbThreadTable[index].value);
         }
     }
 }
 
-extern unsigned char sbChains[];
-
-void *sbChainGet(int index) {
-    return sbChains + index * 0x114;
+SbQueue *sbChainGet(int index) {
+    return &sbChains[index];
 }
 
-void sbChainReset(struct SlotTable *table) {
-    struct SlotChain *chain;
+void sbChainReset(SbThread *thread) {
+    SbQueue *chain;
 
-    chain = table->chain;
-    chain->mask = 0xF;
-    chain->state = 0;
-    chain->value = 0;
-    chain->previous_state = (chain->pending = 0);
+    chain = thread->queue;
+    chain->last = SB_QUEUE_LAST;
+    chain->first = 0;
+    chain->tail = 0;
+    chain->used = (chain->head = 0);
 }
 
-int sbCursorPush(SbFrame *obj)
+int sbCursorPush(SbThread *thread)
 {
-    SbCursor *cursor;
+    SbQueue *cursor;
     int next;
 
-    cursor = obj->cursor;
+    cursor = thread->queue;
     if (!(cursor->used < (cursor->last - cursor->first) + 1)) {
         return -1;
     }
     cursor->used = cursor->used + 1;
-    next = cursor->index + 1;
-    cursor->index = next;
+    next = cursor->tail + 1;
+    cursor->tail = next;
     if (cursor->last < next) {
-        cursor->index = cursor->first;
+        cursor->tail = cursor->first;
     }
-    return cursor->index;
+    return cursor->tail;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbCursorPop);
+/* Takes the next index from the thread's cursor ring; -1 when it is empty. */
+int sbCursorPop(SbThread *thread)
+{
+    SbQueue *cursor;
+    int next;
 
-int sbChainPreviousState(struct SlotTable *table) {
-    return table->chain->previous_state;
+    cursor = thread->queue;
+    if (cursor->used <= 0) {
+        return -1;
+    }
+    next = cursor->head + 1;
+    cursor->used = cursor->used - 1;
+    cursor->head = next;
+    if (cursor->last < next) {
+        cursor->head = cursor->first;
+    }
+    return cursor->head;
 }
 
-int sbChainEntryGet(struct SlotTable *table, int index) {
-    return (int) &table->chain->entries[index];
+int sbChainPreviousState(SbThread *thread) {
+    return thread->queue->used;
 }
 
-extern unsigned char sbStacks[];
-
-void *sbStackGet(int index) {
-    return sbStacks + (index << 9);
+SbMessage *sbChainEntryGet(SbThread *thread, int index) {
+    return &thread->queue->messages[index];
 }
 
-u16 sbCodeU16(struct SlotTable *table, int index) {
+int *sbStackGet(int index) {
+    return sbStacks[index];
+}
+
+u16 sbCodeU16(SbThread *thread, int index) {
     struct SbImageHeader *layout;
 
-    layout = table->layout;
+    layout = thread->image;
     return ((u16 *) ((unsigned char *) layout + layout->code_offset))[index];
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbCodeS32);
 
-int sbGlobalGet(struct SlotTable *table, int index) {
+int sbGlobalGet(SbThread *thread, int index) {
     struct SbImageHeader *layout;
 
-    layout = table->layout;
+    layout = thread->image;
     return ((int *) ((unsigned char *) layout + layout->global_offset))[index];
 }
 
-void sbGlobalSet(struct SlotTable *table, int index, int value) {
+void sbGlobalSet(SbThread *thread, int index, int value) {
     struct SbImageHeader *layout;
 
-    layout = table->layout;
+    layout = thread->image;
     ((int *) ((unsigned char *) layout + layout->global_offset))[index] = value;
 }
 
-/* Local slot read: the locals sit above the operand stack, at table->slots + count words. */
-int sbLocalGet(struct SlotTable *table, int index)
+/* Local read: the locals sit in the operand stack, from word frame on. */
+int sbLocalGet(SbThread *thread, int index)
 {
     int *locals;
 
-    locals = table->slots + table->count;
+    locals = thread->stack + thread->frame;
     return locals[index];
 }
 
-/* Local slot write; returns the locals' byte offset (count * 4). */
-int sbLocalSet(struct SlotTable *table, int index, int value) {
-    int used_bytes;
+/* Local write: word frame + index of the operand stack. */
+void sbLocalSet(SbThread *thread, int index, int value) {
     int *locals;
 
-    used_bytes = table->count * 4;
-    locals = table->slots + table->count;
+    locals = thread->stack + thread->frame;
     locals[index] = value;
-    return used_bytes;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbStackPush);
+/* Pushes value on the frame's operand stack; a full stack is fatal. */
+void sbStackPush(SbThread *thread, int value)
+{
+    if (thread->sp >= thread->stackLimit) {
+        sbFatal(thread);
+    }
+    thread->stack[thread->sp++] = value;
+}
 
-int sbStackPop(SbFrame *obj)
+int sbStackPop(SbThread *thread)
 {
     int top;
 
-    if (obj->count <= 0) {
-        sbFatal(obj);
+    if (thread->sp <= 0) {
+        sbFatal(thread);
     }
-    top = obj->count - 1;
-    obj->count = top;
-    return obj->stack[top];
+    top = thread->sp - 1;
+    thread->sp = top;
+    return thread->stack[top];
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbOpLength);
+/* Opcode with an operand list: one byte opcode word plus `count` words. */
+#define SB_OP_SWITCH 0x25
 
-/* One step of the VM: fetch the opcode at pc (record->total) and run its handler. */
-int sbStep(SbThread *record)
+extern signed char sbOpLengths[];
+
+/* Length of an instruction: from sbOpLengths, or 4 * count + 5 for SB_OP_SWITCH. */
+int sbOpLength(unsigned short opcode, int count)
+{
+    if (opcode == SB_OP_SWITCH) {
+        return count * 4 + 5;
+    }
+    return sbOpLengths[opcode];
+}
+
+/* One step of the VM: fetch the opcode at pc and run its handler. */
+int sbStep(SbThread *thread)
 {
     unsigned int opcode;
     int original_total;
     int result;
 
-    opcode = sbCodeU16(record, record->total);
+    opcode = sbCodeU16(thread, thread->pc);
     if (opcode < 0x2E) {
-        original_total = record->total;
-        result = sbOpHandlers[opcode](record, opcode);
+        original_total = thread->pc;
+        result = sbOpHandlers[opcode](thread, opcode);
         if (result == 1) {
-            record->status = result;
-            record->total = original_total;
+            thread->status = result;
+            thread->pc = original_total;
         } else {
-            record->status = 0;
+            thread->status = 0;
         }
         if (result == 2) {
-            record->total = record->value;
+            thread->pc = thread->value;
         }
     } else {
         result = 2;
-        sbFatal(record);
+        sbFatal(thread);
     }
     return result;
 }
 
 /* Opcode 0x00: no effect; advances past the opcode. */
-int sbOpNop(SbFrame *obj, int opcode)
+int sbOpNop(SbThread *thread, int opcode)
 {
-    obj->sum += sbOpLength(opcode & 0xFFFF, 0);
+    thread->pc += sbOpLength(opcode & 0xFFFF, 0);
     return 0;
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbOpBinary);
 
 /* Opcode 0x02: no effect; skips the opcode and its operand word. */
-int func_00A9DDE0(SbFrame *obj, int opcode)
+int func_00A9DDE0(SbThread *thread, int opcode)
 {
-    obj->sum += sbOpLength(opcode & 0xFFFF, 0);
+    thread->pc += sbOpLength(opcode & 0xFFFF, 0);
     return 0;
 }
 
-int sbOpPushWord(SbRunner *control, int amount)
+int sbOpPushWord(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int slot;
 
     amount16 = (unsigned short) amount;
-    slot = sbCodeS32(control, control->count + 1);
-    sbStackPush(control, slot);
-    control->count += sbOpLength(amount16, 0);
+    slot = sbCodeS32(thread, thread->pc + 1);
+    sbStackPush(thread, slot);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
 /* Opcode 0x04: pushes the operand word after the opcode, as sbOpPushWord does. */
-int func_00A9DE80(SbRunner *control, int opcode)
+int func_00A9DE80(SbThread *thread, int opcode)
 {
     unsigned short opcode16;
     int operand;
 
     opcode16 = (unsigned short) opcode;
-    operand = sbCodeS32(control, control->count + 1);
-    sbStackPush(control, operand);
-    control->count += sbOpLength(opcode16, 0);
+    operand = sbCodeS32(thread, thread->pc + 1);
+    sbStackPush(thread, operand);
+    thread->pc += sbOpLength(opcode16, 0);
     return 0;
 }
 
 /* Opcode 0x05: no effect; skips the opcode and its operand word. */
-int func_00A9DEE0(SbFrame *obj, int opcode)
+int func_00A9DEE0(SbThread *thread, int opcode)
 {
-    obj->sum += sbOpLength(opcode & 0xFFFF, 0);
+    thread->pc += sbOpLength(opcode & 0xFFFF, 0);
     return 0;
 }
 
 /* Opcode 0x06: pushes the operand word after the opcode, as sbOpPushWord does. */
-int func_00A9DF20(SbRunner *control, int opcode)
+int func_00A9DF20(SbThread *thread, int opcode)
 {
     unsigned short opcode16;
     int operand;
 
     opcode16 = (unsigned short) opcode;
-    operand = sbCodeS32(control, control->count + 1);
-    sbStackPush(control, operand);
-    control->count += sbOpLength(opcode16, 0);
+    operand = sbCodeS32(thread, thread->pc + 1);
+    sbStackPush(thread, operand);
+    thread->pc += sbOpLength(opcode16, 0);
     return 0;
 }
 
-/* Opcode 0x07: pushes the operand word after the opcode, reading the pc through the SbFrame view (sum). */
-int func_00A9DF80(SbFrame *obj, int opcode)
+/* Opcode 0x07: pushes the operand word after the opcode, as sbOpPushWord does. */
+int func_00A9DF80(SbThread *thread, int opcode)
 {
     int opcode16;
     int operand;
 
     opcode16 = opcode & 0xFFFF;
-    operand = sbCodeS32(obj, obj->sum + 1);
-    sbStackPush(obj, operand);
-    obj->sum += sbOpLength(opcode16, 0);
+    operand = sbCodeS32(thread, thread->pc + 1);
+    sbStackPush(thread, operand);
+    thread->pc += sbOpLength(opcode16, 0);
     return 0;
 }
 
-int sbGlobalGet(struct SlotTable *table, int index);
+int sbGlobalGet(SbThread *thread, int index);
 
-int sbOpPushGlobal(SbRunner *control, int amount)
+int sbOpPushGlobal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int slot;
     int next_slot;
 
     amount16 = (unsigned short) amount;
-    slot = sbCodeS32(control, control->count + 1);
-    next_slot = sbGlobalGet(control, slot);
-    sbStackPush(control, next_slot);
-    control->count += sbOpLength(amount16, 0);
+    slot = sbCodeS32(thread, thread->pc + 1);
+    next_slot = sbGlobalGet(thread, slot);
+    sbStackPush(thread, next_slot);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
-int sbLocalGet(struct SlotTable *table, int index);
+int sbLocalGet(SbThread *thread, int index);
 
-int sbOpPushLocal(SbRunner *control, int amount)
+int sbOpPushLocal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int slot;
     int next_slot;
 
     amount16 = (unsigned short) amount;
-    slot = sbCodeS32(control, control->count + 1);
-    next_slot = sbLocalGet(control, slot);
-    sbStackPush(control, next_slot);
-    control->count += sbOpLength(amount16, 0);
+    slot = sbCodeS32(thread, thread->pc + 1);
+    next_slot = sbLocalGet(thread, slot);
+    sbStackPush(thread, next_slot);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
-void sbGlobalSet(struct SlotTable *table, int index, int value);
+void sbGlobalSet(SbThread *thread, int index, int value);
 
-int sbOpStoreGlobal(SbRunner *control, int amount)
+int sbOpStoreGlobal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int first;
     int second;
 
     amount16 = (unsigned short) amount;
-    first = sbStackPop(control);
-    second = sbStackPop(control);
-    sbGlobalSet(control, first, second);
-    control->count += sbOpLength(amount16, 0);
+    first = sbStackPop(thread);
+    second = sbStackPop(thread);
+    sbGlobalSet(thread, first, second);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
-int sbOpStoreLocal(SbRunner *control, int amount)
+int sbOpStoreLocal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int first;
     int second;
 
     amount16 = (unsigned short) amount;
-    first = sbStackPop(control);
-    second = sbStackPop(control);
-    sbLocalSet(control, first, second);
-    control->count += sbOpLength(amount16, 0);
+    first = sbStackPop(thread);
+    second = sbStackPop(thread);
+    sbLocalSet(thread, first, second);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", func_00A9E1A0);
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", func_00A9E220);
-
-int sbOpJump(SbFrame *obj)
+/* Stores into a global like the plain store but leaves the value on the stack. */
+int sbOpStoreGlobalKeep(SbThread *thread, int opcode)
 {
-    obj->sum = sbCodeS32(obj, obj->sum + 1);
+    unsigned short opcode16;
+    int first;
+    int second;
+
+    opcode16 = (unsigned short) opcode;
+    first = sbStackPop(thread);
+    second = sbStackPop(thread);
+    sbGlobalSet(thread, first, second);
+    thread->sp++;
+    thread->pc += sbOpLength(opcode16, 0);
     return 0;
 }
 
-int sbOpJumpIfZero(SbThread *record, unsigned short id)
+/* Stores into a local like the plain store but leaves the value on the stack. */
+int sbOpStoreLocalKeep(SbThread *thread, int opcode)
+{
+    unsigned short opcode16;
+    int first;
+    int second;
+
+    opcode16 = (unsigned short) opcode;
+    first = sbStackPop(thread);
+    second = sbStackPop(thread);
+    sbLocalSet(thread, first, second);
+    thread->sp++;
+    thread->pc += sbOpLength(opcode16, 0);
+    return 0;
+}
+
+int sbOpJump(SbThread *thread)
+{
+    thread->pc = sbCodeS32(thread, thread->pc + 1);
+    return 0;
+}
+
+int sbOpJumpIfZero(SbThread *thread, unsigned short id)
 {
     int next;
 
-    next = sbCodeS32(record, record->total + 1);
-    if (sbStackPop(record) == 0) {
-        record->total = next;
+    next = sbCodeS32(thread, thread->pc + 1);
+    if (sbStackPop(thread) == 0) {
+        thread->pc = next;
     } else {
-        record->total += sbOpLength(id, 0);
+        thread->pc += sbOpLength(id, 0);
     }
     return 0;
 }
 
-int sbOpJumpIfNotZero(SbThread *record, unsigned short id)
+int sbOpJumpIfNotZero(SbThread *thread, unsigned short id)
 {
     int next;
 
-    next = sbCodeS32(record, record->total + 1);
-    if (sbStackPop(record) != 0) {
-        record->total = next;
+    next = sbCodeS32(thread, thread->pc + 1);
+    if (sbStackPop(thread) != 0) {
+        thread->pc = next;
     } else {
-        record->total += sbOpLength(id, 0);
+        thread->pc += sbOpLength(id, 0);
     }
     return 0;
 }
@@ -638,147 +844,188 @@ int sbOpJumpIfNotZero(SbThread *record, unsigned short id)
  * Opcode 0x11: pushes a call frame header (return slot, saved limit, frame
  * marker) and records the marker in the local at -1.
  */
-int sbOpEnterFrame(SbThread *record, unsigned short opcode)
+int sbOpEnterFrame(SbThread *thread, unsigned short opcode)
 {
-    sbStackPush(record, 0);
-    sbStackPush(record, record->limit);
-    sbStackPush(record, 0);
-    sbLocalSet(record, -1, record->count);
-    record->total += sbOpLength(opcode, 0);
+    sbStackPush(thread, 0);
+    sbStackPush(thread, thread->frame);
+    sbStackPush(thread, 0);
+    sbLocalSet(thread, -1, thread->sp);
+    thread->pc += sbOpLength(opcode, 0);
     return 0;
 }
 
 /* Opcode 0x12: call. Stores the return position in the frame's return slot and jumps to the operand. */
-int sbOpCall(SbFrame *obj)
+int sbOpCall(SbThread *thread)
 {
-    obj->tag = sbLocalGet(obj, -1);
-    sbLocalSet(obj, -3, obj->sum + 2);
-    obj->sum = sbCodeS32(obj, obj->sum + 1);
+    thread->frame = sbLocalGet(thread, -1);
+    sbLocalSet(thread, -3, thread->pc + 2);
+    thread->pc = sbCodeS32(thread, thread->pc + 1);
     return 0;
 }
 
 /* Opcode 0x13: return. Restores the stack depth, the saved limit and the pc from the frame header. */
-int sbOpReturn(SbThread *record, unsigned short opcode)
+int sbOpReturn(SbThread *thread, unsigned short opcode)
 {
-    if (record->count == 0) {
-        sbFatal(record);
+    if (thread->sp == 0) {
+        sbFatal(thread);
     }
-    record->count = record->limit;
-    sbStackPop(record);
-    record->limit = sbStackPop(record);
-    record->total = sbStackPop(record);
-    record->total += sbOpLength(opcode, 0);
+    thread->sp = thread->frame;
+    sbStackPop(thread);
+    thread->frame = sbStackPop(thread);
+    thread->pc = sbStackPop(thread);
+    thread->pc += sbOpLength(opcode, 0);
     return 0;
 }
 
 /* Opcode 0x14: return with a value. The top of the stack survives the frame restore. */
-int sbOpReturnValue(SbThread *record, unsigned short opcode)
+int sbOpReturnValue(SbThread *thread, unsigned short opcode)
 {
     int returnValue;
 
-    returnValue = sbStackPop(record);
-    if (record->count == 0) {
-        sbFatal(record);
+    returnValue = sbStackPop(thread);
+    if (thread->sp == 0) {
+        sbFatal(thread);
     }
-    record->count = record->limit;
-    sbStackPop(record);
-    record->limit = sbStackPop(record);
-    record->total = sbStackPop(record);
-    sbStackPush(record, returnValue);
-    record->total += sbOpLength(opcode, 0);
+    thread->sp = thread->frame;
+    sbStackPop(thread);
+    thread->frame = sbStackPop(thread);
+    thread->pc = sbStackPop(thread);
+    sbStackPush(thread, returnValue);
+    thread->pc += sbOpLength(opcode, 0);
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbOpCallNative);
+/* Native call opcode: the word after the opcode is the native id (sbFindNative).
+ * Status 1 from the method repeats the opcode on the next run; otherwise the
+ * arguments (a count word over two words per argument) are dropped and the
+ * result is pushed. */
+int sbOpCallNative(SbThread *thread, int opcode)
+{
+    unsigned short opcode16;
+    int id;
+    int status;
+    int result;
+    int words;
 
-int sbThreadStart(SbCodeRange *, int);
+    opcode16 = opcode;
+    id = sbCodeS32(thread, thread->pc + 1);
+    status = 0;
+    result = sbNativeOwners[id >> 16].methods[id & 0xFFFF].func(thread, &status);
+    if (status == 1) {
+        return 1;
+    }
+    words = thread->stack[thread->sp - 1] * 2 + 1;
+    thread->sp -= words;
+    sbStackPush(thread, result);
+    thread->pc += sbOpLength(opcode16, 0);
+    return 0;
+}
 
-int sbOpSpawn(SbRunner *control, int amount)
+int sbOpSpawn(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int slot;
 
     amount16 = (unsigned short) amount;
-    slot = sbStackPop(control);
-    control->count += sbOpLength(amount16, 0);
-    return (sbThreadStart(control->span, slot) != 0) ? 0 : 2;
+    slot = sbStackPop(thread);
+    thread->pc += sbOpLength(amount16, 0);
+    return (sbThreadStart(thread->image, slot) != 0) ? 0 : 2;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbOpKillThread);
+/* Kills the thread whose value is popped; 2 (stop) when the thread killed itself. */
+int sbOpKillThread(SbThread *thread, int opcode)
+{
+    unsigned short opcode16;
+    int value;
+    int result;
 
-int sbOpDup(SbFrame *obj, int value)
+    opcode16 = (unsigned short) opcode;
+    value = sbStackPop(thread);
+    thread->pc += sbOpLength(opcode16, 0);
+    result = sbThreadRelease(thread->image, value);
+    if (result != 0) {
+        result = 2;
+        if (thread->value != value) {
+            result = 0;
+        }
+        return result;
+    }
+    return 2;
+}
+
+int sbOpDup(SbThread *thread, int value)
 {
     int operand;
 
     operand = value & 0xFFFF;
-    sbStackPush(obj, obj->stack[obj->count - 1]);
-    obj->sum += sbOpLength(operand, 0);
+    sbStackPush(thread, thread->stack[thread->sp - 1]);
+    thread->pc += sbOpLength(operand, 0);
     return 0;
 }
 
-int sbOpDrop(SbFrame *obj, int value)
+int sbOpDrop(SbThread *thread, int value)
 {
-    obj->count -= 1;
-    obj->sum += sbOpLength(value & 0xFFFF, 0);
+    thread->sp -= 1;
+    thread->pc += sbOpLength(value & 0xFFFF, 0);
     return 0;
 }
 
-int sbOpLoadGlobal(SbRunner *control, int amount)
-{
-    unsigned short amount16;
-    int slot;
-    int next_slot;
-
-    amount16 = (unsigned short) amount;
-    slot = sbStackPop(control);
-    next_slot = sbGlobalGet(control, slot);
-    sbStackPush(control, next_slot);
-    control->count += sbOpLength(amount16, 0);
-    return 0;
-}
-
-int sbOpLoadLocal(SbRunner *control, int amount)
+int sbOpLoadGlobal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int slot;
     int next_slot;
 
     amount16 = (unsigned short) amount;
-    slot = sbStackPop(control);
-    next_slot = sbLocalGet(control, slot);
-    sbStackPush(control, next_slot);
-    control->count += sbOpLength(amount16, 0);
+    slot = sbStackPop(thread);
+    next_slot = sbGlobalGet(thread, slot);
+    sbStackPush(thread, next_slot);
+    thread->pc += sbOpLength(amount16, 0);
+    return 0;
+}
+
+int sbOpLoadLocal(SbThread *thread, int amount)
+{
+    unsigned short amount16;
+    int slot;
+    int next_slot;
+
+    amount16 = (unsigned short) amount;
+    slot = sbStackPop(thread);
+    next_slot = sbLocalGet(thread, slot);
+    sbStackPush(thread, next_slot);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
 /* Opcode 0x1C: returns 2, which sbStep takes as a rewind of the pc to the thread entry. */
-int sbOpEnd(SbFrame *obj, int opcode)
+int sbOpEnd(SbThread *thread, int opcode)
 {
-    obj->sum += sbOpLength(opcode & 0xFFFF, 0);
+    thread->pc += sbOpLength(opcode & 0xFFFF, 0);
     return 2;
 }
 
 /* Opcode 0x1D: returns 3; sbStep keeps the advanced pc and the run stops for this frame. */
-int sbOpYield(SbFrame *obj, int opcode)
+int sbOpYield(SbThread *thread, int opcode)
 {
-    obj->sum += sbOpLength(opcode & 0xFFFF, 0);
+    thread->pc += sbOpLength(opcode & 0xFFFF, 0);
     return 3;
 }
 
-int sbOpWaitFrames(SbRunner *control, int amount)
+int sbOpWaitFrames(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int result;
 
     amount16 = (unsigned short) amount;
-    if (control->state == 0) {
-        control->remaining = sbStackPop(control);
+    if (thread->status == 0) {
+        thread->wait[0] = sbStackPop(thread);
         result = 1;
     } else {
-        control->remaining -= 1;
-        if (control->remaining <= 0) {
+        thread->wait[0] -= 1;
+        if (thread->wait[0] <= 0) {
             result = 0;
-            control->count += sbOpLength(amount16, 0);
+            thread->pc += sbOpLength(amount16, 0);
         } else {
             result = 1;
         }
@@ -786,64 +1033,133 @@ int sbOpWaitFrames(SbRunner *control, int amount)
     return result;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", func_00A9E9E0);
+SbMessage *sbThreadDequeue(struct SbImageHeader *key, int value);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", func_00A9EA80);
+/* Send opcode: pops a thread value and an entry index and queues that entry as a
+ * message from this thread to the thread with the same key and the popped value. */
+int sbOpSend(SbThread *thread, int opcode)
+{
+    unsigned short opcode16;
+    int value;
+    SbMessage message;
 
-int sbOpIncGlobal(SbRunner *control, int amount)
+    opcode16 = opcode;
+    value = sbStackPop(thread);
+    /* The message is the four words from global index of the image (vmEntryGet). */
+    message = *(SbMessage *)vmEntryGet(thread, sbStackPop(thread));
+    sbThreadEnqueue(thread->image, value, &message, thread);
+    thread->pc += sbOpLength(opcode16, 0);
+    return 0;
+}
+
+/* Receive opcode: pops a thread value and an entry index, takes the next message
+ * of the thread with the same key and that value into the entry and pushes 1, or
+ * pushes 0 when there is none. */
+int sbOpReceive(SbThread *thread, int opcode)
+{
+    unsigned short opcode16;
+    int value;
+    SbMessage *out;
+    SbMessage *message;
+    int found;
+
+    opcode16 = opcode;
+    value = sbStackPop(thread);
+    out = vmEntryGet(thread, sbStackPop(thread));
+    message = sbThreadDequeue(thread->image, value);
+    if (message != 0) {
+        *out = *message;
+        found = 1;
+    } else {
+        found = 0;
+    }
+    sbStackPush(thread, found);
+    thread->pc += sbOpLength(opcode16, 0);
+    return 0;
+}
+
+int sbOpIncGlobal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int first;
     int second;
 
     amount16 = (unsigned short) amount;
-    first = sbStackPop(control);
-    second = sbGlobalGet(control, first);
-    sbGlobalSet(control, first, second + 1);
-    control->count += sbOpLength(amount16, 0);
+    first = sbStackPop(thread);
+    second = sbGlobalGet(thread, first);
+    sbGlobalSet(thread, first, second + 1);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
-int sbOpIncLocal(SbRunner *control, int amount)
+int sbOpIncLocal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int first;
     int second;
 
     amount16 = (unsigned short) amount;
-    first = sbStackPop(control);
-    second = sbLocalGet(control, first);
-    sbLocalSet(control, first, second + 1);
-    control->count += sbOpLength(amount16, 0);
+    first = sbStackPop(thread);
+    second = sbLocalGet(thread, first);
+    sbLocalSet(thread, first, second + 1);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
-int sbOpDecGlobal(SbRunner *control, int amount)
+int sbOpDecGlobal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int first;
     int second;
 
     amount16 = (unsigned short) amount;
-    first = sbStackPop(control);
-    second = sbGlobalGet(control, first);
-    sbGlobalSet(control, first, second - 1);
-    control->count += sbOpLength(amount16, 0);
+    first = sbStackPop(thread);
+    second = sbGlobalGet(thread, first);
+    sbGlobalSet(thread, first, second - 1);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
-int sbOpDecLocal(SbRunner *control, int amount)
+int sbOpDecLocal(SbThread *thread, int amount)
 {
     unsigned short amount16;
     int first;
     int second;
 
     amount16 = (unsigned short) amount;
-    first = sbStackPop(control);
-    second = sbLocalGet(control, first);
-    sbLocalSet(control, first, second - 1);
-    control->count += sbOpLength(amount16, 0);
+    first = sbStackPop(thread);
+    second = sbLocalGet(thread, first);
+    sbLocalSet(thread, first, second - 1);
+    thread->pc += sbOpLength(amount16, 0);
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbOpSwitch);
+/* Switch opcode: pops a value and looks it up by binary search in the sorted
+ * (value, target) pairs after the opcode (count at +1, default target at +3,
+ * pair i at +5 + 4 * i); the pc moves to the matching or the default target. */
+int sbOpSwitch(SbThread *thread)
+{
+    int low;
+    int high;
+    int mid;
+    int key;
+    int value;
+
+    low = 0;
+    key = sbStackPop(thread);
+    high = sbCodeS32(thread, thread->pc + 1);
+    while (low < high) {
+        mid = (low + high) / 2;
+        value = sbCodeS32(thread, thread->pc + mid * 4 + 5);
+        if (value < key) {
+            low = mid + 1;
+        } else if (key < value) {
+            high = mid;
+        } else {
+            thread->pc = sbCodeS32(thread, thread->pc + mid * 4 + 7);
+            return 0;
+        }
+    }
+    thread->pc = sbCodeS32(thread, thread->pc + 3);
+    return 0;
+}

@@ -8,6 +8,7 @@
 #include "ov01/tu022.h"
 #include "ov01/tu023.h"
 #include "ov01/tu036.h"
+#include "ov01/tu042.h"
 #include "ov01/tu057.h"
 #include "ov01/tu059.h"
 #include "ov01/tu060.h"
@@ -432,12 +433,6 @@ int calcKeyPairRecords(StatOwner *unit, void *out);
 int slotFlagCollect(StatOwner *unit, void *out);
 int calcCfEventKeyTest(StatOwner *unit);
 
-struct DataBoxEntry {
-    unsigned char unmodeled_00[4];
-    unsigned short flags;
-};
-
-struct DataBoxEntry *func_00A9B548(int index);
 
 /* Key test of the slot menu: keys 11 to 19 each pick one check; key 11 always passes. */
 int dataSlotKeyTest(StatOwner *unit, int key)
@@ -459,7 +454,7 @@ int dataSlotKeyTest(StatOwner *unit, int key)
         count = 0;
         for (i = 1; i < 41; i++) {
             if (dataBoxChkCategory1(i) > 0) {
-                struct DataBoxEntry *box = func_00A9B548(i);
+                HitAction *box = hitActionGet(i);
                 if (box->flags & 0x4000) {
                     count++;
                 }

@@ -30,11 +30,7 @@
 #define PERCENT_MAX 100
 #define UNIT_LEVEL_MAX 3
 #define BOOST_PROGRESS_PER_STOCK 50
-#define UNIT_FLAG_DOWN 0x4
-#define UNIT_FLAG_STOCKED 0x8
 #define STAT_FLAG_PERCENT_GATE 0x800
-#define ACT_STOCK_SLOTS 4
-#define ACT_STOCK_BOOST_SLOTS 2
 #define ACT_STEP_COUNT 4
 #define ACT_STEP_HOLD 3
 
@@ -47,61 +43,9 @@ struct PtStatusBlock {
     unsigned short stat6;                   /* +0x06 */
 };
 
-/* The entry func_00A9B490 returns. */
-typedef struct BattleLookupEntry BattleLookupEntry;
 
-struct BattleLookupEntry {
-    unsigned char unmodeled_00[6];
-    unsigned short flags;                   /* +0x06 */
-    short tecIndex;                         /* +0x08: the index func_00A9B3B8 takes */
-    unsigned char firstCode;                /* +0x0A */
-    unsigned char secondCode;               /* +0x0B */
-};
 
-/* The 0x20-byte technique record func_00A9B3B8 returns for an action index. */
-struct TecRecord {
-    unsigned char flags;                    /* +0x00: target flags (1, 2, 3 side, 4 self, 8 all, 0x10 flagged units); bit 0x20 is tested with calcStatGet(unit, 4, 0x2000) */
-    signed char code;                       /* +0x01: func_00252CD8's code; must be 0 for calcStatusHitRoll */
-    short scale;                            /* +0x02: percent scale battleEffectApplies passes to func_00252CD8 */
-    signed char rollThreshold;              /* +0x04: a first roll below this goes to the second roll */
-    signed char secondRollThreshold;        /* +0x05: a second roll below this returns 0 */
-    signed char type;                       /* +0x06: compared with 2 by calcHitRecordFill */
-    union {
-        signed char kind;                   /* kind byte, mapped by calcHitMode and calcKindHitMode */
-        unsigned char effectFlags;          /* the same byte as flags 0x1 to 0x40, read by calcHitApply */
-    } kindBits;                             /* +0x07 */
-    unsigned short hitFlags;                /* +0x08: bits 0x4, 0x8, 0x10 and 0x20 are tested */
-    signed char epCost;                     /* +0x0A: the EP cost calcEpCost scales */
-    signed char levelDelta;                 /* +0x0B: unitRecordStateGet's result */
-    unsigned short actionBits;              /* +0x0C: tested against 0x100, 0x200, 0x500 and 0x600 by calcHitStateStep; low five bits are calcComboUpdate's mask */
-    unsigned char power;                    /* +0x0E */
-    signed char modeGuard[3];               /* +0x0F..+0x11: bit 0 of modeGuard[mode] blocks the hit */
-    signed char rowGate[4];                 /* +0x12..+0x15: one gate byte per row slot (calcHitRowGate), the unit-state codes battleEffectApplies tests */
-    signed char inflictRate;                /* +0x16: chance the value of calcStatResist is taken from */
-    signed char row;                        /* +0x17 */
-    unsigned short bits;                    /* +0x18: one bit per status of the row */
-    unsigned char unmodeled_1a[0x2];        /* +0x1A..+0x1B */
-    signed char gateFlag;                   /* +0x1C: zero lets calcHitRowGate walk its row gates */
-    unsigned char unmodeled_1d[0x3];        /* +0x1D..+0x1F */
-};
 
-/* The record func_00A9B508 returns for a status or effect index. */
-typedef struct StatusRecord StatusRecord;
-
-struct StatusRecord {
-    unsigned char unmodeled_00[0x6];        /* +0x00..+0x05 */
-    unsigned short slotFlags;               /* +0x06: bit 0x2000 marks an effect that lives in the slot table; 0x8000 and 0x4000 are tested by battleSlotExport */
-    unsigned short flags;                   /* +0x08: tested with the caller's mask */
-    unsigned short code;                    /* +0x0a: low 7 bits are the result */
-};
-
-/* The equipment item record func_00A9B4D0 returns: its code halfword is at +0xA. */
-typedef struct ItemRecord ItemRecord;
-
-struct ItemRecord {
-    unsigned char unmodeled_00[0xA];
-    short code;                             /* +0xA */
-};
 
 /*
  * Hit record of one target: calcHitRoll rolls for it and calcHitRecordFill fills it; the status
@@ -132,18 +76,11 @@ struct HitRecord {
 struct AttackCommand {
     StatOwner *attacker;                    /* +0x00 */
     int kind;                               /* +0x04: 4 selects the base chance 200 in calcStatInflictRate */
-    int actionIdx;                          /* +0x08: index func_00A9B3B8 takes */
+    int actionIdx;                          /* +0x08: index tecRecordGet takes */
     int id;                                 /* +0x0C: the lookup key (the third argument of calcHitApply) */
     struct HitRecord hit;                   /* +0x10 */
 };
 
-/* Action row func_00A9B548 returns: the entry index and the amount. */
-struct HitAction {
-    unsigned char unmodeled_00[0x8];        /* +0x00..+0x07 */
-    short entry;                            /* +0x08: index func_00A9B3B8 takes */
-    unsigned char unmodeled_0a[0x2];        /* +0x0A..+0x0B */
-    short amount;                           /* +0x0C: selects the +0x40 action; nonzero picks row 2 */
-};
 
 /*
  * Slot records: 0x40-byte records in slotRecordTable. Record k (k = slot index 0..15)
@@ -180,15 +117,6 @@ struct SlotRecord {
     };                                      /* +0x3E */
 };
 
-/* Link record func_00A9B5F0 returns: the required level and the two slot indices it pairs. */
-typedef struct PairLink PairLink;
-
-struct PairLink {
-    unsigned char unmodeled_00[0xA];
-    short requiredLevel;                    /* +0xA */
-    short slotFirst;                        /* +0xC */
-    short slotSecond;                       /* +0xE */
-};
 
 /*
  * The step counter actStepCounter: step runs 0..3; at step 3 `hold` is a random value of 4 or
@@ -204,20 +132,6 @@ struct ActStepCounter {
     };
     int bonusFlag;                          /* +0x10: set by calcCritDamage's bonus roll */
     int stepState;                          /* +0x14: 1 to 3, set by calcHitStateStep and calcHitRowGate */
-};
-
-/*
- * The action-stock record (the global actStock, X1 ActStock layout): stock[4] at +0x00,
- * boost[2] at +0x10 (calcActStockSet fills them), max at +0x18, pickCursor at +0x1C,
- * lastPicked at +0x20, pickSource at +0x24.
- */
-struct ActStock {
-    StatOwner *stock[ACT_STOCK_SLOTS];
-    StatOwner *boost[ACT_STOCK_BOOST_SLOTS];
-    int max;
-    int pickCursor;
-    StatOwner *lastPicked;
-    int pickSource;
 };
 
 extern StatBlock battleSlotTable[];
@@ -324,18 +238,11 @@ struct ActStepCounter *actStepCounterGet(void);
 void sdvSpecialBitSet(int index);
 signed char actEntryFlagGet(int index);
 signed char func_00A91B90(int index);
-struct ActStock *actStockGet(void);
 /* Refreshes the hp and ep of the slots 1 to 15 from their battle blocks, then commits each. */
 void battleSlotsRefresh(void);
 /* Defined in other files. */
 PtStatusBlock *ptGetStatusBlock(void);
 void *func_00A9B2A8(int key);
-BattleLookupEntry *func_00A9B490(int index);
-struct TecRecord *func_00A9B3B8(int index);
-StatusRecord *func_00A9B508(int index);
-ItemRecord *func_00A9B4D0(int id);
-struct HitAction *func_00A9B548(int id);
-PairLink *func_00A9B5F0(int index);
 int dataBoxDecCategory1(int lookup_key);
 int unitTblGet(int side, StatOwner ***table);
 
@@ -517,14 +424,14 @@ void battleSlotExport(StatBlock *entry, StatBlock *out)
         slotOwner.stats = battleSlotGet(entry->linkedSlots[0]);
         if (entry->key == specialSlotKey) {
             for (statusKey = 1; statusKey <= SLOT_CODE_COUNT; statusKey++) {
-                if (slotCodeTest(&slotOwner, statusKey) != 0 && (func_00A9B490(statusKey)->flags & 0x4000) != 0) {
+                if (slotCodeTest(&slotOwner, statusKey) != 0 && (battleLookupGet(statusKey)->flags & 0x4000) != 0) {
                     slotCodeSet(&entryOwner, statusKey);
                 }
             }
         }
         for (statusKey = 1; statusKey < 0x41; statusKey++) {
-            if (slotFlagTest(&slotOwner, statusKey) != 0 && (func_00A9B508(statusKey)->slotFlags & 0x8000) != 0
-                && (func_00A9B508(statusKey)->slotFlags & 0x2000) != 0) {
+            if (slotFlagTest(&slotOwner, statusKey) != 0 && (statusRecordGet(statusKey)->slotFlags & 0x8000) != 0
+                && (statusRecordGet(statusKey)->slotFlags & 0x2000) != 0) {
                 slotFlagSet(&entryOwner, statusKey);
             }
         }
@@ -534,7 +441,7 @@ void battleSlotExport(StatBlock *entry, StatBlock *out)
 
             markIndex++;
             statusKey = ((signed char *) slotOwner.stats)[effectOffset + 4];
-            if (func_00A9B508(statusKey)->slotFlags & 0x8000) {
+            if (statusRecordGet(statusKey)->slotFlags & 0x8000) {
                 effectCodes[effectOffset] = statusKey;
             }
         }
@@ -603,11 +510,11 @@ void battleSlotsInit(void)
 
         battleEntryLoad(slot, slotIndex);
         record->expCounter = unitExpTblGet()[slot->expLevel].exp;
-        growthRow = func_00A9B6E8(slotIndex);
+        growthRow = growthRecordGet(slotIndex);
         for (valueIndex = 0; valueIndex < 8; valueIndex++) {
             record->growth[valueIndex] = growthRow->start[valueIndex];
         }
-        pairRow = func_00A9B450(slotIndex);
+        pairRow = slotPairRowGet(slotIndex);
         for (valueIndex = 0; valueIndex < 3; valueIndex++) {
             slot->pairFirst[valueIndex] = *(unsigned short *)((char *)pairRow + (valueIndex << 2));
             secondWord = &pairRow->second;
@@ -719,7 +626,7 @@ StatBlock *battleContextStateGet(int key)
 void battleContextApplyLookup(int key, int lookupKey)
 {
     StatOwner *unit = battleContextBind(key, 0);
-    BattleLookupEntry *entry = func_00A9B490(lookupKey);
+    BattleLookupEntry *entry = battleLookupGet(lookupKey);
 
     calcEpCost(unit, entry->tecIndex);
 }
@@ -741,13 +648,13 @@ int battleAttackResolve(int attackerKey, int targetKey, int lookupKey)
     int wordIndex;
 
     owner = battleContextBind(attackerKey, 0);
-    lookup = func_00A9B490(lookupKey);
+    lookup = battleLookupGet(lookupKey);
     command.kind = 3;
     command.actionIdx = lookup->tecIndex;
     command.attacker = owner;
     command.id = lookupKey;
-    lookup = func_00A9B490(lookupKey);
-    technique = func_00A9B3B8(lookup->tecIndex);
+    lookup = battleLookupGet(lookupKey);
+    technique = tecRecordGet(lookup->tecIndex);
     if (technique->flags & 8) {
         count = battleMaskWordsStat6(words);
     } else {
@@ -762,7 +669,7 @@ int battleAttackResolve(int attackerKey, int targetKey, int lookupKey)
         calcHpDmg(command.attacker, command.hit.target, command.hit.hitMode.word, command.hit.damage);
         battleSlotCommit(unit);
     }
-    lookup = func_00A9B490(lookupKey);
+    lookup = battleLookupGet(lookupKey);
     calcEpAdjust(owner, -calcEpCost(owner, lookup->tecIndex));
     battleSlotGet(attackerKey)->ep = owner->stats->ep;
     return 1;
@@ -778,8 +685,8 @@ int battleItemUse(int targetKey, int lookupKey)
     int remaining;
     int *wordPtr;
 
-    lookup = func_00A9B548(lookupKey);
-    technique = func_00A9B3B8(lookup->entry);
+    lookup = hitActionGet(lookupKey);
+    technique = tecRecordGet(lookup->entry);
     if (technique->flags & 8) {
         count = battleMaskWordsStat6(words);
     } else {
@@ -1227,7 +1134,7 @@ int calcDefMag(StatOwner *unit)
 unsigned char calcActionPower(StatOwner *unusedAttacker, int index) {
     struct TecRecord *record;
 
-    record = func_00A9B3B8(index);
+    record = tecRecordGet(index);
     return record->power;
 }
 
@@ -1273,7 +1180,7 @@ int calcEpCost(StatOwner *owner, int index)
 {
     int cost;
 
-    cost = func_00A9B3B8(index)->epCost;
+    cost = tecRecordGet(index)->epCost;
     if (unitHasEffectCode(owner, 41) != 0) {
         cost = cost / 2;
     }
@@ -1296,14 +1203,14 @@ struct TecRecord *calcHitRecordFill(struct AttackCommand *action, struct HitReco
     hit->inflictMask = 0;
     hit->cureRow = 0;
     hit->cureMask = 0;
-    command = func_00A9B3B8(action->actionIdx);
+    command = tecRecordGet(action->actionIdx);
     if (command->type == 2) {
         hit->backAttack = 0;
         hit->hitMode.word = calcKindHitMode(action, hit);
-        command = func_00A9B3B8(action->actionIdx);
+        command = tecRecordGet(action->actionIdx);
         hit->damage = calcRestoreValue(action, hit, command->kindBits.kind, 0);
     } else {
-        command = func_00A9B3B8(action->actionIdx);
+        command = tecRecordGet(action->actionIdx);
         if (command->kindBits.kind == 1) {
             hit->backAttack = calcBackAttack((int *)action, (int *)hit);
         } else {
@@ -1317,7 +1224,7 @@ struct TecRecord *calcHitRecordFill(struct AttackCommand *action, struct HitReco
             hit->damage = calcAttackDamage(action, hit);
         }
     }
-    return func_00A9B3B8(action->actionIdx);
+    return tecRecordGet(action->actionIdx);
 }
 
 /* calcHitRoll: rnd(99) rolls checked against the record's bytes at +0x4 and +0x5 and the target's flags; returns 0, 1 or 2. Returns 0 when the unit's state byte at +0x70 is set. */
@@ -1340,7 +1247,7 @@ int calcHitRoll(struct AttackCommand *action, struct HitRecord *hit)
     if (hit->backAttack == 1) {
         return 0;
     }
-    command = func_00A9B3B8(action->actionIdx);
+    command = tecRecordGet(action->actionIdx);
     hitRate = calcHitRateGet(action->attacker);
     evade = calcEvadeRate(hit->target);
     if (calcStatGet(hit->target, 4, 0x2000) != 0 && (command->flags & 0x20) != 0) {
@@ -1349,7 +1256,7 @@ int calcHitRoll(struct AttackCommand *action, struct HitRecord *hit)
             hitRate = 0;
         }
     }
-    record = func_00A9B3B8(action->actionIdx);
+    record = tecRecordGet(action->actionIdx);
     if ((record->hitFlags & 0x10) != 0) {
         return 0;
     }
@@ -1357,7 +1264,7 @@ int calcHitRoll(struct AttackCommand *action, struct HitRecord *hit)
     sum = rnd(99) + margin + 1;
     roll = sum < 0 ? 0 : sum;
     if (roll >= command->rollThreshold && (hit->target->stats->flags & 0x40) == 0) {
-        record = func_00A9B3B8(action->actionIdx);
+        record = tecRecordGet(action->actionIdx);
         if ((record->hitFlags & 0x8) == 0) {
             return 2;
         }
@@ -1379,7 +1286,7 @@ int calcHitMode(struct AttackCommand *action, struct HitRecord *hit)
     int roll;
     int mode;
 
-    tec = func_00A9B3B8(action->actionIdx);
+    tec = tecRecordGet(action->actionIdx);
     switch (tec->kindBits.kind) {
     case 1:
         roll = calcHitRoll(action, hit);
@@ -1454,7 +1361,7 @@ int calcAttackDamage(struct AttackCommand *action, struct HitRecord *hit)
     int resultState;
 
     damage = 0;
-    command = func_00A9B3B8(action->actionIdx);
+    command = tecRecordGet(action->actionIdx);
     switch (command->kindBits.kind) {
     case 1:
         if (command->type >= 2) {
@@ -1675,7 +1582,7 @@ int calcCritDamage(struct AttackCommand *command, struct HitRecord *hit, int dam
                 chance = 50;
             }
             modeIdx = hit->target->stats->flags & 3;
-            tec = func_00A9B3B8(command->actionIdx);
+            tec = tecRecordGet(command->actionIdx);
             if ((modeIdx == 0 && (tec->modeGuard[0] & 4) != 0) ||
                 (modeIdx == 1 && (tec->modeGuard[1] & 4) != 0) ||
                 (modeIdx == 2 && (tec->modeGuard[2] & 4) != 0)) {
@@ -1715,7 +1622,7 @@ int calcHitInflict(struct AttackCommand *command, struct HitRecord *hit)
     int statBit;
     int inflictRate;
 
-    action = func_00A9B3B8(command->actionIdx);
+    action = tecRecordGet(command->actionIdx);
     if (action->row == 0) {
         return 0;
     }
@@ -1752,7 +1659,7 @@ int calcHitCure(struct AttackCommand *command, struct HitRecord *hit)
     int row;
 
     curedBits = 0;
-    action = func_00A9B3B8(command->actionIdx);
+    action = tecRecordGet(command->actionIdx);
     if (action->kindBits.kind == 5) {
         statBit = 1;
         do {
@@ -1785,7 +1692,7 @@ int calcKindHitMode(struct AttackCommand *command, struct HitRecord *hit)
     signed char kind;
     int mode;
 
-    record = func_00A9B3B8(command->actionIdx);
+    record = tecRecordGet(command->actionIdx);
     kind = record->kindBits.kind;
     if ((kind & 1) != 0) {
         mode = 2;
@@ -1817,8 +1724,8 @@ int calcRestoreValue(struct AttackCommand *command, struct HitRecord *hit, int m
     int effectBonus;
 
     value = 0;
-    func_00A9B3B8(command->actionIdx);
-    action = func_00A9B548(command->id);
+    tecRecordGet(command->actionIdx);
+    action = hitActionGet(command->id);
     amount = action->amount;
     if (mode & 0x9) {
         target = hit->target;
@@ -1870,9 +1777,9 @@ int calcHitStateStep(struct AttackCommand *command, struct HitRecord *hit)
     blocked = calcHitRowGate(command, hit);
     oldState = (signed char) state;
     unitFlags = hit->target->stats->flags;
-    element = func_00A9B3B8(command->actionIdx);
+    element = tecRecordGet(command->actionIdx);
     actionBits = element->actionBits;
-    element = func_00A9B3B8(command->actionIdx);
+    element = tecRecordGet(command->actionIdx);
     if (element->gateFlag == 0) {
         hitKind = hit->hitMode.kind;
         if (hitKind == 1) {
@@ -1945,14 +1852,14 @@ int calcHitRowGate(struct AttackCommand *command, struct HitRecord *hit)
     if (stats->state70 != 0) {
         return 0;
     }
-    element = func_00A9B3B8(command->actionIdx);
+    element = tecRecordGet(command->actionIdx);
     if (element->gateFlag == 0 && (stats->flags & 0x10) != 0 && hit->backAttack == 0) {
         actStepCounterGet()->stepState = 1;
         return 0;
     }
     i = 0;
     while (i < 4) {
-        element = func_00A9B3B8(command->actionIdx);
+        element = tecRecordGet(command->actionIdx);
         gateCode = element->rowGate[i];
         i++;
         if (gateCode == 0) {
@@ -2145,7 +2052,7 @@ int calcComboUpdate(struct AttackCommand *command, StatOwner **targetSlot)
     StatBlock *stats;
     int statusMask;
 
-    element = func_00A9B3B8(command->actionIdx);
+    element = tecRecordGet(command->actionIdx);
     statusMask = calcAttackStatusMask(command->attacker, element->actionBits) & 0x1f;
     stats = (*targetSlot)->stats;
     if (stats->comboHits != 0 && (stats->comboMask & statusMask) != 0) {
@@ -2208,8 +2115,8 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
     int statBit;
     int flags;
 
-    action = func_00A9B548(lookupKey);
-    entry = func_00A9B3B8(action->entry);
+    action = hitActionGet(lookupKey);
+    entry = tecRecordGet(action->entry);
     amount = action->amount;
     command.kind = 4;
     command.hit.target = target;
@@ -2287,14 +2194,14 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
 int calcStatusHitRoll(StatOwner *source, StatOwner *target, int actionIdx)
 {
     if (!(source != 0 && !(source->flags & UNIT_FLAG_DOWN) && target != 0 && !(target->flags & UNIT_FLAG_DOWN)
-          && !(func_00A9B3B8(actionIdx)->flags & 8)
-          && func_00A9B3B8(actionIdx)->code == 0)) {
+          && !(tecRecordGet(actionIdx)->flags & 8)
+          && tecRecordGet(actionIdx)->code == 0)) {
         return 0;
     }
     if (!(target->stats->flags & STAT_FLAG_PERCENT_GATE)) {
         return 0;
     }
-    if (func_00A9B3B8(actionIdx)->hitFlags & 4) {
+    if (tecRecordGet(actionIdx)->hitFlags & 4) {
         return 0;
     }
     if (!(target->flags & 0x4000)) {
@@ -2565,7 +2472,7 @@ int unitStatsRefresh(StatOwner *unit)
 
     for (i = 0; i < 4; i++) {
         if (unit->stats->equipId[i] != 0) {
-            equipItem = func_00A9B4D0(unit->stats->equipId[i]);
+            equipItem = itemRecordGet(unit->stats->equipId[i]);
             code = equipItem->code;
             if (code != 0) {
                 unitApplyStatBonus(unit, code);
@@ -2580,7 +2487,7 @@ int unitStatsRefresh(StatOwner *unit)
     }
     for (i = 1; i < 0x80; i++) {
         if (slotFlagTest(unit, i) != 0) {
-            statusRecord = func_00A9B508(i);
+            statusRecord = statusRecordGet(i);
             if ((statusRecord->slotFlags & 0x2000) != 0) {
                 unitApplyStatBonus(unit, i);
             }
@@ -2624,7 +2531,7 @@ void unitApplyStatBonus(StatOwner *unit, int recordIdx)
     unsigned char *loopStatCells;
     unsigned char *loopStatCapCells;
 
-    record = func_00A9B508(recordIdx);
+    record = statusRecordGet(recordIdx);
     stats = unit->stats;
     if (record->flags & 0x8000) {
         value = record->code & 0x7F;
@@ -2740,7 +2647,7 @@ int calcStatEffectSum(StatOwner *unit, int flagMask, int codeMask)
     sum = 0;
     for (i = 0; i < 4; i++) {
         if (unit->stats->equipId[i] != 0) {
-            item = func_00A9B4D0(unit->stats->equipId[i]);
+            item = itemRecordGet(unit->stats->equipId[i]);
             code = item->code;
             if (code != 0) {
                 sum += calcStatEffectValue(unit, code, flagMask, codeMask);
@@ -2755,7 +2662,7 @@ int calcStatEffectSum(StatOwner *unit, int flagMask, int codeMask)
     }
     for (i = 1; i < 128; i++) {
         if (slotFlagTest(unit, i) != 0) {
-            record = func_00A9B508(i);
+            record = statusRecordGet(i);
             if ((record->slotFlags & 0x2000) != 0) {
                 sum += calcStatEffectValue(unit, i, flagMask, codeMask);
             }
@@ -2770,7 +2677,7 @@ int calcStatEffectValue(StatOwner *unusedUnit, int recordIdx, int flagMask, int 
     StatusRecord *record;
     int code;
 
-    record = func_00A9B508(recordIdx);
+    record = statusRecordGet(recordIdx);
     if ((record->flags & flagMask) != 0) {
         code = record->code;
         if ((code & codeMask) != 0) {
@@ -2801,7 +2708,7 @@ int unitHasEffectCode(StatOwner *unit, int effectCode)
     ItemRecord *item;
     int i;
 
-    record = func_00A9B508(effectCode);
+    record = statusRecordGet(effectCode);
     if ((record->slotFlags & 0x2000) != 0) {
         if (slotFlagTest(unit, effectCode) != 0) {
             return 1;
@@ -2809,7 +2716,7 @@ int unitHasEffectCode(StatOwner *unit, int effectCode)
     } else {
         for (i = 0; i < 4; i++) {
             if (unit->stats->equipId[i] != 0) {
-                item = func_00A9B4D0(unit->stats->equipId[i]);
+                item = itemRecordGet(unit->stats->equipId[i]);
                 if (effectCode == item->code) {
                     return 1;
                 }
@@ -2951,7 +2858,7 @@ int slotPairSet(int index)
     if ((unsigned int)(index - 1) >= SLOT_PAIR_COUNT) {
         return 0;
     }
-    link = func_00A9B5F0(index);
+    link = pairLinkGet(index);
     index = index - 1;
     mask = 1;
     firstRecord = slotRecordByIndex(link->slotFirst);
@@ -2970,7 +2877,7 @@ int slotPairTest(int index)
     if ((unsigned int)(index - 1) >= SLOT_PAIR_COUNT) {
         return 0;
     }
-    link = func_00A9B5F0(index);
+    link = pairLinkGet(index);
     index = index - 1;
     record = slotRecordByIndex(link->slotFirst);
     return ((unsigned int)record->pairBitsSigned[index / 8] >> (index % 8)) & 1;
@@ -3374,7 +3281,7 @@ void unitGrowthStep(int key)
     StatBlock *stat;
     int i;
 
-    target = func_00A9B6E8(key);
+    target = growthRecordGet(key);
     slot = slotRecordByIndex(key);
     stat = battleSlotGet(key);
     for (i = 0; i < 8; i++) {
@@ -3558,7 +3465,7 @@ s8 unitRecordStateGet(StatOwner *unit, s32 index)
 {
     s8 state;
 
-    state = func_00A9B3B8(index)->levelDelta;
+    state = tecRecordGet(index)->levelDelta;
     if (unitHasEffectCode(unit, 0x13) != 0) {
         state = 0;
     }
@@ -3595,14 +3502,7 @@ int unitCanAct(StatOwner *unit)
 }
 
 /* ---- old ov01/tu030 ---- */
-/* The record func_00A9B628 returns; +0xA is its required level, +0xC the entry mask calcEntryMaskTest tests. */
-struct CalcLevelRecord {
-    unsigned char unmodeled_000[0xA];
-    short requiredLevel;
-    short entryMask;
-};
 
-struct CalcLevelRecord *func_00A9B628(int index);
 int *effectPosGet(int index);
 int func_00252CD8(int code, struct XenoActor *first, struct XenoActor *second, float scale);
 
@@ -3630,7 +3530,7 @@ int battleEffectApplies(StatOwner *command, int index, StatOwner *entity)
     if (index == 0) {
         return 0;
     }
-    record = func_00A9B3B8(index);
+    record = tecRecordGet(index);
     if ((effectPosGet(entity->stats->posIndex)[3] & 2) != 0 && (record->flags & 0x20) == 0) {
         return 0;
     }
@@ -3697,10 +3597,9 @@ int tgtSideOf(StatOwner *entity, int flags)
     return (flags & 3) == 2 ? entity->stats->key < BATTLE_SLOT_KEY_LIMIT : 2;
 }
 
-short *func_00A9B418(int index);
 
 /*
- * For a negative index, returns the first id func_00A9B418 lists for -index whose record passes the flag tests
+ * For a negative index, returns the first id effectIdListGet lists for -index whose record passes the flag tests
  * against the entity's unit state, or 0; a non-negative index is returned unchanged.
  */
 int battleEffectResolve(StatOwner *command, int index, StatOwner *entity)
@@ -3728,11 +3627,11 @@ int battleEffectResolve(StatOwner *command, int index, StatOwner *entity)
                 negated = -index;
                 magnitude = negated;
             }
-            idList = func_00A9B418(magnitude);
+            idList = effectIdListGet(magnitude);
             byteOffset = listPos * 2;
             id = *(short *)((char *)idList + byteOffset);
             if (id != 0) {
-                recordFlags = func_00A9B3B8(id)->rowGate[0];
+                recordFlags = tecRecordGet(id)->rowGate[0];
                 if (((recordFlags & 8) == 0 || entity->stats->state70 == 2) &&
                     ((recordFlags & 0x10) == 0 || (command->flags & 0x2000) != 0) && (stateFlags & recordFlags) != 0) {
                     return id;
@@ -3891,9 +3790,9 @@ int calcEntryUsable(StatOwner *entity, int index)
     unsigned char tecFlags;
     int tecIndex;
 
-    lookupEntry = func_00A9B490(index);
+    lookupEntry = battleLookupGet(index);
     tecIndex = lookupEntry->tecIndex;
-    tecFlags = func_00A9B3B8(tecIndex)->flags;
+    tecFlags = tecRecordGet(tecIndex)->flags;
     if (calcStatGet(entity, 2, 0x400) != 0) {
         return 0;
     }
@@ -3912,8 +3811,8 @@ int tgtRecordCanTarget(StatOwner *target, int id)
     struct HitAction *hitAction;
     unsigned char tecFlags;
 
-    hitAction = func_00A9B548(id);
-    tecFlags = func_00A9B3B8(hitAction->entry)->flags;
+    hitAction = hitActionGet(id);
+    tecFlags = tecRecordGet(hitAction->entry)->flags;
     if (dataBoxChkCategory1(id) <= 0) {
         return 0;
     }
@@ -3971,7 +3870,7 @@ int calcKeyBandRecords(StatOwner *entity, int *found)
         return 0;
     }
     for (index = firstIndex; index <= lastIndex; index++) {
-        record = func_00A9B628(index);
+        record = calcLevelRecordGet(index);
         metricMask = record->entryMask;
         if (calcEntryMaskTest(statBlock->linkedSlots[1], metricMask) == 0) {
             continue;
@@ -3990,7 +3889,7 @@ int calcCurrentMeetsRecord(StatOwner *entity, int index)
 {
     struct CalcLevelRecord *levelRecord;
 
-    levelRecord = func_00A9B628(index);
+    levelRecord = calcLevelRecordGet(index);
     if (entity->stats->current < levelRecord->requiredLevel) {
         return 0;
     }
@@ -4019,7 +3918,7 @@ int calcKeyPairRecords(StatOwner *entity, int *found)
     actingKey = actingUnit->stats->key;
     for (index = 0; index < 17; index++) {
         if (slotPairTest(index) != 0 && actEntryFlagGet(index) == 0) {
-            pairLink = func_00A9B5F0(index);
+            pairLink = pairLinkGet(index);
             if ((pairLink->slotFirst == entityKey && pairLink->slotSecond == actingKey) ||
                 (pairLink->slotFirst == actingKey && pairLink->slotSecond == entityKey)) {
                 found[count] = index;
@@ -4040,7 +3939,7 @@ int calcLevelsMeetRecord(StatOwner *entity, int record_index)
     if (actingUnit == 0) {
         return 0;
     }
-    pairLink = func_00A9B5F0(record_index);
+    pairLink = pairLinkGet(record_index);
     if (entity->stats->level < pairLink->requiredLevel || actingUnit->stats->level < pairLink->requiredLevel) {
         return 0;
     }
@@ -4065,8 +3964,8 @@ int calcPairedRecords(int unused_arg0, int code, int *found)
         return 0;
     }
     for (index = 60; index < 90; index++) {
-        pairFirst = func_00A9B490(index)->firstCode;
-        pairSecond = func_00A9B490(index)->secondCode;
+        pairFirst = battleLookupGet(index)->firstCode;
+        pairSecond = battleLookupGet(index)->secondCode;
         if ((code == pairFirst && slotCodeTest(actingUnit, pairSecond) != 0) ||
             (code == pairSecond && slotCodeTest(actingUnit, pairFirst) != 0)) {
             found[count] = index;
@@ -4110,15 +4009,7 @@ int slotFlagCollect(StatOwner *subject, int *found)
 }
 
 /* ---- old ov01/tu031 ---- */
-/* The record func_00A9B660 returns for an id: +0x8 is the action index func_00A9B3B8 takes, +0xE the minimum level. */
-struct TgtIdRecord {
-    unsigned char unmodeled_00[0x8];
-    short actionIndex;                      /* +0x08: the index func_00A9B3B8 takes */
-    unsigned char unmodeled_0a[0xe - 0xa];
-    short minLevel;                         /* +0x0E: obj->stats->level below this gives 0 */
-};
 
-struct TgtIdRecord *func_00A9B660(int id);
 
 int tgtSideAccepts(StatOwner *obj, int id)
 {
@@ -4130,14 +4021,14 @@ int tgtSideAccepts(StatOwner *obj, int id)
     int hits;
     int unitIndex;
 
-    if (obj->stats->level < func_00A9B660(id)->minLevel) {
+    if (obj->stats->level < tgtIdRecordGet(id)->minLevel) {
         return 0;
     }
-    idRecord = func_00A9B660(id);
+    idRecord = tgtIdRecordGet(id);
     unitIndex = 0;
     hits = 0;
     actionIndex = idRecord->actionIndex;
-    tecFlags = func_00A9B3B8(actionIndex)->flags;
+    tecFlags = tecRecordGet(actionIndex)->flags;
     sideCount = unitTblGet(tgtSideOf(obj, tecFlags), &sideUnits);
     for (; unitIndex < sideCount; unitIndex++) {
         if (sideUnits[unitIndex] != 0) {
@@ -4184,7 +4075,7 @@ StatOwner *tgtFindFirst(struct AttackCommand *record, StatOwner *value)
     tgtIdx = 0;
     tgtNum = 0;
     tgtIdx = 0;
-    actionFlags = func_00A9B3B8(record->actionIdx)->flags;
+    actionFlags = tecRecordGet(record->actionIdx)->flags;
     multiFlag = actionFlags & 0x8;
     if (multiFlag == 0) {
         valueAccepted = 0;
@@ -4361,7 +4252,7 @@ int actLevelChanceRoll(StatOwner *owner, int index)
     signed char chanceLevel;
     int rollPercent;
 
-    techRecord = func_00A9B3B8(index);
+    techRecord = tecRecordGet(index);
     if (techRecord->hitFlags & 4) {
         return 0;
     }
@@ -4466,7 +4357,7 @@ int sdvSpecialBitGet(int index)
     return ((unsigned int) sdvSpecialBuf[byteIndex >> 3] >> (bit - (byteIndex >> 3) * 8)) & 1;
 }
 
-/* Marks entry `index` in the per-entry byte table actEntryFlags; the index is the key of func_00A9B3B8. */
+/* Marks entry `index` in the per-entry byte table actEntryFlags; the index is the key of tecRecordGet. */
 void actEntryFlagSet(int index)
 {
     actEntryFlags[index] = 1;

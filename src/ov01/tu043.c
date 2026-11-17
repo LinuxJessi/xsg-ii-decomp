@@ -32,7 +32,20 @@ void dataBoxClearAll(void) {
 }
 
 /* Quantity table of a category: D_61C800 for 1, D_61CA00 for 2, D_61CC00 for 3, D_61CE00 for 4; NULL for any other value. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu043", dataBoxPtrGet);
+u16 *dataBoxPtrGet(int category)
+{
+    switch (category) {
+    case 1:
+        return D_61C800;
+    case 2:
+        return D_61CA00;
+    case 3:
+        return D_61CC00;
+    case 4:
+        return D_61CE00;
+    }
+    return 0;
+}
 
 int dataBoxChk(int category, int id)
 {

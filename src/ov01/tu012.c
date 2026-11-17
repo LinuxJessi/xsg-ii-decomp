@@ -10,6 +10,7 @@
 #include "ov01/tu016.h"
 #include "ov01/tu033.h"
 #include "ov01/tu036.h"
+#include "ov01/tu042.h"
 
 /* keyHigh of the high modes (mode 16 and up): unitActionKey uses 320, unitMoveKey uses 330. */
 #define ACTION_KEY_BASE 320
@@ -434,22 +435,11 @@ int unitCmdNoop(void) {
     return 1;
 }
 
-struct Ov01Record {
-    unsigned char unmodeled_00[8];
-    u16 setFlags; /* +8: bit 0x100 raises object flag 0x2000 */
-    unsigned char unmodeled_0a[8];
-    unsigned char holdFlags; /* +0x12: bit 0x10 clears object flag 0x2000 */
-    unsigned char unmodeled_13[0xA];
-    signed char phase; /* +0x1D */
-    s16 timer;         /* +0x1E: nonzero selects unitSetTimedPhase */
-};
-
-struct Ov01Record *func_00A9B3B8(int key);
 
 int unitCmdSetPhase(Ov01Object *object, Ov01Command *step) {
-    struct Ov01Record *record;
+    TecRecord *record;
 
-    record = func_00A9B3B8(step->code);
+    record = tecRecordGet(step->code);
     switch (step->state) {
     case 0:
         if (record->timer == 0) {
@@ -457,10 +447,10 @@ int unitCmdSetPhase(Ov01Object *object, Ov01Command *step) {
         } else {
             unitSetTimedPhase(object, record->phase);
         }
-        if (record->setFlags & 0x100) {
+        if (record->hitFlags & 0x100) {
             object->flags |= 0x2000;
         }
-        if (record->holdFlags & 0x10) {
+        if (record->rowGate[0] & 0x10) {
             object->flags &= ~0x2000;
         }
         step->state++;
@@ -498,7 +488,7 @@ int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
 
     hpKind = -50;
     if (step->state == 0) {
-        func_00A954D8(object, 0x140, 9);
+        unitEffectStart(object, 0x140, 9);
         seVoiceStartTagged(2, 3);
         if (object->stats->key >= 0x10) {
             object->flags |= 0x4000;
@@ -577,7 +567,7 @@ int unitCmdAction(Ov01Object *object, Ov01Command *command) {
     case 0:
         unitSetPhase(object, 20);
         unitActionKey(object, &keyHigh, &keyLow);
-        func_00A954D8(object, keyHigh, keyLow);
+        unitEffectStart(object, keyHigh, keyLow);
         unitSetSelector(object, 9);
         seObjectVoiceStart(object, 8, func_001EDCA8());
         command->state++;
@@ -606,7 +596,7 @@ int func_001EDCA0(void);
 void streamPlayByKey(void *owner, int mode);
 
 int unitCmdPlayVoice(Ov01Object *object, Ov01Command *step) {
-    func_00A9B3B8(step->code);
+    tecRecordGet(step->code);
     switch (step->state) {
     case 0:
         unitSetPhase(object, 23);

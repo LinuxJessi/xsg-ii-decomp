@@ -39,7 +39,7 @@ typedef struct PadRecord {
         };
         unsigned long long heldAndPressed; /* +0x28: held and pressed read as one doubleword */
     };
-    unsigned char unmodeled_30[2];
+    unsigned short directionHeld;     /* +0x30: read by ov01's sampPadRead */
     unsigned short directionPressed;  /* +0x32 */
     unsigned short directionRepeated; /* +0x34 */
     unsigned char unmodeled_36[6];

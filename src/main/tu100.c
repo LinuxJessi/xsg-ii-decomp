@@ -4060,7 +4060,7 @@ int menuEquipAssignStep(ControlSlot *slot) {
         }
         {
             PadRecord *held = (PadRecord *) PadData;
-            if ((*(unsigned long long *) &held->unmodeled_30 & 0x80F00FLL) == 0x800000LL) {
+            if ((*(unsigned long long *) &held->directionHeld & 0x80F00FLL) == 0x800000LL) {
                 if (D_006A4928[0].cursor == 0) {
                     if (ptGetMenuMember()->buffer->count != 0) {
                         D_0069D4DC &= ~1;
@@ -4076,10 +4076,10 @@ int menuEquipAssignStep(ControlSlot *slot) {
         }
         {
             PadRecord *pad4 = (PadRecord *) PadData;
-            if ((*(unsigned long long *) &pad4->unmodeled_30 & 0x800000005000ULL) == 0x800000000000ULL) {
+            if ((*(unsigned long long *) &pad4->directionHeld & 0x800000005000ULL) == 0x800000000000ULL) {
                 cursorBufferMoveUnits(D_006A51C8, -1);
             }
-            if ((*(unsigned long long *) &pad4->unmodeled_30 & 0x200000005000ULL) == 0x200000000000ULL) {
+            if ((*(unsigned long long *) &pad4->directionHeld & 0x200000005000ULL) == 0x200000000000ULL) {
                 cursorBufferMoveUnits(D_006A51C8, 1);
             }
         }
@@ -4120,7 +4120,7 @@ int menuEquipAssignStep(ControlSlot *slot) {
             func_00211918((ControlLink *) D_006A51C8);
             break;
         }
-        if ((*(unsigned long long *) &((PadRecord *) PadData)->unmodeled_30 & 0x80F00FLL) == 0x800000LL) {
+        if ((*(unsigned long long *) &((PadRecord *) PadData)->directionHeld & 0x80F00FLL) == 0x800000LL) {
             if (D_0069D4E0 != 0) {
                 int i;
                 for (i = 0; i < ptGetMenuMember()->buffer->count; i++) {
@@ -4310,7 +4310,7 @@ int menuPartyFormationStep(ControlSlot *slot) {
             seVoiceStartDefault(MENU_SE_CONFIRM);
             break;
         }
-        if ((*(unsigned long long *) &pad->unmodeled_30 & 0x80F00FLL) == 0x800000LL) {
+        if ((*(unsigned long long *) &pad->directionHeld & 0x80F00FLL) == 0x800000LL) {
             if (D_0069D4E0 != 0) {
                 seVoiceStartDefault(MENU_SE_CANCEL);
                 func_0022B458();

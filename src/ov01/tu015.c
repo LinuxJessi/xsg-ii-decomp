@@ -196,7 +196,7 @@ int unitCmdMoveRamp(Ov01Object *object, Ov01Command *step)
     }
     if (objPoseStep(object) != 0) {
         unitSetPhase(object, (unitCurrentPhase(object) ^ 0x22) == 0 ? 0x24 : 0x27);
-        func_00A954D8(object, 310, 20);
+        unitEffectStart(object, 310, 20);
         seObjectVoiceStartDefault(object, 14);
         if ((object->flags & 0x20) != 0) {
             memset(message, 0, sizeof(message));

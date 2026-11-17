@@ -1,14 +1,7 @@
 #include "common.h"
 #include "shared.h"
+#include "ov01/tu048.h"
 #include "ov01/tu049.h"
-
-/* grGpInit's argument: the VIF1 DIRECT packet grPacketSend transmits, a
- * data buffer and its length. grGpInit points data at the scratchpad
- * (0x70000000). */
-typedef struct GrPacket {
-    void *data;  /* +0x0 */
-    int count;   /* +0x4 */
-} GrPacket;
 
 /* GIF packet words are written as doubleword descriptors by the openers and
  * as 32-bit lanes by the vertex writers. Both are the same packet storage. */
@@ -42,9 +35,14 @@ void GS_REG_SET(GrPacket *packet, long long register_id, long long control)
     *count = tag_index + 1;
 }
 
-/* Ten row slots of 4 bytes: a slot holds the row's y (100 + 20 * index) while
- * the row is taken, 0 when free. menuPanelRowAlloc takes one, menuPanelRowFree frees it. */
-extern unsigned char menuPanelRows[0x28];
+/* Menu panel rows: MENU_PANEL_ROW_COUNT slots, a slot holds the row's y
+ * (MENU_PANEL_ROW_Y0 + MENU_PANEL_ROW_STEP * index) while the row is taken, 0
+ * when free. menuPanelRowAlloc takes one, menuPanelRowFree frees it. */
+#define MENU_PANEL_ROW_COUNT 10
+#define MENU_PANEL_ROW_Y0 100
+#define MENU_PANEL_ROW_STEP 20
+
+extern int menuPanelRows[MENU_PANEL_ROW_COUNT];
 extern int screenFadeTask;
 extern int screenFillTask;
 void *memset(void *, int, unsigned int);
@@ -56,9 +54,35 @@ void menuPanelRowsReset(void)
     screenFillTask = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuPanelRowAlloc);
+/* Takes the first free row and returns its y, or 0 when all rows are taken. */
+int menuPanelRowAlloc(void)
+{
+    int i;
+    int y;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuPanelRowFree);
+    for (i = 0, y = MENU_PANEL_ROW_Y0; i < MENU_PANEL_ROW_COUNT; i++) {
+        if (menuPanelRows[i] == 0) {
+            menuPanelRows[i] = y;
+            return y;
+        }
+        y += MENU_PANEL_ROW_STEP;
+    }
+    return 0;
+}
+
+/* Frees the row taken at y; returns 1, or 0 when no row has that y. */
+int menuPanelRowFree(int y)
+{
+    int i;
+
+    for (i = 0; i < MENU_PANEL_ROW_COUNT; i++) {
+        if (menuPanelRows[i] == y) {
+            menuPanelRows[i] = 0;
+            return 1;
+        }
+    }
+    return 0;
+}
 
 /* A menu object from objSlotAlloc: +0x04 a state word, +0x08 the draw callback
  * (the draw slot of the other objects, see arrowCreate). */
@@ -102,8 +126,6 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatRecordsCreate);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatGaugeStep);
 
 void menuStatRecordDraw(int, GrPacket *);
-void grGpInit(GrPacket *);
-void grPacketSend(GrPacket *);
 
 /* Draw callback of a stat record (record + 0x08). `first` is the record pointer
  * passed through an int parameter: menuStatRecordDraw reads its origin at +0x10 and
