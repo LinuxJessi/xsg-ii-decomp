@@ -83622,9 +83622,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026C488",
+     "name": "sefCreateResourceSlot",
      "size": 1008,
-     "splat_name": "func_0026C488",
+     "splat_name": "sefCreateResourceSlot",
      "va": "0x0026c488",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83667,9 +83667,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026C9C8",
+     "name": "sefCreateKindResourceSlot",
      "size": 1036,
-     "splat_name": "func_0026C9C8",
+     "splat_name": "sefCreateKindResourceSlot",
      "va": "0x0026c9c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83901,9 +83901,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00270CA0",
+     "name": "sefDrawEmitter",
      "size": 984,
-     "splat_name": "func_00270CA0",
+     "splat_name": "sefDrawEmitter",
      "va": "0x00270ca0",
      "name_basis": "address",
      "provenance": "estimated"

@@ -46338,7 +46338,7 @@
      2
     ],
     [
-     "func_0026C488",
+     "sefCreateResourceSlot",
      2540680,
      1008,
      2
@@ -46368,7 +46368,7 @@
      2
     ],
     [
-     "func_0026C9C8",
+     "sefCreateKindResourceSlot",
      2542024,
      1036,
      2
@@ -46524,7 +46524,7 @@
      2
     ],
     [
-     "func_00270CA0",
+     "sefDrawEmitter",
      2559136,
      984,
      2

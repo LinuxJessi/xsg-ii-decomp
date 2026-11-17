@@ -5357,7 +5357,7 @@ typedef struct SefEntryHeader {
 } SefEntryHeader;
 
 extern SefEntryHeader *D_0069DC2C;
-SefEffectRecord *func_0026C9C8(int key, int base, int index, int second, unsigned char *third, unsigned char *fourth,
+SefEffectRecord *sefCreateKindResourceSlot(int key, int base, int index, int second, unsigned char *third, unsigned char *fourth,
                                int fifth);
 
 /* Copies one quadword block with lq/sq through $8; the source block is an in-out memory operand of the asm. */
@@ -5371,7 +5371,7 @@ static inline void sefCopyBlock(unsigned char *destination, unsigned char *sourc
 }
 
 /* Spawns the effect record for an effect id. Inside an entry (D_0069DC2C set) it hands the remapped key to
- * func_0026C9C8; otherwise it creates a record, copies the two optional quadword blocks into it and marks it. */
+ * sefCreateKindResourceSlot; otherwise it creates a record, copies the two optional quadword blocks into it and marks it. */
 SefEffectRecord *sefSpawnEffectRecord(int effectId, int second, unsigned char *firstBlock, unsigned char *secondBlock, int fifth)
 {
     SefEffectRecord *record = 0;
@@ -5404,7 +5404,7 @@ SefEffectRecord *sefSpawnEffectRecord(int effectId, int second, unsigned char *f
             } else if (key == 0x100C838C) {
                 key = 0x100C8392;
             }
-            return func_0026C9C8(key, lookupBase + entry->entryIndex * 2, (key & 0x3FF) - 901, second, firstBlock, secondBlock, fifth);
+            return sefCreateKindResourceSlot(key, lookupBase + entry->entryIndex * 2, (key & 0x3FF) - 901, second, firstBlock, secondBlock, fifth);
         }
         return 0;
     }

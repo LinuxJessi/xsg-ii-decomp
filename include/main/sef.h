@@ -146,7 +146,7 @@ void sefStartEffectWithValue(void *object, int value);
 int sefStartEffectKeyDefault(int first, int second);
 
 /* Spawns the effect record for an effect id. Inside an entry (D_0069DC2C set) it hands the remapped key to
- * func_0026C9C8; otherwise it creates a record, copies the two optional quadword blocks into it and marks it. */
+ * sefCreateKindResourceSlot; otherwise it creates a record, copies the two optional quadword blocks into it and marks it. */
 SefEffectRecord *sefSpawnEffectRecord(int effectId, int second, unsigned char *third, unsigned char *fourth, int fifth);
 
 int sefCanonicalEffectId(int effectId);
