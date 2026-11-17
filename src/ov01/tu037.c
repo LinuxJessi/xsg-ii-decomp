@@ -2,26 +2,74 @@
  * OV01 original TU 37: 0x00a99ec0..0x00a9a4b0 (11 functions)
  */
 #include "common.h"
+#include "main/TiWindBase.h"
 #include "main/pad.h"
 #include "main/face_point.h"
+#include "main/tu051.h"
 #include "main/tu092.h"
 #include "main/tu093.h"
+#include "main/tu123.h"
+#include "main/tu124.h"
+#include "main/tu125.h"
+#include "main/tu156.h"
 #include "main/xenoActor.h"
+#include "main/xgl_2.h"
 #include "ov01/tu005.h"
+#include "ov01/tu008.h"
+#include "ov01/tu010.h"
 #include "ov01/tu017.h"
+#include "ov01/tu019.h"
 #include "ov01/tu022.h"
 #include "ov01/tu023.h"
+#include "ov01/tu033.h"
+#include "ov01/tu035.h"
 #include "ov01/tu040.h"
 #include "ov01/tu037.h"
+#include "ov01/tu042.h"
 #include "ov01/tu044.h"
+#include "ov01/tu047.h"
+#include "ov01/tu049.h"
 #include "ov01/tu075.h"
 
-/* Scene init: resets the tables and the frame counter ov01SceneFrames, sets the draw
- * hook 0x645864 to ov01DrawAll and runs the reset chain (unitInit, dataStateReset,
- * tiWindClearTables and others). */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu037", ov01SceneInit);
+/* ov01 0x00AA8EA0, in a part of the overlay that has no C file yet. */
+void handleTableInit(void);
+/* main xgl_2 (no header prototype: nml_model_set passes its own light block type). */
+void xglLightSetDefault(XglLightSet *lightSet);
 
-void ov01SceneInit(void);
+/* Frames run by the scene loop (counted by ov01SceneLoop). */
+extern int ov01SceneFrames;
+
+/* Scene init: runs the reset chain of the battle systems, makes the light block the default light set of xgl and
+ * tu156, resets the menus and text systems, clears the frame counter ov01SceneFrames and sets the draw hook
+ * (sRender.fade_callback) to ov01DrawAll. The light block is the 0x180-byte light set (see initLight, tu047). */
+void ov01SceneInit(void)
+{
+    ov01ResetAll();
+    dataFileInit();
+    battleWorkTablesReset();
+    func_00A9B0F8();
+    monsSlotReset();
+    unitInit();
+    dataVPadReset();
+    msgReset();
+    cmdSystemInit();
+    tgtSelectInit();
+    dataStateReset();
+    menuPanelRowsReset();
+    handleTableInit();
+    ov01SceneStateReset();
+    cameraInit();
+    xglLightSetDefault((XglLightSet *)lightBlockGet());
+    func_00253048((XglLightSet *)lightBlockGet());
+    choiceMenuResetAll();
+    textEntryPoolReset();
+    textBlockClear();
+    textWindowReset();
+    tiWindClearTables();
+    ov01SceneFrames = 0;
+    sRender.fade_callback = ov01DrawAll;
+}
+
 void ov01StepChainStart(void);
 
 /* Scene entry: culling ignore on, scene init, then the battle step chain. */
@@ -46,7 +94,7 @@ int func_00A9A138(void) {
     return 0;
 }
 
-/* Scene end: release the scene, reset the tables, clear the draw hook 0x645864. */
+/* Scene end: release the scene, reset the tables, clear the draw hook (sRender.fade_callback). */
 void ov01SceneEnd(void) {
     ov01SceneRelease();
     ov01ResetAll();
@@ -67,8 +115,6 @@ void ov01SceneRelease(void) {
     partySnapshotBuild();
     ov01ClearTables();
 }
-
-extern int ov01SceneFrames;
 
 /* Frames run by the scene loop (ov01SceneFrames, counted by ov01SceneLoop). */
 int ov01SceneFrameCount(void) {

@@ -77,5 +77,6 @@ struct DataSlot *dataSlotFind();
 /* The model entry of a table index and the motion entry of a table index, motion and suffix. */
 struct DataEntry *dataModelEntryLoad(int table_index);
 struct DataEntry *dataMotEntryLoad(int table_index, int index, int suffix_index);
+void dataFileInit(void);
 
 #endif /* INCLUDE_OV01_TU008_H */

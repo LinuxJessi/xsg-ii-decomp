@@ -1,5 +1,6 @@
 #include "common.h"
 #include "main/tu097.h"
+#include "main/tu123.h"
 #include "main/xgl_font.h"
 
 /* Font escape byte that opens a two-byte character in the scratch string. */

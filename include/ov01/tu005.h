@@ -51,5 +51,6 @@ int ov01RollPercent(int percent);
 int rnd(int max);
 struct SaveStack *ov01StackNew(void);
 void ov01StackPop(struct SaveStack *stack);
+void ov01DrawAll(void);
 
 #endif /* INCLUDE_OV01_TU005_H */

@@ -4,5 +4,6 @@
 /* Functions of src/main/tu125.c that other files call. */
 
 int textBlockIsActive(void);
+void textBlockClear(void);
 
 #endif /* INCLUDE_MAIN_TU125_H */

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "main/control_entry.h"
+#include "main/tu123.h"
 #include "main/xgl_render.h"
 #include "main/sdv_033.h"
 #include "main/xgl_cd.h"
@@ -155,7 +156,6 @@ void xglCdArenaOpen(int a, int b);
 void xglCdArenaClose(void);
 void textEntryPoolReset(void);
 void choiceMenuResetAll(void);
-void textWindowReset(void);
 void textBlockClear(void);
 void menuSceneRunLoop(void);
 void menuSceneRunSplit(void);

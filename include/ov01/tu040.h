@@ -7,5 +7,6 @@ struct SbImageHeader;
 
 struct SbImageHeader *ov01ScriptKeyGet(void);
 struct SbImageHeader *ov01ScriptImageGet(void);
+void func_00A9B0F8(void);
 
 #endif

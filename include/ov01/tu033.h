@@ -30,5 +30,6 @@ void unitEffectStart(struct Ov01Object *object, int keyHigh, int keyLow);
 void func_00A955C8(struct Ov01Object *object);
 void func_00A95608(struct Ov01Object *object);
 void unitStatusAuraUpdate(struct Ov01Object *object);
+void cmdSystemInit(void);
 
 #endif /* INCLUDE_OV01_TU033_H */

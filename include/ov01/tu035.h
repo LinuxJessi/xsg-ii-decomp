@@ -6,5 +6,6 @@
 int battleEndCheck(void);
 int tgtSelectStep(void);
 void tgtSelectModeEnd(void);
+void tgtSelectInit(void);
 
 #endif /* INCLUDE_OV01_TU035_H */

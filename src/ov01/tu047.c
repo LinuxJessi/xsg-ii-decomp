@@ -3,6 +3,7 @@
  */
 #include "common.h"
 #include "main/tu022.h"
+#include "main/tu156.h"
 #include "main/xgl_2.h"
 #include "main/tu063.h"
 #include "main/tu077.h"
@@ -23,6 +24,7 @@
 #include "ov01/tu042.h"
 #include "ov01/tu044.h"
 #include "ov01/tu046.h"
+#include "ov01/tu047.h"
 #include "ov01/tu054.h"
 #include "ov01/tu066.h"
 #include "ov01/tu071.h"
@@ -179,8 +181,6 @@ int setMoveCmd(SbThread *call)
 
 void xglLightSetDefault(XglLightSet *lightSet);
 void pxySetDefaultLight(XglLightSet *light);
-void func_00253048(XglLightSet *lights);
-LightBlocks *lightBlockGet(void);
 
 /* Native initLight: makes the light block the default light set of xgl, the pxy models and tu156. The block is
  * the 0x180-byte light set the battle actors copy as LightBlocks (unitCreateSide, unitTblBodySetLight). */

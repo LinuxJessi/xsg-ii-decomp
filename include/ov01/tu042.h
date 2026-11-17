@@ -269,5 +269,6 @@ char *tableStringGet(int index, int mode);
 int msgIsIdle(void);
 void partyDataSetSlot(int id, int slot, int value);
 struct TableKeyRecord *tableKeyRecordGet(int key);
+void msgReset(void);
 
 #endif /* INCLUDE_OV01_TU042_H */

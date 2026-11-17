@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu156.h"
 #include "main/xgl_2.h"
 
 extern AlignedXglLightSet D_006AF340;

@@ -154,5 +154,6 @@ struct BattleResultRow {
 struct BattleResult *battleResultGet(void);
 int battleResultApply(struct BattleResultRow *rows);
 int partySnapshotGet(StatOwner ***snapshots);
+void battleWorkTablesReset(void);
 
 #endif /* INCLUDE_OV01_TU023_H */

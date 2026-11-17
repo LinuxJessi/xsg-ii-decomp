@@ -4,5 +4,6 @@
 /* Functions of src/ov01/tu075.c that other files call. */
 
 void ov01SceneSystemsShutdown(void);
+void ov01SceneStateReset(void);
 
 #endif /* INCLUDE_OV01_TU075_H */

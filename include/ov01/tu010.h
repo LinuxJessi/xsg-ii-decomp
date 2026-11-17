@@ -10,5 +10,6 @@
 #define FADE_DEFAULT_STEP 0.1f
 
 typedef struct ObjectTask ObjectTask;
+void unitInit(void);
 
 #endif /* INCLUDE_OV01_TU010_H */

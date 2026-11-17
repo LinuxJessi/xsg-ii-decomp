@@ -4,5 +4,7 @@
 /* Functions of src/main/tu124.c that other files call. */
 
 void choiceMenuClose(int index);
+void choiceMenuResetAll(void);
+void textEntryPoolReset(void);
 
 #endif /* INCLUDE_MAIN_TU124_H */
