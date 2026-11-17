@@ -16,7 +16,6 @@ unsigned short xglSRand(void)
     return (iRandSeed >> 16) & 0x7fff;
 }
 
-
 /* Two steps of the iRandSeed generator; returns the first step shifted left 16 plus the second state shifted right 16. */
 unsigned int xglLRand(void)
 {
@@ -248,7 +247,6 @@ void xglVectorDivSub(Vector4 *destination, const Vector4 *numerator,
 void xglVectorDivSubXYZ(Vector4 *destination, const Vector4 *numerator,
                         const Vector4 *divisor, const Vector4 *subtrahend);
 extern void xglMatrixMul(Matrix *destination, Matrix *left, Matrix *right);
-
 
 void xglMemCopy16b(u8 *destination, const u8 *source, int count)
 {
@@ -932,7 +930,6 @@ void xglMatrixInverse(Matrix *destination, Matrix *source)
     destination->elements[15] = 1.0f;
 }
 
-
 typedef struct Matrix4Block {
     Matrix4 m;
 } Matrix4Block;
@@ -1579,7 +1576,6 @@ void xglLightSetDefault(XglLightSet *lightSet)
     xglMotionCacheValid = 0;
 }
 
-
 void xglLightPackTableInit(void)
 {
     int i;
@@ -1589,7 +1585,6 @@ void xglLightPackTableInit(void)
         xglLightPackTable[i].refs = 0;
     }
 }
-
 
 int xglLightPackRegister(XglLightPack *pack)
 {
@@ -1696,7 +1691,6 @@ typedef struct XglLightEntry {
     u8 unk24[12];
     int stream[1];          /* 0x30 */
 } XglLightEntry;
-
 
 void xglLightPackEvaluate(XglLightPack *pack, float time)
 {
@@ -1837,7 +1831,6 @@ int xglLightSpotColor(Vector4 *color, Vector4 *lightDirection, XglLightKey *key,
     xglVectorScale(lightDirection, lightDirection, -1.0f);
     return 1;
 }
-
 
 int xglLightBoxColor(Vector4 *color, Vector4 *lightDirection, XglLightKey *key, Vector4 *receiver)
 {
@@ -2012,7 +2005,6 @@ void xglLightPackCacheInvalidate(void)
 {
     xglMotionCacheValid = 0;
 }
-
 
 void xglLightPackBuildLightSet(XglLightPack *pack, XglLightSet *lightSet, Vector4 *receiver)
 {
@@ -2633,7 +2625,6 @@ void xglLightPackDebugAxis(XglLightKey *key)
     xglVectorSubXYZ_001AF3F0(&point0.vector, &zero, &point0.vector);
 }
 
-
 void xglLightPackDebugAmbient(void *state);
 void xglLightPackDebugMarker(struct XglLightKeyView *key);
 void xglLightPackDebugPoint(struct XglLightKeyView *key);
@@ -2746,43 +2737,6 @@ void xglZeroQuadwords18(register AlignedVector4 *dst)
 Matrix4 xglIdentityMatrix = { { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
 
 Matrix4 D_00645330 = { { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
-
-Vector4 D_00645370 = { .x = 0.08f, .y = 14000.0f, .z = 0.0f, .w = 0.0f };
-
-Vector4 D_00645380 = { 1.0f, 1.0f, 1.0f, 100.0f };
-Vector4 D_00645390 = { 0.0f, 0.0f, 0.0f, 1.0f };
-Vector4 D_006453A0 = { 0.0f, 0.0f, 0.0f, 1.0f };
-Vector4 D_006453B0 = { 0.0f, 0.0f, 0.0f, 1.0f };
-Vector4 D_006453C0 = { 0.0f, 1.0f, 4.0f, 1.0f };
-Vector4 D_006453D0 = { 0.0f, 0.0f, 0.0f, 1.0f };
-Vector4 D_006453E0 = { 0.0f, 0.0f, 0.0f, 1.0f };
-Vector4 D_006453F0 = { 0.0f, 1.0f, 0.0f, 1.0f };
-Vector4 D_00645400 = { 0.0f, 1.0f, 0.0f, 1.0f };
-Vector4 D_00645410 = { 0.0f, 0.0f, 0.0f, 1.0f };
-Vector4 D_00645420 = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-signed char aaiVertexIndex[32] = { 0, 2, 4, 1, 0, 5, 0, 1, 2, 3, 1, 7, 2, 3, 6, 4, 6, 5 };
-
-unsigned int D_00645450[12] = {
-    0, 0, 0, 0x51000006, 32769, 0x50000000, 0xEEEEE, 0,
-    0, 0, 63, 0
-};
-
-u64 D_00645480[4] = { 0x0000000000000000ULL, 0x0000000000000050ULL, 0x0000000000000000ULL, 0x0000000000000051ULL };
-u64 D_006454A0[4] = { 0x0000000000000000ULL, 0x0000000000000052ULL, 0x0000000000000000ULL, 0x0000000000000053ULL };
-
-unsigned int D_006454C0[20] = {
-    32769, 0xB0AB4000, 0x31EEEEEE, 1333, 0, 0, 63, 0,
-    0x7FC00A, 1788, 8, 0, 96, 0, 20, 0,
-    0, 0, 6, 0
-};
-
-unsigned int D_00645510[28] = {
-    0x31001, 0, 71, 0, 100, 64, 66, 0,
-    128, 128, 128, 128, 0, 16, 0, 0,
-    28664, 29175, 0, 0, 8192, 7184, 0, 0,
-    36856, 36343, 0, 0
-};
 
 const u64 D_0068E570[2] = { 0x3F80000000000000ULL, 0x3F80000000000000ULL };
 

@@ -152,8 +152,7 @@ int msgSlotStatus(MsgSlot *slot) {
 }
 
 /* The two tag strings formatted into a type 1 text slot (role from msgTextSlotStart). */
-extern char textSlotStylePrefix[];
-extern char textSlotPropTag[];
+extern const char textSlotStylePrefix[40];
 char *textOutputAdvance(void);
 void textFormatWrapped(void *record, int mapped);
 
@@ -163,7 +162,7 @@ void msgTextSlotStart(MsgSlot *slot) {
     slot->u.text.reveal = slot->u.text.start = textOutputAdvance();
     textFormatWrapped(slot, (int)textSlotStylePrefix);
     slot->u.text.reveal += 0x22; /* moves the revealed end on by 0x22 bytes after the first tag string (constant of the original) */
-    textFormatWrapped(slot, (int)textSlotPropTag);
+    textFormatWrapped(slot, (int)"$prop1;");
     slot->u.text.reveal += 7;
 }
 
@@ -213,3 +212,11 @@ void msgEntryFeedText(MsgSlot *record, char *input) {
         record->u.text.line_count = textLineCount(record);
     }
 }
+
+const char textSlotStylePrefix[40] = {
+    11, 25, 2, 13, 2, 36, 120, 120,
+    48, 44, 51, 48, 59, 36, 114, 117,
+    98, 121, 122, 50, 51, 44, 50, 49,
+    59, 36, 114, 117, 98, 121, 121, 45,
+    50, 59, 0, 0, 0, 0, 0, 0
+};

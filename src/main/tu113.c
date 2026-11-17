@@ -4,6 +4,7 @@
 #include "main/tu149.h"
 #include "main/tu021.h"
 #include "shared.h"
+#include "main/tu048.h"
 
 int segGetAddrOn(u32);
 void func_A9CC70(int, int);
@@ -15,7 +16,6 @@ int func_A9F140(int, int);
 int func_A9F238(int, int);
 void msgWindowOpenText(int);
 extern u16 textOptionFlags;
-extern u32 gameWork[];
 void segSetAddrOn(int, int);
 int uwamonoCurrentRecord(void);
 void mapObjectBeginMessage(int);
@@ -146,7 +146,7 @@ int menuAddItem(int ctx, int *error_flag)
     }
     if (msgWindowBusy() == 0 && msgWindowHasMore() == 0 && (textOptionFlags & 0x20) != 0) {
         msgWindowOpenText(func_A9F238(ctx, func_A9F0C0(ctx, 2)));
-        gameWork[2] |= 0x8000;
+        gameWork.control |= 0x8000;
     } else {
         *error_flag = 1;
     }
@@ -198,7 +198,7 @@ int menuDeptQuest(int ctx, int *error_flag)
             }
         }
         msgWindowBindTables();
-        gameWork[2] |= 0x8000;
+        gameWork.control |= 0x8000;
     }
     return 1;
 }
@@ -245,7 +245,7 @@ int slotWinOpen(int ctx, int *error_flag)
         timelineFrame = func_A9F0C0(ctx, 1);
         choiceIndex = func_A9F0C0(ctx, 2);
         msgChoiceOpen(timelineFrame, choiceIndex);
-        gameWork[2] |= 0x8000;
+        gameWork.control |= 0x8000;
     } else {
         *error_flag = 1;
     }

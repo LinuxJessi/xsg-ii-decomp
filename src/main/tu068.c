@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu048.h"
 
 
 /* Script natives: argument count, n-th argument, nonzero when argument n is omitted, wrong-count error. */
@@ -14,15 +15,6 @@ extern int padDebugCount;
 void msgPanelOpen(void);
 void msgPanelClear(void);
 
-/* gameWork: the panel block the time-attack natives read and write at +0x1B20. */
-typedef struct GameWorkPanel {
-    unsigned char unmodeled_0000[0x1B20];
-    signed char panelMode;              /* +0x1B20: the kind of the last panel command */
-    unsigned char unmodeled_1b21[3];
-    int panelValue;                     /* +0x1B24 */
-} GameWorkPanel;
-
-extern GameWorkPanel gameWork;
 /* Natives used by runtime_001F2DF8 (defined elsewhere) and the library compare helpers it calls. */
 int func_A9B8D8(int target, int zero);
 int func_A9B7D8(int target, int zero);
@@ -51,8 +43,10 @@ void cursorBufferDeactivateCurrent(void);
 void cursorBufferPush(char *text);
 /* Text default and digit buffer: tu068's own data at 0x0069D220 and the rodata run at 0x00689700. */
 extern char D_0069D220[];
-extern char D_00689700[];
 extern char D_003E7270[];
+
+/* EUC-JP text "00" (two digits written in place) then the rest of the 32-byte buffer, zero-filled. */
+const char D_00689700[32] = "\xa4\xf2\x30\x30\xb8\xc4\xbc\xea\xa4\xcb\xc6\xfe\xa4\xec\xa4\xbf\xa1\xaa";
 
 int runtime_001F2DF8(int call)
 {
@@ -239,3 +233,25 @@ int runtime_001F3420(int call)
     }
     return result;
 }
+
+char D_0069D220[8] = { 0 };
+char D_0069D228[8] = "bgm";
+char D_0069D230[8] = "nextBgm";
+char D_0069D238[8] = "bgmFade";
+char D_0069D240[8] = "bgmse";
+char D_0069D248[8] = "seVol";
+char D_0069D250[8] = "sePos";
+char D_0069D258[8] = "se";
+char D_0069D260[8] = "adxplay";
+char D_0069D268[8] = "adxload";
+char D_0069D270[8] = "adx";
+char D_0069D278[8] = "mpeg2";
+char D_0069D280[8] = "System";
+char D_0069D288[8] = "setItai";
+char D_0069D290[8] = "setFog";
+char D_0069D298[8] = "getFlag";
+char D_0069D2A0[8] = "setFlag";
+char D_0069D2A8[8] = "Fade";
+char D_0069D2B0[8] = "jumpCF";
+char D_0069D2B8[8] = "message";
+char D_0069D2C0[8] = "Item";

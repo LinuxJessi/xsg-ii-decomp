@@ -184,7 +184,6 @@ void recordSetAlphaFlags(int *record)
 }
 
 extern f32 quadWobblePhase;          /* wobble phase (degrees), advanced by every quadDrawRotating call */
-extern f32 kDegToRadQuad;          /* degrees-to-radians factor used for the wobble phase */
 f32 cosf(f32 x);
 f32 sinf(f32 x);
 void quadRotateAroundCenter(Vector4 *vectors, f32 angle, f32 centerX, f32 centerY);
@@ -210,7 +209,7 @@ void quadDrawRotating(GsQueueContext *quad, XglPacket *packet)
     int angle;
     int pivotX;
     int pivotY;
-    f32 toRad = kDegToRadQuad;
+    f32 toRad = 0.0174532793f;
     f32 amplitudeX;
     f32 amplitudeY;
     f32 offsetX;
@@ -272,7 +271,6 @@ void quadDrawRotating(GsQueueContext *quad, XglPacket *packet)
     gsQueueFlush(packet);
 }
 
-extern f32 degToRad;
 
 /* Rotates four vectors by angle (degrees) around the point (centerX, centerY). */
 void quadRotateAroundCenter(Vector4 *vectors, f32 angle, f32 centerX, f32 centerY)
@@ -287,7 +285,7 @@ void quadRotateAroundCenter(Vector4 *vectors, f32 angle, f32 centerX, f32 center
     center.y = centerY;
     center.z = 0.0f;
     xglMatrixUnit(rotation);
-    xglMatrixRotZ(rotation, rotation, angle * degToRad);
+    xglMatrixRotZ(rotation, rotation, angle * 0.0174532793f);
     for (i = 0; i < 4; i++) {
         Vu0SubVector(&offset, vectors, &center);
         xglVectorMulMat(&rotated, rotation, &offset);
@@ -768,3 +766,13 @@ void gsQueueFadeToColor(XglPacket *packet, int colorB, GsQueueContext *context, 
     }
     gsQueueAddContextColor(packet, context);
 }
+
+/* Scalar data of the original .sdata section, in address order. */
+f32 degreesToRadians = 0.0174532887f;
+f32 quadWobblePhase = 0;
+int randomSeed = 0;
+f32 D_0069DE10 = 0;
+f32 D_0069DE14 = 0;
+f32 D_0069DE18 = 0.0174532887f;
+int D_0069DE1C = 0;
+f32 D_0069DE20 = 0.0174532887f;

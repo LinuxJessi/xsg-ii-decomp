@@ -4670,7 +4670,7 @@ def anonymous_coordinate_candidates(elf, csec, rels, data, want, length,
 
     def consider(offset):
         if time.monotonic() > deadline:
-            raise CarveError(f'{tu_id}: anonymous coordinate proof exceeds its 20-second bound')
+            raise CarveError(f'{tu_id}: anonymous coordinate proof exceeds its time bound')
         if offset < 0 or offset + length > csec.size:
             return
         if any(lo < offset + length and offset < hi for lo, hi in occupied):
@@ -4695,7 +4695,7 @@ def anonymous_coordinate_candidates(elf, csec, rels, data, want, length,
                     return
         candidates.add(offset)
         # A TU with many switch tables (ov02 tsk_umn_mail_pas: 437) offers one
-        # candidate per relocation; the 20-second deadline above bounds the work.
+        # candidate per relocation; the time bound of the caller bounds the work.
         if len(candidates) > 1024:
             raise CarveError(f'{tu_id} {sec}: anonymous coordinate search exceeds its bound')
 
@@ -4715,7 +4715,7 @@ def anonymous_coordinate_candidates(elf, csec, rels, data, want, length,
             offset = data.find(want[:4])
             while offset >= 0:
                 if time.monotonic() > deadline:
-                    raise CarveError(f'{tu_id}: anonymous coordinate proof exceeds its 20-second bound')
+                    raise CarveError(f'{tu_id}: anonymous coordinate proof exceeds its time bound')
                 if not any(position in relocations for position in range(offset - 3, offset + 4)):
                     consider(offset)
                 offset = data.find(want[:4], offset + 1)
@@ -5358,7 +5358,10 @@ def refresh_initialized_spans(root, unit, unit_dir, tu_id, obj, elf, ctx, declar
             for csec in elf.sections:
                 if csec.name == '.lit4' and csec.size:
                     literal_coordinates = original_literal_coordinates(elf, original, csec, per_func)
-        search_deadline = time.monotonic() + 20
+        # 20 seconds, or a quarter second per anonymous item for a large literal
+        # pool (res_get_path's ~1,400 CD file names; data map review 2026-11-17).
+        search_bound = max(20, len(anonymous) // 4)
+        search_deadline = time.monotonic() + search_bound
         # The cc1 provenance proof depends only on the input section; prove it
         # once per section rather than once per anonymous item.
         section_proofs = {}
@@ -5375,6 +5378,9 @@ def refresh_initialized_spans(root, unit, unit_dir, tu_id, obj, elf, ctx, declar
                 raise exc
             return proof
 
+        # Parse the relocations once: a per-item parse made large literal pools (res_get_path,
+        # ~1,150 items) exceed the 20-second bound on parsing alone (data map review 2026-11-17).
+        object_relocations = read_relocations(elf)
         for sec, run, part, lo, hi in anonymous:
             input_sec = base_section_name(part['section'])
             csecs = [s for s in elf.sections if s.name == input_sec and s.size and s.type != 8]
@@ -5400,7 +5406,7 @@ def refresh_initialized_spans(root, unit, unit_dir, tu_id, obj, elf, ctx, declar
                     continue
                 raise CarveError(f'{tu_id} {sec}: anonymous payload has no precise cc1 source proof')
             length = hi - lo
-            rels = read_relocations(elf).get(csec.index, [])
+            rels = object_relocations.get(csec.index, [])
             want = va_bytes(original, lo, length)
             data = elf.section_bytes(csec)
             candidates = anonymous_coordinate_candidates(
@@ -5409,7 +5415,7 @@ def refresh_initialized_spans(root, unit, unit_dir, tu_id, obj, elf, ctx, declar
             exact = []
             for offset in sorted(candidates):
                 if time.monotonic() > search_deadline:
-                    raise CarveError(f'{tu_id}: anonymous coordinate proof exceeds its 20-second bound')
+                    raise CarveError(f'{tu_id}: anonymous coordinate proof exceeds its {search_bound}-second bound')
                 if any(p['input_section'] == input_sec and p['offset'] < offset + length and offset < p['end']
                        for p in target_parts):
                     continue
@@ -6808,6 +6814,27 @@ def _derive_current(root, unit, unit_dir, tu_id, source, obj, *, _declared=None,
     # of a function-local `char *tbl[] = {...}` template, short ones in .sdata
     # under -G8): the C object emits them too
     todo = [(sec, i) for sec, w in work.items() for i in w['gen']]
+    # Items of sections already routed by explicit c_input_spans (a re-derive
+    # of a recorded entry) still generate what they point at: the strings of a
+    # literal-initialized pointer table in .data stay C items when .data is
+    # explicit (res_get_path's CD name tables; data map review 2026-11-17).
+    for xsec, xruns in explicit_sections.items():
+        if xsec in work or xsec not in ctx['pieces']:
+            continue
+        xspans = [(hx(r['range'][0]), hx(r['range'][1])) for r in xruns]
+        for xit in section_items(ctx, xsec):
+            if not any(lo <= xit['start'] < hi for lo, hi in xspans):
+                continue
+            names = item_references(xit)
+            for tsec, w in work.items():
+                for j, it in enumerate(w['items']):
+                    if j in w['gen'] or j in w['also'] or not set(it['labels']) & names:
+                        continue
+                    if set(it['labels']) & extern:
+                        w['also'].add(j)
+                        continue
+                    w['gen'].add(j)
+                    todo.append((tsec, j))
     while todo:
         sec, i = todo.pop()
         names = work[sec]['refs'][i]
@@ -7379,6 +7406,23 @@ def _derive_current(root, unit, unit_dir, tu_id, source, obj, *, _declared=None,
                 root, unit, unit_dir, tu_id, obj, elf, ctx, out['runs'], c_refs, per_func)
             result = derive(root, unit, unit_dir, tu_id, source, obj, _declared=canonical,
                             accepted_root=accepted_root, accepted_runs=accepted_runs)
+            if normalize_runs(result['runs']) != normalize_runs(canonical):
+                # A fresh run can mix named C OBJECTs with anonymous literals
+                # (res_get_path: "man.xap"/"CFS_SE" and D_0069CFD0 among its CD
+                # name literals). The whole span is no anonymous coordinate, so
+                # route it item by item exactly as the legacy retry in
+                # `_derive_current` does; every proof is unchanged.
+                try:
+                    mixed_canonical, mixed_refresh = refresh_initialized_spans(
+                        root, unit, unit_dir, tu_id, obj, elf, ctx, out['runs'], c_refs, per_func,
+                        split_mixed=True)
+                    mixed_result = derive(root, unit, unit_dir, tu_id, source, obj, _declared=mixed_canonical,
+                                          accepted_root=accepted_root, accepted_runs=accepted_runs)
+                except CarveError:
+                    mixed_result = None
+                if mixed_result is not None and \
+                        normalize_runs(mixed_result['runs']) == normalize_runs(mixed_canonical):
+                    canonical, refresh, result = mixed_canonical, mixed_refresh, mixed_result
             if 'declared_current' in out:
                 result['declared_current'] = out['declared_current']
                 result['withdrawn_candidate_data'] = out['withdrawn_candidate_data']

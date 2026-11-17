@@ -13,6 +13,7 @@
 #include "main/pad.h"
 #include "main/sdv_033.h"
 #include "main/tu021.h"
+#include "main/tu048.h"
 
 /* Page shown by yg2PathDraw; yg2PathMode selects it and yg2PathRun dispatches the pad input on it. */
 enum YgPathPage {
@@ -330,7 +331,7 @@ void yg2PathLoadCitizens(void)
     }
 }
 
-extern float D_0069D830[4];
+extern float D_0069D830[];
 
 /* Partial view of the XenoActor record the path scene creates, for the accesses below that the original makes through
    a union view (alias set 0: it reloads the handle after each store; struct XenoActor's plain vectors would not). */
@@ -537,7 +538,6 @@ void yg2PathDrawPageChrome(void) {
     }
     fontObjResetOpacity();
 }
-
 
 void yg2PathDrawMainMenu(int opacity) {
     fontObjSetOpacity(opacity);
@@ -1006,7 +1006,6 @@ void yg2PathDraw(void)
   xglFontFlush();
 }
 
-
 void yg2PathDrawFrame(void) {
     yg2PathDraw();
     gifStateSuppressDrawHook();
@@ -1177,7 +1176,6 @@ int yg2PathFindPrevPath(int path)
         current = (signed char) (current - 1);
     }
 }
-
 
 int yg2PathHandlePathInput(void)
 {
@@ -1357,14 +1355,6 @@ void yg2PathEaseCursor(void) {
 
 const unsigned char D_0068B1C8[24] = "201_menu";
 
-/* Partial view of gameWork: control at +0x8 (the bits are the CONTROL_* values of tu051.h). */
-typedef struct YgPathGameWork {
-    unsigned char unmodeled_00[8];
-    int control;
-} YgPathGameWork;
-
-extern YgPathGameWork gameWork;
-
 #define CONTROL_SOFT_RESET 0x10000000
 
 extern const unsigned char D_0068B1C8[];
@@ -1475,130 +1465,87 @@ int yg2PathPortraitBuffer = 0;
 
 int D_0069D7DC = 0;
 
-unsigned char yg2PathFrameImage[80] = {
-    218, 1, 0, 0, 219, 1, 0, 0,
-    220, 1, 0, 0, 221, 1, 0, 0,
-    255, 255, 255, 255, 222, 1, 0, 0,
-    223, 1, 0, 0, 224, 1, 0, 0,
-    225, 1, 0, 0, 0, 0, 0, 0,
-    210, 1, 0, 0, 211, 1, 0, 0,
-    212, 1, 0, 0, 213, 1, 0, 0,
-    255, 255, 255, 255, 214, 1, 0, 0,
-    215, 1, 0, 0, 216, 1, 0, 0,
-    217, 1, 0, 0, 0, 0, 0, 0
-};
-unsigned char yg2PathFrameBorderImage[40] = {
-    202, 1, 0, 0, 203, 1, 0, 0,
-    204, 1, 0, 0, 205, 1, 0, 0,
-    255, 255, 255, 255, 206, 1, 0, 0,
-    207, 1, 0, 0, 208, 1, 0, 0,
-    209, 1, 0, 0, 0, 0, 0, 0
-};
-unsigned int D_003EB380[10] = {
-    261, 262, 263, 255, 256, 257, 265, 264,
-    265, 0
-};
-unsigned int menuIconKinds[8] = {
-    0xC40147u, 0x14F00C2u, 0xC60149u, 0x153014Du, 0x1510155u, 0x1430145u, 331, 0
-};
-unsigned int D_003EB3C8[12] = {
-    0x69D600u, 0x69D5F8u, 0x69D5F0u, 0x69D5E8u, 0x69D5E0u, 0x69D5D8u, 0x69D5D0u, 0x69D5C8u,
-    0x69D5C0u, 0x69D5B8u, 0x69D5B0u, 0x69D5A8u
-};
-unsigned int D_003EB3F8[] = { 0x1020401u, 0x5000006u };
-unsigned int D_003EB400[] = { 1, 21 };
-unsigned char D_003EB408[720] = {
-    116, 0, 0, 0, 1, 0, 0, 0,
-    45, 0, 0, 0, 203, 0, 0, 0,
-    1, 0, 0, 0, 69, 0, 0, 0,
-    34, 1, 0, 0, 1, 0, 0, 0,
-    238, 0, 0, 0, 125, 0, 0, 0,
-    1, 0, 0, 0, 252, 0, 0, 0,
-    174, 0, 0, 0, 1, 0, 0, 0,
-    10, 1, 0, 0, 223, 0, 0, 0,
-    1, 0, 0, 0, 24, 1, 0, 0,
-    16, 1, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 1, 0, 0, 0,
-    21, 0, 0, 0, 116, 0, 0, 0,
-    1, 0, 0, 0, 45, 0, 0, 0,
-    203, 0, 0, 0, 1, 0, 0, 0,
-    69, 0, 0, 0, 34, 1, 0, 0,
-    1, 0, 0, 0, 238, 0, 0, 0,
-    125, 0, 0, 0, 1, 0, 0, 0,
-    252, 0, 0, 0, 182, 0, 0, 0,
-    1, 0, 0, 0, 10, 1, 0, 0,
-    239, 0, 0, 0, 1, 0, 0, 0,
-    24, 1, 0, 0, 40, 1, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 27, 0, 0, 0,
-    105, 0, 0, 0, 0, 0, 0, 0,
-    70, 0, 0, 0, 197, 0, 0, 0,
-    0, 0, 0, 0, 27, 0, 0, 0,
-    33, 1, 0, 0, 0, 0, 0, 0,
-    104, 255, 255, 255, 66, 1, 0, 0,
-    0, 0, 0, 0, 185, 254, 255, 255,
-    33, 1, 0, 0, 0, 0, 0, 0,
-    185, 254, 255, 255, 105, 0, 0, 0,
-    0, 0, 0, 0, 104, 255, 255, 255,
-    72, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 2, 0, 0, 0,
-    17, 0, 0, 0, 95, 0, 0, 0,
-    2, 0, 0, 0, 17, 0, 0, 0,
-    95, 0, 0, 0, 2, 0, 0, 0,
-    17, 0, 0, 0, 95, 0, 0, 0,
-    2, 0, 0, 0, 17, 0, 0, 0,
-    95, 0, 0, 0, 2, 0, 0, 0,
-    17, 0, 0, 0, 95, 0, 0, 0,
-    2, 0, 0, 0, 17, 0, 0, 0,
-    95, 0, 0, 0, 2, 0, 0, 0,
-    17, 0, 0, 0, 95, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    1, 0, 0, 0, 17, 1, 0, 0,
-    95, 0, 0, 0, 1, 0, 0, 0,
-    17, 1, 0, 0, 137, 0, 0, 0,
-    1, 0, 0, 0, 17, 1, 0, 0,
-    179, 0, 0, 0, 1, 0, 0, 0,
-    17, 1, 0, 0, 227, 0, 0, 0,
-    1, 0, 0, 0, 17, 1, 0, 0,
-    11, 1, 0, 0, 1, 0, 0, 0,
-    17, 1, 0, 0, 51, 1, 0, 0,
-    1, 0, 0, 0, 17, 1, 0, 0,
-    91, 1, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
-};
-unsigned int D_003EB6D8[13] = { 0 };
-
 float D_0069B2A0 = 3.14159203f;
+
+/* .data of this file (0x3EC930-0x3ECAB0), address order; tu110.c and tu116.c also read questFlags and citizenFlags. */
+unsigned char D_003EC930[40] = {
+    183, 1, 0, 0, 184, 1, 0, 0,
+    185, 1, 0, 0, 147, 1, 0, 0,
+    148, 1, 0, 0, 149, 1, 0, 0,
+    186, 1, 0, 0, 187, 1, 0, 0,
+    188, 1, 0, 0, 0, 0, 0, 0
+};
+
+unsigned char yg2PathPanelImage[40] = {
+    153, 1, 0, 0, 154, 1, 0, 0,
+    155, 1, 0, 0, 147, 1, 0, 0,
+    148, 1, 0, 0, 149, 1, 0, 0,
+    150, 1, 0, 0, 151, 1, 0, 0,
+    152, 1, 0, 0, 0, 0, 0, 0
+};
+
+signed char D_003EC980[40] = {
+    1, 0, 2, 26, 10, 43, 4, 5,
+    7, 42, 8, 45, 30, 46, 49, 25,
+    12, 28, 9, 14, 32, 19, 47, 36,
+    11, 20, 17, 34, 44, 18, 27, 37,
+    48, 40, 23, 39, 0, 0, 0, 0
+};
+
+unsigned char yg2PathNumberText[136] = "Path No. 01 achievement level. \xa2" "\xf6" "\\nGray = In Progress   Blue = Success   Red = Failed\\nPress &03 for details. Press &04 to go back.";
+
+unsigned char yg2PathDigitChars[16] = "0123456789";
+
+unsigned char questFlags[40] = { 0 };
+
+unsigned char citizenFlags[56] = { 0 };
+
+int yg2PathModelHandles[4] = { 0 };
+
+/* .sdata of this file after its own globals (0x69D7E0-0x69D888): globals read by tu115.c (renderOriginX/Y) and its names. */
+unsigned char yg2PathImageFade = 0;
+
+int renderOriginX = 1792;
+
+int renderOriginY = 0x720;
+
+unsigned char D_0069D7F0[8] = { 0 };
+
+unsigned char D_0069D7F8[8] = "pBuf";
+
+unsigned char D_0069D800[8] = "Sex:%s\n";
+
+unsigned char D_0069D808[8] = "Age:%s\n";
+
+unsigned char D_0069D810[8] = "pPxy";
+
+unsigned char D_0069D818[8] = "pTxy";
+
+unsigned char D_0069D820[8] = "pXhr";
+
+unsigned char D_0069D828[8] = "pXap";
+
+float D_0069D830[1] = { -0.0f };
+
+int D_0069D834 = 131071;
+
+unsigned char D_0069D838[8] = "Subject";
+
+unsigned char D_0069D840[8] = "Message";
+
+unsigned char D_0069D848[8] = "Client";
+
+unsigned char D_0069D850[8] = "Data";
+
+unsigned char D_0069D858[8] = "Profile";
+
+unsigned char D_0069D860[8] = "Name:";
+
+unsigned char D_0069D868[8] = "Sex:";
+
+unsigned char D_0069D870[8] = "Age:";
+
+unsigned char D_0069D878[8] = "Hobby:";
+
+unsigned char *D_0069D880 = (unsigned char *)&yg2PathPortraitFormat[16];
+

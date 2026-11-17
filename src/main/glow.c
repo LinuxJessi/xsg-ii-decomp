@@ -132,3 +132,18 @@ void glowRunScene(void)
     xglRenderClearFrame();
     gifStateModeHook = 0;
 }
+
+const char D_0068CB58[16] = "pLandscape";
+const char D_0068CB68[16] = "../glow.euc.c";
+const char D_0068CB78[40] = "host0:/home/xeno/work/iwase/glow3.pxy";
+const char D_0068CBA0[40] = "host0:/home/xeno/work/iwase/glow3.txy";
+const char D_0068CBC8[32] = "pLandscape->rsrc[XAct_Rsrc_MDL]";
+const char D_0068CBE8[32] = "pLandscape->rsrc[XAct_Rsrc_TEX]";
+const char D_0068CC08[8] = "pChaos";
+const char D_0068CC10[40] = "host0:/home/xeno/work/iwase/ziggy00.pxy";
+const char D_0068CC38[40] = "host0:/home/xeno/work/iwase/ziggy00.txy";
+const char D_0068CC60[40] = "host0:/home/xeno/work/iwase/ziggy00.xhr";
+const char D_0068CC88[40] = "host0:/home/xeno/work/iwase/ziggy00.xap";
+const char D_0068CCB0[32] = "pChaos->rsrc[XAct_Rsrc_MDL]";
+const char D_0068CCD0[32] = "pChaos->rsrc[XAct_Rsrc_TEX]";
+const char D_0068CCF0[32] = "iwase\\citizen.xtx";

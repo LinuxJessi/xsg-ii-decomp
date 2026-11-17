@@ -167,27 +167,3 @@ void renderSpriteClutAlpha(int x, int y, int width, int height, int clutOffset, 
     gifStateFlush();
     sceVif1PkCloseDirectHLCode(packet);
 }
-
-unsigned char yg2PathImageFade = 0;
-int renderOriginX = 1792;
-int renderOriginY = 0x720;
-unsigned char D_0069D7F0[8] = { 0 };
-unsigned char D_0069D7F8[8] = "pBuf";
-unsigned char D_0069D800[8] = "Sex:%s\n";
-unsigned char D_0069D808[8] = "Age:%s\n";
-unsigned char D_0069D810[8] = "pPxy";
-unsigned char D_0069D818[8] = "pTxy";
-unsigned char D_0069D820[8] = "pXhr";
-unsigned char D_0069D828[8] = "pXap";
-int D_0069D830 = (int)0x80000000;
-int D_0069D834 = 131071;
-unsigned char D_0069D838[8] = "Subject";
-unsigned char D_0069D840[8] = "Message";
-unsigned char D_0069D848[8] = "Client";
-unsigned char D_0069D850[8] = "Data";
-unsigned char D_0069D858[8] = "Profile";
-unsigned char D_0069D860[8] = "Name:";
-unsigned char D_0069D868[8] = "Sex:";
-unsigned char D_0069D870[8] = "Age:";
-unsigned char D_0069D878[8] = "Hobby:";
-char D_0069D880[8] = "\xd0\xb0h";

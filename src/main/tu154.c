@@ -273,3 +273,7 @@ int func_00252CD8(int kind, struct XenoActor *firstActor, struct XenoActor *seco
     }
     return result != 0;
 }
+
+/* Screen parameters read by func_00252AB8: pass 0 and 1 are the fan scale factors (1 and -1). The first three
+ * Vector4 slots are read by sv_get_image_item.c as scale and offset values. */
+float svDefaultScreenParams[12] = { 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f, 268435360.0f, 0.0f };

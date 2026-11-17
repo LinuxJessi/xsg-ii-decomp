@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/sdv_033.h"
 #include "shared.h"
+#include "main/tu048.h"
 
 extern void sceVif1PkRef(XglPacket *packet, const void *environment,
                          int count, int mode, int offset, int flags);
@@ -74,7 +75,6 @@ typedef struct TyaPadDirections {
 
 extern PadRecord PadData[2];
 extern ConfigSaveSettings SaveData;
-extern GameWorkControl gameWork;
 extern void *memset(void *dst, int value, unsigned int size);
 
 /*
@@ -237,3 +237,8 @@ void tyaSetDisplayOffset(int horizontal, int vertical)
     DispEnv.display1.dx = DispEnv.base.dx + horizontal * 5;
     DispEnv.display1.dy = DispEnv.base.dy + vertical;
 }
+
+/* The DMA environment of the overlay's three framebuffer packets, in address order (DrawImage_001EE618 reads them). */
+u64 TestEnv_0_002BD4C0[12] = { 0x0000000000000000ULL, 0x5100000500000000ULL, 0x1000000000000004ULL, 0x000000000000000eULL, 0x0000000000000000ULL, 0x0000000000000050ULL, 0x0000000000000000ULL, 0x0000000000000051ULL, 0x000001c000000200ULL, 0x0000000000000052ULL, 0x0000000000000000ULL, 0x0000000000000053ULL };
+GameOverDmaPacket4 TransEnv_1_002BD520 = { .words = { 0x0000000000000000ULL, 0x5100000100000000ULL, 0x0800000000007000ULL, 0x0000000000000000ULL } };
+GameOverDmaPacket6 FlushEnv_2_002BD540 = { .words = { 0x0000000000000000ULL, 0x5100000200000000ULL, 0x1000000000008001ULL, 0x000000000000000eULL, 0x0000000000000000ULL, 0x000000000000003fULL } };

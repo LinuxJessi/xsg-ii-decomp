@@ -251,7 +251,7 @@ typedef struct XenoActor {
 /* colorIndex value meaning "no color"; XenoActorInit fills the 0x10-byte block at colorIndex with it. */
 #define XENO_COLOR_INDEX_NONE 0xFF
 
-extern int XenoActorPoolCount;
+int XenoActorPoolCount = 48;
 extern XenoActor *XenoActorPool;
 
 /* Size in bytes of one pool record. */
@@ -266,8 +266,11 @@ XenoActor *XenoActorPoolGet(int index)
     return (XenoActor *)((unsigned char *)XenoActorPool + index * XENO_ACTOR_POOL_STRIDE);
 }
 
-extern u8 D_008A2CB0[];
-extern int *XenoActorActiveTable;
+static u8 D_0088AEF0[97728];
+static u8 D_008A2CB0[54096];
+static u8 D_008B0000[175360];
+XenoActor *XenoActorPool = (XenoActor *)D_0088AEF0;
+int *XenoActorActiveTable = (int *)((u8 *)D_0088AEF0 + 97536);
 
 /* XenoActorPoolInit: sets the pool base and count, builds the active table after the pool and inits every record. */
 unsigned char *XenoActorPoolInit(void *data, int size) {
@@ -292,14 +295,12 @@ unsigned char *XenoActorPoolInit(void *data, int size) {
     return end;
 }
 
-extern u8 D_0088AEF0[];
-
 /* XenoActorPoolInitDefault: initializes the pool from the built-in buffer D_0088AEF0 (0x30 records). */
 void XenoActorPoolInitDefault(void) {
     XenoActorPoolInit(D_0088AEF0, 0x30);
 }
 
-extern unsigned char xenoActorAssertFile[];
+const char xenoActorAssertFile[16] = "xenoActor.euc.c";
 extern unsigned char xenoActorAssertExpr[];
 struct RgHeap *InstanceOfRgHeapById(int);
 void tiMRStateSetValue(void *, float);
@@ -307,7 +308,8 @@ int tiMRPackageGetNodeMatrix(int);
 int tiMRPackageGetNodePoint(int);
 void xglCurMatrixSet(f32 *);
 void xacEvalTransform(float *, int *, float);
-extern int XenoActorHoldFlag;
+int XenoActorHoldFlag = 0;
+unsigned char xenoActorAssertExpr[8] = "pAct";
 void xglCurSetTranslate(const Vector4 *vector);
 void tiDrawJointDrawPoints(f32 matrix[4][4], float scale);
 void xglMatrixMul(void *, void *, void *);
@@ -402,11 +404,11 @@ XenoActor *XenoActorAlloc(void) {
     return 0;
 }
 
-extern unsigned char xenoActorAssertExprDynamics[];
-extern unsigned char xenoActorAssertExprLocalMat[];
-extern unsigned char xenoActorAssertExprGlobalMat[];
-extern unsigned char xenoActorAssertExprBlendMat[];
-extern unsigned char xenoActorAssertExprPartsMat[];
+const char xenoActorAssertExprDynamics[24] = "pAct->pDynamics != NIL";
+const char xenoActorAssertExprLocalMat[24] = "pAct->pLocalMat != NIL";
+const char xenoActorAssertExprGlobalMat[24] = "pAct->pGlobalMat != NIL";
+const char xenoActorAssertExprBlendMat[24] = "pAct->pBlendMat != NIL";
+const char xenoActorAssertExprPartsMat[16] = "pAct->pPartsMat";
 void *RgHeapAllocById(u32 heapId, u32 size, const char *pSourceFile, int line);
 void RgHeapFree(void *pPtr, const char *pSourceFile, int line);
 void tiMRPackageSetLocalMat(void *package, void *matrices);
@@ -907,7 +909,7 @@ void XenoActorClearHoldFlag(void) {
     XenoActorHoldFlag = 0;
 }
 
-extern unsigned char xenoActorAssertExprRelease[];
+const char xenoActorAssertExprRelease[16] = "bRelease";
 /* XenoActorRelease: frees the matrix buffers, removes the record from the active table and its parent, detaches its children, then resets it. */
 void XenoActorRelease(XenoActor *actor) {
     int i, j;
@@ -1290,8 +1292,8 @@ void XenoActorUpdateTree(XenoActor *actor) {
     }
 }
 
-extern unsigned char XenoActorItemTextIdle[];
-extern unsigned char XenoActorItemTextActive[];
+u32 XenoActorItemTextIdle[4] = { 96, 170, 96, 255 };
+u32 XenoActorItemTextActive[4] = { 204, 255, 170, 255 };
 
 /* XenoActorRefreshItems: draws each table item; the active item uses its own text. */
 void XenoActorRefreshItems(XenoActor *actor)
@@ -1415,7 +1417,10 @@ void XenoActorSetVector(XenoActor *actor, float x, float y, float z) {
     tiMRPackageSetVector(actor->motionPack, x, y, z);
 }
 
-extern char xenoActorAssertExprMotionPackHrcData[], xenoActorAssertExprMotionPackGlobalMat[], xenoActorAssertExprJointMatrixCount[], xenoActorAssertExprMotionPackPamData[];
+const char xenoActorAssertExprMotionPackHrcData[32] = "pAct->motionPack.pHrcData";
+const char xenoActorAssertExprMotionPackGlobalMat[32] = "pAct->motionPack.pGlobalMat";
+const char xenoActorAssertExprJointMatrixCount[72] = "pAct->motionPack.pHrcData->numTransform - 2 >= pPxyHead->nJointMatrix";
+const char xenoActorAssertExprMotionPackPamData[40] = "pAct->motionPack.pPamData";
 void func_001BAA98(int state);
 void pxySetModelScale(float *row);
 void func_001BA248(unsigned char *color);
@@ -2028,3 +2033,13 @@ void XenoActorTransformOffset(struct XenoActor *actor, int id) {
     xglCurMatrixSet(actor->localMatrix.m[0]);
     xglCurApplyVector((Vector4 *)id, &actor->vector80);
 }
+
+const u8 dropShadowContactQuadIndices[56] = {
+    4, 0, 1, 6, 1, 6, 7, 2,
+    7, 2, 3, 5, 12, 9, 8, 15,
+    8, 15, 14, 11, 14, 11, 10, 13,
+    0, 4, 8, 12, 4, 1, 12, 9,
+    1, 7, 9, 15, 7, 3, 15, 11,
+    3, 5, 11, 13, 5, 2, 13, 10,
+    2, 6, 10, 14, 6, 0, 14, 8
+};

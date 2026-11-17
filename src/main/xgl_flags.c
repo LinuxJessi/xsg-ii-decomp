@@ -199,3 +199,11 @@ void xglFlagsClear(void)
     }
     while (index < 0x100U);
 }
+
+/* .data of this file (0x63F878-0x640000): the system block read by xgl_timer0.c, tu060.c, tu110.c and tu126.c. */
+/* 24-byte block: the language index (read at +2) that xglGetLanguageCode selects with. */
+unsigned char D_0063F878[24] = { 0 };
+
+unsigned char D_0063F890[24] = { 0 };
+
+unsigned int D_0063F8A8[470] = { 0 };

@@ -140,7 +140,6 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
-    ".data": "asm",
     ".rodata": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
@@ -249,6 +248,7 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
+    ".data": "asm",
     ".sdata": "asm",
     ".bss": "asm"
    },
@@ -491,7 +491,8 @@
    ],
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
-    ".text": "asm"
+    ".text": "asm",
+    ".data": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
@@ -1260,7 +1261,6 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
-    ".data": "asm",
     ".rodata": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
@@ -1270,35 +1270,9 @@
     "-g"
    ]
   },
-  "tu053": {
+  "res_get_path": {
    "id": "main/tu053",
    "ordinal": 53,
-   "path": "src/main/tu053.c",
-   "kind": "gcc",
-   "category": "game",
-   "in_scope": true,
-   "mode": "asm",
-   "language": "c",
-   "compiler_profile": "ee-gcc2_96-realconv-lp7",
-   "flags": [
-    "-O2",
-    "-G0"
-   ],
-   "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-   "owners": {
-    ".text": "asm",
-    ".data": "asm"
-   },
-   "evidence": "reports/x2-compiler-calibration.md",
-   "all_functions_accepted": false,
-   "accepted_functions": "0/3",
-   "assembler_options": [
-    "-g"
-   ]
-  },
-  "res_get_path": {
-   "id": "main/tu054",
-   "ordinal": 54,
    "path": "src/main/res_get_path.c",
    "kind": "gcc",
    "category": "game",
@@ -1322,7 +1296,7 @@
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/101",
+   "accepted_functions": "0/104",
    "assembler_options": [
     "-g"
    ]
@@ -1652,7 +1626,6 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
-    ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm"
    },
@@ -1870,6 +1843,7 @@
    "owners": {
     ".text": "asm",
     ".data": "asm",
+    ".rodata": "asm",
     ".lit4": "asm",
     ".sdata": "asm",
     ".sbss": "asm"
@@ -1919,7 +1893,7 @@
    "compiler_profile": "ee-gcc2_96-realconv-lp7",
    "flags": [
     "-O2",
-    "-G0"
+    "-G8"
    ],
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
@@ -2059,7 +2033,6 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
-    ".data": "asm",
     ".lit4": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
@@ -2086,7 +2059,6 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
-    ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm",
     ".sdata": "asm"
@@ -2196,7 +2168,6 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
-    ".data": "asm",
     ".rodata": "asm",
     ".lit4": "asm"
    },
@@ -2583,9 +2554,7 @@
    ],
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
-    ".text": "asm",
-    ".data": "asm",
-    ".bss": "asm"
+    ".text": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
@@ -2743,8 +2712,7 @@
    ],
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
-    ".text": "asm",
-    ".sdata": "asm"
+    ".text": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
@@ -3236,7 +3204,6 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
-    ".data": "asm",
     ".rodata": "asm",
     ".bss": "asm"
    },
@@ -3628,7 +3595,7 @@
    "compiler_profile": "ee-gcc2_96-realconv-lp7",
    "flags": [
     "-O2",
-    "-G0"
+    "-G8"
    ],
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
@@ -4149,6 +4116,7 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
+    ".rodata": "asm",
     ".bss": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
@@ -4279,8 +4247,7 @@
    ],
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
-    ".text": "asm",
-    ".rodata": "asm"
+    ".text": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
@@ -4541,64 +4508,13 @@
    "owners": {
     ".text": "asm",
     ".rodata": "asm",
-    ".sdata": "asm"
-   },
-   "evidence": "reports/x2-compiler-calibration.md",
-   "all_functions_accepted": false,
-   "accepted_functions": "0/3",
-   "assembler_options": [
-    "-g"
-   ]
-  },
-  "tu202": {
-   "id": "main/tu202",
-   "ordinal": 202,
-   "path": "src/main/tu202.c",
-   "kind": "gcc",
-   "category": "game",
-   "in_scope": true,
-   "mode": "asm",
-   "language": "c",
-   "compiler_profile": "ee-gcc2_96-realconv-lp7",
-   "flags": [
-    "-O2",
-    "-G0"
-   ],
-   "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-   "owners": {
-    ".text": "asm"
-   },
-   "evidence": "reports/x2-compiler-calibration.md",
-   "all_functions_accepted": false,
-   "accepted_functions": "0/3",
-   "assembler_options": [
-    "-g"
-   ]
-  },
-  "tu203": {
-   "id": "main/tu203",
-   "ordinal": 203,
-   "path": "src/main/tu203.c",
-   "kind": "gcc",
-   "category": "game",
-   "in_scope": true,
-   "mode": "asm",
-   "language": "c",
-   "compiler_profile": "ee-gcc2_96-realconv-lp7",
-   "flags": [
-    "-O2",
-    "-G8"
-   ],
-   "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-   "owners": {
-    ".text": "asm",
     ".lit4": "asm",
     ".sdata": "asm",
     ".bss": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/6",
+   "accepted_functions": "0/12",
    "assembler_options": [
     "-g"
    ]
@@ -4855,14 +4771,13 @@
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
     ".text": "asm",
-    ".rodata": "asm",
     ".lit4": "asm",
     ".sdata": "asm",
     ".sbss": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/30",
+   "accepted_functions": "0/28",
    "assembler_options": [
     "-g"
    ]
@@ -4885,11 +4800,12 @@
    "owners": {
     ".text": "asm",
     ".data": "asm",
+    ".rodata": "asm",
     ".sdata": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/5",
+   "accepted_functions": "0/7",
    "assembler_options": [
     "-g"
    ]
@@ -5157,7 +5073,7 @@
    "compiler_profile": "ee-gcc2_96-realconv-lp7",
    "flags": [
     "-O2",
-    "-G0"
+    "-G8"
    ],
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {

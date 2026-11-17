@@ -60,3 +60,8 @@ void talkCopySpeakerName(unsigned char *buffer, MsgSlot *box)
         *buffer = 0;
     }
 }
+
+/* Scaffold data of this file (.sdata), in address order. The string items are read by the other main TUs
+ * (main/tu234 and others) through their own extern declarations. */
+signed char talkPrefixStash[2] = { 0, 0 };
+extern unsigned char sellNoItemsText[];

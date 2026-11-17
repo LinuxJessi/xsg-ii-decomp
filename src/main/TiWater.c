@@ -23,7 +23,7 @@
 
 extern int tiWaterDebugMode;
 /* debug panel mode, toggled by select in the scene loop */
-extern int tiWaterDebugIndex;
+static int tiWaterDebugIndex;
 /* selected debug parameter, 0..11 */
 extern float tiWaterEffectNum;
 extern int tiWaterSubCount;
@@ -683,3 +683,25 @@ void tiWaterCameraUpdateFine(XglCamera *camera)
         }
     }
 }
+
+/* Data of this TU (the scaffold items, in address order). */
+const char tiWaterMenuFormat[24] = "\x0d" "\x02" "MENU %2d / %2d";
+const char tiWaterMenuMarker[8] = "\x0d" "\x02" "*";
+const char tiWaterLandscapeName[16] = "pLandscape";
+const char tiWaterSourceFile[24] = "../TiWater.euc.c";
+const char tiWaterLandscapeModelPath[48] = "host0:/home/xeno/work/iwase/E2_MOM17.pxy";
+const char tiWaterLandscapeTexturePath[48] = "host0:/home/xeno/work/iwase/E2_MOM17.txy";
+const char tiWaterLandscapeModelAssert[32] = "pLandscape->rsrc[XAct_Rsrc_MDL]";
+const char tiWaterLandscapeTextureAssert[32] = "pLandscape->rsrc[XAct_Rsrc_TEX]";
+const char tiWaterKosmosName[8] = "pKosmos";
+const char tiWaterKosmosModelPath[40] = "host0:/home/xeno/work/iwase/jr00.pxy";
+const char tiWaterKosmosTexturePath[40] = "host0:/home/xeno/work/iwase/jr00.txy";
+const char tiWaterKosmosHierarchyPath[40] = "host0:/home/xeno/work/iwase/jr00.xhr";
+const char tiWaterKosmosMotionPath[40] = "host0:/home/xeno/work/iwase/jr00.xap";
+const char tiWaterKosmosMotionExt2Path[48] = "host0:/home/xeno/work/iwase/x2/ziggy00.xap";
+const char tiWaterKosmosModelAssert[32] = "pKosmos->rsrc[XAct_Rsrc_MDL]";
+const char tiWaterKosmosTextureAssert[32] = "pKosmos->rsrc[XAct_Rsrc_TEX]";
+const char tiWaterKosmosHierarchyAssert[32] = "pKosmos->rsrc[XAct_Rsrc_XHR]";
+const char tiWaterKosmosMotionAssert[32] = "pKosmos->rsrc[XAct_Rsrc_XAP]";
+const char tiWaterKosmosMotionExt2Assert[48] = "pKosmos->rsrc[XAct_Rsrc_XAP_Ext2]";
+const DoublewordAlignedVector4 tiWaterMulColor = { 1.0f, 0.0f, 0.0f, 1.0f };

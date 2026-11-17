@@ -3,6 +3,7 @@
 #include "main/tu051.h"
 #include "main/pad.h"
 #include "main/xgl_font.h"
+#include "main/tu048.h"
 
 #define UWAMONO_RECORD_COUNT 256
 #define FOOT_STEP_TABLE_COUNT 44
@@ -294,7 +295,6 @@ void uwamonoSearchArcHit(int index, int other, int third)
 }
 
 extern u16 textOptionFlags[];
-extern int gameLoopFlags[];
 
 void uwamonoSearchFacingHit(int index, int other, int third)
 {
@@ -310,7 +310,7 @@ void uwamonoSearchFacingHit(int index, int other, int third)
     records = uwamonoRecords;
     record = &records[index];
     actor = record->actor;
-    if ((gameLoopFlags[0] & 0x20000000) != 0) {
+    if ((gameWork.control & 0x20000000) != 0) {
         return;
     }
     if ((textOptionFlags[0] & 0x20) == 0) {
@@ -357,7 +357,7 @@ void func_002079F0(int index, int other, int third)
 
     record = &records[index];
     actor = record->actor;
-    if ((gameLoopFlags[0] & 0x20000000) != 0) {
+    if ((gameWork.control & 0x20000000) != 0) {
         return;
     }
     if ((textOptionFlags[0] & 0x20) == 0) {
@@ -378,15 +378,6 @@ void func_002079F0(int index, int other, int third)
     uwamonoSendEvent(2, records[actor->moved].id, records[other].id);
 }
 
-struct SharedFlags {
-    unsigned char unmodeled_00[6];
-    unsigned short searchDisabled;
-    int flags;
-    unsigned char unmodeled_0C[0x10];
-    int lockedTarget;
-};
-
-extern struct SharedFlags gameWork;
 extern PadRecord PadData[];
 extern unsigned char D_0069D456;
 int unduCheckInsideFan(int arg0, AlignedVector4 *arg1, AlignedVector4 *arg2, int arg3, float arg4, float arg5, float arg6, float arg7);
@@ -394,7 +385,7 @@ int unduCheckInsideFan(int arg0, AlignedVector4 *arg1, AlignedVector4 *arg2, int
 void uwamonoSearchCircleFan(int index, int other, int third) {
     struct XenoActor *actor = uwamonoRecords[index].actor;
 
-    if ((gameWork.flags & 0x20000000) == 0) {
+    if ((gameWork.control & 0x20000000) == 0) {
         if ((PadData[0].pressed & PAD_CIRCLE) != 0) {
             float angle;
             float radius;
@@ -421,7 +412,7 @@ void uwamonoSearchPlainHit(int index, int other, int third) {
 void func_00207D58(int index, int other, int third) {
     struct XenoActor *actor = uwamonoRecords[index].actor;
 
-    if ((gameWork.flags & 0x20000000) == 0) {
+    if ((gameWork.control & 0x20000000) == 0) {
         if ((PadData[0].pressed & PAD_CIRCLE) != 0) {
             float angle;
             float radius;
@@ -439,7 +430,7 @@ void func_00207D58(int index, int other, int third) {
 void uwamonoSearchCircleFacing(int index, int other, int third) {
     struct XenoActor *actor = uwamonoRecords[index].actor;
 
-    if ((gameWork.flags & 0x20000000) == 0) {
+    if ((gameWork.control & 0x20000000) == 0) {
         if ((PadData[0].pressed & PAD_CIRCLE) != 0) {
             int otherIndex = other;
             if (uwamonoCheckCollision(index, other, third) != 0) {
@@ -491,11 +482,11 @@ void uwamonoSelectTarget(int index) {
 
     actor = uwamonoRecords[index].actor;
     linkedIndex = -1;
-    if (gameWork.searchDisabled != 0) {
+    if (gameWork.loadStage != 0) {
         return;
     }
-    if ((gameWork.flags & 0x20) != 0) {
-        if (gameWork.lockedTarget != -1) {
+    if ((gameWork.control & CONTROL_TOP_EXIT) != 0) {
+        if (gameWork.entryKey != -1) {
             return;
         }
     }

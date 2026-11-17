@@ -70,8 +70,8 @@ typedef struct TiXacTransFace {
     f32 channelDefault8;
 } TiXacTransFace;
 
-extern char xacAssertFile[];
-extern char D_0068F630[];
+const char xacAssertFile[24] = "../TiXacAnimCurve.euc.c";
+const char D_0068F630[16] = "pKeyHeader";
 
 /* Returns one float of a key header by its key type: types 0 and 1 read +4, 2 and 3 read +8, 5 reads +C, 4 and types above 5 give 0.0; asserts on a null pointer. */
 f32 xacGetKeyValue(TiXacKey *pKeyHeader) {
@@ -92,10 +92,10 @@ f32 xacGetKeyValue(TiXacKey *pKeyHeader) {
     }
 }
 
-extern char D_0068F658[];
-extern char D_0068F670[];
-extern char D_0068F688[];
-extern char D_0068F6A0[];
+const char D_0068F658[24] = "XacKeyType_Hermite";
+const char D_0068F670[24] = "!\"XacKeyType_Hermite\"";
+const char D_0068F688[24] = "IllegalCurveType";
+const char D_0068F6A0[32] = "!\"IllegalCurveType\"";
 
 /* Evaluates a keyframe curve at curveParam: reads keys from *keyCursor, advances it, interpolates through xacEvalLinearKeys; asserts on an illegal curve type. */
 f32 xacEvalCurve(f32 curveParam, u8 **keyCursor) {
@@ -235,8 +235,8 @@ f32 xacEvalCurve(f32 curveParam, u8 **keyCursor) {
     return value;
 }
 
-extern char D_0068F6D8[];
-extern char D_0068F6E0[];
+const char D_0068F6D8[8] = "res";
+const char D_0068F6E0[16] = "pTransJoint";
 
 /* Evaluates the nine channels of a joint transform (pTransJoint) into values[0..8]: each channel is a curve or a stored default, chosen by its flag bit. */
 void xacEvalTransJoint(f32 *values, TiXacTransJoint *pTransJoint, u8 **keyCursor, f32 frame) {
@@ -372,8 +372,8 @@ void xacEvalTransform(f32 *values, u8 **keyCursor, f32 curveParam) {
     }
 }
 
-extern char D_0068F6F0[];
-extern char D_0068F700[];
+const char D_0068F6F0[16] = "pTransLocator";
+const char D_0068F700[16] = "pTransFace";
 
 /* Nine-channel transform reader for pTransLocator; same shape as the pTransJoint reader. */
 void xacEvalTransLocator(f32 *values, TiXacTransLocator *pTransLocator, u8 **keyCursor, f32 frame) {
@@ -533,7 +533,7 @@ void xacEvalTransFace(f32 *values, TiXacTransFace *pTransFace, u8 **keyCursor, f
     }
 }
 
-extern char D_0068F710[];
+const char D_0068F710[16] = "pTransDynamics";
 
 /* The channel tests read the header through a cast of *ppCursor on each test: a local header pointer changes the code. */
 void xacEvalTransDynamics(f32 *values, XacTransDynamics *pTransDynamics, u8 **ppCursor, f32 curveParam) {
@@ -698,7 +698,7 @@ void xacEvalTransDynamicsNoWeight(f32 *values, XacTransDynamics *pTransDynamics,
     }
 }
 
-extern char D_0068F720[];
+const char D_0068F720[16] = "ppJointHeader";
 
 /* Reads six curve values from a joint header, starting 4 bytes in, and advances *ppJointHeader. */
 u8 *xacEvalJointPose(f32 *values, u8 **ppJointHeader, f32 curveParam) {
@@ -761,7 +761,8 @@ u8 *xacReadJointCurves9(f32 *values, u8 **ppJointHeader, f32 curveParam) {
     return keyCursor;
 }
 
-extern char D_0068F730[];
+/* The label text, then four NUL bytes and the two floats that the original .rodata keeps after it (no reader in this TU reaches them). */
+const char D_0068F730[24] = "pJointHeader\0\0\0\0\xab\xaa\xaa\x3e\x54\xda\xae\x4a";
 
 /* Reads nine curve values from a joint header (pJointHeader, assert lines 772/773). */
 void xacEvalJointCurves9(f32 *values, u8 *pJointHeader, f32 curveParam) {

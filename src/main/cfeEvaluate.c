@@ -65,9 +65,6 @@ int XenoActorReleaseChild(struct XenoActor *parent, struct XenoActor *child);
 int XenoActorAppendChildOnJoint(struct XenoActor *parent, struct XenoActor *child, int joint);
 /* TiMRPackage.c takes its own view of the state (TiMRState). */
 void tiMRStateSetSpeed(XenoMotionState *state, float value);
-extern const char cfeReleaseChildAssert[];
-extern const char cfeEvaluateSourceFile[];
-extern const char cfeAppendChildAssert[];
 
 
 /* XenoActor's vector at +0x90 as the node's scale tracks write it. The original reaches it through a
@@ -224,16 +221,16 @@ void cfeEvaluateNode(CfeActor *entry, int time)
     if (entry->parentActId >= 0) {
         if (entry->actor->parent != 0) {
             if (XenoActorReleaseChild(entry->actor->parent, entry->actor) != 1) {
-                assertFailed(cfeReleaseChildAssert, cfeEvaluateSourceFile, 393);
+                assertFailed("XenoActorReleaseChild(pAct->pAct->pParent, pAct->pAct) == true", "../cfeEvaluate.euc.c", 393);
             }
         }
         if (XenoActorAppendChildOnJoint(cfeEntries[entry->parentActId].actor, entry->actor,
                                         entry->parentMatId) != 1) {
-            assertFailed(cfeAppendChildAssert, cfeEvaluateSourceFile, 396);
+            assertFailed("XenoActorAppendChildOnJoint(actor[pAct->parentActID].pAct, pAct->pAct, pAct->parentMatID) == true", "../cfeEvaluate.euc.c", 396);
         }
     } else if (entry->actor->parent != 0) {
         if (XenoActorReleaseChild(entry->actor->parent, entry->actor) != 1) {
-            assertFailed(cfeReleaseChildAssert, cfeEvaluateSourceFile, 402);
+            assertFailed("XenoActorReleaseChild(pAct->pAct->pParent, pAct->pAct) == true", "../cfeEvaluate.euc.c", 402);
         }
     }
     if (entry->track[CFE_ACTOR_TRACK_DAMP_OFFSET] != 0) {
@@ -381,7 +378,7 @@ void cfeGroupTableEvaluate(int time)
 void *memset(void *destination, int value, unsigned int size);
 
 /* -1.0f and 1.0f: the random sign of a shake offset. */
-extern f32 cfeShakeSigns[2];
+extern f32 cfeShakeSigns[4];
 
 /* The units of the shake amount for the position and the rotation. */
 #define CFE_SHAKE_POSITION_UNIT 0.001f
@@ -877,15 +874,17 @@ void xglVectorInner(float *result, const Vector4 *left, const Vector4 *right);
 /* One 8-bit channel of a packed RGBA colour. */
 #define CHANNEL(c, shift) (((c) >> (shift)) & 0xFF)
 
+/* The grid axes of cfeDrawRotationGrid: up (y) and front (z). */
+static const AlignedVector4 cfeRotationGridUp = { 0.0f, 1.0f, 0.0f, 1.0f };
+static const AlignedVector4 cfeRotationGridFront = { 0.0f, 0.0f, 1.0f, 1.0f };
+
 /* Draws the orientation grid of a rotation: like cfeDrawDirectionGrid, with the grid turned by the angles
  * (x, then y) instead of towards a direction vector. The direction of the angles is computed but not used. */
 void cfeDrawRotationGrid(int x, int y, Vector4 *angles, float *color0, float *color1)
 {
     Matrix4 view;
-    static const AlignedVector4 upAxis = { 0.0f, 1.0f, 0.0f, 1.0f };
-    static const AlignedVector4 frontAxis = { 0.0f, 0.0f, 1.0f, 1.0f };
-    AlignedVector4 up = upAxis;
-    AlignedVector4 front = frontAxis;
+    AlignedVector4 up = cfeRotationGridUp;
+    AlignedVector4 front = cfeRotationGridFront;
     AlignedVector4 direction;
     float facing;
     XglCamera *camera;
@@ -974,6 +973,9 @@ void cfeDrawRotationGrid(int x, int y, Vector4 *angles, float *color0, float *co
 }
 
 
+/* The axis cfeDrawDirectionGrid turns towards the direction vector (z); defined after the function. */
+static const AlignedVector4 cfeDirectionGridForward;
+
 /* Draws the orientation grid of a direction vector: a 7x7 grid of lines in
    front of the active camera, shaded from color0 to color1, and a 70-unit
    pointer, projected around the screen point (x + 60, y + 40). */
@@ -1008,8 +1010,7 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
         far_color = COLOR_BYTE(color1[0]) + (COLOR_BYTE(color1[1]) << 8) + (COLOR_BYTE(color1[2]) << 16) + 0x80000000;
     }
     {
-        static const AlignedVector4 forward = { 0.0f, 0.0f, 1.0f, 1.0f };
-        AlignedVector4 axis = forward;
+        AlignedVector4 axis = cfeDirectionGridForward;
         AlignedVector4 quaternion;
         AlignedVector4 line[4];
         AlignedVector4 tip;
@@ -1069,6 +1070,8 @@ void cfeDrawDirectionGrid(int x, int y, Vector4 *direction, float *color0, float
                       0x80FFFFFF, 0x80FFFFFF, 0xFFFFFF);
     }
 }
+
+static const AlignedVector4 cfeDirectionGridForward = { 0.0f, 0.0f, 1.0f, 1.0f };
 
 void _CurMatrixSet(Matrix4 matrix);
 void _CurSetViewScaleTrans(Vector4 *scale, Vector4 *translation);
@@ -1240,3 +1243,20 @@ void cfeUpdateEntries(int noPlay)
         }
     }
 }
+
+const char D_0068D270[16] = "Colorfade2";
+const char D_0068D280[16] = "Colorfade";
+const char D_0068D290[16] = "ColorSet";
+
+/* Data of the original .data section, in address order. */
+f32 cfeShakeSigns[4] = { -1.0f, 1.0f, 0.0f, 0.0f };   /* 0x6318B0, 16 bytes; cfeEntries follows at 0x6318C0 */
+CfeActor cfeEntries[64] = { 0 };                       /* 0x6318C0, 0x6C00 = 64 * 0x1B0; inner: 0x6319xx, D_00631A64 */
+CfeStudioView cfeCamera = { 0 };                       /* 0x6384C0, 0x70 */
+CfeEvalCommand cfeCommands[64] = { 0 };                /* 0x638530, 0x2000 = 64 * 0x80; inner: D_0063857C, D_00638xxx */
+CfeLight cfeDirections[4] = { 0 };                     /* 0x63A530, 0x100; inner: D_0063A54C */
+XglLightSet cfeLightSet = { 0 };                       /* 0x63A630, 0x180 */
+CfeMap cfeGroups[4] = { 0 };                           /* 0x63A7B0, 0x300 = 4 * 0xC0; inner: D_0063A7BC, D_0063A814, D_0063A868 */
+CfeEvalEntry cfeEvalEntries[16] = { 0 };               /* 0x63AAB0, 0x2300 = 16 * 0x230; inner: D_0063ACB4 */
+CfeEvalGlobal cfeEvalGlobal = { 0 };                   /* 0x63CDB0, 0x50; inner: D_0063CDE0 (source[0]) */
+CfeEvalSlot cfeEvalSlots[3] = { 0 };                   /* 0x63CE00, 0x48 = 3 * 0x18; inner: D_0063CE0C */
+CfeSndRecord cfeSndRecords[1] = { 0 };                 /* 0x63CE48, 0x50; inner: D_0063CE90 */

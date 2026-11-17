@@ -103,3 +103,11 @@ signed char *textSkipLineBreak(signed char *text) {
     }
     return p;
 }
+
+/* Initial control point values, as the original data holds them. */
+float grControlPoints[4][2] = {
+    { 0.0f, 0.0f },
+    { 1.0f, 0.0f },
+    { 1.0f, 1.0f },
+    { 0.0f, 0.0f },
+};

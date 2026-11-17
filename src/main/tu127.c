@@ -9,6 +9,7 @@
 #include "main/tu098.h"
 #include "main/xgl_2.h"
 #include "shared.h"
+#include "main/tu048.h"
 
 /* Debug test menu (testUiMenuRun): item count, arena size, clear colour and list layout. */
 #define TEST_MENU_ITEM_COUNT 7
@@ -129,7 +130,6 @@ typedef struct CursorBufferHead {
     int status_flags;
 } CursorBufferHead;
 static CursorBufferHead D_006AC060[1];
-extern u32 gameWork[];
 
 typedef struct TestUiItemNames {
     const char *name[TEST_MENU_ITEM_COUNT];
@@ -270,7 +270,7 @@ void testUiMenuRun(void) {
             ClearEnv.color_g = TEST_MENU_CLEAR_G;
             ClearEnv.color_b = TEST_MENU_CLEAR_B;
             ClearEnv.color_a = TEST_MENU_CLEAR_A;
-            gameWork[2] &= 0xEFFFFFFF;
+            gameWork.control &= 0xEFFFFFFF;
         }
         if (PadData[0].pressed & PAD_SELECT) {
             textWindowShow(32, 400, 0, testUiKanaSample, 60);

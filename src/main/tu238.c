@@ -5,6 +5,8 @@
 #include "main/tu236.h"
 #include "main/tu238.h"
 #include "main/tu239.h"
+#include "main/tu048.h"
+#include "main/tu051.h"
 #include "main/tu242.h"
 #include "main/tu243.h"
 #include "main/tu245.h"
@@ -12,7 +14,6 @@
 #include "shared.h"
 
 f32 cosf(f32);
-extern f32 msgRadiansPerDegree;
 int wrapIntRange(int, int, int);
 
 
@@ -37,7 +38,7 @@ int msgWindowUpdate(MsgSlot *window)
         {
             msgWindowCountItems(window);
         }
-        if (!(gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES))
+        if (!(gameWork.control & CONTROL_PAUSED))
         {
             if (window->flags & MSG_SLOT_OPENING)
             {
@@ -185,7 +186,6 @@ void msgWindowScrollBy(MsgSlot *window, int delta)
 }
 
 /* Degrees-to-radians factor used by the slide (a separate copy from msgRadiansPerDegree). */
-extern f32 kDegToRadSlide;
 
 /* Slide step: advances slide_angle by slide_step; slide_pos moves from slide_from to slide_to on a cosine. */
 int msgWindowSlideStep(MsgSlot *window)
@@ -202,7 +202,7 @@ int msgWindowSlideStep(MsgSlot *window)
     }
     midpoint = (list->slide_to + list->slide_from) >> 1;
     amplitude = (f32) (midpoint - list->slide_to);
-    list->slide_pos = midpoint + (int) (amplitude * cosf((f32) list->slide_angle * kDegToRadSlide));
+    list->slide_pos = midpoint + (int) (amplitude * cosf((f32) list->slide_angle * 0.01745328f));
     return 0;
 }
 
@@ -230,7 +230,7 @@ int msgWindowSweepValue(MsgSlot *window)
 
     amplitude = (f32) -((list->sweep_end - list->sweep_begin) >> 1);
     midpoint = (list->sweep_end + list->sweep_begin) >> 1;
-    return midpoint + (int) (amplitude * cosf((f32) list->sweep_angle * msgRadiansPerDegree));
+    return midpoint + (int) (amplitude * cosf((f32) list->sweep_angle * 0.01745328f));
 }
 
 /* Item count: the number of nonzero entries of the 40-entry count table. */

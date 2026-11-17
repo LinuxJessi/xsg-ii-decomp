@@ -451,3 +451,5 @@ void tiDynamicsCollSolveCapsulePair(struct TiSolverBodyView *first, struct TiSol
         second->accumulator.vector.z += correction.vector.z;
     }
 }
+
+Vector4 tiDynamicsCollCapsuleCenter = { 0.0f, 0.0f, 0.0f, 1.0f };

@@ -3,6 +3,7 @@
 #include "main/tu050.h"
 #include "main/sef.h"
 #include "main/xgl_flags.h"
+#include "main/tu048.h"
 
 /* Script natives: argument count, n-th argument, nonzero when argument n is omitted, wrong-count error. */
 int func_A9F0A8(int call);
@@ -41,32 +42,6 @@ extern int uwamonoEventIds[];
 /* A bit of gameWork.control; tu051.h cannot be included here, its record types clash with this file's. */
 #define CONTROL_SCRIPTED 0x8000 /* include/main/tu051.h */
 
-/* The game work block (tu067.c's GameWork); only the fields these natives touch. */
-typedef struct GameWork {
-    unsigned char unmodeled_0[8];
-    int control;                    /* +0x8: CONTROL_SCRIPTED while a script controls the player */
-    unsigned char unmodeled_c[0x14 - 0xC];
-    int state;                      /* +0x14: takes the record's eventState when a state change runs at once */
-    unsigned char unmodeled_18[0x1C - 0x18];
-    int stateArg;                   /* +0x1C: takes the record's eventStateArg */
-    unsigned char unmodeled_20[0xC0 - 0x20];
-    float color[3];
-    unsigned char unmodeled_cc[0x348 - 0xCC];
-    float fogDist[4];               /* +0x348: setFog args 2-5 / 100: near, far, min, max for pxySetFogDist */
-    unsigned char unmodeled_358[0x360 - 0x358];
-    float fogColor[3];              /* +0x360: setFog args 6-8, the color for pxySetFogColor */
-    unsigned char unmodeled_36c[0x370 - 0x36C];
-    int shadowCasterMode;           /* +0x370: setItai argument 2 (default 1); tu048 passes it each frame to
-                                       func_001BA358, the mode pxyDrawShadowCaster tests (1, 2) */
-    unsigned char unmodeled_374[0x384 - 0x374];
-    float lightDirection[16][3][4]; /* +0x384: per light set, light types 1-3 */
-    float lightColor[16][3][4];     /* +0x684 */
-    float ambientColor[16][4];      /* +0x984: light type 0 */
-    float type4Direction[16][4];    /* +0xA84: light type 4; w 0 disables it */
-    float type4Value[16];           /* +0xB84: light type 4, 0.2 by default */
-} GameWork;
-
-extern GameWork gameWork;
 
 /* A bit of XenoActor.drawFlags (defined in src/main/xenoActor.c, not in a header). */
 #define XENO_DRAW_COLOR 0x1 /* apply the color block: set by setFog after it writes fogDist/fogColor */
@@ -314,7 +289,7 @@ int runtimeJumpCf(int call)
    while uwamonoLadderState is 0, starts motion 0 on the current record.  When
    gameWork.control bit 0x100000 is clear and timer is nonzero, fades out over timer
    frames.  When timer is zero the state change runs at once: the event becomes -1
-   (none) and gameWork.state/stateArg take the record's values. */
+   (none) and gameWork.nextMap/stateArg take the record's values. */
 void uwamonoSetTransition(signed char mode, int state, int stateArg, int timer)
 {
     UwamonoRecord *record = &uwamonoRecords[uwamonoCurrentIndex];
@@ -341,8 +316,8 @@ void uwamonoSetTransition(signed char mode, int state, int stateArg, int timer)
     }
     if (timer == 0) {
         record->event = -1;
-        gameWork.state = record->eventState;
-        gameWork.stateArg = record->eventStateArg;
+        gameWork.nextMap = record->eventState;
+        gameWork.entryKey = record->eventStateArg;
     }
 }
 
@@ -411,13 +386,13 @@ int runtimeSetMapFog(int call)
     }
     key = func_A9F0C0(call, 1);
     if (key == -1) {
-        gameWork.fogDist[0] = (float) func_A9F0C0(call, 2) / 100.0f;
-        gameWork.fogDist[1] = (float) func_A9F0C0(call, 3) / 100.0f;
-        gameWork.fogDist[2] = (float) func_A9F0C0(call, 4) / 100.0f;
-        gameWork.fogDist[3] = (float) func_A9F0C0(call, 5) / 100.0f;
-        gameWork.fogColor[0] = (float) func_A9F0C0(call, 6);
-        gameWork.fogColor[1] = (float) func_A9F0C0(call, 7);
-        gameWork.fogColor[2] = (float) func_A9F0C0(call, 8);
+        gameWork.fogDist.x = (float) func_A9F0C0(call, 2) / 100.0f;
+        gameWork.fogDist.y = (float) func_A9F0C0(call, 3) / 100.0f;
+        gameWork.fogDist.z = (float) func_A9F0C0(call, 4) / 100.0f;
+        gameWork.fogDist.w = (float) func_A9F0C0(call, 5) / 100.0f;
+        gameWork.fogColor.x = (float) func_A9F0C0(call, 6);
+        gameWork.fogColor.y = (float) func_A9F0C0(call, 7);
+        gameWork.fogColor.z = (float) func_A9F0C0(call, 8);
     }
     if (key == -1 || key == -2) {
         first = 0;
@@ -450,9 +425,9 @@ int setMapColor(int call)
         func_A9CC70(call, 2);
         return 0;
     }
-    gameWork.color[0] = (float) func_A9F0C0(call, 1) / 255.0f;
-    gameWork.color[1] = (float) func_A9F0C0(call, 2) / 255.0f;
-    gameWork.color[2] = (float) func_A9F0C0(call, 3) / 255.0f;
+    gameWork.mapColor.x = (float) func_A9F0C0(call, 1) / 255.0f;
+    gameWork.mapColor.y = (float) func_A9F0C0(call, 2) / 255.0f;
+    gameWork.mapColor.z = (float) func_A9F0C0(call, 3) / 255.0f;
     return 1;
 }
 
@@ -542,44 +517,44 @@ int runtimeSetMapLight(int call)
     direction.z = (float) func_A9F0C0(call, 8) / 100.0f;
     switch (type) {
         case 0:
-            gameWork.ambientColor[light][0] = color.x;
-            gameWork.ambientColor[light][1] = color.y;
-            gameWork.ambientColor[light][2] = color.z;
+            gameWork.lights.ambient[light][0] = color.x;
+            gameWork.lights.ambient[light][1] = color.y;
+            gameWork.lights.ambient[light][2] = color.z;
             break;
         case 1:
         case 2:
         case 3:
             xglVectorNormal_001A9200(&direction, &direction);
-            gameWork.lightDirection[light][type - 1][0] = direction.x;
-            gameWork.lightDirection[light][type - 1][1] = direction.y;
-            gameWork.lightDirection[light][type - 1][2] = direction.z;
-            gameWork.lightDirection[light][type - 1][3] = 1.0f;
+            gameWork.lights.direction[light][type - 1][0] = direction.x;
+            gameWork.lights.direction[light][type - 1][1] = direction.y;
+            gameWork.lights.direction[light][type - 1][2] = direction.z;
+            gameWork.lights.direction[light][type - 1][3] = 1.0f;
             if (func_A9F1C0(call, 3) == 0 && func_A9F1C0(call, 4) != 0 && func_A9F1C0(call, 5) != 0) {
-                gameWork.lightColor[light][type - 1][0] = color.x;
-                gameWork.lightColor[light][type - 1][1] = color.x;
-                gameWork.lightColor[light][type - 1][2] = color.x;
-                gameWork.lightColor[light][type - 1][3] = 1.0f;
+                gameWork.lights.color[light][type - 1][0] = color.x;
+                gameWork.lights.color[light][type - 1][1] = color.x;
+                gameWork.lights.color[light][type - 1][2] = color.x;
+                gameWork.lights.color[light][type - 1][3] = 1.0f;
             } else {
-                gameWork.lightColor[light][type - 1][0] = color.x;
-                gameWork.lightColor[light][type - 1][1] = color.y;
-                gameWork.lightColor[light][type - 1][2] = color.z;
-                gameWork.lightColor[light][type - 1][3] = 1.0f;
+                gameWork.lights.color[light][type - 1][0] = color.x;
+                gameWork.lights.color[light][type - 1][1] = color.y;
+                gameWork.lights.color[light][type - 1][2] = color.z;
+                gameWork.lights.color[light][type - 1][3] = 1.0f;
             }
             break;
         case 4:
             if (func_A9F1C0(call, 6) != 0 && func_A9F1C0(call, 7) != 0 && func_A9F1C0(call, 8) != 0) {
-                gameWork.type4Direction[light][3] = 0.0f;
+                gameWork.lights.type4Direction[light][3] = 0.0f;
             } else {
                 xglVectorNormal_001A9200(&direction, &direction);
-                gameWork.type4Direction[light][0] = direction.x;
-                gameWork.type4Direction[light][1] = direction.y;
-                gameWork.type4Direction[light][2] = direction.z;
-                gameWork.type4Direction[light][3] = 1.0f;
+                gameWork.lights.type4Direction[light][0] = direction.x;
+                gameWork.lights.type4Direction[light][1] = direction.y;
+                gameWork.lights.type4Direction[light][2] = direction.z;
+                gameWork.lights.type4Direction[light][3] = 1.0f;
             }
             if (func_A9F1C0(call, 3) != 0 && func_A9F1C0(call, 4) != 0 && func_A9F1C0(call, 5) != 0) {
-                gameWork.type4Value[light] = 0.2f;
+                gameWork.lights.type4Value[light] = 0.2f;
             } else {
-                gameWork.type4Value[light] = color.x;
+                gameWork.lights.type4Value[light] = color.x;
             }
             break;
     }
@@ -687,5 +662,3 @@ const char D_00689918[16] = "setParamsAll";
 
 const char D_00689928[24] = "setParams";
 
-unsigned char D_002B6820[2640] = { 0 };
-unsigned int D_002B7270[16] = { 0 };

@@ -32,3 +32,39 @@ void oLibExit(void)
 
 /* Loads a game resource by Id (asserted at line 157) and initialises a new object from its header. */
 INCLUDE_ASM("asm/main/nonmatchings/oLib", oLibLoadObject);
+
+/* The old tu202 and tu203 are the tail of this object: their .sdata flags xglCosDegTableReady and
+   xglSinDegTableReady precede oLibHandle (data map review 2026-11-17). */
+INCLUDE_ASM("asm/main/nonmatchings/oLib", gsVertexX);
+
+INCLUDE_ASM("asm/main/nonmatchings/oLib", gsVertexY);
+
+/* Converts a coordinate to 12.4 fixed point with half-unit rounding by sign (gsRoundCoord). */
+int gsRoundCoord(int coordinate)
+{
+  int zero;
+  int magnitude;
+  zero = 0;
+  magnitude = coordinate;
+  if (coordinate < zero)
+  {
+    magnitude = -magnitude;
+  }
+  if (zero < coordinate)
+  {
+    return (coordinate * 0x10) + 8;
+  }
+  return (-(magnitude * 0x10)) - 8;
+}
+
+INCLUDE_ASM("asm/main/nonmatchings/oLib", func_00274100);
+
+INCLUDE_ASM("asm/main/nonmatchings/oLib", func_00274130);
+
+INCLUDE_ASM("asm/main/nonmatchings/oLib", xglCosDeg);
+
+INCLUDE_ASM("asm/main/nonmatchings/oLib", xglCosDegTableInit);
+
+INCLUDE_ASM("asm/main/nonmatchings/oLib", xglSinDeg);
+
+INCLUDE_ASM("asm/main/nonmatchings/oLib", xglSinDegTableInit);

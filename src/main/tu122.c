@@ -4,6 +4,8 @@
 #include "main/tu101.h"
 #include "ov01/tu023.h"
 #include "ov01/tu043.h"
+#include "main/tu051.h"
+#include "main/tu048.h"
 
 /* ptFindRecord result. */
 typedef struct ResultLabel {
@@ -451,11 +453,6 @@ typedef struct SceneClearEnv {
     unsigned int color_a;
 } SceneClearEnv;
 
-typedef struct SceneGameWork {
-    unsigned char unmodeled_00[8];
-    int control;
-} SceneGameWork;
-
 typedef struct SceneStats {
     int w0;
     int w4;
@@ -469,7 +466,6 @@ typedef struct SceneMember {
 } SceneMember;
 
 extern SceneClearEnv ClearEnv;
-extern SceneGameWork gameWork;
 extern PadRecord PadData[];
 void xglCdArenaOpen(int size, long long handle);
 void *xglCdSectorAlloc(int size);
@@ -606,8 +602,8 @@ void battleResultScene(void)
             D_0069D91C = (signed char) xglCdServiceIfPending();
             if (((pad->directionPressed & PAD_START) != 0
                     && (pad->held & PAD_SOFT_RESET_HELD) == PAD_SOFT_RESET_HELD)
-                || (gameWork.control & 0x10000000) != 0) {
-                gameWork.control |= 0x10000000;
+                || (gameWork.control & CONTROL_SOFT_RESET) != 0) {
+                gameWork.control |= CONTROL_SOFT_RESET;
                 soundSlotsRestart();
                 soundSlotReopen(0);
                 break;
@@ -686,7 +682,7 @@ void battleResultScene(void)
         }
 
         xglPadSetRepeat(0, PAD_UP | PAD_RIGHT | PAD_DOWN | PAD_LEFT | PAD_L1 | PAD_R1, 8, 1);
-        if ((gameWork.control & 0x10000000) == 0) {
+        if ((gameWork.control & CONTROL_SOFT_RESET) == 0) {
             fadeStartOut(15);
             for (i = 0; i < 16; i++) {
                 XenoActorSetFlagAll(2);
@@ -703,7 +699,7 @@ void battleResultScene(void)
         bgLayerRelease();
         xglCdArenaClose();
         pxyTickScaleDoubleOverride(0);
-        if ((gameWork.control & 0x10000000) == 0) {
+        if ((gameWork.control & CONTROL_SOFT_RESET) == 0) {
             GameResArenaRelease();
             fadeReset();
             fadeStartIn(30);

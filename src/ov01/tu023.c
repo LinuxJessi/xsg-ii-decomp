@@ -1052,12 +1052,6 @@ int unitCurrentAdd(StatOwner *unit, int amount)
 }
 
 /* ---- old ov01/tu026 ---- */
-/* The six status-bit masks at calcComboMaskBits (1, 2, 4, 8, 16, 0), copied to the frame. */
-typedef struct StatBitList {
-    int masks[6];
-} StatBitList;
-
-extern StatBitList calcComboMaskBits;
 extern unsigned char calcStatDefTurnTable[];
 extern unsigned char calcStatInflictPenaltyTable[];
 
@@ -1261,16 +1255,15 @@ int calcStatResist(StatOwner *owner, int row, int statBit)
 
 int calcAttackStatusMask(StatOwner *owner, int statusMask)
 {
-    StatBitList statBits;
+    int statBits[6] = { 1, 2, 4, 8, 16, 0 };
     int i;
 
-    statBits = calcComboMaskBits;
     if ((statusMask & 0x1f) != 0) {
         return statusMask;
     }
-    for (i = 0; statBits.masks[i] != 0; i++) {
-        if (calcStatGet(owner, 3, statBits.masks[i]) != 0) {
-            statusMask |= statBits.masks[i];
+    for (i = 0; statBits[i] != 0; i++) {
+        if (calcStatGet(owner, 3, statBits[i]) != 0) {
+            statusMask |= statBits[i];
         }
     }
     return statusMask;
@@ -4730,3 +4723,7 @@ void actStockClearBoost1(void)
 {
     actStockGet()->boost[1] = 0;
 }
+
+/* Names the overlay .data tables reach (the tables are not split per file yet). */
+const char D_00ABA420[] = "kosmos_udeR";
+const char D_00ABA430[] = "jin_saya_tuka";

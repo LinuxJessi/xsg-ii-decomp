@@ -577,3 +577,6 @@ int cfeTrackAllValuesEqual(CfeTrackNode *node)
     }
     return 1;
 }
+
+f32 cfeTimeScale = 1.0f;
+f32 cfeBezierTimeScale = 1.0f;

@@ -45,3 +45,7 @@ void easeStepOverrideSet(int value) {
 void easeStepOverrideClear(void) {
     easeStepOverrideEnabled = 0;
 }
+
+/* Override state: enable flag and value, both zero until easeStepOverrideSet. */
+int easeStepOverrideEnabled = 0;
+int easeStepOverrideValue = 0;

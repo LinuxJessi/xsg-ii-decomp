@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "main/game_snap_shot.h"
 #include "main/xgl_dma.h"
+#include "main/tu048.h"
 
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
@@ -142,12 +143,6 @@ extern char snapname[];
 extern void xglClockRead(void *time);
 extern void xglClockUInt2DayTime(void *time, unsigned int seconds);
 
-typedef struct {
-    unsigned char unmodeled_00[0x20];
-    int save_word;
-} GameSnapShotWork;
-
-extern GameSnapShotWork gameWork;
 
 typedef struct {
     unsigned char save_time[8];
@@ -170,7 +165,7 @@ void GameSnapShotExecute(int quality, int flags) {
         memset(&metadata, 0, sizeof(metadata));
         xglClockRead(metadata.save_time);
         xglClockUInt2DayTime(metadata.play_time, 0);
-        metadata.save_word = gameWork.save_word;
+        metadata.save_word = gameWork.resourceId;
         file_handle = sceOpen(snapname, SNAPSHOT_OPEN_FLAGS, SNAPSHOT_FILE_MODE);
         sceWrite(file_handle, &metadata, sizeof(metadata));
         sceClose(file_handle);
@@ -224,11 +219,6 @@ unsigned int GameSnapShotSaveThumbnail(int quality, unsigned int output_buffer) 
     return params.output_size;
 }
 
-/* Scaffold data labels of the words the original reads: gameWork.save_word (0x2B5DB0)
- * and DrawEnv.frame1 (0x645650). The original relocates against these labels. */
-extern int D_002B5DB0[];
-extern unsigned long long D_00645650[];
-
 int GameSnapShotSave(int quality, unsigned char *output) {
     GameSnapShotJpegParams params;
     GameSnapShotMetadata meta;
@@ -249,7 +239,7 @@ int GameSnapShotSave(int quality, unsigned char *output) {
     memset(&meta, 0, SNAPSHOT_METADATA_SIZE);
     xglClockRead(meta.save_time);
     xglClockUInt2DayTime(meta.play_time, 0);
-    meta.save_word = D_002B5DB0[0];
+    meta.save_word = gameWork.resourceId;
     *(GameSnapShotMetadata *)write_cursor = meta;
     write_cursor += SNAPSHOT_METADATA_SIZE;
 
@@ -262,9 +252,9 @@ int GameSnapShotSave(int quality, unsigned char *output) {
 
     memset(&params, 0, sizeof(params));
     params.output_buffer = (unsigned int)write_cursor;
-    frame_base = D_00645650[0] & SNAPSHOT_FRAME1_FBP_MASK;
+    frame_base = DrawEnv.frame1 & SNAPSHOT_FRAME1_FBP_MASK;
     params.source_x = frame_base << 5;
-    params.source_y = (D_00645650[0] >> 16) & SNAPSHOT_FRAME1_FBW_MASK;
+    params.source_y = (DrawEnv.frame1 >> 16) & SNAPSHOT_FRAME1_FBW_MASK;
     params.width = SNAPSHOT_WIDTH;
     params.height = SNAPSHOT_HEIGHT;
     params.destination_x = 0;

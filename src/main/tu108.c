@@ -8,6 +8,7 @@
 #include "main/tu148.h"
 #include "main/xgl_cd.h"
 #include "main/xgl_flags.h"
+#include "main/tu048.h"
 
 extern unsigned int D_003EC458[];
 extern unsigned int D_003EC468[];
@@ -164,21 +165,12 @@ struct UwamonoBinding {
     unsigned char counts[3];            /* +0x57 */
 };
 
-/* gameWork as used here (each TU keeps its own view): the control word and the current map. */
-struct PartyGameWork {
-    unsigned char unmodeled_00[8];
-    int control;                        /* +0x08: CONTROL_* bits (main/tu051.h) */
-    unsigned char unmodeled_0C[0x18 - 0x0C];
-    int mapId;                          /* +0x18 */
-};
-
 /* gameWork.control bit set while ptState.progress is attached to a uwamono (tu067.c's script
  * native reads it back as a 0/1 value). */
 #define CONTROL_PARTY_ATTACHED 0x800
 
 extern struct UwamonoBinding ptState;
 extern struct UwamonoContext D_006A5A30;
-extern struct PartyGameWork gameWork;
 void uwamonoSetTransition(signed char mode, int state, int stateArg, int timer);
 void ptEnterSplit(void);
 void ptLeaveSplit(void);

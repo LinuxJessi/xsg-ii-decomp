@@ -193,6 +193,11 @@ def asm_contract():
 SMALL_DATA_LITERAL_TUS = {
     0x0019A148: "xgl_menu: the three row formats of xglMenuDrawType1Sub (0x69DEF0, 0x69DEF8, 0x69DF00)",
     0x0022D1D8: "tu111: \"NULL\" (0x69D778) of smsg and msgDtl",
+    # Data of 8 bytes or less in .sdata with code identical under -G8 (data pass 6, 2026-11-17).
+    0x00251E30: "sef_print: \"RESET\" (0x69DAD8) and the shared words D_0069DAD0/svSceneFlags in .sdata",
+    0x0027DCB0: "tu225: \"$prop1;\" (0x69DCB0) in .sdata",
+    # The native names of a data table: .sdata literals of a -G8 file (data map review, 2026-11-17).
+    0x001FC558: "tu079: \"math\" (0x69D3B8, mathInit) and the mathNativeTable names (0x69D398-0x69D3B0) in .sdata",
 }
 
 
@@ -247,13 +252,24 @@ def yaml_options(unit, image, overlay):
     return lines
 
 
+# Data tables whose leading pointers splat's string guesser misreads as text: their first words
+# point at .rodata strings whose address bytes (50 5C 68 00, "P\\h") look like a short string.
+# A declared word type keeps them `.word LABEL`, so the scaffold item references its strings
+# (data map review 2026-11-17: the CD file name tables of res_get_path).
+TYPED_DATA_SYMBOLS = {
+    "main": {va: (f"D_{va:08X}", "u32") for va in (0x002B9DE0, 0x002BA1C8, 0x002BA2A0, 0x002BA3E8, 0x002BA538)},
+}
+
+
 def data_symbol_lines(unit):
     """Data labels chosen for one unit's link (tools/tu/x1_port.py plan), after its functions."""
+    typed = "".join(f"{name} = 0x{va:08X}; // type:{kind}\n"
+                    for va, (name, kind) in sorted((TYPED_DATA_SYMBOLS.get(unit) or {}).items()))
     if not REVIEWED_DATA.is_file():
-        return ""
+        return typed
     wanted = json.loads(REVIEWED_DATA.read_bytes()).get("units", {}).get(unit) or {}
-    return "".join(f"{name} = 0x{int(va, 16):08X};\n"
-                   for va, name in sorted(wanted.items(), key=lambda item: int(item[0], 16)))
+    return typed + "".join(f"{name} = 0x{int(va, 16):08X};\n"
+                           for va, name in sorted(wanted.items(), key=lambda item: int(item[0], 16)))
 
 
 def symbol_line(name, va, size=None):

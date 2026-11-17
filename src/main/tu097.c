@@ -295,7 +295,6 @@ void fontObjClearSlots(void)
     }
 }
 
-
 void fontObjResetBufferSlots(void)
 {
     fontObjRunLists[3] = fontObjRunLists[4] = 0;
@@ -764,7 +763,6 @@ void fontObjGetQuadCorners(struct FontObject *object, int *corners)
     corners[3] = corners[1] + second->current_pair.y;
 }
 
-
 /* 0x40000000 is the bit pattern of 2.0f; the callee takes it in a general register. */
 void fontObjDrawQuadFromTracks(struct FontObject *object)
 {
@@ -859,7 +857,6 @@ void fontObjDrawIfActive(struct FontObject *object) {
     }
 }
 
-
 /* Ticks the sub-object of a text block (block+0x58) through fontObjUpdate. */
 void fontObjSubUpdate(struct FontObject *obj) {
     fontObjUpdate(obj);
@@ -906,7 +903,6 @@ struct FontTrack *fontObjGetSizeTrack(struct FontObject *object)
     }
     return &object->tracks[1];
 }
-
 
 /* Resets a cursor-buffer record to its idle values; step starts at 1 and mode at 0. */
 void fontObjResetCursor(struct FontBlockCursor *cursor)
@@ -1096,7 +1092,6 @@ done:
     }
 }
 
-
 /* Shifts point by (dx, dy), sets z, lays the text out, then restores the point. */
 void fontObjLayoutAtOffset(int dx, int dy, int z, struct FontPoint *point)
 {
@@ -1120,11 +1115,7 @@ void fontObjLayoutAtOffset(int dx, int dy, int z, struct FontPoint *point)
     }
 }
 
-
-
 extern unsigned char D_003ED060[];
-
-
 
 /* Initialises a text block: origin at (0, 0), a cleared cursor record in mode 1, and the sub-object
  * placed at (16, 352) with the size (480, 80). */
@@ -1162,7 +1153,6 @@ void fontObjSetText(FontTextBlock *block, unsigned char *text) {
     cursor->count = 0;
 }
 
-
 void fontObjClearText(FontTextBlock *block) {
     fontObjSetText(block, 0);
 }
@@ -1197,7 +1187,6 @@ int fontObjDrawText(FontTextBlock *block)
         }
     }
 }
-
 
 /* Opens the sub-object of a text block through fontObjStartOpen (the phase 1 start). */
 void fontObjSubStartOpen(FontTextBlock *block) {
@@ -1259,7 +1248,6 @@ void cursorBufferSetText(struct FontCursorEntry *entry, unsigned char *text) {
     cursor->count = 0;
 }
 
-
 /* Clears the text of a cursor buffer entry: cursorBufferSetText with a null text (its only caller, cursorBufferPush, passes pool entries). */
 void cursorBufferClearText(struct FontCursorEntry *entry) {
     cursorBufferSetText(entry, 0);
@@ -1267,7 +1255,6 @@ void cursorBufferClearText(struct FontCursorEntry *entry) {
 
 void func_0020EBF0(void) {
 }
-
 
 /* Advances one cursor buffer entry: while its flags word has bit 0x10000 set, the pending count in
  * counter.bytes[0] is consumed (one step of counter.bytes[2] off unmodeled_0c, after the first
@@ -1336,22 +1323,6 @@ signed char fontObjTextureSlot[24] = { 0, -1, 2, 1, 3, 4, 3, 5, 3, 4, 5, 0, 0, 0
 u64 fontObjVifPacketData[14] = { 0x0000000000000000ULL, 0x5100000600000000ULL, 0x5000000000008001ULL, 0x00000000000eeeeeULL, 0x0000000000000000ULL, 0x000000000000003fULL, 0x0000000000000000ULL, 0x0000000000000050ULL, 0x0000000000000000ULL, 0x0000000000000051ULL, 0x0000000000000000ULL, 0x0000000000000052ULL, 0x0000000000000000ULL, 0x0000000000000053ULL };
 
 u64 fontObjBaseVifPacketData[14] = { 0x0000000000000000ULL, 0x5100000600000000ULL, 0x5000000000008001ULL, 0x00000000000eeeeeULL, 0x0000000000000000ULL, 0x000000000000003fULL, 0x0000000000000000ULL, 0x0000000000000050ULL, 0x0000000000000000ULL, 0x0000000000000051ULL, 0x0000000000000000ULL, 0x0000000000000052ULL, 0x0000000000000000ULL, 0x0000000000000053ULL };
-
-unsigned char D_003EB040[16] = { 2, 7, 4, 3, 1, 0, 5, 6, 8, 9, 0, 0, 0, 0, 0, 0 };
-
-short D_003EB050[20] = { 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 0, 0, 0 };
-
-signed char D_003EB078[32] = { 0, 2, 0, 2, 16, 1, 16, 1, 13, 2, 13, 2, 8, 2, 10, 2, 2, 4, 12, 1, 6, 2, 6, 2, 15, 1, 0, 0, 0, 0, 0, 0 };
-
-/* Size pairs read by menuSkillModelSizes users (tu100): compressed-size and buffer-size words of the model sets. */
-unsigned int menuSkillModelSizes[22] = { 0x4800, 0x8800, 0x4800, 0x8800, 0xd800, 0x9000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x11000, 0x1000, 0x11000, 0x1000, 0x11000, 0x1000, 0x11000 };
-
-int menuUmnImageFileNames[10] = { 0x68a3d8, 0x68a3c0, 0x68a3a8, 0x68a390, 0x68a378, 0x68a360, 0x68a348, 0x68a330, 0, 0 };
-
-/* VIF1 packet template (tu100 writes its +0x40 tag and +0x60 size); typed here as the qword view. */
-u64 D_003EB170[14] = { 0x0000000000000000ULL, 0x5100000600000000ULL, 0x1000000000000004ULL, 0x000000000000000eULL, 0x0008380000000000ULL, 0x0000000000000050ULL, 0x0000000000000000ULL, 0x0000000000000051ULL, 0x0000000000000000ULL, 0x0000000000000052ULL, 0x0000000000000000ULL, 0x0000000000000053ULL, 0x0800000000007000ULL, 0x0000000000000000ULL };
-
-unsigned char D_003EB1E0[24] = { 18, 16, 16, 12, 128, 128, 128, 14, 1, 1, 0, 0, 0, 13, 3, 15, 72, 0, 128, 0, 0, 0, 0, 0 };
 
 struct FontCell fontObjCellTable[758] = {
     { 0, 0, 0, 443, 24, 24, { 0, 0 }, 0x00003b3cu },
@@ -2115,52 +2086,3 @@ struct FontCell fontObjCellTable[758] = {
 };
 
 /* String data of tu099 (rodata) read by the script table below. */
-extern const char D_0068A000[];
-extern const char D_0068A028[];
-extern const char D_0068A050[];
-extern const char D_0068A078[];
-extern const char D_0068A0A0[];
-extern const char D_0068A0C8[];
-extern const char D_0068A0F0[];
-extern const char D_0068A118[];
-extern const char D_0068A140[];
-extern const char D_0068A168[];
-extern const char D_0068A190[];
-extern const char D_0068A1B8[];
-extern const char D_0068A1E0[];
-extern const char D_0068A208[];
-extern const char D_0068A230[];
-extern const char D_0068A258[];
-extern const char D_0068A280[];
-extern const char D_0068A2A8[];
-extern const char D_0068A2D0[];
-extern const char D_0068A2E8[];
-extern const char D_0068A300[];
-extern const char D_0068A318[];
-void *D_003EB09C[21] = {
-    (void *) D_0068A300,
-    (void *) D_0068A2E8,
-    (void *) D_0068A2D0,
-    (void *) D_0068A2A8,
-    (void *) D_0068A280,
-    (void *) D_0068A258,
-    (void *) D_0068A230,
-    (void *) D_0068A208,
-    (void *) D_0068A1E0,
-    (void *) D_0068A1B8,
-    (void *) D_0068A190,
-    (void *) D_0068A168,
-    (void *) D_0068A140,
-    (void *) D_0068A118,
-    (void *) D_0068A0F0,
-    (void *) D_0068A0C8,
-    (void *) D_0068A0A0,
-    (void *) D_0068A078,
-    (void *) D_0068A050,
-    (void *) D_0068A028,
-    (void *) D_0068A000
-};
-
-void *D_003EB098[] = { (void *) D_0068A318 };
-unsigned short D_003EB1F8[] = { 793 };
-unsigned char D_003EB1FA[22] = { 0 };

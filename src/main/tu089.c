@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu051.h"
+#include "main/tu048.h"
 
 /* Two endpoints of the sector at angle +/- half its width, both one unit out from source. */
 typedef struct UwamonoSector {
@@ -166,21 +167,6 @@ missed:
     return 0;
 }
 
-/*
- * The byte fade block at gameWork. vibrationStartFade starts a fade from currentValue
- * towards targetValue over framesTotal steps; vibrationStepFade steps it and writes
- * currentValue to PadData[0].+0x51, with PadData[0].+0x50 as the running flag.
- */
-typedef struct ByteFade {
-    unsigned char unmodeled_0000[0x332];
-    unsigned char targetValue;          /* +0x332 */
-    unsigned char currentValue;         /* +0x333 */
-    int holdCountdown;                  /* +0x334: hold countdown, read by vibrationStepFade */
-    int framesLeft;                     /* +0x338: steps left in the fade */
-    int framesTotal;                    /* +0x33C: steps the fade was started with */
-} ByteFade;
-
-extern ByteFade gameWork;
 enum {
     VIBRATION_RUNNING_FLAG = 0x50,
     VIBRATION_VALUE_BYTE = 0x51
@@ -190,54 +176,51 @@ extern unsigned char PadData[];
 
 void vibrationResetFade(void) {
     do {
-        gameWork.holdCountdown = 0;
+        gameWork.vibrationHold = 0;
         PadData[VIBRATION_VALUE_BYTE] = 0;
     } while (0);
     do {
-        gameWork.framesLeft = 0;
+        gameWork.vibrationFramesLeft = 0;
         PadData[VIBRATION_RUNNING_FLAG] = 0;
     } while (0);
 }
 
-/* Stores into the word at D_002B60C4; what that word means is not known yet. */
-extern int D_002B60C4[];
-
+/* Sets the hold countdown of the vibration fade. */
 void func_00208B50(int value) {
-    D_002B60C4[0] = value;
+    gameWork.vibrationHold = value;
 }
 
 void vibrationStartFade(unsigned char targetValue, unsigned char currentValue, int framesTotal) {
-    gameWork.targetValue = targetValue;
-    gameWork.currentValue = currentValue;
-    gameWork.framesLeft = framesTotal;
-    gameWork.framesTotal = framesTotal;
+    gameWork.vibrationTarget = targetValue;
+    gameWork.vibrationValue = currentValue;
+    gameWork.vibrationFramesLeft = framesTotal;
+    gameWork.vibrationFramesTotal = framesTotal;
 }
 
 void vibrationStepFade(void) {
-    if (gameWork.holdCountdown != 0) {
+    if (gameWork.vibrationHold != 0) {
         int remaining;
 
         remaining = 0;
-        if (gameWork.holdCountdown - 1 >= 0) {
-            remaining = gameWork.holdCountdown - 1;
+        if (gameWork.vibrationHold - 1 >= 0) {
+            remaining = gameWork.vibrationHold - 1;
         }
         PadData[VIBRATION_RUNNING_FLAG] = 1;
-        gameWork.holdCountdown = remaining;
+        gameWork.vibrationHold = remaining;
     }
-    if (gameWork.framesLeft != 0) {
+    if (gameWork.vibrationFramesLeft != 0) {
         int remaining;
         int fadeStep;
 
-        fadeStep = (gameWork.targetValue - gameWork.currentValue) * gameWork.framesLeft / gameWork.framesTotal;
+        fadeStep = (gameWork.vibrationTarget - gameWork.vibrationValue) * gameWork.vibrationFramesLeft / gameWork.vibrationFramesTotal;
         remaining = 0;
-        if (gameWork.framesLeft - 1 >= 0) {
-            remaining = gameWork.framesLeft - 1;
+        if (gameWork.vibrationFramesLeft - 1 >= 0) {
+            remaining = gameWork.vibrationFramesLeft - 1;
         }
-        gameWork.framesLeft = remaining;
-        PadData[VIBRATION_VALUE_BYTE] = gameWork.currentValue + fadeStep;
+        gameWork.vibrationFramesLeft = remaining;
+        PadData[VIBRATION_VALUE_BYTE] = gameWork.vibrationValue + fadeStep;
     }
 }
 
 /* The word stored by func_00208B50 and the rest of the 860-byte block that follows it; only
  * index 0 is used by this TU, the other words are zero in the original. Element type is a guess. */
-int D_002B60C4[215] = { 0 };

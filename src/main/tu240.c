@@ -2,6 +2,8 @@
 #include "main/tu229.h"
 #include "main/tu234.h"
 #include "main/tu240.h"
+#include "main/tu048.h"
+#include "main/tu051.h"
 #include "main/tu242.h"
 #include "main/tu244.h"
 
@@ -37,12 +39,12 @@ void timecodeStartOpening(MsgSlot *slot)
 
 
 /*
- * Per-frame update, main 0x00285160. Does nothing unless the object is active and gameLoopFlags bit 0 is clear.
+ * Per-frame update, main 0x00285160. Does nothing unless the object is active and gameWork.control has CONTROL_PAUSED clear.
  * The int return type (never set) keeps the final timecodeStepCounter call from becoming a tail jump.
  */
 int timecodeUpdate(MsgSlot *slot)
 {
-    if (slot->state == MSG_SLOT_STATE_TIMECODE && !(gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES)) {
+    if (slot->state == MSG_SLOT_STATE_TIMECODE && !(gameWork.control & CONTROL_PAUSED)) {
         if (slot->flags & MSG_SLOT_OPENING) {
             slot->open_counter += 1;
             if (slot->open_counter >= TIMECODE_OPEN_FRAMES) {
@@ -179,7 +181,6 @@ void timecodeStepCounter(MsgSlot *slot)
 }
 
 /* X of the cursor: eased between the previous and the selected digit, the centre of the range from timecodeCursorEnds offset by the half-width times cos(cursor_angle). */
-extern float kDegToRad;
 extern float cosf(float angle);
 
 int timecodeCursorX(MsgSlot *slot)
@@ -192,7 +193,7 @@ int timecodeCursorX(MsgSlot *slot)
     float angle;
 
     timecodeCursorEnds(slot, &low, &high);
-    angle = stepper->cursor_angle * kDegToRad;
+    angle = stepper->cursor_angle * 0.01745328f;
     amplitude = -((high - low) >> 1);
     centre = (high + low) >> 1;
     return centre + (int)(amplitude * cosf(angle));
@@ -328,3 +329,5 @@ void timecodeEnablePhase(MsgSlot *slot)
         slot->flags |= TIMECODE_FLAG_PHASE;
     }
 }
+
+int kTimecodeFieldLayout[2][2] = { { 2, 11 }, { 2, 10 } };

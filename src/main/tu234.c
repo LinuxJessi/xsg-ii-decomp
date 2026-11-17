@@ -8,7 +8,6 @@
 #include "main/xgl_font.h"
 #include "gs.h"
 
-
 /* Text layout constants shared by the sell, list and talk-box drawers. */
 #define DEBT_CAPTION_WIDTH 0xA5     /* width of the "remaining debt" caption; the digits start after it */
 #define DEBT_DIGIT_PITCH 15         /* px between the amount's text units */
@@ -89,9 +88,9 @@ int debtBoxCenterX(MsgSlot *box, int value) {
 
 extern int sellLabelTextOff;
 extern unsigned char fmtThreeStrings[];
-extern unsigned char fontStylePrefix[];
+extern const unsigned char fontStylePrefix[];
 extern unsigned char fontPropTag[];
-extern unsigned char sellRemainingDebtText[];
+extern const unsigned char sellRemainingDebtText[];
 extern unsigned char sellMoneyFormat[];
 
 /* Prints the "remaining debt" caption, then the amount one text unit at a time, 15 px apart. */
@@ -124,9 +123,9 @@ void drawRemainingDebt(int x, int y, int color, int amount) {
 
 u8 *fontColorTag(int color);
 u8 *fontZoomTag(int zoom);
-extern unsigned char fmtSevenStrings[];
-extern unsigned char fontShadowTagA[];
-extern unsigned char fontShadowTagB[];
+extern const unsigned char fmtSevenStrings[];
+extern const unsigned char fontShadowTagA[];
+extern const unsigned char fontShadowTagB[];
 
 /* Draws the string text with a colour tag, a zoom tag and two shadow tags. */
 void drawShadowedText(int x, int y, int z, unsigned int *text) {
@@ -355,11 +354,9 @@ void drawSellPanel(MsgSlot *widget) {
     xglFontFlush();
 }
 
-extern float kPixelsToRowsScale;
-
 /* Scales an integer by a float constant and rounds to nearest. */
 int pixelsToRows(int value) {
-    return (float) value * kPixelsToRowsScale + 0.5;
+    return (float) value * 0.0333f + 0.5;
 }
 
 int sellItemFirstRowY(const MsgSlot *slot);
@@ -393,12 +390,10 @@ void drawSellItemList(MsgSlot *list) {
     }
 }
 
-extern float kPixelsToSlotsScale;
-
 /* Returns how many of the SELL_LIST_SLOTS slots are walked before the rounded scaled value runs out of filled slots. */
 int sellCursorFilledRank(int value, int *slots) {
     int *end = slots + SELL_LIST_SLOTS;
-    int remaining = (float) value * kPixelsToSlotsScale + 0.5;
+    int remaining = (float) value * 0.0333f + 0.5;
     int count;
 
     for (count = 0; slots < end; count++, slots++) {
@@ -523,7 +518,7 @@ char *textFindRunEnd(char *text)
     return (char *)end;
 }
 
-extern unsigned char sellNoItemsText[];
+extern const unsigned char sellNoItemsText[];
 
 /* Draws the empty-list notice "No items to sell." at the position in pos (only when flag is zero). */
 void drawEmptyNotice(MsgSlot *pos) {
@@ -680,6 +675,12 @@ void talkBoxDrawDigitRow(MsgSlot *box, int x, int y) {
     xglFontPrintExtFunc(box->z, talkBoxScissorCallback, (void *) 1);
 }
 
+const unsigned char fontXOffsetTag[16] = "$xx0,20;";
+const unsigned char fmtFourStrings[16] = "%s%s%s%s";
+const unsigned char sellAcquiredText[16] = "Acquired ";
+const unsigned char fontGreyTag[16] = "$col808080;";
+const unsigned char fontHanCountFmt[16] = "$han1;%d";
+
 void drawPlainText(int x, int y, int color, const char *text);
 void drawAccentText(int x, int y, int color, const char *text);
 
@@ -698,7 +699,6 @@ void drawDigit(int x, int y, int color, int digit, int variant) {
     drawPlainText(x, y, color, &text_buf[0]);
 }
 
-extern float kDegToRadSwing;
 extern const char *entryAccentGlyph;
 float cosf(float x);
 
@@ -720,7 +720,7 @@ void drawSwingingAccent(int x, int y, int color, int slot, MsgSlot *menu) {
     }
     mid = (from + to) >> 1;
     amplitude = (float) ((from - to) >> 1);
-    drawAccentText(x, y - mid + (int) (amplitude * cosf((float) menu->u.timecode.roll_angle * kDegToRadSwing)), color, entryAccentGlyph);
+    drawAccentText(x, y - mid + (int) (amplitude * cosf((float) menu->u.timecode.roll_angle * 0.01745328f)), color, entryAccentGlyph);
 }
 
 void formatEntryValue(char *buffer, MsgSlot *entry);
@@ -741,6 +741,15 @@ void drawEntryDigits(MsgSlot *entry, int x, int y) {
 }
 
 void formatEntryDigits(char *buffer, MsgSlot *entry);
+/* Font and format strings of the sell and talk boxes. */
+const unsigned char fontStylePrefix[40] = "\x0b" "\x19" "\x02" "\x0d" "\x02" "$xx0,30;$rubyz23,21;$rubyy-2;";
+const unsigned char sellRemainingDebtText[24] = "Remaining Debt: ";
+const unsigned char fmtSevenStrings[16] = "%s%s%s%s%s%s%s";
+const unsigned char fontShadowTagA[24] = "$shadow+2,+1,000000;";
+const unsigned char fontShadowTagB[24] = "$shadow+1,+1,000000;";
+const unsigned char sellNoItemsText[72] = "No items to sell.\x00" "\x00" "\x00" "\x00" "\x00" "\x00" "\x00" "$han1;0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n";
+const unsigned char fmtSixDigits[16] = "%d%d%d%d%d%d";
+
 int formatEntryHms(char *buffer, MsgSlot *entry);
 int formatEntryMsf(char *buffer, MsgSlot *entry);
 
@@ -783,7 +792,7 @@ void formatEntryDigits(char *buffer, MsgSlot *entry) {
     buffer[count] = '\0';
 }
 
-extern unsigned char fmtSixDigits[];
+extern const unsigned char fmtSixDigits[];
 extern unsigned char entryFrameDigitCorrection[];
 
 /* Formats the entry's frame count (30 per second) as the six digits hh:mm:ss. */
@@ -1028,9 +1037,9 @@ void drawAcquiredText(MsgSlot *block) {
     xglFontPrintExtFunc(0, talkBoxScissorCallback, (void *) 1);
 }
 
-extern unsigned char sellAcquiredText[];
-extern unsigned char fontGreyTag[];
-extern unsigned char fontHanCountFmt[];
+extern const unsigned char sellAcquiredText[];
+extern const unsigned char fontGreyTag[];
+extern const unsigned char fontHanCountFmt[];
 extern unsigned char acquiredCountLead[];
 extern unsigned char acquiredTextEnd[];
 typedef struct StylePrefixCopy {
@@ -1128,14 +1137,14 @@ int sellItemFirstRowY(const MsgSlot *slot)
     return slot->y - slot->u.list.slide_pos + SELL_ROWS_MARGIN;
 }
 
-extern unsigned char fontXOffsetTag[];
+extern const unsigned char fontXOffsetTag[];
 
 void drawPlainText(int x, int y, int color, const char *text) {
     sprintf((char *) SCRATCHPAD_BASE, fmtThreeStrings, fontStylePrefix, fontXOffsetTag, text);
     xglFontPrint(x, y, color, (char *) SCRATCHPAD_BASE);
 }
 
-extern unsigned char fmtFourStrings[];
+extern const unsigned char fmtFourStrings[];
 
 void drawAccentText(int x, int y, int color, const char *text) {
     u8 *color_tag;
@@ -1151,8 +1160,10 @@ void drawTextFront(int x, int y, char *text)
     xglFontPrint(x, y + FRONT_TEXT_Y_OFFSET, FONT_Z_FRONT, text);
 }
 
-extern unsigned char fmtColorTag[];
-extern unsigned char D_00888798[];
+const unsigned char fmtColorTag[16] = "$col%06x;";
+const unsigned char fmtZoomTag[16] = "$zoom%d,%d;";
+
+static unsigned char D_00888798[24];
 
 /* Returns the colour tag "$col%06x;" for `color`, formatted into a static buffer. */
 u8 *fontColorTag(int color) {
@@ -1160,11 +1171,47 @@ u8 *fontColorTag(int color) {
     return D_00888798;
 }
 
-extern unsigned char fmtZoomTag[];
-extern unsigned char D_008887B0[];
+static unsigned char D_008887B0[24];
 
 /* Returns the zoom tag "$zoom%d,%d;" for `zoom`, formatted into a static buffer. */
 u8 *fontZoomTag(int zoom) {
     sprintf((char *) D_008887B0, fmtZoomTag, zoom, zoom);
     return D_008887B0;
 }
+
+/* Digit-correction table of formatEntryMsf (.data), and the Sell label text offset (.sdata). */
+unsigned char entryFrameDigitCorrection[16] = {
+    0, 0, 1, 2, 0, 2, 1, 2,
+    1, 0, 0, 0, 0, 0, 0, 0
+};
+
+/* .sdata of this file (0x69DCD0-0x69DD48): its format strings and tags (data map review 2026-11-17). */
+unsigned char fmtThreeStrings[8] = "%s%s%s";
+
+unsigned char fontPropTag[8] = "$prop1;";
+
+unsigned char sellMoneyFormat[8] = "%dG";
+
+unsigned char fmtDecimal[8] = "%d";
+
+unsigned char fontXOffsetFmt[8] = "$xx1,4;";
+
+unsigned char fmtString[8] = "%s";
+
+unsigned char sellActionSell[8] = ":Sell";
+
+unsigned char sellActionClose[8] = ":Close";
+
+unsigned char sellCurrencySuffix[8] = "G";
+
+unsigned char fmtXAdvance[8] = "$ax%d;";
+
+const char *entryAccentGlyph = (const char *) sellNoItemsText + 0x18;
+
+unsigned char fontHanTag[8] = "$han1;";
+
+unsigned char entrySeparatorMark[8] = ":";
+
+unsigned char acquiredCountLead[8] = " \xa1" "\xdf" " ";
+
+unsigned char acquiredTextEnd[8] = ".";

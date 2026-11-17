@@ -35,9 +35,9 @@ typedef struct TiCamera {
     float position[3];
 } TiCamera;
 
-extern unsigned char tiCameraAssertPData[];
-extern unsigned char tiCameraSourceFile[];
-extern unsigned char tiCameraAssertPCam[];
+extern const char tiCameraAssertPData[];
+extern const char tiCameraSourceFile[];
+extern const char tiCameraAssertPCam[];
 void xacEvalJointPose(f32 *values, void **ppJointHeader, f32 curveParam);
 void xacEvalJointValue(f32 curveParam, f32 *values, void **ppJointHeader);
 void xglEulerFromRotation(Vector4 *euler, Vector4 *rotation);
@@ -117,3 +117,8 @@ void tiCameraReadRecord(TiCamera *camera, f32 *record, f32 value)
     tiCameraReadPose(camera, &stream, value);
     tiCameraReadAngle(camera, &stream, value);
 }
+
+/* Data of this TU: the assert strings, in address order. */
+const char tiCameraAssertPData[8] = "pData";
+const char tiCameraSourceFile[24] = "../TiCameraSolver.euc.c";
+const char tiCameraAssertPCam[8] = "pCam";

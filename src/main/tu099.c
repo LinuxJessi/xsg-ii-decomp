@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/tu097.h"
 #include "main/tu098.h"
+#include "main/tu048.h"
 
 /* Text system sizes: eight text boxes, four slots per box stack, four cursor buffers, 0x18 pixels per line. */
 #define TEXT_BOX_COUNT 8
@@ -311,13 +312,6 @@ void textBoxUpdate(TextBoxStack *stack)
     }
 }
 
-/* The shared game-work block; only its flags word at +0x08 is touched by this TU. */
-typedef struct GameWorkFlags {
-    unsigned char unmodeled_00[8];
-    unsigned int flags;
-} GameWorkFlags;
-
-extern GameWorkFlags gameWork;
 void cursorBufferUpdateEntry(void *cursor);
 /*
  * Updates every text box and draws the highlight bar of each box with a non-empty stack.
@@ -349,7 +343,7 @@ void textSystemUpdate(void)
             }
         }
         if (cursorBufferCount == 0) {
-            gameWork.flags &= 0xFFFF7FFF;
+            gameWork.control &= 0xFFFF7FFF;
         }
     }
     textBoxUpdateAll();
@@ -733,66 +727,6 @@ void cursorBufferDeactivateCurrent(void)
 }
 
 const char D_00689FE8[24] = "$mark1f;";
-
-const char D_0068A000[40] = "yosikawa\134skillmdl\134skilplate05.txy";
-
-const char D_0068A028[40] = "yosikawa\134skillmdl\134skilplate05.pxy";
-
-const char D_0068A050[40] = "yosikawa\134skillmdl\134skilplate04.txy";
-
-const char D_0068A078[40] = "yosikawa\134skillmdl\134skilplate04.pxy";
-
-const char D_0068A0A0[40] = "yosikawa\134skillmdl\134skilplate03.txy";
-
-const char D_0068A0C8[40] = "yosikawa\134skillmdl\134skilplate03.pxy";
-
-const char D_0068A0F0[40] = "yosikawa\134skillmdl\134skilplate02.txy";
-
-const char D_0068A118[40] = "yosikawa\134skillmdl\134skilplate02.pxy";
-
-const char D_0068A140[40] = "yosikawa\134skillmdl\134skilball04.txy";
-
-const char D_0068A168[40] = "yosikawa\134skillmdl\134skilball04.pxy";
-
-const char D_0068A190[40] = "yosikawa\134skillmdl\134skilball03.txy";
-
-const char D_0068A1B8[40] = "yosikawa\134skillmdl\134skilball03.pxy";
-
-const char D_0068A1E0[40] = "yosikawa\134skillmdl\134skilball02.txy";
-
-const char D_0068A208[40] = "yosikawa\134skillmdl\134skilball02.pxy";
-
-const char D_0068A230[40] = "yosikawa\134skillmdl\134skilball01.txy";
-
-const char D_0068A258[40] = "yosikawa\134skillmdl\134skilball01.pxy";
-
-const char D_0068A280[40] = "yosikawa\134skillmdl\134skilplate01.txy";
-
-const char D_0068A2A8[40] = "yosikawa\134skillmdl\134skilplate01.pxy";
-
-const char D_0068A2D0[24] = "yosikawa\134model\134rsv.txy";
-
-const char D_0068A2E8[24] = "yosikawa\134model\134rsv.pxy";
-
-const char D_0068A300[24] = "yosikawa\134model\134atk.txy";
-
-const char D_0068A318[24] = "yosikawa\134model\134atk.pxy";
-
-const char D_0068A330[24] = "yosikawa\134umn8.jpg";
-
-const char D_0068A348[24] = "yosikawa\134umn7.jpg";
-
-const char D_0068A360[24] = "yosikawa\134umn6.jpg";
-
-const char D_0068A378[24] = "yosikawa\134umn5.jpg";
-
-const char D_0068A390[24] = "yosikawa\134umn4.jpg";
-
-const char D_0068A3A8[24] = "yosikawa\134umn3.jpg";
-
-const char D_0068A3C0[24] = "yosikawa\134umn2.jpg";
-
-const char D_0068A3D8[24] = "yosikawa\134umn1.jpg";
 
 int cursorBufferCount = 0;
 

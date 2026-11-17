@@ -17,11 +17,7 @@
 #include "main/pad.h"
 #include "main/pad_raw.h"
 #include "main/tu093.h"
-
-/* Initialized data read by menuSceneInit and by other TUs (0x002B5DA8, .data). */
-int D_002B5DA8[] = { 0, 0 };
-int D_002B5DB0[] = { 0, 0 };
-int D_002B5DB8[] = { 0 };
+#include "main/tu048.h"
 
 /* Script strings of the text draw commands (0x0068A3F0, .rodata, 80 bytes with zero fill). */
 const char D_0068A3F0[80] = "$init;$bg2;$shadow+1,+3,000000;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
@@ -247,7 +243,6 @@ void cursorBufferTablesInit(void) {
     D_0069D502 = 0;
 }
 
-
 /* Refreshes a cursor buffer: while D_0069D4EC is set only the unit size and capacity change, otherwise a full init. */
 void cursorBufferSetOrInit(CursorBuffer *buffer, int capacity, int unit_size, int mode_flags) {
     if (D_0069D4EC != 0) {
@@ -297,7 +292,6 @@ void cursorBuffersRewind(void) {
     D_006A5220[0].cursor = 0;
 }
 
-
 /* ControlSlot.state values; 2 and 3 are not named yet. */
 enum ControlState {
     CONTROL_STATE_IDLE = 0,
@@ -342,7 +336,7 @@ void menuUmnImageReset(void) {
 
 int xglCdBufferReserve(long size);
 void xglCdReadFileAsync();
-extern int menuUmnImageFileNames[];
+extern const char *menuUmnImageFileNames[];
 
 void menuUmnImageLoad(int count) {
     int remaining;
@@ -408,6 +402,7 @@ typedef struct VifPacketTemplate {
     u64 tag;                    /* 0x40 */
     u8 unmodeled_48[0x18];
     u32 size;                   /* 0x60 */
+    u8 unmodeled_64[0xC];
 } VifPacketTemplate;
 
 extern VifPacketTemplate D_003EB170;
@@ -575,7 +570,7 @@ void menuSkillModelReadDone(int key) {
     }
 }
 
-extern int D_003EB098[];
+extern const char *D_003EB098[];
 extern int D_003EB09C[];
 
 /* Runs once per index: the byte at menuSkillModelLoadTally[index] is set on the first call, then the two files of that
@@ -821,7 +816,6 @@ void menuMessageTextUpdate(void) {
     }
 }
 
-
 int selectionMemberCapacity();
 int selectionPairRecordCount();
 int selectionCopilotRecordCount();
@@ -984,7 +978,6 @@ void menuSlotSetEnterDirection(int to, int from) {
     }
 }
 
-
 extern StateBlock D_006A4940;
 extern u8 D_006A4D28[];
 extern int menuPendingSelection;
@@ -1112,7 +1105,6 @@ typedef union MenuLatch {
     int word;
     u8 bytes[4];
 } MenuLatch;
-
 
 /* Initialized small data of this TU's menu functions (0x0069D514..0x0069D53F, .sdata); the definitions follow the MenuLatch type. */
 MenuLatch D_0069D514 = { -1 };
@@ -1470,7 +1462,7 @@ void menuSceneInit(void) {
     if (xglFlagsGet1(232)) {
         D_0069D503 = (D_0069D503 | 2) + 16;
     }
-    if (ptState.word5C == 9 || (ptState.progress->key != -1 && (unsigned int) (D_002B5DA8[0] - 5510) >= 601)) {
+    if (ptState.word5C == 9 || (ptState.progress->key != -1 && (unsigned int) (gameWork.mapId - 5510) >= 601)) {
         D_0069D503 = (D_0069D503 | 1) + 16;
     }
 
@@ -2879,8 +2871,6 @@ void menuTutorialSaveState(void) {
     cursorBufferSetOffset((CursorBuffer *) ((CursorEntry *) D_006A51E0 + 1), 0);
     cursorBufferSetOffset((CursorBuffer *) ((CursorEntry *) D_006A51E0 + 2), 0);
 }
-
-
 
 void menuTutorialRestoreState(void) {
     int i;
@@ -4860,12 +4850,6 @@ void menuSceneExit(void) {
     D_0069E228 = firstSlotState;
 }
 
-typedef struct MenuSceneWork {
-    u8 unmodeled_00[8];
-    int control;                /* 0x08: 0x04000000 while the menu scene runs; 0x10000000 soft reset */
-} MenuSceneWork;
-
-extern MenuSceneWork gameWork;
 void func_001BA6F4(void);
 void fadeStartIn(int frames);
 void uwamonoAttachCurrent(int record, int index);
@@ -4918,8 +4902,6 @@ int menuSceneRunLoop(void) {
     menuSceneEnter();
 
     for (;;) {
-        MenuSceneWork *work = &gameWork;
-
         if (D_0069D518 == 0 && (padPort0->doubleword & 0x10F00F) == 0x100000) {
             if (D_0069D4E0 != 0 && menuCurrentSlot == 6) {
                 if (ptAllCopilotsAssigned() != 0) {
@@ -4935,7 +4917,7 @@ int menuSceneRunLoop(void) {
         if (((padNow->pressed & PAD_START) != 0 && (padNow->buttonsHeld & PAD_SOFT_RESET_HELD) == 0x10F)
             || (gameWork.control & 0x10000000) != 0) {
             sceneResult = 1;
-            work->control |= 0x10000000;
+            gameWork.control |= 0x10000000;
         }
 
         if (sceneResult != 0) {
@@ -5113,7 +5095,7 @@ int menuSceneRunLoop(void) {
         XenoActorSetFlagAll(2);
         bgLayerClearAllFlags();
         menuSelectionRingDraw(D_0069D519 & 1);
-        if ((work->control & 0x10000000) == 0) {
+        if ((gameWork.control & 0x10000000) == 0) {
             xglCallbackQueueAdd((int) menuSceneDraw);
             XenoActorDoit();
             XenoActorDisp();
@@ -5160,7 +5142,6 @@ finish:
     return 0;
 }
 
-
 /* Sets D_0069D502 when the first state object's key is -1, then runs the scene loop menuSceneRunLoop. */
 void menuSceneRunKeyCheck(void) {
     if (ptState.progress->key == -1) {
@@ -5200,3 +5181,56 @@ const float D_0069B20C = 0.32f;
 const float D_0069B210 = 0.020833f;
 const float D_0069B214 = -0.1f;
 int menuPendingSelection = -1;
+
+/* CD file names are string literals of the tables below (D_003EB098, menuUmnImageFileNames). */
+
+/* .data of this file (0x3EB040-0x3EB210), address order. */
+unsigned char D_003EB040[16] = { 2, 7, 4, 3, 1, 0, 5, 6, 8, 9, 0, 0, 0, 0, 0, 0 };
+
+short D_003EB050[20] = { 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 0, 0, 0 };
+
+signed char D_003EB078[32] = { 0, 2, 0, 2, 16, 1, 16, 1, 13, 2, 13, 2, 8, 2, 10, 2, 2, 4, 12, 1, 6, 2, 6, 2, 15, 1, 0, 0, 0, 0, 0, 0 };
+
+const char *D_003EB098[22] = {
+    "yosikawa\134model\134atk.pxy",
+    "yosikawa\134model\134atk.txy",
+    "yosikawa\134model\134rsv.pxy",
+    "yosikawa\134model\134rsv.txy",
+    "yosikawa\134skillmdl\134skilplate01.pxy",
+    "yosikawa\134skillmdl\134skilplate01.txy",
+    "yosikawa\134skillmdl\134skilball01.pxy",
+    "yosikawa\134skillmdl\134skilball01.txy",
+    "yosikawa\134skillmdl\134skilball02.pxy",
+    "yosikawa\134skillmdl\134skilball02.txy",
+    "yosikawa\134skillmdl\134skilball03.pxy",
+    "yosikawa\134skillmdl\134skilball03.txy",
+    "yosikawa\134skillmdl\134skilball04.pxy",
+    "yosikawa\134skillmdl\134skilball04.txy",
+    "yosikawa\134skillmdl\134skilplate02.pxy",
+    "yosikawa\134skillmdl\134skilplate02.txy",
+    "yosikawa\134skillmdl\134skilplate03.pxy",
+    "yosikawa\134skillmdl\134skilplate03.txy",
+    "yosikawa\134skillmdl\134skilplate04.pxy",
+    "yosikawa\134skillmdl\134skilplate04.txy",
+    "yosikawa\134skillmdl\134skilplate05.pxy",
+    "yosikawa\134skillmdl\134skilplate05.txy"
+};
+
+/* Size pairs read by menuSkillModelSizes users (tu100): compressed-size and buffer-size words of the model sets. */
+unsigned int menuSkillModelSizes[22] = { 0x4800, 0x8800, 0x4800, 0x8800, 0xd800, 0x9000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x11000, 0x1000, 0x11000, 0x1000, 0x11000, 0x1000, 0x11000 };
+
+const char *menuUmnImageFileNames[10] = { "yosikawa\134umn1.jpg", "yosikawa\134umn2.jpg", "yosikawa\134umn3.jpg", "yosikawa\134umn4.jpg", "yosikawa\134umn5.jpg", "yosikawa\134umn6.jpg", "yosikawa\134umn7.jpg", "yosikawa\134umn8.jpg", 0, 0 };
+
+/* VIF1 packet template (tu100 writes its +0x40 tag and +0x60 size); bytes of the unmodeled parts. */
+VifPacketTemplate D_003EB170 = {
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 81, 4, 0, 0, 0, 0, 0, 0, 16, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 56, 8, 0, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 81, 0, 0, 0, 0, 0, 0, 0 },
+    0x0ULL,
+    { 82, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 83, 0, 0, 0, 0, 0, 0, 0 },
+    0x7000,
+    { 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+unsigned char D_003EB1E0[24] = { 18, 16, 16, 12, 128, 128, 128, 14, 1, 1, 0, 0, 0, 13, 3, 15, 72, 0, 128, 0, 0, 0, 0, 0 };
+
+/* D_003EB1FA is the byte at +2 of this object. */
+char D_003EB1F8[24] = { 0x19, 0x03 };

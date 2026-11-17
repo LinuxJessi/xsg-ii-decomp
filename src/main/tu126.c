@@ -1,6 +1,7 @@
 #include "common.h"
 #include "main/tu097.h"
 #include "main/tu110.h"
+#include "main/tu048.h"
 
 /* Text strings of the save and config screens, in address order (read by the draw helpers below). */
 const char D_0068B640[56] = "$init;$bg0;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
@@ -1902,14 +1903,6 @@ typedef struct ClearEnvColor {
 
 extern ClearEnvColor ClearEnv;
 
-typedef struct GameWorkView {
-    unsigned char unmodeled_000[0x8];
-    int control;                    /* +0x08: CONTROL_* bits (tu051.h) */
-    unsigned char unmodeled_00c[0x0C];
-    int field18;
-} GameWorkView;
-
-extern GameWorkView gameWork;
 extern int (*saveUiUpdateTable[])(void);
 const char D_0068B7D8[16] = "carddata.bin";
 const char D_0068B7E8[24] = "yosikawa\\Location.txd";
@@ -1989,7 +1982,7 @@ int saveScreenRun(int entryMode)
     if (mode >= 2) {
         mode = 1;
     }
-    if (mode == 0 && gameWork.field18 == 0x1B91) {
+    if (mode == 0 && gameWork.mapId == 0x1B91) {
         D_0069DA1D = 1;
     } else {
         D_0069DA1D = 0;
@@ -2634,7 +2627,6 @@ void configScreenRun(void)
 {
     int done;
     int countdown;
-    GameWorkView *scene;
     done = 0;
     gameWork.control |= 0x04000000;
     ClearEnv.color_r = 0;
@@ -2687,9 +2679,7 @@ void configScreenRun(void)
     bgLayerRelease();
     xglCdArenaClose();
     {
-        scene = &gameWork;
-
-        if ((scene->control & 0x10000000) == 0) {
+        if ((gameWork.control & 0x10000000) == 0) {
             grCopyFrame(sRender.frame_base, sRender.copy_base);
             countdown = 15;
             do {

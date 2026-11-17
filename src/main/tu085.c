@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/get.h"
+#include "main/tu048.h"
 
 /* Named values of the map object (uwamono) system in this file. */
 enum UwamonoLimit {
@@ -437,7 +438,6 @@ extern const char D_00689DC8[];
 extern const char D_00689DD8[];
 extern const float uwamonoPi;
 extern const float D_0069B0E8;
-extern s16 D_002B60C0[];
 extern s16 uwamonoLadderState;
 extern float D_0069B0D4;
 extern float D_0069B0D8;
@@ -479,7 +479,7 @@ void uwamonoPursueFocus(int slotIndex)
     actor = uwamonoRecords[slotIndex].actor;
     state = uwamonoRecords[slotIndex].state;
 
-    if (D_002B60C0[0] > 0)
+    if (gameWork.fadeTimer > 0)
     {
         uwamonoHaltPursuit(slotIndex);
         return;
@@ -1038,30 +1038,6 @@ void uwamonoStepScript(int slotIndex)
 
 
 
-typedef struct UwamonoGameWork {
-    unsigned char unmodeled_000[0x06];
-    u16 field06;                        /* +0x06 */
-    int control;                        /* +0x08 */
-    unsigned char unmodeled_00c[0x10 - 0x0C];
-    int flags;                          /* +0x10 */
-    unsigned char unmodeled_014[0x1C - 0x14];
-    int field1C;                        /* +0x1C */
-    unsigned char unmodeled_020[0x31C - 0x20];
-    s16 encounterTarget;                       /* +0x31C */
-    unsigned char unmodeled_31e[2];
-    s16 encounterReaction;                       /* +0x320 */
-    unsigned char unmodeled_322[2];
-    int encounterFlags;                       /* +0x324 */
-    unsigned char unmodeled_328[0x32C - 0x328];
-    int encounterRecord;                       /* +0x32C */
-    s16 blocked;                        /* +0x330 */
-    unsigned char unmodeled_332[0x344 - 0x332];
-    void *releaseHandle;                /* +0x344 */
-    unsigned char unmodeled_348[0x1B20 - 0x348];
-    signed char field1B20;              /* +0x1B20 */
-} UwamonoGameWork;
-
-extern UwamonoGameWork gameWork;
 extern signed char pxyTickScaleDouble;
 extern unsigned short textOptionFlags[];
 extern const float D_0069B0F0;
@@ -1144,7 +1120,7 @@ void uwamonoUpdateRecord(int index)
                 actor->radius + uwamonoRecords[uwamonoCurrentIndex].actor->radius + D_0069B0F0 &&
             __builtin_fabsf(actor->position.y - uwamonoRecords[uwamonoCurrentIndex].actor->position.y) <
                 uwamonoRecords[uwamonoCurrentIndex].form * D_0069B0F4 &&
-            gameWork.blocked == 0)
+            gameWork.fadeTimer == 0)
         {
             uwamonoBeginEncounter(index, 0, 0);
         }
@@ -1216,7 +1192,7 @@ void uwamonoUpdateRecord(int index)
     }
     if (pxyTickScaleDouble != 0)
     {
-        if ((textOptionFlags[0] & 4) || gameWork.blocked != 0)
+        if ((textOptionFlags[0] & 4) || gameWork.fadeTimer != 0)
         {
             if ((*(signed char *) &state->mode) == 5)
             {
@@ -1227,7 +1203,7 @@ void uwamonoUpdateRecord(int index)
     if (Get_Distance(&actor->position, &player->position) <= actor->radius + player->radius + D_0069B0F8 &&
         __builtin_fabsf(actor->position.y - uwamonoRecords[uwamonoCurrentIndex].actor->position.y) <
             uwamonoRecords[uwamonoCurrentIndex].form * D_0069B0FC &&
-        gameWork.blocked == 0)
+        gameWork.fadeTimer == 0)
     {
         uwamonoBeginEncounter(index, 0, 0);
     }
@@ -1671,10 +1647,10 @@ void uwamonoBeginAim(int index)
     if (record->flags & 0x2000000) {
         return;
     }
-    if (gameWork.blocked != 0 || uwamonoLadderState != 0 || gameWork.field06 != 0) {
+    if (gameWork.fadeTimer != 0 || uwamonoLadderState != 0 || gameWork.loadStage != 0) {
         return;
     }
-    if ((gameWork.control & 0x20) && gameWork.field1C != -1) {
+    if ((gameWork.control & 0x20) && gameWork.entryKey != -1) {
         return;
     }
     if ((unsigned) (state->mode - 4) < 2) {
@@ -1712,13 +1688,13 @@ void uwamonoBeginEncounter(int index, signed char takeValue, int reactionValue)
     UwamonoState *state;
     UwamonoActor *actor;
     float angle;
-    UwamonoGameWork *work;
+    GameWork *work; /* lever: the pointer keeps the register allocation of the encounterTarget stores */
     int inSector;
     int slotOffset;
 
     if (index == -1) {
         gameWork.encounterRecord = index;
-        gameWork.flags |= 1;
+        gameWork.sceneFlags |= 1;
         gameWork.encounterFlags = reactionValue;
         gameWork.encounterTarget = 0;
         gameWork.encounterReaction = 0;
@@ -1738,10 +1714,10 @@ void uwamonoBeginEncounter(int index, signed char takeValue, int reactionValue)
         if (gameWork.control & 0x8000) {
             return;
         }
-        if (gameWork.field06 != 0) {
+        if (gameWork.loadStage != 0) {
             return;
         }
-        if ((gameWork.control & 0x20) && gameWork.field1C != -1) {
+        if ((gameWork.control & 0x20) && gameWork.entryKey != -1) {
             return;
         }
         angle = Get_Angle_Relative(&uwamonoRecords[uwamonoCurrentIndex].position.vector, &actor->position,
@@ -1801,7 +1777,7 @@ void uwamonoBeginEncounter(int index, signed char takeValue, int reactionValue)
         work->encounterTarget = 0;
     }
     gameWork.encounterRecord = index;
-    gameWork.flags |= 1;
+    gameWork.sceneFlags |= 1;
     gameWork.encounterFlags = 0;
     if (uwamonoRecords[uwamonoCurrentIndex].form != 1.0f) {
         gameWork.encounterFlags = 0x800;
@@ -1813,7 +1789,7 @@ void uwamonoBeginEncounter(int index, signed char takeValue, int reactionValue)
             gameWork.encounterFlags |= 2;
         }
     }
-    if (gameWork.field1B20 == 0) {
+    if (gameWork.panelMode == 0) {
         gameWork.encounterFlags |= 0x20;
     }
     gameWork.encounterFlags |= state->field4064;
@@ -1926,7 +1902,6 @@ void uwamonoRebuildTrail(int index)
     uwamonoSetAction(index, 2);
 }
 
-s16 D_002B60C0[] = { 0, 0 };
 
 const char D_0069D438[8] = "\276\345\312\252";
 

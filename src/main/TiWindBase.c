@@ -133,9 +133,9 @@ void tiDynamicsCollSolveSpherePair(TiWindNode *a, TiWindNode *b, TiWindWorld *wo
 void tiDynamicsCollSolveMatrixPair(TiWindNode *a, TiWindNode *b, TiWindWorld *world);
 void tiDynamicsCollSolveCapsulePair(TiWindNode *a, TiWindNode *b, TiWindWorld *world);
 void xglVectorNormal_001A9200(float *destination, const float *source);
-extern DirWind tiWindDirTable[DIR_WIND_MAX];
+static DirWind tiWindDirTable[DIR_WIND_MAX];
 extern DirWindValue D_00989D90[DIR_WIND_MAX];
-extern PointWind tiWindPointTable[POINT_WIND_MAX];
+static PointWind tiWindPointTable[POINT_WIND_MAX];
 extern PointWindValues D_00989F00[POINT_WIND_MAX];
 extern const char D_0068F7B0[];
 extern const char D_0068F7C8[];
@@ -540,3 +540,8 @@ PointWind *tiWindPointGet(u32 index)
     }
     return &tiWindPointTable[index];
 }
+
+const char D_0068F7B0[24] = "num < DIR_WIND_MAX";
+const char D_0068F7C8[24] = "../TiWindBase.euc.c";
+const char D_0068F7E0[24] = "num < POINT_WIND_MAX";
+const char D_0068F7F8[8] = "wind";

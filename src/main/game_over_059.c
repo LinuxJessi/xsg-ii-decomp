@@ -10,6 +10,7 @@
 #include "main/pad.h"
 #include "main/tu051.h"
 #include "gs.h"
+#include "main/tu048.h"
 
 extern void sceVif1PkRef(XglPacket *packet, const void *environment,
                          int count, int mode, int offset, int flags);
@@ -63,22 +64,6 @@ void uwamonoResetRecords(int index, signed char mode);
 void saveScreenRun(int);
 void fadeReset(void);
 
-/* The fields of gameWork this file reads and writes. */
-typedef struct GameOverWork {
-    u8 unmodeled_00[0x06];
-    u16 loadedFromSave;         /* +0x06: Title stores saveScreenRun(1)'s result here (1: the game was
-                                 * loaded from a save); Intermission then does nothing */
-    int control;                /* +0x08: CONTROL_* bits (main/tu051.h) */
-    u8 unmodeled_0C[0x08];
-    int state;                  /* +0x14: the requested next map (-1 none); Title writes
-                                 * MAP_ID_NEW_GAME or GAME_STATE_LOAD_SAVE */
-    int mapId;                  /* +0x18: the current map; GameOver runs GameEnd on MAP_ID_GAME_END,
-                                 * Intermission copies state here */
-    u8 unmodeled_1C[0x04];
-    int current_id;             /* +0x20: the current resource id (tu050.c mainSwitchId);
-                                 * GameEnd sets 10, Intermission chapter + 1 */
-} GameOverWork;
-
 /* The JPEG decoder's 32-byte request: only the source and destination
  * words are set here, memset clears the rest. */
 typedef struct JpegDecodeRequest {
@@ -105,7 +90,7 @@ typedef struct JpegDecodeRequest {
 #define IMAGE_LOAD_OFFSET 0x100000
 /* The GameEnd map: GameOver shows the ending screen when gameWork.mapId is this. */
 #define MAP_ID_GAME_END 0x1B91
-/* The first map of a new game: Title's New Game writes it to gameWork.state. */
+/* The first map of a new game: Title's New Game writes it to gameWork.nextMap. */
 #define MAP_ID_NEW_GAME 0x1B59
 /* The state Title's Load Game writes after menuRequestLoad. */
 #define GAME_STATE_LOAD_SAVE 10
@@ -131,9 +116,8 @@ typedef struct GameSynopsisPanelSet {
     GameSynopsisPanel incoming;     /* +0x14: archive image 1, fades in */
 } GameSynopsisPanelSet;
 
-extern GameSynopsisPanelSet GameSynopsisPanels;
+static GameSynopsisPanelSet GameSynopsisPanels;
 void GameSynopsisDrawPanel(GameSynopsisPanel *panel, int x, int y, int alpha);
-extern GameOverWork gameWork;
 extern PadRecord PadData;
 extern GameOverDmaPacket12 TestEnv_4_002BCF70;
 extern GameOverDmaPacket12 TestEnv_5_002BCFD0;
@@ -389,6 +373,18 @@ void redraw_frame(void *framebuffer) {
 /* The ending screen: fade the ending image in, ask whether to save, and
  * either reset the scene for the save or (after a second confirmation)
  * fade out. */
+const char D_00688488[16] = "yajima\\end.jpg";
+const char D_00688498[96] = "\x0b" "\x0e" "\x01" "\x01" "\x00" "\x00" "\x00" "\x0d" "\x03" "\x19" "\x03" "Save Xenosaga Episode II clear data?\n\n\x0c" "\x80" "  \xa1" "\xfb" "\x0c" "\x80" "\x80" "\x80" " button: Yes\n\n\x0c" "  \x80" "\xa1" "\xdf" "\x0c" "\x80" "\x80" "\x80" " button: No";
+const char D_006884F8[96] = "\x0b" "\x0e" "\x01" "\x01" "\x00" "\x00" "\x00" "\x0d" "\x03" "\x19" "\x03" "Ending without saving.\n\nIs this okay?\n\n\x0c" "\x80" "  \xa1" "\xfb" "\x0c" "\x80" "\x80" "\x80" " button: Yes\n\n\x0c" "  \x80" "\xa1" "\xdf" "\x0c" "\x80" "\x80" "\x80" " button: No";
+const char D_00688558[16] = "203_game_over";
+const char D_00688568[24] = "yajima\\gameov1.jpg";
+const char D_00688580[16] = "yajima\\im.bin";
+const char D_00688590[80] = "\x0b" "\x0e" "\x01" "\x01" "\x00" "\x00" "\x00" "\x0d" "\x03" "\x19" "\x03" "Save game data?\n\n\x0c" "\x80" "  \xa1" "\xfb" "\x0c" "\x80" "\x80" "\x80" " button: Yes\n\n\x0c" "  \x80" "\xa1" "\xdf" "\x0c" "\x80" "\x80" "\x80" " button: No";
+const char D_006885E0[104] = "\x0b" "\x0e" "\x01" "\x01" "\x00" "\x00" "\x00" "\x0d" "\x03" "\x19" "\x03" "Continuing without saving.\n\nIs this okay?\n\n\x0c" "\x80" "  \xa1" "\xfb" "\x0c" "\x80" "\x80" "\x80" " button: Yes\n\n\x0c" "  \x80" "\xa1" "\xdf" "\x0c" "\x80" "\x80" "\x80" " button: No";
+const char D_00688648[24] = "GameDiskChange:%d\n";
+const char D_00688660[24] = "yajima\\diskchg.jpg";
+const char D_00688678[24] = "yajima\\synopsis.bin";
+
 void GameEnd(void)
 {
     JpegDecodeRequest jpeg;
@@ -401,7 +397,7 @@ void GameEnd(void)
     int count;
     int buttons;
 
-    gameWork.current_id = 10;
+    gameWork.resourceId = 10;
     GameCopyFrame();
     xglCdReadFile(D_00688488, (void *)jpeg_source, 0, 1);
     memset(&jpeg, 0, sizeof(jpeg));
@@ -573,10 +569,10 @@ void Intermission(int chapter)
     int count;
     int buttons;
 
-    if (gameWork.loadedFromSave == 1) {
+    if (gameWork.loadStage == 1) {
         return;
     }
-    gameWork.current_id = chapter + 1;
+    gameWork.resourceId = chapter + 1;
     GameCopyFrame();
     framebuffer = (u32)func_001DF9F0(0);
     archive = (u32 *)(framebuffer + IMAGE_LOAD_OFFSET);
@@ -622,7 +618,7 @@ void Intermission(int chapter)
         buttons = PadData.pressed;
         if (buttons & PAD_CIRCLE) {
             seVoiceStartDefault(SE_DECIDE);
-            gameWork.mapId = gameWork.state;
+            gameWork.mapId = gameWork.nextMap;
             GameSceneReset((void *)framebuffer);
             break;
         }
@@ -764,7 +760,7 @@ void GameSynopsis(void)
     u32 *end;
     u32 *entry;
 
-    if (gameWork.state == GAME_STATE_LOAD_SAVE) {
+    if (gameWork.nextMap == GAME_STATE_LOAD_SAVE) {
         return;
     }
     if (xglFlagsGet8(STORY_PROGRESS_FLAG) < 0x4C) {
@@ -798,7 +794,7 @@ void GameSynopsis(void)
     GameSynopsisPanels.incoming.height = 0x40;
     GameSynopsisPanels.incoming.qwc = 0x2000;
 
-    if (gameWork.state == MAP_ID_NEW_GAME) {
+    if (gameWork.nextMap == MAP_ID_NEW_GAME) {
         xglRenderClearFrame();
         GameSynopsisPanels.framebuffer = 0;
     } else {
@@ -862,10 +858,10 @@ int func_001E95C8(void)
     int alpha;
 
     alpha = 0;
-    if (gameWork.state == GAME_STATE_LOAD_SAVE) {
+    if (gameWork.nextMap == GAME_STATE_LOAD_SAVE) {
         return 0;
     }
-    if (gameWork.state == MAP_ID_NEW_GAME) {
+    if (gameWork.nextMap == MAP_ID_NEW_GAME) {
         return 0;
     }
     seVoiceStartDefault(SE_SYNOPSIS_OPEN);
@@ -898,3 +894,77 @@ int func_001E95C8(void)
         return 0;
     }
 }
+
+GameOverDmaPacket12 TestEnv_0_002BCD00 = {
+    { 0, 0x5100000500000000UL, 0x1000000000000004UL, 14, 0, 80, 0, 81,
+      0x1C000000200UL, 82, 0, 83 }
+};
+
+GameOverDmaPacket4 TransEnv_1_002BCD60 = {
+    { 0, 0x5100000100000000UL, 0x800000000007000UL, 0 }
+};
+
+GameOverDmaPacket6 FlushEnv_2_002BCD80 = {
+    { 0, 0x5100000200000000UL, 0x1000000000008001UL, 14, 0, 63 }
+};
+
+GameSynopsisPanelHeader D_002BCDB0 = {
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 81,
+      4, 0, 0, 0, 0, 0, 0, 16, 14, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 56, 8, 0, 80, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 81, 0, 0, 0, 0, 0, 0, 0 },
+    0x0UL,
+    { 82, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 83, 0, 0, 0, 0, 0, 0, 0 },
+    28672,
+    { 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+GameSynopsisPanelRect D_002BCE20 = {
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 81,
+      1, 128, 0, 0, 0, 64, 171, 144, 238, 238, 49, 53, 5, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 63, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 3, 0, 0, 0, 0, 0, 71, 0, 0, 0, 0, 0, 0, 0,
+      0, 56, 2, 100, 6, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0,
+      68, 0, 0, 0, 128, 0, 0, 0, 66, 0, 0, 0, 0, 0, 0, 0,
+      128, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0 },
+    128,
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    28664,
+    29175,
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    8192,
+    3584,
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    36856,
+    36343,
+    { 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+GameOverDmaPacket20 TestEnv_3_002BCED0 = {
+    { 0, 0x5000000900000000UL, 0x80AB400000008001UL, 0x53531E6EUL, 0x30000UL, 71, 0, 6,
+      0, 66, 0x8000000080UL, 0x8000000080UL, 0, 0, 0x71F800006FF8UL, 0,
+      0x1C0000002000UL, 0, 0x8DF800008FF8UL, 0 }
+};
+
+GameOverDmaPacket12 TestEnv_4_002BCF70 = {
+    { 0, 0x5000000500000000UL, 0x4023400000008001UL, 21790, 0, 66, 0x8000000080UL, 0x8000000080UL,
+      0x71F800006FF8UL, 0, 0x8DF800008FF8UL, 0 }
+};
+
+GameOverDmaPacket12 TestEnv_5_002BCFD0 = {
+    { 0, 0x5000000500000000UL, 0x4023400000008001UL, 21790, 0, 66, 0x8000000080UL, 0x8000000080UL,
+      0x71F800006FF8UL, 0, 0x8DF800008FF8UL, 0 }
+};
+
+u8 D_002BD030[48] = "Please insert DISC 2 of\nXenosaga Episode II.";
+
+u8 D_002BD060[64] = "Incorrect disc.\n\nPlease insert DISC 2 of\nXenosaga Episode II.";
+
+u8 D_002BD0A0[80] = "There is no disc inserted.\n\nPlease insert DISC 2 of\nXenosaga Episode II.";
+
+u8 D_002BD0F0[24] = "Checking disc...";
+
+char *D_002BD108[4] = { D_002BD0F0, D_002BD030, D_002BD060, D_002BD0A0 };
+
+char D_002BD118[24] = "yajima\\synopsis\\00.jpg";

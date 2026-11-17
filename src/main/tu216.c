@@ -50,3 +50,5 @@ void msgWindowLayoutText(MsgWindow *window, char *text) {
         msgEntryFeedText(&window->slots[current], text);
     }
 }
+
+int msgWindowStartValue = 1;

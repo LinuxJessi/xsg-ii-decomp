@@ -4,6 +4,8 @@
 #include "main/tu229.h"
 #include "main/tu232.h"
 #include "main/tu234.h"
+#include "main/tu048.h"
+#include "main/tu051.h"
 #include "main/tu242.h"
 #include "main/tu227.h"
 #include "main/tu243.h"
@@ -13,7 +15,7 @@
 #include "shared.h"
 
 extern float cosf(float x);
-extern float mathDegToRad;
+
 const char *func_0027E7A0(const char *text);
 
 void talkAdvanceCounter(MsgSlot *slot);
@@ -24,7 +26,7 @@ void interpUpdate(MsgSlot *slot)
     if (slot->state != MSG_SLOT_STATE_TEXT) {
         return;
     }
-    if (gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES) {
+    if (gameWork.control & CONTROL_PAUSED) {
         return;
     }
     if (slot->flags & MSG_SLOT_OPENING) {
@@ -175,6 +177,6 @@ int interpStepCosine(MsgSlot *slot)
     half_sum = base + interp->scroll_from;
     midpoint = half_sum >> 1;
     span = (float) (midpoint - base);
-    interp->scroll_y = midpoint + (int) (span * cosf((float) angle * mathDegToRad));
+    interp->scroll_y = midpoint + (int) (span * cosf((float) angle * 0.0174532793f));
     return 0;
 }

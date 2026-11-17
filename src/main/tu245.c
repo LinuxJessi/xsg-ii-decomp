@@ -66,13 +66,12 @@ void textTagTableClear(void)
 }
 
 int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
-extern char msgBotanPath[];
 extern void *msgBotanHandle;
 
-/* Loads omiya\botan.xtx (the path string msgBotanPath) into the handle msgBotanHandle and waits for the load. */
+/* Loads omiya\botan.xtx into the handle msgBotanHandle and waits for the load. */
 void msgWindowLoadBotanXtx(void)
 {
-    GameResLoadName(msgBotanPath, &msgBotanHandle, 0, 0);
+    GameResLoadName("omiya\\botan.xtx", &msgBotanHandle, 0, 0);
     while (xglCdServiceIfPending() != 0) {
     }
 }
@@ -334,3 +333,31 @@ void msgWindowDrawListIcons(MsgSlot *window)
     textTagDrawGlyph(GLYPH_ICON_RIGHT_X, GLYPH_ICON_Y, GLYPH_ICON_RIGHT_KIND);
     grFlushQuadBatch();
 }
+
+struct TextTag textTagTable[TEXT_TAG_COUNT] = { 0 };
+
+extern char D_0069DD70[];
+extern char D_0069DD78[];
+extern char D_0069DD80[];
+extern char D_0069DD88[];
+extern char D_0069DD90[];
+extern char D_0069DD98[];
+
+char *D_0063D5F0[] = { D_0069DD98, D_0069DD90, D_0069DD88, D_0069DD80, D_0069DD78, D_0069DD70 };
+
+long long textTagGlyphRects[6][4] = {
+    { 0, 0, 64, 35 },
+    { 0, 0, 19, 18 },
+    { 0, 18, 37, 19 },
+    { 17, 0, 19, 35 },
+    { 17, 18, 37, 35 },
+    { 0, 36, 65, 18 },
+};
+
+void *msgBotanHandle = 0;
+char D_0069DD70[8] = "<R3>";
+char D_0069DD78[8] = "<\xa1\xdf>";
+char D_0069DD80[8] = "<\xa2\xa4>";
+char D_0069DD88[8] = "<\xa2\xa2>";
+char D_0069DD90[8] = "<\xa1\xfb>";
+char D_0069DD98[8] = "";

@@ -24,8 +24,8 @@
 void xglCurMatrixGet(Matrix4 matrix);
 void xglCurSetRotateX(float value);
 void xglMatrixMul(void *destination, void *left, void *right);
-extern unsigned char tiMotionAssertPPlaceMat[];
-extern unsigned char tiMotionSourceFile[];
+extern const unsigned char tiMotionAssertPPlaceMat[];
+extern const unsigned char tiMotionSourceFile[];
 
 typedef struct TiMotionTarget {
     int flags;
@@ -269,8 +269,8 @@ typedef struct TiMotionPackage {
     Matrix4 *pPlaceMat;
 } TiMotionPackage;
 
-extern unsigned char tiMotionAssertPLocalMat[];
-extern unsigned char tiMotionAssertPHrcData[];
+extern const unsigned char tiMotionAssertPLocalMat[];
+extern const unsigned char tiMotionAssertPHrcData[];
 void xacEvalTransLocator(float *values, TiHrcLocator *locator, unsigned char **cursor, float frame);
 void xacEvalTransJoint(float *values, TiHrcJoint *joint, unsigned char **cursor, float frame);
 void xacEvalTransDynamics(float *values, TiHrcDynamics *dynamics, unsigned char **cursor, float frame);
@@ -293,8 +293,8 @@ typedef struct TiHrcSkip {
     unsigned char unmodeled_64[0xC];
 } TiHrcSkip;
 
-extern unsigned char D_0068F3E0[];
-extern unsigned char tiMotionAssertParentScale[];
+extern const unsigned char D_0068F3E0[];
+extern const unsigned char tiMotionAssertParentScale[];
 
 /* Scale lookup for node `index` in the pMRPack table at +0xD0; asserts "can not found parent scale". */
 float *tiMotionFindParentScale(TiMotionPackage *pMRPack, int index)
@@ -947,7 +947,7 @@ void tiMotionChainDynamics(TiMotionPackage *pMRPack, TiHrcDynamics *dynamics)
     tiWindSolveCellPairs(pMRPack);
 }
 
-extern unsigned char tiMotionAssertPGlobalMat[];
+extern const unsigned char tiMotionAssertPGlobalMat[];
 void tiMtnBlendUpdateGlobal(TiMotionPackage *pMRPack);
 void tiDynamicsCollTransformVectors(TiMotionPackage *pMRPack);
 void tiDynamicsCollBuildMatrices(TiMotionPackage *pMRPack);
@@ -1024,8 +1024,8 @@ void tiMotionUpdateGlobal(TiMotionPackage *pMRPack)
     tiMotionChainDynamics(pMRPack, dynamics);
 }
 
-extern unsigned char tiMotionAssertPMRPack[];
-extern unsigned char tiMotionAssertPVisible[];
+extern const unsigned char tiMotionAssertPMRPack[];
+extern const unsigned char tiMotionAssertPVisible[];
 unsigned char *xacFindCurveKey(int *flag, unsigned char *keyCursor, float frame);
 
 /* Sets or clears one visibility bit per curve of the animation's visibility table (+0x40, count +0x20): a set flag from
@@ -1193,3 +1193,14 @@ void tiMotionSolveDynamicsOldOutOfLine(Matrix4 matrix, TiMotionPackage *pMRPack,
     TI_MUL_SCALE(pMRPack, values, dynamics);
     xglCurMatrixGet(matrix);
 }
+
+/* Assert texts of the solver (the original .rodata strings, in address order). */
+const unsigned char tiMotionAssertPPlaceMat[16] = "pPlaceMat";
+const unsigned char tiMotionSourceFile[24] = "../TiMotionSolver.euc.c";
+const unsigned char D_0068F3E0[32] = "can not found parent scale";
+const unsigned char tiMotionAssertParentScale[32] = "!\"can not found parent scale\"";
+const unsigned char tiMotionAssertPLocalMat[24] = "pMRPack->pLocalMat";
+const unsigned char tiMotionAssertPHrcData[24] = "pMRPack->pHrcData";
+const unsigned char tiMotionAssertPGlobalMat[24] = "pMRPack->pGlobalMat";
+const unsigned char tiMotionAssertPMRPack[8] = "pMRPack";
+const unsigned char tiMotionAssertPVisible[16] = "pVisible";

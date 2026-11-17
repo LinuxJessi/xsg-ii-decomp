@@ -378,7 +378,6 @@ int srsEffectKeyFromName(int name);
 int sefStartEffectKeyDefault(int first, int second);
 void uwamonoStartPairMove(int index, int a, int b, int c);
 
-
 int uwamonoSetKowaremonoAll(int source)
 {
     int recordIndex;
@@ -696,7 +695,6 @@ int setCollisionScale(int source)
 
 /* Native names of the uwamono module's natives, in address order (read by uwamonoRegisterNatives). */
 
-
 /* Native table of the enepc module: name string address, function pointer pairs (last pair null). */
 void AngleMode();
 void CamLock();
@@ -780,45 +778,6 @@ extern const char D_006898F8[];
 extern const char D_00689908[];
 extern const char D_00689918[];
 extern const char D_00689928[];
-extern const char D_00689A60[];
-extern const char D_00689A70[];
-extern const char D_00689A80[];
-extern const char D_00689A90[];
-extern const char D_00689AA0[];
-extern const char D_00689AB0[];
-extern const char D_00689AC0[];
-extern const char D_00689AD0[];
-extern const char D_00689AE0[];
-extern const char D_00689AF0[];
-extern const char D_00689B00[];
-extern const char D_00689B10[];
-extern const char D_00689B20[];
-extern const char D_00689B30[];
-extern const char D_00689B40[];
-extern const char D_00689B50[];
-extern const char D_00689B60[];
-extern const char D_00689B70[];
-extern const char D_00689B80[];
-extern const char D_00689B90[];
-extern const char D_00689BA0[];
-extern const char D_00689BB0[];
-extern const char D_00689BC0[];
-extern const char D_00689BD0[];
-extern const char D_00689BE0[];
-extern const char D_00689BF0[];
-extern const char D_00689C00[];
-extern const char D_00689C10[];
-extern const char D_00689C20[];
-extern const char D_00689C30[];
-extern const char D_00689C40[];
-extern const char D_00689C50[];
-extern const char D_00689C60[];
-extern const char D_00689C70[];
-extern const char D_00689C80[];
-extern const char D_00689C90[];
-extern const char D_00689CA0[];
-extern const char D_00689CB0[];
-extern const char D_00689CC0[];
 extern const char D_0069D2D8[];
 extern const char D_0069D2E0[];
 extern const char D_0069D2E8[];
@@ -880,142 +839,6 @@ void *D_003E6F58[38] = {
     0
 };
 
-/* Native table of the uwamono module. */
-void *uwamonoNativeTable[12] = {
-    (void *) "setDoorAll",
-    uwamonoSetDoorAll,
-    (void *) "setKowaremonoAll",
-    uwamonoSetKowaremonoAll,
-    (void *) "SendSignal",
-    uwamonoSendSignal,
-    (void *) "setCollisionSize",
-    uwamonoSetCollisionSize,
-    (void *) "setCollisionScale",
-    setCollisionScale,
-    0,
-    0
-};
-
-/* Native table of the ladder module. */
-void *ladderNatives[8] = {
-    (void *) D_00689A70,
-    ladderSetLadder,
-    (void *) D_00689A60,
-    ladderSetEntrance,
-    0,
-    0,
-    0,
-    0
-};
-
-/* Camera reference position: x = 0, y = 0, z = -10, w = 1. */
-Vector4 D_003E7040 = { 0.0f, 0.0f, -10.0f, 1.0f };
-
-/* Native table of the camera module. */
-void *cameraNatives[102] = {
-    (void *) D_0069D388,
-    talkReset,
-    (void *) D_0069D380,
-    cameraMode,
-    (void *) D_00689CC0,
-    AngleMode,
-    (void *) D_00689CB0,
-    cameraPosReset,
-    (void *) D_0069D378,
-    cameraCfSet,
-    (void *) D_00689CA0,
-    cfChange,
-    (void *) D_00689C90,
-    cameraCfRotRange,
-    (void *) D_00689C80,
-    cameraCfRangeMode,
-    (void *) D_0069D370,
-    cameraCfCamId,
-    (void *) D_0069D368,
-    cameraCfLock,
-    (void *) D_00689C70,
-    cameraCfSelectChg,
-    (void *) D_0069D360,
-    cameraCfHokan,
-    (void *) D_00689C60,
-    cameraCfBattleCam,
-    (void *) D_0069D358,
-    cfNorth,
-    (void *) D_00689C50,
-    cameraSetRefPos,
-    (void *) D_00689C40,
-    cameraSetRefAct,
-    (void *) D_00689C30,
-    SetRefActR,
-    (void *) D_00689C20,
-    cameraSetRefAng,
-    (void *) D_0069D350,
-    RefLock,
-    (void *) D_00689C10,
-    SetRefCamActR,
-    (void *) D_00689C00,
-    SetRefCamAct3R,
-    (void *) D_00689BF0,
-    cameraSetCamPos,
-    (void *) D_00689BE0,
-    cameraSetCamAng,
-    (void *) D_00689BD0,
-    SetCamAct,
-    (void *) D_00689BC0,
-    SetCamActR,
-    (void *) D_00689BB0,
-    SetCamAct2,
-    (void *) D_00689BA0,
-    SetCamAct2R,
-    (void *) D_00689B90,
-    SetCamAct3,
-    (void *) D_00689B80,
-    OffsCamPos,
-    (void *) D_00689B70,
-    OffsCamAng,
-    (void *) D_0069D348,
-    CamLock,
-    (void *) D_00689B60,
-    cameraMoveRefMode,
-    (void *) D_00689B50,
-    MoveCamMode,
-    (void *) D_0069D340,
-    cameraMove,
-    (void *) D_00689B40,
-    WaitMoveRef,
-    (void *) D_00689B30,
-    WaitMoveCam,
-    (void *) D_00689B20,
-    MoveRefStop,
-    (void *) D_00689B10,
-    MoveCamStop,
-    (void *) D_00689B00,
-    MovePersStop,
-    (void *) D_00689AF0,
-    MoveBankStop,
-    (void *) D_0069D338,
-    cameraShake,
-    (void *) D_00689AE0,
-    HandShake,
-    (void *) D_0069D330,
-    cameraSetBank,
-    (void *) D_0069D328,
-    cameraSetPers,
-    (void *) D_00689AD0,
-    MoveBank,
-    (void *) D_00689AC0,
-    MovePers,
-    (void *) D_00689AB0,
-    cameraGetRefPos,
-    (void *) D_00689AA0,
-    GetRefAng,
-    (void *) D_00689A90,
-    GetCamPos,
-    (void *) D_00689A80,
-    GetCamAng,
-    0,
-    0
-};
-
 /* Module name of the enepc natives. */
 unsigned char D_0069D308[8] = "enepc";
+

@@ -1,6 +1,8 @@
 #ifndef INCLUDE_MAIN_TU242_H
 #define INCLUDE_MAIN_TU242_H
 
+#include "main/tu048.h"
+
 /* Functions of src/main/tu242.c that other files call. */
 
 /*
@@ -162,10 +164,6 @@ typedef char MsgSlotSizeCheck[sizeof(MsgSlot) == 0x98 ? 1 : -1]; /* MsgWindow st
 
 #define MSG_SLOT_COUNT 5
 #define MSG_SLOT_ACTIVE 0x1
-
-/* Bit 0 of the global flag word gameLoopFlags: while set, the slot update functions do nothing. */
-extern int gameLoopFlags[];
-#define SYS_FLAG_HOLD_UPDATES 0x1
 #define MSG_SLOT_FRONT_Z 0x7FFFFF  /* MsgSlot.z of the frontmost slot: the depth sizedRecordSetValue stores when a slot is started */
 typedef struct MsgWindow {
     int current_index;

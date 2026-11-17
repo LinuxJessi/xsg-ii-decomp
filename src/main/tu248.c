@@ -14,7 +14,7 @@ int xglCurApplyVector(Vector4 *, const Vector4 *);
 #define XENO_CHANNEL_BIT80 0x80  /* channel flag bit set here; its role is not recovered */
 #define CFE_DIR_COUNT 9          /* directions 0..8 index cfeDirOffsetTable */
 
-extern float cfeDirOffsetTable[][2];
+extern float cfeDirOffsetTable[10][2];
 
 /* Damps the actor's focus pair toward the table offset of direction dir (0..8); the focus-locked draw flag is set unless both results are zero. */
 void cfeDampDirOffset(struct XenoActor *actor, int dir) {
@@ -59,3 +59,17 @@ void XenoActorSetChannelFlag80(struct XenoActor *actor) {
 void XenoActorSetState(struct XenoActor *actor, int state) {
     actor->state = state;
 }
+
+/* Data of this TU: the focus offset per direction, ten (x, y) pairs as the original stores them. */
+float cfeDirOffsetTable[10][2] = {
+    { 0.0f, 0.0f },
+    { 0.0f, -0.100000001f },
+    { 0.0f, 0.150000006f },
+    { 0.100000001f, 0.0f },
+    { -0.100000001f, 0.0f },
+    { 0.100000001f, -0.100000001f },
+    { -0.100000001f, -0.100000001f },
+    { 0.100000001f, 0.150000006f },
+    { -0.100000001f, 0.150000006f },
+    { 0.0f, 0.0f }
+};

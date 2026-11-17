@@ -1395,6 +1395,14 @@ def attribute_data(unit, tus):
             for target in users:
                 if low <= target < high:
                     defined[target] = ordinal
+    # Spans whose C definitions live in one TU although another TU is their only reader (see DATA_RANGE_OWNERS).
+    for low, high, function, _ in DATA_RANGE_OWNERS:
+        if function in unit.index and unit.index[function] in owner:
+            ordinal = owner[unit.index[function]]
+            defined[low] = ordinal
+            for target in users:
+                if low <= target < high:
+                    defined[target] = ordinal
     for target, who in users.items():
         ordinals = {owner[i] for i in who if i in owner}
         if target in defined:
@@ -1454,12 +1462,88 @@ DATA_OWNERS = [
 ]
 
 
+
+# Data spans kept in the TU whose C defines them, although the single-user rule hands their labels to another
+# TU or no code reads their first byte: (first byte, end, a function of the defining TU, why). The
+# check is link order: within a link group the .data of the objects follows their .text order, so a reader
+# later in that order cannot own data placed before an earlier object's data (reviewed 2026-11-17).
+DATA_RANGE_OWNERS = [
+    # Cross-section review (2026-11-17): every data section of one object follows the same link order, so a
+    # span whose place contradicts the other sections of its TU belongs to the TU of that place (the readers
+    # below are globals read through an extern; a jump table or literal moves its function instead).
+    (0x002BD570, 0x003E6DC0, 0x001EEBC8, 'tya_draw_gauge.c: the globals uwamonoPoints, ladderSlots, uwamonoRecords, '
+     'D_003C6DC0 lie before tu067 in .data, while tu083 and init_uwamono_sys come after tu082 in .rodata, .sdata '
+     'and .lit4'),
+    (0x003E7270, 0x003E7400, 0x001FD348, 'tu083.c: D_003E7270, read by tu083 and tu068; tu083 is the reader inside '
+     'the link-order interval tu082..tu088'),
+    (0x005E6D00, 0x005E6D40, 0x00266B50, 'sdv_180: D_005E6D00/D_005E6D20 lie between tu178 and sdv_180 in .data; '
+     'tu185 (their reader) comes after sdv_183 in every other section'),
+    (0x00631140, 0x00631440, 0x0023E978, 'test_129.c: tiWaterTwoPi opens its .data (alignment 8 rules out a start '
+     'at 0x631144); TiWater comes after test_129 in .rodata and .bss'),
+    (0x0069DCA0, 0x0069DCAC, 0x0027C7D0, 'tu214.c: sellLabelTextOff lies between tu198 and tu214 in .sdata; tu234 '
+     '(its reader) comes after tu229 in .data, .rodata and .lit4'),
+    (0x0068C660, 0x0068C6F8, 0x00271458, 'sm_initilize: MMathUnitVector and MMathUnitMatrix, global constants read by '
+     'eight TUs, lie between tu185 and tu187 in .rodata; m_math_191 (one reader) follows m_math_188 in .lit4'),
+    (0x0068D2B0, 0x0068D348, 0x0027BFD0, 'tu214.c: jump table of effectRequestToCommand (see MOVED_CUTS 0x27C7D0)'),
+    (0x0063EDE0, 0x0063EE80, 0x00199428, 'xgl_pad.c: pad state bytes read by the sdv_033 camera code; between '
+     'xgl_dma and xgl_menu in .data, while sdv_033 comes after xgl_2 everywhere else'),
+    (0x0063F878, 0x00640000, 0x001A09B8, 'xgl_flags.c: the system block (language index, memcard state, flags) '
+     'after tu012 in .data; xgl_timer0 opens the xgl group in .rodata'),
+    (0x006459A0, 0x00645F10, 0x001B8B18, 'tu042.c: the pxy glyph tables'),
+    (0x00645F10, 0x00645FB0, 0x001B95F0, 'nml_model_set.c: after tu042 in .data as in .sdata and .text'),
+    (0x0069D750, 0x0069D768, 0x0021A520, 'tu101.c: the record "\\031\\003", the 8-byte style record D_0069D758 and '
+     'msgStyleReset (msgRangeDraw)'),
+    (0x0069D768, 0x0069D770, 0x00228520, 'tu108.c: D_0069D768 (tu110 ptEnterSplit reads it at index-11), '
+     'menuLoadPending and the selection counts'),
+    (0x0069D770, 0x0069D778, 0x0022A560, 'tu110.c: mapActiveObject and talkResult (before tu111 in .sdata)'),
+    (0x0069D778, 0x0069D7B8, 0x0022D1D8, 'tu111.c: "NULL" and its native names'),
+    (0x0069D7B8, 0x0069D7D0, 0x0022DD20, 'tu114.c: the module names of scriptRegisterNatives'),
+    (0x0069D7D0, 0x0069D888, 0x0022E9C0, 'yg2path.c: its globals, renderOriginX/Y (read by tu115) and its names'),
+    (0x006ABBC0, 0x006ABC18, 0x0022A560, 'tu110.c: selectionFlagTable after its .bss (tu108 < tu110 in .data and .bss, '
+     'so tu109 cannot follow tu110)'),
+    (0x002B78C0, 0x002B7A90, 0x001D7250, 'tu049.c: mapObjectResourceNames is read only by tu051, but the .data of tu050 '
+     '(0x2B7A90) lies between, and .data follows link order'),
+    (0x002B7CF0, 0x002B9CF8, 0x001D9280, 'tu051.c, the camera code: cameraCfSlots (read by tu051 and tu077) starts its '
+     '.data; tu050, before it, reads none of it'),
+    (0x002B9CF8, 0x002BC1A0, 0x001DF120, 'res_get_path.c (old tu053 joined): the CD file name tables of xglCdFileGroups, '
+     'then its .data around footMaterialKeys'),
+    (0x006857A0, 0x00688238, 0x001DF120, 'res_get_path.c: the CD file names longer than 8 bytes (.rodata, 16-byte slots) '
+     'of its name tables; tu052 (-G0) cannot hold them, as its short literals would be in .rodata too'),
+    (0x0069B9B8, 0x0069CEE0, 0x001DF120, 'res_get_path.c: the CD file names of up to 8 bytes (.sdata literals of a -G8 '
+     'file) of its name tables, emitted in reverse order per table'),
+    (0x0069D1F0, 0x0069D218, 0x001EF600, 'tu067.c: the short native names of objxNatives (.sdata literals of the table)'),
+    (0x00689960, 0x006899D0, 0x001F8138, 'tu075.c: the native names of uwamonoNativeTable (.rodata literals of the table)'),
+    (0x00689A60, 0x00689CD0, 0x001F9CC0, 'tu077.c: the native names of ladderNatives and cameraNatives (.rodata literals; '
+     'the short ones are already in its .sdata)'),
+    (0x0069D398, 0x0069D3C0, 0x001FC558, 'tu079.c: the short names of mathNativeTable (.sdata literals, reverse order), '
+     'then its "math"'),
+    (0x00689CD0, 0x00689D60, 0x001FCBD0, 'tu082.c: the long names of menuNativeTable (.rodata literals, reverse order), '
+     '"PartsNames" (read by nothing), then its own .rodata'),
+    (0x0069D3C0, 0x0069D420, 0x001FCBD0, 'tu082.c: the short names of menuNativeTable (.sdata literals), then its own .sdata'),
+    (0x0068A000, 0x0068A3F0, 0x00210268, 'tu100.c: the file names of its tables (.rodata literals; tu099 reads none)'),
+    (0x003EB210, 0x003EBA58, 0x0021A520, 'tu101.c: also yg2PathFrameImage.. (yg2path) and D_003EB70C (tu109); those '
+     'objects follow tu108 in link order, so their .data cannot lie before tu108\'s; tu100 reads D_003EB240, D_003EB268'),
+    (0x003EBA58, 0x003EC458, 0x00228520, 'tu108.c: also items read only by tu100 (earlier in link order) and tu109'),
+    (0x00645580, 0x006459A0, 0x001B2DE4, 'xgl_render.c (D_00645868 read only by tu100, a game object of another link group)'),
+    (0x0063ED50, 0x0063EDE0, 0x00199078, 'xgl_dma.c (D_0063EDA8, D_0063EDD0 read only by tu085/tu089, game objects of '
+     'another link group)'),
+]
+
 # Objects that span addresses the single-user rule gives to several TUs: (first byte, end, a function of the
 # defining TU, why). Xenosaga II has no symbol table, so a code reference to `object.field` or `table[i].field`
 # is a label inside the object, and the single-user rule hands that label to whichever TU reads the field.
 # Found while moving the data of the code-complete TUs to C (2026-11-15/16): a C object must start at its first
 # byte and cannot be split between two objects.
 DATA_OBJECT_OWNERS = [
+    (0x002B5D90, 0x002B78C0, 0x001D5440,
+     'gameWork: the 0x1B28-byte game work block of tu048 (GameWorkPlayer, zero .data; 8 bytes of fill before tu049). '
+     'Other modules read its fields through their own labels (gameLoopFlags = +8, elvSlopeTable, cameraBankAngle, '
+     '...), so the single-user rule had cut its .data into pieces of tu075, tu100, res_get_path, tu051, tu077, '
+     'tu085, tu089, tu052, tu069 and tu067, which have no .data of their own'),
+    (0x006A18B0, 0x006A1B30, 0x001EDCA0,
+     'elvRecords: 8 ElevatorRecords of 80 bytes (elevator.c, numbers 1..8). tu075 reads its rung table '
+     'ladderStepHeights (0x6A1B30) at index-1 through the address 0x6A1B2C, which had started the .bss of tu075 '
+     'inside the last record'),
     (0x0033FDC0, 0x003C6DC0, 0x001FFC90,
      'uwamonoRecords: 256 records of 0x870 bytes (0x33FDC0-0x3C6DC0, .data, zero). Every label in it is a field '
      'offset of record 0 used as an array base with stride 0x870 (0x3400F8 = +0x338 in tu110, uwamonoMoveRecords '
@@ -1507,6 +1591,13 @@ JOINED_KEEPS_LATER_ORDINAL = {
 }
 
 JOINED_CUTS = [
+    (0x00274070, 'oLib: tu202 joins (it lies between oLib and the old tu203, see 0x274100)'),
+    (0x00274100, 'oLib: tu203 joins. Its .sdata flags xglCosDegTableReady/xglSinDegTableReady (read only by '
+     'xglCosDeg/xglSinDeg) precede oLibHandle (read only by oLibInit/oLibExit) at 0x69DDC4-0x69DDD0, so the '
+     'three file statics open one object (data map review 2026-11-17)'),
+    (0x001DF120, 'main res_get_path, 2026-11-17 (data map review after gameWork): its .data (xglCdFileGroups, '
+     'xglCdXapGroups before, resCommandTable.. after) surrounds footMaterialKeys, read only by the footMaterial '
+     'functions of old tu053 (0x1DF090-0x1DF120): one object, old tu053 is the head of res_get_path.c'),
     # OV01 battle code, user 2026-11-17 ("unir tu025-tu032, por favor, hazlo"; the evidence starts at tu023):
     # four callers match only when their callee is an earlier C definition of the same file (reorg
     # nothrow annul rows, stub-definition probes exact): func_00A8F948 (old tu028) -> battleSlotGet
@@ -1613,6 +1704,10 @@ JOINED_CUTS = [
 
 # Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).
 MOVED_CUTS = [
+    (0x0027C7D0, 0x0027BFD0,
+     'effectRequestToCommand reads its jump table at 0x68D2B0, between tu199 and tu225 in .rodata where the '
+     'tu214 file sits, while the gsQueue functions before it keep tu213 .sdata/.sbss/.lit4 after tu211; the '
+     'effect functions open the tu214 file (data map review 2026-11-17)'),
     (0x001B73B0, 0x001B74A0,
      '-O0 static-copy tail: xglVectorZero/AddXYZ/SubXYZ 0x1B7408-0x1B74A0 are called only by face_point '
      '(_CheckLine, setup_occlusion), so they and the global func_001B73B0 before them end face_point, user '

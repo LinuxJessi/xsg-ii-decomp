@@ -9,12 +9,12 @@ extern PadRecord PadData[];
 void msgWindowOpenNextSlot(void *);
 void msgWindowBindCurrentItems(void *, void *, void *, void *, void *);
 extern unsigned char msgWindow[];
-extern int msgItemNames[];
-extern int msgItemCost[];
-extern int msgShownValue;
-extern int msgTotalValue;
-extern int msgItemCount[];
-extern int msgModeFlag;
+static int msgItemNames[40];
+static int msgItemCost[40];
+static int msgShownValue;
+static int msgTotalValue;
+static int msgItemCount[40];
+static int msgModeFlag = 0;
 extern int msgBalance;
 
 /* Bind the window to its item tables and to the shown-value word. */
@@ -114,3 +114,6 @@ int msgPurchaseUpdate(void)
     }
     return -1;
 }
+
+/* Balance word read and written by other main TUs (msgBalanceGet, msgBalanceSet). */
+int msgBalance = 0;

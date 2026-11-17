@@ -30,15 +30,14 @@ void talkEndScript(void) {
 }
 
 int GameResLoadName(char *name, void **data, unsigned int *size, void (*callback)(int index, void *buffer, unsigned int size, int value));
-extern char talkOmiyaScriptPath[];
 
 /*
- * Starts loading "omiya\talk01.xtx" (talkOmiyaScriptPath) into the script handle
+ * Starts loading "omiya\talk01.xtx" into the script handle
  * talkScriptHandle, then waits while the CD service reports work pending
  * (xglCdServiceIfPending, tu011).
  */
 void talkLoadOmiyaScript(void) {
-    GameResLoadName(talkOmiyaScriptPath, &talkScriptHandle, 0, 0);
+    GameResLoadName("omiya\\talk01.xtx", &talkScriptHandle, 0, 0);
     while (xglCdServiceIfPending() != 0) {
     }
 }
@@ -689,3 +688,49 @@ void talkWindowDrawFrame(MsgSlot *window, int mode, float scale)
     sceVif1PkAddDirectDataN(packet, pairs, pairCount);
     sceVif1PkCloseDirectHLCode(packet);
 }
+
+/* Scalar and array data of the original .data and .sdata sections, in address order. */
+TalkPiece talkWindowPieces[39] = {
+    { 19, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 32, 1, 31, 31, 0, 0 },
+    { 1, 0, 32, 1, 31, 31, 0, 0 },
+    { 2, 0, 32, 1, 31, 31, 0, 0 },
+    { 3, 0, 32, 1, 31, 31, 0, 0 },
+    { 6, 8, 32, 1, 31, 31, 0, 0 },
+    { 4, 4, 32, 1, 31, 31, 0, 0 },
+    { 8, 12, 32, 1, 31, 31, 0, 0 },
+    { 7, 8, 32, 1, 31, 31, 0, 0 },
+    { 5, 4, 32, 1, 31, 31, 0, 0 },
+    { 20, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 16, 40, 1, 31, 31, 0, 0 },
+    { 1, 16, 40, 1, 31, 31, 0, 0 },
+    { 2, 16, 40, 1, 31, 31, 0, 0 },
+    { 3, 16, 40, 1, 31, 31, 0, 0 },
+    { 6, 24, 40, 1, 31, 31, 0, 0 },
+    { 4, 20, 40, 1, 31, 31, 0, 0 },
+    { 8, 28, 40, 1, 31, 31, 0, 0 },
+    { 7, 24, 40, 1, 31, 31, 0, 0 },
+    { 5, 20, 40, 1, 31, 31, 0, 0 },
+    { 21, 0, 0, 0, 0, 0, 0, 0 },
+    { 9, 516, 544, 0, 31, 31, 0, 5 },
+    { 13, 528, 544, 0, 31, 31, 0, 5 },
+    { 11, 532, 544, 0, 31, 31, 6, 5 },
+    { 12, 284, 544, 0, 31, 31, 6, 0 },
+    { 10, 276, 544, 0, 31, 31, 6, 0 },
+    { 22, 0, 0, 0, 0, 0, 0, 0 },
+    { 9, 512, 288, 0, 31, 31, 0, 5 },
+    { 6, 264, 288, 0, 31, 31, 0, 0 },
+    { 0, 256, 288, 0, 31, 31, 0, 0 },
+    { 4, 260, 288, 0, 31, 31, 0, 0 },
+    { 10, 272, 288, 0, 31, 31, 6, 0 },
+    { 23, 0, 0, 0, 0, 0, 0, 0 },
+    { 14, 536, 296, 1, 31, 3, 0, 0 },
+    { 15, 524, 296, 1, 31, 3, 0, 0 },
+    { 16, 520, 296, 1, 31, 3, 0, 0 },
+    { 17, 524, 296, 1, 31, 3, 0, 0 },
+    { 18, 536, 296, 1, 31, 3, 0, 0 },
+    { 24, 0, 0, 0, 0, 0, 0, 0 },
+};
+int talkPendingValue = 0;
+void *talkScriptHandle = 0;
+int talkActive = 0;

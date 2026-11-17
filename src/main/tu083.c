@@ -2,6 +2,8 @@
 #include "main/xenoActor.h"
 #include "shared.h"
 #include "main/tu051.h"
+#include "main/tu048.h"
+#include "main/tya_draw_gauge.h"
 
 extern short D_0033FDC2;
 extern int D_0033FDC4[];
@@ -20,7 +22,6 @@ extern int uwamonoStateSlots;
 
 /* uwamono records (tu051.c has the same kinds and states): kind 0 free, 1 talks, 2 searched. */
 #define UWAMONO_RECORD_COUNT 256
-#define UWAMONO_POINT_COUNT 16
 #define UWAMONO_KIND_FREE 0
 #define UWAMONO_KIND_TALK 1
 #define UWAMONO_KIND_SEARCHED 2
@@ -35,8 +36,6 @@ extern int uwamonoStateSlots;
 
 void sefReleaseRecordHandle(void *record);
 void uwamonoReleaseHandles(void);
-
-
 
 /* The two poses of uwamonoSetPairMode, read through this union view (alias set 0). */
 typedef union UwamonoPoses {
@@ -152,9 +151,6 @@ int uwamonoCountLeadingInUse(void)
     }
     return count;
 }
-
-
-
 
 short uwamonoFindSelected(void);
 void uwamonoResetRecords(int index, int flag);
@@ -337,23 +333,6 @@ int uwamonoFindNearest(void)
 
 float Get_Distance3D(const void *first, const void *second);
 
-/* The gameWork words this file reads (tu069 MapColorBlock and tu077 CameraWork are other views). */
-typedef struct UwamonoGameControl {
-    unsigned char unmodeled_000[6];
-    unsigned short field_006;
-    int control;                        /* +0x08 */
-    unsigned char unmodeled_00c[0x1C - 0x0C];
-    int field_1c;                       /* +0x1C */
-    unsigned char unmodeled_020[0x2D8 - 0x20];
-    float searchRadius;                 /* +0x2d8 */
-    unsigned char unmodeled_2dc[0x2E0 - 0x2DC];
-    float searchHeight;                 /* +0x2e0 */
-    unsigned char unmodeled_2e4[0x1520 - 0x2E4];
-    char flags[8];                      /* +0x1520 */
-} UwamonoGameControl;
-
-extern UwamonoGameControl gameWork;
-
 short uwamonoFindSelected(void)
 {
     short result = -1;
@@ -376,7 +355,7 @@ short uwamonoFindSelected(void)
                 height = 0.0 - height;
             }
             heightDistance = height;
-            if (!(gameWork.searchRadius < distance) && !(gameWork.searchHeight < heightDistance)
+            if (!(gameWork.playerParams[0][0] < distance) && !(gameWork.playerParams[1][0] < heightDistance)
                 && uwamonoRecords[index].state == 1)
             {
                 result = index;
@@ -456,7 +435,7 @@ void uwamonoUpdateInReach(struct XenoActor *actor, int index)
     {
         return;
     }
-    if (gameWork.field_006 != 0)
+    if (gameWork.loadStage != 0)
     {
         return;
     }
@@ -468,9 +447,9 @@ void uwamonoUpdateInReach(struct XenoActor *actor, int index)
     {
         return;
     }
-    if (gameWork.control & 0x20)
+    if (gameWork.control & CONTROL_TOP_EXIT)
     {
-        if (gameWork.field_1c != -1)
+        if (gameWork.entryKey != -1)
         {
             return;
         }
@@ -520,7 +499,7 @@ void uwamonoUpdateInReach(struct XenoActor *actor, int index)
         func_00202E60(actorPos, &hit, 1);
     }
 
-    if (distance <= gameWork.searchRadius && heightDistance <= gameWork.searchHeight
+    if (distance <= gameWork.playerParams[0][0] && heightDistance <= gameWork.playerParams[1][0]
         && result == 1 && uwamonoLadderState == 0 && uwamonoIsActorInCells(index) == result)
     {
         if (record->state == UWAMONO_STATE_OUT_OF_REACH)
@@ -1084,8 +1063,6 @@ typedef struct UwamonoSubject {
     int actorKind;                      /* +0x798 */
 } UwamonoSubject;
 
-
-
 extern UwamonoRecord D_00340390[];
 extern int uwamonoCurrentIndex;
 void Get_MiddlePoint(void *a, void *b, int c, int d, void *out);
@@ -1100,7 +1077,7 @@ int uwamonoFindTalkTarget(UwamonoSubject *subject, float range)
     int index;
     UwamonoRecord *record;
 
-    if ((gameWork.control & 0x20) != 0 && gameWork.field_1c != bestIndex) {
+    if ((gameWork.control & CONTROL_TOP_EXIT) != 0 && gameWork.entryKey != bestIndex) {
         return -1;
     }
     for (index = 0; index < UWAMONO_RECORD_COUNT; index++) {
@@ -1284,7 +1261,7 @@ void uwamonoUpdateCountdowns(void)
     short moveFrameCopy;
     int currentOffset;
 
-    if ((gameWork.control & 1) != 0) {
+    if ((gameWork.control & CONTROL_PAUSED) != 0) {
         return;
     }
     records = (UwamonoRecord *) uwamonoRecords;
@@ -1362,7 +1339,7 @@ void uwamonoUpdateCountdowns(void)
                 selectionBlockFill();
                 break;
             }
-            gameWork.flags[record->tableIndex] = 1;
+            gameWork.eventFlags[record->tableIndex] = 1;
             {
                 extern char D_0069D420[];
                 D_0069D420[2] = (char) (count / 10 + 0x30);
@@ -1389,7 +1366,6 @@ void uwamonoUpdateCountdowns(void)
 extern unsigned char D_0069D1E4;
 extern float D_0069B05C;
 extern float D_0069B060;
-extern int D_002B5DA8[];
 
 void sefSpawnEffectById(int effectId, Vector4 *position, Vector4 *outVector, Vector4 *scale, int count, float radius);
 void vibrationStartFade(unsigned char targetValue, unsigned char currentValue, int framesTotal);
@@ -1455,7 +1431,7 @@ void uwamonoTriggerRecord(int index)
     if (record->triggerSound != -1) {
         seVoiceStartDefault(record->triggerSound);
     }
-    if (D_002B5DA8[0] != 3560) {
+    if (gameWork.mapId != 3560) {
         vibrationStartFade(255, 32, 30);
     }
     if ((unsigned int) record->type < 4) {
@@ -1527,17 +1503,6 @@ void uwamonoTriggerRecord(int index)
     }
     uwamonoReleaseRecord(index);
 }
-
-
-typedef struct UwamonoPoint {
-    Vector4 position;                   /* +0x00: copied as one 16-byte block */
-    short key;                          /* +0x10 */
-    unsigned char unmodeled_12[2];
-    float value;                        /* +0x14 */
-    unsigned char unmodeled_18[8];
-} UwamonoPoint;
-
-extern UwamonoPoint uwamonoPoints[UWAMONO_POINT_COUNT];
 
 /* Clears the 16 records: origin position with w = 1, key -1 (free), value 0. */
 void uwamonoResetPoints(void)
@@ -1645,13 +1610,61 @@ char D_0069D420[8] = "\244\362" "00" "\270\304";
 char D_0069D428[8] = { 0 };
 char D_0069D430[8] = "%8f";
 
-/* 16 records of the point table, all zero at startup. */
-UwamonoPoint uwamonoPoints[UWAMONO_POINT_COUNT] = { 0 };
-
 const UwamonoCellBits uwamonoCellBitTable = { { 0, 1, 2, 3, 0, 4, 5, 6, 7 } };
 
-/* Ladder table: 0x0D00 bytes of zero at startup (208-byte records; see LadderSlot in tu075/tu076). */
-unsigned char ladderSlots[3328] = { 0 };
 /* Zero data after the ladder table (.data, address order). The types are guesses from the sizes; */
 /* uwamonoRecords (0x33FDC0) is declared by include/main/tu051.h and is not defined here.       */
 
+/* .data of this file (0x3E7270-0x3E7400), also read by tu068.c. */
+char D_003E7270[400] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 128, 0, 0, 0,
+    255, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 128, 0, 0, 0,
+    0, 0, 0, 0, 255, 0, 0, 0,
+    0, 0, 0, 0, 128, 0, 0, 0,
+    255, 0, 0, 0, 255, 0, 0, 0,
+    0, 0, 0, 0, 128, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    255, 0, 0, 0, 128, 0, 0, 0,
+    255, 0, 0, 0, 0, 0, 0, 0,
+    255, 0, 0, 0, 128, 0, 0, 0,
+    0, 0, 0, 0, 255, 0, 0, 0,
+    255, 0, 0, 0, 128, 0, 0, 0,
+    255, 0, 0, 0, 255, 0, 0, 0,
+    255, 0, 0, 0, 128, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};

@@ -3,6 +3,7 @@
 #include "debug_break.h"
 #include "main/pad.h"
 #include "main/sdv_033.h"
+#include "main/tu048.h"
 
 
 /* XenoActor.rsrc slots (tu051.h's XActRsrc). */
@@ -204,82 +205,7 @@ typedef struct FieldRecord {
 extern FieldRecord uwamonoRecords[];
 extern int uwamonoCurrentIndex;
 
-/* The light sets of the game work block (tu069.c's lightDirection onwards), one per light set. */
-typedef struct GameLightSets {
-    float direction[16][3][4];          /* +0x000: light types 1-3 */
-    float color[16][3][4];              /* +0x300 */
-    float ambient[16][4];               /* +0x600: light type 0 */
-    float type4Direction[16][4];        /* +0x700 */
-    float type4Value[16];               /* +0x800 */
-} GameLightSets;
 
-/* One 256-bit map flag set (tu050.c's MAP_BIT_* arrays). */
-typedef struct MapBits {
-    unsigned int bits[8];
-} MapBits;
-
-/* The game work block as this file sees it: the scene state the field loop (func_001D6070) reads and writes,
- * the player parameters (tu067.c's GameWork view) and the saved copies uwamonoLoadCurrent writes beside them. */
-typedef struct GameWorkPlayer {
-    u8 *workEnd;                        /* +0x00: WorkEnd, saved when the loop starts */
-    unsigned char unmodeled_04[2];
-    u16 loadStage;                      /* +0x06: 1 once the save is read, 2 once the party models are loaded */
-    int control;                        /* +0x08: CONTROL_* bits (tu051.h) */
-    unsigned char pauseDelay;           /* +0x0C: frames before the pause can be toggled again */
-    unsigned char unmodeled_0d[0x14 - 0x0D];
-    int nextScene;                      /* +0x14: -1 when no scene change is requested */
-    int mapId;                          /* +0x18 */
-    int entryKey;                       /* +0x1C: -1 none, -2 the party position, else an entry key */
-    int loadSlot;                       /* +0x20 */
-    unsigned char unmodeled_24;
-    unsigned char elevatorMask;         /* +0x25: elvActiveMask, saved with the scene */
-    unsigned char unmodeled_26[0x2C - 0x26];
-    void *resBuffer;                    /* +0x2C: GameResBufferAlloc result */
-    unsigned char unmodeled_30[0xB0 - 0x30];
-    int mapLoaded;                      /* +0xB0 */
-    int keepOffMask;                    /* +0xB4: bit n set when elvKeepOffFlags[n] is */
-    unsigned char unmodeled_b8[0xC0 - 0xB8];
-    union {
-        Vector4 scale;                  /* +0xC0: x, y and z are 1.0 */
-    };
-    u16 cameraFlags;                    /* +0xD0: CAMERA_FLAG_* bits (camera code, tu051.c) */
-    unsigned char unmodeled_d2[0x290 - 0xD2];
-    unsigned char sceneFlag;            /* +0x290: cleared at each scene start */
-    unsigned char unmodeled_291[0x2D0 - 0x291];
-    float frameScale;                   /* +0x2D0: elapsed frames, scales the per-frame movement */
-    float frameScaleSaved;              /* +0x2D4: copy of frameScale made by uwamonoLoadCurrent */
-    float playerParams[5][2];           /* +0x2D8: setPlayer arguments 4 to 8 in [i][0]; [i][1] is the saved copy */
-    int climbFrames;                    /* +0x300: setPlayer argument 9 */
-    int climbFramesSaved;               /* +0x304 */
-    float formScale;                    /* +0x308: the form's scale, the current record's scale.x */
-    float formSize;                     /* +0x30C: the form's size, the current record's extent.x */
-    unsigned char unmodeled_310[0x320 - 0x310];
-    short encounterReaction;            /* +0x320: -1 none */
-    unsigned char unmodeled_322[2];
-    int encounterFlags;                 /* +0x324 */
-    unsigned char unmodeled_328[0x32C - 0x328];
-    int encounterRecord;                /* +0x32C: record index of the current encounter */
-    short blocked;                      /* +0x330 */
-    unsigned char unmodeled_332[0x344 - 0x332];
-    void *releaseHandle;                /* +0x344 */
-    unsigned char unmodeled_348[0x370 - 0x348];
-    int sceneMode;                      /* +0x370 */
-    float playerRate;                   /* +0x374: setPlayer argument 10 */
-    float playerRateSaved;              /* +0x378 */
-    float playerScale;                  /* +0x37C: setPlayer argument 11 */
-    float playerScaleSaved;             /* +0x380 */
-    GameLightSets lights;               /* +0x384 */
-    unsigned char unmodeled_bc4[0xC84 - 0xBC4];
-    GameLightSets savedLights;          /* +0xC84 */
-    unsigned char unmodeled_14c4[0x14E0 - 0x14C4];
-    MapBits savedMapBits[2];            /* +0x14E0: D_002B7C88 and D_002B7CA8 */
-    unsigned char unmodeled_1520[0x1B20 - 0x1520];
-    signed char timerArmed;             /* +0x1B20: clear while the timer counts down */
-    unsigned char unmodeled_1b21[3];
-    int timerFrames;                    /* +0x1B24 */
-} GameWorkPlayer;
-
-extern GameWorkPlayer gameWork;
 extern MapBits D_002B7C88;
 extern MapBits D_002B7CA8;
 extern unsigned char elvActiveMask;
@@ -367,8 +293,8 @@ void func_001D5440(void)
 
 void uwamonoLoadCurrent(void)
 {
-    gameWork.playerRateSaved = gameWork.playerRate;
-    gameWork.playerScaleSaved = gameWork.playerScale;
+    gameWork.gravitySaved = gameWork.gravity;
+    gameWork.bounceDivisorSaved = gameWork.bounceDivisor;
     gameWork.frameScaleSaved = gameWork.frameScale;
     gameWork.playerParams[0][1] = gameWork.playerParams[0][0];
     gameWork.playerParams[1][1] = gameWork.playerParams[1][0];
@@ -444,7 +370,7 @@ void func_001D5820(void)
     data = 0;
     WorkEnd = gameWork.workEnd;
     mapObjectResourcesLoad();
-    mainSwitchId(gameWork.loadSlot, 0);
+    mainSwitchId(gameWork.resourceId, 0);
     D_002B7C88 = gameWork.savedMapBits[0];
     D_002B7CA8 = gameWork.savedMapBits[1];
     for (set = 0; set < 16; set++) {
@@ -465,8 +391,8 @@ void func_001D5820(void)
             elvKeepOffFlags[bit] = 0;
         }
     }
-    gameWork.playerRate = gameWork.playerRateSaved;
-    gameWork.playerScale = gameWork.playerScaleSaved;
+    gameWork.gravity = gameWork.gravitySaved;
+    gameWork.bounceDivisor = gameWork.bounceDivisorSaved;
     sefStartClipTestEnabled();
     sefRestoreEffectRecords();
     XenoActorPoolInitDefault();
@@ -575,7 +501,7 @@ void func_001D5820(void)
     uwamonoRecords[uwamonoCurrentIndex].actor->probe.hitFlags |= 0x1000;
     uwamonoStoreCurrent();
     cameraRestoreState();
-    gameWork.cameraFlags |= 0x20;
+    gameWork.camera.flags |= 0x20;
     func_A9D7B8(D_003C6DC0);
     func_A9C9C0();
     scriptRegisterModules();
@@ -640,15 +566,10 @@ extern u8 *WorkEnd;
 extern int fadeUpdateHook[];
 extern short uwamonoLadderState;
 extern int D_0069B978;
-extern union {
+union {
     float coords[4];
     Vector4 vector;
-} D_002B5D80;
-extern char D_00685180[];
-extern char D_00685190[];
-extern char D_006851A0[];
-extern char D_006851B0[];
-extern char D_006851C0[];
+} D_002B5D80 = { 0 };
 
 /* Callees of func_001D6070 (declared where their owners do not declare them for this TU). */
 void padApplySaveSettings(void);
@@ -802,8 +723,8 @@ void func_001D6070(void)
     uwamonoResetRecords(-1, 0);
     gameWork.control &= ~0x100000;
     gameWork.encounterReaction = gameWork.entryKey = -1;
-    gameWork.timerArmed = 1;
-    gameWork.blocked = 0;
+    gameWork.panelMode = 1;
+    gameWork.fadeTimer = 0;
     func_001EEF60();
     func_001EEF98();
     zero = 0.0f;
@@ -832,7 +753,7 @@ void func_001D6070(void)
         saveReadGameWork();
         gameWork.loadStage = 1;
     }
-    gameWork.loadSlot = -1;
+    gameWork.resourceId = -1;
     gameWork.workEnd = WorkEnd;
     uwamonoCurrentIndex = -1;
     gameWork.mapLoaded = 0;
@@ -881,12 +802,12 @@ void func_001D6070(void)
         xglFontPrint(0, 0, 0, "$init;");
         gameWork.control &= ~0x401;
         gameWork.sceneFlag = 0;
-        gameWork.blocked = 0;
-        func_001EECE0(gameWork.nextScene, 1);
+        gameWork.fadeTimer = 0;
+        func_001EECE0(gameWork.nextMap, 1);
         XenoActorPoolInitDefault();
         uwamonoResetRecords(-1, 0);
         if (uwamonoCurrentIndex == -1) {
-            printf(D_00685180);
+            printf("player lost\n");
             DEBUG_BREAK();
         } else {
             ptLoadPartyModels();
@@ -901,8 +822,8 @@ void func_001D6070(void)
         uwamonoRecords[uwamonoCurrentIndex].actor->position.z = D_002B5D80.coords[2];
         gameWork.encounterReaction = -1;
         uwamonoRecords[uwamonoCurrentIndex].actor->drawFlags |= 4;
-        gameWork.sceneMode = 1;
-        gameWork.scale.z = gameWork.scale.y = gameWork.scale.x = 1.0f;
+        gameWork.shadowCasterMode = 1;
+        gameWork.mapColor.z = gameWork.mapColor.y = gameWork.mapColor.x = 1.0f;
         gameWork.control &= ~0x80000;
         gameWork.control &= ~0x800000;
         gameWork.control &= ~0x10000;
@@ -936,7 +857,7 @@ void func_001D6070(void)
                 xglRenderClearSkipOff();
             }
             func_001BA68C();
-            func_001BA358(gameWork.sceneMode);
+            func_001BA358(gameWork.shadowCasterMode);
             if (gameWork.control & 1) {
                 func_001BAA6C();
             }
@@ -965,7 +886,7 @@ void func_001D6070(void)
                 }
                 gameWork.control &= ~0x400;
                 uwamonoRecords[uwamonoCurrentIndex].actor->probe.hitFlags |= 0x1000;
-                gameWork.cameraFlags |= 0x80;
+                gameWork.camera.flags |= 0x80;
             }
             if (gameWork.loadStage != 0) {
                 int slot;
@@ -981,7 +902,7 @@ void func_001D6070(void)
                         gameWork.control &= ~0x400;
                         uwamonoRecords[uwamonoCurrentIndex].actor->probe.hitFlags |= 0x1000;
                         uwamonoRecords[uwamonoCurrentIndex].actor->drawFlags &= ~4;
-                        gameWork.cameraFlags |= 0x80;
+                        gameWork.camera.flags |= 0x80;
                         break;
                     }
                 }
@@ -997,18 +918,18 @@ void func_001D6070(void)
                 }
             }
             if (!(gameWork.control & 0x200)) {
-                pxyBegin(D_00685190);
+                pxyBegin("DispMapObject");
                 DispMapObject();
-                pxyEnd(D_00685190);
+                pxyEnd("DispMapObject");
                 uwamonoPlayerUpdate();
                 cameraUpdateFrame();
                 mainDrawObjects();
             }
             if (!(gameWork.control & 1)) {
                 if (!(gameWork.control & 0x200)) {
-                    pxyBegin(D_006851A0);
+                    pxyBegin("sefExecEffect");
                     sefExecEffect();
-                    pxyEnd(D_006851A0);
+                    pxyEnd("sefExecEffect");
                 }
                 vibrationStepFade();
                 if (!(gameWork.control & 0x200) && !(D_0069B978 > 0 || (gameWork.control & 0x20000000))) {
@@ -1041,11 +962,11 @@ void func_001D6070(void)
                 if (gameWork.control & 0x10000000) {
                     break;
                 }
-                if (gameWork.timerArmed == 0) {
-                    gameWork.timerFrames--;
-                    if (gameWork.timerFrames < 0) {
-                        gameWork.timerFrames = 0;
-                        gameWork.timerArmed = 1;
+                if (gameWork.panelMode == 0) {
+                    gameWork.panelValue--;
+                    if (gameWork.panelValue < 0) {
+                        gameWork.panelValue = 0;
+                        gameWork.panelMode = 1;
                         uwamonoSendEvent(7, 0, 0);
                     }
                 } else {
@@ -1057,21 +978,21 @@ void func_001D6070(void)
                 pauseStart();
                 xglClockAccumulate();
             }
-            if (gameWork.timerArmed == 0) {
-                msgPanelSetTimecode(0, 0, gameWork.timerFrames / 30, gameWork.timerFrames % 30);
+            if (gameWork.panelMode == 0) {
+                msgPanelSetTimecode(0, 0, gameWork.panelValue / 30, gameWork.panelValue % 30);
             } else {
                 msgPanelClear();
             }
             msgClose();
             resJumpPointsUpdate();
             if (fadeUpdateHook[0] != 0 || gameWork.encounterReaction != -1 || (gameWork.control & 0x230)
-                || gameWork.nextScene != -1 || uwamonoLadderState == 2 || uwamonoLadderState == 3
-                || uwamonoLadderState == 7 || gameWork.pauseDelay != 0 || xglRenderGlobalFadeGet() < 0) {
-                if (gameWork.pauseDelay != 0) {
-                    gameWork.pauseDelay--;
+                || gameWork.nextMap != -1 || uwamonoLadderState == 2 || uwamonoLadderState == 3
+                || uwamonoLadderState == 7 || gameWork.inputDelay != 0 || xglRenderGlobalFadeGet() < 0) {
+                if (gameWork.inputDelay != 0) {
+                    gameWork.inputDelay--;
                 }
             } else if (PadData[0].pressed & 0x800) {
-                gameWork.pauseDelay = 16;
+                gameWork.inputDelay = 16;
                 if (gameWork.control & 1) {
                     gameWork.control &= ~1;
                     seSetMuted(1, 0);
@@ -1085,19 +1006,19 @@ void func_001D6070(void)
                     soundSlotSetLevelIfUnset(0, 1);
                 }
             }
-            if (gameWork.nextScene != -1) {
+            if (gameWork.nextMap != -1) {
                 break;
             }
             if (!(gameWork.control & 0x200)) {
                 if (gameWork.encounterReaction == -1) {
                     if (!(gameWork.control & 1)) {
-                        pxyBegin(D_006851B0);
+                        pxyBegin("XenoActorDoit");
                         XenoActorDoit();
-                        pxyEnd(D_006851B0);
+                        pxyEnd("XenoActorDoit");
                     }
-                    pxyBegin(D_006851C0);
+                    pxyBegin("XenoActorDisp");
                     XenoActorDisp();
-                    pxyEnd(D_006851C0);
+                    pxyEnd("XenoActorDisp");
                 }
             }
             if (gameWork.encounterReaction == -1) {
@@ -1153,7 +1074,7 @@ void func_001D6070(void)
             uwamonoReleaseHandles();
             msgResetAll();
             gameWork.encounterReaction = -1;
-            gameWork.blocked = 90;
+            gameWork.fadeTimer = 90;
             gameWork.encounterFlags = 0;
             switch (func_A97880()) {
             case 1:
@@ -1177,7 +1098,7 @@ void func_001D6070(void)
             gameWork.entryKey = -1;
             gameWork.releaseHandle = NULL;
             uwamonoHaltPursuit(-1);
-            if (gameWork.timerArmed == 0) {
+            if (gameWork.panelMode == 0) {
                 msgPanelOpen();
             }
             actor = uwamonoRecords[uwamonoCurrentIndex].actor;
@@ -1200,7 +1121,7 @@ void func_001D6070(void)
         xglSleep();
         xglSleep();
         fadeClear();
-        if (gameWork.nextScene == -1) {
+        if (gameWork.nextMap == -1) {
             break;
         }
     }
@@ -1223,3 +1144,72 @@ void func_001D6070(void)
         GameOver();
     }
 }
+
+/* The last three words of the jump table jtbl_006851D0 (the switch in func_001D6070 emits its five entries). */
+const int D_006851E4[3] = { 0, 0, 0 };
+
+/* Path strings of the map resource table (16-byte rows in the original are 24/32-byte slots). */
+const char D_006851F0[24] = "matumoto\\Item010.txy";
+const char D_00685208[24] = "matumoto\\Item010.pxy";
+const char D_00685220[24] = "matumoto\\Item009.txy";
+const char D_00685238[24] = "matumoto\\Item009.pxy";
+const char D_00685250[24] = "matumoto\\Item008.txy";
+const char D_00685268[24] = "matumoto\\Item008.pxy";
+const char D_00685280[24] = "matumoto\\Item007.txy";
+const char D_00685298[24] = "matumoto\\Item007.pxy";
+const char D_006852B0[24] = "matumoto\\Item006.txy";
+const char D_006852C8[24] = "matumoto\\Item006.pxy";
+const char D_006852E0[24] = "matumoto\\Item005.txy";
+const char D_006852F8[24] = "matumoto\\Item005.pxy";
+const char D_00685310[24] = "matumoto\\Item004.txy";
+const char D_00685328[24] = "matumoto\\Item004.pxy";
+const char D_00685340[24] = "matumoto\\Item003.txy";
+const char D_00685358[24] = "matumoto\\Item003.pxy";
+const char D_00685370[24] = "matumoto\\Item103.txy";
+const char D_00685388[24] = "matumoto\\Item103.pxy";
+const char D_006853A0[24] = "matumoto\\Item102.txy";
+const char D_006853B8[24] = "matumoto\\Item102.pxy";
+const char D_006853D0[24] = "matumoto\\Item101.txy";
+const char D_006853E8[24] = "matumoto\\Item101.pxy";
+const char D_00685400[24] = "matumoto\\Item002.txy";
+const char D_00685418[24] = "matumoto\\Item002.pxy";
+const char D_00685430[24] = "matumoto\\Item001.txy";
+const char D_00685448[24] = "matumoto\\Item001.pxy";
+const char D_00685460[24] = "matumoto\\Ret_P2.txy";
+const char D_00685478[24] = "matumoto\\Ret_P2.pxy";
+const char D_00685490[24] = "matumoto\\Ret_P.txy";
+const char D_006854A8[24] = "matumoto\\Ret_P.pxy";
+const char D_006854C0[24] = "matumoto\\Evs_P.txy";
+const char D_006854D8[24] = "matumoto\\Evs_P.pxy";
+const char D_006854F0[24] = "matumoto\\Save_P2.txy";
+const char D_00685508[24] = "matumoto\\Save_P2.pxy";
+const char D_00685520[24] = "matumoto\\Save_P.txy";
+const char D_00685538[24] = "matumoto\\Save_P.pxy";
+const char D_00685550[24] = "matumoto\\Tre101.txy";
+const char D_00685568[24] = "matumoto\\Tre101.pxy";
+const char D_00685580[24] = "matumoto\\Tre002.txy";
+const char D_00685598[24] = "matumoto\\Tre002.pxy";
+const char D_006855B0[24] = "matumoto\\Tre001.txy";
+const char D_006855C8[24] = "matumoto\\Tre001.pxy";
+const char D_006855E0[24] = "matumoto\\Tra004.txy";
+const char D_006855F8[24] = "matumoto\\Tra004.pxy";
+const char D_00685610[24] = "matumoto\\Tra003.txy";
+const char D_00685628[24] = "matumoto\\Tra003.pxy";
+const char D_00685640[24] = "matumoto\\Tra002.txy";
+const char D_00685658[24] = "matumoto\\Tra002.pxy";
+const char D_00685670[24] = "matumoto\\Tra001.txy";
+const char D_00685688[24] = "matumoto\\Tra001.pxy";
+const char D_006856A0[24] = "matumoto\\spline.dat";
+const char D_006856B8[24] = "matumoto\\enemyorder.dat";
+const char D_006856D0[32] = "matumoto\\treasurebox.dat";
+const char D_006856F0[32] = "matumoto\\kowaremono.dat";
+
+/* .sdata cells 0x0069B960..0x0069B974, in address order: other TUs use them; this TU reads none of them. */
+void *mainObject = 0;
+int D_0069B964 = 0;
+PxyHeader *mapObjectTable = 0;
+unsigned short *uwamonoEntryCountPtr = 0;
+UwamonoEntry *uwamonoEntries = 0;
+/* The game work block (0x1B28 bytes): the scene, player, camera and module state the field loop and the
+ * other modules share. */
+GameWork gameWork = { 0 };

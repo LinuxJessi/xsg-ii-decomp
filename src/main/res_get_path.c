@@ -2,6 +2,559 @@
 #include "main/xgl_timer0.h"
 #include "main/xgl_cd.h"
 #include "main/res_get_path.h"
+#include "main/tu048.h"
+
+/* ---- old main/tu053: the footstep material keys ---- */
+
+/* Returns 0. Same 8-byte body as func_001DF088 in main/tu052. No caller found in the binary. */
+int func_001DF090(void) {
+    return 0;
+}
+
+/*
+ * Footstep material keys (proposed footMaterialKeys): 4-byte entries holding three letters, the fourth byte zero.
+ * The list ends at an entry whose first byte is zero. Read by footMaterialFind and footMaterialKey.
+ */
+extern int footMaterialKeys[16];
+
+/*
+ * Returns the key entry at `index` (proposed footMaterialKey). enefoot and seFootBanksLoad copy its three bytes into
+ * their sound command.
+ */
+void *footMaterialKey(int index) {
+    return &footMaterialKeys[index];
+}
+
+/*
+ * Searches the key list for the three bytes of `name` (proposed footMaterialFind) and returns the matching index.
+ * It returns 0 when the list ends without a match, which is also the index of "kon", the default material.
+ * foot calls it once per token.
+ */
+int footMaterialFind(const char *name) {
+    const char *entry = (const char *)footMaterialKeys;
+    int index = 0;
+
+    while (entry[0] != 0) {
+        if (entry[0] == name[0] && entry[1] == name[1] && entry[2] == name[2]) {
+            return index;
+        }
+        entry += 4;
+        index++;
+    }
+    return 0;
+}
+
+/*
+ * The CD file name tables: per group of file ids (xglCdFileGroups) the names of its files, then the
+ * XAP groups. The names longer than 8 bytes are .rodata, the others .sdata (a -G8 file); each table
+ * holds them in reverse address order.
+ */
+
+
+char *D_002B9CF8[58] = {
+    "model\\char\\pc\\", "shionH00", "shion00", "_",
+    "shion05", "shion03", "shion04", "shionH03",
+    "sh_box01", "kosmosH00", "kosmos00", "kosmos01",
+    "kosmos02", "kosmos03", "kos_sw03", "chaosH00",
+    "chaos00", "chaos01", "chaos02", "chaos03",
+    "chaosH01", "jrH00", "jr00", "jr01",
+    "jr02", "jr03", "jrH01", "momoH00",
+    "momo00", "momo01", "momo02", "momoH03",
+    "mm_ym01", "_", "ziggy02", "ziggy00",
+    "ziggy01", "jinH00", "jin00", "jin01",
+    "jin02", "jinH01", "jin_saya", "jin_sw01",
+    "jrH02", "jrH04", "jinH03", "jinH04",
+    "_", "jr_gun01", "jr_gun01b", "jr_gun01b_2",
+    "zig_sw01", "jin_sw02", "jin_sw03", "jin_sw04",
+    "chaosH02", "ziggyH01"
+};
+
+char *D_002B9DE0[90] = {
+    "model\\char\\npc\\", "allenH01", "allen01", "albelt00",
+    "albelt01", "albelt02", "albelt03", "helmer00",
+    "helmer01", "marglis00", "marglis01", "pope00",
+    "pelegri00", "kebin00", "kebin01", "gaignun00",
+    "gaignun01", "gaignun02", "shelley00", "mary00",
+    "yuri00", "yuri01", "sakura00", "_",
+    "sellers00", "yuriev00", "_", "voyager00",
+    "voyager01", "citren00", "febronia00", "_",
+    "_", "_", "_", "virgil00",
+    "_", "_", "_", "_",
+    "_", "_", "_", "_",
+    "_", "kirsh00", "kirsh01", "_",
+    "nephilim00", "miyuki00", "_", "tonny00",
+    "hammer00", "mathews00", "_", "_",
+    "cananH00", "canan01", "_", "_",
+    "virhelm00", "albeltH00", "albeltH01", "albeltH03",
+    "albeltH04", "albeltH05", "marglisH00", "marglisH01",
+    "marglisH02", "bos013", "bos001", "popeH00",
+    "gaignunH00", "gaignunH02", "gaignunH04", "gaignun03",
+    "yuriH00", "yuriH01", "sakuraH00", "nephilim01",
+    "tonnyH00", "hammerH00", "mathewsH00", "albeltH06",
+    "albeltH07", "marglisH03", "gaignunH01", "gaignunH03",
+    "gaignunH05", "gaignunH06"
+};
+
+char *D_002B9F48[88] = {
+    "model\\char\\cf_npc\\", "vecm100", "vecm200", "vecf100",
+    "vecf200", "vecm300", "vecf300", "_",
+    "gfgm00", "gfgf00", "urtvmH00", "urtvm00",
+    "urtvf00", "uticm00", "cf_uso001", "cf_uso002",
+    "gfgass100", "gfgass200", "gfgass300", "engm01",
+    "engm02", "denki00", "water00", "gomi00",
+    "du100", "du200", "hyaku00", "gfgm01",
+    "gfgm02", "gfgf01", "gfgf02", "du101",
+    "du102", "du201", "du202", "realm00",
+    "realf00", "brealm00", "brealm01", "engm00",
+    "hakase01", "hakase00", "scott00", "inngirl00",
+    "mouth00", "king00", "bread00", "breadch00",
+    "clean00", "cleanch00", "pelesol00", "master00",
+    "hakase02", "vectech00", "umnm00", "umnf00",
+    "yurim00", "cf_uso003", "cf_uso004", "cf_uso007",
+    "cf_uso008", "cf_uso009", "cf_uso010", "bar00",
+    "thief00", "thief01", "thief02", "thief03",
+    "thief04", "org00", "cf_bos010", "uso011",
+    "uso012", "bos030", "uso005", "uso006",
+    "umnm01", "umnf01", "umnmh00", "umnfh00",
+    "umnm02", "umnf02", "vecm400", "vecf400",
+    "gfgm03", "gfgf03", "du103", "umnm03"
+};
+
+char *D_002BA0A8[72] = {
+    "model\\char\\citizen\\", "kidm100", "kidm101", "kidm200",
+    "kidm201", "kidf100", "kidf101", "kidf200",
+    "kidf201", "boy100", "boy101", "boy200",
+    "boy201", "boy300", "boy301", "boy400",
+    "boy401", "boy500", "boy501", "boy600",
+    "boy601", "girl100", "girl101", "girl200",
+    "girl201", "girl300", "girl301", "girl400",
+    "girl401", "girl500", "girl501", "kidm300",
+    "kidf300", "man100", "man101", "man200",
+    "man201", "man300", "man301", "man400",
+    "man401", "woman100", "woman101", "woman200",
+    "woman201", "woman300", "woman301", "woman400",
+    "woman401", "oldm100", "oldm101", "oldm200",
+    "oldm201", "oldf100", "oldf101", "oldf200",
+    "oldf201", "ukun00", "robo00", "doctor00",
+    "spy00", "singer00", "cook100", "cook200",
+    "kingcat00", "kitten00", "cat00", "dog00",
+    "rat00", "ballet00", "robo01", "robo02"
+};
+
+char *D_002BA1C8[20] = {
+    "model\\robo\\pc_robo\\", "pcr01a", "pcr02a", "pcr03",
+    "_", "pcr05", "pcr05_sh01", "pcr05_mg01",
+    "pcr02b", "pcr02c", "pcr02d", "pcr05b",
+    "pcr02_rp01", "pcr02_rp02", "pcr05_rf01", "pcr05_sh01",
+    "pcr05_br01", "pcr05_sr01", "pcr01b", 0
+};
+
+char *D_002BA218[34] = {
+    "model\\robo\\npc_robo\\", "npcr01", "npcr02a", "npcr02b",
+    "npcr03", "npcr04", "npcr05", "npcr06",
+    "npcr07", "npcr08", "npcr09a", "npcr10",
+    "npcr11", "npcr12", "npcr13", "npcr14",
+    "npcr15", "npcr16", "npcr17", "npcr18",
+    "npcr19", "npcr09b", "npcr12a", "npcr12b",
+    "npcr12_rf01", "npcr12_mg01", "npcr13_sw01", "npcr06_rf01",
+    "npcr06_mg01", "npcr06_sw01", "npcr17_sw01", "npcr10_rf01",
+    "npcr10_sh01", 0
+};
+
+char *D_002BA2A0[82] = {
+    "model\\robo\\gattai_robo\\", "gattai01", "gattai02", "gattai03",
+    "gattai04", "gattai05", "gattai06", "gattai07",
+    "gattai08", "gattai09", "gattai10", "gattai11",
+    "gattai12", "gattai13", "gattai14", "gattai15",
+    "gattai16", "gattai17", "gattai18", "gattai19",
+    "gattai20", "gattai21", "gattai22", "gattai23",
+    "gattai24", "gattai25", "gattai26", "gattai27",
+    "gattai28", "gattai29", "gattai30", "gattai31",
+    "gattai32", "gattai33", "gattai34", "gattai35",
+    "gattai36", "gattai37", "gattai38", "gattai39",
+    "gattai40", "gattai41", "gattai42", "gattai43",
+    "gattai44", "gattai45", "gattai46", "gattai47",
+    "gattai48", "gattai49", "gattai50", "gattai51",
+    "gattai52", "gattai53", "gattai54", "gattai55",
+    "gattai56", "gattai57", "gattai58", "gattai59",
+    "gattai60", "gattai61", "gattai62", "gattai63",
+    "gattai64", "gattai65", "gattai66", "gattai67",
+    "gattai68", "gattai69", "gattai70", "gattai71",
+    "gattai72", "gattai73", "gattai74", "gattai75",
+    "gattai76", "gattai77", "gattai78", "gattai79",
+    "gattai80", "gattai81"
+};
+
+char *D_002BA3E8[84] = {
+    "model\\enemy\\", "uso001", "uso002", "uro001",
+    "uma001", "uma002", "uso003", "uso004",
+    "uma003", "uro002", "uma004", "uma005",
+    "uma006", "cre001", "cre002", "cre003",
+    "cre004", "cre005", "cre006", "cre007",
+    "cre008", "cre009", "cre010", "vma001",
+    "vma002", "vma003", "uro003", "uro004",
+    "uma007", "uro005", "uro006", "uro007",
+    "uso005", "uso006", "uma008", "uso007",
+    "uso008", "cre011", "cre012", "cre018",
+    "uro008", "uro009", "uma009", "uma010",
+    "uro010", "uso009", "uso010", "cre013",
+    "cre014", "uma012", "uro011", "uro012",
+    "uro013", "uro014", "uro015", "uso011",
+    "uso012", "cre015", "cre016", "cre017",
+    "uma011", "gno001", "gno002", "gno003",
+    "gno004", "gno005", "gno006", "gno007",
+    "gno008", "gno009", "gno010", "gno011",
+    "gno012", "gno013", "gno014", "gno015",
+    "gno016", "gno017", "gno018", "gno019",
+    "uso001_rf01", "uso001_sg01", "uma013", 0
+};
+
+char *D_002BA538[32] = {
+    "model\\enemy\\", "bos001", "bos002", "bos003",
+    "bos004", "bos005", "bos006", "bos007",
+    "bos008", "bos009", "bos010", "bos011",
+    "bos012", "bos013", "bos014", "bos015",
+    "bos016", "bos017", "bos018", "bos019",
+    "bos020", "bos021", "bos022", "bos023",
+    "bos024", "bos025", "bos026", "bos027",
+    "bos028", "bos029", "bos030", "bos031"
+};
+
+char *D_002BA5B8[362] = {
+    "model\\map\\", "kowashi_chara", "kowashi_robo", "idtest",
+    "camera_test", "E2_TST01", "E2_TST02", "E2_TST03",
+    "E2_TST04", "E2_TST05", "E2_TST06", "dummy_0b",
+    "dummy_0c", "dummy_0d", "dummy_0e", "dummy_0f",
+    "E2_KML01", "E2_KML02", "E2_KML03", "E2_KML04",
+    "E2_KML05", "E2_KML06", "E2_KML07", "E2_KML08",
+    "E2_KML09", "E2_KML10", "E2_MID01", "E2_MID02",
+    "E2_MID03", "E2_MID04", "E2_MID05", "E2_MID06",
+    "E2_MID07", "E2_MID08", "E2_MID09", "E2_VEC01",
+    "E2_VEC02", "E2_VEC03", "E2_MIL01", "E2_MIL02",
+    "E2_MIL03", "E2_MIL04", "E2_MIL05", "E2_MIL06",
+    "E2_MIL07", "E2_MIL08", "E2_MIL09", "E2_MIL10",
+    "E2_MIL11", "E2_MIL12", "E2_MIL13", "E2_MIL14",
+    "E2_MIL15", "E2_MIL16", "E2_MIL17", "E2_UZU01",
+    "E2_UZU06", "E2_UZU08", "E2_UMN01", "E2_UMN02",
+    "E2_UMN03", "E2_UMN04", "E2_MOM01", "E2_MOM02",
+    "E2_MOM03", "E2_MOM05", "E2_MOM06", "E2_MOM07",
+    "E2_MOM08", "E2_MOM09", "E2_MOM10", "E2_MOM11",
+    "E2_MOM12", "E2_MOM13", "E2_MOM14", "E2_MOM15",
+    "E2_MOM16", "E2_MOM17", "E2_MOM18", "E2_MOM19",
+    "E2_MOM21", "E2_MOM22", "E2_MOM23", "E2_MOM24",
+    "E2_MOM25", "E2_MOM26", "E2_MOM27", "E2_MOM28",
+    "E2_ELS01", "E2_ELS02", "E2_ELS03", "E2_ELS04",
+    "E2_ELS05", "E2_ELS06", "E2_ELS07", "E2_ELS08",
+    "E2_SYD01", "E2_SYD02", "E2_SYD03", "E2_SYD04",
+    "E2_SYD05", "E2_SYD06", "E2_SYD07", "E2_SYD08",
+    "E2_SYD09", "E2_SYD10", "E2_SYD11", "E2_SYD12",
+    "E2_SYD13", "E2_SYD14", "E2_SYD15", "E2_SYD16",
+    "E2_SYD17", "E2_SYD18", "E2_SYD19", "E2_SYD20",
+    "E2_SPA01", "E2_OLM01", "E2_OLM02", "E2_OLM03",
+    "E2_OLM04", "E2_OLM05", "E2_OLM06", "E2_OLM07",
+    "E2_OLM08", "E2_OLM09", "E2_OLM10", "E2_OLM11",
+    "E2_OLM12", "E2_OLM13", "E2_OLM14", "E2_OLM15",
+    "E2_OLM16", "E2_OLM17", "E2_OLM18", "E2_DYU01",
+    "E2_DYU02", "E2_DYU03", "E2_DYU04", "E2_DYU05",
+    "E2_KUK01", "E2_KUK02", "E2_KUK03", "E2_KUK04",
+    "E2_KUK05", "E2_KUK06", "E2_KUK07", "E2_KUK08",
+    "E2_KUK09", "E2_KUK10", "E2_KUK11", "E2_KUK17",
+    "E2_KUK18", "E2_KUK19", "E2_SUI01", "E2_SUI02",
+    "E2_SUI03", "E2_SUI04", "E2_SUI05", "E2_SUI06",
+    "E2_SUI07", "E2_SUI08", "E2_SUI09", "E2_SUI10",
+    "E2_SUI11", "E2_SUI12", "E2_RAV01", "E2_RAV02",
+    "E2_RAV03", "E2_RAV04", "E2_RAV05", "E2_RAV06",
+    "E2_RAV07", "E2_RAV08", "E2_RAV09", "E2_RAV10",
+    "E2_RAV11", "E2_RAV12", "E2_RAV13", "E2_RAV14",
+    "E2_RAV15", "E2_OMG01", "E2_OMG02", "E2_OMG03",
+    "E2_OMG04", "E2_OMG05", "E2_OMG06", "E2_OMG07",
+    "E2_OMG08", "E2_OMG09", "E2_OMG10", "E2_OMG11",
+    "E2_OMG12", "E2_OMG13", "E2_OMG14", "E2_OMG15",
+    "E2_OMG16", "E2_OMG17", "E2_OMG18", "E2_OMG19",
+    "E2_OMG20", "E2_JSY01", "E2_JSY02", "E2_JSY03",
+    "E2_JSY04", "E2_JSY05", "E2_JSY06", "E2_JSY07",
+    "E2_JSY08", "E2_EXA01", "E2_EXA02", "E2_EXA03",
+    "E2_EXA04", "E2_EXA05", "E2_EXA06", "E2_EXA07",
+    "E2_EXB01", "E2_EXB02", "E2_EXB03", "E2_EXB04",
+    "E2_EXB05", "E2_EXB06", "E2_EXB07", "E2_EXC01",
+    "E2_EXC02", "E2_EXC03", "E2_EXC04", "E2_EXC05",
+    "E2_EXC06", "E2_EXC07", "E2_EXC08", "E2_EXC09",
+    "E2_EXC10", "E2_EXC11", "E2_EXD01", "CFEVE01",
+    "CFEVE02", "CFEVE03", "CFEVE04", "CFEVE05",
+    "CFEVE06", "CFEVE07", "CFEVE08", "CFEVE09",
+    "CFEVE10", "CFEVE11", "CFEVE12", "CFEVE13",
+    "CFEVE14", "CFEVE15", "E2_EVE01", "E2_EVE02",
+    "E2_EVE03", "E2_EVE04", "E2_EVE05", "E2_EVE06",
+    "E2_EVE07", "E2_EVE08", "E2_EVE09", "E2_EVE10",
+    "E2_EVE11", "E2_EVE12", "E2_EVE13", "E2_EVE14",
+    "E2_EVE15", "E2_EVE16", "E2_EVE17", "E2_EVE18",
+    "E2_EVE19", "E2_EVE20", "E2_EVE21", "E2_EVE22",
+    "E2_EVE23", "E2_EVE24", "E2_EVE25", "E2_EVE26",
+    "E2_EVE27", "E2_EVE28", "E2_EVE29", "E2_EVE30",
+    "E2_EVE31", "E2_EVE32", "E2_EVE33", "E2_EVE34",
+    "E2_EVE35", "E2_EVE36", "E2_EVE37", "E2_EVE38",
+    "E2_EVE39", "E2_EVE40", "E2_EVE41", "E2_EVE42",
+    "E2_EVE43", "E2_EVE44", "E2_EVE45", "E2_EVE46",
+    "E2_EVE47", "E2_EVE48", "E2_EVE49", "E2_EVE50",
+    "E2_EVE51", "E2_EVE52", "E2_EVE53", "E2_EVE54",
+    "E2_EVE55", "E2_EVE56", "E2_EVE57", "E2_EVE58",
+    "E2_EVE59", "E2_EVE60", "E2_EVE61", "E2_EVE62",
+    "E2_EVE63", "E2_EVE64", "E2_EVE65", "E2_EVE66",
+    "E2_EVE67", "E2_EVE68", "E2_EVE69", "E2_EVE70",
+    "E2_EVE71", "E2_EVE72", "E2_EVE73", "E2_EVE74",
+    "E2_EVE75", "E2_EVE76", "E2_EVE77", "E2_EVE78",
+    "E2_EVE79", "E2_EVE80", "E2_EVE81", "E2_EVE82",
+    "E2_EVE83", "E2_EVE84", "E2_EVE85", "E2_EVE86",
+    "E2_EVE87", "E2_EVE88", "E2_EVE89", "E2_EVE90",
+    "E2_EVE91", "E2_EVS01", "E2_EVS02", "E2_EVS02b",
+    "E2_EVS03", "E2_EVS03b", "E2_EVS04", "E2_EVS05",
+    "E2_EVS06", "E2_EVS07", "E2_EVS08", "E2_EVS09",
+    "E2_MOM04", "E2_KML11", "CFEVE16", "CFEVE17",
+    "CFEVE18", "CFEVE19", "E2_OMG21", "CFEVE20",
+    "CFEVE21", "CFEVE22"
+};
+
+char *D_002BAB60[66] = {
+    "motion\\", "chaos00", "jin00", "shion00",
+    "momo00", "ziggy00", "jr00", "kosmos00",
+    "kanan00", "pcr00", "pcr01", "pcr02",
+    "pcr03", "pcr04", "pcr05", "motion_ext01",
+    "motion_ext02", "motion_ext03", "motion_ext04", "motion_ext05",
+    "motion_ext06", "motion_ext07", "motion_ext08", "motion_ext09",
+    "motion_ext10", "motion_ext11", "motion_ext12", "motion_ext13",
+    "motion_ext14", "motion_ext15", "motion_ext16", "motion_ext17",
+    "motion_ext18", "motion_ext19", "motion_ext20", "motion_ext21",
+    "motion_ext22", "motion_ext23", "motion_ext24", "motion_ext25",
+    "motion_ext26", "motion_ext27", "motion_ext28", "motion_ext29",
+    "motion_ext30", "motion_ext31", "motion_ext32", "motion_ext33",
+    "motion_ext34", "motion_ext35", "motion_ext36", "motion_ext37",
+    "motion_ext38", "motion_ext39", "motion_ext40", "motion_ext41",
+    "motion_ext42", "motion_ext43", "motion_ext44", "motion_ext45",
+    "motion_ext46", "motion_ext47", "motion_ext48", "motion_ext49",
+    "motion_ext50", "face_all"
+};
+
+char *D_002BAC68[10] = {
+    "effect\\", "00", "01", "02",
+    "03", "04", "05", "06",
+    "07", 0
+};
+
+char *D_002BAC90[326] = {
+    "model\\mobj\\", "mobj000", "mobj001", "mobj002",
+    "mobj003", "mobj004", "mobj005", "mobj006",
+    "mobj007", "mobj008", "mobj009", "mobj010",
+    "mobj011", "mobj012", "mobj013", "mobj014",
+    "mobj015a", "mobj015b", "mobj016", "mobj017",
+    "mobj018", "mobj019", "mobj020", "mobj021",
+    "mobj022", "mobj023", "mobj024", "mobj025",
+    "mobj026", "mobj027", "mobj028a", "mobj028b",
+    "mobj028c", "mobj029a", "mobj029b", "mobj029c",
+    "mobj029d", "mobj029e", "mobj029f", "mobj030a",
+    "mobj030b", "mobj030c", "mobj030d", "mobj030e",
+    "mobj030f", "mobj031a", "mobj031b", "mobj031c",
+    "mobj031d", "mobj031e", "mobj031f", "mobj032a",
+    "mobj032b", "mobj033", "mobj034", "mobj035",
+    "mobj036", "mobj037", "mobj038", "mobj039a",
+    "mobj039b", "mobj040", "mobj041", "mobj042",
+    "mobj043", "mobj044", "mobj045", "mobj046",
+    "mobj047", "mobj048", "mobj049", "mobj050",
+    "mobj051", "mobj052", "mobj053", "mobj054",
+    "mobj055", "mobj056", "mobj057", "mobj058",
+    "mobj059", "mobj060", "mobj061", "mobj062",
+    "mobj063", "mobj064", "mobj065", "mobj066",
+    "mobj067", "mobj068", "mobj069", "mobj070",
+    "mobj071", "mobj072", "mobj072b", "mobj073",
+    "mobj074", "mobj075", "mobj076", "mobj077",
+    "mobj078", "mobj079", "mobj080", "mobj081",
+    "mobj082", "mobj083", "mobj084", "mobj085",
+    "mobj086", "mobj087", "mobj088", "mobj089",
+    "mobj090", "mobj091", "mobj092", "mobj093",
+    "mobj094", "mobj095", "mobj096", "mobj097",
+    "mobj098", "mobj099", "mobj100", "mobj101",
+    "mobj102", "mobj103", "mobj104", "mobj105",
+    "mobj106", "mobj107", "mobj108", "mobj109",
+    "mobj110", "mobj111", "mobj112", "mobj113",
+    "mobj114", "mobj115", "mobj116", "mobj117",
+    "mobj118", "mobj119", "mobj120", "mobj121",
+    "mobj122", "mobj123", "mobj124", "mobj125",
+    "mobj126", "mobj127", "mobj128", "mobj129",
+    "mobj130", "mobj131", "mobj132", "mobj133",
+    "mobj134", "mobj135", "mobj136", "mobj137",
+    "mobj138", "mobj139", "mobj140", "mobj141",
+    "mobj142", "mobj143", "mobj144", "mobj145",
+    "mobj146", "mobj147", "mobj148", "mobj149",
+    "mobj150", "mobj151", "mobj152", "_",
+    "mobj154", "mobj155", "mobj156", "mobj157",
+    "mobj158", "mobj159", "mobj160", "mobj161",
+    "mobj162", "mobj163", "mobj164", "mobj165",
+    "mobj166", "mobj167", "mobj168", "mobj169",
+    "mobj170", "mobj171", "mobj172", "mobj173",
+    "mobj174", "mobj175", "mobj176", "mobj177",
+    "mobj178", "mobj179", "mobj180", "mobj181",
+    "mobj182", "mobj183", "mobj184", "mobj185",
+    "mobj186", "mobj187", "mobj188", "mobj189",
+    "mobj190", "mobj191", "mobj192", "mobj193",
+    "mobj194", "mobj195", "mobj196", "mobj197",
+    "mobj198", "mobj199", "mobj200", "mobj201",
+    "mobj202", "mobj203", "mobj204", "mobj205",
+    "mobj206", "mobj207", "mobj208", "mobj209",
+    "mobj210", "mobj211", "mobj212", "mobj213",
+    "mobj214", "mobj215", "mobj216", "mobj217",
+    "mobj218", "mobj219", "mobj220", "mobj221",
+    "mobj222", "mobj223", "mobj224", "mobj225",
+    "mobj226", "mobj227", "mobj228", "mobj229",
+    "mobj230", "mobj231", "mobj232", "mobj233",
+    "mobj234", "mobj235", "mobj236", "mobj237",
+    "mobj238", "mobj239", "mobj240", "mobj241",
+    "mobj242", "mobj243", "mobj244", "mobj245",
+    "mobj246", "mobj247", "mobj248", "mobj249",
+    "mobj250", "mobj251", "mobj252", "mobj253",
+    "mobj254", "mobj255", "mobj256", "mobj257",
+    "mobj258", "mobj259", "mobj260", "mobj261",
+    "mobj262", "mobj263", "mobj264", "mobj265",
+    "mobj266", "mobj267", "mobj268", "mobj269",
+    "mobj270", "mobj271", "mobj272", "mobj273",
+    "mobj274", "mobj275", "mobj276", "mobj277",
+    "mobj278", "mobj279", "mobj280", "mobj281",
+    "mobj282", "mobj283", "mobj284", "mobj285",
+    "mobj286", "mobj287", "mobj288", "mobj289",
+    "mobj290", "mobj291", "mobj292", "mobj293",
+    "mobj294", "mobj295", "mobj296", "mobj297",
+    "mobj298", "mobj299", "mobj153a", "mobj153b",
+    "mobj153c", 0
+};
+
+char *D_002BB1A8[60] = {
+    "cf\\", "enemy001", "enemy002", "enemy003",
+    "enemy004", "enemy005", "enemy006", "enemy007",
+    "enemy008", "enemy009", "enemy010", "enemy011",
+    "enemy012", "enemy013", "enemy014", "enemy015",
+    "enemy016", "enemy017", "enemy018", "enemy019",
+    "enemy_001", "enemy_002", "enemy_003", "enemy_004",
+    "enemy_005", "enemy_006", "enemy_007", "enemy_008",
+    "enemy_009", "enemy_010", "enemy_011", "enemy_012",
+    "enemy_013", "enemy_014", "enemy_015", "enemy_016",
+    "enemy_017", "enemy_018", "enemy_019", "enemy_020",
+    "npc_001", "npc_002", "npc_003", "npc_004",
+    "npc_005", "npc_006", "npc_007", "npc_008",
+    "npc_009", "npc_010", "npc_011", "npc_012",
+    "npc_013", "npc_014", "npc_015", "npc_016",
+    "npc_017", "npc_018", "npc_019", "npc_020"
+};
+
+/* One 0xC-byte entry of xglCdFileGroups: file ids base .. base + count - 1 map to
+ * names[0 .. count - 1] (xglCdFindFileId, xglCdFindFileName); xglCdBuildFileName also writes
+ * names[0] in front of the file's own name. An entry with no names ends the table. */
+typedef struct CdFileGroup {
+    unsigned int base;
+    unsigned int count;
+    char **names;
+} CdFileGroup;
+
+CdFileGroup xglCdFileGroups[15] = {
+    { 0x10000, 58, D_002B9CF8 },
+    { 0x11000, 90, D_002B9DE0 },
+    { 0x12000, 88, D_002B9F48 },
+    { 0x13000, 72, D_002BA0A8 },
+    { 0x14000, 19, D_002BA1C8 },
+    { 0x15000, 33, D_002BA218 },
+    { 0x16000, 82, D_002BA2A0 },
+    { 0x18000, 83, D_002BA3E8 },
+    { 0x19000, 32, D_002BA538 },
+    { 0x20000, 362, D_002BA5B8 },
+    { 0x30000, 66, D_002BAB60 },
+    { 0x40000, 9, D_002BAC68 },
+    { 0x70000, 325, D_002BAC90 },
+    { 0x80000, 60, D_002BB1A8 },
+    { 0xFFFFFFFF, 0, 0 }
+};
+
+/* The words of xglCdXapGroups are groups: a name, its file ids, then -1; a lone -1 closes the table. */
+int xglCdXapGroups[138] = {
+    (int) "man", 69656, 73774, 73779, -1, (int) "woman", 73776, -1,
+    (int) "boy", 69692, 73767, 73770, 73749, 73750, -1, (int) "girl",
+    69662, 73775, -1, (int) "oldm", 73751, -1, (int) "soldm", 69641,
+    69642, 69643, 69667, 69668, 69669, 73736, 73755, 73756,
+    73812, 73741, 73742, 73743, 73765, 73766, 73778, 73785,
+    73786, 73787, 73788, 73789, 73790, 73784, 73799, 73800,
+    -1, (int) "soldf", 69644, 73737, 73757, 73758, 73813, -1,
+    (int) "kidm", 73777, 77855, -1, (int) "kidf", 73771, 77856, -1,
+    (int) "albelt", 69657, -1, (int) "momo00", 69654, 69677, 69680, 73754,
+    -1, (int) "kebin", 69659, 69660, 73797, 73798, -1, (int) "urtvf",
+    69661, -1, (int) "proudm", 73744, 73745, 73746, -1, (int) "faithm",
+    73781, -1, (int) "kenkyum", 73729, 73730, 73733, 73810, 73752,
+    73759, 73760, 73814, 73763, 73782, 73804, 73808, 73815,
+    -1, (int) "kenkyuf", 73731, 73732, 73734, 73811, 73753, 73761,
+    73762, 73764, 73783, 73805, 73809, 77885, -1, (int) "erobo",
+    77882, 77894, 77895, -1, (int) "cook1", 77886, -1, (int) "cook2",
+    77887, -1, (int) "cat", 77888, 77889, -1, (int) "oldf", 77893,
+    -1, -1
+};
+
+/* Footstep material keys: 16 entries of 4 bytes (three letters and a zero), terminated by an empty entry. */
+int footMaterialKeys[16] = {
+    0x006E6F6B, 0x00696172, 0x00616C67, 0x006F6C66,
+    0x006F7269, 0x006F7473, 0x00726163, 0x006F6F77,
+    0x006F6C63, 0x00746177, 0x00727574, 0x00726165,
+    0x006F6E73, 0x00616E73, 0x00000000, 0x00000000,
+};
+
+/* Words read by res_get_path (the size argument of seBankLoad per kind; the last one is zero). Guessed type. */
+int D_002BB5B8[22] = {
+    0x00019000, 0x00005000, 0x0007D000, 0x000BE000, 0x000BE000, 0x00000000,
+    0x00000000, 0x00154000, 0x00176000, 0x0017A400, 0x0017E800, 0x00182C00,
+    0x00187000, 0x0018D000, 0x00193000, 0x00199000, 0x0019F000, 0x001A5000,
+    0x001AB000, 0x001B1000, 0x001B7000, 0x00000000,
+};
+
+
+/* Command table of resScriptRun: the name stored in the scaffold strings of main/tu054 (its ';' prefix is not
+ * part of the name) and the handler. Four handlers are defined with another signature, so the table casts them. */
+typedef struct {
+    signed char *name;
+    unsigned char *(*handler)(unsigned char *cursor);
+} ResCommand;
+
+void resCmdMap(int cursor);
+void resCmdAct(int cursor);
+void resCmdMot(int cursor);
+void resCmdMobj(int cursor);
+u8 *resCmdEffect(u8 *cursor);
+u8 *resCmdMapse(u8 *script);
+u8 *resCmdRuntimeBgm(u8 *script);
+u8 *resCmdBgmVol(u8 *cursor);
+u8 *resCmdFoot(u8 *script);
+u8 *resCmdEnefoot(u8 *script);
+u8 *resCmdDisk(u8 *entry);
+u8 *resCmdSave(u8 *cursor);
+int resCmdMpeg2(int cursor);
+
+char D_0069CEE0[8] = "man.xap";
+char D_0069CEE8[8] = "CFS_SE";
+int D_0069CEF0 = (int) D_0069CEE8;
+
+ResCommand resCommandTable[14] = {
+    { "map", (unsigned char *(*)(unsigned char *)) resCmdMap },
+    { "act", (unsigned char *(*)(unsigned char *)) resCmdAct },
+    { "mot", (unsigned char *(*)(unsigned char *)) resCmdMot },
+    { "mobj", (unsigned char *(*)(unsigned char *)) resCmdMobj },
+    { "effect", resCmdEffect },
+    { "mapse", resCmdMapse },
+    { "bgm", resCmdRuntimeBgm },
+    { "bgmvol", resCmdBgmVol },
+    { "foot", resCmdFoot },
+    { "enefoot", resCmdEnefoot },
+    { "disk", resCmdDisk },
+    { "save", resCmdSave },
+    { ";mpeg2", (unsigned char *(*)(unsigned char *)) resCmdMpeg2 },
+    { 0, 0 }
+};
+
+char *D_0069CF5C = "cf\\";
+
+
+/* ---- res_get_path ---- */
 
 /* Writes the low 16 bits of number as a 6-byte name: "cf" then four decimal digits, no NUL. */
 void xglCdFormatFileName(char *buffer, int number)
@@ -222,16 +775,6 @@ void xglCdSlotEvent(int event, int value, int slot) {
     }
 }
 
-/* One 0xC-byte entry of xglCdFileGroups: file ids base .. base + count - 1 map to
- * names[0 .. count - 1] (xglCdFindFileId, xglCdFindFileName); xglCdBuildFileName also writes
- * names[0] in front of the file's own name. An entry with no names ends the table. */
-typedef struct CdFileGroup {
-    unsigned int base;
-    unsigned int count;
-    char **names;
-} CdFileGroup;
-
-extern CdFileGroup xglCdFileGroups[];
 extern int strcmp(const char *a, const char *b);
 /* Frees block index: it is marked free and absorbs the free block after it, then the free block * before it (index 2 and up). The entries past the merged block move down to close the gap. */ void GameResBlockFree(int index);
 
@@ -416,7 +959,6 @@ void xglCdSetSlotValue(int value)
     xglCdSlotValue = value;
 }
 
-
 int xglCdReadFileTagged(const char *name, void *buffer, int unused_arg2, int tag) {
     int status;
 
@@ -495,9 +1037,6 @@ int xglCdCheckXapFile(const char *path, char *extension)
     extension[4] = 0;
     return xglCdCheckFile(path, record);
 }
-
-/* The words of xglCdXapGroups are groups: a name, its file ids, then -1; a lone -1 closes the table. */
-extern int xglCdXapGroups[];
 
 /* Returns the name of the group that lists file_id, or 0 when no group does. */
 char *xglCdFindXapName(int file_id)
@@ -595,6 +1134,7 @@ typedef struct CdFileSetHeader {
 /* Returns the name of the group that lists file_id, or 0 when no group does. */ char *xglCdFindXapName(int file_id);
 /* Default .xap name "man.xap" for ids whose own and fallback names are all missing
  * (tu054's own .sdata, still asm-owned data). */
+
 extern char D_0069CEE0[8];
 
 /* Loads the file set of file_id into slot's block: a CdFileSetHeader, then the .xap file and
@@ -726,8 +1266,6 @@ int xglCdLoadFileSet(unsigned int file_id, unsigned int slot, int tag)
 }
 
 void *memset(void *dest, int value, unsigned int count);
-extern u32 gameWork[];
-extern char *D_002B5DBC[];
 
 /* Loads the .bin, language-specific .sbl, .id, .txy and .pxy files of file_id into slot's
  * block (with slot 0 it only measures them) and returns the bytes the set takes. */
@@ -765,11 +1303,11 @@ int xglCdLoadBinFileSet(unsigned int file_id, unsigned int slot, int tag)
     extension[3] = 'n';
     size = xglCdGetFileSize(name);
     if (size > 0) {
-        if (slot != 0 && D_002B5DBC[0] != 0) {
+        if (slot != 0 && gameWork.resBuffer != 0) {
             if (xglCdLoadSync != 0) {
                 binData = buffer;
             } else {
-                binData = D_002B5DBC[0];
+                binData = (char *) gameWork.resBuffer;
             }
             header->xap = binData;
             xglCdReadFileSlot(name, binData, 0, 0);
@@ -812,8 +1350,8 @@ int xglCdLoadBinFileSet(unsigned int file_id, unsigned int slot, int tag)
                 if (xglCdLoadSync == 0) {
                     char *sblTop;
 
-                    sblTop = (char *) (gameWork[11] + info->xapBytes);
-                    gameWork[46] = (u32) sblTop;
+                    sblTop = (char *) ((u32) gameWork.resBuffer + info->xapBytes);
+                    gameWork.imageEnd = (u32) sblTop;
                     sblBuffer = sblTop;
                 }
                 xglCdReadFileSlot(sblPath, sblBuffer, 0, 0);
@@ -1085,7 +1623,6 @@ int GameResBlockFindByOwner(int owner);
 /* Entry 0 of xglCdSlotTable (CdSlot above) is the header: resInitPathHeader stores the
    managed range start in its buffer and length in its size, and its owner holds the matched index. */
 
-
 int GameResFindID(int resourceId, int *outSize)
 {
     int block;
@@ -1101,15 +1638,14 @@ int GameResFindID(int resourceId, int *outSize)
 }
 
 int GameResBlockFindLargestFree(void);
-extern int resSelectedSlot[];
 
-/* Stores the path slot index in resSelectedSlot[0]: the slot found by the search (GameResBlockFindLargestFree) when search is
+/* Stores the path slot index in xglCdSlotTable[0].owner: the slot found by the search (GameResBlockFindLargestFree) when search is
    nonzero, otherwise slot 1. Callers pass 1 to search and 0 for the default (proposed resSelectSlot). */
 void resSelectSlot(int search) {
     if (search != 0) {
-        resSelectedSlot[0] = GameResBlockFindLargestFree();
+        xglCdSlotTable[0].owner = GameResBlockFindLargestFree();
     } else {
-        resSelectedSlot[0] = 1;
+        xglCdSlotTable[0].owner = 1;
     }
 }
 
@@ -1282,7 +1818,6 @@ int seNameCopyIfChanged(char *dst, char *src)
 }
 
 #include "main/tu051.h"
-
 
 void resReleaseRecordsOfType(int kind, int forward) {
     int i;
@@ -1492,7 +2027,6 @@ void seVoiceRecordAddAt(int voice, f32 *src)
     }
 }
 
-extern u32 gameLoopFlags[];
 u32 seVoicePanVolumeFromPosition(ResRecord *rec);
 
 void seVoiceRecordsUpdatePan(void)
@@ -1501,7 +2035,7 @@ void seVoiceRecordsUpdatePan(void)
     int j;
     u32 loudest;
 
-    if (gameLoopFlags[0] & 0x20) {
+    if (gameWork.control & CONTROL_TOP_EXIT) {
         return;
     }
     for (i = 0; i < SE_RECORD_COUNT; i++) {
@@ -1554,7 +2088,6 @@ typedef struct {
 
 extern int uwamonoCurrentIndex;
 extern SeListener uwamonoSlotTable[];
-extern f32 D_002B5F20[];
 void xglVectorLength(f32 *destination, f32 *vector);
 f32 xglAtan2(f32 x, f32 z);
 int F2I(f32 value);
@@ -1585,7 +2118,7 @@ u32 seVoicePanVolumeFromPosition(ResRecord *rec)
         return 0;
     }
     volume = F2I((1.0f - distance / seMaxDistance) * 127.0f);
-    angle = xglAtan2(offset[0], offset[2]) + D_002B5F20[0] + 1.5707963705062866f;
+    angle = xglAtan2(offset[0], offset[2]) + gameWork.camera.range.northAngle + 1.5707963705062866f;
     while (6.2831854820251465f < angle) {
         angle -= 6.2831854820251465f;
     }
@@ -1991,8 +2524,6 @@ u8 *resCmdBgmVol(u8 *cursor) {
 }
 
 static signed char D_006A1110[16];
-int footMaterialFind(u8 *name);
-
 u8 *resCmdFoot(u8 *script) {
     u8 *materialList = D_006A1110;
     u8 *materialListStart = materialList;
@@ -2129,12 +2660,6 @@ int resCmdMpeg2(int cursor) {
     return cursor;
 }
 
-/* One entry of the script command table resCommandTable; a NULL name ends it. */
-typedef struct {
-    signed char *name;
-    unsigned char *(*handler)(unsigned char *cursor);
-} ResCommand;
-
 static void *resScriptBuffer[512];           /* script buffer, "#scn" header */
 extern ResCommand resCommandTable[];      /* script command table */
 static unsigned char D_006A0AC0[256];   /* u32 list, [0] = count incl. header */
@@ -2157,7 +2682,6 @@ void resScriptRun(int mode)
     int found;
     u32 n, next;
     int i, j, m;
-
 
     if (mode != CD_EVENT_READ_DONE) {
         return;
@@ -2393,12 +2917,10 @@ typedef struct JumpNameEntry {
 } JumpNameEntry;
 
 extern JumpTableHeader D_003C6DC0;
-extern char D_0069CF60[];
-extern char D_0069CF68[];
-extern char D_0069CF70[];
 int strcmp(const char *, const char *);
 int func_A9D148(void *, void *);
 int func_A9DAD0(u16 op, int value);
+
 
 void resParseJumpTarget(void)
 {
@@ -2423,7 +2945,7 @@ void resParseJumpTarget(void)
     names = (u8 *) header + header->nameTableOffset;
     entry = (JumpNameEntry *) names;
     for (nameIndex = 0; nameIndex < header->nameCount; nameIndex++) {
-        if (strcmp(names + entry->nameOffset, D_0069CF60) == 0) {
+        if (strcmp(names + entry->nameOffset, "mapjump") == 0) {
             cursor += entry->length;
             break;
         }
@@ -2432,7 +2954,7 @@ void resParseJumpTarget(void)
     if (cursor == start) {
         return;
     }
-    matchKey = func_A9D148(D_0069CF68, D_0069CF70);
+    matchKey = func_A9D148("runtime", "jumpCF");
     do {
     } while (0);
     recordCount = 0;
@@ -2516,6 +3038,38 @@ void resParseJumpTarget(void)
     }
     resJumpRecords[index].kind = RES_JUMP_END;
 }
+
+/* Data defined after resParseJumpTarget: its "mapjump"/"runtime"/"jumpCF" literals precede these tables in .sdata. */
+u8 *D_002BB680[10] = {
+    "shi", "kos", "cha", "jrr", "mom",
+    "zig", "jin", "r02", "r03", "r05"
+};
+
+
+/* Guessed type: a table of 4-byte words (pairs of 16-bit values, -1 separators); its reader is in other TUs. */
+int D_002BB6A8[40] = {
+    0x10002, 0x10005, 0x10006, 0x10004, -1, 0x1000A, 0x1000B, -1,
+    0x10010, 0x10011, 0x10012, 0x10013, -1, 0x10016, 0x10017, 0x10018,
+    0x10019, -1, 0x1001C, 0x1001D, 0x1001E, -1, 0x10023, 0x10024,
+    -1, 0x10026, 0x10027, 0x10028, -1, 0x14002, 0x14008, 0x14009,
+    0x1400A, -1, 0x14003, -1, 0x14005, 0x1400B, -1, -1
+};
+
+u8 D_002BB748[16] = "fs_xxx_xxx";
+u8 D_002BB758[16] = "break_xxx";
+
+/* Guessed type: byte table read by resFootMaterialIndex (other TU). */
+unsigned char D_002BB768[56] = {
+    0, 1, 2, 3, 4, 5, 6, 7,
+    8, 9, 9, 9, 9, 9, 9, 9,
+    9, 9, 9, 10, 10, 10, 10, 10,
+    0, 0, 0, 0, 0, 11, 11, 11,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    12, 0, 0, 0, 0, 0, 0, 0,
+    0, 13, 0, 0, 0, 0, 0, 0
+};
+
+CdSlot xglCdSlotTable[GAME_RES_BLOCK_COUNT] = { { 0 } };
 
 f32 I2F();
 void *mapFindBlockEntry();
@@ -2635,7 +3189,7 @@ int xglCdSyncDone(void);
 
 /* Loads the cf file of the first jump point whose radius reaches the current map object. A jump
    record holds its point in unsetValue[0..2], the radius in unsetValue[3] and the cf file in stackWord;
-   gameWork[6] is the map id. */
+   gameWork.mapId is the map id. */
 void resJumpPointsUpdate(void)
 {
     AlignedVector4 *position;
@@ -2647,7 +3201,7 @@ void resJumpPointsUpdate(void)
         resJumpPointsBuild();
         resJumpRecordSet(0, 0, 0);
     }
-    if (gameWork[6] == 1520 || gameWork[6] == 1560) {
+    if (gameWork.mapId == 1520 || gameWork.mapId == 1560) {
         return;
     }
     if (xglCdSyncDone() == 0) {
@@ -2763,7 +3317,6 @@ void resRelocateRecord(int toAbsolute, int kindWord, int *record) {
 }
 
 extern int mainObject;
-extern int D_002B5DB8[];
 static unsigned char resEnemyFootCount;
 void mapLoadBlock(int block);
 void sefStartEffectByCode(int code, char *name);
@@ -2799,7 +3352,7 @@ void resApplyCfFile(int id)
     }
     resResetDescriptorTables();
     mainObject = 0;
-    D_002B5DB8[0] = 0;
+    gameWork.active = 0;
     mapLoadBlock(0);
     resJumpRecords[0].kind = RES_JUMP_END;
     seBgmVolume = -1;
@@ -3079,6 +3632,7 @@ void resSetPathSlot(int slot, unsigned int base, unsigned int limit, int value);
 
 const char D_00688318[16] = "(Player)";
 
+
 void resUpdatePathSlot(int slot)
 {
     int base;
@@ -3178,7 +3732,7 @@ void resPathSlotBlockReset(void *buffer) {
     int block;
 
     block = GameResBlockFindByBuffer(buffer);
-    if (block != 0 && resSelectedSlot[block * 5] == 0) {
+    if (block != 0 && xglCdSlotTable[block].owner == 0) {
         GameResBlockAssign(block, GAME_RES_OWNER, RES_PATH_BUFFER_SIZE);
         *(ResPlayerName *) buffer = *(ResPlayerName *) D_00688318;
         GameResBlockAssign(block + 1, GAME_RES_OWNER, RES_PATH_PAD_SIZE);
@@ -3209,11 +3763,7 @@ typedef struct FootRecord {
     u8 unk04[0x86C];
 } FootRecord;
 
-extern int D_002BB6A8[];
-extern u8 *D_002BB680[];
 extern FootRecord D_0033FDC4[];
-extern u8 D_002BB748[];
-extern u8 D_002BB758[];
 int xglFlagsGet8(int flag);
 void seTonePlay(int mode);
 int seBankSetName(int kind, char *text);
@@ -3315,7 +3865,6 @@ struct UwamonoWordRecord {
 
 extern UwamonoWordRecord D_00340330[];
 extern unsigned char resEnemyFootCount;
-extern char D_0069CFC8[];
 void xglFontDebugPrintf(int x, int y, const char *format, ...);
 int resFootMaterialIndex(int key);
 
@@ -3330,7 +3879,7 @@ int seFootBankFromKind(int kind, int code) {
             return -1;
         }
         slot = resFootMaterialIndex(code);
-        xglFontDebugPrintf(64, 0, D_0069CFC8, code, slot);
+        xglFontDebugPrintf(64, 0, "%2x %2d", code, slot);
         return slot < 0 ? slot : slot + SE_BANK_FOOT_MATERIAL;
     }
     if (kind == 0x18037) {
@@ -3362,45 +3911,7 @@ int seFootBankFromKind(int kind, int code) {
     return -1;
 }
 
-char *D_002B5DBC[1] = { 0 };
-
-/* .sdata strings of the resource name tables (from D_0069CEE0 on). */
-char D_0069CEE0[8] = "man.xap";
-char D_0069CEE8[8] = "CFS_SE";
-int D_0069CEF0 = (int) D_0069CEE8;
-char D_0069CEF8[8] = ";mpeg2";
-char D_0069CF00[8] = "save";
-char D_0069CF08[8] = "disk";
-char D_0069CF10[8] = "enefoot";
-char D_0069CF18[8] = "foot";
-char D_0069CF20[8] = "bgmvol";
-char D_0069CF28[8] = "bgm";
-char D_0069CF30[8] = "mapse";
-char D_0069CF38[8] = "effect";
-char D_0069CF40[8] = "mobj";
-char D_0069CF48[8] = "mot";
-char D_0069CF50[8] = "act";
-char D_0069CF58[4] = "map";
-extern const char D_0069CE30[8];
-char *D_0069CF5C = (char *) D_0069CE30;
-char D_0069CF60[8] = "mapjump";
-char D_0069CF68[8] = "runtime";
-char D_0069CF70[8] = "jumpCF";
-char D_0069CF78[8] = "r05";
-char D_0069CF80[8] = "r03";
-char D_0069CF88[8] = "r02";
-char D_0069CF90[8] = "jin";
-char D_0069CF98[8] = "zig";
-char D_0069CFA0[8] = "mom";
-char D_0069CFA8[8] = "jrr";
-char D_0069CFB0[8] = "cha";
-char D_0069CFB8[8] = "kos";
-char D_0069CFC0[8] = "shi";
-char D_0069CFC8[8] = "%2x %2d";
+/* Follows the "%2x %2d" literal of seFootBankFromKind in .sdata. */
 unsigned char D_0069CFD0 = 0;
 
-/* .data zero tables (elvSlopeTable .. D_002B5ED0), used by other TUs. */
-unsigned char elvSlopeTable[144] = { 0 };
-unsigned int D_002B5E50[4] = { 0 };
-unsigned int D_002B5E60[3] = { 0 };
-unsigned int D_002B5E6C[25] = { 0 };
+

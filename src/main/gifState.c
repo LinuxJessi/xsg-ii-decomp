@@ -15,6 +15,7 @@
 #include "main/sdv_033.h"
 #include "main/tu254.h"
 #include "main/xgl_studio.h"
+#include "main/tu048.h"
 
 typedef struct XglPacket XglPacket;
 
@@ -377,11 +378,10 @@ void gifStateDrawRing(XglPacket *packet)
     sceVif1PkCloseDirectHLCode(packet);
 }
 
-extern GameWorkControl gameWork;
 /* The smallest texture scale of the blur, 0.9 of the ratio. */
 extern f32 gifBlurMinScale;
 /* The texture scale of each edge point of the blur fan. */
-extern f32 gifBlurScales[512];
+static f32 gifBlurScales[512];
 /* The GIF tag template of the blur fan (the vertex count is or-ed in). */
 extern u32 gifBlurFanTag[4];
 
@@ -400,7 +400,6 @@ typedef struct GifPacket {
 } GifPacket;
 
 #define GIF_PACKET ((GifPacket *) 0x70000000)
-#define GIF_GAME_PAUSED 0x1
 /* The edge points are this far apart at least. */
 #define GIF_BLUR_MIN_STEP 4
 
@@ -422,7 +421,7 @@ void gifStateDrawRadialBlur(XglPacket *packet)
         return;
     }
     gifBlurMinScale = gifStatus.ratio * 0.9f;
-    if (!(gameWork.control & GIF_GAME_PAUSED)) {
+    if (!(gameWork.control & CONTROL_PAUSED)) {
         for (pos = 0; pos < 512; pos++) {
             gifBlurScales[pos] = (xglSRand() % 10U) * 0.01f + gifBlurMinScale;
         }
@@ -519,7 +518,7 @@ void gifStateDrawRadialBlur(XglPacket *packet)
     sceVif1PkOpenDirectHLCode(packet, 0);
     sceVif1PkAddDirectDataN(packet, GIF_PACKET, count * 2 + 1);
     sceVif1PkCloseDirectHLCode(packet);
-    if (!(gameWork.control & GIF_GAME_PAUSED)) {
+    if (!(gameWork.control & CONTROL_PAUSED)) {
         gifStatus.ratio -= gifStatus.ratioStep;
         if (gifStatus.ratio < 0.0f) {
             gifStatus.ratio = 0.0f;
@@ -1373,10 +1372,10 @@ extern void (*gifStateEffectHook)(XglPacket *packet);
 
 #define GIF_BREAK_SHARDS 24
 
-extern GifBreakPoint gifBreakPoints[3];
-extern GifBreakShard gifBreakShards[GIF_BREAK_SHARDS];
+static GifBreakPoint gifBreakPoints[3];
+static GifBreakShard gifBreakShards[GIF_BREAK_SHARDS];
 extern char D_006315C8[8];
-extern u32 gifBreakGifTagTemplate[4];
+extern u32 gifBreakGifTagTemplate[12];
 void *memset(void *dst, int value, unsigned int size);
 
 void gifStateEffectFrame(XglPacket *packet)
@@ -1632,8 +1631,8 @@ void func_00246AF8(void) {
  * gifStatePacket; entry 0 is the GIF tag word, the pairs follow in packed mode (A+D).
  * The assert text "numPacket < (STATEPACKET_MAX - 1)" names both.
  */
-extern int gifStateNumPacket;
-extern GifStateQword gifStatePacket[];
+static int gifStateNumPacket;
+static GifStateQword gifStatePacket[128];
 
 /* GIF tag words: end-of-packet flag in the low word, one register descriptor (NREG = 1) in word 1. */
 #define GIF_TAG_EOP 0x8000
@@ -1649,8 +1648,8 @@ void gifStateReset(void) {
 }
 
 /* The assert text and the file name of the packet queue asserts. */
-extern const char gifStatePacketAssert[];
-extern const char gifStateSourceFile[];
+const char gifStatePacketAssert[40] = "numPacket < (STATEPACKET_MAX - 1)";
+const char gifStateSourceFile[24] = "../gifState.euc.c";
 
 /* The queue size the assert names: numPacket < (STATEPACKET_MAX - 1). */
 #define STATEPACKET_MAX 0x80
@@ -1872,3 +1871,53 @@ void gifStateUpdateDrawHook(void) {
     gifStateDrawHookSuppressed = 0;
     gifStateDrawHook = 0;
 }
+
+/* .data of this file, in address order. */
+int gifStateOriginX = 0x700;
+int gifStateOriginY = 0x720;
+u32 D_00631448[2] = { 0, 0 };
+GifStateQword D_00631450[15] = {
+    { { 0x0000000000000000ULL, 0x5100000E00000000ULL } },
+    { { 0xD08B400000008001ULL, 0x000EE53531EEEEEEULL } },
+    { { 0x0000000131000000ULL, 0x000000000000004EULL } },
+    { { 0x0000000000071001ULL, 0x0000000000000047ULL } },
+    { { 0x0000000000000000ULL, 0x0000000000000014ULL } },
+    { { 0x0000000000000001ULL, 0x000000000000004AULL } },
+    { { 0x0000000000000000ULL, 0x000000000000004CULL } },
+    { { 0x0000000000000000ULL, 0x0000000000000006ULL } },
+    { { 0x0000008000000080ULL, 0x0000000000000080ULL } },
+    { { 0x0000000000000000ULL, 0x0000000000000000ULL } },
+    { { 0x000071F700006FF8ULL, 0x00000000FFFFFFFFULL } },
+    { { 0x00001C0000002000ULL, 0x0000000000000000ULL } },
+    { { 0x00008DF700008FF8ULL, 0x00000000FFFFFFFFULL } },
+    { { 0x0000000000000000ULL, 0x000000000000003FULL } },
+    { { 0x0000000000000000ULL, 0x000000000000004AULL } }
+};
+u32 D_00631540[4] = { 0x00008000, 0x30AE4000, 0x00000531, 0x00000000 };
+int gifStateRingCount = 0x5A;
+f32 gifBlurMinScale = 0.8f;
+u32 gifBlurFanTag[4] = { 0x00008000, 0x20AEC000, 0x00000053, 0x00000000 };
+u32 gifCameraQuadTag[4] = { 0x00008000, 0x20AE4000, 0x00000053, 0x00000000 };
+int gifStateGridStep = 0xA;
+u32 D_00631580[4] = { 0x00008000, 0x20AE4000, 0x00000053, 0x00000000 };
+u32 D_00631590[4] = { 0x00008000, 0x20AE4000, 0x00000053, 0x00000000 };
+u32 gifFadeQuadTag[4] = { 0x00008000, 0x20AE4000, 0x00000053, 0x00000000 };
+int gifStateBlurDivisor = 3;
+int gifCopyWidth = 0xCC;
+int gifCopyHeight = 0xB3;
+int gifStateBlurOffset = 1;
+int D_006315C0[2] = { 0, 0 };
+char D_006315C8[] = { -128, -16, -96, -96, -64, -64, -32, -32 };
+u32 gifBreakGifTagTemplate[12] = { 0x00008000, 0x30ADC000, 0x00000531 };
+GifEffectDraw gifStateEffectDraws[16] = {
+    gifStateDrawRadialBlur,
+    gifStateDrawRing,
+    gifStateDrawCameraQuad,
+    gifStateDrawJitterGrid,
+    gifStateDrawFadeQuad,
+    gifStateEffectFrame,
+    func_002439C8
+};
+GifStatusBlock gifStatus = { 0 };
+int gifStateDrawHookSuppressed = 0;
+int D_006316A4 = 0;

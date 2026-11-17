@@ -12,6 +12,7 @@
 #include "main/tu114.h"
 #include "main/xenoActor.h"
 #include "main/tu272.h"
+#include "main/tu048.h"
 
 /* The XenoActor of a map object (xenoActor.c); only the fields this file touches. */
 struct XenoActor {
@@ -223,29 +224,6 @@ extern UwamonoEventRow *uwamonoEventTable;
 /* A bit of gameWork.control; tu051.h cannot be included here, its record types clash with this file's. */
 #define CONTROL_SCRIPTED 0x8000 /* include/main/tu051.h */
 
-/* The game work block (tu050.c's MainWork, tu051.c's CameraState); only the fields this file uses. */
-typedef struct GameWork {
-    unsigned char unmodeled_000[6];
-    unsigned short loadedFromSave;  /* +0x006: 1 when the game was loaded from a save (getParam 7) */
-    int control;                    /* +0x008: CONTROL_SCRIPTED while a script controls the player */
-    unsigned char unmodeled_00c[0x10];
-    int stateArg;                   /* +0x01C: tu050.c's stateArg */
-    unsigned char unmodeled_020[0x2D0 - 0x20];
-    float frameScale;               /* +0x2D0: elapsed frames, scales the per-frame movement */
-    unsigned char unmodeled_2d4[4];
-    float playerParams[5][2];       /* +0x2D8: setPlayer arguments 4 to 8 (percent) in [i][0] */
-    int climbFrames;                /* +0x300: setPlayer argument 9, the ladder-step divisor (tu075.c) */
-    unsigned char unmodeled_304[0x374 - 0x304];
-    float playerRate;               /* +0x374: setPlayer argument 10 (ten-thousandths) */
-    unsigned char unmodeled_378[4];
-    float playerScale;              /* +0x37C: setPlayer argument 11 (percent) */
-    unsigned char unmodeled_380[0x1520 - 0x380];
-    signed char eventFlags[512];    /* +0x1520: one flag per kind 8 event index */
-    signed char rowFlags[2][512];       /* +0x1720: key row flags, [0] while control bit 11 is clear, [1] while set */
-} GameWork;
-
-extern GameWork gameWork;
-
 /* A one-member union: the original reads the vector it points at with alias set 0 (tu050.c's MapVector). */
 typedef union MapVector {
     Vector4 vector;
@@ -420,7 +398,7 @@ int objxGetParam(int call)
             result = uwamonoRecords[uwamonoCurrentIndex].actor->kind;
             break;
         case 7:
-            result = gameWork.loadedFromSave != 0 ? -2 : gameWork.stateArg;
+            result = gameWork.loadStage != 0 ? -2 : gameWork.entryKey;
             break;
         case 8:
             result = (gameWork.control & 0x800) >> 11;
@@ -1107,8 +1085,14 @@ int objxFootId(int call)
 }
 
 int func_A9CDB0(void *module, void *nativeTable);
+
+typedef struct ObjxNative {
+    const char *name;
+    void (*function)();
+} ObjxNative;
+
 /* Native entries of the objx module: (name, function) pairs of 8 bytes. */
-extern unsigned char objxNatives[];
+extern ObjxNative objxNatives[];
 /* Module name "objx". */
 extern unsigned char objxModuleName[];
 
@@ -1158,6 +1142,27 @@ int runtimeSetNumber(int call)
     }
     return uwamonoCreateRecord(key, kind, entry, fourth, func_A9F1C0(call, 5) != 0 ? -1 : func_A9F0C0(call, 5));
 }
+
+/* .data of this file (0x3E6DC0): the objx script natives. */
+ObjxNative objxNatives[16] = {
+    { "getParam", objxGetParam },
+    { "move", objxMove },
+    { "rotate", objxRotate },
+    { "scale", objxScale },
+    { "transparent", objxTransparent },
+    { "offsetPivot", objxOffsetPivot },
+    { "setRotateTurn", objxSetRotateTurn },
+    { "setStepMove", setStepMove },
+    { "setStepRotate", setStepRotate },
+    { "enableFlags", objxEnableFlags },
+    { "disableFlags", objxDisableFlags },
+    { "setParent", objxSetParent },
+    { "setPair", objxSetPair },
+    { "changeId", objxChangeId },
+    { "footId", objxFootId },
+    { 0, 0 },
+};
+
 
 /* Creates the map object record for key, kind and entry in the first free slot and returns its index, or -1
  * when fourth names a key row that the gate bytes hide. The kind decides how the record is set up. */
@@ -1494,8 +1499,8 @@ int runtimeSetPlayer(int call)
     gameWork.playerParams[3][0] = func_A9F1C0(call, 7) != 0 ? gameWork.playerParams[3][0] : (float) func_A9F0C0(call, 7) / 100.0f;
     gameWork.playerParams[4][0] = func_A9F1C0(call, 8) != 0 ? gameWork.playerParams[4][0] : (float) func_A9F0C0(call, 8) / 100.0f;
     gameWork.climbFrames = func_A9F1C0(call, 9) != 0 ? gameWork.climbFrames : func_A9F0C0(call, 9);
-    gameWork.playerRate = func_A9F1C0(call, 10) != 0 ? gameWork.playerRate : (float) func_A9F0C0(call, 10) / 10000.0f;
-    gameWork.playerScale = func_A9F1C0(call, 11) != 0 ? gameWork.playerScale : (float) func_A9F0C0(call, 11) / 100.0f;
+    gameWork.gravity = func_A9F1C0(call, 10) != 0 ? gameWork.gravity : (float) func_A9F0C0(call, 10) / 10000.0f;
+    gameWork.bounceDivisor = func_A9F1C0(call, 11) != 0 ? gameWork.bounceDivisor : (float) func_A9F0C0(call, 11) / 100.0f;
     if (func_A9F1C0(call, 12) == 0) {
         childKey = func_A9F0C0(call, 12);
         if (childKey >= 0) {
@@ -1506,3 +1511,5 @@ int runtimeSetPlayer(int call)
     }
     return 1;
 }
+
+unsigned char objxModuleName[8] = "objx";

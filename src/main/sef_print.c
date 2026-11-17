@@ -22,13 +22,15 @@ extern const char tracePrintFormat[8];
 extern PadRecord PadData[];
 
 /* The reset message resetWaitForPad shows. */
-extern const char resetText[];
+
+/* Word of sefUpdateEntryTransforms (sef.c). */
+int D_0069DAD0 = 0;
 
 /* Shows the reset message until SELECT and START are held together. */
 void resetWaitForPad(void)
 {
     while ((PadData[0].heldAndPressed & (PAD_SELECT | PAD_START)) != (PAD_SELECT | PAD_START)) {
-        xglFontDebugPrintf(8, 8, resetText);
+        xglFontDebugPrintf(8, 8, "RESET");
         xglRenderClearFrame();
         xglSleep();
     }
@@ -49,3 +51,6 @@ void tracePrint(const char *format, ...) {
 void logNoOp(const void *data, const char *format, ...)
 {
 }
+
+/* Scene flags of the sv line and image functions. */
+unsigned int svSceneFlags = 0;

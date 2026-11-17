@@ -16,10 +16,11 @@
  * below call the same object methods on each of them. */
 extern int msgSlotIndex;   /* current slot index into msgSlotFlags; -1 when none */
 extern int msgChoiceTimer;   /* choice timer: set to 0x5A, ticked, cleared at zero */
-extern int msgSlotFlags[5]; /* five per-slot flag words */
-extern unsigned char msgChoice[];
-extern unsigned char msgWindow[];
-extern unsigned char msgPanel[];
+static unsigned char msgChoice[152];
+static unsigned char msgPanel[152];
+/* Global (tu149's purchase window uses it), allocated in this file's .bss after the statics. */
+unsigned char msgWindow[776];
+int msgSlotFlags[5]; /* five per-slot flag words */
 extern PadRecord PadData[];
 void *memset(void *, int, unsigned int);
 void msgWindowReset(void *);
@@ -356,3 +357,6 @@ void msgPanelShow(int first, int second) {
 void msgPanelClear(void) {
     msgChoiceCloseByState(msgPanel);
 }
+
+int msgSlotIndex = 0;
+int msgChoiceTimer = 0;

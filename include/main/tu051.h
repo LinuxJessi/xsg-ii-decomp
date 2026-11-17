@@ -1,6 +1,7 @@
 #ifndef INCLUDE_MAIN_TU051_H
 #define INCLUDE_MAIN_TU051_H
 
+#include "main/tu048.h"
 #include "shared.h"
 
 /* Types used by the map object code (tu051.c, tu075.c); the actor is only partly recovered. */
@@ -218,22 +219,6 @@ typedef struct UwamonoObject {
     unsigned char unmodeled_74a[0x870 - 0x74A];
 } UwamonoObject;
 
-/* gameWork as far as its control word: the files that read more of it keep their own view. */
-typedef struct GameWorkControl {
-    unsigned char unmodeled_00[8];
-    int control;                            /* +0x08: CONTROL_* */
-} GameWorkControl;
-
-/* Bits of gameWork.control. */
-#define CONTROL_PAUSED 0x1
-#define CONTROL_SCRIPTED 0x8000
-#define CONTROL_REPLAYED 0x10000
-#define CONTROL_SEARCHING 0x20000
-#define CONTROL_TOP_EXIT 0x20 /* reaching the top of a ladder moves on to the top state (tu075.c) */
-/* Set while a cut scene runs (cfePlugIn.c sets it at the start, clears it at the end). */
-#define CONTROL_CFE_SCENE 0x200
-#define CONTROL_CFE_NO_FADE 0x100000 /* set with it: events then start no fade-out (tu069.c) */
-#define CONTROL_SOFT_RESET 0x10000000 /* the soft-reset pad combo was pressed; Title will not start a game while it is set */
 
 extern UwamonoObject uwamonoRecords[];
 extern int uwamonoCurrentIndex;

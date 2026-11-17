@@ -7,8 +7,6 @@
 
 void xglCurMatrixGet(Matrix4 matrix);
 void xglCurMatrixSet(Matrix4 matrix);
-extern unsigned char tiPartsAnimAssertExpr[];
-extern unsigned char tiPartsAnimSourceFile[];
 
 /* The pack read by tiPartsAnimSamplePose: curveParam is the curve parameter of every joint,
  * pPamData the start of the animation data. */
@@ -30,7 +28,7 @@ void tiPartsAnimSamplePose(Matrix4 *matrices, TiPartsPack *pPack, int count)
     int i;
 
     if (pPack->pPamData == 0) {
-        assertFailed(tiPartsAnimAssertExpr, tiPartsAnimSourceFile, 58);
+        assertFailed("pPack->pPamData", "../TiPartsAnim.euc.c", 58);
     }
     cursor = pPack->pPamData + 12;
     for (i = 0; i < count; i++) {

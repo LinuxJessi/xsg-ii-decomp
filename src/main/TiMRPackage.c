@@ -7,10 +7,10 @@
 #define TI_MR_STATE_FLAG_OUT_OF_RANGE 0x8  /* set while the position is past its range, cleared inside it */
 #define TI_MR_STATE_FLAG_ENTRY_BOUND 0x40  /* set when an entry is bound to the state */
 
-extern char tiMRPackageAssertExpr[];
-extern char tiMRPackageSourceFile[];
-extern char D_0068F4A8[];
-extern char D_0068F4B0[];
+extern const char tiMRPackageAssertExpr[];
+extern const char tiMRPackageSourceFile[];
+extern const char D_0068F4A8[];
+extern const char D_0068F4B0[];
 void tiWordZero(int *word);
 void tiMRPackageSetEntryA(TiMRPackage *pMRPackage, TiOffsetEntry *entry);
 void tiMRPackageSetHrcData(TiMRPackage *pMRPackage, TiVersionedBlock *value);
@@ -389,11 +389,11 @@ void tiMRPackageAdvanceBUnwrapped(TiMRPackage *pMRPackage) {
     tiWordClearBits(&pMRPackage->state_b.flags, TI_MR_STATE_FLAG_OUT_OF_RANGE);
 }
 
-extern char tiMRPackageGlobalMatAssertExpr[];
-extern char tiMRPackageLocalMatAssertExpr[];
-extern char tiMRPackageHrcVersionAssertExpr[];
-extern char tiMRPackageAnimVersionAssertExpr[];
-extern char tiMRPackageFaceVersionAssertExpr[];
+extern const char tiMRPackageGlobalMatAssertExpr[];
+extern const char tiMRPackageLocalMatAssertExpr[];
+extern const char tiMRPackageHrcVersionAssertExpr[];
+extern const char tiMRPackageAnimVersionAssertExpr[];
+extern const char tiMRPackageFaceVersionAssertExpr[];
 void tiMotionSolveLocalMatrices(TiMRPackage *pMRPackage);
 void tiMotionSolveLocalMatricesOld(TiMRPackage *pMRPackage);
 void tiMtnBlendUpdateLocal(TiMRPackage *pMRPackage);
@@ -516,3 +516,13 @@ void tiMRPackageSelectEntryB(TiMRPackage *pMRPackage, unsigned int index) {
         tiWordSetBits(&pMRPackage->state_b.flags, TI_MR_STATE_FLAG_ENTRY_BOUND);
     }
 }
+
+const char tiMRPackageAssertExpr[16] = "pMRPackage";
+const char tiMRPackageSourceFile[24] = "../TiMRPackage.euc.c";
+const char D_0068F4A8[8] = "pState";
+const char D_0068F4B0[8] = "pMRPack";
+const char tiMRPackageGlobalMatAssertExpr[24] = "pMRPackage->pGlobalMat";
+const char tiMRPackageLocalMatAssertExpr[24] = "pMRPackage->pLocalMat";
+const char tiMRPackageHrcVersionAssertExpr[88] = "pMRPackage->pHrcData->fileVersion >= CURRENT_XHR_VERSION && \"illegal xhr version\"";
+const char tiMRPackageAnimVersionAssertExpr[88] = "pMRPackage->pAnimData->fileVersion >= CURRENT_XAC_VERSION && \"illegal xac version\"";
+const char tiMRPackageFaceVersionAssertExpr[88] = "pMRPackage->pFaceAnimData->fileVersion >= CURRENT_XAC_VERSION && \"illegal fac version\"";

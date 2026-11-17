@@ -1,18 +1,9 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu147.h"
+#include "main/tu051.h"
+#include "main/tu048.h"
 
-/*
- * The global block at gameWork, shared with other translation units that
- * use other views of it. Only the flags word at offset 8 is accessed here;
- * the bytes before it are not modelled here.
- */
-typedef struct GlobalFlagBlock {
-    unsigned char unmodeled_00[8];
-    u32 flags;
-} GlobalFlagBlock;
-
-extern GlobalFlagBlock gameWork;
 extern int msgBalance;
 
 /* Stores value in msgBalance, read back by msgBalanceGet. */
@@ -27,16 +18,16 @@ int msgBalanceGet(void)
     return msgBalance;
 }
 
-/* Clears bit 0x8000 of the flags word of gameWork. */
+/* Clears CONTROL_SCRIPTED in gameWork.control. */
 void msgGameFlagClear(void)
 {
-    gameWork.flags &= ~0x8000;
+    gameWork.control &= ~CONTROL_SCRIPTED;
 }
 
-/* Sets bit 0x8000 of the flags word of gameWork. */
+/* Sets CONTROL_SCRIPTED in gameWork.control. */
 void msgGameFlagSet(void)
 {
-    gameWork.flags |= 0x8000;
+    gameWork.control |= CONTROL_SCRIPTED;
 }
 
 /* Stores 10000000 (0x989680) in msgBalance. */

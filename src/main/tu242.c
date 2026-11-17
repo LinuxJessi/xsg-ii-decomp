@@ -1,6 +1,8 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu234.h"
+#include "main/tu048.h"
+#include "main/tu051.h"
 #include "main/tu242.h"
 #include "main/tu244.h"
 #include "main/tu245.h"
@@ -9,6 +11,7 @@
 extern void *memset(void *destination, int value, unsigned int count);
 extern char *strchr(const char *string, int c);
 int sprintf(char *destination, const char *format, ...);
+extern const char textHanTagFormat[];
 
 #define MSG_SLOT_MIN_WIDTH 0x5E     /* msgSlotSetGeometry raises extent_x to this */
 #define MSG_SLOT_OPEN_FRAMES 12     /* frames of the opening and closing animation */
@@ -131,7 +134,7 @@ void msgSlotItemTick(MsgSlot *slot) {
     MsgSlotItem *acquired;
     u32 flags;
 
-    if (slot->state == MSG_SLOT_STATE_ITEM && !(gameLoopFlags[0] & SYS_FLAG_HOLD_UPDATES)) {
+    if (slot->state == MSG_SLOT_STATE_ITEM && !(gameWork.control & CONTROL_PAUSED)) {
         flags = slot->flags;
         if (flags & MSG_SLOT_OPEN) {
             if (--slot->u.item.timer <= 0) {
@@ -196,8 +199,8 @@ void msgSlotStartClosing(MsgSlot *record) {
     }
 }
 
-extern u8 *textOutputCursor;
-extern unsigned char textOutputBuffer[];
+static u8 *textOutputCursor;
+static unsigned char textOutputBuffer[6000];
 /* Resets the text output: the cursor goes to the start of the output buffer, which becomes an empty string. */
 void textOutputReset(void) {
     textOutputCursor = textOutputBuffer;
@@ -223,7 +226,6 @@ int textAppendPairTag(char **cursor, char **text);
 int textRemainingWidth(int end, int value);
 int textWordLength(signed char *text);
 void textFormatInsertGlyphTag(char **cursor, char **glyph_text, int mode, MsgSlot *object);
-extern char D_0069DD48[];
 int textIsNonDecimalEscape(char *text);
 
 /*
@@ -278,7 +280,7 @@ refit: /* a glyph tag 1..5 was expanded: re-measure from the new position.
                 goto refit;
             }
             if (textIsLineBreak((signed char *) text)) {
-                textCopyCounted((u8 *) cursor, (u8 *) D_0069DD48, 1);
+                textCopyCounted((u8 *) cursor, (u8 *) "\n", 1);
                 cursor++;
                 text = (char *) textSkipLineBreak((signed char *) text);
                 break;
@@ -286,7 +288,7 @@ refit: /* a glyph tag 1..5 was expanded: re-measure from the new position.
             if (textIsSpace((signed char *) text)) {
                 remaining = fitted - done;
                 if (textWordLength((signed char *) text + 1) >= remaining) {
-                    textCopyCounted((u8 *) cursor, (u8 *) D_0069DD48, 1);
+                    textCopyCounted((u8 *) cursor, (u8 *) "\n", 1);
                     cursor++;
                     text++;
                     break;
@@ -300,7 +302,7 @@ refit: /* a glyph tag 1..5 was expanded: re-measure from the new position.
             break;
         }
         if (done == fitted) {
-            textCopyCounted((u8 *) cursor, (u8 *) D_0069DD48, 1);
+            textCopyCounted((u8 *) cursor, (u8 *) "\n", 1);
             cursor++;
             if (textIsLineBreak((signed char *) text)) {
                 text = (char *) textSkipLineBreak((signed char *) text);
@@ -328,21 +330,19 @@ int textIsNonDecimalEscape(char *text) {
     return 0;
 }
 
-extern unsigned char D_0069DD50[];
-
 /* Appends the two-byte tag held in D_0069DD50 at the output cursor; the output cursor and the source text both step two characters. Returns the new text pointer. */
 int textAppendPairTag(char **cursor, char **text) {
     char *new_text;
 
-    textCopyCounted((u8 *) *cursor, D_0069DD50, 2);
+    textCopyCounted((u8 *) *cursor, (u8 *) "%s", 2);
     new_text = *text + 2;
     *text = new_text;
     *cursor += 2;
     return (int) new_text;
 }
 
-extern char D_0068D518[];
-extern char D_0068D530[];
+extern const char D_0068D518[];
+extern const char D_0068D530[];
 void textTagAdd(int key, int payload0, int payload1, int payload2, int kind);
 char *textSkipGlyphName(char *text, int index);
 
@@ -378,8 +378,7 @@ int textRemainingWidth(int end, int value)
 }
 
 char *textLineStart(char *text);
-extern unsigned char textPropTag[];
-extern unsigned char D_0069DD58[];
+extern const unsigned char textPropTag[];
 
 /* Width of the line that ends at end: "$prop1;" and the line text are built in the scratchpad buffer, then measured. */
 int textLineWidth(int end) {
@@ -389,7 +388,7 @@ int textLineWidth(int end) {
     start = (int) textLineStart((char *) end);
     *scratch = 0;
     strcat(scratch, (const char *) textPropTag);
-    strcat(scratch, (const char *) D_0069DD58);
+    strcat(scratch, "$prop1;");
     strncat(scratch, (const char *) start, end - start + 1);
     return xglFontGetStringWidth(scratch);
 }
@@ -496,8 +495,6 @@ int msgWindowFindSlotByState(int *index, MsgWindow *window, int mode) {
     return 1;
 }
 
-extern char textHanTagFormat[];
-
 /* Formats the "$han1;" markup tag followed by the name into first. */
 void textFormatHanTag(char *dst, const char *src)
 {
@@ -547,3 +544,16 @@ void digitsLsbFirstToNumber(long long *out, char *text) {
     }
     *out = value;
 }
+
+const char D_0068D518[24] = "$xx1,18; $xx1,4;";
+const char D_0068D530[24] = "$xx1,28; $xx1,4;";
+
+const unsigned char textPropTag[40] = {
+    11, 25, 2, 13, 2, 36, 120, 120,
+    48, 44, 51, 48, 59, 36, 114, 117,
+    98, 121, 122, 50, 51, 44, 50, 49,
+    59, 36, 114, 117, 98, 121, 121, 45,
+    50, 59, 0, 0, 0, 0, 0, 0
+};
+
+const char textHanTagFormat[16] = "$han1;%s";
