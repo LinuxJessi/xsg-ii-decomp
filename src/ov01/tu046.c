@@ -7,6 +7,7 @@
 #include "ov01/tu017.h"
 #include "ov01/tu023.h"
 #include "ov01/tu041.h"
+#include "ov01/tu042.h"
 #include "ov01/tu044.h"
 #include "ov01/tu046.h"
 #include "ov01/tu070.h"
@@ -305,7 +306,6 @@ void *actorGet(SbThread *thread)
     return unitTblEntryGet(vmArgGet(thread, 1))->unit;
 }
 
-int unitParaFieldGet(StatOwner *unit, int argTwo);
 
 int unitParaGet(SbThread *thread)
 {
@@ -321,7 +321,6 @@ int unitParaGet(SbThread *thread)
     return unitParaFieldGet(unit, argTwo);
 }
 
-void unitParaFieldSet(StatOwner *unit, int argTwo, int argThree);
 
 int unitParaSet(SbThread *thread)
 {

@@ -189,6 +189,35 @@ struct TgtIdRecord {
     short minLevel;                         /* +0x0E: obj->stats->level below this gives 0 */
 };
 
+/* The unit parameters scripts read and write by number (natives unitParaGet and unitParaSet, tu046). 17..36 are
+ * the bytes from StatBlock.liveRows on: liveRows (17..20), slotValue (21..28) and slotRoll (29..36). */
+enum {
+    UNIT_PARA_MAX_HP,
+    UNIT_PARA_MAX_EP,
+    UNIT_PARA_PHYS_ATTACK,
+    UNIT_PARA_PHYS_DEFENCE,
+    UNIT_PARA_MAG_ATTACK,
+    UNIT_PARA_MAG_DEFENCE,
+    UNIT_PARA_HIT_RATE,
+    UNIT_PARA_EVADE_RATE,
+    UNIT_PARA_VALUE_BIAS,
+    UNIT_PARA_HP,
+    UNIT_PARA_EP,
+    UNIT_PARA_KEY,
+    UNIT_PARA_STATE70,                  /* read only */
+    UNIT_PARA_LEVEL,
+    UNIT_PARA_EXP_LEVEL,
+    UNIT_PARA_FLAGS,
+    UNIT_PARA_POS_INDEX,
+    UNIT_PARA_LIVE_ROW,
+    UNIT_PARA_SLOT_VALUE = UNIT_PARA_LIVE_ROW + 4,
+    UNIT_PARA_SLOT_ROLL = UNIT_PARA_SLOT_VALUE + 8,
+    UNIT_PARA_CURRENT = UNIT_PARA_SLOT_ROLL + 8
+};
+
+int unitParaFieldGet(struct Ov01Object *unit, int field);
+void unitParaFieldSet(struct Ov01Object *unit, int field, int value);
+
 /* Table getters: each returns record index of its bat.dat table, 0 for an index outside the table. */
 TecRecord *tecRecordGet(int index);
 void *tableKeyRowGet(int key);

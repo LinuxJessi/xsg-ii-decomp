@@ -118481,6 +118481,34 @@
      }
     }
    ]
+  },
+  "ov01/tu042": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba740",
+      "0x00aba880"
+     ],
+     "generated": [
+      "0x00aba740",
+      "0x00aba878"
+     ],
+     "generated_by": [
+      "unitParaFieldGet",
+      "unitParaFieldSet"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA740",
+      "jtbl_00ABA7E0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu042.o"
+     }
+    }
+   ]
   }
  }
 }

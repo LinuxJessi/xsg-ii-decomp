@@ -354,11 +354,134 @@ int atkTblFieldGet(int field, AtkTbl *table, int index)
     return table->count;
 }
 
-/* unitParaFieldGet: field reader over the unit's +0x144 sub-struct, same 38 field ids as unitParaFieldSet; native unitParaGet. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", unitParaFieldGet);
+/* Parameter field of the unit (UNIT_PARA_*); 0 for no unit or an unknown field (native unitParaGet). */
+int unitParaFieldGet(struct Ov01Object *unit, int field)
+{
+    StatBlock *stats;
 
-/* unitParaFieldSet: field writer over the unit's +0x144 sub-struct (ids 0..37); native unitParaSet. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", unitParaFieldSet);
+    if (unit == 0) {
+        return 0;
+    }
+    stats = unit->stats;
+    switch (field) {
+    case UNIT_PARA_MAX_HP:
+        return stats->maxHp;
+    case UNIT_PARA_MAX_EP:
+        return stats->maxEp;
+    case UNIT_PARA_PHYS_ATTACK:
+        return stats->physAttack;
+    case UNIT_PARA_PHYS_DEFENCE:
+        return stats->physDefence;
+    case UNIT_PARA_MAG_ATTACK:
+        return stats->magAttack;
+    case UNIT_PARA_MAG_DEFENCE:
+        return stats->magDefence;
+    case UNIT_PARA_HIT_RATE:
+        return stats->hitRate;
+    case UNIT_PARA_EVADE_RATE:
+        return stats->evadeRate;
+    case UNIT_PARA_VALUE_BIAS:
+        return stats->valueBias;
+    case UNIT_PARA_HP:
+        return stats->hp;
+    case UNIT_PARA_EP:
+        return stats->ep;
+    case UNIT_PARA_KEY:
+        return stats->key;
+    case UNIT_PARA_STATE70:
+        return stats->state70;
+    case UNIT_PARA_LEVEL:
+        return stats->level;
+    case UNIT_PARA_EXP_LEVEL:
+        return stats->expLevel;
+    case UNIT_PARA_FLAGS:
+        return stats->flags;
+    case UNIT_PARA_POS_INDEX:
+        return stats->posIndex;
+    case UNIT_PARA_LIVE_ROW ... UNIT_PARA_SLOT_VALUE - 1:
+        return stats->liveRows[field - UNIT_PARA_LIVE_ROW];
+    case UNIT_PARA_SLOT_VALUE ... UNIT_PARA_SLOT_ROLL - 1:
+        return stats->slotValue[field - UNIT_PARA_SLOT_VALUE];
+    case UNIT_PARA_SLOT_ROLL ... UNIT_PARA_CURRENT - 1:
+        return stats->slotRoll[field - UNIT_PARA_SLOT_ROLL];
+    case UNIT_PARA_CURRENT:
+        return stats->current;
+    }
+    return 0;
+}
+
+/* Sets parameter field of the unit (UNIT_PARA_*, all but UNIT_PARA_STATE70) to value (native unitParaSet). */
+void unitParaFieldSet(struct Ov01Object *unit, int field, int value)
+{
+    StatBlock *stats;
+
+    if (unit == 0) {
+        return;
+    }
+    stats = unit->stats;
+    switch (field) {
+    case UNIT_PARA_MAX_HP:
+        stats->maxHp = value;
+        break;
+    case UNIT_PARA_MAX_EP:
+        stats->maxEp = value;
+        break;
+    case UNIT_PARA_PHYS_ATTACK:
+        stats->physAttack = value;
+        break;
+    case UNIT_PARA_PHYS_DEFENCE:
+        stats->physDefence = value;
+        break;
+    case UNIT_PARA_MAG_ATTACK:
+        stats->magAttack = value;
+        break;
+    case UNIT_PARA_MAG_DEFENCE:
+        stats->magDefence = value;
+        break;
+    case UNIT_PARA_HIT_RATE:
+        stats->hitRate = value;
+        break;
+    case UNIT_PARA_EVADE_RATE:
+        stats->evadeRate = value;
+        break;
+    case UNIT_PARA_VALUE_BIAS:
+        stats->valueBias = value;
+        break;
+    case UNIT_PARA_HP:
+        stats->hp = value;
+        break;
+    case UNIT_PARA_EP:
+        stats->ep = value;
+        break;
+    case UNIT_PARA_KEY:
+        stats->key = value;
+        break;
+    case UNIT_PARA_LEVEL:
+        stats->level = value;
+        break;
+    case UNIT_PARA_EXP_LEVEL:
+        stats->expLevel = value;
+        break;
+    case UNIT_PARA_FLAGS:
+        stats->flags = value;
+        break;
+    case UNIT_PARA_POS_INDEX:
+        stats->posIndex = value;
+        break;
+    case UNIT_PARA_LIVE_ROW ... UNIT_PARA_SLOT_VALUE - 1:
+        stats->liveRows[field - UNIT_PARA_LIVE_ROW] = value;
+        break;
+    case UNIT_PARA_SLOT_VALUE ... UNIT_PARA_SLOT_ROLL - 1:
+        stats->slotValue[field - UNIT_PARA_SLOT_VALUE] = value;
+        break;
+    case UNIT_PARA_SLOT_ROLL ... UNIT_PARA_CURRENT - 1:
+        stats->slotRoll[field - UNIT_PARA_SLOT_ROLL] = value;
+        break;
+    case UNIT_PARA_CURRENT:
+        stats->current = value;
+        break;
+    }
+}
 
 void *memset();
 
