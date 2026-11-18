@@ -6,6 +6,10 @@
 /* The message task record msgPutObject returns (defined in tu042.c). */
 struct MsgObject;
 
+/* Unit record of bat.dat for a unit index, and the unit's name (tu042.c has the numbering). */
+void *batUnitRecordGet(int index);
+char *batUnitNameGet(int index);
+
 /* Shows text at (x, y) in a width x height box for frames frames (0: until its voice is done). */
 struct MsgObject *msgPutObject(int x, int y, char *text, int frames, int width, int height);
 

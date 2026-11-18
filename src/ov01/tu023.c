@@ -186,7 +186,6 @@ signed char func_00A91B90(int index);
 /* Refreshes the hp and ep of the slots 1 to 15 from their battle blocks, then commits each. */
 void battleSlotsRefresh(void);
 /* Defined in other files. */
-void *func_00A9B2A8(int key);
 int dataBoxDecCategory1(int lookup_key);
 int unitTblGet(int side, StatOwner ***table);
 
@@ -358,7 +357,7 @@ void battleSlotExport(StatBlock *entry, StatBlock *out)
     int markIndex;
 
     *out = *entry;
-    out->inflictBase = ((unsigned char *) func_00A9B2A8(entry->key))[0x17];
+    out->inflictBase = ((unsigned char *) batUnitRecordGet(entry->key))[0x17];
     if ((unsigned short) entry->key - 0xB < 5U) {
         specialSlotKey = 0xC;
         slotRecord = slotRecordByIndex(entry->key);
@@ -485,7 +484,7 @@ void battleSlotsInit(void)
 void battleEntryLoad(StatBlock *entry, int key)
 {
     memset(entry, 0, sizeof(StatBlock));
-    *(StatBlockHead *)entry = *(StatBlockHead *)func_00A9B2A8(key);
+    *(StatBlockHead *)entry = *(StatBlockHead *)batUnitRecordGet(key);
     entry->hp = entry->maxHp;
     entry->ep = entry->maxEp;
     entry->key = key;

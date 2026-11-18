@@ -159,7 +159,7 @@ void configPlayer3(void) {
 
 /* One party slot of the BATTLE CONFIG records (ov01PartyListGet returns the table, 0x14 bytes each). */
 typedef struct ConfigPartyRecord {
-    int charaId;  /* PLAYERn name row, resolved through func_00A9B338 */
+    int charaId;  /* PLAYERn name row, resolved through batUnitNameGet */
     int position; /* PLAYERn POS row */
     unsigned char unmodeled_08[0x14 - 0x08];
 } ConfigPartyRecord;
@@ -298,13 +298,12 @@ int configCloth(void)
     return 0;
 }
 
-/* The base unit func_00A9B2A8 returns (the LV UP row reads its level, at +0x13 like StatBlock.expLevel). */
+/* The base unit batUnitRecordGet returns (the LV UP row reads its level, at +0x13 like StatBlock.expLevel). */
 typedef struct ConfigUnit {
     unsigned char unmodeled_00[0x13];
     signed char level;         /* +0x13 */
 } ConfigUnit;
 
-ConfigUnit *func_00A9B2A8(int);
 
 /* SUB PILOT row: edits the sub-pilot id (0..0xA) of the selected unit. */
 int configSubPilot(void)
@@ -329,7 +328,7 @@ int configLvUp(void)
     int level;
 
     unit = battleSlotGet(configUnitIndex);
-    baseUnit = func_00A9B2A8(configUnitIndex);
+    baseUnit = batUnitRecordGet(configUnitIndex);
     level = unit->expLevel;
     debugValLR(&level, baseUnit->level, 0x63, 1);
     if (level != unit->expLevel) {

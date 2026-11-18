@@ -4062,13 +4062,13 @@
      1
     ],
     [
-     "func_00A9B2A8",
+     "batUnitRecordGet",
      11121320,
      144,
      1
     ],
     [
-     "func_00A9B338",
+     "batUnitNameGet",
      11121464,
      128,
      1

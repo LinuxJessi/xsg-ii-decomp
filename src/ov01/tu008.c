@@ -642,7 +642,6 @@ int dataFileSlotLoad(struct DataFileRecord *file_record, char *path, char **next
 }
 
 extern char *dataBatDatPath;
-extern int batDat;
 
 void dataBatDatLoad(void) {
     ov01CdReadFileSync(dataBatDatPath, &batDat);
@@ -1202,7 +1201,6 @@ struct SlotKeySource {
     short key;
 };
 
-struct SlotKeySource *func_00A9B2A8(int);
 void sefAcquireSlot(int key);
 void sefAcquireHighSlot(int key);
 
@@ -1213,11 +1211,11 @@ int unitEffectSlotAcquire(int key) {
         return 1;
     }
     if (key < DATA_BATTLE_ID_COUNT) {
-        source = func_00A9B2A8(key);
+        source = batUnitRecordGet(key);
         sefAcquireSlot(source->key);
         return 1;
     }
-    source = func_00A9B2A8(key);
+    source = batUnitRecordGet(key);
     sefAcquireHighSlot(source->key);
     return 1;
 }
