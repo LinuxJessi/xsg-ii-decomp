@@ -1310,6 +1310,8 @@
    "0x00ab5d18": "largeUnitFileIds",
    "0x00ab5d30": "otherUnitFileIds",
    "0x00ab62a0": "fb",
+   "0x00ab64c0": "menuIconTablesKeyed",
+   "0x00ab64f0": "menuIconTablesOther",
    "0x00ac1040": "unitTbl",
    "0x00ac1060": "unitPlNum",
    "0x00ac1064": "unitEnNum",

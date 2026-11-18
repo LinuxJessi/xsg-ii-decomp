@@ -45,6 +45,7 @@ struct ActStock {
 };
 
 struct ActStock *actStockGet(void);
+int battleEffectResolve(struct Ov01Object *command, int index, struct Ov01Object *entity);
 
 /*
  * Hit record of one target: calcHitRoll rolls for it and calcHitRecordFill fills it; the status

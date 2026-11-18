@@ -34,6 +34,11 @@ void dataVPadReset(void);
 void dataVPadSet(int virtualPad);
 void dataObjCreateAtOrigin(void);
 
+struct Ov01Object;
+
+/* State of a command key for the unit (0 usable, 1 shown, 2 hidden; negative skips the icons). */
+int dataKeyCheck(struct Ov01Object *unit, int key, void *tgt);
+
 /* Pad, key input and the battle menu panels (battleSelectStep). */
 unsigned short dataPadRead(int port);
 int dataKeyInputStep(struct Ov01Object *unit);

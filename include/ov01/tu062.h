@@ -32,5 +32,10 @@ void menuNumDraw(struct GrPacket *packet, int x, int y, int value, int digits, i
 void menuNumDrawTarget(struct GrPacket *packet, int x, int y, int value, int digits, int style,
                        struct Ov01Object *target);
 void func_00AA7A48(struct GrPacket *packet, int x, int y, int value, int digits, int style, struct Ov01Object *target);
+/* One 18 x 18 icon from the icon atlas, cell (col, row). */
+void menuIconPut(struct GrPacket *packet, int x, int y, int col, int row);
+void menuStatusIconPut(struct GrPacket *packet, int x, int y);
+/* The status icons of a tec record (tecRecordGet). */
+void menuStatusIconsDraw(struct GrPacket *packet, int x, int y, int record);
 
 #endif /* INCLUDE_OV01_TU062_H */
