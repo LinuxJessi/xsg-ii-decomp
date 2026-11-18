@@ -207,6 +207,7 @@ int sefCountOwnerValue(int owner, unsigned short value);
 void sefClearOwnerValueFlags(int owner, unsigned short value, int mask);
 void sefReleaseOwnedRecords(int owner);
 int sefOwnerPairInUse(int owner, int ownerKey);
+int sefEntryHasFlag1(int key);
 void sefPruneHandleSlots(void);
 void sefRegisterHandle(int handle, int value);
 

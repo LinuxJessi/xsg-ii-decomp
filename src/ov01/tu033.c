@@ -35,7 +35,7 @@
 #include "ov01/tu070.h"
 
 extern char cmdList[];   /* cmdList: 0x20-byte entries, unit then command body */
-extern char cmdFifo[];   /* cmdFifo: fifo control block */
+extern struct FifoRing cmdFifo;   /* the fifo over the cmdList entries */
 
 /* Command list entries (0x20 bytes each); the fifo ring runs over them. */
 #define CMD_LIST_COUNT 0x20
@@ -94,12 +94,21 @@ extern int eventQueueCursor;
 extern int eventRetryCount;
 extern int eventStepStarted;
 
-/* cmdSystemInit: clears the command list and fifo, the event table and its counters. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdSystemInit);
+void *memset(void *destination, int value, unsigned int count);
+
+/* cmdSystemInit: clears the command list and fifo, the event table and its counters. The four counters are
+ * cleared in one chained assignment: as four statements gcc loads their addresses in the other order. */
+void cmdSystemInit(void)
+{
+    memset(cmdList, 0, CMD_LIST_COUNT * CMD_LIST_ENTRY_SIZE);
+    ov01FifoInit(&cmdFifo, CMD_LIST_COUNT);
+    memset(eventQueueTable, 0, sizeof(eventQueueTable));
+    eventStepStarted = eventRetryCount = eventQueueCursor = eventQueueCount = 0;
+}
 
 /* cmdListPtrGet: the command fifo and the command list, through two out pointers. */
 void cmdListPtrGet(void **fifo_out, void **list_out) {
-    *fifo_out = cmdFifo;
+    *fifo_out = &cmdFifo;
     *list_out = cmdList;
 }
 
@@ -372,7 +381,14 @@ Ov01Object *unitPairPartnerFind(Ov01Object *unit, int value)
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93128);
+/* For the attack kinds 1, 3 and 4: whether the sef entry of the attacker's actor has flag 1; 0 otherwise. */
+int func_00A93128(Ov01Object *attacker, int kind)
+{
+    if (kind != 1 && kind != 3 && kind != 4) {
+        return 0;
+    }
+    return sefEntryHasFlag1((int)attacker->unit) != 0;
+}
 
 /* A unit command request (func_00A96510, func_00A94260): the unit, the command and its words. */
 typedef struct UnitCmdRequest {

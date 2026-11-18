@@ -4412,8 +4412,8 @@ int sefGetEntryFlags(key)
     return 8;
 }
 
-int sefEntryHasFlag1(void) {
-    return sefGetEntryFlags() & 1;
+int sefEntryHasFlag1(int key) {
+    return sefGetEntryFlags(key) & 1;
 }
 
 int sefEntryHasFlag2(void) {

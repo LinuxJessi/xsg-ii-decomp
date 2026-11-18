@@ -44,6 +44,7 @@ void *dataLookupNext(struct DataLookup *lookup);
 void dataObjRelease(void *object);
 void ov01MatrixBlockInit(struct MatrixBlock *mat);
 void ov01ClearTables(void);
+void ov01FifoInit(struct FifoRing *ring, int capacity);
 int ov01FifoGetTail(struct FifoRing *ring);
 int ov01FifoPush(struct FifoRing *ring);
 void ov01ResetAll(void);
