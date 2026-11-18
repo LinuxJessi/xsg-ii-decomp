@@ -105,6 +105,9 @@ void unitTblBodySetPosDir(DoublewordVector4 *pos, DoublewordVector4 *dir);
 extern DoublewordVector4 runtimePos;
 extern DoublewordVector4 runtimeDir;
 
+/* Script values in hundredths. */
+#define VM_FIXED_SCALE 100.0f
+
 /* Script command: fills the runtime position and direction vectors from arguments 2 to 8, then copies them to units as flags ask. */
 int runtimeSetFog(SbThread *call)
 {
@@ -115,10 +118,10 @@ int runtimeSetFog(SbThread *call)
         return 0;
     }
     flags = vmArgGet(call, 1);
-    runtimePos.vector.x = (float) vmArgGet(call, 2) / 100.0f;
-    runtimePos.vector.y = (float) vmArgGet(call, 3) / 100.0f;
-    runtimePos.vector.z = (float) vmArgGet(call, 4) / 100.0f;
-    runtimePos.vector.w = (float) vmArgGet(call, 5) / 100.0f;
+    runtimePos.vector.x = (float) vmArgGet(call, 2) / VM_FIXED_SCALE;
+    runtimePos.vector.y = (float) vmArgGet(call, 3) / VM_FIXED_SCALE;
+    runtimePos.vector.z = (float) vmArgGet(call, 4) / VM_FIXED_SCALE;
+    runtimePos.vector.w = (float) vmArgGet(call, 5) / VM_FIXED_SCALE;
     runtimeDir.vector.x = (float) vmArgGet(call, 6);
     runtimeDir.vector.y = (float) vmArgGet(call, 7);
     runtimeDir.vector.z = (float) vmArgGet(call, 8);
@@ -240,7 +243,50 @@ void unitTblBodySetLight(LightBlocks *light)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", pari);
+/*
+ * Native pari(unit, count, state, velocity, value [, angle [, value3]]): sets the move parameters of the unit's
+ * actor: moveVelocity, shadowValue (default 1), moveAngle (default 0) and shadowValue3 (default 1) from
+ * hundredths, shadowCount and moveState as given. Jumps to SB_JUMP_ARGUMENTS with fewer than four arguments.
+ */
+int pari(SbThread *thread)
+{
+    struct XenoActor *actor;
+    float velocity;
+    float value;
+    float angle;
+    float value3;
+
+    if (VM_PLUGIN_CNT_GET(thread) < 4) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    actor = unitTblEntryGet(vmArgGet(thread, 1))->unit;
+    velocity = vmArgGet(thread, 4) / VM_FIXED_SCALE;
+    /* if/else (not a default before a plain if): the scale constant is then shared by the first two
+     * divisions only, as in the original. */
+    if (vmArgTagIsZero(thread, 5)) {
+        value = 1.0f;
+    } else {
+        value = vmArgGet(thread, 5) / VM_FIXED_SCALE;
+    }
+    if (vmArgTagIsZero(thread, 6)) {
+        angle = 0.0f;
+    } else {
+        angle = vmArgGet(thread, 6) / VM_FIXED_SCALE;
+    }
+    if (vmArgTagIsZero(thread, 7)) {
+        value3 = 1.0f;
+    } else {
+        value3 = vmArgGet(thread, 7) / VM_FIXED_SCALE;
+    }
+    actor->moveAngle = angle;
+    actor->shadowValue = value;
+    actor->moveVelocity = velocity;
+    actor->shadowCount = vmArgGet(thread, 2);
+    actor->shadowValue3 = value3;
+    actor->moveState = vmArgGet(thread, 3);
+    return 1;
+}
 
 int partyDataGetSlot(int, int);
 
