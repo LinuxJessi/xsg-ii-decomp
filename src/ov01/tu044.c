@@ -233,7 +233,30 @@ void sbFatal(SbThread *thread)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNativeOwnerAdd);
+/* Registers the null-terminated method table methods under name: appends the methods to
+ * sbNativeMethods and an owner record pointing at them. 0 when either table is full, else 1.
+ * The counts are compared unsigned (sltiu); index carries the owner count into the last store. */
+int sbNativeOwnerAdd(const char *name, SbNativeMethod *methods)
+{
+    int count;
+    int index;
+
+    if (!((unsigned int) sbNativeOwnerCount < SB_NATIVE_OWNER_MAX)) {
+        return 0;
+    }
+    sbNativeOwners[sbNativeOwnerCount].name = name;
+    sbNativeOwners[sbNativeOwnerCount].methods = &sbNativeMethods[sbNativeMethodCount];
+    for (count = 0; methods[count].name != 0; count++) {
+        if (!((unsigned int) sbNativeMethodCount < SB_NATIVE_METHOD_MAX)) {
+            return 0;
+        }
+        sbNativeMethods[sbNativeMethodCount++] = methods[count];
+    }
+    index = sbNativeOwnerCount;
+    sbNativeOwnerCount = index + 1;
+    sbNativeOwners[index].count = count;
+    return 1;
+}
 
 int sbIsSbImage(int *header) {
     if (header == 0) {
