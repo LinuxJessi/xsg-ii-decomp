@@ -1461,7 +1461,54 @@ int func_00A95CE8(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95CF0);
+/* sefLoadEffect (main) as ov01 calls it: the effect key and its group (tu046 loadEffect passes both too). */
+int sefLoadEffect(int effectKey, int group);
+
+/*
+ * Loads what the action of request needs: the motion entries of its technique (one, or two for a pair technique,
+ * the partner's first when the unit is not the pair's first slot), the model of a gateFlag-5 technique's target
+ * record (joint in pairSecond[2]) and its effect group. Returns 1.
+ */
+int func_00A95CF0(Ov01Tu033Request *request)
+{
+    Ov01Object *unit;
+    int value;
+    TecRecord *tec;
+    TgtIdRecord *record;
+    int first;
+    int second;
+    int group;
+
+    unit = (Ov01Object *) request->id;
+    tec = tecRecordGet(request->index);
+    value = request->value;
+    ov01ModelEntry = 0;
+    if (tec->timer != 0) {
+        if (tec->gateFlag == 1) {
+            if (pairLinkGet(value)->slotFirst == unit->stats->key) {
+                first = 0;
+                second = 1;
+            } else {
+                first = 1;
+                second = 0;
+            }
+            ov01ModelEntry = dataMotEntryLoad(tec->timer, first, 0);
+            ov01ModelEntry = dataMotEntryLoad(tec->timer, second, 1);
+        } else {
+            ov01ModelEntry = dataMotEntryLoad(tec->timer, 0, 0);
+        }
+    }
+    if (tec->gateFlag == 5) {
+        record = tgtIdRecordGet(value);
+        if (record->modelIndex != 0) {
+            unit->stats->pairSecond[2] = record->modelJoint;
+            ov01ModelEntry = dataModelEntryLoad(record->modelIndex);
+        }
+    }
+    group = tecEffectGroupGet(unit, tec);
+    sefLoadEffect((group << 12) | tec->extent, group);
+    return 1;
+}
 
 int ov01CdPendingReads(void);
 
