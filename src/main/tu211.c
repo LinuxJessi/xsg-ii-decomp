@@ -122,7 +122,7 @@ int pointFadeColorStep(f32 *out, const GsQueueContext *params, f32 x, f32 y) {
     return 1;
 }
 
-/* Linear interpolation from `from` to `to` by fraction; the same body as animLerp in tu209. */
+/* Linear interpolation from `from` to `to` by fraction; the same body as recordLerp in tu209. */
 f32 intLerp(f32 from, f32 to, f32 fraction) {
     return ((to - from) * fraction) + from;
 }

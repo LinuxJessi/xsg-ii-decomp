@@ -2,8 +2,24 @@
 #include "shared.h"
 #include "main/tu192.h"
 
-/* MMathVectorDotProduct (MMathVectorDotProduct): dot product of the xyz lanes, returned in $f0. */
-INCLUDE_ASM("asm/main/nonmatchings/tu192", MMathVectorDotProduct);
+/* Dot product of the xyz lanes, returned in $f0. The asm's float output stays in a register; it is
+ * bound to the x field of a Vector4 local only so the function keeps the original's 16-byte frame,
+ * which no instruction reads or writes. */
+float MMathVectorDotProduct(const Vector4 *first, const Vector4 *second)
+{
+    Vector4 product;
+
+    __asm__ __volatile__(
+        "lqc2 vf1, 0(%1)\n\t"
+        "lqc2 vf2, 0(%2)\n\t"
+        "vmul.xyz vf1, vf1, vf2\n\t"
+        "vaddy.x vf1, vf1, vf1y\n\t"
+        "vaddz.x vf1, vf1, vf1z\n\t"
+        "qmfc2.ni $8, vf1\n\t"
+        "mtc1 $8, %0"
+        : "=f"(product.x) : "r"(first), "r"(second) : "$8", "memory");
+    return product.x;
+}
 
 Vector4 *MMathVectorCrossProduct(Vector4 *destination, const Vector4 *first, const Vector4 *second)
 {

@@ -13,8 +13,40 @@ void MMathCalcDir(const Vector4 *first, const Vector4 *second)
     srsAtan2(second->x - (*origin)->x, second->z - (*origin)->z);
 }
 
-/* MMathCalcAngle (MMathCalcAngle): pitch to out.x, yaw to out.y; null vectors default to MMathUnitVector. */
-INCLUDE_ASM("asm/main/nonmatchings/m_math_191", MMathCalcAngle);
+extern Vector4 MMathUnitVector;
+
+/* Pitch from source to target to out.x, yaw to out.y; a null source or target defaults to
+ * MMathUnitVector (the library's own lui/addiu/movz null-default group inside the VU0 block). */
+Vector4 *MMathCalcAngle(Vector4 *out, const Vector4 *source, const Vector4 *target)
+{
+    Vector4 delta;
+    float horizontalLength = 0.0f;
+
+    __asm__ __volatile__(
+        "lui $8, %%hi(MMathUnitVector)\n\t"
+        "addiu $8, $8, %%lo(MMathUnitVector)\n\t"
+        "movz %2, $8, %2\n\t"
+        "movz %3, $8, %3\n\t"
+        "lqc2 vf1, 0(%2)\n\t"
+        "lqc2 vf2, 0(%3)\n\t"
+        "vsub.xz vf3, vf2, vf1\n\t"
+        "vmul.xz vf4, vf3, vf3\n\t"
+        "vaddz.x vf4, vf4, vf4z\n\t"
+        "vsqrt Q, vf4x\n\t"
+        "vsub.y vf3, vf1, vf2\n\t"
+        "sqc2 vf3, %1\n\t"
+        "sqc2 vf0, 0(%4)\n\t"
+        "vwaitq\n\t"
+        "vaddq.x vf1, vf0, Q\n\t"
+        "qmfc2.ni $8, vf1\n\t"
+        "mtc1 $8, %0"
+        : "+f"(horizontalLength), "=m"(delta), "+r"(source), "+r"(target)
+        : "r"(out)
+        : "$8", "memory");
+    out->x = srsAtan2(delta.y, horizontalLength);
+    out->y = srsAtan2(delta.x, delta.z);
+    return out;
+}
 
 Vector4 *MMathCalcOffset(Vector4 *destination, const Vector4 *first, const Vector4 *second)
 {
@@ -162,8 +194,43 @@ Vector4 *MMathDivVectorS4(Vector4 *destination, const Vector4 *source, float sca
     return destination;
 }
 
-/* MMathIsVectorEqual (MMathIsVectorEqual) and MMathIsVectorEqual4 (MMathIsVectorEqual4): 128-bit equality tests
- * returning a short 1 when the vectors are equal; they differ only in the permute before the second movn. */
-INCLUDE_ASM("asm/main/nonmatchings/m_math_191", MMathIsVectorEqual);
+/* 128-bit equality test: 1 when the two quadwords are identical, else 0. The hand-written MMI block
+ * compares both doubleword halves of the xor mask; MMathIsVectorEqual4 differs only in the permute
+ * before the second movn. The original keeps an untouched 16-byte frame: the unused scratch quadword. */
+short MMathIsVectorEqual(const Vector4 *first, const Vector4 *second)
+{
+    short equal;
+    Vector4 scratch;
 
-INCLUDE_ASM("asm/main/nonmatchings/m_math_191", MMathIsVectorEqual4);
+    __asm__ __volatile__(
+        "lq $8, 0(%1)\n\t"
+        "lq $9, 0(%2)\n\t"
+        "pxor $10, $8, $9\n\t"
+        "addi %0, $0, 1\n\t"
+        "movn %0, $0, $10\n\t"
+        "pexew $10, $10\n\t"
+        "movn %0, $0, $10"
+        : "=&r"(equal)
+        : "r"(first), "r"(second)
+        : "$8", "$9", "$10");
+    return equal;
+}
+
+short MMathIsVectorEqual4(const Vector4 *first, const Vector4 *second)
+{
+    short equal;
+    Vector4 scratch;
+
+    __asm__ __volatile__(
+        "lq $8, 0(%1)\n\t"
+        "lq $9, 0(%2)\n\t"
+        "pxor $10, $8, $9\n\t"
+        "addi %0, $0, 1\n\t"
+        "movn %0, $0, $10\n\t"
+        "pcpyud $10, $10, $0\n\t"
+        "movn %0, $0, $10"
+        : "=&r"(equal)
+        : "r"(first), "r"(second)
+        : "$8", "$9", "$10");
+    return equal;
+}

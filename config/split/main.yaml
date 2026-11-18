@@ -203,12 +203,9 @@ segments:
       - [0x13A628, c, tu163]
       - [0x13A658, c, sef]
       - [0x146820, c, srs]
-      - [0x1471B0, c, tu178]
       - [0x1479F0, c, tu179]
       - [0x147B50, c, sdv_180]
-      - [0x147F68, c, tu181]
-      - [0x1484A0, c, tu182]
-      - [0x148BB8, c, sdv_183]
+      - [0x147F68, c, sdv_181]
       - [0x14CC28, c, tu185]
       - [0x152458, c, sm_initilize]
       - [0x1527C0, c, tu187]
@@ -229,7 +226,7 @@ segments:
       - [0x155368, c, tu204]
       - [0x155650, c, tu205]
       - [0x155738, c, tu206]
-      - [0x155808, c, tu207]
+      - [0x155830, c, tu207]
       - [0x158720, c, tu208]
       - [0x158F78, c, tu209]
       - [0x1590E8, c, tu210]
@@ -343,9 +340,8 @@ segments:
       - [0x2CE490, data, sv_get_image_item]
       - [0x352D90, data, sef]
       - [0x4C75C0, data, srs]
-      - [0x4C76E0, data, tu178]
-      - [0x4C7D00, data, sdv_180]
-      - [0x4C7D60, data, sdv_183]
+      - [0x4C7D28, data, sdv_180]
+      - [0x4C7D60, data, sdv_181]
       - [0x4C7E70, data, tu185]
       - [0x4FC2C0, data, tu197]
       - [0x512140, data, test_129]
@@ -454,8 +450,7 @@ segments:
       - [0x56CFF0, rodata, sv_get_image_item]
       - [0x56D210, rodata, sef]
       - [0x56D480, rodata, srs]
-      - [0x56D510, rodata, tu178]
-      - [0x56D530, rodata, sdv_183]
+      - [0x56D530, rodata, sdv_181]
       - [0x56D5F0, rodata, tu185]
       - [0x56D660, rodata, sm_initilize]
       - [0x56D6F8, rodata, tu187]
@@ -554,9 +549,7 @@ segments:
       - [0x57C2A8, lit4, tu154]
       - [0x57C2B0, lit4, sv_get_image_item]
       - [0x57C2B8, lit4, sef]
-      - [0x57C324, lit4, tu181]
-      - [0x57C330, lit4, tu182]
-      - [0x57C334, lit4, sdv_183]
+      - [0x57C324, lit4, sdv_181]
       - [0x57C3A8, lit4, tu185]
       - [0x57C4E4, lit4, tu187]
       - [0x57C500, lit4, m_math_188]
@@ -628,7 +621,7 @@ segments:
       - [0x57EB48, sdata, sef]
       - [0x57EBE0, sdata, srs]
       - [0x57EC30, sdata, sdv_180]
-      - [0x57EC38, sdata, sdv_183]
+      - [0x57EC38, sdata, sdv_181]
       - [0x57EC48, sdata, tu185]
       - [0x57EC58, sdata, tu187]
       - [0x57EC68, sdata, tu197]
@@ -729,8 +722,7 @@ segments:
       - { type: bss, vram: 0x006AF7C0, name: sv_get_image_item }
       - { type: bss, vram: 0x006DE840, name: sef }
       - { type: bss, vram: 0x00807B90, name: srs }
-      - { type: bss, vram: 0x00807EA0, name: tu182 }
-      - { type: bss, vram: 0x00807EC0, name: sdv_183 }
+      - { type: bss, vram: 0x00807EA0, name: sdv_181 }
       - { type: bss, vram: 0x00831610, name: tu185 }
       - { type: bss, vram: 0x00881810, name: sm_initilize }
       - { type: bss, vram: 0x00881840, name: tu187 }

@@ -1,10 +1,34 @@
 #include "common.h"
 
-/* 0x00274368: per-channel lerp of two packed 8-bit colours by the float t in $f12
- * (proposed name xglColorLerp); the four channels are masked with 0xFF, 0xFF00, 0xFF0000, 0xFF000000. */
-INCLUDE_ASM("asm/main/nonmatchings/tu204", xglColorLerp);
+#include "shared.h"
+#include "main/tu204.h"
 
-/* Wraps an angle in degrees into [0, 360]: one step of 360 each way (proposed name xglWrapDegrees). */
+/* Per-channel lerp of two packed 8-bit colours by t: the four channels are masked with 0xFF, 0xFF00, 0xFF0000 and
+ * 0xFF000000 and each one is moved from its from value towards its to value. */
+long long xglColorLerp(long long from, long long to, float t)
+{
+    long long fromRed = from & 0xFF;
+    long long fromGreen = from & 0xFF00;
+    long long fromBlue = from & 0xFF0000;
+    long long fromAlpha = from & 0xFF000000;
+    long long toRed = to & 0xFF;
+    long long toGreen = to & 0xFF00;
+    long long toBlue = to & 0xFF0000;
+    long long toAlpha = to & 0xFF000000;
+    long long red;
+    long long green;
+    long long blue;
+    long long alpha;
+
+    red = (u32)((float) fromRed + (float) (toRed - fromRed) * t) & 0xFF;
+    green = (u32)((float) fromGreen + (float) (toGreen - fromGreen) * t) & 0xFF00;
+    blue = (u32)((float) fromBlue + (float) (toBlue - fromBlue) * t) & 0xFF0000;
+    alpha = (u32)((float) fromAlpha + (float) (toAlpha - fromAlpha) * t) & 0xFF000000;
+    return red | green | blue | alpha;
+}
+
+/* Steps an angle in degrees towards [0, 360]: subtracts 360 once when above 360, then adds 360 once when below 0
+ * (an angle more than one turn outside the range stays outside). */
 float xglWrapDegrees(float degrees) {
     if (degrees > 360.0f) {
         degrees -= 360.0f;
@@ -15,6 +39,22 @@ float xglWrapDegrees(float degrees) {
     return degrees;
 }
 
-/* 0x002745A8: returns a 64-bit register word for mode 0, 1 or 2; mode 0 reads sRender +0x20 and +0x1A,
- * modes 1 and 2 read the halfwords D_00645842 and sRenderFrameBase. Role not yet proven, no name proposed. */
-INCLUDE_ASM("asm/main/nonmatchings/tu204", gsMakeTex0);
+#include "gs.h"
+#include "main/tu093.h"
+
+
+/* GS TEX0 of a 512x512 PSMCT32 frame page (TBW 8, TW and TH 9): buffer 0 is the display page with CBP set to
+ * frame_base_1, buffer 1 the page copy_base, buffer 2 the page frame_base; tex_cc goes to TCC, TFX stays 0. */
+u64 gsMakeTex0(int buffer, int tex_cc)
+{
+    switch (buffer) {
+    case 0:
+        return GS_SET_TEX0(sRender.display_base << 5, 8, GS_PSMCT32, 9, 9, tex_cc, 0, sRender.frame_base_1, 0, 0, 0, 0);
+    case 1:
+        return GS_SET_TEX0(sRender.copy_base << 5, 8, GS_PSMCT32, 9, 9, tex_cc, 0, 0, 0, 0, 0, 0);
+    case 2:
+        return GS_SET_TEX0(sRender.frame_base << 5, 8, GS_PSMCT32, 9, 9, tex_cc, 0, 0, 0, 0, 0, 0);
+    default:
+        return 0;
+    }
+}

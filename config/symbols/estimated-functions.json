@@ -45912,13 +45912,13 @@
      2
     ],
     [
-     "func_00266BC8",
+     "scGetKeyRecord",
      2517960,
      372,
      2
     ],
     [
-     "func_00266D40",
+     "scGetKeyRecordFirst",
      2518336,
      24,
      2
@@ -45978,31 +45978,31 @@
      2
     ],
     [
-     "func_00266F68",
+     "sdvCheckSeqKey",
      2518888,
      224,
      2
     ],
     [
-     "func_00267048",
+     "sdvExecSeqTbl",
      2519112,
      116,
      2
     ],
     [
-     "func_002670C0",
+     "sdvProgressKey",
      2519232,
      224,
      2
     ],
     [
-     "func_002671A0",
+     "sdvExecEffectSeq",
      2519456,
      484,
      2
     ],
     [
-     "func_00267388",
+     "sdvExecShadowSeq",
      2519944,
      276,
      2
@@ -46056,7 +46056,7 @@
      2
     ],
     [
-     "func_00268010",
+     "sdvApplyCameraSlots",
      2523152,
      52,
      2
@@ -46068,7 +46068,7 @@
      2
     ],
     [
-     "func_002680A8",
+     "sdvNearestAngle",
      2523304,
      316,
      2
@@ -46170,7 +46170,7 @@
      2
     ],
     [
-     "func_0026A718",
+     "sdvDestroyOwnerAlters",
      2533144,
      136,
      2
@@ -46194,7 +46194,7 @@
      2
     ],
     [
-     "func_0026AFB0",
+     "sdvSetStripHeader",
      2535344,
      192,
      2
@@ -46230,7 +46230,7 @@
      2
     ],
     [
-     "func_0026BB78",
+     "sdvDrawOwnerAlters",
      2538360,
      172,
      2
@@ -46254,7 +46254,7 @@
      2
     ],
     [
-     "func_0026BD10",
+     "sefUnpackBlockInit",
      2538768,
      40,
      2
@@ -46290,7 +46290,7 @@
      2
     ],
     [
-     "func_0026C0A8",
+     "sefBuildModelPacket",
      2539688,
      408,
      2
@@ -46338,7 +46338,7 @@
      2
     ],
     [
-     "func_0026C488",
+     "sefCreateResourceSlot",
      2540680,
      1008,
      2
@@ -46368,7 +46368,7 @@
      2
     ],
     [
-     "func_0026C9C8",
+     "sefCreateKindResourceSlot",
      2542024,
      1036,
      2
@@ -46380,13 +46380,13 @@
      2
     ],
     [
-     "sefScaleVectorRandom",
+     "sefGetRandomScaledDirection",
      2543152,
      116,
      2
     ],
     [
-     "func_0026CEA8",
+     "sefRotationZRows",
      2543272,
      112,
      2
@@ -46410,55 +46410,55 @@
      2
     ],
     [
-     "func_0026D6A8",
+     "sefSpawnKinds5To7",
      2545320,
      540,
      2
     ],
     [
-     "func_0026D8C8",
+     "sefSpawnKinds8To10",
      2545864,
      848,
      2
     ],
     [
-     "func_0026DC18",
+     "sefSpawnKinds11To13",
      2546712,
      792,
      2
     ],
     [
-     "func_0026DF30",
+     "sefSpawnKinds22Up",
      2547504,
      856,
      2
     ],
     [
-     "func_0026E288",
+     "sefSpawnKinds14To16",
      2548360,
      856,
      2
     ],
     [
-     "func_0026E5E0",
+     "sefSpawnKinds17To19",
      2549216,
      1160,
      2
     ],
     [
-     "func_0026EA68",
+     "sefSpawnKind20",
      2550376,
      480,
      2
     ],
     [
-     "func_0026EC48",
+     "sefSpawnKind21",
      2550856,
      412,
      2
     ],
     [
-     "func_0026EDE8",
+     "sefUpdateBurstParticles",
      2551272,
      548,
      2
@@ -46470,7 +46470,7 @@
      2
     ],
     [
-     "func_0026F250",
+     "sefUpdateFadeOutParticles",
      2552400,
      632,
      2
@@ -46500,31 +46500,31 @@
      2
     ],
     [
-     "func_00270428",
+     "sefUpdateKind20Particles",
      2556968,
      916,
      2
     ],
     [
-     "func_002707C0",
+     "sefUpdateSpinParticles",
      2557888,
      288,
      2
     ],
     [
-     "func_002708E0",
+     "sefRunEmitters",
      2558176,
      508,
      2
     ],
     [
-     "func_00270AE0",
+     "sefSetupEmitterPacket",
      2558688,
      444,
      2
     ],
     [
-     "func_00270CA0",
+     "sefDrawEmitter",
      2559136,
      984,
      2
@@ -46554,13 +46554,13 @@
      2
     ],
     [
-     "func_00271390",
+     "sefNoOp",
      2560912,
      8,
      2
     ],
     [
-     "func_00271398",
+     "sefCollectPersistentSlots",
      2560920,
      192,
      2
@@ -47238,13 +47238,13 @@
      2
     ],
     [
-     "func_00274100",
+     "xglRoundCoord",
      2572544,
      44,
      2
     ],
     [
-     "func_00274130",
+     "xglPointDistanceInt",
      2572592,
      104,
      2
@@ -47298,7 +47298,7 @@
      2
     ],
     [
-     "func_002746B8",
+     "xglVectorNormalInPlace",
      2574008,
      60,
      2
@@ -47352,19 +47352,19 @@
      2
     ],
     [
-     "func_00274850",
+     "recordUpdateRenderHook",
      2574416,
      120,
      2
     ],
     [
-     "func_002748C8",
+     "recordSetPreset",
      2574536,
      3652,
      2
     ],
     [
-     "func_00275710",
+     "recordSetSlot",
      2578192,
      128,
      2
@@ -47376,19 +47376,19 @@
      2
     ],
     [
-     "func_002757F0",
+     "recordClearBanks",
      2578416,
      60,
      2
     ],
     [
-     "func_00275830",
+     "recordRenderAll",
      2578480,
      312,
      2
     ],
     [
-     "func_00275968",
+     "recordAnyUsed",
      2578792,
      96,
      2
@@ -47406,25 +47406,25 @@
      2
     ],
     [
-     "func_002759F8",
+     "recordDrawType1",
      2578936,
      756,
      2
     ],
     [
-     "func_00275CF0",
+     "recordStageSize",
      2579696,
      64,
      2
     ],
     [
-     "func_00275D30",
+     "recordStageColor",
      2579760,
      212,
      2
     ],
     [
-     "func_00275E08",
+     "recordPulseColor",
      2579976,
      152,
      2
@@ -47436,31 +47436,31 @@
      2
     ],
     [
-     "func_00275EE8",
+     "recordDrawType2",
      2580200,
      132,
      2
     ],
     [
-     "func_00275F70",
+     "recordDrawType3",
      2580336,
      992,
      2
     ],
     [
-     "func_00276350",
+     "recordRingPoint",
      2581328,
      172,
      2
     ],
     [
-     "func_00276400",
+     "recordAdvanceRingRadius",
      2581504,
      84,
      2
     ],
     [
-     "func_00276458",
+     "recordDrawType4",
      2581592,
      900,
      2
@@ -47478,43 +47478,43 @@
      2
     ],
     [
-     "func_00276838",
+     "recordDrawType5",
      2582584,
      1324,
      2
     ],
     [
-     "func_00276D68",
+     "recordDrawType6",
      2583912,
      916,
      2
     ],
     [
-     "func_00277100",
+     "recordStepWarp",
      2584832,
      100,
      2
     ],
     [
-     "func_00277168",
+     "recordWarpCorner",
      2584936,
      316,
      2
     ],
     [
-     "func_002772A8",
+     "recordDrawType7",
      2585256,
      832,
      2
     ],
     [
-     "func_002775E8",
+     "recordStepRing",
      2586088,
      8,
      2
     ],
     [
-     "func_002775F0",
+     "recordRingInnerColor",
      2586096,
      12,
      2
@@ -47526,19 +47526,19 @@
      2
     ],
     [
-     "func_00277610",
+     "recordRingStep",
      2586128,
      268,
      2
     ],
     [
-     "func_00277720",
+     "recordDrawStrip",
      2586400,
      428,
      2
     ],
     [
-     "func_002778D0",
+     "recordDrawTurnColumns",
      2586832,
      648,
      2
@@ -47550,7 +47550,7 @@
      2
     ],
     [
-     "func_00277C28",
+     "recordRotateCorner",
      2587688,
      412,
      2
@@ -47562,25 +47562,25 @@
      2
     ],
     [
-     "func_00277EA0",
+     "recordDrawFlatColumn",
      2588320,
      216,
      2
     ],
     [
-     "animSampleSegment",
+     "recordTurnAngleAt",
      2588536,
      244,
      2
     ],
     [
-     "animLerp",
+     "recordLerp",
      2588784,
      16,
      2
     ],
     [
-     "animOffsetPoints",
+     "recordOffsetCorners",
      2588800,
      100,
      2
@@ -47598,13 +47598,13 @@
      2
     ],
     [
-     "func_002783D0",
+     "quadDrawPreset",
      2589648,
      388,
      2
     ],
     [
-     "func_00278558",
+     "quadDrawPresetUv",
      2590040,
      388,
      2
@@ -47616,7 +47616,7 @@
      2
     ],
     [
-     "func_002789C8",
+     "circleSpriteCorners",
      2591176,
      124,
      2
@@ -52218,7 +52218,7 @@
      2
     ],
     [
-     "func_002A1E10",
+     "fmodf",
      2760208,
      20,
      2
@@ -52368,7 +52368,7 @@
      2
     ],
     [
-     "func_002A6818",
+     "__floatdisf",
      2779160,
      232,
      2
@@ -52674,13 +52674,13 @@
      2
     ],
     [
-     "func_002A9350",
+     "malloc",
      2790224,
      84,
      2
     ],
     [
-     "func_002A93A8",
+     "free",
      2790312,
      72,
      2
@@ -52746,7 +52746,7 @@
      2
     ],
     [
-     "func_002AA130",
+     "rand",
      2793776,
      100,
      2

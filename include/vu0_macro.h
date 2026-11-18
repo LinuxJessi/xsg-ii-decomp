@@ -13,11 +13,12 @@
 
 /*
  * Vector operations through vf2/vf3, the second operand loaded first (used
- * across the game code), and the four-lane difference through vf20/vf21.
+ * across the game code), and the four-lane difference and sum through vf20/vf21.
  *
  *   Vu0AddVectorXYZ(d, a, b)  d.xyz = a.xyz + b.xyz, d.w = a.w
  *   Vu0SubVectorXYZ(d, a, b)  d.xyz = a.xyz - b.xyz, d.w = a.w
  *   Vu0SubVector(d, a, b)     d = a - b
+ *   Vu0AddVector(d, a, b)     d = a + b
  */
 
 #define Vu0AddVectorXYZ(destination, first, second) \
@@ -60,6 +61,16 @@
         "sqc2 vf20, 0(%0)\n" \
         : \
         : "r" (destination), "r" (minuend), "r" (subtrahend) \
+        : "memory")
+
+#define Vu0AddVector(destination, first, second) \
+    __asm__ __volatile__( \
+        "lqc2 vf20, 0(%1)\n" \
+        "lqc2 vf21, 0(%2)\n" \
+        "vadd.xyzw vf20, vf20, vf21\n" \
+        "sqc2 vf20, 0(%0)\n" \
+        : \
+        : "r" (destination), "r" (first), "r" (second) \
         : "memory")
 
 /*
