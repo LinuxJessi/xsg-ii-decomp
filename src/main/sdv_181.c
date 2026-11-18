@@ -368,7 +368,7 @@ typedef struct TiWindKey {
 #define TIWIND_RADIUS_OFF 20000
 
 void sefGetPosition(Vector4 *destination, Vector4 *offset, int kind);
-void *MMathNormalizeVector2(void *destination, const void *source);
+void *MMathNormalizeVector2(void *destination, const Vector4 *source);
 
 /* One length of the key reached: the row's value, moved towards the next key by t (in 256ths of
  * the interval) when the two keys differ (SDV_BLEND of sdvExecSpecial in X1). */
@@ -1362,7 +1362,7 @@ typedef union SdvScale {
 } SdvScale;
 
 /* Normalizes a vector in place. */
-static inline void *sdvNormalize(float *vector)
+static inline void *sdvNormalize(Vector4 *vector)
 {
     return MMathNormalizeVector2(vector, vector);
 }
@@ -1636,7 +1636,7 @@ void sdvDrawSpecial(SdvSpecial *special)
                 scale.f[1] = direction[1];
                 scale.f[2] = direction[2];
                 scale.f[3] = 1.0f;
-                sdvNormalize(scale.f);
+                sdvNormalize(&scale.vector);
                 sefApplyPartTransform(vector, vector, record->table->part);
                 nmlModelSetMulColor(&scale.vector);
             }
