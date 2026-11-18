@@ -73,16 +73,39 @@ typedef struct AtkTbl {
 
 struct Ov01Object;
 
+/* The 16-byte record unitScriptEventSend takes: the unit and three words it passes on, with the selector, as a script
+ * message (sbThreadEnqueue). */
+typedef struct UnitScriptEvent {
+    struct Ov01Object *unit;
+    int words[3];
+} UnitScriptEvent;
+
+void unitScriptEventSend(int kind, UnitScriptEvent *event);
+
 int atkTblFieldGet(int field, AtkTbl *table, int index);
-int func_00A9BF08(struct Ov01Object *unit, AtkTbl *table, int value);
+int atkTblBuild(struct Ov01Object *unit, AtkTbl *table, int rows);
 void thinkSendEnd(struct Ov01Object *unit);
+void thinkDispatch(struct Ov01Object *unit, int command, int arg, struct Ov01Object *target);
 
 /* The records of the bat.dat tables (the getters below, numbered from 1). */
+/* The first two halfwords of a bat.dat record that has texts: the offsets of its RECORD_TEXT_NAME and
+ * RECORD_TEXT_INFO texts from the start of its table (the *TextGet getters). */
+typedef struct RecordTexts {
+    short text[2];
+} RecordTexts;
+
+/* The 8-byte records func_00A9B5B8 returns. */
+typedef struct TextRecord8 {
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x4];
+} TextRecord8;
+
 /* The entry battleLookupGet returns. */
 typedef struct BattleLookupEntry BattleLookupEntry;
 
 struct BattleLookupEntry {
-    unsigned char unmodeled_00[6];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[2];
     unsigned short flags;                   /* +0x06 */
     short tecIndex;                         /* +0x08: the index tecRecordGet takes */
     unsigned char firstCode;                /* +0x0A */
@@ -132,7 +155,8 @@ struct TecRecord {
 typedef struct StatusRecord StatusRecord;
 
 struct StatusRecord {
-    unsigned char unmodeled_00[0x6];        /* +0x00..+0x05 */
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x2];
     /* +0x06: bit 0x2000 marks an effect that lives in the slot table; 0x8000 and 0x4000 are tested by
      * battleSlotExport */
     unsigned short slotFlags;
@@ -144,27 +168,32 @@ struct StatusRecord {
 typedef struct ItemRecord ItemRecord;
 
 struct ItemRecord {
-    unsigned char unmodeled_00[0xA];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x6];
     short code;                             /* +0xA */
+    unsigned char unmodeled_0C[0x4];
 };
 
 typedef struct HitAction HitAction;
 
 /* Action row hitActionGet returns: the entry index and the amount. */
 struct HitAction {
-    unsigned char unmodeled_00[0x4];        /* +0x00..+0x03 */
+    RecordTexts texts;                      /* +0x00 */
     unsigned short flags;                   /* +0x04: tested by dataSlotKeyTest (tu022) */
     unsigned char unmodeled_06[0x2];        /* +0x06..+0x07 */
     short entry;                            /* +0x08: index tecRecordGet takes */
     unsigned char unmodeled_0a[0x2];        /* +0x0A..+0x0B */
     short amount;                           /* +0x0C: selects the +0x40 action; nonzero picks row 2 */
+    unsigned char unmodeled_0e[0x2];        /* +0x0E..+0x0F */
 };
 
 /* Link record pairLinkGet returns: the required level and the two slot indices it pairs. */
 typedef struct PairLink PairLink;
 
 struct PairLink {
-    unsigned char unmodeled_00[0xA];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x4];
+    short tecIndex;                         /* +0x8: the technique a pair selection uses (battleSelectionGet) */
     short requiredLevel;                    /* +0xA */
     short slotFirst;                        /* +0xC */
     short slotSecond;                       /* +0xE */
@@ -174,20 +203,54 @@ typedef struct CalcLevelRecord CalcLevelRecord;
 
 /* The record calcLevelRecordGet returns; +0xA is its required level, +0xC the entry mask calcEntryMaskTest tests. */
 struct CalcLevelRecord {
-    unsigned char unmodeled_000[0xA];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_004[0x4];
+    short tecIndex;                         /* +0x8: the technique a level selection uses (battleSelectionGet) */
     short requiredLevel;
     short entryMask;
+    unsigned char unmodeled_00E[0x2];
 };
 
 typedef struct TgtIdRecord TgtIdRecord;
 
 /* The record tgtIdRecordGet returns for an id: +0x8 is the action index tecRecordGet takes, +0xE the minimum level. */
 struct TgtIdRecord {
-    unsigned char unmodeled_00[0x8];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x4];
     short actionIndex;                      /* +0x08: the index tecRecordGet takes */
-    unsigned char unmodeled_0a[0xe - 0xa];
+    short modelIndex;                       /* +0x0A: the model entry func_00A95CF0 loads (0: none) */
+    unsigned short modelJoint;              /* +0x0C: the joint that model is attached at (StatBlock.pairSecond[2]) */
     short minLevel;                         /* +0x0E: obj->stats->level below this gives 0 */
 };
+
+/* The unit parameters scripts read and write by number (natives unitParaGet and unitParaSet, tu046). 17..36 are
+ * the bytes from StatBlock.liveRows on: liveRows (17..20), slotValue (21..28) and slotRoll (29..36). */
+enum {
+    UNIT_PARA_MAX_HP,
+    UNIT_PARA_MAX_EP,
+    UNIT_PARA_PHYS_ATTACK,
+    UNIT_PARA_PHYS_DEFENCE,
+    UNIT_PARA_MAG_ATTACK,
+    UNIT_PARA_MAG_DEFENCE,
+    UNIT_PARA_HIT_RATE,
+    UNIT_PARA_EVADE_RATE,
+    UNIT_PARA_VALUE_BIAS,
+    UNIT_PARA_HP,
+    UNIT_PARA_EP,
+    UNIT_PARA_KEY,
+    UNIT_PARA_STATE70,                  /* read only */
+    UNIT_PARA_LEVEL,
+    UNIT_PARA_EXP_LEVEL,
+    UNIT_PARA_FLAGS,
+    UNIT_PARA_POS_INDEX,
+    UNIT_PARA_LIVE_ROW,
+    UNIT_PARA_SLOT_VALUE = UNIT_PARA_LIVE_ROW + 4,
+    UNIT_PARA_SLOT_ROLL = UNIT_PARA_SLOT_VALUE + 8,
+    UNIT_PARA_CURRENT = UNIT_PARA_SLOT_ROLL + 8
+};
+
+int unitParaFieldGet(struct Ov01Object *unit, int field);
+void unitParaFieldSet(struct Ov01Object *unit, int field, int value);
 
 /* Table getters: each returns record index of its bat.dat table, 0 for an index outside the table. */
 TecRecord *tecRecordGet(int index);
@@ -198,19 +261,37 @@ BattleLookupEntry *battleLookupGet(int index);
 ItemRecord *itemRecordGet(int index);
 StatusRecord *statusRecordGet(int index);
 HitAction *hitActionGet(int index);
-void *func_00A9B580(int index);
-void *func_00A9B5B8(int index);
+RecordTexts *func_00A9B580(int index);
+struct TextRecord8 *func_00A9B5B8(int index);
 PairLink *pairLinkGet(int index);
 CalcLevelRecord *calcLevelRecordGet(int index);
 TgtIdRecord *tgtIdRecordGet(int index);
 UnitExpEntry *unitExpTblGet(void);
 GrowthRecord *growthRecordGet(int index);
 short *stringOffsetsGet(int index);
+
+/* The two texts of a data record (the *TextGet getters below): the record's first two halfwords are their
+ * offsets from the table start. */
+enum RecordText {
+    RECORD_TEXT_NAME = 0,
+    RECORD_TEXT_INFO = 1
+};
+
+char *battleLookupTextGet(int index, int field);
+char *itemTextGet(int index, int field);
+char *statusTextGet(int index, int field);
+char *hitActionTextGet(int index, int field);
+char *func_00A9B950(int index, int field);
+char *func_00A9B9C8(int index, int field);
+char *pairLinkTextGet(int index, int field);
+char *calcLevelTextGet(int index, int field);
+char *tgtIdTextGet(int index, int field);
 char *tableStringGet(int index, int mode);
 
 /* Message, party data and table row prototypes. */
 int msgIsIdle(void);
 void partyDataSetSlot(int id, int slot, int value);
 struct TableKeyRecord *tableKeyRecordGet(int key);
+void msgReset(void);
 
 #endif /* INCLUDE_OV01_TU042_H */

@@ -144,8 +144,9 @@ void grGsRegSet(void *packet, unsigned long long reg, unsigned long long value);
 void grPacketSend(void *packet);
 
 /* ov01DrawAll: a GS packet with the ZBUF_1 register (GS_ZBUF_1) set, the second callbacks
- * of the five tables, then the object table's draw pass (objSlotRunDraw). */
-void ov01DrawAll(void)
+ * of the five tables, then the object table's draw pass (objSlotRunDraw). It is the scene's draw hook
+ * (sRender.fade_callback, set by ov01SceneInit) and does not use the hook's packet. */
+void ov01DrawAll(struct XglPacket *hookPacket)
 {
     unsigned int packet[4];
     unsigned long long zbufWord;

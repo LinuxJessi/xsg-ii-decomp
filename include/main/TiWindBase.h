@@ -20,5 +20,7 @@ void tiWindPointSetPosition(u32 index, const float *position);
 void tiWindPointSetSpeed(u32 index, float speed);
 void tiWindPointSetRange(u32 index, float upper, float lower);
 void tiWindPointSetRadius(u32 index, float radius, int global);
+void tiWindClearTables(void);
+void tiWindAdvanceAll(void);
 
 #endif /* INCLUDE_MAIN_TIWINDBASE_H */

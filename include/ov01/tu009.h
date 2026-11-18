@@ -23,5 +23,6 @@ void ov01CdPendingReset(void);
 unsigned long long ov01CdReadFileSync(const char *name, void *buffer);
 unsigned long long ov01CdReadFileAsync(const char *name, void *buffer);
 unsigned int ov01LookupNonHeap(int key);
+int ov01HeapProbeLargeAlloc(void);
 
 #endif /* INCLUDE_OV01_TU009_H */

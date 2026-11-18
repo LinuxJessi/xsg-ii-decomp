@@ -740,8 +740,8 @@ typedef struct SelectionRecord {
 } SelectionRecord;
 
 extern SelectionRecord selectionRecordTable[];
-char *func_00A9B850(int dispatch_value, int value);
-char *func_00A9B750(int dispatch_value, int value);
+char *statusTextGet(int dispatch_value, int value);
+char *battleLookupTextGet(int dispatch_value, int value);
 
 /* Returns the text pointer of the OV01 call (tu101 draws it with textDrawSegment). */
 char *selectionRecordSetValue(int record, int value)
@@ -751,11 +751,11 @@ char *selectionRecordSetValue(int record, int value)
     entry = &selectionRecordTable[record];
     if (entry->kind < 2)
     {
-        return func_00A9B850(entry->dispatch_value, value);
+        return statusTextGet(entry->dispatch_value, value);
     }
     else
     {
-        return func_00A9B750(entry->dispatch_value, value);
+        return battleLookupTextGet(entry->dispatch_value, value);
     }
 }
 

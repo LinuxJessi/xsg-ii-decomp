@@ -4,27 +4,40 @@
 #include "common.h"
 #include "ov01/tu041.h"
 
-/*
- * Sets the effect position table: the base goes to effectPosTable and the count
- * of 16-byte records goes to effectPosCount. A record is terminated by a word
- * of -1 at +0xC (the last word of the 16-byte record).
- */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu041", effectPosTableSet);
+/* One 16-byte record of the effect position table: x, y, z in 1/100 units (createEffectPos), then a word that is
+ * EFFECT_POS_END in the record that ends the table. */
+typedef struct EffectPosRecord {
+    int position[3]; /* +0x00 */
+    int end;         /* +0x0C */
+} EffectPosRecord;
 
-/* Base of the effect position table: 16-byte records, set by effectPosTableSet. */
-extern int effectPosTable;
-/* Number of valid position records (the index of the -1 terminator). */
+#define EFFECT_POS_END -1
+
+/* Base of the effect position table, set by effectPosTableSet. */
+extern EffectPosRecord *effectPosTable;
+/* Number of valid position records (the index of the end record). */
 extern int effectPosCount;
 
+/* Sets the effect position table: the base goes to effectPosTable, the number of records before the end record to
+ * effectPosCount. */
+void effectPosTableSet(EffectPosRecord *table)
+{
+    effectPosTable = table;
+    effectPosCount = 0;
+    while (table[effectPosCount].end != EFFECT_POS_END) {
+        effectPosCount++;
+    }
+}
+
 /*
- * Returns position record `index` (words 0, 1, 2 are x, y, z in 1/100 units,
- * read by createEffectPos), or 0 when index is past the last record.
+ * Returns position record `index` (x, y, z in 1/100 units, read by createEffectPos), or 0 when index is past the
+ * last record.
  */
 int *effectPosGet(int index) {
     if (!(index < effectPosCount)) {
         return 0;
     }
-    return effectPosTable + (index * 0x10);
+    return effectPosTable[index].position;
 }
 
 /* Number of valid effect position records. */

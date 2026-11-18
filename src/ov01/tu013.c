@@ -14,7 +14,6 @@ void unitValueRefresh(Ov01Object *object);
 int calcStatGet(Ov01Object *object, int kind, int mask);
 void calcStatResetCha(Ov01Object *object);
 void calcStatSet(Ov01Object *object, int kind, int value);
-void streamPlayByKey(Ov01Object *object, int key);
 void unitRemove(Ov01Object *object);
 int unitCmdCodeGet(int code, int wait);
 int unitCmdModeGet(int mode);
@@ -285,7 +284,7 @@ int func_00A85FC0(Ov01Object *object, Ov01Command *step)
         unitMoveKey(object, &keyHigh, &keyLow);
         if (mode != 125) {
             /* The key test takes the object as an int (ov01/tu012.h); its first argument is unused. */
-            if (unitEffectKeyFree((int) object, keyHigh, keyLow) == 0) {
+            if (unitEffectKeyFree(object, keyHigh, keyLow) == 0) {
                 break;
             }
         } else {

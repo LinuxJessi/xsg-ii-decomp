@@ -579,15 +579,6 @@ struct DataStreamEntry {
 
 extern struct DataSlot dataSlotPool[DATA_SLOT_COUNT];
 extern struct DataStreamEntry dataStreamPool[DATA_STREAM_COUNT];
-/* The entry block: the model entry files from +0x08 (pxy, txy, xhr, epf), the motion records at +0x38 and alt_index at +0x50. */
-struct DataEntry {
-    struct DataFileHead head;
-    struct DataModelFiles model;
-    struct DataFileRecord motions[2];
-    int alt_index;
-    unsigned char unmodeled_54[0x14];
-};
-
 extern struct DataEntry dataEntryBlock;
 
 void dataFileInit(void) {

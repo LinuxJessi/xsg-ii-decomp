@@ -5,10 +5,14 @@
 #include "shared.h"
 #include "main/sef.h"
 #include "ov01/tu001.h"
+#include "ov01/tu017.h"
 #include "ov01/tu033.h"
 #include "ov01/tu035.h"
 #include "ov01/tu023.h"
+#include "ov01/tu040.h"
 #include "ov01/tu042.h"
+#include "ov01/tu044.h"
+#include "ov01/tu046.h"
 
 extern int dataModelKeyTbl[];
 
@@ -155,7 +159,7 @@ HitAction *hitActionGet(int index)
 
 /* Records of batTable70Offset (entries 1..0x63). */
 
-void *func_00A9B580(int index)
+RecordTexts *func_00A9B580(int index)
 {
     unsigned char *table;
 
@@ -163,12 +167,12 @@ void *func_00A9B580(int index)
         return 0;
     }
     table = (unsigned char *)&batTable70Offset - 48 + batTable70Offset;
-    return table + (index - 1) * 4;
+    return (RecordTexts *) (table + (index - 1) * 4);
 }
 
 /* Records of batTable74Offset (entries 1..0x63). */
 
-void *func_00A9B5B8(int index)
+TextRecord8 *func_00A9B5B8(int index)
 {
     unsigned char *table;
 
@@ -176,7 +180,7 @@ void *func_00A9B5B8(int index)
         return 0;
     }
     table = (unsigned char *)&batTable74Offset - 52 + batTable74Offset;
-    return table + (index - 1) * 8;
+    return (TextRecord8 *) (table + (index - 1) * 8);
 }
 
 /* Records of pairLinkTableOffset (entries 1..0x10). */
@@ -268,31 +272,165 @@ short *stringOffsetsGet(int index)
     return (short *) (table + (index - 1) * 2);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B750);
+/* The *TextGet getters below decrement index after the table call: decremented first, the copy of index and the
+ * decrement merge into one instruction, unlike the original. */
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B7D8);
+/* Text `field` of record `index` (numbered from 1) of the battleLookupGet table; 0 for another field. */
+char *battleLookupTextGet(int index, int field)
+{
+    BattleLookupEntry *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B850);
+    table = battleLookupGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B8D8);
+/* Text `field` of record `index` (numbered from 1) of the itemRecordGet table; 0 for another field. */
+char *itemTextGet(int index, int field)
+{
+    ItemRecord *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B950);
+    table = itemRecordGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B9C8);
+/* Text `field` of record `index` (numbered from 1) of the statusRecordGet table; 0 for another field. */
+char *statusTextGet(int index, int field)
+{
+    StatusRecord *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BA40);
+    table = statusRecordGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BAB8);
+/* Text `field` of record `index` (numbered from 1) of the hitActionGet table; 0 for another field. */
+char *hitActionTextGet(int index, int field)
+{
+    HitAction *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BB30);
+    table = hitActionGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
 
-/* Message object made by msgPutObject: +0x4 release callback (msgObjRelease), +0xC ref count, +0x10 mode, +0x14 handle. */
+/* Text `field` of record `index` (numbered from 1) of the func_00A9B580 table; 0 for another field. */
+char *func_00A9B950(int index, int field)
+{
+    RecordTexts *table;
+
+    table = func_00A9B580(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
+
+/* Text `field` of record `index` (numbered from 1) of the func_00A9B5B8 table; 0 for another field. */
+char *func_00A9B9C8(int index, int field)
+{
+    TextRecord8 *table;
+
+    table = func_00A9B5B8(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
+
+/* Text `field` of record `index` (numbered from 1) of the pairLinkGet table; 0 for another field. */
+char *pairLinkTextGet(int index, int field)
+{
+    PairLink *table;
+
+    table = pairLinkGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
+
+/* Text `field` of record `index` (numbered from 1) of the calcLevelRecordGet table; 0 for another field. */
+char *calcLevelTextGet(int index, int field)
+{
+    CalcLevelRecord *table;
+
+    table = calcLevelRecordGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
+
+/* Text `field` of record `index` (numbered from 1) of the tgtIdRecordGet table; 0 for another field. */
+char *tgtIdTextGet(int index, int field)
+{
+    TgtIdRecord *table;
+
+    table = tgtIdRecordGet(1);
+    index--;
+    switch (field) {
+    case RECORD_TEXT_NAME:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
+    case RECORD_TEXT_INFO:
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
+    }
+    return 0;
+}
+
+/* Message object made by msgPutObject: an ov01 task record (ov01TaskClaim) whose update is msgObjRelease. */
 struct MsgObject {
-    unsigned char unmodeled_00[0xC];
-    int ref_count;
-    int mode;
-    int handle;
+    int flags;                                  /* +0x00: the task record's flags */
+    void (*update)(struct MsgObject *object);   /* +0x04: msgObjRelease */
+    void (*draw)(struct MsgObject *object);     /* +0x08: none */
+    int ref_count;                              /* +0x0C: frames the message stays (0: until its voice is done) */
+    int mode;                                   /* +0x10: MSG_MODE_VOICE when ref_count was 0 */
+    int handle;                                 /* +0x14: the text entry (textEntryAlloc) */
 };
+
+/* MsgObject.mode of a message that stays until its voice is done. */
+#define MSG_MODE_VOICE 1
 
 /* The string table: record 1 of the table at stringTableOffset is its offset list; each offset counts from the list. */
 char *tableStringGet(int index, int mode)
@@ -308,23 +446,42 @@ char *tableStringGet(int index, int mode)
     return 0;
 }
 
-/* Message globals: D_00AC51B0 is the two-word request block {arg, 0} that msgPutObject passes to textEntryAlloc;
- * msgBusy is the busy flag (1 while a message is outstanding). */
-extern int D_00AC51B0;
+/* Message globals: msgPages is the text page list {text, 0} that msgPutObject passes to textEntryAlloc; msgBusy
+ * is the busy flag (1 while a message is outstanding). */
+extern char *msgPages[2];
 extern int msgBusy;
 
 /* Clears the message request block and the busy flag. */
 void msgReset(void) {
-    D_00AC51B0 = 0;
+    msgPages[0] = 0;
     msgBusy = 0;
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BC20);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BCC8);
+/*
+ * Sends event (the unit and three words) as a kind message to the unit's script (the battle block's spawnArgD),
+ * or, without a unit or script, to the camera setting's script. The message's first word is the unit index with
+ * words[0] in the high half, its second words[1] | words[2] << 16.
+ */
+void unitScriptEventSend(int kind, UnitScriptEvent *event)
+{
+    SbMessage message;
+    int entry;
+    int script;
 
-/* thinkDispatch: switch over the think opcode (argument 2, 38 cases) on the unit's +0x144 sub-struct;
- * shared by natives thinkSet and thinkSet2. */
+    message.kind = kind;
+    message.args[0] = unitTblIndexOf(event->unit) | (event->words[0] << 16);
+    message.args[1] = event->words[1] | (event->words[2] << 16);
+    entry = event->unit != 0 && (script = event->unit->stats->spawnArgD) != 0 ? script : cameraSettingGet();
+    if (entry != 0) {
+        sbThreadEnqueue(ov01ScriptKeyGet(), entry, &message, 0);
+    }
+}
+
+/* thinkDispatch: queues the command `command` (CMD_KIND_*) for the unit; natives thinkSet and thinkSet2. Still asm:
+ * in the C, case 1 keeps unit and command in each other's registers and stores the command word after the code
+ * (five instruction pairs). */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", thinkDispatch);
 
 /* thinkSendEnd: queues the think-end record for the unit (cmdListSet), then ends the
@@ -338,7 +495,51 @@ void thinkSendEnd(Ov01Object *unit)
     tgtSelectModeEnd();
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BF08);
+/*
+ * Native atkTbl: fills table with the attack candidates of unit: for each of the first `rows` techniques of its
+ * key row (tableKeyRowGet) and each unit of the side the technique targets that is not flagged 4 and that the
+ * technique can affect (battleEffectApplies), one row {technique slot, unit index}. Returns the row count, which
+ * is also stored in table->count.
+ */
+int atkTblBuild(Ov01Object *unit, AtkTbl *table, int rows)
+{
+    Ov01Object **units;
+    int *word;
+    unsigned char *keys;
+    /* Byte offset of the slot in the key row: with keys[row] the address add takes the other operand order. */
+    int offset;
+    int row;
+    int tec;
+    int count;
+    int i;
+    int n;
+
+    word = &table->count;
+    n = 1;
+    for (row = 0; row < rows; row++) {
+        keys = tableKeyRowGet(unit->stats->key);
+        offset = row * sizeof(short);
+        tec = *(short *)(keys + offset);
+        if (tec == 0) {
+            continue;
+        }
+        count = unitTblGet(tgtSideOf(unit, tecRecordGet(tec)->flags), &units);
+        for (i = 0; i < count; i++) {
+            if (units[i] == 0) {
+                continue;
+            }
+            if (units[i]->flags & UNIT_FLAG_DOWN) {
+                continue;
+            }
+            if (!battleEffectApplies(unit, tec, units[i])) {
+                continue;
+            }
+            word[n++] = row;
+            word[n++] = unitTblIndexOf(units[i]);
+        }
+    }
+    return table->count = (n - 1) / 2;
+}
 
 /* Field `field` of row `index` of the attack table (native atkTblGet). */
 int atkTblFieldGet(int field, AtkTbl *table, int index)
@@ -354,11 +555,134 @@ int atkTblFieldGet(int field, AtkTbl *table, int index)
     return table->count;
 }
 
-/* unitParaFieldGet: field reader over the unit's +0x144 sub-struct, same 38 field ids as unitParaFieldSet; native unitParaGet. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", unitParaFieldGet);
+/* Parameter field of the unit (UNIT_PARA_*); 0 for no unit or an unknown field (native unitParaGet). */
+int unitParaFieldGet(struct Ov01Object *unit, int field)
+{
+    StatBlock *stats;
 
-/* unitParaFieldSet: field writer over the unit's +0x144 sub-struct (ids 0..37); native unitParaSet. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", unitParaFieldSet);
+    if (unit == 0) {
+        return 0;
+    }
+    stats = unit->stats;
+    switch (field) {
+    case UNIT_PARA_MAX_HP:
+        return stats->maxHp;
+    case UNIT_PARA_MAX_EP:
+        return stats->maxEp;
+    case UNIT_PARA_PHYS_ATTACK:
+        return stats->physAttack;
+    case UNIT_PARA_PHYS_DEFENCE:
+        return stats->physDefence;
+    case UNIT_PARA_MAG_ATTACK:
+        return stats->magAttack;
+    case UNIT_PARA_MAG_DEFENCE:
+        return stats->magDefence;
+    case UNIT_PARA_HIT_RATE:
+        return stats->hitRate;
+    case UNIT_PARA_EVADE_RATE:
+        return stats->evadeRate;
+    case UNIT_PARA_VALUE_BIAS:
+        return stats->valueBias;
+    case UNIT_PARA_HP:
+        return stats->hp;
+    case UNIT_PARA_EP:
+        return stats->ep;
+    case UNIT_PARA_KEY:
+        return stats->key;
+    case UNIT_PARA_STATE70:
+        return stats->state70;
+    case UNIT_PARA_LEVEL:
+        return stats->level;
+    case UNIT_PARA_EXP_LEVEL:
+        return stats->expLevel;
+    case UNIT_PARA_FLAGS:
+        return stats->flags;
+    case UNIT_PARA_POS_INDEX:
+        return stats->posIndex;
+    case UNIT_PARA_LIVE_ROW ... UNIT_PARA_SLOT_VALUE - 1:
+        return stats->liveRows[field - UNIT_PARA_LIVE_ROW];
+    case UNIT_PARA_SLOT_VALUE ... UNIT_PARA_SLOT_ROLL - 1:
+        return stats->slotValue[field - UNIT_PARA_SLOT_VALUE];
+    case UNIT_PARA_SLOT_ROLL ... UNIT_PARA_CURRENT - 1:
+        return stats->slotRoll[field - UNIT_PARA_SLOT_ROLL];
+    case UNIT_PARA_CURRENT:
+        return stats->current;
+    }
+    return 0;
+}
+
+/* Sets parameter field of the unit (UNIT_PARA_*, all but UNIT_PARA_STATE70) to value (native unitParaSet). */
+void unitParaFieldSet(struct Ov01Object *unit, int field, int value)
+{
+    StatBlock *stats;
+
+    if (unit == 0) {
+        return;
+    }
+    stats = unit->stats;
+    switch (field) {
+    case UNIT_PARA_MAX_HP:
+        stats->maxHp = value;
+        break;
+    case UNIT_PARA_MAX_EP:
+        stats->maxEp = value;
+        break;
+    case UNIT_PARA_PHYS_ATTACK:
+        stats->physAttack = value;
+        break;
+    case UNIT_PARA_PHYS_DEFENCE:
+        stats->physDefence = value;
+        break;
+    case UNIT_PARA_MAG_ATTACK:
+        stats->magAttack = value;
+        break;
+    case UNIT_PARA_MAG_DEFENCE:
+        stats->magDefence = value;
+        break;
+    case UNIT_PARA_HIT_RATE:
+        stats->hitRate = value;
+        break;
+    case UNIT_PARA_EVADE_RATE:
+        stats->evadeRate = value;
+        break;
+    case UNIT_PARA_VALUE_BIAS:
+        stats->valueBias = value;
+        break;
+    case UNIT_PARA_HP:
+        stats->hp = value;
+        break;
+    case UNIT_PARA_EP:
+        stats->ep = value;
+        break;
+    case UNIT_PARA_KEY:
+        stats->key = value;
+        break;
+    case UNIT_PARA_LEVEL:
+        stats->level = value;
+        break;
+    case UNIT_PARA_EXP_LEVEL:
+        stats->expLevel = value;
+        break;
+    case UNIT_PARA_FLAGS:
+        stats->flags = value;
+        break;
+    case UNIT_PARA_POS_INDEX:
+        stats->posIndex = value;
+        break;
+    case UNIT_PARA_LIVE_ROW ... UNIT_PARA_SLOT_VALUE - 1:
+        stats->liveRows[field - UNIT_PARA_LIVE_ROW] = value;
+        break;
+    case UNIT_PARA_SLOT_VALUE ... UNIT_PARA_SLOT_ROLL - 1:
+        stats->slotValue[field - UNIT_PARA_SLOT_VALUE] = value;
+        break;
+    case UNIT_PARA_SLOT_ROLL ... UNIT_PARA_CURRENT - 1:
+        stats->slotRoll[field - UNIT_PARA_SLOT_ROLL] = value;
+        break;
+    case UNIT_PARA_CURRENT:
+        stats->current = value;
+        break;
+    }
+}
 
 void *memset();
 
