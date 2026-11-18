@@ -147,8 +147,8 @@ f32 MMathMakeRandomPI(void)
 }
 
 float fmodf(float, float);
-extern float D_0069B4F0;
-extern float D_0069B4F4;
+extern float MMathRotNearTwoPi;
+extern float MMathRotNearPi;
 
 /* Shortest signed difference second - first, wrapped into [-pi, pi]. */
 f32 MMathCalcRotNear(f32 first, f32 second)
@@ -156,9 +156,9 @@ f32 MMathCalcRotNear(f32 first, f32 second)
     f32 twoPi;
     f32 result;
 
-    twoPi = D_0069B4F0;
+    twoPi = MMathRotNearTwoPi;
     result = fmodf(second - first, twoPi);
-    if (D_0069B4F4 < __builtin_fabsf(result))
+    if (MMathRotNearPi < __builtin_fabsf(result))
     {
         if (result < 0.0f)
         {
@@ -172,8 +172,8 @@ f32 MMathCalcRotNear(f32 first, f32 second)
     return result;
 }
 
-extern float D_0069B4F8;
-extern float D_0069B4FC;
+extern float MMathRotFarTwoPi;
+extern float MMathRotFarPi;
 
 /* Difference second - first wrapped into the other half-turn (|difference| >= pi). */
 f32 MMathCalcRotFar(f32 first, f32 second)
@@ -181,9 +181,9 @@ f32 MMathCalcRotFar(f32 first, f32 second)
     f32 twoPi;
     f32 result;
 
-    twoPi = D_0069B4F8;
+    twoPi = MMathRotFarTwoPi;
     result = fmodf(second - first, twoPi);
-    if (__builtin_fabsf(result) < D_0069B4FC)
+    if (__builtin_fabsf(result) < MMathRotFarPi)
     {
         if (result < 0.0f)
         {
