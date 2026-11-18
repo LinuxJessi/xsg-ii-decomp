@@ -815,7 +815,64 @@ int eventAttackRun(EventQueueEntry *entry)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", unitsMarkUninvolved);
+/*
+ * Holder of the table pointer unitTblGet returns. Codegen: a plain `Ov01Object **` local whose address is passed
+ * gets a stack slot of alias set 0, so the unit and actor flag stores in the unit loops kill its load for gcse load
+ * PRE (one more reload per loop than the original); the slot of a struct member keeps the original's register.
+ */
+struct UnitTableRef {
+    Ov01Object **units;
+};
+
+/* XenoActor.drawFlags bit unitsMarkUninvolved sets on the actors that take no part in the queued action and clears
+ * on the others (func_00A93CF0 clears it on all). */
+#define ACTOR_DRAW_UNINVOLVED 0x4000000
+
+/* Unit keys that always count as involved. */
+#define UNIT_KEY_ALWAYS_INVOLVED_A 0x7D
+#define UNIT_KEY_ALWAYS_INVOLVED_B 0x1F
+#define UNIT_KEY_ALWAYS_INVOLVED_C 0x7C
+
+/* Marks every unit that is neither the attacker of one of the last `actions` kind-4 records nor the target of one
+ * of the last `hits` kind-5 records; units with keys 0x7D, 0x1F and 0x7C always count as involved. */
+void unitsMarkUninvolved(int actions, int hits)
+{
+    struct UnitTableRef table;
+    int count;
+    int i;
+    int j;
+    int involved;
+
+    count = unitTblGet(UNIT_SIDE_ALL, &table.units);
+    for (i = 0; i < count; i++) {
+        if (table.units[i] == 0) {
+            continue;
+        }
+        involved = 0;
+        for (j = 0; j < actions; j++) {
+            if (eventQueueFindKind4(j)->data.attack.attacker == table.units[i]) {
+                involved = 1;
+                break;
+            }
+        }
+        for (j = 0; j < hits; j++) {
+            if (eventQueueFindKind5(j)->data.kind5.target == table.units[i]) {
+                involved = 1;
+                break;
+            }
+        }
+        if (table.units[i]->stats->key == UNIT_KEY_ALWAYS_INVOLVED_A
+            || table.units[i]->stats->key == UNIT_KEY_ALWAYS_INVOLVED_B
+            || table.units[i]->stats->key == UNIT_KEY_ALWAYS_INVOLVED_C) {
+            involved = 1;
+        }
+        if (involved == 0) {
+            table.units[i]->unit->drawFlags |= ACTOR_DRAW_UNINVOLVED;
+        } else {
+            table.units[i]->unit->drawFlags &= ~ACTOR_DRAW_UNINVOLVED;
+        }
+    }
+}
 
 void func_00A93CF0(void) {
     Ov01Object **actors;
