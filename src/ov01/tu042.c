@@ -457,7 +457,26 @@ void msgReset(void) {
     msgBusy = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BC20);
+/*
+ * Sends event as a kind message to the unit's script (the battle block's spawnArgC): the unit index, and for
+ * UNIT_SCRIPT_KIND_PAIR the second unit's index in the high half and words[0] | words[1] << 16.
+ */
+void func_00A9BC20(int kind, UnitScriptPairEvent *event)
+{
+    SbMessage message;
+
+    message.kind = kind;
+    message.args[0] = unitTblIndexOf(event->unit);
+    if (kind == UNIT_SCRIPT_KIND_PAIR) {
+        message.args[0] |= unitTblIndexOf(event->other) << 16;
+        /* In two steps: the one-expression form loads the words and allocates the registers differently. */
+        message.args[1] = event->words[0];
+        message.args[1] |= event->words[1] << 16;
+    }
+    if (event->unit->stats->spawnArgC != 0) {
+        sbThreadEnqueue(ov01ScriptKeyGet(), event->unit->stats->spawnArgC, &message, 0);
+    }
+}
 
 /*
  * Sends event (the unit and three words) as a kind message to the unit's script (the battle block's spawnArgD),

@@ -514,20 +514,12 @@ void tgtSelectUnhighlight(Ov01Object *unit)
 
 void tgtSelectUnhighlight(Ov01Object *unit);
 
-/* The script request func_00A9BC20 queues for a candidate: the unit and a zero word. */
-typedef struct TgtThinkRequest {
-    Ov01Object *unit;
-    int value;
-} TgtThinkRequest;
-
-void func_00A9BC20(int code, TgtThinkRequest *request);
-
 /* Automatic candidate: in mode 0 a unit with the skip status may give up its turn (20 %);
  * otherwise its think request is queued and mode 1 waits; in a later mode the candidate
  * is confirmed (highlight dropped) once no party unit is busy. */
 int tgtSelectAuto(Ov01Object *object)
 {
-    TgtThinkRequest request;
+    UnitScriptPairEvent request;
 
     switch (tgtSelectState.mode) {
     case 0:
@@ -536,7 +528,7 @@ int tgtSelectAuto(Ov01Object *object)
             return 1;
         }
         request.unit = object;
-        request.value = 0;
+        request.other = 0;
         func_00A9BC20(1, &request);
         tgtSelectState.mode = 1;
         break;

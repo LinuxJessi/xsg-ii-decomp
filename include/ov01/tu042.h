@@ -86,6 +86,19 @@ typedef struct UnitScriptEvent {
 
 void unitScriptEventSend(int kind, UnitScriptEvent *event);
 
+/* The 16-byte record func_00A9BC20 takes: the unit and, for UNIT_SCRIPT_KIND_PAIR, a second unit and two words
+ * that it passes on, with the kind, as a script message (sbThreadEnqueue). */
+typedef struct UnitScriptPairEvent {
+    struct Ov01Object *unit;
+    struct Ov01Object *other;
+    int words[2];
+} UnitScriptPairEvent;
+
+/* The func_00A9BC20 kind whose message also carries the second unit's index and the two words. */
+#define UNIT_SCRIPT_KIND_PAIR 2
+
+void func_00A9BC20(int kind, UnitScriptPairEvent *event);
+
 int atkTblFieldGet(int field, AtkTbl *table, int index);
 int atkTblBuild(struct Ov01Object *unit, AtkTbl *table, int rows);
 void thinkSendEnd(struct Ov01Object *unit);
