@@ -722,7 +722,120 @@ int sbOpNop(SbThread *thread, int opcode)
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbOpBinary);
+/* Operators of the sbOpBinary operand word. */
+#define SB_BIN_ADD 1
+#define SB_BIN_SUB 2
+#define SB_BIN_MUL 3
+#define SB_BIN_DIV 4
+#define SB_BIN_MOD 5
+#define SB_BIN_OR 6
+#define SB_BIN_AND 7
+#define SB_BIN_SHIFT_RIGHT 8
+#define SB_BIN_SHIFT_LEFT 9
+#define SB_BIN_NEG 10
+#define SB_BIN_EQ 11
+#define SB_BIN_GT 12
+#define SB_BIN_LT 13
+#define SB_BIN_GE 14
+#define SB_BIN_LE 15
+#define SB_BIN_NE 16
+#define SB_BIN_LOGICAL_OR 17
+#define SB_BIN_LOGICAL_AND 18
+
+/* Opcode 0x01: pops the right and the left operand (only the right one for SB_BIN_NEG), applies the operator of
+ * the operand word and pushes the result. A division or remainder by zero requests the SB_JUMP_ZERO_DIVIDE jump and
+ * pushes 0; an unknown operator is fatal. */
+int sbOpBinary(SbThread *thread, int opcode)
+{
+    unsigned short opcode16;
+    int right;
+    int left;
+    int result;
+    int operation;
+
+    opcode16 = opcode;
+    operation = sbCodeS32(thread, thread->pc + 1);
+    if (operation == SB_BIN_NEG) {
+        right = sbStackPop(thread);
+        left = 0;
+    } else {
+        right = sbStackPop(thread);
+        left = sbStackPop(thread);
+    }
+    switch (operation) {
+    case SB_BIN_ADD:
+        result = left + right;
+        break;
+    case SB_BIN_SUB:
+        result = left - right;
+        break;
+    case SB_BIN_MUL:
+        result = left * right;
+        break;
+    case SB_BIN_DIV:
+        if (right == 0) {
+            result = 0;
+            sbSlotJumpRequest(thread, SB_JUMP_ZERO_DIVIDE);
+            break;
+        }
+        result = left / right;
+        break;
+    case SB_BIN_MOD:
+        if (right == 0) {
+            result = 0;
+            sbSlotJumpRequest(thread, SB_JUMP_ZERO_DIVIDE);
+            break;
+        }
+        result = left % right;
+        break;
+    case SB_BIN_OR:
+        result = left | right;
+        break;
+    case SB_BIN_AND:
+        result = left & right;
+        break;
+    case SB_BIN_SHIFT_RIGHT:
+        result = left >> right;
+        break;
+    case SB_BIN_SHIFT_LEFT:
+        result = left << right;
+        break;
+    case SB_BIN_NEG:
+        result = -right;
+        break;
+    case SB_BIN_EQ:
+        result = left == right;
+        break;
+    case SB_BIN_GT:
+        result = left > right;
+        break;
+    case SB_BIN_LT:
+        result = left < right;
+        break;
+    case SB_BIN_GE:
+        result = left >= right;
+        break;
+    case SB_BIN_LE:
+        result = left <= right;
+        break;
+    case SB_BIN_NE:
+        result = left != right;
+        break;
+    case SB_BIN_LOGICAL_OR:
+        result = left || right;
+        break;
+    case SB_BIN_LOGICAL_AND:
+        result = left && right;
+        break;
+    default:
+        sbFatal(thread);
+        result = 0;
+        break;
+    }
+    sbStackPush(thread, result);
+    thread->pc += sbOpLength(opcode16, 0);
+    return 0;
+}
 
 /* Opcode 0x02: no effect; skips the opcode and its operand word. */
 int func_00A9DDE0(SbThread *thread, int opcode)
