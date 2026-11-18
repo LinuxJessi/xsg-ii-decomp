@@ -390,26 +390,20 @@ int func_00A93128(Ov01Object *attacker, int kind)
     return sefEntryHasFlag1((int)attacker->unit) != 0;
 }
 
-/* A unit command request (func_00A96510, func_00A94260): the unit, the command and its words. */
-typedef struct UnitCmdRequest {
-    Ov01Object *unit;
-    int command;
-    int words[3];
-} UnitCmdRequest;
-
-/* Queues the unit command of request (the mode, effect and activity commands; others are ignored). The mode
- * dispatch takes words 1 and 2 of the request and the face target. When the running command and the new one
- * are both mode or effect commands, the running one is dropped first. */
-void unitCmdRequestQueue(Ov01Object **faceTarget, UnitCmdRequest *request)
+/* Queues the reaction command of hit for its target (the mode, effect and activity commands; others are
+ * ignored). The mode dispatch takes the hit's words at +0x0C and +0x10 as its code and wait, and the face
+ * target. When the running command and the new one are both mode or effect commands, the running one is dropped
+ * first. */
+void unitCmdRequestQueue(Ov01Object **faceTarget, struct HitRecord *hit)
 {
     Ov01Command command;
     Ov01Command *current;
 
-    switch (request->command) {
+    switch (hit->reaction) {
     case UNIT_CMD_MODE_DISPATCH:
         command.command = UNIT_CMD_MODE_DISPATCH;
-        command.code = request->words[1];
-        command.arg.wait = request->words[2];
+        command.code = hit->followResult;
+        command.arg.wait = hit->backAttack;
         if (faceTarget != 0) {
             command.faceTarget = *faceTarget;
         } else {
@@ -434,16 +428,16 @@ void unitCmdRequestQueue(Ov01Object **faceTarget, UnitCmdRequest *request)
     default:
         return;
     }
-    current = dataLookupCurrent(&request->unit->commandQueue);
+    current = dataLookupCurrent(&hit->target->commandQueue);
     if (current != 0
         && (current->command == UNIT_CMD_MODE_DISPATCH || current->command == UNIT_CMD_MODE_START
             || current->command == UNIT_CMD_HOVER_EFFECT || current->command == UNIT_CMD_MOVE_RATIO)) {
-        if (request->command == UNIT_CMD_MODE_DISPATCH || request->command == UNIT_CMD_MODE_START
-            || request->command == UNIT_CMD_HOVER_EFFECT) {
-            dataLookupNext(&request->unit->commandQueue);
+        if (hit->reaction == UNIT_CMD_MODE_DISPATCH || hit->reaction == UNIT_CMD_MODE_START
+            || hit->reaction == UNIT_CMD_HOVER_EFFECT) {
+            dataLookupNext(&hit->target->commandQueue);
         }
     }
-    unitQueueAppend(request->unit, &command);
+    unitQueueAppend(hit->target, &command);
 }
 
 int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec);
@@ -1513,7 +1507,7 @@ int unitBindRequest(Ov01Tu033Request *request)
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96050);
 
-void func_00A96510(void *, int, int, int);
+int func_00A96510(Ov01Object *unit, int commandKind, int hitDamage, int hitMode);
 
 /*
  * battleResolveStatus (proposed battleResolveStatus): the kind-12 event handler. While the
