@@ -29,6 +29,7 @@ enum {
     UNIT_CMD_CLEAR_ACTIVE = 0x20,
     UNIT_CMD_PHASE_2B_WAIT = 0x21,
     UNIT_CMD_DEACTIVATE = 0x22,     /* func_00A86CB0: clears UNIT_FLAG_ACTIVE */
+    UNIT_CMD_FINISH_REFRESH = 0x26, /* unitCmdFinishRefresh */
     UNIT_CMD_MODE_START = 0x27
 };
 

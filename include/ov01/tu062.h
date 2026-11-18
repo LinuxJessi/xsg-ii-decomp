@@ -3,6 +3,8 @@
 
 /* Functions of src/ov01/tu062.c that other files call. */
 void menuPanelCreate(void);
+/* Opens a stat panel of kind. */
+void menuStatPanelNew(int kind);
 
 struct GrPacket;
 struct Ov01Object;

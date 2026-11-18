@@ -31,6 +31,8 @@
 #include "ov01/tu033.h"
 #include "ov01/tu042.h"
 #include "ov01/tu043.h"
+#include "ov01/tu050.h"
+#include "ov01/tu062.h"
 #include "ov01/tu036.h"
 #include "ov01/tu038.h"
 #include "ov01/tu054.h"
@@ -730,7 +732,112 @@ void func_00A93CF0(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93D50);
+int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit);
+
+/* Row 3 status that brings back a unit the hit takes down with 1 HP (and is used up); the row 1 and row 2
+ * status that a hit of kind 1 clears (50 and 10 percent). */
+#define STAT3_ENDURE 0x400
+#define STAT_HIT_CLEARS 0x20
+/* TecRecord.gateFlag of a technique that takes 100 of the target's current value. */
+#define TEC_GATE_CURRENT_DRAIN 10
+/* The actStepCounterValue values at which a technique hit takes the target's act stock and adds boost progress. */
+#define ACT_STEP_TAKE_STOCK 5
+#define ACT_STEP_ADD_BOOST 7
+/* menuStatPanelNew kind shown when a hit takes act stock. */
+#define STAT_PANEL_STOCK_LOST 5
+
+/*
+ * Applies one hit of an attack to its target and returns 1: the HP damage (calcHitApply for a lookup attack),
+ * the endure status, the wake rolls, the inflicted and cured statuses, the technique's drain, the attacker's percent
+ * and the target's stock and boost on the counter steps, the act stock roll, and UNIT_CMD_FINISH_REFRESH when the
+ * hit changes whether the target is low on HP.
+ */
+int func_00A93D50(struct AttackCommand *command, struct HitRecord *hit)
+{
+    Ov01Command refresh;
+    int stockIndex;
+    TecRecord *tec;
+    int wasLow;
+    int isLow;
+    int result;
+    int removed;
+    int bit;
+    int i;
+
+    wasLow = partyUnitHpLow(hit->target);
+    if (command->kind == CMD_KIND_ITEM) {
+        result = calcHitApply(command->attacker, hit->target, command->id);
+    } else {
+        result = calcHpDmg(command->attacker, hit->target, hit->hitMode.word, hit->damage);
+    }
+    if (result == 0 && calcStatGet(hit->target, 3, STAT3_ENDURE) != 0) {
+        calcHpAdjust(hit->target, 1);
+        result = 1;
+        calcStatReset(hit->target, 3, STAT3_ENDURE);
+    }
+    if (hit->hitMode.kind == 1) {
+        if (calcStatGet(hit->target, 1, STAT_HIT_CLEARS) != 0 && ov01RollPercent(50) != 0) {
+            calcStatReset(hit->target, 1, STAT_HIT_CLEARS);
+        }
+        if (calcStatGet(hit->target, 2, STAT_HIT_CLEARS) != 0 && ov01RollPercent(10) != 0) {
+            calcStatReset(hit->target, 2, STAT_HIT_CLEARS);
+        }
+    }
+    if (hit->inflictRow != 0) {
+        for (bit = 1, i = 15; i >= 0; i--, bit <<= 1) {
+            if (hit->inflictMask & bit) {
+                calcStatSet(hit->target, hit->inflictRow, bit);
+            }
+        }
+    }
+    if (hit->cureRow != 0) {
+        for (bit = 1, i = 15; i >= 0; i--, bit <<= 1) {
+            if (hit->cureMask & bit) {
+                calcStatReset(hit->target, hit->cureRow, bit);
+            }
+        }
+    }
+    tec = tecRecordGet(command->actionIdx);
+    if (tec->gateFlag == TEC_GATE_CURRENT_DRAIN) {
+        unitCurrentAdd(hit->target, -100);
+    }
+    if (command->kind == CMD_KIND_TECHNIQUE
+        && (tec->gateFlag == 0 || tec->gateFlag == 6 || tec->gateFlag == 7 || tec->gateFlag == 8)) {
+        unitPercentAdd(command->attacker, ((hit->hitMode.word >> 8) & 1) ? 20 : 10);
+        if (actStepCounterValue() == ACT_STEP_TAKE_STOCK && (hit->hitMode.word & 0xFF) == 1
+            && command->attacker != hit->target) {
+            removed = 0;
+            while (actStockRemoveStock(hit->target, &stockIndex) != 0) {
+                if (stockIndex > 0) {
+                    objPathShift(stockIndex);
+                }
+                removed = 1;
+            }
+            if (removed) {
+                unitValueRefresh(hit->target);
+                menuStatPanelNew(STAT_PANEL_STOCK_LOST);
+            }
+        }
+    }
+    if ((hit->hitMode.word >> 8) & 1) {
+        unitPercentAdd(hit->target, -(hit->target->stats->rollPercent / 2));
+    }
+    if (command->kind == CMD_KIND_TECHNIQUE
+        && (tec->gateFlag == 0 || tec->gateFlag == 6 || tec->gateFlag == 7 || tec->gateFlag == 8)) {
+        if (actStepCounterValue() == ACT_STEP_ADD_BOOST) {
+            boostAddProgress(hit->target, 10);
+        }
+    }
+    if (result != 0 && command->kind == CMD_KIND_TECHNIQUE) {
+        unitTryActStock(command, hit);
+    }
+    isLow = partyUnitHpLow(hit->target);
+    if (result != 0 && ((wasLow == 0 && isLow != 0) || (wasLow != 0 && isLow == 0))) {
+        refresh.command = UNIT_CMD_FINISH_REFRESH;
+        unitQueueAppend(hit->target, &refresh);
+    }
+    return 1;
+}
 
 int unitHasEffectCode(void *, int);
 
@@ -740,20 +847,20 @@ int unitHasEffectCode(void *, int);
  * of an entry, with two effect-code rolls for the low keys, and grants act stock
  * when a roll hits and calcBoostOk accepts the unit.
  */
-int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request) {
+int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit) {
     Ov01Object *object;
     int chanceHit;
     int flags;
     int requestFlags;
 
-    object = request->object;
-    if (tecRecordGet(source->tec_id)->flags & 8) {
+    object = hit->target;
+    if (tecRecordGet(command->actionIdx)->flags & 8) {
         return 0;
     }
     if (object->stats->key < 0x10) {
-        chanceHit = actLevelChanceRoll(object, source->tec_id) != 0;
+        chanceHit = actLevelChanceRoll(object, command->actionIdx) != 0;
         if (unitHasEffectCode(object, 0x2B) != 0) {
-            flags = request->flags;
+            flags = hit->hitMode.word;
             if ((flags >> 8) & 1) {
                 if (ov01RollPercent(0x19) != 0) {
                     chanceHit = 1;
@@ -761,7 +868,7 @@ int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request
             }
         }
         if (unitHasEffectCode(object, 0x33) != 0 && (object->flags & 0x4000)) {
-            requestFlags = request->flags;
+            requestFlags = hit->hitMode.word;
             if (((requestFlags >> 8) & 2) != 0 || !(requestFlags & 0xFF)) {
                 if (ov01RollPercent(0x32) != 0) {
                     chanceHit = 1;
@@ -769,7 +876,7 @@ int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request
             }
         }
     } else {
-        chanceHit = actLevelChanceRoll(object, source->tec_id) != 0;
+        chanceHit = actLevelChanceRoll(object, command->actionIdx) != 0;
     }
     if (chanceHit == 1 && calcBoostOk(object, 0) != 0) {
         calcActStockSet(object, 0);

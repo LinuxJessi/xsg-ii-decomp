@@ -108,6 +108,12 @@ int calcHpAdjust(struct Ov01Object *unit, int delta);
 int calcStatGet(struct Ov01Object *owner, int row, int mask);
 int calcStatReset(struct Ov01Object *owner, int row, int mask);
 int calcStatAltReset(struct Ov01Object *owner, int statIdx, int mask);
+int calcStatSet(struct Ov01Object *unit, int row, int statBit);
+/* The hit of an attack on target: calcHpDmg with the hit mode and damage, calcHitApply for a lookup key. */
+int calcHpDmg(struct Ov01Object *attacker, struct Ov01Object *target, int hitMode, int damage);
+int calcHitApply(struct Ov01Object *source, struct Ov01Object *target, int lookupKey);
+int unitPercentAdd(struct Ov01Object *unit, int amount);
+void boostAddProgress(struct Ov01Object *unit, int amount);
 void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
 int calcEpCost(struct Ov01Object *owner, int index);
 int slotCodeTest(struct Ov01Object *owner, int bit);
@@ -127,6 +133,8 @@ int tgtSideAccepts(struct Ov01Object *obj, int id);
 int actLevelChanceRoll(struct Ov01Object *owner, int index);
 int actStepCounterValue(void);
 void actStockClearBoost1(void);
+/* Drops unit from the stock; *stockIndex receives its stock position, or -1. */
+int actStockRemoveStock(struct Ov01Object *unit, int *stockIndex);
 void sdvInitSpecialWork(void);
 
 /*
