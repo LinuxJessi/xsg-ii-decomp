@@ -3475,7 +3475,7 @@ s8 unitRecordStateGet(StatOwner *unit, s32 index)
 /*
  * Returns 1 when exactly one of the two units has key (+0x62) below 16, the same
  * split tgtSideOf reads; 0 when both or neither are below it. When it returns 1,
- * func_00A97890 walks all units (team 2) instead of one target.
+ * tgtSelectTurnEnd walks all units (team 2) instead of one target.
  */
 s32 unitSidesDiffer(StatOwner *unitA, StatOwner *unitB)
 {

@@ -2106,14 +2106,14 @@
       "asm/nonmatchings/ov01/tu035/tgtSelectCursor.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectConfirm.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectExecute.s",
-      "asm/nonmatchings/ov01/tu035/func_00A977A0.s",
+      "asm/nonmatchings/ov01/tu035/tgtSelectStatusUpdate.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectStatusGet.s",
-      "asm/nonmatchings/ov01/tu035/func_00A97890.s",
+      "asm/nonmatchings/ov01/tu035/tgtSelectTurnEnd.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectPadInput.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectUnhighlight.s",
-      "asm/nonmatchings/ov01/tu035/func_00A97B90.s",
+      "asm/nonmatchings/ov01/tu035/tgtSelectAuto.s",
       "asm/nonmatchings/ov01/tu035/tgtSelectModeEnd.s",
-      "asm/nonmatchings/ov01/tu035/func_00A97C78.s"
+      "asm/nonmatchings/ov01/tu035/tgtSelectManual.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
