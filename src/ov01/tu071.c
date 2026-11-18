@@ -4,6 +4,8 @@
 #include "common.h"
 #include "main/tu022.h"
 #include "main/tu063.h"
+#include "ov01/tu008.h"
+#include "ov01/tu012.h"
 #include "ov01/tu071.h"
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu071", seObjectVoiceStart);
@@ -18,12 +20,12 @@ void seObjectVoiceStartDefault(void *object, int code)
     seObjectVoiceStart(object, code, -1);
 }
 
-void adxSetSlotFile(int slot, int handle);
+void adxSetSlotFile(int slot, const char *file);
 
 /* Sets the file of stream slot `slot` to `handle`. */
-void streamSlotSetFile(int slot, int handle)
+void streamSlotSetFile(int slot, const char *file)
 {
-    adxSetSlotFile(slot, handle);
+    adxSetSlotFile(slot, file);
 }
 
 
@@ -37,28 +39,15 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu071", bgmPlayTrack);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu071", func_00AA91B8);
 
-/* A table key: the record at owner->key whose table_id selects a table or path. */
-struct TableKey {
-    char unmodeled_000[0x62];
-    s16 table_id;
-};
-
-struct TableKeyOwner {
-    char unmodeled_000[0x144];
-    struct TableKey *key;
-};
-
-int dataBattleActionPathGet(s16);
-
-/* Plays the stream that the owner's table key maps to, on slot 1 at the stream level. */
-void streamPlayByKey(struct TableKeyOwner *owner)
+/* Plays the battle action stream of the unit's key in mode (dataBattleActionPathGet) on slot 1. */
+void streamPlayByKey(Ov01Object *unit, int mode)
 {
-    int handle;
+    char *path;
 
-    handle = dataBattleActionPathGet(owner->key->table_id);
-    if (handle != 0) {
+    path = dataBattleActionPathGet(unit->stats->key, mode);
+    if (path != 0) {
         soundSlotReopen(1);
         func_001EDC60(1);
-        streamSlotSetFile(1, handle);
+        streamSlotSetFile(1, path);
     }
 }

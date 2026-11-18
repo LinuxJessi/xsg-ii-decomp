@@ -613,14 +613,14 @@ int objx(SbThread *call)
 int streamPlay(SbThread *call)
 {
     int streamId;
-    int streamHandle;
+    const char *streamHandle;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
         sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     streamId = vmArgGet(call, 1);
-    streamHandle = vmKeyedEntryGet(call, streamId);
+    streamHandle = (const char *)vmKeyedEntryGet(call, streamId);
     soundSlotReopen(1);
     streamSetLevel(1);
     streamSlotSetFile(1, streamHandle);

@@ -91,7 +91,6 @@ unsigned short dataPadRead(int port);
 int dataKeyRegister(StatOwner *unit, unsigned short key);
 int dataKeyFind(StatOwner *unit, struct DataKeyEntry **found);
 int dataKeyValueGet(StatOwner *unit, int key);
-void *tgtUnitGet(void);
 int dataKeyCheck(StatOwner *unit, int key, void *tgt);
 
 int dataKeyInputStep(StatOwner *unit)

@@ -14,7 +14,6 @@ void unitValueRefresh(Ov01Object *object);
 int calcStatGet(Ov01Object *object, int kind, int mask);
 void calcStatResetCha(Ov01Object *object);
 void calcStatSet(Ov01Object *object, int kind, int value);
-void streamPlayByKey(Ov01Object *object, int key);
 void unitRemove(Ov01Object *object);
 int unitCmdCodeGet(int code, int wait);
 int unitCmdModeGet(int mode);

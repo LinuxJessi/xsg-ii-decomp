@@ -5,6 +5,7 @@
 #include "ov01/tu005.h"
 #include "ov01/tu012.h"
 #include "ov01/tu023.h"
+#include "ov01/tu036.h"
 #include "ov01/tu048.h"
 #include "ov01/tu051.h"
 
@@ -76,7 +77,6 @@ typedef struct ColourPair {
 
 extern ColourPair D_00ABACC8;
 
-extern void *tgtUnitGet(void);
 extern void func_00AA84D0(GrPacket *packet);
 extern void func_00AA7750(GrPacket *packet, int x, int y, short value, int);
 extern void menuStatSpriteRGB(GrPacket *packet, int x, int y, int width, int height,

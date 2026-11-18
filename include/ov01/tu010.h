@@ -3,7 +3,9 @@
 
 #include "shared.h"
 
-/* Bits of XenoActor.drawFlags (+0xBC): hidden, and the fade flag set while a fade runs. */
+/* Bits of XenoActor.drawFlags (+0xBC): unbound (set before unitUnbind, cleared before unitBindSetup), hidden, and
+ * the fade flag set while a fade runs. */
+#define ACTOR_STATE_UNBOUND 0x1
 #define ACTOR_STATE_HIDDEN 0x4
 #define ACTOR_STATE_FADING 0x10000
 /* Default progress step of a fade (per frame, tu018 and tu021). */

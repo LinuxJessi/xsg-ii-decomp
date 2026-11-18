@@ -28,6 +28,7 @@
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
 #include "ov01/tu035.h"
+#include "ov01/tu036.h"
 #include "ov01/tu040.h"
 #include "ov01/tu037.h"
 #include "ov01/tu042.h"
@@ -226,10 +227,6 @@ StatOwner *unitSelectPlTarget(StatOwner *keep)
 
 void *memset(void *destination, int value, unsigned int size);
 
-/* cfEvent bits of the battle start bonuses battleStartBonusApply grants. */
-#define CF_EVENT_BOOST_BONUS 0x1
-#define CF_EVENT_PARTY_BONUS 0x2
-#define CF_EVENT_BONUSES (CF_EVENT_BOOST_BONUS | CF_EVENT_PARTY_BONUS)
 /* Effect group of the battle start bonus effect; its record is 1 (boost), 2 (party) or 3 (both). */
 #define BONUS_EFFECT_GROUP 0x154
 

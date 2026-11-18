@@ -162,10 +162,10 @@ int posDataSet(SbThread *thread)
     return 1;
 }
 
-/* Returns the entry posDataSet stored. */
-int posDataGet(void)
+/* Returns the entry posDataSet stored: the effect position table (effectPosTableSet). */
+struct EffectPosRecord *posDataGet(void)
 {
-    return posDataEntry;
+    return (struct EffectPosRecord *)posDataEntry;
 }
 
 /* The monster table entry monsTblSet selected (the enemy list, an array of spawn records); monsTblGet returns it.

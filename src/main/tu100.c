@@ -18,6 +18,7 @@
 #include "main/pad_raw.h"
 #include "main/tu093.h"
 #include "main/tu048.h"
+#include "ov01/tu042.h"
 
 /* Script strings of the text draw commands (0x0068A3F0, .rodata, 80 bytes with zero fill). */
 const char D_0068A3F0[80] = "$init;$bg2;$shadow+1,+3,000000;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
@@ -611,10 +612,6 @@ void menuSkillModelTailLoad(void) {
 int msgRangeSetText();
 int selectionBlockTestBit();
 int selectionEntryBitOutsideMask(int group, int slot, int sub, int mask);
-char *hitActionTextGet();
-char *func_00A9B9C8();
-char *battleLookupTextGet();
-char *itemTextGet();
 extern u8 D_0069D518;
 extern char *menuTutorialLine;
 extern unsigned char D_006A52E0[];

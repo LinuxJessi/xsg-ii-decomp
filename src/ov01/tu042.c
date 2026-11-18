@@ -479,8 +479,9 @@ void unitScriptEventSend(int kind, UnitScriptEvent *event)
     }
 }
 
-/* thinkDispatch: queues think command  (cmdExecute command kinds) for the unit; natives thinkSet and
- * thinkSet2. Still asm: the C is five instruction pairs off (held/pkg3/tu042_thinkDispatch_5ranges.c). */
+/* thinkDispatch: queues the command `command` (CMD_KIND_*) for the unit; natives thinkSet and thinkSet2. Still asm:
+ * in the C, case 1 keeps unit and command in each other's registers and stores the command word after the code
+ * (five instruction pairs). */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", thinkDispatch);
 
 /* thinkSendEnd: queues the think-end record for the unit (cmdListSet), then ends the
@@ -527,7 +528,7 @@ int atkTblBuild(Ov01Object *unit, AtkTbl *table, int rows)
             if (units[i] == 0) {
                 continue;
             }
-            if (units[i]->flags & 4) {
+            if (units[i]->flags & UNIT_FLAG_DOWN) {
                 continue;
             }
             if (!battleEffectApplies(unit, tec, units[i])) {

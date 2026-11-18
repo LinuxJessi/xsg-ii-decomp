@@ -13,61 +13,7 @@
 #include "ov01/tu043.h"
 
 
-typedef struct XglTaskPrefix XglTaskPrefix;
 
-typedef struct XglTaskScheduler XglTaskScheduler;
-
-/*
- * Only the link/callback prefix is evidenced by this allocation.  The
- * complete task records are allocated with a 0x80-byte stride, and callers
- * write task-specific payload beyond this 0x10-byte prefix.  This declaration
- * must not be read as the complete task layout or allocation size.
- */
-struct XglTaskPrefix {
-    XglTaskScheduler *scheduler;
-    XglTaskPrefix *next;
-    XglTaskPrefix *previous;
-    int (*callback)(XglTaskPrefix *task);
-};
-
-struct XglTaskScheduler {
-    XglTaskPrefix *free_tasks;
-    XglTaskPrefix *active_head;
-    XglTaskPrefix *active_tail;
-    XglTaskPrefix *next_to_visit;
-};
-
-struct ObjectTask {
-    XglTaskPrefix task; /* the scheduler header xglTaskEntryNext maintains. */
-    void *work; /* objRemove passes this slot to objWorkFree. */
-};
-
-extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
-                                int (*callback)(XglTaskPrefix *task),
-                                XglTaskPrefix *entry);
-
-/* The unit's actor and weapon slots point at XenoActors (main/tu051.h). */
-
-/*
- * The unit record scenarioMtd, transWepIn/transWepOut and spWepDispOn
- * (0x00a0e550) all share: spWepDispOn receives the
- * same pointer scenarioMtd receives, dereferences it to reach this record,
- * then indexes its +0x1C table by (weapon-slot & 3) and reads +0x14, exactly
- * as transWepIn/transWepOut do on their own argument and scenarioMtd does on
- * *unitHandle. Bytes between the evidenced members are untouched here.
- */
-typedef struct BattleUnit BattleUnit;
-
-struct BattleUnit {
-    unsigned char unmodeled_00[0x10];
-    struct XenoActor *work;       /* +0x10 */
-    struct XenoActor *actor;      /* +0x14 */
-    unsigned char unmodeled_18[0x1C - 0x18];
-    struct XenoActor *weapon[4];  /* +0x1C */
-};
-
-BattleUnit **tgtUnitAdrGet(void);
-BattleUnit *tgtUnitGet(void);
 /*
  * Private battle state, in original BSS address order. Keeping these local
  * definitions together lets the guarded overlay linker map each exact object
@@ -75,34 +21,20 @@ BattleUnit *tgtUnitGet(void);
  */
 /* The enemy-cursor task: enemyCursorOpen opens it, enemyCursorClose and objCurRemove
  * remove it. X1 names the same global the enemy-cursor task (battle_init.c). */
-extern ObjectTask *pTaskEnCur;
-/*
- * objEntry2 and objStdInit are defined by ov01/tu001 obj.c (src/ov01/obj.h
- * is that TU-local header and is not includable here);
- * src/ov01/entry_first_init.c already redeclares them the same way.
- */
-extern ObjectTask *objEntry2(void *argument, void (*callback)(ObjectTask *task));
-extern void objRemove(ObjectTask *task);
-
+extern TextEntry *pTaskEnCur;
 /* Text task that the choice-menu openers allocate (the textEntryAlloc result) and the close functions remove. */
-extern ObjectTask *choiceMenuTextTask;
+extern TextEntry *choiceMenuTextTask;
 /* The choice menu's text page list for textEntryAlloc: the text of the entry under the cursor (set by the pickers),
  * then 0. */
-extern char *choiceMenuPages[2];
-/* The text page list of the enemy cursor (and of the paired technique menu): the text (set by func_00A98960 and
+extern unsigned char *choiceMenuPages[2];
+/* The text page list of the enemy cursor (and of the paired technique menu): the text (set by pairedMenuPick and
  * enemyCursorStep), then 0. */
-extern char *enemyCursorPages[2];
-
-/* main/tu124 (its header has no prototypes for these; tu127 keeps its own differently typed copies). */
-int choiceMenuOpen(unsigned int index, int x, int y, int width, int height, int style_index, unsigned char unit_size,
-                   unsigned int flags, char **items, short *values, unsigned char *itemFlags);
-void choiceMenuSetActive(int index, int enable);
-ObjectTask *textEntryAlloc(int x, int y, int width, int height, int style, void *pages);
+extern unsigned char *enemyCursorPages[2];
 
 /* The lists the choice-menu openers fill for choice slot 0: the entry texts (0 after the last), the value shown with
  * each entry, its id and its flag (CHOICE_ENTRY_DISABLED greys it out). The pickers index ids and flags with the
  * 1-based cursor. */
-extern char *choiceMenuItems[];
+extern unsigned char *choiceMenuItems[];
 extern short choiceMenuValues[];
 extern short choiceMenuEntryIds[];
 extern unsigned char choiceMenuEntryFlags[];
@@ -167,10 +99,11 @@ void choiceMenuTextClose(void) {
 
 int choiceMenuIsOpen(int);
 int choiceMenuGetResult(int);
-extern int D_00AC3C04;
+extern int itemMenuChoice;
 
-/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C04, 0 when choiceMenuEntryFlags flags it. */
-int func_00A97F40(void) {
+/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in itemMenuChoice, 0 when choiceMenuEntryFlags
+ * flags it. */
+int itemMenuPick(void) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -179,15 +112,15 @@ int func_00A97F40(void) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index - 1];
-            D_00AC3C04 = entry_id;
+            itemMenuChoice = entry_id;
             result = hitActionTextGet(entry_id, 1);
             choiceMenuPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
-                D_00AC3C04 = 0;
+                itemMenuChoice = 0;
             }
         }
     }
-    return D_00AC3C04;
+    return itemMenuChoice;
 }
 
 /* Techniques 1..TEC_LOOKUP_LAST of the battle lookup table. */
@@ -234,7 +167,7 @@ extern int tecMenuChoice;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in tecMenuChoice, 0 when choiceMenuEntryFlags
  * flags it. */
-int func_00A981B8(void) {
+int tecMenuPick(void) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -296,10 +229,11 @@ void func_00A98408(void) {
     choiceMenuTextTask = 0;
 }
 
-extern int D_00AC3C0C;
+extern int levelMenuChoice;
 
-/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C0C, 0 when choiceMenuEntryFlags flags it. */
-int func_00A98440(void) {
+/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in levelMenuChoice, 0 when choiceMenuEntryFlags
+ * flags it. */
+int levelMenuPick(void) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -308,15 +242,15 @@ int func_00A98440(void) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index - 1];
-            D_00AC3C0C = entry_id;
+            levelMenuChoice = entry_id;
             result = calcLevelTextGet(entry_id, 1);
             choiceMenuPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
-                D_00AC3C0C = 0;
+                levelMenuChoice = 0;
             }
         }
     }
-    return D_00AC3C0C;
+    return levelMenuChoice;
 }
 
 extern int pairMenuIds[];
@@ -359,10 +293,11 @@ void func_00A98690(void) {
     choiceMenuTextTask = 0;
 }
 
-extern int D_00AC3C30;
+extern int pairMenuChoice;
 
-/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C30, 0 when choiceMenuEntryFlags flags it. */
-int func_00A986C8(void) {
+/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in pairMenuChoice, 0 when choiceMenuEntryFlags
+ * flags it. */
+int pairMenuPick(void) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -371,15 +306,15 @@ int func_00A986C8(void) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index - 1];
-            D_00AC3C30 = entry_id;
+            pairMenuChoice = entry_id;
             result = pairLinkTextGet(entry_id, 1);
             choiceMenuPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
-                D_00AC3C30 = 0;
+                pairMenuChoice = 0;
             }
         }
     }
-    return D_00AC3C30;
+    return pairMenuChoice;
 }
 
 extern int pairedMenuIds[];
@@ -423,11 +358,11 @@ void enemyCursorClose(void) {
     pTaskEnCur = 0;
 }
 
-extern int D_00AC3C80;
+extern int pairedMenuChoice;
 
-/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C80, 0 when choiceMenuEntryFlags flags it;
- * the helper result goes to enemyCursorPages instead of choiceMenuPages, the list the other pickers use. */
-int func_00A98960(void) {
+/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in pairedMenuChoice, 0 when choiceMenuEntryFlags
+ * flags it; the text goes to enemyCursorPages instead of choiceMenuPages, the list the other pickers use. */
+int pairedMenuPick(void) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -436,15 +371,15 @@ int func_00A98960(void) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index - 1];
-            D_00AC3C80 = entry_id;
+            pairedMenuChoice = entry_id;
             result = battleLookupTextGet(entry_id, 1);
             enemyCursorPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
-                D_00AC3C80 = 0;
+                pairedMenuChoice = 0;
             }
         }
     }
-    return D_00AC3C80;
+    return pairedMenuChoice;
 }
 
 extern int tgtIdMenuIds[];
@@ -487,10 +422,11 @@ void func_00A98BB0(void) {
     choiceMenuTextTask = 0;
 }
 
-extern int D_00AC3CAC;
+extern int tgtIdMenuChoice;
 
-/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3CAC, 0 when choiceMenuEntryFlags flags it. */
-int func_00A98BE8(void) {
+/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in tgtIdMenuChoice, 0 when choiceMenuEntryFlags
+ * flags it. */
+int tgtIdMenuPick(void) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -499,15 +435,15 @@ int func_00A98BE8(void) {
         cursor_index = choiceMenuGetResult(0);
         if (cursor_index > 0) {
             entry_id = choiceMenuEntryIds[cursor_index - 1];
-            D_00AC3CAC = entry_id;
+            tgtIdMenuChoice = entry_id;
             result = tgtIdTextGet(entry_id, 1);
             choiceMenuPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index - 1] != 0) {
-                D_00AC3CAC = 0;
+                tgtIdMenuChoice = 0;
             }
         }
     }
-    return D_00AC3CAC;
+    return tgtIdMenuChoice;
 }
 
 extern int statBitValues[];
@@ -640,17 +576,17 @@ enum {
     SELECT_LOOKUP,
     SELECT_HIT_ACTION,
     SELECT_PAIR,
-    SELECT_INDEX_6,
-    SELECT_INDEX_5,
+    SELECT_SNAPSHOT,
+    SELECT_SWAP,
     SELECT_LEVEL,
-    SELECT_COMMAND_7,
+    SELECT_LEAVE,
     SELECT_TGT_ID,
     SELECT_END = 20
 };
 
 /* The command of the battle menu's selection for the unit: key-row entries 1..10 (entries 1 and 2 are no command
  * for party keys 1..10), the record-based selections with their technique and record index, and the end of the
- * turn (command 8 for a party unit with selection kind 1 or 2, else CMD_KIND_THINK_END). Returns 1. */
+ * turn (CMD_KIND_REFRESH for a party unit with selection kind 1 or 2, else CMD_KIND_THINK_END). Returns 1. */
 int battleSelectionGet(Ov01Object *unit, CmdListBody *command, Ov01Object *target)
 {
     int selection;
@@ -666,7 +602,7 @@ int battleSelectionGet(Ov01Object *unit, CmdListBody *command, Ov01Object *targe
     } else if (selection == SELECT_END) {
         if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10
             && (unsigned int)(tgtSelectState.selectionKind - 1) < 2) {
-            command->command = 8;
+            command->command = CMD_KIND_REFRESH;
             tgtSelectState.selectionKind = 0;
             tgtSelectState.selection = 0;
         } else {
@@ -674,66 +610,66 @@ int battleSelectionGet(Ov01Object *unit, CmdListBody *command, Ov01Object *targe
         }
     } else if (selection <= SELECT_TARGET_LAST) {
         if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10 && (unsigned int)(selection - 1) < 2) {
-            command->command = 0;
+            command->command = CMD_KIND_NONE;
         } else {
             code = tableKeyEntryGet(unit, tgtSelectState.selection, target);
-            command->command = 1;
+            command->command = CMD_KIND_TECHNIQUE;
             command->code = code;
             command->arg.target = target;
         }
     } else {
         switch (selection) {
         case SELECT_WAIT:
-            command->command = 2;
+            command->command = CMD_KIND_WAIT;
             break;
         case SELECT_LOOKUP:
-            command->command = 3;
+            command->command = CMD_KIND_LOOKUP;
             lookup = battleLookupGet(tgtSelectState.selectionIndex);
             command->arg.target = target;
             command->code = lookup->tecIndex;
             command->pairIndex = tgtSelectState.selectionIndex;
             break;
         case SELECT_HIT_ACTION:
-            command->command = 4;
+            command->command = CMD_KIND_ITEM;
             hitAction = hitActionGet(tgtSelectState.selectionIndex);
             command->arg.target = target;
             command->code = hitAction->entry;
             command->pairIndex = tgtSelectState.selectionIndex;
             break;
         case SELECT_LEVEL:
-            command->command = 1;
+            command->command = CMD_KIND_TECHNIQUE;
             level = calcLevelRecordGet(tgtSelectState.selectionIndex);
             command->arg.target = target;
             command->code = level->tecIndex;
             command->pairIndex = tgtSelectState.selectionIndex;
             break;
         case SELECT_PAIR:
-            command->command = 1;
+            command->command = CMD_KIND_TECHNIQUE;
             pair = pairLinkGet(tgtSelectState.selectionIndex);
             command->arg.target = target;
             command->code = pair->tecIndex;
             command->pairIndex = tgtSelectState.selectionIndex;
             break;
         case SELECT_TGT_ID:
-            command->command = 1;
+            command->command = CMD_KIND_TECHNIQUE;
             tgtId = tgtIdRecordGet(tgtSelectState.selectionIndex);
             command->arg.target = target;
             command->code = tgtId->actionIndex;
             command->pairIndex = tgtSelectState.selectionIndex;
             break;
-        case SELECT_INDEX_6:
-            command->command = 6;
+        case SELECT_SNAPSHOT:
+            command->command = CMD_KIND_SNAPSHOT;
             command->code = tgtSelectState.selectionIndex;
             break;
-        case SELECT_INDEX_5:
-            command->command = 5;
+        case SELECT_SWAP:
+            command->command = CMD_KIND_SWAP;
             command->code = tgtSelectState.selectionIndex;
             break;
-        case SELECT_COMMAND_7:
-            command->command = 7;
+        case SELECT_LEAVE:
+            command->command = CMD_KIND_LEAVE;
             break;
         default:
-            command->command = 0;
+            command->command = CMD_KIND_NONE;
             break;
         }
     }
@@ -751,7 +687,7 @@ s16 tableKeyEntryGet(StatOwner *owner, int index, void *target) {
 }
 
 /* The target slot of the menu: targets[1] while a pair menu mode is open and its flag is set, else targets[0]. */
-BattleUnit **tgtUnitAdrGet(void)
+Ov01Object **tgtUnitAdrGet(void)
 {
     switch (tgtSelectState.menuMode) {
     case 7:
@@ -767,12 +703,12 @@ BattleUnit **tgtUnitAdrGet(void)
     return &tgtSelectState.targets[0];
 }
 
-BattleUnit *tgtUnitGet(void)
+Ov01Object *tgtUnitGet(void)
 {
     return *tgtUnitAdrGet();
 }
 
-void tgtUnitSet(BattleUnit *unit)
+void tgtUnitSet(Ov01Object *unit)
 {
     *tgtUnitAdrGet() = unit;
 }

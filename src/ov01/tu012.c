@@ -11,6 +11,7 @@
 #include "ov01/tu033.h"
 #include "ov01/tu036.h"
 #include "ov01/tu042.h"
+#include "ov01/tu071.h"
 
 /* keyHigh of the high modes (mode 16 and up): unitActionKey uses 320, unitMoveKey uses 330. */
 #define ACTION_KEY_BASE 320
@@ -594,7 +595,6 @@ int unitCmdAction(Ov01Object *object, Ov01Command *command) {
 }
 
 int func_001EDCA0(void);
-void streamPlayByKey(void *owner, int mode);
 
 int unitCmdPlayVoice(Ov01Object *object, Ov01Command *step) {
     tecRecordGet(step->code);

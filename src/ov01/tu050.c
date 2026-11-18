@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ov01/tu005.h"
 #include "ov01/tu023.h"
+#include "ov01/tu036.h"
 #include "ov01/tu048.h"
 #include "ov01/tu050.h"
 #include "ov01/tu051.h"
@@ -26,7 +27,6 @@ extern PathObject *objPathTable[OBJ_PATH_COUNT];
 /* ActStock.pickSource value that shows the moving path object instead of point 0. */
 #define PATH_STOCK_SOURCE_MOVING 2
 
-void *tgtUnitGet(void);
 void func_00AA7770(GrPacket *packet, int x, int y, int key, int mode, int fade);
 
 int objStdMove(void *target);

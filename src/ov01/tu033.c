@@ -17,6 +17,7 @@
 #include "ov01/tu008.h"
 #include "main/tu051.h"
 #include "ov01/tu009.h"
+#include "ov01/tu010.h"
 #include "ov01/tu011.h"
 #include "ov01/tu012.h"
 #include "ov01/tu019.h"
@@ -42,12 +43,9 @@ extern char cmdFifo[];   /* cmdFifo: fifo control block */
 
 /* Payloads the appenders copy whole into a record (four, six and eleven words). */
 
-/* The four-word payload of eventQueueAdd and eventQueueAddKind4. */
+/* The four-word payload of eventQueueAdd. */
 typedef struct EventQueueArgs {
-    union {
-        struct Ov01Object *unit;        /* the acting unit of a kind-4 record (the attack's attacker) */
-        int actions;                    /* kind 3: the kind-4 records of the attack */
-    };                                  /* +0x00 */
+    int actions;                        /* +0x00: kind 3: the kind-4 records of the attack */
     union {
         int tecIndex;                   /* the tec whose EP cost cmdStockRun charges */
         int hits;                       /* kind 3: the kind-5 records (targets) of the attack */
@@ -61,7 +59,8 @@ typedef struct EventQueueArgs {
 typedef struct EventQueueEntry {
     int kind;
     union {
-        EventQueueArgs args;          /* eventQueueAdd, eventQueueAddKind4 */
+        EventQueueArgs args;          /* eventQueueAdd */
+        struct AttackCommand attack;  /* eventQueueAddKind4: the attack (attackQueue) */
         struct {
             void *object;
             CmdListBody args;
@@ -257,7 +256,7 @@ void *memset(void *destination, int value, unsigned int count);
 struct Ov01Object *tgtFindNext(void);
 signed char unitRecordStateGet(struct Ov01Object *unit, int index);
 int actionTransformSlotGet(int id);
-void eventQueueAddKind4(EventQueueArgs *args);
+void eventQueueAddKind4(struct AttackCommand *command);
 void eventQueueAddKind5(struct HitRecord *args);
 extern int D_00AC3AFC;
 
@@ -268,7 +267,7 @@ int attackQueue(struct AttackCommand *command, struct Ov01Object *target, TecRec
 {
     struct HitRecord hit;
     EventQueueArgs counts;
-    EventQueueArgs pair;
+    struct AttackCommand pair;
     int kind;
     int flags;
     int hits;
@@ -280,8 +279,8 @@ int attackQueue(struct AttackCommand *command, struct Ov01Object *target, TecRec
             calcHitRecordFill(command, &hit);
             kind = hit.hitMode.word & 0xFF;
             flags = (hit.hitMode.word >> 8) & 0xFF;
-            battleStateGet()->second = hit.damage;
-            battleStateGet()->third = hit.hitMode.word;
+            battleStateGet()->hitDamage = hit.damage;
+            battleStateGet()->hitMode = hit.hitMode.word;
             switch (kind) {
             case 0:
                 hit.reaction = UNIT_CMD_JUMP_EFFECT;
@@ -324,15 +323,13 @@ int attackQueue(struct AttackCommand *command, struct Ov01Object *target, TecRec
         eventQueueAddKind5(&hit);
         hits++;
     } while ((target = tgtFindNext()) != 0);
-    /* A kind-4 record keeps the first four words of the attack command (attacker, kind, action, id); the pair
-     * copy below is one 16-byte struct copy in the original (ldl/sdl), so both go through that view. */
-    eventQueueAddKind4((EventQueueArgs *)command);
+    eventQueueAddKind4(command);
     kind = 1;
     command->attacker->stats->valueLevel += unitRecordStateGet(command->attacker, command->actionIdx);
     if (tecRecordGet(command->actionIdx)->gateFlag == 1) {
         kind = 2;
-        pair = *(EventQueueArgs *)command;
-        pair.unit = unitPairPartnerFind(command->attacker, command->id);
+        pair = *command;
+        pair.attacker = unitPairPartnerFind(command->attacker, command->id);
         eventQueueAddKind4(&pair);
     }
     if (actionTransformSlotGet(command->actionIdx) != 0) {
@@ -578,13 +575,13 @@ void eventQueueAddKind1(void *object, CmdListBody *args)
     eventQueueCount++;
 }
 
-/* eventQueueAddKind4: appends a kind-4 record with an 0x10-byte payload. */
-void eventQueueAddKind4(EventQueueArgs *args)
+/* eventQueueAddKind4: appends a kind-4 record holding the attack command. */
+void eventQueueAddKind4(struct AttackCommand *command)
 {
     EventQueueEntry *entry = eventQueueReserve();
 
     entry->kind = 4;
-    entry->data.args = *args;
+    entry->data.attack = *command;
     eventQueueCount++;
 }
 
@@ -754,9 +751,10 @@ enum {
 };
 #define ATTACK_FILL_FRAMES 3
 
-/* unitDataBoxDrop's second argument for the two special actions that call it. */
-#define ATTACK_SPECIAL_VALUE_C9 50
-#define ATTACK_SPECIAL_VALUE_F6 100
+/* The percent chance of the target's first drop for the two stealing actions (unitDataBoxDrop): 0x2C9 takes it
+ * half the time, 0x2F6 always (else the second drop). */
+#define STEAL_CHANCE_HALF 50
+#define STEAL_CHANCE_SURE 100
 
 extern int attackStep;
 extern int attackFillWait;
@@ -810,7 +808,7 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
     case 0x2C9:
         if (attackStep == 0) {
             if (unitEffectKeyFree(command->attacker, tecEffectGroupGet(command->attacker, tec), tec->extent) != 0) {
-                unitDataBoxDrop(hit->target, ATTACK_SPECIAL_VALUE_C9);
+                unitDataBoxDrop(hit->target, STEAL_CHANCE_HALF);
                 attackStep++;
             }
         } else if (msgIsIdle() != 0) {
@@ -899,7 +897,7 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
             }
             break;
         case 1:
-            unitDataBoxDrop(hit->target, ATTACK_SPECIAL_VALUE_F6);
+            unitDataBoxDrop(hit->target, STEAL_CHANCE_SURE);
             attackStep++;
             break;
         default:
@@ -1072,8 +1070,6 @@ void unitDataBoxDrop(Ov01Object *unit, int percent)
     msgPutObject(0x14, 0x120, itemPickText, 0x2D, 0x1AC, 0x28);
 }
 
-/* XenoActor.drawFlags bit unitTransformBegin clears on every side-2 actor before binding it again. */
-#define ACTOR_DRAW_BIT0 0x1
 /* The sef gate the transform closes (owner 0). */
 #define TRANSFORM_SEF_GATE 0x37
 
@@ -1098,7 +1094,7 @@ void unitTransformBegin(Ov01Object *unit, int action)
     for (i = 0; i < count; i++) {
         other = units[i];
         if (other != 0) {
-            other->unit->drawFlags &= ~ACTOR_DRAW_BIT0;
+            other->unit->drawFlags &= ~ACTOR_STATE_UNBOUND;
             unitBindSetup(other);
         }
     }
@@ -1169,7 +1165,7 @@ void battleUnitsReset(void)
             owner = items[index];
             index += 1;
             if (owner != 0) {
-                owner->unit->drawFlags |= 1;
+                owner->unit->drawFlags |= ACTOR_STATE_UNBOUND;
                 unitUnbind(owner);
             }
         } while (index < count);
@@ -1286,7 +1282,7 @@ void func_00A95608(Ov01Object *object)
  */
 void unitStatusAuraUpdate(Ov01Object *object)
 {
-    if (object->flags & 2) {
+    if (object->flags & UNIT_FLAG_HIDDEN) {
         return;
     }
     if (calcStatGet(object, 2, 1)) {
@@ -1375,7 +1371,7 @@ void unitSlotShowHidePart(Ov01Object *object, int index) {
 
     unit = object->children[index];
     if (unit != 0) {
-        unit->drawFlags &= ~4;
+        unit->drawFlags &= ~ACTOR_STATE_HIDDEN;
         unit->alpha = 1.0f;
         XenoActorHidePart(object->unit, ov01UnitSlotPart);
     }
@@ -1388,7 +1384,7 @@ void unitSlotHideShowPart(Ov01Object *object, int index) {
     unit = object->children[index];
     if (unit != 0) {
         unit->alpha = 0;
-        unit->drawFlags |= 4;
+        unit->drawFlags |= ACTOR_STATE_HIDDEN;
         XenoActorShowPart(object->unit, ov01UnitSlotPart);
     }
 }
@@ -1513,23 +1509,23 @@ int battleResolveStatus(void) {
     Ov01Object **units;
     Ov01Object *object;
     Ov01Object *unit;
-    int first;
-    int second;
-    int third;
+    int commandKind;
+    int hitDamage;
+    int hitMode;
     int count;
     int i;
     int result;
 
     object = battleStateGet()->object;
-    first = battleStateGet()->first;
-    second = battleStateGet()->second;
-    third = battleStateGet()->third;
+    commandKind = battleStateGet()->commandKind;
+    hitDamage = battleStateGet()->hitDamage;
+    hitMode = battleStateGet()->hitMode;
     if (object != 0 && (calcStatGet(object, 1, 0xFFFF) != 0 || calcStatGet(object, 2, 0xFFFF) != 0 || calcStatGet(object, 3, 0xFFFF) != 0)) {
         result = unitQueueIsEmpty(object);
         if (result == 0) {
             return 0;
         }
-        func_00A96510(object, first, second, third);
+        func_00A96510(object, commandKind, hitDamage, hitMode);
     }
     count = unitTblGet(2, &units);
     for (i = 0; i < count; i++) {

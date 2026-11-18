@@ -6,6 +6,7 @@
 #include "main/tu097.h"
 #include "main/tu110.h"
 #include "main/xgl_font.h"
+#include "ov01/tu042.h"
 
 /* Admitted aligned(1) scalar: maxHp sits at the unaligned offset 2 of the record. */
 typedef signed int UnalignedS32 __attribute__((aligned(1)));
@@ -2397,7 +2398,6 @@ unsigned int cursorBufferGetIndex(LicenseCursor *cursor);
 int menuListPageCount(LicenseCursor *cursor);
 /* OV01 dataBoxChkCategory1 (config/symbols/ov01.txt). */
 int dataBoxChkCategory1(int value);
-void *hitActionTextGet(int id, int unused);
 int selectionEntryIsEligible(int index);
 extern u8 selectionWindowCount;
 extern unsigned char selectionWindowList[];
@@ -2440,7 +2440,6 @@ void menuDrawItemList(int x, int y, LicenseCursor *cursor)
 
 /* OV01 dataBoxChkCategory3 (config/symbols/ov01.txt). */
 int dataBoxChkCategory3(int id);
-void *func_00A9B9C8(int id, int unused);
 int selectionBlockTestBit(int slot);
 
 /* Two-column item window: up to 18 rows (9 per column) from the cursor's first visible
@@ -2515,7 +2514,6 @@ struct ControlContext *ptGetMenuMember();
 /* OV01 battleContextStateGet (config/symbols/ov01.txt): the state record (BattleState in
    ov01/tu023.c, 0x108 bytes) of the member bound to slot key. */
 MenuPartyRecord *battleContextStateGet(int key);
-void *itemTextGet(int id, int unused);
 /* OV01 dataBoxChkCategory2 (config/symbols/ov01.txt). */
 int dataBoxChkCategory2(int value);
 extern unsigned char selectionPlainCount;
@@ -2574,7 +2572,6 @@ void menuDrawPlainItemList(int x, int y, LicenseCursor *cursor)
 
 /* OV01 battleContextApplyLookup (config/symbols/ov01.txt). */
 int battleContextApplyLookup(int id, int item);
-void *battleLookupTextGet(int dispatch_value, int value);
 
 /* Item list of the selected party member: member tabs (0x166 for the selected one),
    then one row per item with its count; a row whose count exceeds the member

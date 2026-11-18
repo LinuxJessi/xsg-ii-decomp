@@ -80,6 +80,8 @@ typedef struct UnitScriptEvent {
     int words[3];
 } UnitScriptEvent;
 
+void unitScriptEventSend(int kind, UnitScriptEvent *event);
+
 int atkTblFieldGet(int field, AtkTbl *table, int index);
 int atkTblBuild(struct Ov01Object *unit, AtkTbl *table, int rows);
 void thinkSendEnd(struct Ov01Object *unit);

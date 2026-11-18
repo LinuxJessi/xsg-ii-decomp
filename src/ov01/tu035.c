@@ -15,7 +15,9 @@
 #include "ov01/tu059.h"
 #include "ov01/tu060.h"
 #include "ov01/tu061.h"
+#include "ov01/tu066.h"
 #include "ov01/tu070.h"
+#include "ov01/tu071.h"
 
 typedef struct TgtSlot TgtSlot;
 
@@ -38,7 +40,6 @@ extern Ov01Object *tgtSelectCurrent;
 extern int tgtSelectStatus;
 extern int tgtSelectMode;
 void *memset(void *s, int c, unsigned int n);
-void unitScriptEventSend(int selector, void *object);
 void tgtSelectActivate(void);
 void tgtSelectBegin(void);
 int tgtSelectCursor(int inputHandled);
@@ -83,8 +84,6 @@ int tgtSelectStep(void)
     return tgtSelectStatusUpdate();
 }
 
-/* cfEvent bit of a battle with a time limit (tu039 tests it too). */
-#define CF_EVENT_TIME_LIMIT 0x20
 /* Side arguments of the unit counts. */
 #define TGT_SIDE_PARTY 0
 #define TGT_SIDE_ENEMY 1
@@ -102,10 +101,6 @@ enum {
 
 unsigned short dataPadRead(int port);
 
-/* cfEvent bit of a battle that ends without the victory sequence. */
-#define CF_EVENT_SKIP_VICTORY 0x200
-/* Unit command the party units get when the victory starts (unitCmdPhase2CWait). */
-#define UNIT_CMD_PHASE_2C_WAIT 0x1F
 /* bgmPlayTrack track of the victory. */
 #define TGT_VICTORY_BGM 6
 /* streamPlayByKey key of the victory line and unitScriptEventSend selector of the victory camera. */
@@ -113,13 +108,7 @@ unsigned short dataPadRead(int port);
 #define TGT_VICTORY_CAMERA 7
 
 int tgtSelectStatusGet(void);
-void bgmPlayTrack(int track);
 Ov01Object *unitSelectPlTarget(Ov01Object *last);
-void streamPlayByKey(Ov01Object *object, int key);
-/* Declared int on purpose: battleEndCheck matches only when this call counts as setting  (with a void
- * prototype the victoryStarted store is scheduled differently), although decoFlagsSetAll returns nothing
- * meaningful; tu066.h does not list it. */
-int decoFlagsSetAll();
 
 /* Returns 1 once the battle is over. While a unit is busy it returns 0. An enemy-gone status starts the victory
  * once (BGM, the line of a party unit, the camera on the last party unit, UNIT_CMD_PHASE_2C_WAIT for every
@@ -230,15 +219,15 @@ void tgtSelectBegin(void)
 void tgtSelectActivate(void)
 {
     BattleState *state = &tgtSelectState;
-    Ov01Object *object;
+    UnitScriptEvent event;
 
     if (unitQueueIsEmpty(state->current) != 0) {
-        object = state->current;
-        object->flags |= 0x10;
+        event.unit = state->current;
+        event.unit->flags |= 0x10;
         state->active = 1;
         state->mode = 0;
         state->flags = (state->flags & ~2) | 4;
-        unitScriptEventSend(4, &object);
+        unitScriptEventSend(4, &event);
     }
 }
 
@@ -272,7 +261,7 @@ int tgtSelectCursor(int inputHandled)
 }
 
 /*
- * Confirms object: it becomes last_object and the execute stage (flag 8) is armed. If the current
+ * Confirms object: it becomes lastObject and the execute stage (flag 8) is armed. If the current
  * candidate has lost its highlight, the selection is dropped and the cursor stage (flag 4) cleared.
  */
 void tgtSelectConfirm(Ov01Object *object)
@@ -281,7 +270,7 @@ void tgtSelectConfirm(Ov01Object *object)
     int flags;
 
     object->flags = (object->flags | 1) & ~0x1000;
-    state->last_object = object;
+    state->lastObject = object;
     flags = state->flags | 8;
     state->flags = flags;
     if (!(state->current->flags & 0x10)) {
@@ -315,7 +304,7 @@ int dataEntryBlockReset(void);
 void tgtSelectExecute(void)
 {
     BattleState *state = &tgtSelectState;
-    Ov01Object *unit;
+    UnitScriptEvent event;
 
     switch (state->phase) {
     case TGT_PHASE_RUN:
@@ -326,7 +315,7 @@ void tgtSelectExecute(void)
         if (eventQueueRun() == 0) {
             return;
         }
-        if (tgtSelectState.last_object->flags & TGT_OBJECT_TURN_DONE) {
+        if (tgtSelectState.lastObject->flags & TGT_OBJECT_TURN_DONE) {
             tgtSelectState.phase = TGT_PHASE_TURN_END;
             return;
         }
@@ -336,22 +325,22 @@ void tgtSelectExecute(void)
         if (unitNumFlag1Flag4ClearGet(TGT_SIDE_ALL) != 0) {
             return;
         }
-        tgtSelectTurnEnd(state->last_object);
+        tgtSelectTurnEnd(state->lastObject);
         menuPanelHide();
-        unitValueRefresh(state->last_object);
-        unit = state->current;
-        unitScriptEventSend(5, &unit);
+        unitValueRefresh(state->lastObject);
+        event.unit = state->current;
+        unitScriptEventSend(5, &event);
         actStepCounterAdvance();
         dataEntryBlockReset();
-        if (state->last_object->stats->key < TGT_PARTY_KEY_LIMIT) {
-            state->lastPartyUnit = state->last_object;
+        if (state->lastObject->stats->key < TGT_PARTY_KEY_LIMIT) {
+            state->lastPartyUnit = state->lastObject;
         }
         state->flags = (state->flags & ~TGT_STAGE_EXECUTE) | TGT_STAGE_BEGIN;
-        state->last_object = 0;
+        state->lastObject = 0;
         state->phase = TGT_PHASE_RUN;
         state->object = 0;
-        state->first = 0;
-        state->second = 0;
+        state->commandKind = 0;
+        state->hitDamage = 0;
         return;
     }
 }
@@ -400,13 +389,10 @@ int tgtSelectStatusGet(void)
 /* StatBlock.state70 values whose units get an end-of-turn command. */
 #define TGT_UNIT_STATE_RATIO 2
 #define TGT_UNIT_STATE_PANEL 3
-/* The unit command (unitCommandTable index) queued for TGT_UNIT_STATE_PANEL units. */
-#define TGT_UNIT_CMD_PANEL 0x1D
-/* menuUnitPanelOpen mode of that command. */
+/* menuUnitPanelOpen mode of the UNIT_CMD_MOVE_RAMP command TGT_UNIT_STATE_PANEL units get. */
 #define TGT_PANEL_MODE 2
 
 int unitSidesDiffer(StatOwner *unitA, StatOwner *unitB);
-void *tgtUnitGet(void);
 void battleEntryClearReset(StatOwner *owner);
 void battleStateClearWords(StatOwner *owner);
 void menuUnitPanelOpen(Ov01Object *unit, int mode);
@@ -444,7 +430,7 @@ void tgtSelectTurnEnd(Ov01Object *unit)
                 unitQueueClear(units[i]);
                 unitQueueAppend(units[i], &command);
             } else if (state == TGT_UNIT_STATE_PANEL) {
-                command.command = TGT_UNIT_CMD_PANEL;
+                command.command = UNIT_CMD_MOVE_RAMP;
                 unitQueueClear(units[i]);
                 unitQueueAppend(units[i], &command);
                 menuUnitPanelOpen(units[i], TGT_PANEL_MODE);
@@ -574,7 +560,6 @@ void tgtSelectModeEnd(void)
 /* BattleState.selection value that leaves the menu without a command. */
 #define TGT_SELECTION_BACK 0x15
 
-void tgtUnitSet(void *unit);
 void dataStateSetMode(u32 value, int flags);
 int dataUnitListInit(void **selected, int side);
 int dataUnitCursorStep(void **out);

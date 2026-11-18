@@ -22,6 +22,6 @@ struct SbImageHeader *ov01ScriptKeyGet(void) {
 }
 
 /* The scene's SBL library image (gameWork.imageEnd, an address main keeps as int). */
-struct SbImageHeader *ov01ScriptImageGet(void) {
-    return (struct SbImageHeader *)gameWork.imageEnd;
+struct VmKeyTable *ov01ScriptImageGet(void) {
+    return (struct VmKeyTable *)gameWork.imageEnd;
 }

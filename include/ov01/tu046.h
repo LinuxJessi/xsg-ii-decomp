@@ -16,7 +16,7 @@ int vmSubEntryGet(struct SbThread *thread, int index, int subIndex);
 void func_00A9F2E0(struct SbThread *thread, int pc);
 
 void *monsTblGet(void);
-int posDataGet(void);
+struct EffectPosRecord *posDataGet(void);
 int cameraSettingGet(void);
 
 #endif /* INCLUDE_OV01_TU046_H */

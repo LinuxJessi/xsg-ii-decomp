@@ -21,8 +21,6 @@ void ov01StepSetNext(void *item, void (*next_step)(int context));
 extern int ov01SceneDone;
 void ov01StepStartFadeOut(int context);
 
-/* cfEventGet bit: the battle runs against the time limit (gameWork.panelValue, in frames). */
-#define CF_EVENT_TIME_LIMIT 0x20
 #define FRAMES_PER_SECOND 30
 
 /* First battle step: runs the target selection until it is done, then hides the cursor and moves on to

@@ -64,6 +64,7 @@ struct DataSlot {
 void dataBatDatLoad(void);
 void dataBattleSeLoad(void);
 void dataBattleSeRelease(void);
+char *dataBattleActionPathGet(int kind, int mode);
 void dataFaceFileLoad(void);
 void dataSlotUnload(struct DataSlot *slot);
 int dataStatBufGet(void);
