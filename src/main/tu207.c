@@ -1015,7 +1015,8 @@ void recordStepAngle(int stage)
 
 void spriteBatchDraw(GsQueueContext *context, XglPacket *packet);
 
-/* Draw handler of record type 2 (recordDrawHandlers[1]): draws the record's texture (its tex0 word) over the whole 512x448
+/* Draw handler of record type 2 (recordDrawHandlers[1]): draws the record's texture (its tex0 word) over the whole
+   512x448
    screen through a type 20 sprite record. */
 void recordDrawType2(GsQueueContext *record, XglPacket *packet)
 {
@@ -1050,7 +1051,8 @@ extern int recordTunnelRadius;
 #define RECORD_TUNNEL_WRAP_RADIUS 406
 #define RECORD_TUNNEL_END_RADIUS 620
 
-/* Draw handler of record type 3 (recordDrawHandlers[2]): a triangle fan from the screen centre through octagonal rings of
+/* Draw handler of record type 3 (recordDrawHandlers[2]): a triangle fan from the screen centre through octagonal rings
+   of
    radius recordTunnelRadius, recordTunnelRadius + RECORD_TUNNEL_RING_SPACING, ... below RECORD_TUNNEL_END_RADIUS
    (recordAdvanceRingRadius advances recordTunnelRadius by the record's step); each ring vertex takes its texture
    coordinates from the point clamped to radius 224, at the record's depth. */
@@ -1420,7 +1422,8 @@ void recordDrawType5(GsQueueContext *record, XglPacket *unused)
 }
 
 /*
- * Draw handler of record type 6 (recordDrawHandlers[5]): draws the 512 x 448 screen texture as one triangle fan of its four
+ * Draw handler of record type 6 (recordDrawHandlers[5]): draws the 512 x 448 screen texture as one triangle fan of its
+   four
  * corners, each corner moved by recordWarpCorner. XYZF2 takes the record's z as the whole upper word (Z and fog).
  */
 void recordDrawType6(GsQueueContext *record, XglPacket *unused)

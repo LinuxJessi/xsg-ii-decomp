@@ -240,7 +240,8 @@ void sefPacketUnpackRef(SefUnpackBlock *block, int blockSize, int count, unsigne
     sceVif1PkRef(currentPacket, environment, count, 0, 0, 0);
 }
 
-/* Opens a VIF UNPACK of the following data: VU address, UNPACK command, cycle and write lengths (tu045.c calls it too). */
+/* Opens a VIF UNPACK of the following data: VU address, UNPACK command, cycle and write lengths (tu045.c calls it
+   too). */
 void func_0012B6E0(XglPacket *packet, int vuAddress, int unpackCommand, int cycleLength, int writeLength);
 void func_0012B770(XglPacket *packet);
 void func_0012BCE8(XglPacket *packet, const void *data, int count);
@@ -308,7 +309,8 @@ extern Matrix4 sefCameraMatrix[1];
  * and gcc then schedules the epilogue's ld $31 after the fourteen stores instead of before them (fd 53/70). */
 extern SefQuadCorners sefQuadCorners;
 
-/* Takes the active camera's view matrix (sefViewMatrixPtr) into the VU packet and sefViewCameraMatrix (view x sefCameraMatrix),
+/* Takes the active camera's view matrix (sefViewMatrixPtr) into the VU packet and sefViewCameraMatrix (view x
+   sefCameraMatrix),
  * and fills the packet's quad corners, GIF tags and depth test. The corners are copied as doublewords through the
  * union: as one struct assignment the tag stores go out before the epilogue's ld $31 (fd 55/70). */
 void sefBuildCameraPacket(void) {
@@ -935,14 +937,17 @@ typedef struct SefEmitterParams {
     unsigned char unmodeled_1e[0x20 - 0x1E];
 } SefEmitterParams;
 
-/* The parameter rows of kinds 5 to 7 (sefEmitterParamsKinds5To7, 0x5E6F80), addressed from the row of kind 0: the original
+/* The parameter rows of kinds 5 to 7 (sefEmitterParamsKinds5To7, 0x5E6F80), addressed from the row of kind 0: the
+   original
  * indexes [kind][line] from 0x5E6D00, five rows (0x80 bytes each) before the table, which lies inside srsRecordTable
- * (+0x630). The same access as (sefEmitterParamsKinds5To7 - 5)[kind] or [kind - 5] costs two instructions (fd 137/135). */
+ * (+0x630). The same access as (sefEmitterParamsKinds5To7 - 5)[kind] or [kind - 5] costs two instructions (fd
+   137/135). */
 extern SefEmitterParams D_005E6D00[][4];
 f32 sefNoiseNext(void);
 void *MMathNormalizeVector2(void *destination, const Vector4 *source);
 
-/* Emitters of effect kinds 0 to 7 (parameter rows of four per kind): once per frame, spawns up to count particles into free
+/* Emitters of effect kinds 0 to 7 (parameter rows of four per kind): once per frame, spawns up to count particles into
+   free
  * entries of the ring. */
 void sefSpawnKinds5To7(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1031,7 +1036,8 @@ void sefSpawnKinds5To7(ResourceSlot *slot, int index) {
 
 extern SefEmitterParams sefEmitterParamsKinds8To10[];
 
-/* Emitters of effect kinds 8 to 10 (parameter rows of four per kind): 0 and 3 spin in place, 1 and 2 fly towards a random point
+/* Emitters of effect kinds 8 to 10 (parameter rows of four per kind): 0 and 3 spin in place, 1 and 2 fly towards a
+   random point
    above the origin; emitter 1 shrinks its particles after the ninth. */
 void sefSpawnKinds8To10(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1128,7 +1134,8 @@ void sefSpawnKinds8To10(ResourceSlot *slot, int index) {
 
 extern SefEmitterParams sefEmitterParamsKinds11To13[];
 
-/* Emitters of effect kinds 11 to 13 (parameter rows of five per kind; sefCreateKindResourceSlot creates three emitters):
+/* Emitters of effect kinds 11 to 13 (parameter rows of five per kind; sefCreateKindResourceSlot creates three
+   emitters):
  * each spawn emits up to count particles while free entries last, until lastFrame. */
 void sefSpawnKinds11To13(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1218,7 +1225,8 @@ extern SefEmitterParams sefEmitterParamsKinds22Up[];
 /* Emitters 1 and 2 of these kinds add xglSRand() & SEF_SHADE_TINT_MASK, 0 to 31, to the shade. */
 #define SEF_SHADE_TINT_MASK 0x1F
 
-/* Emitters of effect kinds 22 and up (parameter rows of four per kind): like sefSpawnKinds8To10 with its emitters 1 and 2 facing a random
+/* Emitters of effect kinds 22 and up (parameter rows of four per kind): like sefSpawnKinds8To10 with its emitters 1
+   and 2 facing a random
    angle, adding a random tint to the shade and emitter 2 shrinking its particles. */
 void sefSpawnKinds22Up(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1318,7 +1326,8 @@ void sefSpawnKinds22Up(ResourceSlot *slot, int index) {
 
 extern SefEmitterParams sefEmitterParamsKinds14To16[];
 
-/* Emitters of effect kinds 14 to 16 (parameter rows of five per kind): 0 to 2 fly outwards along their start position, 3 and 4 fly
+/* Emitters of effect kinds 14 to 16 (parameter rows of five per kind): 0 to 2 fly outwards along their start position,
+   3 and 4 fly
    towards a random point. */
 void sefSpawnKinds14To16(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1419,7 +1428,8 @@ void sefSpawnKinds14To16(ResourceSlot *slot, int index) {
 
 extern SefEmitterParams sefEmitterParamsKinds17To19[];
 
-/* Emitters of effect kinds 17 to 19 (parameter rows of five per kind, sefEmitterParamsKinds17To19 indexed from kind 0): 0 and 1 start on a cylinder,
+/* Emitters of effect kinds 17 to 19 (parameter rows of five per kind, sefEmitterParamsKinds17To19 indexed from kind
+   0): 0 and 1 start on a cylinder,
    2 at a random offset, 3 and 4 on a cylinder and fly towards a random point. */
 void sefSpawnKinds17To19(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
