@@ -4416,8 +4416,8 @@ int sefEntryHasFlag1(int key) {
     return sefGetEntryFlags(key) & 1;
 }
 
-int sefEntryHasFlag2(void) {
-    return sefGetEntryFlags() & 2;
+int sefEntryHasFlag2(int key) {
+    return sefGetEntryFlags(key) & 2;
 }
 
 /* The actor the wrappers below address, with the offsets of XenoActor in xenoActor.c:

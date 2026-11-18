@@ -2105,8 +2105,6 @@ short D_0069B9A8[3] = { -1, -1, -1 };
 short D_0069B9B0[3] = { -1, -1, -1 };
 
 int uwamonoUpdateLadderState(void);
-void XenoActorHidePart(struct XenoActor *actor, const char *part);
-void XenoActorShowPart(struct XenoActor *actor, const char *part);
 int uwamonoFindSelected(void);
 void uwamonoSendEvent(int kind, int id, int value);
 void uwamonoTriggerRecord(int index);

@@ -57,6 +57,8 @@ void XenoActorReleaseAll(void);
 void XenoActorSetChannelValue(struct XenoActor *actor, float value);
 void XenoActorSetChannelValueB(struct XenoActor *actor, float value);
 int XenoActorIsDone(struct XenoActor *actor);
+int XenoActorHidePart(struct XenoActor *actor, const char *partName);
+int XenoActorShowPart(struct XenoActor *actor, const char *partName);
 void XenoActorApplySourceValue(struct XenoActor *actor);
 void XenoActorSetPlayRange(struct XenoActor *actor, int start, int end);
 void XenoActorSetFirstWord(struct XenoActor *actor, int value);

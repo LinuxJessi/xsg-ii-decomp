@@ -13,6 +13,8 @@
  */
 #include "common.h"
 #include "main/sef.h"
+#include "main/xenoActor.h"
+#include "ov01/tu002.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
 #include "main/tu051.h"
@@ -22,6 +24,7 @@
 #include "ov01/tu012.h"
 #include "ov01/tu019.h"
 #include "ov01/tu017.h"
+#include "ov01/tu018.h"
 #include "ov01/tu020.h"
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
@@ -1346,8 +1349,7 @@ void unitSlotPause(Ov01Object *object, int index) {
     }
 }
 
-int XenoActorShowPart(struct XenoActor *, int);
-extern int ov01Slot1Part;
+extern const char *ov01Slot1Part;
 
 /* unitSlotShowPart (proposed unitSlotShowPart): shows part ov01Slot1Part of slot 1 when the slot exists. */
 void unitSlotShowPart(Ov01Object *object) {
@@ -1359,7 +1361,6 @@ void unitSlotShowPart(Ov01Object *object) {
     }
 }
 
-int XenoActorHidePart(struct XenoActor *, int);
 
 /* unitSlotHidePart (proposed unitSlotHidePart): hides part ov01Slot1Part of slot 1 when the slot exists. */
 void unitSlotHidePart(Ov01Object *object) {
@@ -1373,7 +1374,7 @@ void unitSlotHidePart(Ov01Object *object) {
 
 /* The part of the unit's own actor that stands in for a slot actor (unitSlotShowHidePart hides it while the slot
  * is shown, unitSlotHideShowPart shows it while the slot is paused). */
-extern int ov01UnitSlotPart;
+extern const char *ov01UnitSlotPart;
 
 /* Shows slot index of the unit (clears the pause bit, alpha 1) and hides part ov01UnitSlotPart of its actor. */
 void unitSlotShowHidePart(Ov01Object *object, int index) {
@@ -1399,16 +1400,14 @@ void unitSlotHideShowPart(Ov01Object *object, int index) {
     }
 }
 
-int unitSlotFadeIn(void);
-
-int func_00A95CB0(void) {
-    return unitSlotFadeIn();
+/* Fades slot index of the unit in (unitSlotFadeIn). */
+struct FadeTask *func_00A95CB0(Ov01Object *object, int index) {
+    return unitSlotFadeIn(object, index);
 }
 
-int unitSlotFadeOut(void);
-
-int func_00A95CC8(void) {
-    return unitSlotFadeOut();
+/* Fades slot index of the unit out (unitSlotFadeOut). */
+struct FadeTask *func_00A95CC8(Ov01Object *object, int index) {
+    return unitSlotFadeOut(object, index);
 }
 
 int func_00A95CE0(void) {
