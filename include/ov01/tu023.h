@@ -158,5 +158,6 @@ struct BattleResult *battleResultGet(void);
 int battleResultApply(struct BattleResultRow *rows);
 int partySnapshotGet(StatOwner ***snapshots);
 void battleWorkTablesReset(void);
+int tgtSideOf(struct Ov01Object *entity, int flags);
 
 #endif /* INCLUDE_OV01_TU023_H */

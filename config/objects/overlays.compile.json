@@ -2628,7 +2628,7 @@
       "asm/nonmatchings/ov01/tu042/unitScriptEventSend.s",
       "asm/nonmatchings/ov01/tu042/thinkDispatch.s",
       "asm/nonmatchings/ov01/tu042/thinkSendEnd.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9BF08.s",
+      "asm/nonmatchings/ov01/tu042/atkTblBuild.s",
       "asm/nonmatchings/ov01/tu042/atkTblFieldGet.s",
       "asm/nonmatchings/ov01/tu042/unitParaFieldGet.s",
       "asm/nonmatchings/ov01/tu042/unitParaFieldSet.s",

@@ -491,7 +491,50 @@ void thinkSendEnd(Ov01Object *unit)
     tgtSelectModeEnd();
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BF08);
+/*
+ * Native atkTbl: fills table with the attack candidates of unit: for each of the first `rows` techniques of its
+ * key row (tableKeyRowGet) and each unit of the side the technique targets that is not flagged 4 and that the
+ * technique can affect (battleEffectApplies), one row {technique slot, unit index}. Returns the row count, which
+ * is also stored in table->count.
+ */
+int atkTblBuild(Ov01Object *unit, AtkTbl *table, int rows)
+{
+    Ov01Object **units;
+    int *word;
+    unsigned char *keys;
+    int offset;
+    int row;
+    int tec;
+    int count;
+    int i;
+    int n;
+
+    word = &table->count;
+    n = 1;
+    for (row = 0; row < rows; row++) {
+        keys = tableKeyRowGet(unit->stats->key);
+        offset = row * sizeof(short);
+        tec = *(short *)(keys + offset);
+        if (tec == 0) {
+            continue;
+        }
+        count = unitTblGet(tgtSideOf(unit, tecRecordGet(tec)->flags), &units);
+        for (i = 0; i < count; i++) {
+            if (units[i] == 0) {
+                continue;
+            }
+            if (units[i]->flags & 4) {
+                continue;
+            }
+            if (!battleEffectApplies(unit, tec, units[i])) {
+                continue;
+            }
+            word[n++] = row;
+            word[n++] = unitTblIndexOf(units[i]);
+        }
+    }
+    return table->count = (n - 1) / 2;
+}
 
 /* Field `field` of row `index` of the attack table (native atkTblGet). */
 int atkTblFieldGet(int field, AtkTbl *table, int index)

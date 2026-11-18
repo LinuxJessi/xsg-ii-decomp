@@ -81,7 +81,7 @@ typedef struct UnitScriptEvent {
 } UnitScriptEvent;
 
 int atkTblFieldGet(int field, AtkTbl *table, int index);
-int func_00A9BF08(struct Ov01Object *unit, AtkTbl *table, int value);
+int atkTblBuild(struct Ov01Object *unit, AtkTbl *table, int rows);
 void thinkSendEnd(struct Ov01Object *unit);
 void thinkDispatch(struct Ov01Object *unit, int command, int arg, struct Ov01Object *target);
 

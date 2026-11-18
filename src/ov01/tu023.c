@@ -187,7 +187,6 @@ int unitCanAct(StatOwner *unit);
 int unitValueCalc(StatOwner *obj);
 void unitValueReset(StatOwner *obj);
 int battleEffectResolve(StatOwner *command, int index, StatOwner *entity);
-int tgtSideOf(StatOwner *entity, int flags);
 int tgtCmdAccepts(struct AttackCommand *record, StatOwner *value);
 struct BoostGauge *boostGaugeGet(StatOwner *unit);
 int boostGaugeAddProgress(struct BoostGauge *gauge, int amount);

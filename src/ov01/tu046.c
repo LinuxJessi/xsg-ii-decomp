@@ -313,7 +313,7 @@ int atkTbl(SbThread *thread)
     unit = unitTblEntryGet(vmArgGet(thread, 1));
     entryIndex = vmArgGet(thread, 2);
     table = vmEntryGet(thread, entryIndex);
-    return func_00A9BF08(unit, table, value);
+    return atkTblBuild(unit, table, value);
 }
 
 
