@@ -2109,7 +2109,124 @@ int battleResolveStatus(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96510);
+/* The statuses func_00A96510 applies at the end of a step (calcStatGet rows 1 to 3). */
+#define STAT1_HP_DRAIN 0x2          /* row 1: loses a tenth of maxHp */
+#define STAT2_HP_DRAIN 0x2          /* row 2: loses a quarter of maxHp */
+#define STAT2_HIT_REPEAT 0x1000     /* row 2: takes the step's plain hit damage again */
+#define STAT1_EP_DRAIN 0x100        /* row 1: loses STATUS_EP_DRAIN EP */
+#define STAT3_EP_REGEN 0x1000       /* row 3: gains STATUS_EP_REGEN EP */
+#define STAT1_CURRENT_DRAIN 0x4000  /* row 1: loses a quarter of currentMax */
+#define STAT2_CURRENT_DRAIN 0x4000  /* row 2: loses half of currentMax */
+#define STATUS_EP_DRAIN 5
+#define STATUS_EP_REGEN 2
+/* func_00AA4DB8 kinds (as calcHpDmg numbers the hit kinds) and the flag of an amount from a status; the amounts
+ * of one step are shown STATUS_AMOUNT_DELAY frames apart. */
+#define AMOUNT_HP_LOSS 1
+#define AMOUNT_HP_GAIN 2
+#define AMOUNT_EP_LOSS 3
+#define AMOUNT_EP_GAIN 4
+#define AMOUNT_STATUS 0x400
+#define STATUS_AMOUNT_DELAY 50
+
+/*
+ * Applies the end-of-step statuses of unit: HP from the hit damage (a HIT_KIND_PLAIN hit with STAT2_HIT_REPEAT) and
+ * the HP drains, EP from STAT1_EP_DRAIN and STAT3_EP_REGEN, current from the current drains. Each nonzero change is
+ * queued as the unit's reaction, applied and shown (func_00AA4DB8). Returns 1 and clears the unit's source when
+ * anything changed. commandKind is not used.
+ */
+int func_00A96510(Ov01Object *unit, int commandKind, int hitDamage, int hitMode)
+{
+    struct HitRecord hit;
+    int hp;
+    int ep;
+    int current;
+    int delay;
+    int delta;
+    int kind;
+
+    hp = 0;
+    current = 0;
+    delay = 0;
+    if ((hitMode & 0xFF) == HIT_KIND_PLAIN && calcStatGet(unit, 2, STAT2_HIT_REPEAT)) {
+        hp = hitDamage;
+    }
+    if (calcStatGet(unit, 1, STAT1_HP_DRAIN)) {
+        hp += unit->stats->maxHp / 10;
+    }
+    if (calcStatGet(unit, 2, STAT2_HP_DRAIN)) {
+        hp += unit->stats->maxHp / 4;
+    }
+    ep = 0;
+    if (calcStatGet(unit, 1, STAT1_EP_DRAIN)) {
+        ep = STATUS_EP_DRAIN;
+    }
+    if (calcStatGet(unit, 3, STAT3_EP_REGEN)) {
+        ep -= STATUS_EP_REGEN;
+    }
+    if (calcStatGet(unit, 1, STAT1_CURRENT_DRAIN)) {
+        current = unit->stats->currentMax / 4;
+    }
+    if (calcStatGet(unit, 2, STAT2_CURRENT_DRAIN)) {
+        current += unit->stats->currentMax / 2;
+    }
+    if (hp != 0) {
+        if (hp > 0) {
+            hit.reaction = UNIT_CMD_MODE_DISPATCH;
+        } else {
+            hit.reaction = UNIT_CMD_CLEAR_ACTIVE;
+        }
+        hit.target = unit;
+        hit.damage = hp;
+        hit.followResult = 0;
+        hit.backAttack = 0;
+        unitCmdRequestQueue(0, &hit);
+        /* The negation is written after the queue call (sched1 hoists it above the call, after the
+         * argument setup); written before the call it lands between the two argument moves. */
+        delta = -hp;
+        calcHpAdjust(unit, delta);
+        kind = hp > 0 ? AMOUNT_HP_LOSS : AMOUNT_HP_GAIN;
+        func_00AA4DB8(unit, hp < 0 ? delta : hp, kind | AMOUNT_STATUS, delay);
+        delay += STATUS_AMOUNT_DELAY;
+    }
+    if (ep != 0) {
+        if (ep > 0) {
+            hit.reaction = UNIT_CMD_MODE_DISPATCH;
+        } else {
+            hit.reaction = UNIT_CMD_CLEAR_ACTIVE;
+        }
+        hit.target = unit;
+        hit.damage = ep;
+        hit.followResult = 0;
+        hit.backAttack = 0;
+        unitCmdRequestQueue(0, &hit);
+        delta = -ep;
+        calcEpAdjust(unit, delta);
+        kind = ep > 0 ? AMOUNT_EP_LOSS : AMOUNT_EP_GAIN;
+        func_00AA4DB8(unit, ep < 0 ? delta : ep, kind | AMOUNT_STATUS, delay);
+        delay += STATUS_AMOUNT_DELAY;
+    }
+    if (current != 0) {
+        if (current > 0) {
+            hit.reaction = UNIT_CMD_MODE_DISPATCH;
+        } else {
+            hit.reaction = UNIT_CMD_CLEAR_ACTIVE;
+        }
+        hit.target = unit;
+        hit.damage = current;
+        hit.followResult = 0;
+        hit.backAttack = 0;
+        unitCmdRequestQueue(0, &hit);
+        delta = -current;
+        unitCurrentAdd(unit, delta);
+        kind = current > 0 ? AMOUNT_EP_LOSS : AMOUNT_EP_GAIN;
+        func_00AA4DB8(unit, current < 0 ? delta : current, kind | AMOUNT_STATUS, delay);
+    }
+    if (hp != 0 || ep != 0 || current != 0) {
+        unit->stats->source = 0;
+        return 1;
+    }
+    return 0;
+}
 
 /* Row-3 statuses that bring a down unit back when the battle step ends (unitsReviveDown): with its full
  * maxHp, or with half of it. */
