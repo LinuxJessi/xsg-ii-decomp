@@ -14,7 +14,7 @@ int scriptLoadByNumber(int *slot, int number) {
     return scriptReadFile(slot, fileName);
 }
 
-int func_002A9350(int size);
+int malloc(int size);
 char *strcat(char *destination, const char *source);
 int sbLinkImage(int buffer);
 extern const char D_0068D5C8[];
@@ -27,7 +27,7 @@ int scriptReadFile(int *slot, char *fileName) {
     int status;
 
     hostPath = D_0068D5C8;
-    *slot = func_002A9350(100);
+    *slot = malloc(100);
     while (*slot == 0) {
     }
     strcpy(path, hostPath);
@@ -41,10 +41,10 @@ int scriptReadFile(int *slot, char *fileName) {
     }
 }
 
-void func_002A93A8(int value);
+void free(int value);
 
 /* Frees the buffer in *slot (allocated by scriptReadFile) and clears the slot. */
 void scriptFreeBuffer(int *slot) {
-    func_002A93A8(*slot);
+    free(*slot);
     *slot = 0;
 }

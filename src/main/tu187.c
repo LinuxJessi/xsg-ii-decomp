@@ -146,7 +146,7 @@ f32 MMathMakeRandomPI(void)
     return ((f32) bits * 1.462918e-09f) - 3.1415927f;
 }
 
-float func_002A1E10(float, float);
+float fmodf(float, float);
 extern float D_0069B4F0;
 extern float D_0069B4F4;
 
@@ -157,7 +157,7 @@ f32 MMathCalcRotNear(f32 first, f32 second)
     f32 result;
 
     twoPi = D_0069B4F0;
-    result = func_002A1E10(second - first, twoPi);
+    result = fmodf(second - first, twoPi);
     if (D_0069B4F4 < __builtin_fabsf(result))
     {
         if (result < 0.0f)
@@ -182,7 +182,7 @@ f32 MMathCalcRotFar(f32 first, f32 second)
     f32 result;
 
     twoPi = D_0069B4F8;
-    result = func_002A1E10(second - first, twoPi);
+    result = fmodf(second - first, twoPi);
     if (__builtin_fabsf(result) < D_0069B4FC)
     {
         if (result < 0.0f)

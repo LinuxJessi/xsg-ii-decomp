@@ -5242,7 +5242,7 @@ SefEffectRecord *sefCreateDetachedEffect(void *object)
     if (request->kind <= 0) {
         return 0;
     }
-    if ((result = func_00266D40(((SefRequestBuffer *)sefRequestBuffer)->kind, (int)&resultOut)) == 0) {
+    if ((result = scGetKeyRecordFirst(((SefRequestBuffer *)sefRequestBuffer)->kind, (int)&resultOut)) == 0) {
         return 0;
     }
     if (0 <= (index = sefCreateEffectRecordDefault(result + resultOut * 2, (int)sefRequestBuffer, 0, result, -1))) {
@@ -5379,7 +5379,7 @@ SefEffectRecord *sefSpawnEffectRecord(int effectId, int second, unsigned char *f
         return 0;
     }
     canonicalId = sefCanonicalEffectId(effectId);
-    lookupBase = func_00266D40(canonicalId, (int) &slot);
+    lookupBase = scGetKeyRecordFirst(canonicalId, (int) &slot);
     if (lookupBase == 0) {
         srsFormatEffectStem(effectId, stem, 1);
         return 0;
@@ -7364,7 +7364,7 @@ void sefSpawnEffect(int effectId, Vector4 *position, Vector4 *direction, Vector4
         return;
     }
     if (effectId == SEF_SPAWN_SPECIAL_ID) {
-        if (func_00266D40(effectId, (int)&lookupOut) == 0) {
+        if (scGetKeyRecordFirst(effectId, (int)&lookupOut) == 0) {
             sefStartEffectKeyDefault(0, SEF_SPAWN_SPECIAL_ID);
         }
         sefSpawnEffectRecord(SEF_SPAWN_SPECIAL_ID, (int)position, 0, (unsigned char *)direction, -1);

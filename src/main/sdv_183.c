@@ -83,7 +83,7 @@ typedef struct SdvCameraSchedule {
     SdvScheduleChannel channels[4]; /* +0x08 */
 } SdvCameraSchedule;
 
-int func_002AA130(void); /* newlib rand() */
+int rand(void); /* newlib rand() */
 int scGetImmAdrImmIdx2(int base, unsigned short *table, int index);
 short scGetImmNumIdx(short *table, int index);
 
@@ -99,7 +99,7 @@ int sdvSelectCamera(SdvCameraSchedule *schedule, int base, unsigned short *table
     int i;
 
     camera = 0;
-    roll = func_002AA130() % 100;
+    roll = rand() % 100;
     if (table == 0 || base == 0) {
         return 0;
     }

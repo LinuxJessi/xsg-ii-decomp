@@ -146,7 +146,7 @@ SefScriptRecord *scGetKeyRecord(int key, int *offset_out, int index)
     return 0;
 }
 
-SefScriptRecord *func_00266D40(int key, int *offset_out)
+SefScriptRecord *scGetKeyRecordFirst(int key, int *offset_out)
 {
     return scGetKeyRecord(key, offset_out, 0);
 }

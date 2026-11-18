@@ -3282,6 +3282,7 @@
    "0x00120320": "CreateThread",
    "0x00120340": "StartThread",
    "0x00120360": "ExitDeleteThread",
+   "0x00266d40": "scGetKeyRecordFirst",
    "0x00278fc8": "pointFadeColorStep",
    "0x00279180": "intLerp",
    "0x00279190": "quadRotateCorner",
@@ -3381,7 +3382,11 @@
    "0x0028b568": "XenoActorSetState",
    "0x002a6a90": "__fixunssfdi",
    "0x002aae40": "strncat",
-   "0x0027d750": "msgEntryTestFlags"
+   "0x0027d750": "msgEntryTestFlags",
+   "0x002a1e10": "fmodf",
+   "0x002a9350": "malloc",
+   "0x002a93a8": "free",
+   "0x002aa130": "rand"
   },
   "ov01": {
    "0x00a80d88": "rnd",

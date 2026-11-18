@@ -96,6 +96,6 @@ char *srsAnalyzeEftNo(int effectNo, int *charNo, int *effectType);
 void srsFormatEffectStem(int effectNo, char *buffer, int withSubNo);
 extern int srsEffectStamp;
 
-int func_00266D40(int first, int second);
+int scGetKeyRecordFirst(int first, int second);
 
 #endif /* INCLUDE_MAIN_SRS_H */

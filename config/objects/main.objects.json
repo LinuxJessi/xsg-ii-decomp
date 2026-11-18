@@ -82034,9 +82034,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266D40",
+     "name": "scGetKeyRecordFirst",
      "size": 24,
-     "splat_name": "func_00266D40",
+     "splat_name": "scGetKeyRecordFirst",
      "va": "0x00266d40",
      "name_basis": "address",
      "provenance": "estimated"
@@ -102660,9 +102660,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1E10",
+     "name": "fmodf",
      "size": 20,
-     "splat_name": "func_002A1E10",
+     "splat_name": "fmodf",
      "va": "0x002a1e10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103344,18 +103344,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A9350",
+     "name": "malloc",
      "size": 84,
-     "splat_name": "func_002A9350",
+     "splat_name": "malloc",
      "va": "0x002a9350",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A93A8",
+     "name": "free",
      "size": 72,
-     "splat_name": "func_002A93A8",
+     "splat_name": "free",
      "va": "0x002a93a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103452,9 +103452,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AA130",
+     "name": "rand",
      "size": 100,
-     "splat_name": "func_002AA130",
+     "splat_name": "rand",
      "va": "0x002aa130",
      "name_basis": "address",
      "provenance": "estimated"

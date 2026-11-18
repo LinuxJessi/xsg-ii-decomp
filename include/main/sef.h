@@ -34,7 +34,7 @@
 /* Effect slot table: SEF_SPAWN_SLOT_COUNT slots of SEF_SPAWN_SLOT_SIZE bytes each. */
 #define SEF_SPAWN_SLOT_COUNT 32
 #define SEF_SPAWN_SLOT_SIZE 0x40
-/* Spawn ids: the canonical base, and the special id that spawns through the record path (func_00266D40 lookup). */
+/* Spawn ids: the canonical base, and the special id that spawns through the record path (scGetKeyRecordFirst lookup). */
 #define SEF_SPAWN_SPECIAL_ID 0x10000035
 /* Entries of the handle table sefHandleSlots. */
 #define SEF_HANDLE_SLOT_COUNT 48
