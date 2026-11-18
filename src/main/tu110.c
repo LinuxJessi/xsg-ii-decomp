@@ -800,21 +800,6 @@ int ptGroupCount(void)
     return count;
 }
 
-/* ptStatusBlock (0x24 bytes) as ptResetStatusBlock resets it and ptRefresh fills
- * it: the ids of the three members on screen and of the leader; memberMask, a
- * copy of D_006A5A30.memberMask (one bit per member who joined the party);
- * presentMask, one bit per member of the group on screen (front slots 0-6,
- * or back slots 7-9 in split mode; ov01's tu072 edits it as the MEMBER row);
- * and the ptGetClothId cloth id of each of the seven members (ov01's tu072
- * edits them as cloth ids). */
-typedef struct PartyStatusBlock {
-    unsigned char memberIds[3];
-    unsigned char leaderId;
-    unsigned short memberMask;
-    unsigned short presentMask;
-    int clothIds[7];
-} PartyStatusBlock;
-
 void *memset(void *dest, int value, unsigned int size);
 static PartyStatusBlock ptStatusBlock;
 
@@ -1394,8 +1379,8 @@ int ptGetMember(int index) {
     return D_003EC60C[index];
 }
 
-u8 *ptGetStatusBlock(void) {
-    return (u8 *)&ptStatusBlock;
+PartyStatusBlock *ptGetStatusBlock(void) {
+    return &ptStatusBlock;
 }
 
 extern int talkResult;

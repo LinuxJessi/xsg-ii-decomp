@@ -7,5 +7,6 @@ struct EffectPosRecord;
 
 void effectPosTableSet(struct EffectPosRecord *table);
 int * effectPosGet(int index);
+int unitFileIdGet(int key);
 
 #endif /* INCLUDE_OV01_TU041_H */

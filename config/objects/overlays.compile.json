@@ -2534,7 +2534,7 @@
       "asm/nonmatchings/ov01/tu041/effectPosTableSet.s",
       "asm/nonmatchings/ov01/tu041/effectPosGet.s",
       "asm/nonmatchings/ov01/tu041/effectPosGetCount.s",
-      "asm/nonmatchings/ov01/tu041/func_00A9B1B8.s"
+      "asm/nonmatchings/ov01/tu041/unitFileIdGet.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],

@@ -3,6 +3,7 @@
  * file, TU merge 2026-11-17; see JOINED_CUTS in tools/tu/map_infer.py).
  */
 #include "common.h"
+#include "main/tu110.h"
 #include "shared.h"
 #include "ov01/tu023.h"
 #include "ov01/tu042.h"
@@ -33,18 +34,6 @@
 #define STAT_FLAG_PERCENT_GATE 0x800
 #define ACT_STEP_COUNT 4
 #define ACT_STEP_HOLD 3
-
-/* The block ptGetStatusBlock returns; the halfwords at +4 and +6 are the battle mask sources. */
-typedef struct PtStatusBlock PtStatusBlock;
-
-struct PtStatusBlock {
-    unsigned char unmodeled_00[4];
-    unsigned short stat4;                   /* +0x04 */
-    unsigned short stat6;                   /* +0x06 */
-};
-
-
-
 
 
 /*
@@ -197,7 +186,6 @@ signed char func_00A91B90(int index);
 /* Refreshes the hp and ep of the slots 1 to 15 from their battle blocks, then commits each. */
 void battleSlotsRefresh(void);
 /* Defined in other files. */
-PtStatusBlock *ptGetStatusBlock(void);
 void *func_00A9B2A8(int key);
 int dataBoxDecCategory1(int lookup_key);
 int unitTblGet(int side, StatOwner ***table);
@@ -256,7 +244,7 @@ int battleMaskWordsStat4(int *words)
     int bit;
     int count;
 
-    mask = ptGetStatusBlock()->stat4;
+    mask = ptGetStatusBlock()->memberMask;
     count = 0;
     for (bit = 0; bit < 16; bit++) {
         if ((mask >> bit) & 1) {
@@ -275,7 +263,7 @@ int battleMaskWordsStat6(int *words)
     int bit;
     int count;
 
-    mask = ptGetStatusBlock()->stat6;
+    mask = ptGetStatusBlock()->presentMask;
     count = 0;
     for (bit = 0; bit < 16; bit++) {
         if ((mask >> bit) & 1) {
@@ -690,7 +678,7 @@ void battleSlotFlagClear(int key, int flag)
     slotFlagClear(unit, flag);
 }
 
-/* battleUnitHasEffectCode: true when the unit in slot `key` has effect code `code` (unitHasEffectCode). func_00A9B1B8 calls it with code 0x3F. */
+/* battleUnitHasEffectCode: true when the unit in slot `key` has effect code `code` (unitHasEffectCode). unitFileIdGet calls it with code 0x3F. */
 int battleUnitHasEffectCode(int key, int code)
 {
     StatOwner *unit = battleContextBind(key, 0);
@@ -3649,7 +3637,7 @@ int battleMaskWordsUnmatched(StatOwner *entity, int *out)
 {
     int words[0x14];
     StatOwner **units;
-    PtStatusBlock *block;
+    PartyStatusBlock *block;
     int count;
     int unitCount;
     int i;
@@ -3665,7 +3653,7 @@ int battleMaskWordsUnmatched(StatOwner *entity, int *out)
     count = 0;
     for (i = 0; i < 16; i++) {
         bit = 1 << i;
-        if ((block->stat6 & bit) != 0) {
+        if ((block->presentMask & bit) != 0) {
             words[count] = battleMaskWordTable[i];
             count++;
         }
