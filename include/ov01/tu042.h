@@ -7,13 +7,17 @@
  * sefStartEffectWithValue); the senders clear it first. */
 struct EffectRequest {
     struct XenoActor *head;            /* +0x00: the actor of the owner unit (Ov01Object.unit) */
-    unsigned char unmodeled_04[0x04];
-    struct XenoActor *target;          /* +0x08: the same actor again (tu033 senders) */
-    unsigned char unmodeled_0c[0x1C - 0x0C];
+    struct XenoActor *partner;         /* +0x04: the other unit's actor of a pair technique (func_00A95268) */
+    struct XenoActor *target;          /* +0x08: the same actor again (tu033 senders); the hit target's actor */
+    struct XenoActor *parts[4];        /* +0x0C: the child actors of the unit (two each for a pair technique) */
     int key;                           /* +0x1C: (high << 12) | low, see createEffect */
-    unsigned char unmodeled_20[0x2C - 0x20];
-    short mode;                        /* +0x2C: 2 or 3 (func_00A95540) */
-    unsigned char unmodeled_2e[0x38 - 0x2E];
+    unsigned char unmodeled_20[0x24 - 0x20];
+    short hitMode;                     /* +0x24: the hit record's hitMode (func_00A95268) */
+    unsigned short hitCode;            /* +0x26: the actionBits byte and the target's row bits (func_00A95268) */
+    unsigned char unmodeled_28[0x2C - 0x28];
+    short mode;                        /* +0x2C: 2 or 3 (func_00A95540); the attacker's state (func_00A95268) */
+    short targetState;                 /* +0x2E: the target's state (func_00A95268) */
+    unsigned char unmodeled_30[0x38 - 0x30];
 };
 
 /* Unaligned signed word: the record's word sits at a 2-byte offset. */

@@ -1279,7 +1279,89 @@ int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec)
     return group;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95268);
+/* EffectRequest.hitCode: the low twelve bits carry the low byte of the technique's actionBits (hits of kind
+ * HIT_KIND_PLAIN), the top four bits the target's flags & 3 (EFFECT_HIT_ROW_OTHER for the other hits). */
+#define EFFECT_HIT_CODE 0x0FFF
+#define EFFECT_HIT_ROW 0xF000
+#define EFFECT_HIT_ROW_SHIFT 12
+#define EFFECT_HIT_ROW_OTHER 3
+
+/* HitRecord.hitMode.kind of the hits whose effect carries the technique's actionBits. */
+#define HIT_KIND_PLAIN 1
+
+/* Starts the effects of a kind-3 attack event: per kind-4 record the technique's effect on the attacker (and its
+ * pair partner, gateFlag 1), once per kind-5 record (hit) with that hit's target. A pair technique runs only its
+ * first record. */
+void func_00A95268(EventQueueEntry *event)
+{
+    struct EffectRequest request;
+    struct AttackCommand *attack;
+    struct HitRecord *hit;
+    TecRecord *tec;
+    Ov01Object *partner;
+    StatBlock *stats;
+    int actions;
+    int hits;
+    int i;
+    int j;
+    unsigned short hitMode;
+
+    actions = event->data.args.actions;
+    hits = event->data.args.hits;
+    for (i = 0; i < actions; i++) {
+        memset(&request, 0, sizeof(request));
+        attack = &eventQueueFindKind4(i)->data.attack;
+        tec = tecRecordGet(attack->actionIdx);
+        request.key = (tecEffectGroupGet(attack->attacker, tec) << 12) | tec->extent;
+        request.mode = attack->attacker->stats->state;
+        if (tec->gateFlag == 1) {
+            partner = unitPairPartnerFind(attack->attacker, attack->id);
+            stats = attack->attacker->stats;
+            if (stats->key == pairLinkGet(attack->id)->slotFirst) {
+                request.head = attack->attacker->unit;
+                request.partner = partner->unit;
+                request.parts[0] = attack->attacker->children[0];
+                request.parts[1] = attack->attacker->children[1];
+                request.parts[2] = partner->children[0];
+                request.parts[3] = partner->children[1];
+            } else {
+                request.head = partner->unit;
+                request.partner = attack->attacker->unit;
+                request.parts[0] = partner->children[0];
+                request.parts[1] = partner->children[1];
+                request.parts[2] = attack->attacker->children[0];
+                request.parts[3] = attack->attacker->children[1];
+            }
+        } else {
+            request.head = attack->attacker->unit;
+            request.parts[0] = attack->attacker->children[0];
+            request.parts[1] = attack->attacker->children[1];
+            request.parts[2] = attack->attacker->children[2];
+        }
+        for (j = 0; j < hits;) {
+            hit = &eventQueueFindKind5(j++)->data.kind5;
+            /* hitMode is read before the target stores and stored after the state; other orders schedule
+             * the loads and stores differently. */
+            hitMode = hit->hitMode.word;
+            request.target = hit->target->unit;
+            request.targetState = hit->target->stats->state;
+            request.hitMode = hitMode;
+            if ((unsigned char)hitMode == HIT_KIND_PLAIN) {
+                /* Three separate updates of the halfword, as the original stores it three times. */
+                request.hitCode &= EFFECT_HIT_ROW;
+                request.hitCode = (request.hitCode | (unsigned char)tecRecordGet(attack->actionIdx)->actionBits)
+                    & EFFECT_HIT_CODE;
+                request.hitCode |= (hit->target->stats->flags & 3) << EFFECT_HIT_ROW_SHIFT;
+            } else {
+                request.hitCode = (request.hitCode & EFFECT_HIT_CODE) | (EFFECT_HIT_ROW_OTHER << EFFECT_HIT_ROW_SHIFT);
+            }
+            sefStartEffectDefault(&request);
+        }
+        if (tec->gateFlag == 1) {
+            break;
+        }
+    }
+}
 
 void sefStartEffectDefault(void *object);
 
