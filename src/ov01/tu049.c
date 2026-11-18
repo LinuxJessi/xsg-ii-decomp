@@ -120,7 +120,56 @@ void menuTexFlushDraw(void)
     menuTexFlush();
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatRecordsCreate);
+/* The stat records menuStatRecordsCreate made, one per slot of the unit table (0 for an empty slot). */
+extern MenuObject *menuStatRecords[];
+
+void menuStatGaugeStep(MenuObject *record);
+void menuStatRecordSubmit(MenuObject *record);
+
+/* Origin of the first stat record and the distance between two records. */
+#define MENU_STAT_X 16
+#define MENU_STAT_STEP_X 167
+#define MENU_STAT_Y 12.0f
+
+/*
+ * Creates one stat record (an objSlotAlloc menu object stepped by menuStatGaugeStep and drawn by
+ * menuStatRecordSubmit) per slot of the player unit table, side by side from MENU_STAT_X; an empty slot gets 0.
+ * Stops when no object is free.
+ */
+void menuStatRecordsCreate(void)
+{
+    Ov01Object **units;
+    MenuObject *record;
+    int count;
+    int i;
+    int x;
+
+    x = MENU_STAT_X;
+    count = unitTblGet(UNIT_SIDE_PLAYER, &units);
+    for (i = 0; i < count; i++) {
+        if (units[i] == 0) {
+            menuStatRecords[i] = 0;
+            continue;
+        }
+        record = objSlotAlloc();
+        if (record == 0) {
+            return;
+        }
+        record->update = menuStatGaugeStep;
+        record->draw = menuStatRecordSubmit;
+        menuStatRecords[i] = record;
+        ov01MatrixBlockInit(&record->slide.block);
+        record->slide.pos.x = x;
+        x += MENU_STAT_STEP_X;
+        record->slide.pos.y = MENU_STAT_Y;
+        record->slide.pos.z = 0.0f;
+        record->kind.stat.unit = units[i];
+        record->moving = 0;
+        record->kind.stat.shown[0] = 0.0f;
+        record->kind.stat.shown[1] = 0.0f;
+        record->kind.stat.shown[2] = 0.0f;
+    }
+}
 
 /* Step of a stat record: eases three displayed floats (+0x98, +0x9C, +0xA0) toward
  * the unit's stat fields (at +0x94 -> +0x144), snapping within 0.5 and clamped. */
