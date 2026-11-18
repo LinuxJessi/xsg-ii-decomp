@@ -34,8 +34,6 @@ void dataVPadReset(void);
 void dataVPadSet(int virtualPad);
 void dataObjCreateAtOrigin(void);
 
-struct Ov01Object;
-
 /* State of a command key for the unit (0 usable, 1 shown, 2 hidden; negative skips the icons). */
 int dataKeyCheck(struct Ov01Object *unit, int key, void *tgt);
 
