@@ -1,10 +1,15 @@
 #include "common.h"
 #include "shared.h"
+#include "gs.h"
 #include "ov01/tu012.h"
 #include "ov01/tu017.h"
+#include "ov01/tu036.h"
+#include "ov01/tu037.h"
 #include "ov01/tu048.h"
 #include "ov01/tu049.h"
 #include "ov01/tu051.h"
+#include "ov01/tu062.h"
+#include "ov01/tu063.h"
 
 /* GIF packet words are written as doubleword descriptors by the openers and
  * as 32-bit lanes by the vertex writers. Both are the same packet storage. */
@@ -187,6 +192,101 @@ void menuStatRecordSubmit(MenuObject *record)
     grPacketSend(&packet);
 }
 
-/* Draws one stat record at its origin: sprite groups through grPutSprOpen/grPutSprClose
- * and the menu stat sprites and numbers. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatRecordDraw);
+/*
+ * Draws one stat record at its origin (slide position): a pulsing frame while its unit is the one under the battle
+ * cursor, the unit's face (func_00AA7750), the HP and EP gauges (shown[0], shown[1] against maxHp and maxEp), then
+ * for a party key the level pips (shown[2], up to 3) or else the current gauge and number (shown[2] against
+ * currentMax), and the HP and EP numbers.
+ */
+void menuStatRecordDraw(MenuObject *record, GrPacket *packet)
+{
+    Ov01Object *unit;
+    unsigned long long alpha;
+    int phase;
+    int x;
+    int y;
+    int value;
+
+    x = record->slide.pos.x;
+    y = record->slide.pos.y;
+    unit = record->kind.stat.unit;
+    if (unit == battleStateGet()->current) {
+        func_00AA84F0(packet);
+        phase = (ov01SceneFrameCount() * 2) & 0xFF;
+        if (phase >= 0x80) {
+            phase = 0xFF - phase;
+        }
+        /* GS ALPHA_1 with a fixed alpha (high word) that rises and falls with the frame counter, as in
+         * menuPulseAlphaSet (tu056) but from 10 */
+        alpha = (unsigned long long)(phase + 10) << 32;
+        grGsRegSet(packet, GS_ALPHA_1, alpha | 0x28);
+        grPutSprOpen(packet);
+        menuStatSprite(packet, x, y + 0x38, 0x91, 0xA, 0, 0x41);
+        grPutSprClose();
+        grGsRegSet(packet, GS_ALPHA_1, alpha | 0x68);
+        grPutSprOpen(packet);
+        menuStatSprite2(packet, x - 4, y - 4, 0x9E, 0x3B, 0xC8, 0x78, 0xFF, 0xBA);
+        grPutSprClose();
+    }
+    func_00AA7750(packet, x, y, unit->stats->key, 0);
+    func_00AA8490(packet);
+    grPutSprOpen(packet);
+    menuStatSprite(packet, x + 0x3A, y + 0xA, 0x58, 8, 0x48, 0x8A);
+    value = record->kind.stat.shown[0];
+    menuStatSprite2(packet, x + 0x3A, y + 8, value * 0x58 / unit->stats->maxHp, 9, 0x48, 0x78, 0xA0, 0x80);
+    menuStatSprite(packet, x + 0x3A, y + 0x20, 0x58, 8, 0x48, 0x8A);
+    value = record->kind.stat.shown[1];
+    if (unit->stats->maxEp <= 0) {
+        value = 0;
+    } else {
+        value = value * 0x58 / unit->stats->maxEp;
+    }
+    menuStatSprite2(packet, x + 0x3A, y + 0x1E, value, 9, 0x48, 0x81, 0xA0, 0x89);
+    grPutSprClose();
+    if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10) {
+        grPutSprOpen(packet);
+        value = record->kind.stat.shown[2];
+        if (value > 0) {
+            menuStatSprite(packet, x + 0x48, y + 0x2A, 0x1A, 9, 0xAE, 0x81);
+        }
+        if (value >= 2) {
+            menuStatSprite(packet, x + 0x60, y + 0x2A, 0x1A, 9, 0xAE, 0x81);
+        }
+        if (value >= 3) {
+            menuStatSprite(packet, x + 0x78, y + 0x2A, 0x1A, 9, 0xAE, 0x81);
+        }
+        menuStatSprite(packet, x + 0x48, y + 0x2A, 0x1A, 9, 0xAE, 0x78);
+        menuStatSprite(packet, x + 0x60, y + 0x2A, 0x1A, 9, 0xAE, 0x78);
+        menuStatSprite(packet, x + 0x78, y + 0x2A, 0x1A, 9, 0xAE, 0x78);
+        grPutSprClose();
+    } else {
+        grPutSprOpen(packet);
+        value = record->kind.stat.shown[2];
+        if (unit->stats->currentMax <= 0) {
+            value = 0;
+        } else {
+            value = value * 0x4A / unit->stats->currentMax;
+        }
+        menuStatSprite(packet, x + 0x48, y + 0x30, 0x4A, 5, 0x48, 0x98);
+        menuStatSprite(packet, x + 0x48, y + 0x2F, value, 5, 0x48, 0x93);
+        grPutSprClose();
+        menuNumDraw(packet, x + 0x74, y + 0x26, record->kind.stat.shown[2], 3, 2);
+    }
+    func_00AA8430(packet);
+    grPutSprOpen(packet);
+    menuStatSprite(packet, x + 0x3C, y - 6, 0x12, 0x10, 0x6B, 0);
+    menuStatSprite(packet, x + 0x3C, y + 0x10, 0x12, 0x10, 0x7D, 0);
+    if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10) {
+        menuStatSprite(packet, x + 0x38, y + 0x28, 0x10, 0xE, 0x64, 0x32);
+    } else {
+        menuStatSprite(packet, x + 0x38, y + 0x28, 0x10, 0xE, 0x54, 0x32);
+    }
+    grPutSprClose();
+    value = record->kind.stat.shown[0];
+    if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10) {
+        menuNumDrawTarget(packet, x + 0x64, y - 8, value, 4, 0, unit);
+    } else {
+        menuNumDrawTarget(packet, x + 0x58, y - 8, value, 5, 0, unit);
+    }
+    func_00AA7A48(packet, x + 0x7B, y + 0xE, record->kind.stat.shown[1], 2, 0, unit);
+}
