@@ -733,6 +733,8 @@ void func_00A93CF0(void) {
 }
 
 int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit);
+/* Defined in tu023 (no header prototype yet: tu034 declares it with a void * argument). */
+void unitValueRefresh(Ov01Object *object);
 
 /* Row 3 status that brings back a unit the hit takes down with 1 HP (and is used up); the row 1 and row 2
  * status that a hit of kind 1 clears (50 and 10 percent). */
@@ -2071,8 +2073,6 @@ int eventPairBegin(EventQueueEntry *entry)
 
 /* unitScriptEventSend kind of the pair end, with the commanding unit. */
 #define PAIR_END_SCRIPT_EVENT 12
-
-void unitValueRefresh(Ov01Object *object);
 
 /*
  * EVENT_KIND_PAIR_END handler. Step 0 binds the partner and the unit again (pausing slot 0 of the PAIR_SLOT_UNIT_KEY
