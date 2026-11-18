@@ -1501,7 +1501,6 @@ int unitBindRequest(Ov01Tu033Request *request)
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96050);
 
-void unitLevelAdd(void *, int);
 void func_00A96510(void *, int, int, int);
 
 /*

@@ -225,4 +225,62 @@ StatOwner *unitSelectPlTarget(StatOwner *keep)
 }
 
 /* Once-per-battle setup of the unit state; still unidentified (see the naming notes). */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu037", func_00A9A2F8);
+void *memset(void *destination, int value, unsigned int size);
+
+/* cfEvent bits of the battle start bonuses func_00A9A2F8 grants. */
+#define CF_EVENT_BOOST_BONUS 0x1
+#define CF_EVENT_PARTY_BONUS 0x2
+/* Effect group of the battle start bonus effect; its record is 1 (boost), 2 (party) or 3 (both). */
+#define BONUS_EFFECT_GROUP 0x154
+
+/*
+ * Battle start bonuses of the cfEvent: CF_EVENT_BOOST_BONUS adds 1..2 stocks to the boost gauge of side 0,
+ * CF_EVENT_PARTY_BONUS raises the party units (units with key 11..15 get 100 or 200 current, the others 1..2
+ * levels). With any bonus every unit's unitValue is cleared and the bonus effect starts.
+ */
+void func_00A9A2F8(void)
+{
+    struct EffectRequest request;
+    Ov01Object **units;
+    Ov01Object **list;
+    int count;
+    int i;
+    int record;
+
+    record = 0;
+    if (cfEventGet() & (CF_EVENT_BOOST_BONUS | CF_EVENT_PARTY_BONUS)) {
+        count = unitTblGet(0, &units);
+        if (cfEventGet() & CF_EVENT_BOOST_BONUS) {
+            record = 1;
+            boostGaugeAddStock(boostGaugeSelect(0), rnd(2) + 1);
+        }
+        if (cfEventGet() & CF_EVENT_PARTY_BONUS) {
+            for (i = 0; i < count; i++) {
+                if (units[i] != 0) {
+                    if ((unsigned int)((unsigned short)units[i]->stats->key - 11) < 5) {
+                        unitCurrentAdd(units[i], rnd(1) * 100 + 100);
+                    } else {
+                        unitLevelAdd(units[i], rnd(2) + 1);
+                    }
+                }
+            }
+            record = 2;
+        }
+        if ((cfEventGet() & (CF_EVENT_BOOST_BONUS | CF_EVENT_PARTY_BONUS)) == (CF_EVENT_BOOST_BONUS | CF_EVENT_PARTY_BONUS)) {
+            record = 3;
+        }
+        if (count > 0) {
+            list = units;
+            i = count;
+            do {
+                if (*list != 0) {
+                    (*list)->stats->unitValue = 0;
+                }
+                list++;
+            } while (--i != 0);
+        }
+        memset(&request, 0, sizeof(request));
+        request.key = (BONUS_EFFECT_GROUP << 12) | record;
+        sefStartEffectDefault(&request);
+    }
+}

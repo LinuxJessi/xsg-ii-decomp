@@ -93,7 +93,6 @@ int dataKeyFind(StatOwner *unit, struct DataKeyEntry **found);
 int dataKeyValueGet(StatOwner *unit, int key);
 void *tgtUnitGet(void);
 int dataKeyCheck(StatOwner *unit, int key, void *tgt);
-void unitLevelAdd(StatOwner *unit, int amount);
 
 int dataKeyInputStep(StatOwner *unit)
 {

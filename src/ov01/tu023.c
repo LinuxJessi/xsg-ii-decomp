@@ -190,7 +190,6 @@ int battleEffectResolve(StatOwner *command, int index, StatOwner *entity);
 int tgtSideOf(StatOwner *entity, int flags);
 int tgtCmdAccepts(struct AttackCommand *record, StatOwner *value);
 struct BoostGauge *boostGaugeGet(StatOwner *unit);
-int boostGaugeAddStock(struct BoostGauge *gauge, int amount);
 int boostGaugeAddProgress(struct BoostGauge *gauge, int amount);
 struct ActStepCounter *actStepCounterGet(void);
 void sdvSpecialBitSet(int index);

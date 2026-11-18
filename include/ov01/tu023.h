@@ -108,6 +108,9 @@ void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
 int calcEpCost(struct Ov01Object *owner, int index);
 int slotCodeTest(struct Ov01Object *owner, int bit);
 int tgtRecordCanTarget(struct Ov01Object *target, int id);
+int unitLevelAdd(struct Ov01Object *unit, int amount);
+int unitCurrentAdd(struct Ov01Object *unit, int amount);
+int boostGaugeAddStock(struct BoostGauge *gauge, int amount);
 /* The record finders below write the indices they find to found and return their count. */
 int calcKeyBandRecords(struct Ov01Object *entity, int *found);
 int calcCurrentMeetsRecord(struct Ov01Object *entity, int index);
