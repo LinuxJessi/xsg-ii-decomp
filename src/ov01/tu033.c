@@ -142,8 +142,34 @@ void cmdListSet(void *unit, CmdListBody *command)
     ov01FifoPush(fifo);
 }
 
-/* cmdListRunHead: runs the head command of the list unless its unit is held; pops it on success. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdListRunHead);
+int cmdExecute(Ov01Object *unit, CmdListBody *command);
+
+/* cmdListRunHead: clears the event queue counters, then runs the head command of the list unless its unit is
+ * down and pops it; returns 0 when the list is empty, else 1. */
+int cmdListRunHead(void)
+{
+    void *fifo;
+    void *list;
+    CmdListEntry *entry;
+    Ov01Object *unit;
+    CmdListBody *body;
+
+    /* One chained assignment: four separate stores give the same stores with the lui order reversed. */
+    eventStepStarted = eventRetryCount = eventQueueCursor = eventQueueCount = 0;
+    cmdListPtrGet(&fifo, &list);
+    if (ov01FifoGetUsed(fifo) == 0) {
+        return 0;
+    }
+    /* cmdListSet's integer form; indexing the list gives list + offset instead of offset + list. */
+    entry = (CmdListEntry *)((char *)(ov01FifoGetHead(fifo) * sizeof(CmdListEntry)) + (int)list);
+    unit = (Ov01Object *)entry->unit;
+    body = &entry->body;
+    if (!(unit->flags & UNIT_FLAG_DOWN)) {
+        cmdExecute(unit, body);
+    }
+    ov01FifoPop(fifo);
+    return 1;
+}
 
 /* cmdExecute: runs one command body, a switch on its kind, queueing events on the way. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdExecute);

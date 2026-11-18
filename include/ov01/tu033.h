@@ -36,6 +36,7 @@ enum {
     CMD_KIND_THINK_END = 9              /* unitCmdUnbind: the end of a unit's think step (thinkSendEnd) */
 };
 
+void cmdListPtrGet(void **fifo_out, void **list_out);
 void cmdListSet(void *unit, CmdListBody *command);
 
 /* The unit effects the object starts or stops by effect key (keyHigh, keyLow); the object is the unit of ov01/tu012.h. */

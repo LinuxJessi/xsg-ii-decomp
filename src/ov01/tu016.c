@@ -93,8 +93,6 @@ float objPoseSlideLimit(Ov01Object *unusedFirst, Ov01Object *value, int rowKey);
 float unitDefArea(Ov01Object *object);
 int *effectPosGet(int index);
 void unitRemove(void);
-void cmdListPtrGet(void **fifo, void **list);
-int ov01FifoGetUsed(void *fifo);
 void XenoActorClearChannel(struct XenoActor *source);
 void func_0028B158(void *source, int first, int second, int third);
 void runEffGet(int *first, int *second);
