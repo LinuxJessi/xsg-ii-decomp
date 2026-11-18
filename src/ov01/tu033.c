@@ -1962,4 +1962,97 @@ int func_00A96AA8(EventQueueEntry *entry)
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96E38);
+/* unitScriptEventSend kind of the pair end, with the commanding unit. */
+#define PAIR_END_SCRIPT_EVENT 12
+
+void unitValueRefresh(Ov01Object *object);
+
+/*
+ * EVENT_KIND_PAIR_END handler. Step 0 binds the partner and the unit again (pausing slot 0 of the PAIR_SLOT_UNIT_KEY
+ * unit for the pair techniques PAIR_SLOT_PAIR_A and PAIR_SLOT_PAIR_B) and the unit's partner object unless the
+ * technique has TEC_TARGET_ALL, hides the stream slot and starts the screen flash (returns 0). Step 1 counts
+ * ATTACK_FILL_FRAMES calls and falls through into step 2 on every call, as in func_00A96AA8. Step 2 puts the saved
+ * positions and angles back, unbinds every unit, releases the stream slot, shows the first monster slot, refreshes
+ * the partner's value, clears the second stock boost, sets the default sef gate, clears the deco flags, sends the
+ * pair end script event for the unit and returns 1.
+ */
+int func_00A96E38(EventQueueEntry *entry)
+{
+    UnitScriptEvent event;
+    Ov01Object **units;
+    struct MonsSlot **slots;
+    Ov01Object *object;
+    Ov01Object *other;
+    struct XenoActor *actor;
+    int tecIndex;
+    int pairIndex;
+    int count;
+    int i;
+
+    tecIndex = entry->data.args.tecIndex;
+    pairIndex = entry->data.args.pairIndex;
+    switch (eventStepStarted) {
+    case 0:
+        object = entry->data.args.target;
+        unitBindSetup(object);
+        if (object->stats->key == PAIR_SLOT_UNIT_KEY
+            && (pairIndex == PAIR_SLOT_PAIR_A || pairIndex == PAIR_SLOT_PAIR_B)) {
+            unitSlotPause(object, 0);
+        }
+        object = entry->data.args.unit;
+        unitBindSetup(object);
+        if (object->stats->key == PAIR_SLOT_UNIT_KEY
+            && (pairIndex == PAIR_SLOT_PAIR_A || pairIndex == PAIR_SLOT_PAIR_B)) {
+            unitSlotPause(object, 0);
+        }
+        if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
+            unitBindSetup(object->partner);
+        }
+        monsSlotHide(ov01StreamSlot);
+        screenFlashStart();
+        attackFillWait = 0;
+        eventStepStarted++;
+        break;
+    case 1:
+        if (attackFillWait >= ATTACK_FILL_FRAMES) {
+            eventStepStarted = 2;
+        } else {
+            attackFillWait++;
+        }
+        /* fall through */
+    case 2:
+        object = entry->data.args.target;
+        actor = object->unit;
+        __builtin_memcpy(&actor->position, &pairSavedPos[1], sizeof(Vector4));
+        actor->rotation.y = pairSavedAngle[1];
+        object = entry->data.args.unit;
+        actor = object->unit;
+        __builtin_memcpy(&actor->position, &pairSavedPos[0], sizeof(Vector4));
+        actor->rotation.y = pairSavedAngle[0];
+        if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
+            object = object->partner;
+            actor = object->unit;
+            __builtin_memcpy(&actor->position, &pairSavedPos[2], sizeof(Vector4));
+            actor->rotation.y = pairSavedAngle[2];
+        }
+        count = unitTblGet(UNIT_SIDE_ALL, &units);
+        for (i = 0; i < count; i++) {
+            other = units[i];
+            if (other != 0) {
+                other->unit->drawFlags |= ACTOR_STATE_UNBOUND;
+                unitUnbind(other);
+            }
+        }
+        monsSlotRelease(ov01StreamSlot);
+        monsActiveSlotsGet(&slots);
+        monsSlotShow(slots[0]);
+        unitValueRefresh(entry->data.args.target);
+        actStockClearBoost1();
+        sefSetGateDefault(1, tecRecordGet(tecIndex)->extent);
+        decoFlagsClearAll();
+        event.unit = entry->data.args.unit;
+        unitScriptEventSend(PAIR_END_SCRIPT_EVENT, &event);
+        return 1;
+    }
+    return 0;
+}
