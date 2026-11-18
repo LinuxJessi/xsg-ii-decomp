@@ -1743,6 +1743,7 @@ void gifStateSetCenter(int centerX, int centerY) {
     gifStatus.centerY = centerY;
 }
 
+/* Stores the Z of the camera quad (gifStatus +0x1C). */
 void func_00246DD8(int value) {
     gifStatus.depth = value;
 }
