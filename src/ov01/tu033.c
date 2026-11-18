@@ -987,7 +987,73 @@ int func_00A94260(EventQueueEntry *entry, struct AttackCommand *command)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94500);
+/* Special actions (AttackCommand.actionIdx) that func_00A94500 resolves and attackSpecialStep steps through. */
+enum {
+    SPECIAL_ACTION_CURE_ALL = 0x38,             /* clears every status row of the target (calcStatResetCha) */
+    SPECIAL_ACTION_HALVE_HP = 0x2A4,            /* clears the attacker's status rows 1 and 2 and halves its HP */
+    SPECIAL_ACTION_CURE_ALL_2 = 0x2C3,          /* as SPECIAL_ACTION_CURE_ALL */
+    SPECIAL_ACTION_ITEM_PICK = 0x2C4,           /* picks a random item (itemRandomPick) */
+    SPECIAL_ACTION_LEVEL_UP = 0x2C5,            /* the target gains a level */
+    SPECIAL_ACTION_BOOST = 0x2C6,               /* the attacker gains a boost stock */
+    SPECIAL_ACTION_STATUS_TEXT = 0x2C8,         /* shows the target's status text */
+    SPECIAL_ACTION_STEAL = 0x2C9,               /* drops the target's first item half the time */
+    SPECIAL_ACTION_TRANSFORM_FIRST = 0x2D5,     /* 0x2D5..0x2D7: the attacker transforms */
+    SPECIAL_ACTION_TRANSFORM_LAST = 0x2D7,
+    SPECIAL_ACTION_STATUS_STEAL = 0x2F6         /* shows the status text, then drops the target's first item */
+};
+/* calcStatReset mask of every status of a row. */
+#define STAT_ROW_ALL 0xFFFF
+
+void unitStatusTextShow(Ov01Object *unit);
+void unitTransformBegin(Ov01Object *unit, int action);
+int actionTransformSlotGet(int id);
+
+/*
+ * Resolves the special action of command (an attack event, entry) on the first hit's target. A command that is no
+ * transform and that func_00A93128 refuses returns 0; otherwise 1 (the item pick and the steal resolve in
+ * attackSpecialStep).
+ */
+int func_00A94500(EventQueueEntry *entry, struct AttackCommand *command)
+{
+    struct HitRecord *hit;
+
+    if (actionTransformSlotGet(command->actionIdx) == 0 && func_00A93128(command->attacker, command->kind) == 0) {
+        return 0;
+    }
+    hit = &eventQueueFindKind5(0)->data.kind5;
+    switch (command->actionIdx) {
+    case SPECIAL_ACTION_HALVE_HP:
+        calcStatReset(command->attacker, 1, STAT_ROW_ALL);
+        calcStatReset(command->attacker, 2, STAT_ROW_ALL);
+        calcHpAdjust(command->attacker, -(command->attacker->stats->hp / 2));
+        break;
+    case SPECIAL_ACTION_CURE_ALL:
+    case SPECIAL_ACTION_CURE_ALL_2:
+        calcStatResetCha(hit->target);
+        func_00A94260(entry, command);
+        break;
+    case SPECIAL_ACTION_LEVEL_UP:
+        unitLevelAdd(hit->target, 1);
+        break;
+    case SPECIAL_ACTION_BOOST:
+        boostAddStock(command->attacker, 1);
+        break;
+    case SPECIAL_ACTION_STATUS_TEXT:
+        unitStatusTextShow(hit->target);
+        break;
+    case SPECIAL_ACTION_TRANSFORM_FIRST ... SPECIAL_ACTION_TRANSFORM_LAST:
+        unitTransformBegin(command->attacker, command->actionIdx);
+        screenFillStart();
+        break;
+    case SPECIAL_ACTION_STATUS_STEAL:
+        unitStatusTextShow(hit->target);
+        break;
+    case SPECIAL_ACTION_ITEM_PICK:
+    case SPECIAL_ACTION_STEAL:
+        break;
+    }
+    return 1;
+}
 
 /* The steps of a transforming action (actionTransformSlotGet gives its model): attackStep runs through them. */
 enum {
@@ -1018,8 +1084,8 @@ void itemRandomPick(void);
 
 /*
  * One step of the special actions of a queued attack (attackStep counts their steps); returns 1 when the action
- * is done. Plain actions resolve at once (func_00A93288); 0x2C4 and 0x2C9 free their effect key first,
- * 0x2D5..0x2D7 transform the attacker, 0x2F6 waits for the text block. Unknown actions return 0.
+ * is done. Plain actions resolve at once (func_00A93288); the item pick and the steal free their effect key
+ * first, the transforms swap the attacker, the status steal waits for the text block. Unknown actions return 0.
  */
 int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
 {
@@ -1033,14 +1099,14 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
     hit = &eventQueueFindKind5(0)->data.kind5;
     tec = tecRecordGet(command->actionIdx);
     switch (command->actionIdx) {
-    case 0x38:
-    case 0x2A4:
-    case 0x2C3:
-    case 0x2C5:
-    case 0x2C6:
+    case SPECIAL_ACTION_CURE_ALL:
+    case SPECIAL_ACTION_HALVE_HP:
+    case SPECIAL_ACTION_CURE_ALL_2:
+    case SPECIAL_ACTION_LEVEL_UP:
+    case SPECIAL_ACTION_BOOST:
         done = func_00A93288(command);
         break;
-    case 0x2C4:
+    case SPECIAL_ACTION_ITEM_PICK:
         if (attackStep == 0) {
             if (unitEffectKeyFree(command->attacker, tecEffectGroupGet(command->attacker, tec), tec->extent) != 0) {
                 itemRandomPick();
@@ -1050,12 +1116,12 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
             done = 1;
         }
         break;
-    case 0x2C8:
+    case SPECIAL_ACTION_STATUS_TEXT:
         if (textBlockIsActive() == 0) {
             done = 1;
         }
         break;
-    case 0x2C9:
+    case SPECIAL_ACTION_STEAL:
         if (attackStep == 0) {
             if (unitEffectKeyFree(command->attacker, tecEffectGroupGet(command->attacker, tec), tec->extent) != 0) {
                 unitDataBoxDrop(hit->target, STEAL_CHANCE_HALF);
@@ -1065,9 +1131,7 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
             done = 1;
         }
         break;
-    case 0x2D5:
-    case 0x2D6:
-    case 0x2D7:
+    case SPECIAL_ACTION_TRANSFORM_FIRST ... SPECIAL_ACTION_TRANSFORM_LAST:
         switch (attackStep) {
         case ATTACK_STEP_TRANSFORM:
             if (ov01CdPendingReads() != 0) {
@@ -1139,7 +1203,7 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
             break;
         }
         break;
-    case 0x2F6:
+    case SPECIAL_ACTION_STATUS_STEAL:
         switch (attackStep) {
         case 0:
             if (textBlockIsActive() == 0) {

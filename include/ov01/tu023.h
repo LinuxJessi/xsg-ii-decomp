@@ -114,6 +114,8 @@ int calcHpDmg(struct Ov01Object *attacker, struct Ov01Object *target, int hitMod
 int calcHitApply(struct Ov01Object *source, struct Ov01Object *target, int lookupKey);
 int unitPercentAdd(struct Ov01Object *unit, int amount);
 void boostAddProgress(struct Ov01Object *unit, int amount);
+/* Clears every status row of the unit (active masks and turn counts). */
+void calcStatResetCha(struct Ov01Object *owner);
 void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
 int calcEpCost(struct Ov01Object *owner, int index);
 int slotCodeTest(struct Ov01Object *owner, int bit);
