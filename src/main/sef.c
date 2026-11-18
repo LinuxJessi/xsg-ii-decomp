@@ -617,12 +617,11 @@ void sefSampleKeyframeValue(SefKeyframe *keys, SefKeyCursor *cursor) {
 }
 
 void *MMathNormalizeVector2(void *destination, const Vector4 *source);
-void MMathMatrixBetweenVectors(void *destination, int slot, const Vector4 *vector);
+int MMathMatrixBetweenVectors(Matrix4 *destination, const Vector4 *from, const Vector4 *to);
 
-/* Normalizes a non-zero direction and hands it to the slot-indexed sink;
- * returns 0 without calling it for a zero direction. */
-/* Normalizes a non-zero direction and hands it to the slot-indexed sink; * returns 0 without calling it for a zero direction. */
-int sefSetSlotDirection(Matrix4 *destination, const Vector4 *direction, int slot)
+/* Builds in destination the rotation that turns axis onto the normalized direction (MMathMatrixBetweenVectors);
+ * returns 0 without touching destination for a zero direction. */
+int sefSetSlotDirection(Matrix4 *destination, const Vector4 *direction, const Vector4 *axis)
 {
     Vector4 normalized;
     int is_zero;
@@ -632,15 +631,15 @@ int sefSetSlotDirection(Matrix4 *destination, const Vector4 *direction, int slot
         return 0;
     }
     MMathNormalizeVector2(&normalized, direction);
-    MMathMatrixBetweenVectors(destination, slot, &normalized);
+    MMathMatrixBetweenVectors(destination, axis, &normalized);
     return 1;
 }
 
-void sefSetSlotDirectionBetween(void *state, Vector4 *minuend, Vector4 *subtrahend, int flags) {
+void sefSetSlotDirectionBetween(void *state, Vector4 *minuend, Vector4 *subtrahend, const Vector4 *axis) {
     Vector4 delta;
 
     Vu0SefSubVectorXYZ(&delta, minuend, subtrahend);
-    sefSetSlotDirection(state, &delta, flags);
+    sefSetSlotDirection(state, &delta, axis);
 }
 
 /* result = the normalized (first - second) when flags has 0x400, else the
@@ -758,7 +757,7 @@ typedef struct SefPointMotion {
 
 SefPointMotion sefPointMotion = { 0 };
 float MMathEvalHermiteKeys(Vector4 *destination, void *keys, float time);
-const Vector4 D_0068C220[2] = { { .x = 0.0f, .y = 0.0f, .z = 1.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = -1.0f, .w = 1.0f } };
+const Vector4 sefDirectionAxes[2] = { { .x = 0.0f, .y = 0.0f, .z = 1.0f, .w = 1.0f }, { .x = 0.0f, .y = 0.0f, .z = -1.0f, .w = 1.0f } };
 /* Copies rows 0-2 of src and the translation into dst; returns the distance
  * the translation step measured. */
 float vu0CopyMatrixWithTranslation(Vector4 *dst, Matrix4 src, Vector4 *aux, int value);
@@ -890,7 +889,7 @@ int sefGetSpeed(Vector4 *displacement, SefTransformState *state, int mode, float
                     sefNormalizeDifference((Vector4 *)0x70000090, &linkedPoint->slot_offset, &sefDefaultOffset, flags);
                 } else {
                     matrix = &state->cached_matrix;
-                    if ((short)sefSetSlotDirection(matrix, &linkedPoint->slot_offset, (int)D_0068C220) != 0) {
+                    if ((short)sefSetSlotDirection(matrix, &linkedPoint->slot_offset, sefDirectionAxes) != 0) {
                         matrix = 0;
                         sefClearVector((Vector4 *)0x70000090);
                     }
@@ -1096,7 +1095,7 @@ void sefCalcLocalMatrix(SefTransformState *state, int kind, int mode, int flags)
                     : "r"(&state->slot_offset), "r"(scratch)
                     : "memory");
             }
-            sefSetSlotDirection(&state->part_matrix, scratch, (int) D_0068C220);
+            sefSetSlotDirection(&state->part_matrix, scratch, sefDirectionAxes);
         } else if (mode == 0x3000) {
             state->flags |= 0x8000;
             sefGetKindMatrix(&state->part_matrix, request->kind1Key, kind & 31, 1);
@@ -1106,7 +1105,7 @@ void sefCalcLocalMatrix(SefTransformState *state, int kind, int mode, int flags)
                 if (flags & 1) {
                     QuadwordCopyMatrixT0(&state->part_matrix, &state->cached_matrix);
                 } else {
-                    sefSetSlotDirection(&state->part_matrix, &sefLinkedPoint->slot_offset, (int) D_0068C220);
+                    sefSetSlotDirection(&state->part_matrix, &sefLinkedPoint->slot_offset, sefDirectionAxes);
                 }
             }
         } else if (kind == 0x40 && mode == kind) {
@@ -1488,7 +1487,7 @@ int sefParentLine = -1;
 s16 sefInitialized = 0;
 int D_0069DB78 = 0;
 s16 D_0069DB80 = 0;
-s16 D_0069DB82 = 0;
+s16 _hitSignal = 0;
 s16 D_0069DB84 = 0;
 s16 sefClipTestDisabled = 0;
 float sefTimeScale = 1.0f;
@@ -1925,7 +1924,8 @@ void sefInitLineData(SefLocalData *line, int startTime, int frame, SefLineScript
             } else if (MMathIsVectorEqual(origin, &D_00471DA0)) {
                 line->in_use |= 0x40;
                 MMathRotateMatrixZ(&line->matrix, 0, -SEF_QUARTER_PI);
-            } else if ((short)sefSetSlotDirection(&line->matrix, (Vector4 *)&line->directionKeys[-2], (int)D_0068C220) != 0) {
+            } else if ((short)sefSetSlotDirection(&line->matrix, (Vector4 *)&line->directionKeys[-2],
+                                                  sefDirectionAxes) != 0) {
                 line->in_use |= 0x40;
             }
         }
@@ -2664,16 +2664,6 @@ int sefExecLineGlobalData(SefLineEmitData *data, int frame)
 extern int D_0069DB48;
 float D_0069B2F8 = 0.00999999978f;
 
-/* The global transform the placement is merged with: the matrix at +0x000, a position at +0x040, a float scale at +0x050
- * and a flag at +0x054. */
-typedef struct SefGlobalTransform {
-    Matrix4 matrix;                                  /* +0x000 */
-    Vector4 position;                                /* +0x040 */
-    float scale;                                     /* +0x050 */
-    short scaled;                                    /* +0x054 */
-} SefGlobalTransform;
-
-extern SefGlobalTransform sefGlobalTransform;
 struct SvDrawItem;
 void svInitItemDrawKind(struct SefPartTransform *part, struct SvDrawItem *item, int scaleKey40, int scaleKey80, int scaleKey100);
 
@@ -2960,7 +2950,7 @@ typedef struct SefSlotEntry {
     short inherit;
 } SefSlotEntry;
 
-extern s16 D_0069DB82;
+extern s16 _hitSignal;
 
 /* Hands a pending request flag of the slot to its target entries: clears it in the slot and sets it in the entries. */
 static inline void sefPassSlotFlag(SefEffectSlot *slot, int target, int flag)
@@ -3062,7 +3052,7 @@ int sefExecEffectData(SefEffectSlot *slot, int frame, short *hit)
     if (slot->flags & 0x1) {
         slot->flags &= ~0x1;
         sefOrEntryFlags((int) ((void **) sefRequestBuffer)[0], 1);
-        D_0069DB82 = 1;
+        _hitSignal = 1;
     }
     if (slot->flags & 0x8) {
         slot->flags &= ~0x8;
@@ -3861,7 +3851,7 @@ void sefLoadRequestBuffer(int p0, int p1, int p2, int p3, int p4, int p5, int p6
         sefGetKindSlotVector(&localB, p2, 1, 0);
         localB.y = 0.0f;
         localA.y = 0.0f;
-        sefSetSlotDirectionBetween(slots + 5, &localA, &localB, (int)D_0068C220);
+        sefSetSlotDirectionBetween(slots + 5, &localA, &localB, sefDirectionAxes);
         QuadwordCopyT0(&(slots + 5)[0][3], &slots[0][3]);
     } else {
         QuadwordCopyMatrixT0(slots + 5, slots);
@@ -4600,7 +4590,7 @@ typedef struct SefGroupEntry {
 } SefGroupEntry;
 
 SefGroupEntry sefGroupTable[SEF_GROUP_ENTRY_COUNT] = { 0 };
-static s16 sefSlotTable[24];
+static SefSlotTable sefSlotTable;
 
 /* Clears the four work tables (sefSlotTable, sefRequestBuffer, sefGroupTable, sefEntryCounts), then runs the init chain of the
  * CD reader, the ambient, and the effect subsystems. */
@@ -4609,7 +4599,7 @@ void sefInitWorkTables(void) {
     srsInitCdRead();
     sefInitEffectRecords();
     sefClearLineDataRecords();
-    memset(sefSlotTable, 0, 0x30);
+    memset(&sefSlotTable, 0, sizeof(sefSlotTable));
     memset(sefRequestBuffer, 0, 0x340);
     memset(sefGroupTable, 0, 0x100);
     memset(sefEntryCounts, 0, 0x488);
@@ -4714,24 +4704,21 @@ void sefStartClipTestEnabled(void) {
     sefSetOverrideVectors(0, 0);
 }
 
-/* Flag shorts of the slot table sit SEF_SLOT_FLAG_BASE entries after the keys (+0x20 in bytes). */
-#define SEF_SLOT_FLAG_BASE 16
-
-/* Slot table sefSlotTable: eight shorts of ids (+0x00..+0x0E) with a flag short per slot at +0x20..+0x2E.
+/* Slot table sefSlotTable: the effect number of each of eight wait slots, with its loadPending flag.
  * This claims a slot for the key among the first three entries when the key is absent, sets its flag, then calls
  * sefLoadPendingEffects. sefAcquireHighSlot claims among entries 3..7 the same way, for a positive key only. */
 void sefAcquireSlot(int key) {
     int i;
 
     for (i = 0; i < 3; i++) {
-        if (sefSlotTable[i] == key) {
+        if (sefSlotTable.effectNo[i] == key) {
             return;
         }
     }
     for (i = 0; i < 3; i++) {
-        if (sefSlotTable[i] == 0) {
-            sefSlotTable[i] = key;
-            sefSlotTable[i + SEF_SLOT_FLAG_BASE] = 1;
+        if (sefSlotTable.effectNo[i] == 0) {
+            sefSlotTable.effectNo[i] = key;
+            sefSlotTable.loadPending[i] = 1;
             sefLoadPendingEffects();
             return;
         }
@@ -4743,14 +4730,14 @@ void sefAcquireHighSlot(int key) {
 
     if (key > 0) {
         for (i = 3; i < 8; i++) {
-            if (sefSlotTable[i] == key) {
+            if (sefSlotTable.effectNo[i] == key) {
                 return;
             }
         }
         for (i = 3; i < 8; i++) {
-            if (sefSlotTable[i] == 0) {
-                sefSlotTable[i] = key;
-                sefSlotTable[i + SEF_SLOT_FLAG_BASE] = 1;
+            if (sefSlotTable.effectNo[i] == 0) {
+                sefSlotTable.effectNo[i] = key;
+                sefSlotTable.loadPending[i] = 1;
                 sefLoadPendingEffects();
                 return;
             }
@@ -4764,20 +4751,18 @@ void sefReleaseWaitSlot(int key) {
     int i;
 
     for (i = 0; i < 8; i++) {
-        if (sefSlotTable[i] == key) {
+        if (sefSlotTable.effectNo[i] == key) {
             sefDeleteWaitEffect(key);
             srsReleaseSlotsByIndex(key);
-            sefSlotTable[i] = 0;
-            sefSlotTable[i + SEF_SLOT_FLAG_BASE] = 0;
+            sefSlotTable.effectNo[i] = 0;
+            sefSlotTable.loadPending[i] = 0;
             return;
         }
     }
 }
 
-int srsLoadPendingEffects(s16 *slots);
-
 void sefLoadPendingEffects(void) {
-    srsLoadPendingEffects(sefSlotTable);
+    srsLoadPendingEffects(&sefSlotTable);
 }
 
 extern unsigned char D_00471E60[64];
@@ -4802,7 +4787,7 @@ void sefResetWorkTables(void)
     sdvInitAmbient();
     sdvClearSpecialWork();
     srsReleaseRecords();
-    memset(sefSlotTable, 0, 0x30);
+    memset(&sefSlotTable, 0, sizeof(sefSlotTable));
     memset(sefRequestBuffer, 0, 0x340);
     memset(&sefEntryTable, 0, 0x21AA0);
     memset(sefEntryCounts, 0, 0x488);
@@ -4850,7 +4835,7 @@ void sefResetWorkTablesAll(void)
     sdvInitAmbient();
     sefResetAll();
     sdvClearSpecialWork();
-    memset(sefSlotTable, 0, 0x30);
+    memset(&sefSlotTable, 0, sizeof(sefSlotTable));
     memset(sefRequestBuffer, 0, 0x340);
     memset(&sefEntryTable, 0, 0x21AA0);
     memset(sefEntryCounts, 0, 0x488);
@@ -4917,7 +4902,7 @@ void sefExecStep(void) {
     sefRunEmitters(0);
     sefSumEntryCounts();
     D_0069DB80 = 0;
-    D_0069DB82 = 0;
+    _hitSignal = 0;
     D_0069DB84 = 0;
 }
 
@@ -5107,29 +5092,11 @@ void func_00260840(unsigned char *request) {
 
 }
 
-/* One 28-byte record of srsRecordTable. The first word is nonzero while a record is in use (it is the buffer the
- * slot records 9..56 own, as in sv_get_image_item.c); key is the short at +0x18 that sefDeleteWaitEffect matches.
- * Local view: its handle is int and value and key sit at +0x04 and +0x18; the shared SrsRecord (srs.h) has a
- * void *handle and other names, so this file keeps its own type. */
-typedef struct SefSrsRecord {
-    int handle;                                        /* +0x00 */
-    int value;                                         /* +0x04 */
-    unsigned char unmodeled_008[0x10];
-    short key;                                         /* +0x18 */
-    unsigned char unmodeled_01a[2];
-} SefSrsRecord;
-
-/* srsRecordTable: the nine key records, then the slot records (as in sv_get_image_item.c). */
-typedef struct SefSrsTable {
-    SefSrsRecord keyRecords[9];
-    SefSrsRecord slots[49];
-} SefSrsTable;
-
-extern SefSrsTable srsRecordTable;
 const unsigned char D_0068C450[16] = "delete wait eft";
 
-/* Deletes the wait effect for the id (string "delete wait eft"): finds the matching entry of the eight-entry table
- * srsRecordTable and releases its record with sefReleaseEffectRecord. Called by sefReleaseWaitSlot (tu165). */
+/* Deletes the wait effect for the id (string "delete wait eft"): finds the wait-slot record of srsRecordTable whose
+ * effect number is key and releases the effect records bound to it with sefReleaseEffectRecord. Called by
+ * sefReleaseWaitSlot (tu165). */
 void sefDeleteWaitEffect(int key)
 {
     int keyIndex;
@@ -5137,7 +5104,7 @@ void sefDeleteWaitEffect(int key)
 
     keyIndex = -1;
     for (i = 0; i < 8; i++) {
-        if ((srsRecordTable.keyRecords[i + 1].handle != 0) && (srsRecordTable.keyRecords[i + 1].key == key)) {
+        if ((srsRecordTable.waitSlots[i].handle != 0) && (srsRecordTable.waitSlots[i].effectNo == key)) {
             keyIndex = i + 1;
             break;
         }
@@ -5151,7 +5118,7 @@ void sefDeleteWaitEffect(int key)
     }
 }
 
-extern int D_0069DC20;
+extern int scKeyRecordMode;
 
 
 typedef struct SefRequestBytes {
@@ -5160,7 +5127,7 @@ typedef struct SefRequestBytes {
 
 void sefRegisterGroupCenter(int owner, unsigned short key);
 extern int scGetKeyRecord(int kind, int out, int flag);
-extern int D_0069DC24;
+extern int scKeyRecordGroupCount;
 
 void sefStartEffect(void *request, int value)
 {
@@ -5180,7 +5147,7 @@ void sefStartEffect(void *request, int value)
         kind = ((SefRequestBuffer *)sefRequestBuffer)->kind;
         result = scGetKeyRecord(kind, (int)&resultOut, 1);
         if (result != 0) {
-            if (D_0069DC20 == SEF_START_MODE_GROUP) {
+            if (scKeyRecordMode == SEF_START_MODE_GROUP) {
                 ownerCount = sefCountOwnerValue(kind, sefGroupKey);
                 if (ownerCount == 0) {
                     innerResult = scGetKeyRecord(((SefRequestBuffer *)sefRequestBuffer)->kind, (int)&innerOut, 0);
@@ -5198,14 +5165,14 @@ void sefStartEffect(void *request, int value)
                     sefClearOwnerValueFlags(kind, sefGroupKey, SEF_RECORD_SLOTS_LOADED);
                 }
                 if (resultOut) {
-                    sefCreateEffectRecord((unsigned short *) (result + resultOut * 2), (SefRecordRequest *) sefRequestBuffer, (Vector4 *) value, result, D_0069DC24 * ownerCount, -1, 1);
+                    sefCreateEffectRecord((unsigned short *) (result + resultOut * 2), (SefRecordRequest *) sefRequestBuffer, (Vector4 *) value, result, scKeyRecordGroupCount * ownerCount, -1, 1);
                 }
                 sefRegisterGroupCenter(kind, sefGroupKey);
             } else {
                 index = sefCreateEffectRecordDefault(result + resultOut * 2, (int)sefRequestBuffer, value, result, -1);
                 if (index >= 0) {
                     record = &sefEffectRecords[index];
-                    if (D_0069DC20 == SEF_START_MODE_FLAG) {
+                    if (scKeyRecordMode == SEF_START_MODE_FLAG) {
                         record->flags = record->flags | 0x800000;
                     }
                 }
@@ -5248,7 +5215,7 @@ SefEffectRecord *sefCreateDetachedEffect(void *object)
         record = sefEffectRecords + index;
         record->flags = record->flags | 0x140;
         record->flags = record->flags & 0xEFFFFFFF;
-        if (SEF_START_MODE_FLAG == D_0069DC20) {
+        if (SEF_START_MODE_FLAG == scKeyRecordMode) {
             record->flags = record->flags | 0x800000;
         }
     }
@@ -5286,7 +5253,6 @@ int sefCanonicalEffectId(int effectId) {
     return effectId;
 }
 
-int srsLoadEffectBlock(int);
 
 /* Starts the effect key: image keys are loaded as a block and pruned, other keys load one slot;
  * a positive or -2 mode registers the handle. */
@@ -5340,13 +5306,13 @@ typedef struct SefSpawnRequest {
     unsigned char unmodeled_24[0x38 - 0x24];
 } SefSpawnRequest;
 
-/* The entry read through D_0069DC2C: a halfword index into the table of the status word. */
+/* The entry read through scKeyRecordEntry: a halfword index into the table of the status word. */
 typedef struct SefEntryHeader {
     unsigned char unmodeled_00[0x2];
     unsigned short entryIndex;  /* 0x2: 0xffff marks no entry */
 } SefEntryHeader;
 
-extern SefEntryHeader *D_0069DC2C;
+extern SefEntryHeader *scKeyRecordEntry;
 SefEffectRecord *sefCreateKindResourceSlot(int key, int base, int index, int second, unsigned char *third, unsigned char *fourth,
                                int fifth);
 
@@ -5360,7 +5326,7 @@ static inline void sefCopyBlock(unsigned char *destination, unsigned char *sourc
                          : "$8", "memory");
 }
 
-/* Spawns the effect record for an effect id. Inside an entry (D_0069DC2C set) it hands the remapped key to
+/* Spawns the effect record for an effect id. Inside an entry (scKeyRecordEntry set) it hands the remapped key to
  * sefCreateKindResourceSlot; otherwise it creates a record, copies the two optional quadword blocks into it and marks it. */
 SefEffectRecord *sefSpawnEffectRecord(int effectId, int second, unsigned char *firstBlock, unsigned char *secondBlock, int fifth)
 {
@@ -5383,7 +5349,7 @@ SefEffectRecord *sefSpawnEffectRecord(int effectId, int second, unsigned char *f
         srsFormatEffectStem(effectId, stem, 1);
         return 0;
     }
-    entry = D_0069DC2C;
+    entry = scKeyRecordEntry;
     if (entry != 0) {
         if (entry->entryIndex != 0xFFFF) {
             key = sefResolveEffectAlias(effectId);
@@ -5410,7 +5376,7 @@ SefEffectRecord *sefSpawnEffectRecord(int effectId, int second, unsigned char *f
         if (secondBlock != 0) {
             sefCopyBlock(record->secondBlock, secondBlock);
         }
-        if (D_0069DC20 == 61) {
+        if (scKeyRecordMode == 61) {
             record->flags |= 0x800000;
         }
         if (((effectId >> 28) & 3) == 2) {
@@ -5489,7 +5455,7 @@ void srsUnloadEffectSlot(unsigned int index);
 
 /* Releases the in-use records whose entry id is i + 9, for each key-table entry i (entries 9 to 56) whose key is
  * key, then unloads slot i. */
-void sefReleaseEntryRecords(int handle)
+void sefReleaseEntryRecords(void *handle)
 {
     int slotIndex;
     int recordIndex;
@@ -5710,14 +5676,14 @@ unsigned char *sefGetSlotDataChecked(int checkedIndex, int slotIndex)
 void sefSetSlotDirectionDefault(Matrix4 *destination, const Vector4 *direction)
 {
     do {
-        sefSetSlotDirection(destination, direction, (int) D_0068C220);
+        sefSetSlotDirection(destination, direction, sefDirectionAxes);
     } while (0);
 }
 
 void sefSetSlotDirectionBetweenDefault(void *state, Vector4 *minuend, Vector4 *subtrahend)
 {
     do {
-        sefSetSlotDirectionBetween(state, minuend, subtrahend, (int) D_0068C220);
+        sefSetSlotDirectionBetween(state, minuend, subtrahend, sefDirectionAxes);
     } while (0);
 }
 
@@ -5965,15 +5931,8 @@ void sefApplyMatrixVector(Vector4 *destination, Matrix4 *matrix, Vector4 *vector
     __asm__ __volatile__("sqc2 vf1, 0(%0)" : : "r"(destination) : "memory");
 }
 
-/* srsRecordTable as the id lookup indexes it: the head record, the eight key records and the slot records. */
-typedef struct SefSrsClassTable {
-    SefSrsRecord head;
-    SefSrsRecord keyRecords[8];
-    SefSrsRecord slots[48];
-} SefSrsClassTable;
-
 /* Record id that holds an effect id in srsRecordTable. A type 9 effect is looked up by its id in the 48 slot
- * records (ids 9..56), a type 1 effect by bits 12..21 of its id in the eight key records (ids 1..8). Returns -1
+ * records (ids 9..56), a type 1 effect by bits 12..21 of its id in the eight wait-slot records (ids 1..8). Returns -1
  * when the id is 0 or no record holds it, and 0 for any other effect type. Both loops take their record count
  * from the class being searched (slotClass). */
 int sefFindRecordIndex(int key)
@@ -5990,7 +5949,7 @@ int sefFindRecordIndex(int key)
     if (effectType == 9) {
         slotClass = 1;
         for (recordIndex = 0; recordIndex < (slotClass ? 48 : 8); recordIndex++) {
-            if (srsRecordTable.slots[recordIndex].handle != 0 && srsRecordTable.slots[recordIndex].value == key) {
+            if (srsRecordTable.slots[recordIndex].handle != 0 && srsRecordTable.slots[recordIndex].key == key) {
                 return recordIndex + 9;
             }
         }
@@ -5999,8 +5958,8 @@ int sefFindRecordIndex(int key)
     if (effectType == 1) {
         slotClass = 0;
         for (recordIndex = 0; recordIndex < (slotClass ? 48 : 8); recordIndex++) {
-            if (((SefSrsClassTable *) &srsRecordTable)->keyRecords[recordIndex].handle != 0
-                && ((((SefSrsClassTable *) &srsRecordTable)->keyRecords[recordIndex].value >> 12) & 0x3FF)
+            if (srsRecordTable.waitSlots[recordIndex].handle != 0
+                && ((srsRecordTable.waitSlots[recordIndex].key >> 12) & 0x3FF)
                        == ((key >> 12) & 0x3FF)) {
                 return recordIndex + 1;
             }
@@ -8238,8 +8197,8 @@ HandleSlot sefHandleSlots[48] = { 0 };
 void srsReleaseOtherOwnerEffectSlots(void);
 
 /* Clears the 48-slot handle table, calls srsReleaseOtherOwnerEffectSlots, then refills the
- * slots from the key records of srsRecordTable whose key is nonzero: eight
- * records first, then forty-eight more. Each refilled slot gets value 0. */
+ * slots from the records of srsRecordTable that hold a buffer: the eight wait-slot
+ * records first, then the 48 effect slots. Each refilled slot takes the record's key, with value 0. */
 void sefResetHandleSlots(void) {
     int count;
     int i;
@@ -8248,16 +8207,16 @@ void sefResetHandleSlots(void) {
     count = 0;
     srsReleaseOtherOwnerEffectSlots();
     for (i = 0; i < 8; i++) {
-        if (srsRecordTable.keyRecords[i + 1].handle != 0) {
+        if (srsRecordTable.waitSlots[i].handle != 0) {
             sefHandleSlots[count].value = 0;
-            sefHandleSlots[count].handle = srsRecordTable.keyRecords[i + 1].value;
+            sefHandleSlots[count].handle = srsRecordTable.waitSlots[i].key;
             count++;
         }
     }
     for (i = 0; i < SEF_HANDLE_SLOT_COUNT; i++) {
         if (srsRecordTable.slots[i].handle != 0) {
             sefHandleSlots[count].value = 0;
-            sefHandleSlots[count].handle = srsRecordTable.slots[i].value;
+            sefHandleSlots[count].handle = srsRecordTable.slots[i].key;
             count++;
         }
     }

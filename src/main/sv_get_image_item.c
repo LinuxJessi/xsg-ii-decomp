@@ -1174,8 +1174,6 @@ void svDeleteImageMapperByTag(int tag) {
 #define SV_ZTEST_ON 0x5000D
 #define SV_ZTEST_OFF 0x2000D
 
-extern SrsTable srsRecordTable;
-
 /* Returns the first free effect slot, or -1 when all are in use. */
 int srsFindFreeEffectSlot(void)
 {

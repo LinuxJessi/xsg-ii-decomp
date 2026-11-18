@@ -64,14 +64,16 @@ typedef struct SrsRecord {
     int owner;              /* 0x0C */
     int arg;                /* 0x10 */
     unsigned int stamp;     /* 0x14: last-use stamp, the eviction order */
-    short effectNo;         /* 0x18: effect number of a pending-resource key record */
+    short effectNo;         /* 0x18: effect number of a wait-slot record */
     signed char kind;       /* 0x1A */
     signed char busy;       /* 0x1B */
 } SrsRecord;
 
 
 #define SRS_SLOT_COUNT 48
-#define SRS_KEY_RECORD_COUNT 9
+#define SRS_WAIT_SLOT_COUNT 8
+/* Records before the effect slots (the package and the wait slots): effect slot i is image mapper i + 9. */
+#define SRS_KEY_RECORD_COUNT (1 + SRS_WAIT_SLOT_COUNT)
 
 /* SrsRecord.kind: how the record's buffer is freed (smFree, GameResBlockFreeByBuffer, or not at all). */
 enum SrsRecordKind {
@@ -80,13 +82,20 @@ enum SrsRecordKind {
     SRS_KIND_CALLER_BUFFER = 2
 };
 
-/* srsRecordTable: 58 records (srsResetKeyTable clears 0x658 bytes). The nine key records
- * come first; the 48 effect slots follow at 0xFC, then one sentinel slot whose
- * stamp srsEvictEffectSlot sets to the maximum. */
+/* srsRecordTable: 58 records (srsResetKeyTable clears 0x658 bytes), each registered as the image
+ * mapper of its record number. Record 0 holds the effect package (default.esp or cfdef.esp), records
+ * 1..8 the .esp packages of the eight wait slots of sefSlotTable, records 9..56 the effect slots;
+ * record 57 is a sentinel slot whose stamp srsEvictEffectSlot sets to the maximum. */
+/* The package and the wait slots are their own members: as a nine-record array indexed [i + 1], the
+ * wait-slot loops of srs.c compile to other address arithmetic (an offset of 28 from the table instead
+ * of 16 from the table + 12). */
 typedef struct SrsTable {
-    SrsRecord keyRecords[SRS_KEY_RECORD_COUNT];
-    SrsRecord slots[SRS_SLOT_COUNT + 1];
+    SrsRecord package;                         /* +0x000: record 0 */
+    SrsRecord waitSlots[SRS_WAIT_SLOT_COUNT];  /* +0x01C: records 1..8 */
+    SrsRecord slots[SRS_SLOT_COUNT + 1];       /* +0x0FC: records 9..56 and the sentinel */
 } SrsTable;
+
+extern SrsTable srsRecordTable;
 
 /* Resource loader functions of srs.c, read by sef.c and the sv file. */
 char *srsGetEffectName(int effectNo);
@@ -97,5 +106,10 @@ void srsFormatEffectStem(int effectNo, char *buffer, int withSubNo);
 extern int srsEffectStamp;
 
 int scGetKeyRecordFirst(int first, int second);
+
+struct SefSlotTable;
+void srsLoadPendingEffects(struct SefSlotTable *slotTable);
+int srsLoadEffectBlock(int effectKey);
+void srsReleaseSlotsByIndex(int index);
 
 #endif /* INCLUDE_MAIN_SRS_H */

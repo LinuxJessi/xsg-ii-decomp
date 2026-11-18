@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/sef.h"
 #include "main/srs.h"
 #include "main/sv_get_image_item.h"
 #include "main/xgl_cd.h"
@@ -226,14 +227,19 @@ int srsMakeFileName(char *buffer, const char *fileName)
     return 1;
 }
 
+/* Script-record state that scGetKeyRecord (sdv_180.c) sets and sef.c reads: the
+ * mode of the record found (SEF_START_MODE_* in sef.h), the group count of a
+ * mode-0x3E record, the group key sefAdvanceGroupKey steps (a halfword), and
+ * the entry of a mode-0x49 record (SefEntryHeader in sef.c). */
+int scKeyRecordMode = 0;
+int scKeyRecordGroupCount = 0;
+/* Read and written as a halfword (sef.c declares it unsigned short). An unsigned short definition
+ * leaves the two bytes after it to the alignment pad, and data_carve refuses that .sdata span. */
+int sefGroupKey = 0;
+struct SefEntryHeader *scKeyRecordEntry = 0;
+
 /* Returns the file length for the current load mode, rounded up to a 2 KB
  * sector, or 0 when the file cannot be opened. */
-/* Two counters after the srsMakeFileName literals in .sdata (types not declared in this TU: int guessed). */
-int D_0069DC20 = 0;
-int D_0069DC24 = 0;
-int sefGroupKey = 0;
-int D_0069DC2C = 0;
-
 int srsGetFileLen(const char *fileName)
 {
     char path[SRS_PATH_LENGTH];
@@ -455,16 +461,267 @@ int srsLoadEffectData(void *buffer, int effectNo)
     return fileLoad(buffer, name, 1);
 }
 
-/* local view: unsized byte array; the sized SrsTable cannot be passed to memset here and would change the symbol size. */
-extern unsigned char srsRecordTable[];
-#define SRS_RECORD_TABLE_SIZE 0x658  /* 58 key records of 0x1C bytes */
-
-/* Clears the 58-record key table srsRecordTable (0x1C-byte records) and srsEffectStamp. */
+/* Clears the 58-record table srsRecordTable and srsEffectStamp. */
 void srsResetKeyTable(void)
 {
     srsEffectStamp = 0;
-    memset(srsRecordTable, 0, SRS_RECORD_TABLE_SIZE);
+    memset(&srsRecordTable, 0, sizeof(srsRecordTable));
 }
 
-unsigned char srsRecordTable[12] = { 0 };
-int D_005E66DC = 0;
+#define SRS_ESP_BUFFER_SIZE 0x28800  /* buffer of the effect package (record 0) */
+#define SRS_SLOT_BUFFER_SIZE 0x1C000 /* buffer of a wait-slot record */
+#define SRS_BLOCK_BUFFER_SIZE 0x10000 /* buffer srsLoadEffectBlock gives wait slot 0 */
+
+/* Defined as void smAlloc(int) in sm_initilize.c; the allocation comes back in $v0. */
+void *smAlloc(int size);
+extern const char srsEspCfdefPath[];
+extern const char srsEspDefaultPath[];
+
+/* Loads an effect package file ("esp/cfdef.esp" when cfdef is set, else
+ * "esp/default.esp") into the buffer of record 0 of srsRecordTable, allocating
+ * it on first use. When the buffer already holds the package with the same key
+ * and reload is 0, only its image mapper is registered again; otherwise the
+ * file is read again. A failed first read clears the key and falls through
+ * into that shared tail, so the file is read a second time. */
+void srsLoadEspFile(int reload, int cfdef)
+{
+    const char *path;
+    int key;
+
+    if (cfdef != 0) {
+        path = srsEspCfdefPath;
+    } else {
+        path = srsEspDefaultPath;
+    }
+    /* Effect key of the package: index 999, sub number 500, kind 1 for cfdef. */
+    key = cfdef ? 0x103E71F4 : 0x3E71F4;
+    if (srsRecordTable.package.handle == 0) {
+        srsRecordTable.package.handle = smAlloc(SRS_ESP_BUFFER_SIZE);
+        if (srsRecordTable.package.handle == 0) {
+            return;
+        }
+        srsRecordTable.package.busy = 1;
+        srsRecordTable.package.key = key;
+        if (fileLoad(srsRecordTable.package.handle, path, 0) >= 0) {
+            if (cfdef != 0) {
+                xglCdWaitUntilIdle();
+            }
+            return;
+        }
+        srsRecordTable.package.busy = 0;
+        srsRecordTable.package.key = 0;
+        if (srsRecordTable.package.handle == 0) {
+            return;
+        }
+    }
+    svDeleteImageMapper(0);
+    if (reload == 0 && srsRecordTable.package.key == key) {
+        srsRecordTable.package.busy = 1;
+        srsMapPendingResources();
+        return;
+    }
+    srsRecordTable.package.busy = 1;
+    srsRecordTable.package.key = key;
+    if (fileLoad(srsRecordTable.package.handle, path, 0) >= 0) {
+        if (cfdef != 0) {
+            xglCdWaitUntilIdle();
+        }
+    } else {
+        srsRecordTable.package.busy = 0;
+        srsRecordTable.package.key = 0;
+    }
+}
+
+/* Loads the default effect package. */
+void srsLoadDefaultEsp(void)
+{
+    srsLoadEspFile(0, 0);
+}
+
+/* Decodes an effect key: index = bits 12..21, kind = bits 28..29. Returns the
+ * index when srsGetEffectFileKind accepts the pair, else 0. */
+int srsCheckEffectKey(int effectKey)
+{
+    int index;
+    int kind;
+
+    index = (effectKey >> 0xC) & 0x3FF;
+    kind = (effectKey >> 0x1C) & 3;
+    if (srsGetEffectFileKind(index, kind) != 1) {
+        return 0;
+    }
+    return index;
+}
+
+void smFree(void *block);
+
+/* Clears every wait-slot record (records 1..8) whose key index equals
+ * index, releasing its image mapper and buffer first when it has one. */
+void srsReleaseSlotsByIndex(int index)
+{
+    int keyIndex;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        keyIndex = (srsRecordTable.waitSlots[i].key >> 12) & 0x3FF;
+        if (keyIndex != 0 && keyIndex == index) {
+            if (srsRecordTable.waitSlots[i].handle != 0) {
+                svDeleteImageMapper(i + 1);
+                smFree(srsRecordTable.waitSlots[i].handle);
+            }
+            memset(&srsRecordTable.waitSlots[i], 0, sizeof(SrsRecord));
+        }
+    }
+}
+
+int GameResBlockFreeByBuffer(void *buffer);
+
+/* Releases records 9..56 (image mapper i + 9): the buffer goes back to smFree
+ * or GameResBlockFreeByBuffer by kind, then the record is cleared. */
+void srsReleaseEffectRecords(void)
+{
+    int i;
+
+    for (i = 0; i < 48; i++) {
+        if (srsRecordTable.slots[i].handle != 0) {
+            svDeleteImageMapper(i + 9);
+            if (srsRecordTable.slots[i].kind == SRS_KIND_SM_BLOCK) {
+                smFree(srsRecordTable.slots[i].handle);
+            } else if (srsRecordTable.slots[i].kind == SRS_KIND_GAME_RES_BLOCK) {
+                GameResBlockFreeByBuffer(srsRecordTable.slots[i].handle);
+            }
+            memset(&srsRecordTable.slots[i], 0, sizeof(SrsRecord));
+        }
+    }
+}
+
+/* Releases every wait-slot record (records 1..8) that holds a buffer. */
+void srsReleaseAllSlots(void)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (srsRecordTable.waitSlots[i].handle != 0) {
+            svDeleteImageMapper(i + 1);
+            smFree(srsRecordTable.waitSlots[i].handle);
+            memset(&srsRecordTable.waitSlots[i], 0, sizeof(SrsRecord));
+        }
+    }
+}
+
+void srsReleaseRecords(void)
+{
+    srsReleaseAllSlots();
+    srsReleaseEffectRecords();
+}
+
+void srsReleaseEspFile(void)
+{
+    srsReleaseRecords();
+    if (srsRecordTable.package.handle != 0) {
+        svDeleteImageMapper(0);
+        smFree(srsRecordTable.package.handle);
+        memset(&srsRecordTable.package, 0, sizeof(SrsRecord));
+    }
+}
+
+/* Registers the image mapper of every loaded record still flagged
+ * busy (image mapper still owed): the effect package (mapper 0, tag 3000), the wait-slot
+ * records (mappers 1..8, tag 2000, entry count from key bits 28..29) and the
+ * effect records (mappers 9..56, tag 3600). */
+void srsMapPendingResources(void)
+{
+    void *chunk[8]; /* svAnalyzeChunk reads only chunk[0]; the 0x20 bytes are the original frame */
+    int i;
+
+    if (srsRecordTable.package.handle != 0 && srsRecordTable.package.busy != 0) {
+        chunk[0] = srsRecordTable.package.handle;
+        svAddImageMapper(0, 0, chunk, 3000);
+        srsRecordTable.package.busy = 0;
+    }
+    for (i = 0; i < 8; i++) {
+        if (srsRecordTable.waitSlots[i].handle != 0 && srsRecordTable.waitSlots[i].busy != 0) {
+            chunk[0] = srsRecordTable.waitSlots[i].handle;
+            svAddImageMapper(i + 1, (srsRecordTable.waitSlots[i].key >> 28) & 3, chunk, 2000);
+            srsRecordTable.waitSlots[i].busy = 0;
+        }
+    }
+    for (i = 0; i < 48; i++) {
+        if (srsRecordTable.slots[i].handle != 0 && srsRecordTable.slots[i].busy != 0) {
+            chunk[0] = srsRecordTable.slots[i].handle;
+            svAddImageMapper(i + 9, 0, chunk, 3600);
+            srsRecordTable.slots[i].busy = 0;
+        }
+    }
+}
+
+/* Loads the .esp package of every wait slot flagged loadPending into the
+ * buffer of wait-slot record i, flags it busy, and sets
+ * its key when the file fits. */
+void srsLoadPendingEffects(SefSlotTable *slotTable)
+{
+    char *name;
+    int size;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (slotTable->effectNo[i] > 0 && slotTable->loadPending[i] != 0) {
+            slotTable->loadPending[i] = 0;
+            name = srsGetEspName(slotTable->effectNo[i] << 12);
+            if (srsRecordTable.waitSlots[i].handle == 0) {
+                srsRecordTable.waitSlots[i].handle = smAlloc(SRS_SLOT_BUFFER_SIZE);
+            }
+            srsRecordTable.waitSlots[i].busy = 1;
+            srsRecordTable.waitSlots[i].effectNo = slotTable->effectNo[i];
+            size = fileLoad(srsRecordTable.waitSlots[i].handle, name, 1);
+            if (size <= 0) {
+                srsRecordTable.waitSlots[i].busy = 0;
+            } else if (size <= SRS_SLOT_BUFFER_SIZE) {
+                srsRecordTable.waitSlots[i].key = slotTable->effectNo[i] << 12;
+            }
+        }
+    }
+}
+
+void sefReleaseRecordsByQuery(void);
+
+/* Loads the .esp package of effectKey (its low 10 bits dropped) into wait slot
+ * 0 (record 1, image mapper 1), allocating its 0x10000-byte buffer on first
+ * use. When the slot already holds the same key, only its image mapper is
+ * registered again. Returns -1 without a buffer, else 1. */
+int srsLoadEffectBlock(int effectKey)
+{
+    int key = effectKey & ~0x3FF;
+    void *buffer = srsRecordTable.waitSlots[0].handle;
+    int result = -1;
+    char *name;
+    int size;
+
+    if (buffer != 0 && srsRecordTable.waitSlots[0].key == key) {
+        svDeleteImageMapper(1);
+        srsRecordTable.waitSlots[0].busy = 1;
+        srsMapPendingResources();
+        return 1;
+    }
+    if (buffer == 0) {
+        srsRecordTable.waitSlots[0].handle = smAlloc(SRS_BLOCK_BUFFER_SIZE);
+    } else {
+        svDeleteImageMapper(1);
+        memset(&srsRecordTable.waitSlots[0], 0, sizeof(SrsRecord));
+        srsRecordTable.waitSlots[0].handle = buffer;
+        sefReleaseRecordsByQuery();
+    }
+    if (srsRecordTable.waitSlots[0].handle != 0) {
+        name = srsGetEspName(key);
+        srsRecordTable.waitSlots[0].busy = 1;
+        size = fileLoad(srsRecordTable.waitSlots[0].handle, name, 0);
+        if (size <= 0) {
+            srsRecordTable.waitSlots[0].busy = 0;
+        } else if (size <= SRS_BLOCK_BUFFER_SIZE) {
+            srsRecordTable.waitSlots[0].key = key;
+            xglCdWaitUntilIdle();
+        }
+        result = 1;
+    }
+    return result;
+}

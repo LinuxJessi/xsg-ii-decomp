@@ -46554,7 +46554,7 @@
      2
     ],
     [
-     "func_00271390",
+     "sefNoOp",
      2560912,
      8,
      2
@@ -47508,13 +47508,13 @@
      2
     ],
     [
-     "func_002775E8",
+     "recordStepRing",
      2586088,
      8,
      2
     ],
     [
-     "func_002775F0",
+     "recordRingInnerColor",
      2586096,
      12,
      2
@@ -47538,7 +47538,7 @@
      2
     ],
     [
-     "recordDrawCurve",
+     "recordDrawTurnColumns",
      2586832,
      648,
      2
@@ -47562,25 +47562,25 @@
      2
     ],
     [
-     "func_00277EA0",
+     "recordDrawFlatColumn",
      2588320,
      216,
      2
     ],
     [
-     "animSampleSegment",
+     "recordTurnAngleAt",
      2588536,
      244,
      2
     ],
     [
-     "animLerp",
+     "recordLerp",
      2588784,
      16,
      2
     ],
     [
-     "animOffsetPoints",
+     "recordOffsetCorners",
      2588800,
      100,
      2
@@ -52368,7 +52368,7 @@
      2
     ],
     [
-     "func_002A6818",
+     "__floatdisf",
      2779160,
      232,
      2

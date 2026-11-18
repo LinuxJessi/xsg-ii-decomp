@@ -2,75 +2,17 @@
 #include "shared.h"
 #include "vu0_macro.h"
 #include "main/xgl_2.h"
+#include "main/tu204.h"
+#include "main/tu207.h"
 
-/* Source record read by recordProjectQuad: an int value and an (x, y) screen offset added to corner 0. */
-typedef struct RecordSource {
-    unsigned char unmodeled_00[0x10];
-    int value;
-    unsigned char unmodeled_14[0x34];
-    int offset_x;
-    int offset_y;
-} RecordSource;
-
-/*
- * Batch header: the depth shared by the four corners and the number of repeats. recordDrawCurve reads
- * the graph fields from 0x20: colour, baseline, time range, top, columns, rows and value ceiling.
- */
-typedef struct RecordBatch {
-    unsigned char unmodeled_00[0x10];
-    int z;
-    int count;
-    unsigned char unmodeled_18[0x20 - 0x18];
-    int color;
-    int bottom;
-    int startTime;
-    int endTime;
-    int top;
-    int columns;
-    int rows;
-    unsigned char unmodeled_3c[0x5c - 0x3c];
-    int maxValue;
-} RecordBatch;
-
-/*
- * Gradient view of the record: two colours and a rectangle (top, left, right, bottom); vertical
- * selects whether the colour changes along y (non-zero) or along x.
- */
-typedef struct RecordGradient {
-    unsigned char unmodeled_00[0x10];
-    int z;
-    int count;
-    unsigned char unmodeled_18[0x20 - 0x18];
-    int color0;
-    int color1;
-    int top;
-    int left;
-    int right;
-    int bottom;
-    int vertical;
-} RecordGradient;
-
-/*
- * The draw record under the views this file reads; z and count are shared. Reading the gradient
- * through the union (alias set 0) keeps the original's field-load order around the corner stores.
- */
-typedef union Record {
-    RecordSource source;
-    RecordBatch batch;
-    RecordGradient gradient;
-} Record;
-
-/* The record header the gsQueue functions read (tu213.c's partial view). */
-typedef struct GsQueueContext GsQueueContext;
-
-void gsQueueBeginTriStrip(void *context);
-void gsQueueAddColor(int packet, int color, GsQueueContext *context);
-void gsQueueAddVertex(int packet, Vector4 *vector, void *context);
-void gsQueueAddKickVertex(int packet, Vector4 *vector, void *context);
-void gsQueueFlush(int packet);
+void gsQueueBeginTriStrip(GsQueueContext *context);
+void gsQueueAddColor(XglPacket *packet, int color, GsQueueContext *context);
+void gsQueueAddVertex(XglPacket *unused, Vector4 *vector, GsQueueContext *context);
+void gsQueueAddKickVertex(XglPacket *packet, Vector4 *vector, GsQueueContext *context);
+void gsQueueFlush(XglPacket *packet);
 
 /* Draws the record's rectangle as one two-colour strip, count times. */
-void recordDrawStrip(Record *record, int packet)
+void recordDrawStrip(GsQueueContext *record, XglPacket *packet)
 {
     Vector4 corners[4];
     int depth;
@@ -82,18 +24,18 @@ void recordDrawStrip(Record *record, int packet)
     int bottom;
     int i;
 
-    depth = record->gradient.z;
-    count = record->gradient.count;
-    color0 = record->gradient.color0;
-    color1 = record->gradient.color1;
-    top = record->gradient.top;
-    right = record->gradient.right;
-    bottom = record->gradient.bottom;
-    corners[0].x = (float) record->gradient.left;
+    depth = record->u.queue.depth;
+    count = record->u.queue.count;
+    color0 = record->u.gradient.color0;
+    color1 = record->u.gradient.color1;
+    top = record->u.gradient.top;
+    right = record->u.gradient.right;
+    bottom = record->u.gradient.bottom;
+    corners[0].x = (float) record->u.gradient.left;
     corners[0].y = (float) top;
-    if (record->gradient.vertical == 0)
+    if (record->u.gradient.vertical == 0)
     {
-        corners[1].x = (float) record->gradient.left;
+        corners[1].x = (float) record->u.gradient.left;
         corners[1].y = (float) bottom;
         corners[2].x = (float) right;
         corners[2].y = (float) top;
@@ -102,7 +44,7 @@ void recordDrawStrip(Record *record, int packet)
     {
         corners[1].x = (float) right;
         corners[1].y = (float) top;
-        corners[2].x = (float) record->gradient.left;
+        corners[2].x = (float) record->u.gradient.left;
         corners[2].y = (float) bottom;
     }
     corners[3].x = (float) right;
@@ -111,10 +53,10 @@ void recordDrawStrip(Record *record, int packet)
     gsQueueBeginTriStrip(record);
     for (i = 0; i < count; i++)
     {
-        gsQueueAddColor(packet, color0, (GsQueueContext *)record);
+        gsQueueAddColor(packet, color0, record);
         gsQueueAddVertex(packet, &corners[0], record);
         gsQueueAddVertex(packet, &corners[1], record);
-        gsQueueAddColor(packet, color1, (GsQueueContext *)record);
+        gsQueueAddColor(packet, color1, record);
         gsQueueAddKickVertex(packet, &corners[2], record);
         gsQueueAddKickVertex(packet, &corners[3], record);
     }
@@ -122,32 +64,30 @@ void recordDrawStrip(Record *record, int packet)
 }
 
 void *memset(void *destination, int value, unsigned int count);
-typedef struct AnimSegment AnimSegment; /* defined in tu209.c */
-int animSampleSegment(f32 *out, AnimSegment *seg, f32 position);
-u64 xglColorLerp(u64 from, u64 to, f32 t);
-void animOffsetPoints(Vector4 *points, f32 dx, f32 dy);
-void recordProjectQuad(Vector4 *corners, RecordSource *source, void *params);
-void recordDrawBatchQuad(int packet, Vector4 *corners, RecordBatch *batch);
-void func_00277EA0(int packet, Vector4 *corners, RecordBatch *batch);
+/* tu209.c */
+int recordTurnAngleAt(Vector4 *angles, GsQueueContext *record, f32 x);
+void recordOffsetCorners(Vector4 *points, f32 dx, f32 dy);
+void recordProjectQuad(Vector4 *corners, GsQueueContext *record, const Vector4 *angles);
+void recordDrawBatchQuad(XglPacket *packet, Vector4 *corners, GsQueueContext *record);
+void recordDrawFlatColumn(XglPacket *packet, Vector4 *corners, GsQueueContext *record);
 
 /*
- * Draws the record's curve as columns of quads, one column per time step: a column whose sample is out of range
- * (animSampleSegment state 2) is skipped, state 0 draws one quad from bottom to top, otherwise all rows quads are
- * stacked from the bottom, projected by the sample and coloured from white towards color by sample / maxValue.
- * The record is passed on untyped: each helper reads its own partial view of it
- * (RecordSource, RecordBatch, AnimSegment in tu209.c).
+ * Draw handler of record type 9: the area between startX and endX, bottom and top as columns of rows quads. The
+ * angle recordTurnAngleAt gives at a column's right x decides: past maxAngle (state 2) the column is not drawn,
+ * below 0 (state 0) it is drawn flat as one quad from bottom to top (recordDrawFlatColumn), otherwise its rows quads are
+ * stacked from the bottom, turned by the angle about the pivot (recordProjectQuad) and coloured from white towards
+ * color by angle / maxAngle.
  */
-void recordDrawCurve(void *record, int packet)
+void recordDrawTurnColumns(GsQueueContext *record, XglPacket *packet)
 {
-    RecordBatch *graph;
     Vector4 corners[4];
-    f32 sample[4];
+    Vector4 angles;
     int color;
     int top;
-    int maxValue;
+    int maxAngle;
     int rowHeight;
-    int startTime;
-    int endTime;
+    int startX;
+    int endX;
     int bottom;
     int columns;
     int rows;
@@ -160,33 +100,32 @@ void recordDrawCurve(void *record, int packet)
     f32 columnRight;
     f32 rowTop;
 
-    graph = record;
-    color = graph->color;
-    bottom = graph->bottom;
-    startTime = graph->startTime;
-    endTime = graph->endTime;
-    top = graph->top;
-    columns = graph->columns;
-    rows = graph->rows;
-    maxValue = graph->maxValue;
+    color = record->u.turn.color;
+    bottom = record->u.turn.bottom;
+    startX = record->u.turn.startX;
+    endX = record->u.turn.endX;
+    top = record->u.turn.top;
+    columns = record->u.turn.columns;
+    rows = record->u.turn.rows;
+    maxAngle = record->u.turn.maxAngle;
     memset(corners, 0, sizeof(corners));
     if (columns <= 0 || rows <= 0)
     {
         return;
     }
-    columnWidth = (endTime - startTime) / columns;
+    columnWidth = (endX - startX) / columns;
     rowHeight = (top - bottom) / rows;
     gsQueueBeginTriStrip(record);
     for (column = 0; column < columns; column = next)
     {
         next = column + 1;
-        columnRight = (f32) (next * columnWidth + startTime);
-        state = animSampleSegment(sample, record, columnRight);
+        columnRight = (f32) (next * columnWidth + startX);
+        state = recordTurnAngleAt(&angles, record, columnRight);
         if (state == 2)
         {
             continue;
         }
-        columnLeft = (f32) (column * columnWidth + startTime);
+        columnLeft = (f32) (column * columnWidth + startX);
         corners[0].x = columnLeft;
         corners[0].y = (f32) bottom;
         corners[0].z = 0.0f;
@@ -201,11 +140,11 @@ void recordDrawCurve(void *record, int packet)
             corners[3].x = columnRight;
             corners[3].y = (f32) top;
             corners[3].z = 0.0f;
-            func_00277EA0(packet, corners, record);
+            recordDrawFlatColumn(packet, corners, record);
         }
         else
         {
-            gsQueueAddColor(packet, xglColorLerp(0x80FFFFFF, color, sample[0] / (f32) maxValue), record);
+            gsQueueAddColor(packet, xglColorLerp(0x80FFFFFF, color, angles.x / (f32) maxAngle), record);
             rowTop = (f32) (bottom + rowHeight);
             corners[2].x = columnLeft;
             corners[2].y = rowTop;
@@ -213,44 +152,44 @@ void recordDrawCurve(void *record, int packet)
             corners[3].x = columnRight;
             corners[3].y = rowTop;
             corners[3].z = 0.0f;
-            recordProjectQuad(corners, record, sample);
+            recordProjectQuad(corners, record, &angles);
             for (row = 0; row < rows; row++)
             {
                 recordDrawBatchQuad(packet, corners, record);
-                animOffsetPoints(corners, 0.0f, (f32) rowHeight);
+                recordOffsetCorners(corners, 0.0f, (f32) rowHeight);
             }
         }
     }
     gsQueueFlush(packet);
 }
 
-void recordRotateCorner(Vector4 *vectors, void *params, int value, int x, int y);
+void recordRotateCorner(Vector4 *corner, const Vector4 *angles, int depth, int x, int y);
 
-/* Passes the four corners to recordRotateCorner with one value and an origin: corner 0 plus the source offset. */
-void recordProjectQuad(Vector4 *corners, RecordSource *source, void *params)
+/* Turns the four corners by angles about the pivot: corner 0 plus the record's pivot offset. */
+void recordProjectQuad(Vector4 *corners, GsQueueContext *record, const Vector4 *angles)
 {
-    int value;
-    int originX;
-    int originY;
+    int depth;
+    int pivotX;
+    int pivotY;
 
-    originX = (int) (corners[0].x + (float) source->offset_x);
-    value = source->value;
-    originY = (int) (corners[0].y + (float) source->offset_y);
-    recordRotateCorner(&corners[0], params, value, originX, originY);
-    recordRotateCorner(&corners[1], params, value, originX, originY);
-    recordRotateCorner(&corners[2], params, value, originX, originY);
-    recordRotateCorner(&corners[3], params, value, originX, originY);
+    pivotX = (int) (corners[0].x + (float) record->u.turn.pivotX);
+    depth = record->u.queue.depth;
+    pivotY = (int) (corners[0].y + (float) record->u.turn.pivotY);
+    recordRotateCorner(&corners[0], angles, depth, pivotX, pivotY);
+    recordRotateCorner(&corners[1], angles, depth, pivotX, pivotY);
+    recordRotateCorner(&corners[2], angles, depth, pivotX, pivotY);
+    recordRotateCorner(&corners[3], angles, depth, pivotX, pivotY);
 }
 
-
-extern f32 D_0069DDF8;
+/* Degrees to radians. */
+extern f32 recordTurnDegToRad;
 void xglMatrixUnit(Matrix4 matrix);
 void xglMatrixRotX(Matrix4 destination, Matrix4 source, f32 angle);
 void xglMatrixRotZ(Matrix4 destination, Matrix4 source, f32 angle);
 void xglMatrixMul(void *destination, void *left, void *right);
 
-/* Rotates one corner by the (x, y, z) angles in degrees of params around the point (x, y); value is not read. */
-void recordRotateCorner(Vector4 *vectors, void *params, int value, int x, int y)
+/* Rotates one corner by the x, y and z angles in degrees around the point (x, y); depth is not read. */
+void recordRotateCorner(Vector4 *corner, const Vector4 *angles, int depth, int x, int y)
 {
     AlignedVector4 offset;
     AlignedVector4 centered;
@@ -262,10 +201,8 @@ void recordRotateCorner(Vector4 *vectors, void *params, int value, int x, int y)
     AlignedVector4 rotated;
     AlignedVector4 result;
     AlignedVector4 position;
-    Vector4 *angles;
 
-    angles = params;
-    position = *vectors;
+    position = *corner;
     offset.x = (f32) -x;
     offset.y = (f32) -y;
     offset.z = 0.0f;
@@ -275,18 +212,18 @@ void recordRotateCorner(Vector4 *vectors, void *params, int value, int x, int y)
     xglMatrixUnit(rotationZ);
     xglMatrixUnit(rotationXY);
     xglMatrixUnit(rotation);
-    xglMatrixRotX(rotationX, rotationX, angles->x * D_0069DDF8);
-    xglMatrixRotY(rotationY, rotationY, angles->y * D_0069DDF8);
-    xglMatrixRotZ(rotationZ, rotationZ, angles->z * D_0069DDF8);
+    xglMatrixRotX(rotationX, rotationX, angles->x * recordTurnDegToRad);
+    xglMatrixRotY(rotationY, rotationY, angles->y * recordTurnDegToRad);
+    xglMatrixRotZ(rotationZ, rotationZ, angles->z * recordTurnDegToRad);
     xglMatrixMul(rotationXY, rotationX, rotationY);
     xglMatrixMul(rotation, rotationZ, rotationXY);
     xglVectorMulMat(&rotated, rotation, &centered);
     Vu0SubVectorXYZ(&result, &rotated, &offset);
-    *vectors = result;
+    *corner = result;
 }
 
-/* Sets the depth of the four corners from the batch and runs the batch count times over them. */
-void recordDrawBatchQuad(int packet, Vector4 *corners, RecordBatch *batch)
+/* Draws one turned quad of a type 9 column count times, at the record's depth. */
+void recordDrawBatchQuad(XglPacket *packet, Vector4 *corners, GsQueueContext *record)
 {
     float z;
     int count;
@@ -298,8 +235,8 @@ void recordDrawBatchQuad(int packet, Vector4 *corners, RecordBatch *batch)
     corner1 = &corners[1];
     corner2 = &corners[2];
     corner3 = &corners[3];
-    z = (float) batch->z;
-    count = batch->count;
+    z = (float) record->u.queue.depth;
+    count = record->u.queue.count;
     corner3->z = z;
     corner2->z = z;
     corner1->z = z;
@@ -310,16 +247,17 @@ void recordDrawBatchQuad(int packet, Vector4 *corners, RecordBatch *batch)
         do
         {
             remaining = remaining - 1;
-            gsQueueAddVertex(packet, corners, batch);
-            gsQueueAddVertex(packet, corner1, batch);
-            gsQueueAddKickVertex(packet, corner2, batch);
-            gsQueueAddKickVertex(packet, corner3, batch);
+            gsQueueAddVertex(packet, corners, record);
+            gsQueueAddVertex(packet, corner1, record);
+            gsQueueAddKickVertex(packet, corner2, record);
+            gsQueueAddKickVertex(packet, corner3, record);
         }
         while (remaining != 0);
     }
 }
 
-void func_00277EA0(int packet, Vector4 *corners, RecordBatch *batch)
+/* The same body as recordDrawBatchQuad: draws the quad of a type 9 column that is not turned. */
+void recordDrawFlatColumn(XglPacket *packet, Vector4 *corners, GsQueueContext *record)
 {
     float z;
     int count;
@@ -331,8 +269,8 @@ void func_00277EA0(int packet, Vector4 *corners, RecordBatch *batch)
     corner1 = &corners[1];
     corner2 = &corners[2];
     corner3 = &corners[3];
-    z = (float) batch->z;
-    count = batch->count;
+    z = (float) record->u.queue.depth;
+    count = record->u.queue.count;
     corner3->z = z;
     corner2->z = z;
     corner1->z = z;
@@ -343,10 +281,10 @@ void func_00277EA0(int packet, Vector4 *corners, RecordBatch *batch)
         do
         {
             remaining = remaining - 1;
-            gsQueueAddVertex(packet, corners, batch);
-            gsQueueAddVertex(packet, corner1, batch);
-            gsQueueAddKickVertex(packet, corner2, batch);
-            gsQueueAddKickVertex(packet, corner3, batch);
+            gsQueueAddVertex(packet, corners, record);
+            gsQueueAddVertex(packet, corner1, record);
+            gsQueueAddKickVertex(packet, corner2, record);
+            gsQueueAddKickVertex(packet, corner3, record);
         }
         while (remaining != 0);
     }

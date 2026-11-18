@@ -3900,34 +3900,7 @@
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,
-   "accepted_functions": "0/21",
-   "assembler_options": [
-    "-g"
-   ]
-  },
-  "tu178": {
-   "id": "main/tu178",
-   "ordinal": 178,
-   "path": "src/main/tu178.c",
-   "kind": "gcc",
-   "category": "game",
-   "in_scope": true,
-   "mode": "asm",
-   "language": "c",
-   "compiler_profile": "ee-gcc2_96-realconv-lp7",
-   "flags": [
-    "-O2",
-    "-G0"
-   ],
-   "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-   "owners": {
-    ".text": "asm",
-    ".data": "asm",
-    ".rodata": "asm"
-   },
-   "evidence": "reports/x2-compiler-calibration.md",
-   "all_functions_accepted": false,
-   "accepted_functions": "0/11",
+   "accepted_functions": "0/32",
    "assembler_options": [
     "-g"
    ]

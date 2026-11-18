@@ -1,97 +1,52 @@
 #include "common.h"
 
 #include "shared.h"
+#include "main/tu204.h"
+#include "main/tu207.h"
 
-/* One rectangle of a draw record: top, left, right, bottom. */
-typedef struct GsQueueRect {
-    int top;
-    int left;
-    int right;
-    int bottom;
-} GsQueueRect;
-
-/* The header every draw record starts with: the gsQueue functions read it, under the name tu213.c gives it (its
-   partial view names color and halveRgb at the same offsets; tu207.c's record continues it). */
-typedef struct GsQueueContext {
+/*
+ * The type 10 record of tu207.h (GsQueueContext, arm u.ring) as orbitDrawRing reads it. Through GsQueueContext.u every
+ * read of the record gets alias set 0 (an access through a union), which conflicts with the stack spill slots: sched2
+ * then moves the mflo of 365 / segments and its spill ahead of the record loads (fd.sh orbitDrawRing 161/172, 27
+ * bytes; the same reads through a pointer to the arm, &record->u.ring, cost a second base register, 112/172). With
+ * this non-union view of the same words the reads keep the int alias set (172/172).
+ */
+typedef struct GsQueueRingView {
     unsigned char type;
     unsigned char unmodeled_01[3];
-    int frame;
-    int tex0;
-    int color;
-    int depth;                          /* 0x10: z of every vertex */
-    int count;                          /* 0x14: how many times the primitive is drawn */
-    int halveRgb;
-    int blendKind;
-} GsQueueContext;
+    int frame;       /* +0x04 */
+    int tex0;        /* +0x08 */
+    int color;       /* +0x0C */
+    int depth;       /* +0x10 */
+    int count;       /* +0x14 */
+    int halveRgb;    /* +0x18 */
+    int blendKind;   /* +0x1C */
+    int endColor;    /* +0x20 */
+    int centerX;     /* +0x24 */
+    int centerY;     /* +0x28 */
+    int radius;      /* +0x2C */
+    int innerRadius; /* +0x30 */
+    int phaseSpeed;  /* +0x34 */
+    int segments;    /* +0x38 */
+    int amplitude;   /* +0x3C */
+} GsQueueRingView;
 
-/* Ring record (orbitDrawRing). */
-typedef struct GsQueueRing {
-    GsQueueContext header;
-    int endColor;
-    int centerX;
-    int centerY;
-    int radius;
-    int innerRadius;
-    int phaseSpeed;
-    int segments;
-    int amplitude;
-} GsQueueRing;
-
-/* Quad record with preset positions and a texture rectangle (quadDrawPreset). */
-typedef struct GsQueuePresetQuad {
-    GsQueueContext header;
-    int positionPreset;
-    unsigned char unmodeled_24[0x30 - 0x24];
-    GsQueueRect texture;
-} GsQueuePresetQuad;
-
-/* Quad record with a screen rectangle and preset texture coordinates (quadDrawPresetUv). */
-typedef struct GsQueuePresetUvQuad {
-    GsQueueContext header;
-    GsQueueRect screen;
-    int texturePreset;
-} GsQueuePresetUvQuad;
-
-/* Circle-of-sprites record (circleDrawSegments, circleSpriteCorners). */
-typedef struct GsQueueCircle {
-    GsQueueContext header;
-    GsQueueRect screen;
-    GsQueueRect texture;
-    int radiusStep;
-    int ringCount;
-    int endColor;
-    int startAngle;
-    int segments;
-    int centerDisabled;
-} GsQueueCircle;
-
-/* Grid record (gridDrawCells). */
-typedef struct GsQueueGrid {
-    GsQueueContext header;
-    int endColor;
-    GsQueueRect screen;
-    int columns;
-    int rows;
-    unsigned char unmodeled_3c[0x68 - 0x3C];
-    int transformStart;
-    int transformEnd;
-} GsQueueGrid;
-
-extern int D_0069DDFC; /* wave phase in degrees, advanced by phaseSpeed on every orbitDrawRing call */
-extern float D_0069DE00; /* degrees to radians */
+extern int orbitRingPhase; /* wave phase in degrees, advanced by phaseSpeed on every orbitDrawRing call */
+extern float orbitDegToRad; /* degrees to radians */
 
 float sinf(float angle);
 float cosf(float angle);
-void gsQueueBeginTriStrip(void *context);
+void gsQueueBeginTriStrip(GsQueueContext *context);
 int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueContext *record);
-void gsQueueAddColor(int packet, int color, GsQueueContext *context);
-void gsQueueAddKickVertex(int packet, Vector4 *vector, void *context);
-void gsQueueFlush(int packet);
+void gsQueueAddColor(XglPacket *packet, int color, GsQueueContext *context);
+void gsQueueAddKickVertex(XglPacket *packet, Vector4 *vector, GsQueueContext *context);
+void gsQueueFlush(XglPacket *packet);
 
 /* Draws a ring as a triangle strip, count times: the outer edge waves with sin(phase) by amplitude around radius,
    the inner edge stays at innerRadius. When endColor is set, the outer vertices get color and the inner ones
    endColor. setPointFromRecord takes z from the record's depth. */
-void orbitDrawRing(GsQueueRing *record, int packet) {
+void orbitDrawRing(GsQueueContext *record, XglPacket *packet) {
+    GsQueueRingView *ring = (GsQueueRingView *) record;
     Vector4 points[2];
     int pass;
     int color;
@@ -110,35 +65,35 @@ void orbitDrawRing(GsQueueRing *record, int packet) {
     int wrappedAngle;
     float radians;
 
-    phaseSpeed = record->phaseSpeed;
-    count = record->header.count;
-    color = record->header.color;
-    endColor = record->endColor;
-    centerX = record->centerX;
-    centerY = record->centerY;
-    radius = record->radius;
-    innerRadius = record->innerRadius;
-    amplitude = record->amplitude;
-    angleStep = 365 / record->segments;
-    D_0069DDFC += phaseSpeed;
+    phaseSpeed = ring->phaseSpeed;
+    count = ring->count;
+    color = ring->color;
+    endColor = ring->endColor;
+    centerX = ring->centerX;
+    centerY = ring->centerY;
+    radius = ring->radius;
+    innerRadius = ring->innerRadius;
+    amplitude = ring->amplitude;
+    angleStep = 365 / ring->segments;
+    orbitRingPhase += phaseSpeed;
     gsQueueBeginTriStrip(record);
     for (pass = 0; pass < count; pass++) {
-        phase = D_0069DDFC;
+        phase = orbitRingPhase;
         for (angle = 0; angle < 369; angle += angleStep) {
             wrappedAngle = (angle < 360) ? angle : 0;
-            radians = wrappedAngle * D_0069DE00;
-            ringRadius = (int) (radius + amplitude * sinf(phase * D_0069DE00));
+            radians = wrappedAngle * orbitDegToRad;
+            ringRadius = (int) (radius + amplitude * sinf(phase * orbitDegToRad));
             phase += 40;
             setPointFromRecord(&points[0], ringRadius * cosf(radians) + centerX, ringRadius * sinf(radians) + centerY,
-                               &record->header);
+                               record);
             setPointFromRecord(&points[1], innerRadius * cosf(radians) + centerX, innerRadius * sinf(radians) + centerY,
-                               &record->header);
+                               record);
             if (endColor != 0) {
-                gsQueueAddColor(packet, color, &record->header);
+                gsQueueAddColor(packet, color, record);
             }
             gsQueueAddKickVertex(packet, &points[0], record);
             if (endColor != 0) {
-                gsQueueAddColor(packet, endColor, &record->header);
+                gsQueueAddColor(packet, endColor, record);
             }
             gsQueueAddKickVertex(packet, &points[1], record);
         }
@@ -150,7 +105,7 @@ void orbitDrawRing(GsQueueRing *record, int packet) {
 int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueContext *record) {
     int depth;
 
-    depth = record->depth;
+    depth = record->u.queue.depth;
     destination->x = (float) x;
     destination->y = (float) y;
     destination->z = (float) depth;
@@ -158,12 +113,12 @@ int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueContext 
 }
 
 void gsQuadHalfScreenFill(int preset, Vector4 *quad);
-void gsQueueAddTexturedVertex(int packet, Vector4 *position, Vector4 *uv, void *context);
-void gsQueueAddTexturedKickVertex(int packet, Vector4 *position, Vector4 *uv, void *context);
+void gsQueueAddTexturedVertex(XglPacket *unused, Vector4 *position, Vector4 *uv, GsQueueContext *context);
+void gsQueueAddTexturedKickVertex(XglPacket *packet, Vector4 *position, Vector4 *uv, GsQueueContext *context);
 
-/* Draws one textured quad count times as a triangle strip: the positions are the preset quad of gsQuadHalfScreenFill, the
-   UVs come from the record's uv rectangle. */
-void quadDrawPreset(GsQueuePresetQuad *record, int packet) {
+/* Draws one textured quad count times as a triangle strip: the positions are the preset quad of gsQuadHalfScreenFill,
+   the UVs come from the record's texture rectangle. */
+void quadDrawPreset(GsQueueContext *record, XglPacket *packet) {
     Vector4 uvs[4];
     Vector4 positions[4];
     int z;
@@ -174,13 +129,13 @@ void quadDrawPreset(GsQueuePresetQuad *record, int packet) {
     int count;
     int i;
 
-    z = record->header.depth;
-    top = record->texture.top;
-    left = record->texture.left;
-    right = record->texture.right;
-    bottom = record->texture.bottom;
-    count = record->header.count;
-    gsQuadHalfScreenFill(record->positionPreset, positions);
+    z = record->u.queue.depth;
+    top = record->u.presetQuad.texture.top;
+    left = record->u.presetQuad.texture.left;
+    right = record->u.presetQuad.texture.right;
+    bottom = record->u.presetQuad.texture.bottom;
+    count = record->u.queue.count;
+    gsQuadHalfScreenFill(record->u.presetQuad.positionPreset, positions);
     uvs[0].y = (float) top;
     uvs[0].x = (float) left;
     uvs[0].z = (float) z;
@@ -205,7 +160,7 @@ void quadDrawPreset(GsQueuePresetQuad *record, int packet) {
 
 /* As quadDrawPreset with the roles swapped: the positions come from the record's rectangle, the UVs are the preset
    quad of gsQuadHalfScreenFill. */
-void quadDrawPresetUv(GsQueuePresetUvQuad *record, int packet) {
+void quadDrawPresetUv(GsQueueContext *record, XglPacket *packet) {
     Vector4 uvs[4];
     Vector4 positions[4];
     int z;
@@ -216,13 +171,13 @@ void quadDrawPresetUv(GsQueuePresetUvQuad *record, int packet) {
     int count;
     int i;
 
-    z = record->header.depth;
-    top = record->screen.top;
-    left = record->screen.left;
-    right = record->screen.right;
-    bottom = record->screen.bottom;
-    count = record->header.count;
-    gsQuadHalfScreenFill(record->texturePreset, uvs);
+    z = record->u.queue.depth;
+    top = record->u.presetUvQuad.screen.top;
+    left = record->u.presetUvQuad.screen.left;
+    right = record->u.presetUvQuad.screen.right;
+    bottom = record->u.presetUvQuad.screen.bottom;
+    count = record->u.queue.count;
+    gsQuadHalfScreenFill(record->u.presetUvQuad.texturePreset, uvs);
     positions[0].y = (float) top;
     positions[0].x = (float) left;
     positions[0].z = (float) z;
@@ -247,15 +202,14 @@ void quadDrawPresetUv(GsQueuePresetUvQuad *record, int packet) {
 
 float xglCosDeg(int degrees);
 float xglSinDeg(int degrees);
-void gsQueueBeginSprites(void *context);
-void circleSpriteCorners(Vector4 *points, int x, int y, const GsQueueCircle *record);
-u64 xglColorLerp(u64 from, u64 to, float t);
+void gsQueueBeginSprites(GsQueueContext *context);
+void circleSpriteCorners(Vector4 *points, int x, int y, const GsQueueContext *record);
 
 /* Draws rings of sprites around the record rectangle, count times: segments sprites per ring, ring (ring + 1) *
    radiusStep away from the centre along directions spaced 360 / segments degrees from startAngle, each ring coloured
    from color towards endColor when endColor is set; a centre sprite comes first unless centerDisabled. Nothing is drawn
    with 15 segments or more (the direction table holds 15). */
-void circleDrawSegments(GsQueueCircle *record, int packet) {
+void circleDrawSegments(GsQueueContext *record, XglPacket *packet) {
     float directions[15][2];
     Vector4 positions[2];
     Vector4 uvs[2];
@@ -278,18 +232,18 @@ void circleDrawSegments(GsQueueCircle *record, int packet) {
     float radius;
 
     angleStep = 0;
-    color = record->header.color;
-    segments = record->segments;
-    count = record->header.count;
-    uvTop = record->texture.top;
-    uvLeft = record->texture.left;
-    uvRight = record->texture.right;
-    uvBottom = record->texture.bottom;
-    radiusStep = record->radiusStep;
-    ringCount = record->ringCount;
-    endColor = record->endColor;
-    startAngle = record->startAngle;
-    centerDisabled = record->centerDisabled;
+    color = record->u.queue.color;
+    segments = record->u.circle.segments;
+    count = record->u.queue.count;
+    uvTop = record->u.circle.texture.top;
+    uvLeft = record->u.circle.texture.left;
+    uvRight = record->u.circle.texture.right;
+    uvBottom = record->u.circle.texture.bottom;
+    radiusStep = record->u.circle.radiusStep;
+    ringCount = record->u.circle.ringCount;
+    endColor = record->u.circle.endColor;
+    startAngle = record->u.circle.startAngle;
+    centerDisabled = record->u.circle.centerDisabled;
     if (segments < 15) {
         uvs[0].x = (float) uvLeft;
         uvs[0].y = (float) uvTop;
@@ -312,7 +266,7 @@ void circleDrawSegments(GsQueueCircle *record, int packet) {
             for (ring = 0; ring < ringCount; ring++) {
                 if (endColor != 0) {
                     gsQueueAddColor(packet, xglColorLerp(color, endColor, (float) ring / (float) ringCount),
-                                    &record->header);
+                                    record);
                 }
                 for (segment = 0; segment < segments; segment++) {
                     radius = (float) (radiusStep * (ring + 1));
@@ -328,18 +282,18 @@ void circleDrawSegments(GsQueueCircle *record, int packet) {
 }
 
 /* Sets the two corner points of a sprite: the record rectangle shifted by (x, y), z from the record. */
-void circleSpriteCorners(Vector4 *points, int x, int y, const GsQueueCircle *record) {
+void circleSpriteCorners(Vector4 *points, int x, int y, const GsQueueContext *record) {
     int top;
     int left;
     int right;
     int bottom;
     int z;
 
-    bottom = record->screen.bottom;
-    top = record->screen.top;
-    left = record->screen.left;
-    right = record->screen.right;
-    z = record->header.depth;
+    bottom = record->u.circle.screen.bottom;
+    top = record->u.circle.screen.top;
+    left = record->u.circle.screen.left;
+    right = record->u.circle.screen.right;
+    z = record->u.queue.depth;
     points[0].x = (float) (left + x);
     points[0].y = (float) (top + y);
     points[1].x = (float) (right + x);
@@ -355,16 +309,16 @@ enum {
     GRID_CELL_HIDDEN
 };
 
-int pointFadeColorStep(Vector4 *transform, float x, float y, GsQueueGrid *record);
-void quadDrawRepeated(int packet, Vector4 *quad, void *context);
-void quadDrawTransformed(int packet, Vector4 *quad, void *context, Vector4 *transform);
+/* tu211.c defines it as (out, record, x, y); under the EABI the floats travel in $f12/$f13 either way, but declared and
+   called in that order the argument moves of gridDrawCells come out swapped (gate: 6 bytes at 0x278B54). */
+int pointFadeColorStep(Vector4 *transform, float x, float y, const GsQueueContext *record);
+void quadDrawRepeated(XglPacket *packet, Vector4 *quad, GsQueueContext *record);
+void quadDrawTransformed(XglPacket *packet, Vector4 *quad, GsQueueContext *record, Vector4 *transform);
 
 /* Draws the record rectangle as rows x columns cells. Once per cell, from the cell's first corner, pointFadeColorStep
-   (still asm: it loads transformStart and transformEnd at +0x68/+0x6C, compares with c.lt.s and returns 0, 1 or 2)
-   fills a transform;
-   the cell is then drawn flat, drawn transformed or skipped. endColor, when set, colours the cells (lerped by
-   transform.x for transformed ones). */
-void gridDrawCells(GsQueueGrid *record, int packet) {
+   (tu211.c) gives the cell's angles; the cell is then drawn flat, drawn turned (quadDrawTransformed) or skipped.
+   endColor, when set, colours the cells (lerped by angle / (maxAngle - minAngle) for turned ones). */
+void gridDrawCells(GsQueueContext *record, XglPacket *packet) {
     Vector4 quad[4];
     Vector4 transform;
     int color;
@@ -375,24 +329,24 @@ void gridDrawCells(GsQueueGrid *record, int packet) {
     int right;
     int bottom;
     int rows;
-    int transformStart;
-    int transformEnd;
+    int minAngle;
+    int maxAngle;
     int cellWidth;
     int cellHeight;
     int row;
     int column;
     int clip;
 
-    color = record->header.color;
-    columns = record->columns;
-    endColor = record->endColor;
-    top = record->screen.top;
-    left = record->screen.left;
-    right = record->screen.right;
-    bottom = record->screen.bottom;
-    rows = record->rows;
-    transformStart = record->transformStart;
-    transformEnd = record->transformEnd;
+    color = record->u.queue.color;
+    columns = record->u.grid.columns;
+    endColor = record->u.grid.endColor;
+    top = record->u.grid.screen.top;
+    left = record->u.grid.screen.left;
+    right = record->u.grid.screen.right;
+    bottom = record->u.grid.screen.bottom;
+    rows = record->u.grid.rows;
+    minAngle = record->u.grid.minAngle;
+    maxAngle = record->u.grid.maxAngle;
     if (columns > 0 && rows > 0) {
         cellWidth = (right - left) / columns;
         cellHeight = (bottom - top) / rows;
@@ -418,7 +372,7 @@ void gridDrawCells(GsQueueGrid *record, int packet) {
                 switch (clip) {
                 case GRID_CELL_FLAT:
                     if (endColor != 0) {
-                        gsQueueAddColor(packet, color, &record->header);
+                        gsQueueAddColor(packet, color, record);
                     }
                     quadDrawRepeated(packet, quad, record);
                     break;
@@ -426,8 +380,8 @@ void gridDrawCells(GsQueueGrid *record, int packet) {
                     if (endColor != 0) {
                         gsQueueAddColor(packet,
                                         xglColorLerp(color, endColor,
-                                                     transform.x / (float) (transformEnd - transformStart)),
-                                        &record->header);
+                                                     transform.x / (float) (maxAngle - minAngle)),
+                                        record);
                     }
                     quadDrawTransformed(packet, quad, record, &transform);
                     break;

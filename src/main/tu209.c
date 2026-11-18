@@ -1,69 +1,51 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu207.h"
 
 void *memset(void *destination, int value, unsigned int count);
 
-/* Linear interpolation from start to end by ratio: start + (end - start) * ratio. Used by the keyframe sampler animSampleSegment. */
-f32 animLerp(f32 start, f32 end, f32 ratio);
+f32 recordLerp(f32 from, f32 to, f32 fraction);
 
 /*
- * Start/end time and start/end value of one keyframe segment, plus the
- * value ceiling animSampleSegment clamps against. Only the fields
- * animSampleSegment reads are modeled; the rest of the owning object is
- * unmodeled here.
+ * The angle of a type 9 record's turn at x: startAngle at startX to endAngle at endX (the first of the three angles,
+ * set alike by recordSetPreset). Returns 0 with angles cleared when the angle is below 0 (the column is drawn flat),
+ * 2 with angles cleared but x = maxAngle when it is past maxAngle (the column is not drawn), otherwise 1 with the
+ * angle in x, y and z.
  */
-typedef struct AnimSegment {
-    unsigned char unmodeled_00[0x28];
-    int startTime;  /* +0x28 */
-    int endTime;    /* +0x2c */
-    unsigned char unmodeled_30[0x3c - 0x30];
-    int endValue;   /* +0x3c */
-    unsigned char unmodeled_40[0x50 - 0x40];
-    int startValue; /* +0x50 */
-    unsigned char unmodeled_54[0x5c - 0x54];
-    int maxValue;   /* +0x5c */
-} AnimSegment;
-
-/*
- * Samples the keyframe segment at `position`: interpolates between
- * startValue and endValue by the segment's elapsed fraction and clamps to
- * [0, maxValue]. `out` is a 4-float (0x10 byte) buffer; its first three
- * entries receive the sampled value. Returns 0 when position is before the
- * segment (out zeroed), 2 when past it (out zeroed except out[0] = maxValue),
- * 1 otherwise (out[0..2] = the sampled value).
- */
-int animSampleSegment(f32 *out, AnimSegment *seg, f32 position)
+int recordTurnAngleAt(Vector4 *angles, GsQueueContext *record, f32 x)
 {
-    int startTime = seg->startTime;
-    f32 endValue = (f32)seg->endValue;
-    int endTime = seg->endTime;
-    f32 ratio = (position - (f32)startTime) / (f32)(endTime - startTime);
-    f32 startValue = (f32)seg->startValue;
-    int maxValue = seg->maxValue;
-    f32 value = animLerp(startValue, endValue, ratio);
-    f32 maxValueF;
+    int startX = record->u.turn.startX;
+    f32 endAngle = (f32)record->u.turn.endAngle[0];
+    int endX = record->u.turn.endX;
+    f32 fraction = (x - (f32)startX) / (f32)(endX - startX);
+    f32 startAngle = (f32)record->u.turn.startAngle[0];
+    int maxAngle = record->u.turn.maxAngle;
+    f32 angle = recordLerp(startAngle, endAngle, fraction);
+    f32 maxAngleF;
 
-    if (value < 0.0f) {
-        memset(out, 0, 0x10);
+    if (angle < 0.0f) {
+        memset(angles, 0, sizeof(*angles));
         return 0;
     }
-    maxValueF = (f32)maxValue;
-    if (maxValueF < value) {
-        memset(out, 0, 0x10);
-        out[0] = maxValueF;
+    maxAngleF = (f32)maxAngle;
+    if (maxAngleF < angle) {
+        memset(angles, 0, sizeof(*angles));
+        angles->x = maxAngleF;
         return 2;
     }
-    out[0] = out[1] = out[2] = value;
+    angles->x = angles->y = angles->z = angle;
     return 1;
 }
 
-f32 animLerp(f32 start, f32 end, f32 ratio)
+/* Linear interpolation from `from` to `to` by fraction (tu211.c's intLerp has the same body). */
+f32 recordLerp(f32 from, f32 to, f32 fraction)
 {
-    return ((end - start) * ratio) + start;
+    return ((to - from) * fraction) + from;
 }
 
-/* Offsets x and y of four corners (recordDrawCurve's quad in tu208.c) by (dx, dy); z and w are untouched. */
-void animOffsetPoints(Vector4 *points, f32 dx, f32 dy)
+/* Moves x and y of the four corners of a type 9 quad (recordDrawTurnColumns in tu208.c) by (dx, dy); z and w are
+   untouched. */
+void recordOffsetCorners(Vector4 *points, f32 dx, f32 dy)
 {
     points[0].y += dy;
     points[0].x += dx;

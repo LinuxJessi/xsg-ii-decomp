@@ -108996,7 +108996,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0068C220"
+      "sefDirectionAxes"
      ],
      "c_input_spans": [
       {
@@ -109010,7 +109010,7 @@
         48
        ],
        "symbols": [
-        "D_0068C220"
+        "sefDirectionAxes"
        ]
       }
      ],
@@ -109737,7 +109737,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0069DB82"
+      "_hitSignal"
      ],
      "c_input_spans": [
       {
@@ -109751,7 +109751,7 @@
         48
        ],
        "symbols": [
-        "D_0069DB82"
+        "_hitSignal"
        ]
       }
      ],
@@ -110578,76 +110578,6 @@
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/main/build/c/srs.o"
      }
-    },
-    {
-     "range": [
-      "0x005e66d0",
-      "0x005e66dc"
-     ],
-     "generated": [
-      "0x005e66d0",
-      "0x005e66dc"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "srsRecordTable"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x005e66d0",
-        "0x005e66dc"
-       ],
-       "object_range": [
-        272,
-        284
-       ],
-       "symbols": [
-        "srsRecordTable"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/srs.o"
-     }
-    },
-    {
-     "range": [
-      "0x005e66dc",
-      "0x005e66e0"
-     ],
-     "generated": [
-      "0x005e66dc",
-      "0x005e66e0"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_005E66DC"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".sdata",
-       "range": [
-        "0x005e66dc",
-        "0x005e66e0"
-       ],
-       "object_range": [
-        80,
-        84
-       ],
-       "symbols": [
-        "D_005E66DC"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/srs.o"
-     }
     }
    ],
    ".rodata": [
@@ -111058,7 +110988,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0069DC20"
+      "scKeyRecordMode"
      ],
      "c_input_spans": [
       {
@@ -111072,7 +111002,7 @@
         68
        ],
        "symbols": [
-        "D_0069DC20"
+        "scKeyRecordMode"
        ]
       }
      ],
@@ -111093,7 +111023,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0069DC24"
+      "scKeyRecordGroupCount"
      ],
      "c_input_spans": [
       {
@@ -111107,7 +111037,7 @@
         72
        ],
        "symbols": [
-        "D_0069DC24"
+        "scKeyRecordGroupCount"
        ]
       }
      ],
@@ -111163,7 +111093,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0069DC2C"
+      "scKeyRecordEntry"
      ],
      "c_input_spans": [
       {
@@ -111177,7 +111107,7 @@
         80
        ],
        "symbols": [
-        "D_0069DC2C"
+        "scKeyRecordEntry"
        ]
       }
      ],
@@ -111194,93 +111124,33 @@
     {
      "range": [
       "0x0069b324",
-      "0x0069b330"
+      "0x0069b374"
      ],
      "generated": [
       "0x0069b324",
-      "0x0069b330"
+      "0x0069b374"
      ],
      "generated_by": [
-      "func_002671A0",
-      "func_00267388"
+      "sdvExecEffectSeq",
+      "sdvExecShadowSeq",
+      "sdvNearestAngle",
+      "sdvProgressPrm",
+      "sdvSetCameraParam",
+      "sdvWrapAngle",
+      "tiWindUpdateKeyframes"
      ],
      "c_owned_symbols": [
       "D_0069B324",
       "D_0069B328",
-      "D_0069B32C"
-     ],
-     "also_referenced_by_c": [],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/sdv_181.o"
-     }
-    },
-    {
-     "range": [
-      "0x0069b330",
-      "0x0069b334"
-     ],
-     "generated": [
-      "0x0069b330",
-      "0x0069b334"
-     ],
-     "generated_by": [
-      "tiWindUpdateKeyframes"
-     ],
-     "c_owned_symbols": [
-      "D_0069B330"
-     ],
-     "also_referenced_by_c": [],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/sdv_181.o"
-     }
-    },
-    {
-     "range": [
-      "0x0069b334",
-      "0x0069b348"
-     ],
-     "generated": [
-      "0x0069b334",
-      "0x0069b348"
-     ],
-     "generated_by": [
-      "sdvSetCameraParam"
-     ],
-     "c_owned_symbols": [
+      "D_0069B32C",
+      "D_0069B330",
       "D_0069B334",
       "D_0069B338",
       "D_0069B33C",
       "D_0069B340",
-      "D_0069B344"
-     ],
-     "also_referenced_by_c": [
+      "D_0069B344",
       "D_0069B348",
-      "D_0069B34C"
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/sdv_181.o"
-     }
-    },
-    {
-     "range": [
-      "0x0069b350",
-      "0x0069b374"
-     ],
-     "generated": [
-      "0x0069b350",
-      "0x0069b374"
-     ],
-     "generated_by": [
-      "func_002680A8",
-      "sdvProgressPrm"
-     ],
-     "c_owned_symbols": [
+      "D_0069B34C",
       "D_0069B350",
       "D_0069B354",
       "D_0069B358",
@@ -111313,12 +111183,14 @@
       "0x0068c590"
      ],
      "generated_by": [
-      "func_002680A8"
+      "sdvNearestAngle"
      ],
      "c_owned_symbols": [
       "D_0068C580"
      ],
-     "also_referenced_by_c": [],
+     "also_referenced_by_c": [
+      "D_0068C590"
+     ],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",

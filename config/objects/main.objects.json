@@ -402,19 +402,11 @@
     },
     {
      "c_split": false,
-     "end": "0x005E66E0",
+     "end": "0x005E6D00",
      "ordinal": 177,
      "piece": "srs",
      "start": "0x005E65C0",
      "tu": "srs"
-    },
-    {
-     "c_split": false,
-     "end": "0x005E6D00",
-     "ordinal": 178,
-     "piece": "tu178",
-     "start": "0x005E66E0",
-     "tu": "tu178"
     },
     {
      "c_split": false,
@@ -1241,19 +1233,11 @@
     },
     {
      "c_split": false,
-     "end": "0x0068C510",
+     "end": "0x0068C530",
      "ordinal": 177,
      "piece": "srs",
      "start": "0x0068C480",
      "tu": "srs"
-    },
-    {
-     "c_split": false,
-     "end": "0x0068C530",
-     "ordinal": 178,
-     "piece": "tu178",
-     "start": "0x0068C510",
-     "tu": "tu178"
     },
     {
      "c_split": false,
@@ -3861,7 +3845,6 @@
   "tu163",
   "sef",
   "srs",
-  "tu178",
   "tu179",
   "sdv_180",
   "sdv_181",
@@ -81212,7 +81195,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 21,
+    "of": 32,
     "migration_hints": [],
     "records": []
    },
@@ -81405,220 +81388,7 @@
      "va": "0x00266188",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c",
-    ".data": "asm",
-    ".rodata": "asm",
-    ".sdata": "asm",
-    ".sbss": "asm",
-    ".bss": "asm"
-   },
-   "sections": {
-    ".data": {
-     "anchored": [
-      "0x005e65c0",
-      "0x005e66c1"
-     ],
-     "bounds": [
-      "0x005e6381",
-      "0x005e66e0"
-     ],
-     "end": "0x005E66E0",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x005E66E0",
-       "name": "srs",
-       "start": "0x005E65C0"
-      }
-     ],
-     "size": 288,
-     "splat_type": "data",
-     "start": "0x005E65C0"
     },
-    ".rodata": {
-     "anchored": [
-      "0x0068c480",
-      "0x0068c4f1"
-     ],
-     "bounds": [
-      "0x0068c451",
-      "0x0068c510"
-     ],
-     "end": "0x0068C510",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0068C510",
-       "name": "srs",
-       "start": "0x0068C480"
-      }
-     ],
-     "size": 144,
-     "splat_type": "rodata",
-     "start": "0x0068C480"
-    },
-    ".sdata": {
-     "anchored": [
-      "0x0069dbe0",
-      "0x0069dc19"
-     ],
-     "bounds": [
-      "0x0069dbd9",
-      "0x0069dc30"
-     ],
-     "end": "0x0069DC30",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069DC30",
-       "name": "srs",
-       "start": "0x0069DBE0"
-      }
-     ],
-     "size": 80,
-     "splat_type": "sdata",
-     "start": "0x0069DBE0"
-    },
-    ".sbss": {
-     "anchored": [
-      "0x0069e320",
-      "0x0069e321"
-     ],
-     "bounds": [
-      "0x0069e31d",
-      "0x0069e324"
-     ],
-     "end": "0x0069E324",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069E324",
-       "name": "srs",
-       "start": "0x0069E320"
-      }
-     ],
-     "size": 4,
-     "splat_type": "sbss",
-     "start": "0x0069E320"
-    },
-    ".bss": {
-     "anchored": [
-      "0x00807b90",
-      "0x00807da1"
-     ],
-     "bounds": [
-      "0x00807391",
-      "0x00807ea0"
-     ],
-     "end": "0x00807EA0",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00807EA0",
-       "name": "srs",
-       "start": "0x00807B90"
-      }
-     ],
-     "size": 784,
-     "splat_type": "bss",
-     "start": "0x00807B90"
-    }
-   },
-   "text": {
-    "start": "0x00265820",
-    "end": "0x002661b0",
-    "code_end": "0x002661b0",
-    "size": 2448,
-    "splat": "c",
-    "splat_range": [
-     "0x00265820",
-     "0x002661b0"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "X1 C under express order (user 2026-11-05)",
-    "source": {
-     "kind": "file",
-     "path": "src/main/srs.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu178",
-   "unit": "main",
-   "ordinal": 178,
-   "name": "tu178",
-   "path": "src/main/tu178.c",
-   "scaffold_path": "scaffold/src/main/tu178.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -1.69",
-    "precision of this score band on X1, held out: 0.227 (17/75)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "no name evidence",
-   "name_confidence": "none",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G0"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G0",
-    "g_basis": "no gp-relative instruction in the code; -G0 cannot add one",
-    "g_confidence": "medium",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 11,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
     {
      "binding": "GLOBAL",
      "name": "srsLoadEspFile",
@@ -81722,16 +81492,19 @@
    "owners": {
     ".text": "c",
     ".data": "asm",
-    ".rodata": "asm"
+    ".rodata": "asm",
+    ".sdata": "asm",
+    ".sbss": "asm",
+    ".bss": "asm"
    },
    "sections": {
     ".data": {
      "anchored": [
-      "0x005e66e0",
+      "0x005e65c0",
       "0x005e66e1"
      ],
      "bounds": [
-      "0x005e66c1",
+      "0x005e6381",
       "0x005e6d00"
      ],
      "end": "0x005E6D00",
@@ -81741,21 +81514,21 @@
       {
        "c_split": false,
        "end": "0x005E6D00",
-       "name": "tu178",
-       "start": "0x005E66E0"
+       "name": "srs",
+       "start": "0x005E65C0"
       }
      ],
-     "size": 1568,
+     "size": 1856,
      "splat_type": "data",
-     "start": "0x005E66E0"
+     "start": "0x005E65C0"
     },
     ".rodata": {
      "anchored": [
-      "0x0068c510",
+      "0x0068c480",
       "0x0068c521"
      ],
      "bounds": [
-      "0x0068c4f1",
+      "0x0068c451",
       "0x0068c530"
      ],
      "end": "0x0068C530",
@@ -81765,33 +81538,105 @@
       {
        "c_split": false,
        "end": "0x0068C530",
-       "name": "tu178",
-       "start": "0x0068C510"
+       "name": "srs",
+       "start": "0x0068C480"
       }
      ],
-     "size": 32,
+     "size": 176,
      "splat_type": "rodata",
-     "start": "0x0068C510"
+     "start": "0x0068C480"
+    },
+    ".sdata": {
+     "anchored": [
+      "0x0069dbe0",
+      "0x0069dc19"
+     ],
+     "bounds": [
+      "0x0069dbd9",
+      "0x0069dc30"
+     ],
+     "end": "0x0069DC30",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x0069DC30",
+       "name": "srs",
+       "start": "0x0069DBE0"
+      }
+     ],
+     "size": 80,
+     "splat_type": "sdata",
+     "start": "0x0069DBE0"
+    },
+    ".sbss": {
+     "anchored": [
+      "0x0069e320",
+      "0x0069e321"
+     ],
+     "bounds": [
+      "0x0069e31d",
+      "0x0069e324"
+     ],
+     "end": "0x0069E324",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x0069E324",
+       "name": "srs",
+       "start": "0x0069E320"
+      }
+     ],
+     "size": 4,
+     "splat_type": "sbss",
+     "start": "0x0069E320"
+    },
+    ".bss": {
+     "anchored": [
+      "0x00807b90",
+      "0x00807da1"
+     ],
+     "bounds": [
+      "0x00807391",
+      "0x00807ea0"
+     ],
+     "end": "0x00807EA0",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x00807EA0",
+       "name": "srs",
+       "start": "0x00807B90"
+      }
+     ],
+     "size": 784,
+     "splat_type": "bss",
+     "start": "0x00807B90"
     }
    },
    "text": {
-    "start": "0x002661b0",
+    "start": "0x00265820",
     "end": "0x002669f0",
     "code_end": "0x002669ec",
-    "size": 2112,
+    "size": 4560,
     "splat": "c",
     "splat_range": [
-     "0x002661b0",
+     "0x00265820",
      "0x002669f0"
     ],
     "note": null
    },
    "import": {
     "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
+    "note": "X1 C under express order (user 2026-11-05); joined srs, tu178 into srs.c (Opok, PR review 2026-11-17: the callee compiled earlier in the file)",
     "source": {
      "kind": "file",
-     "path": "src/main/tu178.c",
+     "path": "src/main/srs.c",
      "include_dirs": [
       "include"
      ]
@@ -83338,9 +83183,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271390",
+     "name": "sefNoOp",
      "size": 8,
-     "splat_name": "func_00271390",
+     "splat_name": "sefNoOp",
      "va": "0x00271390",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87197,18 +87042,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002775E8",
+     "name": "recordStepRing",
      "size": 8,
-     "splat_name": "func_002775E8",
+     "splat_name": "recordStepRing",
      "va": "0x002775e8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002775F0",
+     "name": "recordRingInnerColor",
      "size": 12,
-     "splat_name": "func_002775F0",
+     "splat_name": "recordRingInnerColor",
      "va": "0x002775f0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87430,9 +87275,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "recordDrawCurve",
+     "name": "recordDrawTurnColumns",
      "size": 648,
-     "splat_name": "recordDrawCurve",
+     "splat_name": "recordDrawTurnColumns",
      "va": "0x002778d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87466,9 +87311,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277EA0",
+     "name": "recordDrawFlatColumn",
      "size": 216,
-     "splat_name": "func_00277EA0",
+     "splat_name": "recordDrawFlatColumn",
      "va": "0x00277ea0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87588,27 +87433,27 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "animSampleSegment",
+     "name": "recordTurnAngleAt",
      "size": 244,
-     "splat_name": "animSampleSegment",
+     "splat_name": "recordTurnAngleAt",
      "va": "0x00277f78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "animLerp",
+     "name": "recordLerp",
      "size": 16,
-     "splat_name": "animLerp",
+     "splat_name": "recordLerp",
      "va": "0x00278070",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "animOffsetPoints",
+     "name": "recordOffsetCorners",
      "size": 100,
-     "splat_name": "animOffsetPoints",
+     "splat_name": "recordOffsetCorners",
      "va": "0x00278080",
      "name_basis": "address",
      "provenance": "estimated"
@@ -102608,9 +102453,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A6818",
+     "name": "__floatdisf",
      "size": 232,
-     "splat_name": "func_002A6818",
+     "splat_name": "__floatdisf",
      "va": "0x002a6818",
      "name_basis": "address",
      "provenance": "estimated"

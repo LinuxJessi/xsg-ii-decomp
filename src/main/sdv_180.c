@@ -75,20 +75,20 @@ static inline int scOfsToAdrInline(int offset)
 /* Takes the effect id in a0 (tu170 0x00261D5C daddu $16,$4,$0, then srsAnalyzeEftNo(effectId, ...)). */
 int sefFindRecordIndex(int effectId);
 int srsGetEffectSlot(int effectKey);
-extern int D_0069DC20;
-extern int D_0069DC24;
-extern short *D_0069DC2C;
+extern int scKeyRecordMode;
+extern int scKeyRecordGroupCount;
+extern short *scKeyRecordEntry;
 
-#define SEF_OPERAND_WHOLE      0x4000    /* kind 0x3E: operand kept whole in D_0069DC24 */
+#define SEF_OPERAND_WHOLE      0x4000    /* kind 0x3E: operand kept whole in scKeyRecordGroupCount */
 #define SEF_OPERAND_INDEX_MASK 0x3FFF    /* kind 0x3E: otherwise only these bits */
 
 /* Looks up the script record of key and resolves its offset by kind: 0x3C/0x3D
  * immediate, 0x3E table entry index, 0x3F table entry srsGetEffectSlot(key);
- * kind 0x49 publishes the operand address in D_0069DC2C instead. Returns the
+ * kind 0x49 publishes the operand address in scKeyRecordEntry instead. Returns the
  * record and stores the offset in *offset_out, or returns 0.
  * The dead store to value in the 0x49 branch keeps value live past the 0x3F
- * lookup; without it gcc folds that lookup's loaded and resolved offsets into
- * one register and the 0x3E/0x3F lookups are no longer merged. */
+ * lookup; without it (compiled again 2026-11-18) gcc folds the loaded and the
+ * resolved offset into one register ($4 for the original's $6/$4) and adds a nop. */
 SefScriptRecord *scGetKeyRecord(int key, int *offset_out, int index)
 {
     SvTypeListEntry *entry;
@@ -102,24 +102,24 @@ SefScriptRecord *scGetKeyRecord(int key, int *offset_out, int index)
 
     status = sefFindRecordIndex(key);
     *offset_out = 0;
-    D_0069DC2C = 0;
-    D_0069DC20 = 0;
+    scKeyRecordEntry = 0;
+    scKeyRecordMode = 0;
     if (status >= 0) {
         entry = svGetScriptEntry(key);
         if (entry != 0) {
             record = (SefScriptRecord *)entry->data;
             offset = 0;
             if (record != 0) {
-                D_0069DC20 = kind = record->kind;
+                scKeyRecordMode = kind = record->kind;
                 if ((unsigned short)(record->kind - 0x3C) < 2) {
                     value = (unsigned short)record->operand;
                     offset = scOfsToAdrInline(value);
                 } else if (kind == 0x3E) {
                     slot = record->operand;
                     if (!(slot & SEF_OPERAND_WHOLE)) {
-                        D_0069DC24 = slot & SEF_OPERAND_INDEX_MASK;
+                        scKeyRecordGroupCount = slot & SEF_OPERAND_INDEX_MASK;
                     } else {
-                        D_0069DC24 = slot;
+                        scKeyRecordGroupCount = slot;
                     }
                     value = record->offsets[index];
                     offset = scOfsToAdrInline(value);
@@ -130,8 +130,8 @@ SefScriptRecord *scGetKeyRecord(int key, int *offset_out, int index)
                         offset = scOfsToAdrInline(value);
                     }
                 } else if (kind == 0x49) {
-                    value = 0;
-                    D_0069DC2C = &record->operand;
+                    value = 0; /* dead store, see above: without it the 0x3E/0x3F lookups use one register */
+                    scKeyRecordEntry = &record->operand;
                     return record;
                 }
                 found = 0;

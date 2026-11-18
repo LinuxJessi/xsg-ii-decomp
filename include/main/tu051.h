@@ -231,6 +231,9 @@ typedef struct UwamonoScaleRecord {
 
 extern UwamonoScaleRecord uwamonoScaleRecords[];
 
+/* Bit of gameWork.camera.flags that cameraApplySlots sets when it starts a transition. */
+#define CAMERA_FLAG_SLOTS_APPLIED 0x10
+
 /* Functions of src/main/tu051.c that other files call. */
 
 void cameraApplySlots(int slot_mask, int index_a, int index_b, int enable_flag);

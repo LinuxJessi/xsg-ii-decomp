@@ -25,7 +25,7 @@
 /* Canonical spawn id of the first id range (see sefCanonicalEffectId). */
 #define SEF_SPAWN_ID_BASE 0x100C8384
 
-/* Modes of D_0069DC20 read by sefStartEffect and sefCreateDetachedEffect: 0x3E takes the group path, 0x3D sets record flag 0x800000. */
+/* Modes of scKeyRecordMode read by sefStartEffect and sefCreateDetachedEffect: 0x3E takes the group path, 0x3D sets record flag 0x800000. */
 #define SEF_START_MODE_FLAG 0x3D
 #define SEF_START_MODE_GROUP 0x3E
 
@@ -145,7 +145,7 @@ void sefStartEffectWithValue(void *object, int value);
 
 int sefStartEffectKeyDefault(int first, int second);
 
-/* Spawns the effect record for an effect id. Inside an entry (D_0069DC2C set) it hands the remapped key to
+/* Spawns the effect record for an effect id. Inside an entry (scKeyRecordEntry set) it hands the remapped key to
  * sefCreateKindResourceSlot; otherwise it creates a record, copies the two optional quadword blocks into it and marks it. */
 SefEffectRecord *sefSpawnEffectRecord(int effectId, int second, unsigned char *third, unsigned char *fourth, int fifth);
 
@@ -185,6 +185,28 @@ typedef struct SefLinkedContext {
 
 SefLinkedContext *sefGetRequestBuffer(void);
 
+/* The effect request at the start of sefRequestBuffer as the sdv sequences read it (sdv_181.c): the actors the
+ * select bits of a key row pick. */
+typedef struct SefRequest {
+    struct XenoActor *source;   /* +0x00 */
+    unsigned char unmodeled_04[4];
+    struct XenoActor *target;   /* +0x08 */
+    struct XenoActor *links[3]; /* +0x0C the actors SDV_KEY_LINK_1..3 select */
+    unsigned char unmodeled_18[0x24 - 0x18];
+    unsigned char waitHit;      /* +0x24 nonzero: hit-wait rows report their row */
+} SefRequest;
+
+/* The global transform the placement is merged with (sefInitPartTransform fills it): the matrix, a position, and a
+ * scale used when scaled is set. */
+typedef struct SefGlobalTransform {
+    Matrix4 matrix;                                  /* +0x000 */
+    Vector4 position;                                /* +0x040 */
+    float scale;                                     /* +0x050 */
+    short scaled;                                    /* +0x054 */
+} SefGlobalTransform;
+
+extern SefGlobalTransform sefGlobalTransform;
+
 void sefMemClear(void *dest, unsigned int size);
 void sefMemZero(void *dest, int size);
 void sefMemFillWords(void *dest, int value, int size);
@@ -192,6 +214,14 @@ void sefMemFillWords(void *dest, int value, int size);
 void sefNoiseInit(void);
 
 void sefResetSlotTable(void);
+
+/* sefSlotTable: the effect number of each of the eight wait slots and the flag that asks
+ * srsLoadPendingEffects (srs.c) to load its package. */
+typedef struct SefSlotTable {
+    short effectNo[8];                 /* +0x00 */
+    unsigned char unmodeled_10[0x20 - 0x10];
+    short loadPending[8];              /* +0x20 */
+} SefSlotTable;
 
 int loadWaitPending(void);
 void xglCdWaitUntilIdle(void);

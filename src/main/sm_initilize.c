@@ -146,9 +146,9 @@ void smFindFree(int size)
   smAllocFromPool((size + 0x7FF) & ~0x7FF, smPool.first_cell, smPool.total_units, 1);
 }
 
-void smAllocSmall(int size)
+void *smAllocSmall(int size)
 {
-  smAllocFromPool((size + 0x3F) & ~0x3F, smPoolSmall.first_cell, smPoolSmall.total_units, 0);
+  return smAllocFromPool((size + 0x3F) & ~0x3F, smPoolSmall.first_cell, smPoolSmall.total_units, 0);
 }
 
 /* Absorbs the free cell that follows cell into it. */
