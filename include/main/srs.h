@@ -82,10 +82,11 @@ enum SrsRecordKind {
     SRS_KIND_CALLER_BUFFER = 2
 };
 
-/* srsRecordTable: 58 records (srsResetKeyTable clears 0x658 bytes), each registered as the image
- * mapper of its record number. Record 0 holds the effect package (default.esp or cfdef.esp), records
- * 1..8 the .esp packages of the eight wait slots of sefSlotTable, records 9..56 the effect slots;
- * record 57 is a sentinel slot whose stamp srsEvictEffectSlot sets to the maximum. */
+/* srsRecordTable (0x5E66D0..0x5E6D28): 58 records (srsResetKeyTable clears 0x658 bytes), each
+ * registered as the image mapper of its record number. Record 0 holds the effect package (default.esp
+ * or cfdef.esp), records 1..8 the .esp packages of the eight wait slots of sefSlotTable, records 9..56
+ * the effect slots; record 57 is a sentinel slot whose stamp (+0x650) srsEvictEffectSlot sets to the
+ * maximum. */
 /* The package and the wait slots are their own members: as a nine-record array indexed [i + 1], the
  * wait-slot loops of srs.c compile to other address arithmetic (an offset of 28 from the table instead
  * of 16 from the table + 12). */

@@ -8,9 +8,10 @@
  * the unit vector to: the half-angle quaternion (cross(from, to) / s, s / 2)
  * with s = sqrt(2 * (1 + dot(from, to))), expanded to a 4x4 matrix. When s is
  * below 0.01 (opposite vectors) it uses the half turn about y instead and
- * returns 0; otherwise returns 1. A hand-written VU0 macro-mode block, like
- * MMathIsVectorEqual it keeps an untouched 16-byte frame (the unused scratch
- * quadword); the 0.01 threshold is the assembler's li.s literal. */
+ * returns 0; otherwise returns 1. A hand-written VU0 macro-mode block; the
+ * 0.01 threshold is the assembler's li.s literal. The original keeps an
+ * untouched 16-byte frame: without the unused scratch quadword gcc drops the
+ * addiu $sp pair (fd.sh: 57 insns for 59). */
 int MMathMatrixBetweenVectors(Matrix4 *destination, const Vector4 *from, const Vector4 *to)
 {
     int rotated;
@@ -85,28 +86,6 @@ int MMathMatrixBetweenVectors(Matrix4 *destination, const Vector4 *from, const V
 extern void *memset(void *destination, int value, unsigned int count);
 extern unsigned short MSeObjReady; /* unsigned: MSeObjProc tests it with lhu, andi 1, andi 0xffff (as short, fd.sh
                                      MSeObjProc 14/172 in place) */
-extern int MSeObjCount;
-extern int MSeObjPool;
-extern int MSeMode1Hook;
-extern int MSeMode2Hook;
-
-/* Initialises the MSe object pool: 127 slots of 0x800 bytes at 0x01FB0000. */
-void MSeObjInit(void) {
-    MSeObjPool = 0x01FB0000;
-    MSeObjReady = 0;
-    MSeObjCount = 0;
-    MSeMode1Hook = 0;
-    MSeMode2Hook = 0;
-    memset((void *)0x01FB0000, 0, 0x3F800);
-    MSeObjReady = 1;
-}
-
-/* Shutdown: clears the ready flag, the live count and the pool pointer. */
-void MSeObjShutdown(void) {
-    MSeObjReady = 0;
-    MSeObjCount = 0;
-    MSeObjPool = 0;
-}
 
 #define MSE_OBJ_SLOTS 127
 #define MSE_OBJ_BUSY 0x1
@@ -125,6 +104,35 @@ struct MSeObj {
     unsigned char unmodeled_18[0x800 - 0x18];
 };
 
+/* A callback MSeObjProc calls with no arguments after its mode 1 or mode 2 pass. */
+typedef void (*MSeHook)(void);
+
+/* The pool lives at a fixed address: MSE_OBJ_SLOTS slots of 0x800 bytes. */
+#define MSE_OBJ_POOL_ADDRESS 0x01FB0000
+
+extern int MSeObjCount;
+extern MSeObj *MSeObjPool;
+extern MSeHook MSeMode1Hook;
+extern MSeHook MSeMode2Hook;
+
+/* Initialises the MSe object pool: MSE_OBJ_SLOTS slots of 0x800 bytes at MSE_OBJ_POOL_ADDRESS. */
+void MSeObjInit(void) {
+    MSeObjPool = (MSeObj *)MSE_OBJ_POOL_ADDRESS;
+    MSeObjReady = 0;
+    MSeObjCount = 0;
+    MSeMode1Hook = 0;
+    MSeMode2Hook = 0;
+    memset((void *)MSE_OBJ_POOL_ADDRESS, 0, MSE_OBJ_SLOTS * sizeof(MSeObj));
+    MSeObjReady = 1;
+}
+
+/* Shutdown: clears the ready flag, the live count and the pool pointer. */
+void MSeObjShutdown(void) {
+    MSeObjReady = 0;
+    MSeObjCount = 0;
+    MSeObjPool = 0;
+}
+
 /* The camera snapshot MSeObjProc mode 0 takes before the object callbacks run. */
 typedef struct MEfCameraParams {
     XglCamera *camera;              /* +0x0: xglStudioGetCamera2(0) */
@@ -134,8 +142,6 @@ typedef struct MEfCameraParams {
     Matrix4 rotationMatrix;         /* +0x60: MMathRotateMatrixYXZ of rotation */
 } MEfCameraParams;
 
-typedef void (*MSeHook)(void);
-
 /* MEfCamParams in the ov01 link (config/symbols/ov01.txt); main still links it as D_0061B2C0. */
 extern MEfCameraParams D_0061B2C0;
 extern char D_0068C6D8[];
@@ -144,10 +150,9 @@ Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4
 void svForceImageMapper(unsigned int index);
 
 /* Runs one pass over the busy slots of the pool: mode 0 takes the camera snapshot first, mode 2 forces each
- * object's image mapper, mode 3 releases the slots MSeObjRequestFree marked; modes 1 and 2 end with their hook.
- * MSeObjPool and the two hooks are still declared int above, hence the casts. */
+ * object's image mapper, mode 3 releases the slots MSeObjRequestFree marked; modes 1 and 2 end with their hook. */
 void MSeObjProc(unsigned int mode) {
-    MSeObj *object = (MSeObj *)MSeObjPool;
+    MSeObj *object = MSeObjPool;
     int count = MSeObjCount;
     int slot = MSE_OBJ_SLOTS;
     unsigned int mapper = 0;
@@ -188,7 +193,7 @@ void MSeObjProc(unsigned int mode) {
             object++;
         }
         if (MSeMode1Hook != 0) {
-            ((MSeHook)MSeMode1Hook)();
+            MSeMode1Hook();
         }
         break;
     case 2:
@@ -209,7 +214,7 @@ void MSeObjProc(unsigned int mode) {
             object++;
         }
         if (MSeMode2Hook != 0) {
-            ((MSeHook)MSeMode2Hook)();
+            MSeMode2Hook();
         }
         break;
     case 3:
@@ -238,7 +243,7 @@ void MSeObjProc(unsigned int mode) {
 /* Takes the first free slot of the pool: its flags become MSE_OBJ_BUSY, the mapper and the four callbacks 0.
  * Returns 0 when the pool already holds MSE_OBJ_SLOTS objects or no slot is free. */
 MSeObj *MSeObjAlloc(void) {
-    MSeObj *object = (MSeObj *)MSeObjPool;
+    MSeObj *object = MSeObjPool;
     int slot = MSE_OBJ_SLOTS;
 
     if (MSeObjCount < MSE_OBJ_SLOTS) {
@@ -263,17 +268,18 @@ MSeObj *MSeObjAlloc(void) {
     return 0;
 }
 
-/* Marks the slot whose flags word is *flags for release: MSeObjProc mode 3 clears slots carrying 0x100. */
+/* Marks the slot whose flags word is *flags for release: MSeObjProc mode 3 clears slots carrying
+ * MSE_OBJ_FREE_REQUESTED. */
 void MSeObjRequestFree(unsigned short *flags) {
-    *flags |= 0x100;
+    *flags |= MSE_OBJ_FREE_REQUESTED;
 }
 
 /* Sets the callback that MSeObjProc calls with no arguments after its mode 1 pass (MSeMode1Hook). */
-void MSeSetMode1Hook(int hook) {
+void MSeSetMode1Hook(MSeHook hook) {
     MSeMode1Hook = hook;
 }
 
 /* Sets the callback that MSeObjProc calls with no arguments after its mode 2 pass (MSeMode2Hook). */
-void MSeSetMode2Hook(int hook) {
+void MSeSetMode2Hook(MSeHook hook) {
     MSeMode2Hook = hook;
 }

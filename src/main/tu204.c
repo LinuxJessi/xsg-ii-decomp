@@ -27,7 +27,8 @@ long long xglColorLerp(long long from, long long to, float t)
     return red | green | blue | alpha;
 }
 
-/* Wraps an angle in degrees into [0, 360]: one step of 360 each way. */
+/* Steps an angle in degrees towards [0, 360]: subtracts 360 once when above 360, then adds 360 once when below 0
+ * (an angle more than one turn outside the range stays outside). */
 float xglWrapDegrees(float degrees) {
     if (degrees > 360.0f) {
         degrees -= 360.0f;
@@ -41,20 +42,18 @@ float xglWrapDegrees(float degrees) {
 #include "gs.h"
 #include "main/tu093.h"
 
-extern u16 D_00645842;
-extern u16 sRenderFrameBase;
 
 /* GS TEX0 of a 512x512 PSMCT32 frame page (TBW 8, TW and TH 9): buffer 0 is the display page with CBP set to
- * frame_base_1, buffer 1 the page D_00645842, buffer 2 sRenderFrameBase; tex_cc goes to TCC, TFX stays 0. */
+ * frame_base_1, buffer 1 the page copy_base, buffer 2 the page frame_base; tex_cc goes to TCC, TFX stays 0. */
 u64 gsMakeTex0(int buffer, int tex_cc)
 {
     switch (buffer) {
     case 0:
         return GS_SET_TEX0(sRender.display_base << 5, 8, GS_PSMCT32, 9, 9, tex_cc, 0, sRender.frame_base_1, 0, 0, 0, 0);
     case 1:
-        return GS_SET_TEX0(D_00645842 << 5, 8, GS_PSMCT32, 9, 9, tex_cc, 0, 0, 0, 0, 0, 0);
+        return GS_SET_TEX0(sRender.copy_base << 5, 8, GS_PSMCT32, 9, 9, tex_cc, 0, 0, 0, 0, 0, 0);
     case 2:
-        return GS_SET_TEX0(sRenderFrameBase << 5, 8, GS_PSMCT32, 9, 9, tex_cc, 0, 0, 0, 0, 0, 0);
+        return GS_SET_TEX0(sRender.frame_base << 5, 8, GS_PSMCT32, 9, 9, tex_cc, 0, 0, 0, 0, 0, 0);
     default:
         return 0;
     }

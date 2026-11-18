@@ -37,7 +37,7 @@ int recordTurnAngleAt(Vector4 *angles, GsQueueContext *record, f32 x)
     return 1;
 }
 
-/* Linear interpolation from `from` to `to` by fraction (tu211.c's intLerp has the same body). */
+/* Linear interpolation from `from` to `to` by fraction. */
 f32 recordLerp(f32 from, f32 to, f32 fraction)
 {
     return ((to - from) * fraction) + from;

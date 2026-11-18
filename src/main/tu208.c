@@ -24,7 +24,7 @@ void recordDrawStrip(GsQueueContext *record, XglPacket *packet)
     int bottom;
     int i;
 
-    depth = record->u.queue.depth;
+    depth = record->u.queue.z;
     count = record->u.queue.count;
     color0 = record->u.gradient.color0;
     color1 = record->u.gradient.color1;
@@ -67,6 +67,7 @@ void *memset(void *destination, int value, unsigned int count);
 /* tu209.c */
 int recordTurnAngleAt(Vector4 *angles, GsQueueContext *record, f32 x);
 void recordOffsetCorners(Vector4 *points, f32 dx, f32 dy);
+
 void recordProjectQuad(Vector4 *corners, GsQueueContext *record, const Vector4 *angles);
 void recordDrawBatchQuad(XglPacket *packet, Vector4 *corners, GsQueueContext *record);
 void recordDrawFlatColumn(XglPacket *packet, Vector4 *corners, GsQueueContext *record);
@@ -74,9 +75,9 @@ void recordDrawFlatColumn(XglPacket *packet, Vector4 *corners, GsQueueContext *r
 /*
  * Draw handler of record type 9: the area between startX and endX, bottom and top as columns of rows quads. The
  * angle recordTurnAngleAt gives at a column's right x decides: past maxAngle (state 2) the column is not drawn,
- * below 0 (state 0) it is drawn flat as one quad from bottom to top (recordDrawFlatColumn), otherwise its rows quads are
- * stacked from the bottom, turned by the angle about the pivot (recordProjectQuad) and coloured from white towards
- * color by angle / maxAngle.
+ * below 0 (state 0) it is drawn flat as one quad from bottom to top (recordDrawFlatColumn), otherwise its rows
+ * quads are stacked from the bottom, turned by the angle about the pivot (recordProjectQuad) and coloured from white
+ * towards color by angle / maxAngle.
  */
 void recordDrawTurnColumns(GsQueueContext *record, XglPacket *packet)
 {
@@ -173,7 +174,7 @@ void recordProjectQuad(Vector4 *corners, GsQueueContext *record, const Vector4 *
     int pivotY;
 
     pivotX = (int) (corners[0].x + (float) record->u.turn.pivotX);
-    depth = record->u.queue.depth;
+    depth = record->u.queue.z;
     pivotY = (int) (corners[0].y + (float) record->u.turn.pivotY);
     recordRotateCorner(&corners[0], angles, depth, pivotX, pivotY);
     recordRotateCorner(&corners[1], angles, depth, pivotX, pivotY);
@@ -186,7 +187,7 @@ extern f32 recordTurnDegToRad;
 void xglMatrixUnit(Matrix4 matrix);
 void xglMatrixRotX(Matrix4 destination, Matrix4 source, f32 angle);
 void xglMatrixRotZ(Matrix4 destination, Matrix4 source, f32 angle);
-void xglMatrixMul(void *destination, void *left, void *right);
+void xglMatrixMul(Matrix4 destination, Matrix4 left, Matrix4 right);
 
 /* Rotates one corner by the x, y and z angles in degrees around the point (x, y); depth is not read. */
 void recordRotateCorner(Vector4 *corner, const Vector4 *angles, int depth, int x, int y)
@@ -235,7 +236,7 @@ void recordDrawBatchQuad(XglPacket *packet, Vector4 *corners, GsQueueContext *re
     corner1 = &corners[1];
     corner2 = &corners[2];
     corner3 = &corners[3];
-    z = (float) record->u.queue.depth;
+    z = (float) record->u.queue.z;
     count = record->u.queue.count;
     corner3->z = z;
     corner2->z = z;
@@ -269,7 +270,7 @@ void recordDrawFlatColumn(XglPacket *packet, Vector4 *corners, GsQueueContext *r
     corner1 = &corners[1];
     corner2 = &corners[2];
     corner3 = &corners[3];
-    z = (float) record->u.queue.depth;
+    z = (float) record->u.queue.z;
     count = record->u.queue.count;
     corner3->z = z;
     corner2->z = z;

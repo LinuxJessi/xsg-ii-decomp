@@ -46380,7 +46380,7 @@
      2
     ],
     [
-     "sefScaleVectorRandom",
+     "sefGetRandomScaledDirection",
      2543152,
      116,
      2
@@ -46410,7 +46410,7 @@
      2
     ],
     [
-     "sefSpawnKinds0To7",
+     "sefSpawnKinds5To7",
      2545320,
      540,
      2

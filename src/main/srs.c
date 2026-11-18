@@ -37,6 +37,7 @@ enum SrsEffectFileKind {
 #define SRS_MAPPER_HEIGHT_BATTLE_IMAGE 3400
 #define SRS_MAPPER_HEIGHT_CF_IMAGE 3500
 #define SRS_MAPPER_HEIGHT_EFFECT 3600
+#define SRS_MAPPER_HEIGHT_WAIT_SLOT 2000    /* srsRecordTable wait-slot records, the weapon effects' height */
 /*
  * Effect number ranges (first number and count). Each range resolves to one
  * of the SrsResourceType categories in srsAnalyzeEftNo/srsGetEffectType.
@@ -170,7 +171,7 @@ char *srsAnalyzeEftNo(int effectNo, int *charNo, int *effectType)
     return name;
 }
 
-/* Sets the load mode: 0 CD, 1 host, 2 USB. */
+/* Stores the load mode as given: SRS_LOAD_MODE_CD, _HOST, _USB or _DEB. */
 void srsSetLoadMode(int load_mode)
 {
     srsLoadMode = load_mode;
@@ -201,8 +202,9 @@ typedef struct { char text[23]; } SrsHostRoot;
 
 typedef struct { char text[7]; } SrsUsbRoot;
 
-/* Builds the resource path for the current load mode from the mode's root
- * ("simajiri/", "host0:/home/xeno/work/" or "usb0:/") and srsViewPath. */
+/* Builds the resource path for the current load mode: CD "simajiri/" + fileName;
+ * host "host0:/home/xeno/work/" or USB "usb0:/" + srsViewPath + fileName; DEB
+ * srsViewPath + fileName. */
 int srsMakeFileName(char *buffer, const char *fileName)
 {
     if (fileName == 0) {
@@ -238,8 +240,9 @@ int scKeyRecordGroupCount = 0;
 int sefGroupKey = 0;
 struct SefEntryHeader *scKeyRecordEntry = 0;
 
-/* Returns the file length for the current load mode, rounded up to a 2 KB
- * sector, or 0 when the file cannot be opened. */
+/* Returns the file length, rounded up to a 2 KB sector, for the CD, host and
+ * DEB load modes; 0 when the file cannot be opened, and 0 in USB mode (no
+ * size query). */
 int srsGetFileLen(const char *fileName)
 {
     char path[SRS_PATH_LENGTH];
@@ -345,7 +348,7 @@ int fileLoad(void *buffer, const char *name, int readMode)
     return size;
 }
 
-/* Loads a file with mode 0 (the read is not left counted in _nRead). */
+/* Loads a file with read mode 0 (fileLoad may retry it in mode 1). */
 int srsLoadFileSync(void *buffer, const char *name)
 {
     return fileLoad(buffer, name, 0);
@@ -412,7 +415,7 @@ int srsLeaveCdRead(void)
 }
 
 /* Read-completion callback for xglCdReadFile. Code 4 finishes a read: _nRead
- * drops (never below 0) and sresDataMapping runs when none is left. Codes -1
+ * drops (never below 0) and srsMapPendingResources runs when none is left. Codes -1
  * and -2 drop _nRead the same way. */
 void srsCdReadCallback(int readStatus)
 {
@@ -461,6 +464,8 @@ int srsLoadEffectData(void *buffer, int effectNo)
     return fileLoad(buffer, name, 1);
 }
 
+SrsTable srsRecordTable = { 0 };
+
 /* Clears the 58-record table srsRecordTable and srsEffectStamp. */
 void srsResetKeyTable(void)
 {
@@ -469,6 +474,11 @@ void srsResetKeyTable(void)
 }
 
 #define SRS_ESP_BUFFER_SIZE 0x28800  /* buffer of the effect package (record 0) */
+/* An effect key: kind in bits 28..29, index in bits 12..21, sub number in bits 0..9. */
+#define SRS_EFFECT_KEY(kind, index, sub) (((kind) << 28) | ((index) << 12) | (sub))
+/* Index and sub number of the effect package's key (its kind is 1 for cfdef.esp, 0 for default.esp). */
+#define SRS_ESP_PACKAGE_INDEX 999
+#define SRS_ESP_PACKAGE_SUB 500
 #define SRS_SLOT_BUFFER_SIZE 0x1C000 /* buffer of a wait-slot record */
 #define SRS_BLOCK_BUFFER_SIZE 0x10000 /* buffer srsLoadEffectBlock gives wait slot 0 */
 
@@ -493,8 +503,8 @@ void srsLoadEspFile(int reload, int cfdef)
     } else {
         path = srsEspDefaultPath;
     }
-    /* Effect key of the package: index 999, sub number 500, kind 1 for cfdef. */
-    key = cfdef ? 0x103E71F4 : 0x3E71F4;
+    key = cfdef ? SRS_EFFECT_KEY(1, SRS_ESP_PACKAGE_INDEX, SRS_ESP_PACKAGE_SUB)
+                : SRS_EFFECT_KEY(0, SRS_ESP_PACKAGE_INDEX, SRS_ESP_PACKAGE_SUB);
     if (srsRecordTable.package.handle == 0) {
         srsRecordTable.package.handle = smAlloc(SRS_ESP_BUFFER_SIZE);
         if (srsRecordTable.package.handle == 0) {
@@ -562,7 +572,7 @@ void srsReleaseSlotsByIndex(int index)
     int keyIndex;
     int i;
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < SRS_WAIT_SLOT_COUNT; i++) {
         keyIndex = (srsRecordTable.waitSlots[i].key >> 12) & 0x3FF;
         if (keyIndex != 0 && keyIndex == index) {
             if (srsRecordTable.waitSlots[i].handle != 0) {
@@ -582,9 +592,9 @@ void srsReleaseEffectRecords(void)
 {
     int i;
 
-    for (i = 0; i < 48; i++) {
+    for (i = 0; i < SRS_SLOT_COUNT; i++) {
         if (srsRecordTable.slots[i].handle != 0) {
-            svDeleteImageMapper(i + 9);
+            svDeleteImageMapper(i + SRS_KEY_RECORD_COUNT);
             if (srsRecordTable.slots[i].kind == SRS_KIND_SM_BLOCK) {
                 smFree(srsRecordTable.slots[i].handle);
             } else if (srsRecordTable.slots[i].kind == SRS_KIND_GAME_RES_BLOCK) {
@@ -600,7 +610,7 @@ void srsReleaseAllSlots(void)
 {
     int i;
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < SRS_WAIT_SLOT_COUNT; i++) {
         if (srsRecordTable.waitSlots[i].handle != 0) {
             svDeleteImageMapper(i + 1);
             smFree(srsRecordTable.waitSlots[i].handle);
@@ -626,30 +636,32 @@ void srsReleaseEspFile(void)
 }
 
 /* Registers the image mapper of every loaded record still flagged
- * busy (image mapper still owed): the effect package (mapper 0, tag 3000), the wait-slot
- * records (mappers 1..8, tag 2000, entry count from key bits 28..29) and the
- * effect records (mappers 9..56, tag 3600). */
+ * busy (image mapper still owed): the effect package (mapper 0), the wait-slot
+ * records (mappers 1..8, kind from key bits 28..29) and the effect records
+ * (mappers 9..56). */
 void srsMapPendingResources(void)
 {
-    void *chunk[8]; /* svAnalyzeChunk reads only chunk[0]; the 0x20 bytes are the original frame */
+    /* svAddImageMapper reads only chunk[0]. Declared as void *chunk[1] (compiled 2026-11-18) the frame is
+     * 64 bytes and the saves sit 16 bytes lower; the original reserves 0x20 bytes for it (an 80-byte frame). */
+    void *chunk[8];
     int i;
 
     if (srsRecordTable.package.handle != 0 && srsRecordTable.package.busy != 0) {
         chunk[0] = srsRecordTable.package.handle;
-        svAddImageMapper(0, 0, chunk, 3000);
+        svAddImageMapper(0, 0, chunk, SRS_MAPPER_HEIGHT_IMAGE);
         srsRecordTable.package.busy = 0;
     }
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < SRS_WAIT_SLOT_COUNT; i++) {
         if (srsRecordTable.waitSlots[i].handle != 0 && srsRecordTable.waitSlots[i].busy != 0) {
             chunk[0] = srsRecordTable.waitSlots[i].handle;
-            svAddImageMapper(i + 1, (srsRecordTable.waitSlots[i].key >> 28) & 3, chunk, 2000);
+            svAddImageMapper(i + 1, (srsRecordTable.waitSlots[i].key >> 28) & 3, chunk, SRS_MAPPER_HEIGHT_WAIT_SLOT);
             srsRecordTable.waitSlots[i].busy = 0;
         }
     }
-    for (i = 0; i < 48; i++) {
+    for (i = 0; i < SRS_SLOT_COUNT; i++) {
         if (srsRecordTable.slots[i].handle != 0 && srsRecordTable.slots[i].busy != 0) {
             chunk[0] = srsRecordTable.slots[i].handle;
-            svAddImageMapper(i + 9, 0, chunk, 3600);
+            svAddImageMapper(i + SRS_KEY_RECORD_COUNT, 0, chunk, SRS_MAPPER_HEIGHT_EFFECT);
             srsRecordTable.slots[i].busy = 0;
         }
     }
@@ -664,7 +676,7 @@ void srsLoadPendingEffects(SefSlotTable *slotTable)
     int size;
     int i;
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < SRS_WAIT_SLOT_COUNT; i++) {
         if (slotTable->effectNo[i] > 0 && slotTable->loadPending[i] != 0) {
             slotTable->loadPending[i] = 0;
             name = srsGetEspName(slotTable->effectNo[i] << 12);

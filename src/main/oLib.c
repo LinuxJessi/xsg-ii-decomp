@@ -6,7 +6,7 @@
 #include "main/xenoActor.h"
 
 /* Source file name passed with the allocation and free calls. */
-extern char D_0068D5E8[];
+extern char oLibSourceFile[];
 extern int oLibHandle;
 int InstanceOfRgHeapById(int count);
 int RgHeapAllocById(int count, int flags, char *file, int line);
@@ -21,7 +21,7 @@ void oLibInit(void)
 
     setup_handle = InstanceOfRgHeapById(4);
     InitRgHeap(setup_handle, 0x01000000, 0x01200000);
-    handle = RgHeapAllocById(4, 0x800010, D_0068D5E8, 118);
+    handle = RgHeapAllocById(4, 0x800010, oLibSourceFile, 118);
     oLibHandle = handle;
     resInitPathHeader(handle, 0x800000);
 }
@@ -30,7 +30,7 @@ void oLibInit(void)
 void oLibExit(void)
 {
     resResetSlotTable();
-    RgHeapFree(oLibHandle, D_0068D5E8, 134);
+    RgHeapFree(oLibHandle, oLibSourceFile, 134);
 }
 
 /* XenoActor.kind (+0x798) as oLibLoadObject writes it: a pointer-typed store through a view that only has this
@@ -42,10 +42,9 @@ typedef struct OLibActorKindView {
 } OLibActorKindView;
 
 /* The assert expression of oLibLoadObject: "GameResLoadID(Id, &SrcData, NULL, NULL) ". */
-extern char D_0068D5F8[];
+extern char oLibLoadObjectAssertExpression[];
 int GameResLoadID(int id, void **buffer, unsigned int *size,
                   void (*callback)(int index, void *buffer, unsigned int size, int value));
-struct XenoActor *XenoActorAlloc(void);
 void XenoActorAllocMatrices(struct XenoActor *actor);
 
 /* Loads the object resource Id (asserted at line 157) and creates the actor from its
@@ -58,7 +57,7 @@ void oLibLoadObject(struct XenoActor **object, int Id)
 
     SrcData = 0;
     if (GameResLoadID(Id, &SrcData, 0, 0) == -1) {
-        assertFailed(D_0068D5F8, D_0068D5E8, 157);
+        assertFailed(oLibLoadObjectAssertExpression, oLibSourceFile, 157);
     }
     values = SrcData;
     actor = XenoActorAlloc();
@@ -133,7 +132,7 @@ int xglRoundCoord(int value)
     return -(magnitude << 4) - 8;
 }
 
-double sqrt(double value); /* sqrt */
+double sqrt(double value);
 
 /* Distance between two points, truncated to an integer: the float sum of squares goes through the
  * soft-float double conversions (fptodp, the double sqrt, dptoli). */

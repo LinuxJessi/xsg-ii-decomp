@@ -6,31 +6,33 @@ typedef char *va_list;
 
 #define va_start(ap, last) ((ap) = (va_list)__builtin_next_arg(last) - (8 - __builtin_args_info(2)) * 8)
 
-/* Formats into the shared debug buffer MOutputDebugBuffer, then prints it with the variadic arguments. */
-void sprintf(unsigned char *buffer, unsigned char *format, int value);
-void func_002AF028(unsigned char *buffer, va_list args);
-extern unsigned char MOutputDebugInfoFormat[];
-extern unsigned char MOutputDebugBuffer[];
+int sprintf(char *buffer, const char *format, ...);
+/* Prints format with the variadic arguments args (libc, next to vsprintf; errorFatal in tu026.c calls it too). */
+void func_002AF028(const char *format, va_list args);
+extern char MOutputDebugInfoFormat[];
+extern char MOutputDebugBuffer[];
 
-/* Debug message, info colour ("MDMSG:" in cyan). The first argument is the message text (a char *). */
-void MOutputDebugString(char *value, ...)
+/* Debug message, info colour ("MDMSG:" in cyan): formats message into MOutputDebugBuffer, then prints
+ * that with the variadic arguments. */
+void MOutputDebugString(char *message, ...)
 {
     va_list ap;
-    va_start(ap, value);
+    va_start(ap, message);
 
-    sprintf(MOutputDebugBuffer, MOutputDebugInfoFormat, value);
+    sprintf(MOutputDebugBuffer, MOutputDebugInfoFormat, message);
     func_002AF028(MOutputDebugBuffer, ap);
 }
 
-extern unsigned char MOutputDebugWarnFormat[];
+extern char MOutputDebugWarnFormat[];
 
-/* Debug message, warning colour ("MDMSG:" in magenta). The first argument is the message text (a char *). */
-void MOutputDebugStringWarn(char *value, ...)
+/* Debug message, warning colour ("MDMSG:" in magenta): formats message into MOutputDebugBuffer, then prints
+ * that with the variadic arguments. */
+void MOutputDebugStringWarn(char *message, ...)
 {
     va_list ap;
-    va_start(ap, value);
+    va_start(ap, message);
 
-    sprintf(MOutputDebugBuffer, MOutputDebugWarnFormat, value);
+    sprintf(MOutputDebugBuffer, MOutputDebugWarnFormat, message);
     func_002AF028(MOutputDebugBuffer, ap);
 }
 
@@ -150,14 +152,14 @@ float fmodf(float, float);
 extern float MMathRotNearTwoPi;
 extern float MMathRotNearPi;
 
-/* Shortest signed difference second - first, wrapped into [-pi, pi]. */
-f32 MMathCalcRotNear(f32 first, f32 second)
+/* Shortest signed difference toAngle - fromAngle, wrapped into [-pi, pi]. */
+f32 MMathCalcRotNear(f32 fromAngle, f32 toAngle)
 {
     f32 twoPi;
     f32 result;
 
     twoPi = MMathRotNearTwoPi;
-    result = fmodf(second - first, twoPi);
+    result = fmodf(toAngle - fromAngle, twoPi);
     if (MMathRotNearPi < __builtin_fabsf(result))
     {
         if (result < 0.0f)
@@ -175,14 +177,14 @@ f32 MMathCalcRotNear(f32 first, f32 second)
 extern float MMathRotFarTwoPi;
 extern float MMathRotFarPi;
 
-/* Difference second - first wrapped into the other half-turn (|difference| >= pi). */
-f32 MMathCalcRotFar(f32 first, f32 second)
+/* Difference toAngle - fromAngle wrapped into the other half-turn (|difference| >= pi). */
+f32 MMathCalcRotFar(f32 fromAngle, f32 toAngle)
 {
     f32 twoPi;
     f32 result;
 
     twoPi = MMathRotFarTwoPi;
-    result = fmodf(second - first, twoPi);
+    result = fmodf(toAngle - fromAngle, twoPi);
     if (__builtin_fabsf(result) < MMathRotFarPi)
     {
         if (result < 0.0f)

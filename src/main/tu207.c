@@ -44,7 +44,7 @@ void recordUpdateRenderHook(void)
     active = 0;
     for (slot = 0; slot < 10; slot++) {
         for (bank = 0; bank < 30; bank++) {
-            if (recordBanks[bank * 0x4D8 + slot * 0x7C] != 0) {
+            if (recordBanks[bank * sizeof(RecordBank) + slot * sizeof(GsQueueContext)] != 0) {
                 active = 1;
             }
         }
@@ -56,7 +56,7 @@ void recordUpdateRenderHook(void)
     }
 }
 
-void recordClear(void *record);
+void recordClear(GsQueueContext *record);
 /* The red, green and blue bits of a packed colour (alpha cleared). */
 #define RECORD_RGB_MASK 0xFFFFFF
 
@@ -97,10 +97,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 2;
         records[0].u.queue.color = params[0];
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 1;
-        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.textured = 1;
+        records[0].u.queue.blend_kind = 0;
         records[0].u.gridFill.cellCount = params[1];
         break;
     case 2:
@@ -108,10 +108,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].u.queue.frame = 2;
         records[0].u.queue.tex0 = 0;
         records[0].u.queue.color = 0x80FFFFFF;
-        records[0].u.queue.depth = 0x7FFFFFFF;
+        records[0].u.queue.z = 0x7FFFFFFF;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 1;
-        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.textured = 1;
+        records[0].u.queue.blend_kind = 0;
         records[0].u.presetQuad.positionPreset = 0;
         records[0].u.presetQuad.texture.top = 0;
         records[0].u.presetQuad.texture.left = 0;
@@ -121,10 +121,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[1].u.queue.frame = 0;
         records[1].u.queue.tex0 = 2;
         records[1].u.queue.color = 0x80FFFFFF;
-        records[1].u.queue.depth = depth;
+        records[1].u.queue.z = depth;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 1;
-        records[1].u.queue.blendKind = 0;
+        records[1].u.queue.textured = 1;
+        records[1].u.queue.blend_kind = 0;
         records[1].u.presetUvQuad.screen.top = 0;
         records[1].u.presetUvQuad.screen.left = 0;
         records[1].u.presetUvQuad.screen.right = 512;
@@ -138,10 +138,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[1].u.queue.frame = 0;
         records[1].u.queue.tex0 = 2;
         records[1].u.queue.color = params[0];
-        records[1].u.queue.depth = depth;
+        records[1].u.queue.z = depth;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 1;
-        records[1].u.queue.blendKind = params[1];
+        records[1].u.queue.textured = 1;
+        records[1].u.queue.blend_kind = params[1];
         records[1].u.params[7] = -params[3];
         records[1].u.params[8] = -params[2];
         records[1].u.params[9] = params[2] + 512;
@@ -159,10 +159,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[1].u.queue.frame = 0;
         records[1].u.queue.tex0 = 2;
         records[1].u.queue.color = params[0];
-        records[1].u.queue.depth = depth;
+        records[1].u.queue.z = depth;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 1;
-        records[1].u.queue.blendKind = params[1];
+        records[1].u.queue.textured = 1;
+        records[1].u.queue.blend_kind = params[1];
         records[1].u.params[7] = params[5];
         records[1].u.params[8] = -params[3];
         records[1].u.params[9] = -params[4];
@@ -183,10 +183,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[1].u.queue.frame = 0;
         records[1].u.queue.tex0 = 2;
         records[1].u.queue.color = params[0];
-        records[1].u.queue.depth = depth;
+        records[1].u.queue.z = depth;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 1;
-        records[1].u.queue.blendKind = params[1];
+        records[1].u.queue.textured = 1;
+        records[1].u.queue.blend_kind = params[1];
         records[1].u.params[7] = params[4];
         records[1].u.params[8] = -7;
         records[1].u.params[9] = -7;
@@ -206,10 +206,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 1;
         records[0].u.queue.color = 0x10FFFFFF;
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 0;
-        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.textured = 0;
+        records[0].u.queue.blend_kind = 0;
         records[0].u.params[7] = 0x80FFFFFF;
         records[0].u.params[8] = -7;
         records[0].u.params[9] = -7;
@@ -229,38 +229,38 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].u.queue.frame = 2;
         records[0].u.queue.tex0 = 0;
         records[0].u.queue.color = 0x80FFFFFF;
-        records[0].u.queue.depth = 0xFFFFFFF;
+        records[0].u.queue.z = 0xFFFFFFF;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 1;
-        records[0].u.queue.blendKind = 0;
-        records[0].u.queue.screenRect[0] = 0;
-        records[0].u.queue.screenRect[1] = 0;
-        records[0].u.queue.screenRect[2] = 512;
-        records[0].u.queue.screenRect[3] = 448;
-        records[0].u.queue.textureRect[0] = 0;
-        records[0].u.queue.textureRect[1] = 0;
-        records[0].u.queue.textureRect[2] = 512;
-        records[0].u.queue.textureRect[3] = 448;
+        records[0].u.queue.textured = 1;
+        records[0].u.queue.blend_kind = 0;
+        records[0].u.queue.screen.top = 0;
+        records[0].u.queue.screen.left = 0;
+        records[0].u.queue.screen.right = 512;
+        records[0].u.queue.screen.bottom = 448;
+        records[0].u.queue.texture.top = 0;
+        records[0].u.queue.texture.left = 0;
+        records[0].u.queue.texture.right = 512;
+        records[0].u.queue.texture.bottom = 448;
         records[1].type = 20;
         records[1].u.queue.frame = 2;
         records[1].u.queue.tex0 = 0;
         records[1].u.queue.color = params[0];
-        records[1].u.queue.depth = 0xFFFFFFF;
+        records[1].u.queue.z = 0xFFFFFFF;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 0;
-        records[1].u.queue.blendKind = 2;
-        records[1].u.queue.screenRect[0] = 0;
-        records[1].u.queue.screenRect[1] = 0;
-        records[1].u.queue.screenRect[2] = 512;
-        records[1].u.queue.screenRect[3] = 448;
+        records[1].u.queue.textured = 0;
+        records[1].u.queue.blend_kind = 2;
+        records[1].u.queue.screen.top = 0;
+        records[1].u.queue.screen.left = 0;
+        records[1].u.queue.screen.right = 512;
+        records[1].u.queue.screen.bottom = 448;
         records[2].type = 13;
         records[2].u.queue.frame = 0;
         records[2].u.queue.tex0 = 2;
         records[2].u.queue.color = 0x40FFFFFF;
-        records[2].u.queue.depth = depth;
+        records[2].u.queue.z = depth;
         records[2].u.queue.count = 1;
-        records[2].u.queue.halveRgb = 1;
-        records[2].u.queue.blendKind = 1;
+        records[2].u.queue.textured = 1;
+        records[2].u.queue.blend_kind = 1;
         records[2].u.circle.screen.top = 0;
         records[2].u.circle.screen.left = 0;
         records[2].u.circle.screen.right = 512;
@@ -284,42 +284,42 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[1].u.queue.tex0 = 0;
         records[1].u.queue.color =
             (((((128 - params[1]) << 16) | (128 - params[1])) | ((128 - params[1]) << 8)) | 0x80000000);
-        records[1].u.queue.depth = 0xFFFFFFF;
+        records[1].u.queue.z = 0xFFFFFFF;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 0;
-        records[1].u.queue.blendKind = 2;
-        records[1].u.queue.screenRect[0] = 0;
-        records[1].u.queue.screenRect[1] = 0;
-        records[1].u.queue.screenRect[2] = 512;
-        records[1].u.queue.screenRect[3] = 448;
+        records[1].u.queue.textured = 0;
+        records[1].u.queue.blend_kind = 2;
+        records[1].u.queue.screen.top = 0;
+        records[1].u.queue.screen.left = 0;
+        records[1].u.queue.screen.right = 512;
+        records[1].u.queue.screen.bottom = 448;
         records[2].type = 20;
         records[2].u.queue.frame = 0;
         records[2].u.queue.tex0 = 0;
         records[2].u.queue.color = ((((params[2] << 16) | params[2]) | (params[2] << 8)) | 0x80000000);
-        records[2].u.queue.depth = 0xFFFFFFF;
+        records[2].u.queue.z = 0xFFFFFFF;
         records[2].u.queue.count = 1;
-        records[2].u.queue.halveRgb = 0;
-        records[2].u.queue.blendKind = 2;
-        records[2].u.queue.screenRect[0] = 0;
-        records[2].u.queue.screenRect[1] = 0;
-        records[2].u.queue.screenRect[2] = 512;
-        records[2].u.queue.screenRect[3] = 448;
+        records[2].u.queue.textured = 0;
+        records[2].u.queue.blend_kind = 2;
+        records[2].u.queue.screen.top = 0;
+        records[2].u.queue.screen.left = 0;
+        records[2].u.queue.screen.right = 512;
+        records[2].u.queue.screen.bottom = 448;
         records[3].type = 20;
         records[3].u.queue.frame = 0;
         records[3].u.queue.tex0 = 2;
         records[3].u.queue.color = 0x80FFFFFF;
-        records[3].u.queue.depth = 0xFFFFFFF;
+        records[3].u.queue.z = 0xFFFFFFF;
         records[3].u.queue.count = 1;
-        records[3].u.queue.halveRgb = 1;
-        records[3].u.queue.blendKind = 1;
-        records[3].u.queue.screenRect[0] = 0;
-        records[3].u.queue.screenRect[1] = 0;
-        records[3].u.queue.screenRect[2] = 512;
-        records[3].u.queue.screenRect[3] = 448;
-        records[3].u.queue.textureRect[0] = 0;
-        records[3].u.queue.textureRect[1] = 0;
-        records[3].u.queue.textureRect[2] = 512;
-        records[3].u.queue.textureRect[3] = 448;
+        records[3].u.queue.textured = 1;
+        records[3].u.queue.blend_kind = 1;
+        records[3].u.queue.screen.top = 0;
+        records[3].u.queue.screen.left = 0;
+        records[3].u.queue.screen.right = 512;
+        records[3].u.queue.screen.bottom = 448;
+        records[3].u.queue.texture.top = 0;
+        records[3].u.queue.texture.left = 0;
+        records[3].u.queue.texture.right = 512;
+        records[3].u.queue.texture.bottom = 448;
         break;
     case 9:
         records[0].type = 2;
@@ -328,130 +328,130 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[1].u.queue.frame = 2;
         records[1].u.queue.tex0 = 2;
         records[1].u.queue.color = 0x80808080;
-        records[1].u.queue.depth = 0xFFFFFFF;
+        records[1].u.queue.z = 0xFFFFFFF;
         records[1].u.queue.count = params[1];
-        records[1].u.queue.halveRgb = 1;
-        records[1].u.queue.blendKind = 2;
-        records[1].u.queue.screenRect[0] = 0;
-        records[1].u.queue.screenRect[1] = 0;
-        records[1].u.queue.screenRect[2] = 512;
-        records[1].u.queue.screenRect[3] = 448;
-        records[1].u.queue.textureRect[0] = 0;
-        records[1].u.queue.textureRect[1] = 0;
-        records[1].u.queue.textureRect[2] = 512;
-        records[1].u.queue.textureRect[3] = 448;
+        records[1].u.queue.textured = 1;
+        records[1].u.queue.blend_kind = 2;
+        records[1].u.queue.screen.top = 0;
+        records[1].u.queue.screen.left = 0;
+        records[1].u.queue.screen.right = 512;
+        records[1].u.queue.screen.bottom = 448;
+        records[1].u.queue.texture.top = 0;
+        records[1].u.queue.texture.left = 0;
+        records[1].u.queue.texture.right = 512;
+        records[1].u.queue.texture.bottom = 448;
         records[2].type = 20;
         records[2].u.queue.frame = 2;
         records[2].u.queue.tex0 = 2;
         records[2].u.queue.color = 0x80808080;
-        records[2].u.queue.depth = 0xFFFFFFF;
+        records[2].u.queue.z = 0xFFFFFFF;
         records[2].u.queue.count = params[1];
-        records[2].u.queue.halveRgb = 1;
-        records[2].u.queue.blendKind = 1;
-        records[2].u.queue.screenRect[0] = 0;
-        records[2].u.queue.screenRect[1] = 0;
-        records[2].u.queue.screenRect[2] = 512;
-        records[2].u.queue.screenRect[3] = 448;
-        records[2].u.queue.textureRect[0] = 0;
-        records[2].u.queue.textureRect[1] = 0;
-        records[2].u.queue.textureRect[2] = 512;
-        records[2].u.queue.textureRect[3] = 448;
+        records[2].u.queue.textured = 1;
+        records[2].u.queue.blend_kind = 1;
+        records[2].u.queue.screen.top = 0;
+        records[2].u.queue.screen.left = 0;
+        records[2].u.queue.screen.right = 512;
+        records[2].u.queue.screen.bottom = 448;
+        records[2].u.queue.texture.top = 0;
+        records[2].u.queue.texture.left = 0;
+        records[2].u.queue.texture.right = 512;
+        records[2].u.queue.texture.bottom = 448;
         records[3].type = 20;
         records[3].u.queue.frame = 0;
         records[3].u.queue.tex0 = 2;
         records[3].u.queue.color = params[0];
-        records[3].u.queue.depth = depth;
+        records[3].u.queue.z = depth;
         records[3].u.queue.count = 1;
-        records[3].u.queue.halveRgb = 1;
-        records[3].u.queue.blendKind = 0;
-        records[3].u.queue.screenRect[0] = 0;
-        records[3].u.queue.screenRect[1] = 0;
-        records[3].u.queue.screenRect[2] = 512;
-        records[3].u.queue.screenRect[3] = 448;
-        records[3].u.queue.textureRect[0] = 0;
-        records[3].u.queue.textureRect[1] = 0;
-        records[3].u.queue.textureRect[2] = 512;
-        records[3].u.queue.textureRect[3] = 448;
+        records[3].u.queue.textured = 1;
+        records[3].u.queue.blend_kind = 0;
+        records[3].u.queue.screen.top = 0;
+        records[3].u.queue.screen.left = 0;
+        records[3].u.queue.screen.right = 512;
+        records[3].u.queue.screen.bottom = 448;
+        records[3].u.queue.texture.top = 0;
+        records[3].u.queue.texture.left = 0;
+        records[3].u.queue.texture.right = 512;
+        records[3].u.queue.texture.bottom = 448;
         break;
     case 10:
         records[0].type = 20;
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 2;
         records[0].u.queue.color = params[0];
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = params[1];
-        records[0].u.queue.blendKind = 0;
-        records[0].u.queue.screenRect[0] = 0;
-        records[0].u.queue.screenRect[1] = 0;
-        records[0].u.queue.screenRect[2] = 512;
-        records[0].u.queue.screenRect[3] = 448;
-        records[0].u.queue.textureRect[0] = 0;
-        records[0].u.queue.textureRect[1] = 0;
-        records[0].u.queue.textureRect[2] = 512;
-        records[0].u.queue.textureRect[3] = 448;
+        records[0].u.queue.textured = params[1];
+        records[0].u.queue.blend_kind = 0;
+        records[0].u.queue.screen.top = 0;
+        records[0].u.queue.screen.left = 0;
+        records[0].u.queue.screen.right = 512;
+        records[0].u.queue.screen.bottom = 448;
+        records[0].u.queue.texture.top = 0;
+        records[0].u.queue.texture.left = 0;
+        records[0].u.queue.texture.right = 512;
+        records[0].u.queue.texture.bottom = 448;
         break;
     case 11:
         records[0].type = 20;
         records[0].u.queue.frame = 2;
         records[0].u.queue.tex0 = 0;
         records[0].u.queue.color = 0x7FFFFFFF;
-        records[0].u.queue.depth = 0xFFFFFFF;
+        records[0].u.queue.z = 0xFFFFFFF;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 1;
-        records[0].u.queue.blendKind = 0;
-        records[0].u.queue.screenRect[0] = 0;
-        records[0].u.queue.screenRect[1] = 0;
-        records[0].u.queue.screenRect[2] = 512;
-        records[0].u.queue.screenRect[3] = 448;
-        records[0].u.queue.textureRect[0] = 0;
-        records[0].u.queue.textureRect[1] = 0;
-        records[0].u.queue.textureRect[2] = 512;
-        records[0].u.queue.textureRect[3] = 448;
+        records[0].u.queue.textured = 1;
+        records[0].u.queue.blend_kind = 0;
+        records[0].u.queue.screen.top = 0;
+        records[0].u.queue.screen.left = 0;
+        records[0].u.queue.screen.right = 512;
+        records[0].u.queue.screen.bottom = 448;
+        records[0].u.queue.texture.top = 0;
+        records[0].u.queue.texture.left = 0;
+        records[0].u.queue.texture.right = 512;
+        records[0].u.queue.texture.bottom = 448;
         records[1].type = 20;
         records[1].u.queue.frame = 0;
         records[1].u.queue.tex0 = 2;
         records[1].u.queue.color = params[0];
-        records[1].u.queue.depth = depth;
+        records[1].u.queue.z = depth;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 1;
-        records[1].u.queue.blendKind = 0;
-        records[1].u.queue.screenRect[0] = params[1];
-        records[1].u.queue.screenRect[1] = params[1];
-        records[1].u.queue.screenRect[2] = params[1] + 512;
-        records[1].u.queue.screenRect[3] = params[1] + 448;
-        records[1].u.queue.textureRect[0] = 0;
-        records[1].u.queue.textureRect[1] = 0;
-        records[1].u.queue.textureRect[2] = 512;
-        records[1].u.queue.textureRect[3] = 448;
+        records[1].u.queue.textured = 1;
+        records[1].u.queue.blend_kind = 0;
+        records[1].u.queue.screen.top = params[1];
+        records[1].u.queue.screen.left = params[1];
+        records[1].u.queue.screen.right = params[1] + 512;
+        records[1].u.queue.screen.bottom = params[1] + 448;
+        records[1].u.queue.texture.top = 0;
+        records[1].u.queue.texture.left = 0;
+        records[1].u.queue.texture.right = 512;
+        records[1].u.queue.texture.bottom = 448;
         break;
     case 12:
         records[0].type = 20;
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 1;
         records[0].u.queue.color = params[0];
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 1;
-        records[0].u.queue.blendKind = 0;
-        records[0].u.queue.screenRect[0] = 0;
-        records[0].u.queue.screenRect[1] = 0;
-        records[0].u.queue.screenRect[2] = 512;
-        records[0].u.queue.screenRect[3] = 448;
-        records[0].u.queue.textureRect[0] = 0;
-        records[0].u.queue.textureRect[1] = 0;
-        records[0].u.queue.textureRect[2] = 512;
-        records[0].u.queue.textureRect[3] = 448;
+        records[0].u.queue.textured = 1;
+        records[0].u.queue.blend_kind = 0;
+        records[0].u.queue.screen.top = 0;
+        records[0].u.queue.screen.left = 0;
+        records[0].u.queue.screen.right = 512;
+        records[0].u.queue.screen.bottom = 448;
+        records[0].u.queue.texture.top = 0;
+        records[0].u.queue.texture.left = 0;
+        records[0].u.queue.texture.right = 512;
+        records[0].u.queue.texture.bottom = 448;
         break;
     case 13:
         records[0].type = 8;
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 0;
         records[0].u.queue.color = 0;
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 0;
-        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.textured = 0;
+        records[0].u.queue.blend_kind = 0;
         records[0].u.gradient.color0 = ((params[1] << 24) | params[0]);
         records[0].u.gradient.color1 = ((params[2] << 24) | params[0]);
         records[0].u.gradient.top = 0;
@@ -481,10 +481,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].type = 9;
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 2;
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = params[4];
-        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.textured = params[4];
+        records[0].u.queue.blend_kind = 0;
         records[0].u.turn.bottom = bottom;
         records[0].u.turn.top = top;
         records[0].u.turn.columns = columns;
@@ -545,10 +545,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 2;
         records[0].u.queue.color = params[0];
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = params[4];
-        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.textured = params[4];
+        records[0].u.queue.blend_kind = 0;
         records[0].u.grid.endColor = params[3];
         records[0].u.grid.screen.top = top;
         records[0].u.grid.screen.left = left;
@@ -580,10 +580,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 0;
         records[0].u.queue.color = (params[0] & RECORD_RGB_MASK);
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 0;
-        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.textured = 0;
+        records[0].u.queue.blend_kind = 0;
         records[0].u.ring.endColor = params[0];
         records[0].u.ring.centerX = 256;
         records[0].u.ring.centerY = 224;
@@ -596,10 +596,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[1].u.queue.frame = 0;
         records[1].u.queue.tex0 = 0;
         records[1].u.queue.color = (params[0] & RECORD_RGB_MASK);
-        records[1].u.queue.depth = depth;
+        records[1].u.queue.z = depth;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 0;
-        records[1].u.queue.blendKind = 0;
+        records[1].u.queue.textured = 0;
+        records[1].u.queue.blend_kind = 0;
         records[1].u.ring.endColor = params[0];
         records[1].u.ring.centerX = 256;
         records[1].u.ring.centerY = 224;
@@ -615,10 +615,10 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].u.queue.frame = 0;
         records[0].u.queue.tex0 = 1;
         records[0].u.queue.color = params[0];
-        records[0].u.queue.depth = depth;
+        records[0].u.queue.z = depth;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 1;
-        records[0].u.queue.blendKind = 0;
+        records[0].u.queue.textured = 1;
+        records[0].u.queue.blend_kind = 0;
         records[0].u.params[7] = 0;
         records[0].u.params[8] = 0;
         records[0].u.params[9] = 512;
@@ -640,30 +640,30 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].u.queue.frame = 2;
         records[0].u.queue.tex0 = 0;
         records[0].u.queue.color = 0x7FFFFFFF;
-        records[0].u.queue.depth = 0x7FFFFFFF;
+        records[0].u.queue.z = 0x7FFFFFFF;
         records[0].u.queue.count = 1;
-        records[0].u.queue.halveRgb = 1;
-        records[0].u.queue.blendKind = 0;
-        records[0].u.queue.screenRect[0] = 0;
-        records[0].u.queue.screenRect[1] = 0;
-        records[0].u.queue.screenRect[2] = 512;
-        records[0].u.queue.screenRect[3] = 448;
-        records[0].u.queue.textureRect[0] = 0;
-        records[0].u.queue.textureRect[1] = 0;
-        records[0].u.queue.textureRect[2] = 512;
-        records[0].u.queue.textureRect[3] = 448;
+        records[0].u.queue.textured = 1;
+        records[0].u.queue.blend_kind = 0;
+        records[0].u.queue.screen.top = 0;
+        records[0].u.queue.screen.left = 0;
+        records[0].u.queue.screen.right = 512;
+        records[0].u.queue.screen.bottom = 448;
+        records[0].u.queue.texture.top = 0;
+        records[0].u.queue.texture.left = 0;
+        records[0].u.queue.texture.right = 512;
+        records[0].u.queue.texture.bottom = 448;
         records[1].type = 20;
         records[1].u.queue.frame = 2;
         records[1].u.queue.tex0 = 0;
         records[1].u.queue.color = 0;
-        records[1].u.queue.depth = depth;
+        records[1].u.queue.z = depth;
         records[1].u.queue.count = 1;
-        records[1].u.queue.halveRgb = 0;
-        records[1].u.queue.blendKind = 0;
-        records[1].u.queue.screenRect[0] = 0;
-        records[1].u.queue.screenRect[1] = 0;
-        records[1].u.queue.screenRect[2] = 512;
-        records[1].u.queue.screenRect[3] = 448;
+        records[1].u.queue.textured = 0;
+        records[1].u.queue.blend_kind = 0;
+        records[1].u.queue.screen.top = 0;
+        records[1].u.queue.screen.left = 0;
+        records[1].u.queue.screen.right = 512;
+        records[1].u.queue.screen.bottom = 448;
         records[2].type = 15;
         records[2].u.queue.frame = 1;
         records[2].u.queue.tex0 = 1;
@@ -672,18 +672,18 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[3].u.queue.frame = 0;
         records[3].u.queue.tex0 = 2;
         records[3].u.queue.color = params[0];
-        records[3].u.queue.depth = 0x7FFFFFFF;
+        records[3].u.queue.z = 0x7FFFFFFF;
         records[3].u.queue.count = 1;
-        records[3].u.queue.halveRgb = 1;
-        records[3].u.queue.blendKind = 0;
-        records[3].u.queue.screenRect[0] = params[1];
-        records[3].u.queue.screenRect[1] = params[1];
-        records[3].u.queue.screenRect[2] = params[1] + 512;
-        records[3].u.queue.screenRect[3] = params[1] + 448;
-        records[3].u.queue.textureRect[0] = 0;
-        records[3].u.queue.textureRect[1] = 0;
-        records[3].u.queue.textureRect[2] = 512;
-        records[3].u.queue.textureRect[3] = 448;
+        records[3].u.queue.textured = 1;
+        records[3].u.queue.blend_kind = 0;
+        records[3].u.queue.screen.top = params[1];
+        records[3].u.queue.screen.left = params[1];
+        records[3].u.queue.screen.right = params[1] + 512;
+        records[3].u.queue.screen.bottom = params[1] + 448;
+        records[3].u.queue.texture.top = 0;
+        records[3].u.queue.texture.left = 0;
+        records[3].u.queue.texture.right = 512;
+        records[3].u.queue.texture.bottom = 448;
         records[4].type = 15;
         records[4].u.queue.frame = 0;
         break;
@@ -697,8 +697,8 @@ void recordSetPreset(int bankIndex, int preset, int depth, int *params)
         records[0].type = 2;
         records[0].u.queue.tex0 = 1;
         records[1].type = 5;
-        records[1].u.warp.alpha = params[0];
-        records[1].u.warp.z = depth;
+        records[1].u.fan.spread = params[0];
+        records[1].u.fan.z = depth;
         break;
     case 21:
         records[0].type = 6;
@@ -734,16 +734,16 @@ void recordSetSlot(int bankIndex, int slotIndex, int type, int *params)
     recordUpdateRenderHook();
 }
 
-/* Clears the ten 0x7C-byte records of bank bankIndex (banks are 0x4D8 bytes apart). */
+/* Clears the ten records of bank bankIndex. */
 void recordClearBank(int bankIndex)
 {
     unsigned char *record;
     int slot;
 
-    record = recordBanks + bankIndex * 0x4D8;
+    record = recordBanks + bankIndex * sizeof(RecordBank);
     for (slot = 0; slot < 10; slot++) {
-        recordClear(record);
-        record += 0x7C;
+        recordClear((GsQueueContext *) record);
+        record += sizeof(GsQueueContext);
     }
 }
 
@@ -765,11 +765,11 @@ void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
 void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 int recordAnyUsed(void);
 /* GIF data sent before (9 quadwords) and after (3 quadwords) the records are drawn. */
-extern const unsigned char D_0063D6C8[];
-extern const unsigned char D_0063D7B0[];
+extern const unsigned char recordPreDrawGifData[];
+extern const unsigned char recordPostDrawGifData[];
 /* Draw handlers of record types 1..21. The handlers of types 1, 3, 5, 6 and 7 build their own packet on the
  * scratchpad (xglPacketGetCurrent) and leave the packet argument unused. */
-extern void (*D_0063D758[])(GsQueueContext *record, XglPacket *packet);
+extern void (*recordDrawHandlers[])(GsQueueContext *record, XglPacket *packet);
 
 /* Calls the draw handler of every record of type 1..21 in the three banks between two fixed GIF blocks, then
  * clears the banks and removes itself as the render callback. */
@@ -787,7 +787,7 @@ void recordRenderAll(XglPacket *packet)
     }
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
-    sceVif1PkAddDirectDataN(packet, D_0063D6C8, 9);
+    sceVif1PkAddDirectDataN(packet, recordPreDrawGifData, 9);
     sceVif1PkCloseDirectHLCode(packet);
     for (bankIndex = 0; bankIndex < 3; bankIndex++) {
         record = bank->records;
@@ -796,7 +796,7 @@ void recordRenderAll(XglPacket *packet)
             /* if (type < 22 && type != 0) gives beq with the slot filled from the call instead of beql */
             switch (type) {
             case 1 ... 21:
-                D_0063D758[type - 1](record, packet);
+                recordDrawHandlers[type - 1](record, packet);
                 break;
             }
             record++;
@@ -805,7 +805,7 @@ void recordRenderAll(XglPacket *packet)
     }
     sceVif1PkCnt(packet, 0);
     sceVif1PkOpenDirectHLCode(packet, 0);
-    sceVif1PkAddDirectDataN(packet, D_0063D7B0, 3);
+    sceVif1PkAddDirectDataN(packet, recordPostDrawGifData, 3);
     sceVif1PkCloseDirectHLCode(packet);
     recordClearBanks();
     recordUpdatePaused.paused = 0;
@@ -826,19 +826,19 @@ int recordAnyUsed(void)
             if (*record != 0) {
                 return 1;
             }
-            record += 0x7C;
+            record += sizeof(GsQueueContext);
         }
-        bank += 0x4D8;
+        bank += sizeof(RecordBank);
     }
     return 0;
 }
 
 extern void *memset(void *destination, int value, unsigned int count);
 
-/* Clears one 0x7C-byte record. */
-void recordClear(void *record)
+/* Clears one record. */
+void recordClear(GsQueueContext *record)
 {
-  memset(record, 0, 0x7C);
+  memset(record, 0, sizeof(*record));
 }
 
 /* Sets recordUpdatePaused, the flag that suspends the per-frame record updates. */
@@ -864,8 +864,9 @@ int recordStageSize(int mode, int fallback);
 int recordStageColor(int mode, int alpha);
 int recordPulseColor(void);
 
-/* Draw handler of record type 1 (D_0063D758[0]): one textured sprite over the 512x448 screen, inset by the
-   stage's size, in the stage's color; at stage 2 the sprite is drawn a second time in the pulsing color. */
+/* Draw handler of record type 1 (recordDrawHandlers[0]): one full-screen 512x448 sprite whose texture rectangle is
+   inset by the stage's size, in the stage's color; at stage 2 the sprite is drawn a second time in the pulsing
+   color. */
 void recordDrawType1(GsQueueContext *record, XglPacket *unused)
 {
     int stage;
@@ -1014,7 +1015,7 @@ void recordStepAngle(int stage)
 
 void spriteBatchDraw(GsQueueContext *context, XglPacket *packet);
 
-/* Draw handler of record type 2 (D_0063D758[1]): draws the record's texture (its tex0 word) over the whole 512x448
+/* Draw handler of record type 2 (recordDrawHandlers[1]): draws the record's texture (its tex0 word) over the whole 512x448
    screen through a type 20 sprite record. */
 void recordDrawType2(GsQueueContext *record, XglPacket *packet)
 {
@@ -1024,18 +1025,18 @@ void recordDrawType2(GsQueueContext *record, XglPacket *packet)
     sprite.u.queue.frame = 2;
     sprite.u.queue.tex0 = record->u.queue.tex0;
     sprite.u.queue.color = 0x80FFFFFF;
-    sprite.u.queue.depth = 0x7FFFFFFF;
+    sprite.u.queue.z = 0x7FFFFFFF;
     sprite.u.queue.count = 1;
-    sprite.u.queue.halveRgb = 1;
-    sprite.u.queue.blendKind = 0;
-    sprite.u.queue.screenRect[0] = 0;
-    sprite.u.queue.screenRect[1] = 0;
-    sprite.u.queue.screenRect[2] = 0x200;
-    sprite.u.queue.screenRect[3] = 0x1C0;
-    sprite.u.queue.textureRect[0] = 0;
-    sprite.u.queue.textureRect[1] = 0;
-    sprite.u.queue.textureRect[2] = 0x200;
-    sprite.u.queue.textureRect[3] = 0x1C0;
+    sprite.u.queue.textured = 1;
+    sprite.u.queue.blend_kind = 0;
+    sprite.u.queue.screen.top = 0;
+    sprite.u.queue.screen.left = 0;
+    sprite.u.queue.screen.right = 0x200;
+    sprite.u.queue.screen.bottom = 0x1C0;
+    sprite.u.queue.texture.top = 0;
+    sprite.u.queue.texture.left = 0;
+    sprite.u.queue.texture.right = 0x200;
+    sprite.u.queue.texture.bottom = 0x1C0;
     spriteBatchDraw(&sprite, packet);
 }
 
@@ -1044,9 +1045,15 @@ void recordRingPoint(float *point, float *clampedPoint, float angle, float radiu
 extern float recordTunnelDegToRad;
 extern int recordTunnelRadius;
 
-/* Draw handler of record type 3 (D_0063D758[2]): a triangle fan from the screen centre through octagonal rings of
-   radius recordTunnelRadius, recordTunnelRadius + 25, ... below 620 (recordAdvanceRingRadius advances recordTunnelRadius by the record's
-   step); each ring vertex takes its texture coordinates from the point clamped to radius 224, at the record's depth. */
+/* Ring spacing of the type 3 tunnel, the radius its first ring is kept below and the radius its rings stop at. */
+#define RECORD_TUNNEL_RING_SPACING 25
+#define RECORD_TUNNEL_WRAP_RADIUS 406
+#define RECORD_TUNNEL_END_RADIUS 620
+
+/* Draw handler of record type 3 (recordDrawHandlers[2]): a triangle fan from the screen centre through octagonal rings of
+   radius recordTunnelRadius, recordTunnelRadius + RECORD_TUNNEL_RING_SPACING, ... below RECORD_TUNNEL_END_RADIUS
+   (recordAdvanceRingRadius advances recordTunnelRadius by the record's step); each ring vertex takes its texture
+   coordinates from the point clamped to radius 224, at the record's depth. */
 void recordDrawType3(GsQueueContext *record, XglPacket *unused)
 {
     int z;
@@ -1104,9 +1111,9 @@ void recordDrawType3(GsQueueContext *record, XglPacket *unused)
     pairs[pairCount].ad.data = GS_SET_RGBAQ(0x80, 0x80, 0x80, 0x23, 0);
     pairCount++;
     /* point is in screen pixels: + (2048 - 256, 2048 - 224) puts it around the GS origin, in 12.4 fixed point.
-       The first vertex of a ring goes to the XYZ3 register, without a drawing kick; recordTunnelDegToRad converts degrees
-       to radians. */
-    for (radius = recordTunnelRadius; radius < 620; radius += 25) {
+       The first vertex of a ring goes to the XYZ3 register, without a drawing kick; recordTunnelDegToRad converts
+       degrees to radians. */
+    for (radius = recordTunnelRadius; radius < RECORD_TUNNEL_END_RADIUS; radius += RECORD_TUNNEL_RING_SPACING) {
         recordRingPoint(point, clampedPoint, 0.0f, radius);
         pairs[pairCount].ad.reg = GS_UV;
         pairs[pairCount].ad.data = GS_SET_UV(clampedPoint[0] * 16.0f, clampedPoint[1] * 16.0f);
@@ -1151,18 +1158,19 @@ void recordRingPoint(float *point, float *clampedPoint, float angle, float radiu
     clampedPoint[1] = radius * sine + 224.0f;
 }
 
-/* While updates are not suspended, advances recordTunnelRadius by step and steps it back below 406 in steps of 25. */
+/* While updates are not suspended, advances recordTunnelRadius by step and steps it back below
+ * RECORD_TUNNEL_WRAP_RADIUS one ring spacing at a time. */
 void recordAdvanceRingRadius(int step)
 {
     if (recordUpdatePaused.paused == 0) {
         recordTunnelRadius += step;
-        while (recordTunnelRadius >= 0x196) {
-            recordTunnelRadius -= 0x19;
+        while (recordTunnelRadius >= RECORD_TUNNEL_WRAP_RADIUS) {
+            recordTunnelRadius -= RECORD_TUNNEL_RING_SPACING;
         }
     }
 }
 
-/* Row length of the cell grid: 50 x 50 flags (0x9C4 bytes, cleared by recordGridReset), of which recordGridWidth
+/* Row length of the cell grid: 50 x 50 flags (cleared by recordGridReset), of which recordGridWidth
  * x recordGridHeight are in use; recordDrawType4 indexes a cell as column + row * 50. */
 #define RECORD_GRID_SIDE 50
 
@@ -1178,7 +1186,7 @@ void gsQueueAddTexturedKickVertex(XglPacket *packet, Vector4 *position, Vector4 
 void gsQueueFlush(XglPacket *packet);
 
 /*
- * Draw handler of record type 4 (D_0063D758[3]): sets random free cells of the grid until cellCount (clamped to
+ * Draw handler of record type 4 (recordDrawHandlers[3]): sets random free cells of the grid until cellCount (clamped to
  * 0..width * height) are set, or clears random set ones down to it, then draws each set cell as one sprite of
  * 512 / width x 448 / height pixels at the record's depth, count times. Reading count before depth gives the
  * original's depth reload register (fd.sh: depth first 216/225, count first 225/225); each random loop declares
@@ -1204,7 +1212,7 @@ void recordDrawType4(GsQueueContext *record, XglPacket *packet)
     cellTotal = recordGridHeight * recordGridWidth;
     cellCount = record->u.gridFill.cellCount;
     count = record->u.queue.count;
-    depth = record->u.queue.depth;
+    depth = record->u.queue.z;
     if (cellCount < 0) {
         cellCount = 0;
     }
@@ -1267,10 +1275,10 @@ void recordDrawType4(GsQueueContext *record, XglPacket *packet)
     gsQueueFlush(packet);
 }
 
-/* Clears the 0x9C4-byte cell grid and sets its width and height (cells across and down). */
+/* Clears the cell grid and sets its width and height (cells across and down). */
 void recordGridReset(int width, int height)
 {
-    memset(recordGridCells, 0, 0x9C4);
+    memset(recordGridCells, 0, RECORD_GRID_SIDE * RECORD_GRID_SIDE * sizeof(recordGridCells[0]));
     recordGridWidth = width;
     recordGridHeight = height;
 }
@@ -1288,8 +1296,8 @@ void recordWarpCorner(Vector4 *result, int x, int y);
 #define RECORD_XYZ(x, y, z) GS_SET_XYZ((int) (((x) + 1792.0f) * 16.0f), (int) (((y) + 1824.0f) * 16.0f), z)
 
 /*
- * Draw handler of record type 5 (D_0063D758[4]): draws the screen texture as a triangle fan around the screen
- * centre (256, 224). The four edge midpoints move out by an eighth of the record's alpha word (spread), each corner
+ * Draw handler of record type 5 (recordDrawHandlers[4]): draws the screen texture as a triangle fan around the screen
+ * centre (256, 224). The four edge midpoints move out by an eighth of the record's spread, each corner
  * by spread along one axis and half of it along the other, a quarter turn further at each corner. The fan goes
  * around twice and closes at its first point. Z and fog take the record's z word.
  */
@@ -1303,8 +1311,8 @@ void recordDrawType5(GsQueueContext *record, XglPacket *unused)
     int pairCount;
     int lap;
 
-    spread = record->u.warp.alpha;
-    z = record->u.warp.z;
+    spread = record->u.fan.spread;
+    z = record->u.fan.z;
     packet = xglPacketGetCurrent();
     eighth = spread >> 3;
     pairs = (GsPair *) SCRATCHPAD_BASE;
@@ -1412,7 +1420,7 @@ void recordDrawType5(GsQueueContext *record, XglPacket *unused)
 }
 
 /*
- * Draw handler of record type 6 (D_0063D758[5]): draws the 512 x 448 screen texture as one triangle fan of its four
+ * Draw handler of record type 6 (recordDrawHandlers[5]): draws the 512 x 448 screen texture as one triangle fan of its four
  * corners, each corner moved by recordWarpCorner. XYZF2 takes the record's z as the whole upper word (Z and fog).
  */
 void recordDrawType6(GsQueueContext *record, XglPacket *unused)
@@ -1530,8 +1538,8 @@ extern AlignedVector4 recordWarpCenter;
 extern AlignedVector4 recordWarpScale;
 extern float recordWarpDegToRad;
 
-/* Rotates the point (x, y) about recordWarpCenter by recordWarpAngle * recordWarpDegToRad, scales it by recordWarpScale and stores the
- * resulting x and y in result. */
+/* Rotates the point (x, y) about recordWarpCenter by recordWarpAngle * recordWarpDegToRad, scales it by
+ * recordWarpScale and stores the resulting x and y in result. */
 void recordWarpCorner(Vector4 *result, int x, int y)
 {
     AlignedVector4 point = { x, y, 0.0f, 0.0f };
@@ -1566,7 +1574,7 @@ void recordRingStep(float angle, Vector4 *screenPoints, Vector4 *texturePoints);
 extern float recordRingDegToRad;
 
 /*
- * Draw handler of record type 7 (D_0063D758[6]): draws a textured ring as one triangle strip: for every step an
+ * Draw handler of record type 7 (recordDrawHandlers[6]): draws a textured ring as one triangle strip: for every step an
  * inner vertex (recordRingInnerColor's colour) and an outer one (recordDefaultColor), Z and fog 0x7FFFFFFF.
  */
 void recordDrawType7(GsQueueContext *unusedRecord, XglPacket *unused)
@@ -1680,7 +1688,8 @@ void recordRingStep(float angle, Vector4 *screenPoints, Vector4 *texturePoints)
     texturePoints->y = textureSin * radius + 224.0f;
     texturePoints->z = textureCos * 300.0f + 256.0f;
     texturePoints->w = textureSin * 300.0f + 224.0f;
-    /* The screen points use the same angle (an offset of 0.0f). */
+    /* The original adds 0.0f to the angle before the second pair of calls (mtc1 $0 / add.s); without this line the
+       function compiles 8 bytes shorter. */
     angle += 0.0f;
     screenSin = sinf(angle);
     screenCos = cosf(angle);

@@ -5,11 +5,11 @@
 #include "main/tu207.h"
 
 /*
- * The type 10 record of tu207.h (GsQueueContext, arm u.ring) as orbitDrawRing reads it. Through GsQueueContext.u every
- * read of the record gets alias set 0 (an access through a union), which conflicts with the stack spill slots: sched2
- * then moves the mflo of 365 / segments and its spill ahead of the record loads (fd.sh orbitDrawRing 161/172, 27
- * bytes; the same reads through a pointer to the arm, &record->u.ring, cost a second base register, 112/172). With
- * this non-union view of the same words the reads keep the int alias set (172/172).
+ * The type 10 record of tu207.h (GsQueueContext, arm u.ring) as orbitDrawRing reads it. Through GsQueueContext.u
+ * every read of the record gets alias set 0 (an access through a union), which conflicts with the stack spill slots:
+ * sched2 then moves the mflo of 365 / segments and its spill ahead of the record loads (fd.sh orbitDrawRing 161/172,
+ * 27 bytes; the same reads through a pointer to the arm, &record->u.ring, cost a second base register, 112/172).
+ * With this non-union view of the same words the reads keep the int alias set (172/172).
  */
 typedef struct GsQueueRingView {
     unsigned char type;
@@ -17,10 +17,10 @@ typedef struct GsQueueRingView {
     int frame;       /* +0x04 */
     int tex0;        /* +0x08 */
     int color;       /* +0x0C */
-    int depth;       /* +0x10 */
+    int z;           /* +0x10 */
     int count;       /* +0x14 */
-    int halveRgb;    /* +0x18 */
-    int blendKind;   /* +0x1C */
+    int textured;    /* +0x18 */
+    int blend_kind;  /* +0x1C */
     int endColor;    /* +0x20 */
     int centerX;     /* +0x24 */
     int centerY;     /* +0x28 */
@@ -105,7 +105,7 @@ void orbitDrawRing(GsQueueContext *record, XglPacket *packet) {
 int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueContext *record) {
     int depth;
 
-    depth = record->u.queue.depth;
+    depth = record->u.queue.z;
     destination->x = (float) x;
     destination->y = (float) y;
     destination->z = (float) depth;
@@ -129,7 +129,7 @@ void quadDrawPreset(GsQueueContext *record, XglPacket *packet) {
     int count;
     int i;
 
-    z = record->u.queue.depth;
+    z = record->u.queue.z;
     top = record->u.presetQuad.texture.top;
     left = record->u.presetQuad.texture.left;
     right = record->u.presetQuad.texture.right;
@@ -171,7 +171,7 @@ void quadDrawPresetUv(GsQueueContext *record, XglPacket *packet) {
     int count;
     int i;
 
-    z = record->u.queue.depth;
+    z = record->u.queue.z;
     top = record->u.presetUvQuad.screen.top;
     left = record->u.presetUvQuad.screen.left;
     right = record->u.presetUvQuad.screen.right;
@@ -293,7 +293,7 @@ void circleSpriteCorners(Vector4 *points, int x, int y, const GsQueueContext *re
     top = record->u.circle.screen.top;
     left = record->u.circle.screen.left;
     right = record->u.circle.screen.right;
-    z = record->u.queue.depth;
+    z = record->u.queue.z;
     points[0].x = (float) (left + x);
     points[0].y = (float) (top + y);
     points[1].x = (float) (right + x);
@@ -313,7 +313,7 @@ enum {
    called in that order the argument moves of gridDrawCells come out swapped (gate: 6 bytes at 0x278B54). */
 int pointFadeColorStep(Vector4 *transform, float x, float y, const GsQueueContext *record);
 void quadDrawRepeated(XglPacket *packet, Vector4 *quad, GsQueueContext *record);
-void quadDrawTransformed(XglPacket *packet, Vector4 *quad, GsQueueContext *record, Vector4 *transform);
+void quadDrawTransformed(XglPacket *packet, Vector4 *corners, GsQueueContext *transform, const float *rotation);
 
 /* Draws the record rectangle as rows x columns cells. Once per cell, from the cell's first corner, pointFadeColorStep
    (tu211.c) gives the cell's angles; the cell is then drawn flat, drawn turned (quadDrawTransformed) or skipped.
@@ -383,7 +383,7 @@ void gridDrawCells(GsQueueContext *record, XglPacket *packet) {
                                                      transform.x / (float) (maxAngle - minAngle)),
                                         record);
                     }
-                    quadDrawTransformed(packet, quad, record, &transform);
+                    quadDrawTransformed(packet, quad, record, &transform.x);
                     break;
                 }
             }

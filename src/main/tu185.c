@@ -23,10 +23,10 @@ typedef union SefRotationRow {
 
 /*
  * The 0xA0-byte particle of sefEntryPool has one layout per effect kind; the words every kind uses keep one
- * name in all three. sefPoolAlloc returns a particle's pool index, 0 when the pool is full.
+ * name in all three. sefPoolAlloc returns a particle's pool index, 0 when its search finds no free entry.
  */
 
-/* Kinds 0 to 7: spawned by func_0026CF90 (0 to 2), func_0026D2B8 (3 and 4) and sefSpawnKinds0To7 (5 to 7); kinds 0 to 2
+/* Kinds 0 to 7: spawned by func_0026CF90 (0 to 2), func_0026D2B8 (3 and 4) and sefSpawnKinds5To7 (5 to 7); kinds 0 to 2
  * drift in sefUpdateBurstParticles, kinds 5 to 7 grow and fade in sefUpdateFadeOutParticles. */
 typedef struct SefFadeParticle {
     SefRotationRow rotation[3]; /* +0x00: built by sefRotationZRows */
@@ -95,7 +95,7 @@ typedef struct SefPoolRecord {
 
 /* One entry of sefEntryPool. The kind 8-21 spawners and the group updates reach the particle through the
  * union (a union access may alias anything, so gcc keeps the particle stores and the age reloads in the
- * original's order); sefSpawnKinds0To7 and sefUpdateSpinParticles take a pointer to their kind's member. */
+ * original's order); sefSpawnKinds5To7 and sefUpdateSpinParticles take a pointer to their kind's member. */
 typedef union SefPoolEntry {
     SefFadeParticle fade;
     SefDriftParticle drift;
@@ -105,7 +105,7 @@ typedef union SefPoolEntry {
 } SefPoolEntry;
 
 /* The particle pool (0x500B0 bytes, cleared by sefResetPool). Entry 0 is never handed out: sefPoolAlloc returns
- * 0 when the pool is full. The SEF_POOL_RING_SIZE entries after it form a ring that the search for a free one walks. */
+ * 0 for no free entry. The SEF_POOL_RING_SIZE entries after it form a ring that the search for a free one walks. */
 #define SEF_POOL_RING_SIZE 2048
 
 typedef struct SefPool {
@@ -130,8 +130,9 @@ void sefResetBuffers(void) {
 /* Set when sefPoolAlloc finds no free entry; sefRunEmitters clears it every frame. */
 extern s16 sefPoolFull;
 
-/* Returns the index of a free pool entry (ring[index] is entries[index + 1]), searching the ring from the cursor,
- * and leaves the cursor on it. Returns 0 and flags the pool full (sefPoolFull) when the search wraps around.
+/* Returns the sefEntryPool index of a free entry (ring entry r is entries[r + 1]), searching the ring from the
+ * cursor; the cursor moves to the ring entry after the one handed out. Returns 0 and sets sefPoolFull when no
+ * free entry is found: the search stops at the ring entry just before the start, so it looks at 2047 of the 2048.
  * The free test reads life through SefPoolRecord: the plain `entry->fade.life == 0.0f` compiles to a float
  * compare (mtc1, lwc1, c.eq.s), the original tests the word (lw, beqz). The cursor is stored through poolCursor:
  * with `pool->cursor = ...` gcc folds the 0x500A0 offset into the store instead of keeping its address in a
@@ -200,12 +201,17 @@ extern void sceVif1PkCnt(XglPacket *packet, int count);
 extern XglPacket *xglPacketGetCurrent(void);
 void sceVif1PkAddCode(XglPacket *packet, unsigned int tag);
 
+/* VIF codes (command in bits 24..30): FLUSH, MSCNT, and MSCAL whose immediate is the micro program address / 8. */
+#define VIF_CODE_FLUSH 0x11000000
+#define VIF_CODE_MSCAL 0x14000000
+#define VIF_CODE_MSCNT 0x17000000
+
 void sefPacketFlush(void) {
     XglPacket *packet;
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    sceVif1PkAddCode(packet, 0x11000000);
+    sceVif1PkAddCode(packet, VIF_CODE_FLUSH);
 }
 
 void sefPacketMscnt(void) {
@@ -213,7 +219,7 @@ void sefPacketMscnt(void) {
 
     packet = xglPacketGetCurrent();
     sceVif1PkCnt(packet, 0);
-    sceVif1PkAddCode(packet, 0x17000000);
+    sceVif1PkAddCode(packet, VIF_CODE_MSCNT);
 }
 
 extern void sceVif1PkRef(XglPacket *packet, const void *environment, int count, int mode, int offset, int flags);
@@ -234,7 +240,8 @@ void sefPacketUnpackRef(SefUnpackBlock *block, int blockSize, int count, unsigne
     sceVif1PkRef(currentPacket, environment, count, 0, 0, 0);
 }
 
-void func_0012B6E0(XglPacket *packet, int, int, int, int);
+/* Opens a VIF UNPACK of the following data: VU address, UNPACK command, cycle and write lengths (tu045.c calls it too). */
+void func_0012B6E0(XglPacket *packet, int vuAddress, int unpackCommand, int cycleLength, int writeLength);
 void func_0012B770(XglPacket *packet);
 void func_0012BCE8(XglPacket *packet, const void *data, int count);
 /* The corners of a unit quad, (x, y, 0, 1) for x, y = -1, 1, as vectors and as the eight doublewords
@@ -276,9 +283,9 @@ void sefBuildVuPacket(int kind, int alternate) {
         func_0012BCE8(packet, &sefVuPacket, 0x11);
     } else {
         if (alternate != 0) {
-            sceVif1PkAddCode(packet, ((u32) D_1FD0 >> 3) | 0x14000000);
+            sceVif1PkAddCode(packet, ((u32) D_1FD0 >> 3) | VIF_CODE_MSCAL);
         } else {
-            sceVif1PkAddCode(packet, ((u32) D_1F70 >> 3) | 0x14000000);
+            sceVif1PkAddCode(packet, ((u32) D_1F70 >> 3) | VIF_CODE_MSCAL);
         }
         if (kind == 1) {
             func_0012B6E0(packet, 0x18, 0x6C, 4, 4);
@@ -289,7 +296,7 @@ void sefBuildVuPacket(int kind, int alternate) {
         }
     }
     func_0012B770(packet);
-    sceVif1PkAddCode(packet, 0x11000000);
+    sceVif1PkAddCode(packet, VIF_CODE_FLUSH);
 }
 
 Matrix4 *MMathMulMatrix(Matrix4 *out, const Matrix4 *rhs, const Matrix4 *lhs);
@@ -331,12 +338,12 @@ void sefBuildCameraPacket(void) {
 extern const u64 sefAlphaBlendValues[];
 
 /*
- * Fills the packet's model-view and camera matrices and its TEX0_1/ALPHA_1 A+D pairs. Additive
- * blending for blend kinds 3-4; 5-7 unless flags bit 0 is set; 11-13 with flags 0 or 3; 14-16
- * with flags below 2; 17-19 with flags 2; 20 with flags 1. Normal blending otherwise. Each test
- * keeps its own store, as the original's one block per test shows.
+ * Fills the packet's model-view and camera matrices and its TEX0_1/ALPHA_1 A+D pairs for emitter emitterIndex.
+ * Additive blending for blend kinds 3-4; 5-7 for even emitter indices; 11-13 for emitters 0 and 3; 14-16 for
+ * emitters 0 and 1; 17-19 for emitter 2; 20 for emitter 1. Normal blending otherwise. Each test keeps its own
+ * store, as the original's one block per test shows.
  */
-void sefBuildModelPacket(u64 tex0, const Matrix4 *matrix, int blendKind, int flags) {
+void sefBuildModelPacket(u64 tex0, const Matrix4 *matrix, int blendKind, int emitterIndex) {
     MMathMulMatrix(&sefVuPacket.modelViewMatrix, sefViewMatrixPtr, matrix);
     QuadwordCopyMatrixT0(&sefVuPacket.cameraMatrix, &sefViewCameraMatrix);
     sefVuPacket.tex0 = tex0;
@@ -344,18 +351,18 @@ void sefBuildModelPacket(u64 tex0, const Matrix4 *matrix, int blendKind, int fla
     if (blendKind >= 3 && blendKind <= 4) {
         sefVuPacket.alpha = sefAlphaBlendValues[1];
     } else if (blendKind >= 5 && blendKind <= 7) {
-        if (flags & 1) {
+        if (emitterIndex & 1) {
             sefVuPacket.alpha = sefAlphaBlendValues[0];
         } else {
             sefVuPacket.alpha = sefAlphaBlendValues[1];
         }
-    } else if (blendKind >= 11 && blendKind <= 13 && (flags == 0 || flags == 3)) {
+    } else if (blendKind >= 11 && blendKind <= 13 && (emitterIndex == 0 || emitterIndex == 3)) {
         sefVuPacket.alpha = sefAlphaBlendValues[1];
-    } else if (blendKind >= 14 && blendKind <= 16 && flags < 2) {
+    } else if (blendKind >= 14 && blendKind <= 16 && emitterIndex < 2) {
         sefVuPacket.alpha = sefAlphaBlendValues[1];
-    } else if (blendKind >= 17 && blendKind <= 19 && flags == 2) {
+    } else if (blendKind >= 17 && blendKind <= 19 && emitterIndex == 2) {
         sefVuPacket.alpha = sefAlphaBlendValues[1];
-    } else if (blendKind == 20 && flags == 1) {
+    } else if (blendKind == 20 && emitterIndex == 1) {
         sefVuPacket.alpha = sefAlphaBlendValues[1];
     } else {
         sefVuPacket.alpha = sefAlphaBlendValues[0];
@@ -378,21 +385,27 @@ typedef struct SefEmitter {
     f32 delay;                 /* +0x10: frames left before the emitter runs, counted down by sefRunEmitters */
     int frame;                 /* +0x14: the last whole frame handled; -1 until the first */
     short cursor;              /* +0x18: where the search for a free ring entry starts */
-    short liveCount;           /* +0x1A: live particles counted by the last update */
+    short liveCount;           /* +0x1A: activity count of the last update: its live particles (kind 20 always 1) */
     short spawned;             /* +0x1C: set by the emitters that spawn only once */
     short createdFlag;         /* +0x1E: set to 1 when the slot is created; no reader in main, ov01 or ov02 */
     short clearedOnCreate[2];  /* +0x20: zeroed when the slot is created; no reader in main, ov01 or ov02 */
     u8 unmodeled_24[0x28 - 0x24];
 } SefEmitter;
 
+/* A texture and its palette (image numbers in the effect's type list) for one emitter. */
+typedef struct SefImagePair {
+    short image;
+    short clut;
+} SefImagePair;
+
 /* The part of a resource slot from +0x40 on (offsets below are slot offsets). sefSetSlotFlags walks the
  * table through this part: its loop pointer starts at sefResourceTable + 0x40. */
 typedef struct ResourceBody {
     int resetFlag;   /* +0x40: set to 1 by sefReleaseCellSlot after the slot is cleared */
     int flags;       /* +0x44: bit flags (RESOURCE_FLAG_*), set by sefSetSlotFlags and sefObjectSetFlags */
-    /* +0x48: nonzero while the slot is active. sefCreateResourceSlot stores its pairs argument here (the address of
-     * the caller's stack array, so always nonzero); nothing reads it back as a pointer. */
-    int active;
+    /* +0x48: nonzero while the slot is in use. sefCreateResourceSlot stores its pairs argument here (the caller's
+     * stack array, so a slot created with no pairs stays free); it is only tested against 0, never dereferenced. */
+    const SefImagePair *activePairs;
     u8 unmodeled_4c[0x50 - 0x4c];
     /* +0x50: the owning actor or record (tu067.c passes pointers to sefSetRecordOwner); saved with the slot */
     void *owner;
@@ -414,7 +427,7 @@ typedef struct ResourceBody {
     int particleCount; /* +0x18C: entries of each emitter's ring (a power of two) */
     int emitterCount;  /* +0x190: emitters in use: the loop bound of sefRunEmitters and sefDrawResources */
     s16 kind;          /* +0x194: effect kind: selects the handlers in sefSpawnHandlers and sefUpdateHandlers */
-    s16 liveCount;     /* +0x196: live particles over all emitters, recounted by sefRunEmitters */
+    s16 liveCount;     /* +0x196: sum of the emitters' liveCount, recounted by sefRunEmitters */
     s16 clearedOnCreate; /* +0x198: zeroed when the slot is created; no reader in main, ov01 or ov02 */
     u8 unmodeled_19a[0x1a0 - 0x19a];
 } ResourceBody;
@@ -435,13 +448,15 @@ typedef struct ResourceSlot {
     ResourceBody body;
 } ResourceSlot;
 
-/* 192 slots (sefResetResourceTable clears 0x13800 bytes = 192 * 0x1A0). */
-extern ResourceSlot sefResourceTable[192];
+/* The slot table: SEF_RESOURCE_SLOT_COUNT slots of 0x1A0 bytes. */
+#define SEF_RESOURCE_SLOT_COUNT 192
+
+extern ResourceSlot sefResourceTable[SEF_RESOURCE_SLOT_COUNT];
 
 /* Clears the active count (sefActiveCount) and the whole slot table. */
 void sefResetResourceTable(void) {
     sefActiveCount = 0;
-    memset(sefResourceTable, 0, 0x13800);
+    memset(sefResourceTable, 0, sizeof(sefResourceTable));
 }
 
 void sefReleaseByKey(int key);
@@ -458,8 +473,8 @@ void sefReleaseCellSlot(ResourceSlot *slot);
 void sefReleaseByKey(int key) {
     int index;
 
-    for (index = 0; index < 192; index++) {
-        if (sefResourceTable[index].body.active != 0 && sefResourceTable[index].body.handle != 0
+    for (index = 0; index < SEF_RESOURCE_SLOT_COUNT; index++) {
+        if (sefResourceTable[index].body.activePairs != 0 && sefResourceTable[index].body.handle != 0
             && (key < 0 || key == sefResourceTable[index].body.key)) {
             sefReleaseCellSlot(&sefResourceTable[index]);
         }
@@ -474,9 +489,9 @@ void sefSetSlotFlags(int key, int flagBits) {
     ResourceBody *body;
 
     table = sefResourceTable;
-    for (index = 0; index < 192; index++) {
+    for (index = 0; index < SEF_RESOURCE_SLOT_COUNT; index++) {
         body = &table[index].body;
-        if (body->active != 0 && body->handle != 0 && (key < 0 || key == body->key)) {
+        if (body->activePairs != 0 && body->handle != 0 && (key < 0 || key == body->key)) {
             body->flags |= flagBits;
         }
     }
@@ -489,9 +504,9 @@ void sefClearSlotFlags(int key, int flagBits) {
     ResourceBody *body;
 
     table = sefResourceTable;
-    for (index = 0; index < 192; index++) {
+    for (index = 0; index < SEF_RESOURCE_SLOT_COUNT; index++) {
         body = &table[index].body;
-        if (body->active != 0 && body->handle != 0 && (key < 0 || key == body->key)) {
+        if (body->activePairs != 0 && body->handle != 0 && (key < 0 || key == body->key)) {
             body->flags &= ~flagBits;
         }
     }
@@ -540,19 +555,15 @@ static inline void sefLoadUnitMatrix(Matrix4 *destination) {
 extern short sefRingSizes[];
 int sefFindRecordIndex(int key);
 
-/* A texture and its palette (image numbers in the effect's type list) for one emitter. */
-typedef struct SefImagePair {
-    short image;
-    short clut;
-} SefImagePair;
-
 void *svGetImageListItem(int type, unsigned int flags);
 
 /* Creates a resource slot for effectId: the first free slot from slotIndex on (0 when negative; a busy
  * slotIndex fails), with emitterCount emitters drawing pairs. Ids 0x100C83A7 and 0x100C83A8 become
- * 0x100C8399 and 0x100C839A at five times the scale. Returns the slot, 0 on failure. */
-ResourceSlot *sefCreateResourceSlot(int effectId, SefImagePair *pairs, int kind, AlignedVector4 *position, int unused,
-                            AlignedVector4 *scale, int emitterCount, int slotIndex, f32 delayStep) {
+ * 0x100C8399 and 0x100C839A at five times the scale. Returns the slot, 0 on failure. firstBlock, the first
+ * quadword block sefSpawnEffectRecord passes on, is not read. */
+ResourceSlot *sefCreateResourceSlot(int effectId, SefImagePair *pairs, int kind, AlignedVector4 *position,
+                                    unsigned char *firstBlock, AlignedVector4 *scale, int emitterCount, int slotIndex,
+                                    f32 delayStep) {
     int enlarged;
     int size;
     unsigned short *rings;
@@ -564,7 +575,7 @@ ResourceSlot *sefCreateResourceSlot(int effectId, SefImagePair *pairs, int kind,
     int index;
     int emitterIndex;
     int psm;
-    int busy;
+    const SefImagePair *busy;
 
     size = sefRingSizes[kind] * emitterCount * 2;
     enlarged = 0;
@@ -581,19 +592,19 @@ ResourceSlot *sefCreateResourceSlot(int effectId, SefImagePair *pairs, int kind,
     }
     index = 0;
     if (slotIndex >= 0) {
-        busy = sefResourceTable[slotIndex].body.active;
+        busy = sefResourceTable[slotIndex].body.activePairs;
         index = slotIndex;
         if (busy != 0) {
             return 0;
         }
     }
-    for (; index < 192; index++) {
+    for (; index < SEF_RESOURCE_SLOT_COUNT; index++) {
         slot = &sefResourceTable[index];
-        if (slot->body.active == 0) {
+        if (slot->body.activePairs == 0) {
             typeListIndex = sefFindRecordIndex(0x100C8384);
             memset(rings, 0, size);
             memset(slot, 0, sizeof(ResourceSlot));
-            slot->body.active = (int) pairs;
+            slot->body.activePairs = pairs;
             slot->body.key = effectId;
             slot->body.particleCount = sefRingSizes[kind];
             slot->body.handle = rings;
@@ -622,7 +633,8 @@ ResourceSlot *sefCreateResourceSlot(int effectId, SefImagePair *pairs, int kind,
             emitterIndex = 0;
             if (emitterCount > 0) {
                 /* The id is stored in the key above; from here on effectId holds the address of the current
-                 * emitter (the original reuses the variable as the emitter cursor). */
+                 * emitter. With a separate `SefEmitter *` cursor (emitter = slot->body.emitters, emitter++) gcc
+                 * swaps the slot and cursor registers ($17/$18, fd 193/252 in place). */
                 effectId = (int) slot->body.emitters;
                 do {
                     emitter = (SefEmitter *) effectId;
@@ -663,7 +675,8 @@ ResourceSlot *sefCreateResourceSlot(int effectId, SefImagePair *pairs, int kind,
     return 0;
 }
 
-/* Frees the particles of a slot that owns cells and restarts its emitters, then sets or clears its suspended flag. */
+/* Frees the particles of a slot that owns cells and resets its emitters' frame, elapsed time and delay (the one-shot
+ * spawned latch is kept), then sets or clears its suspended flag. */
 void sefResetSlotRecords(ResourceSlot *slot, int suspend) {
     int index;
 
@@ -688,7 +701,7 @@ void sefObjectSetFlags(ResourceSlot *slot, int mask) {
     }
 }
 
-void sefObjectClearFlags(ResourceSlot *slot, unsigned int mask) {
+void sefObjectClearFlags(ResourceSlot *slot, int mask) {
     if (slot != 0 && slot->body.handle != 0) {
         slot->body.flags &= ~mask;
     }
@@ -712,9 +725,9 @@ typedef struct SefImageSource {
 } SefImageSource;
 
 /* Picks the image pairs and emitter count for an effect kind (ids 0x100C83A7 and 0x100C83A8 force kinds 20
- * and 21) and creates its resource slot through sefCreateResourceSlot. */
+ * and 21) and creates its resource slot through sefCreateResourceSlot (firstBlock is only passed on). */
 ResourceSlot *sefCreateKindResourceSlot(int effectId, SefImageSource *sources, int kind, AlignedVector4 *position,
-                                        int unused, AlignedVector4 *scale, int slotIndex) {
+                                        unsigned char *firstBlock, AlignedVector4 *scale, int slotIndex) {
     SefImagePair pairs[5];
 
     if (effectId == 0x100C83A7) {
@@ -729,25 +742,25 @@ ResourceSlot *sefCreateKindResourceSlot(int effectId, SefImageSource *sources, i
     if (kind < 3) {
         pairs[0].image = sources[0].image;
         pairs[0].clut = sources[0].clut;
-        return sefCreateResourceSlot(effectId, pairs, kind, position, unused, scale, 1, slotIndex, 0.0f);
+        return sefCreateResourceSlot(effectId, pairs, kind, position, firstBlock, scale, 1, slotIndex, 0.0f);
     } else if (kind == 3) {
         pairs[0].image = sources[1].image;
         pairs[0].clut = sources[1].clut;
         pairs[1].image = sources[2].image;
         pairs[1].clut = sources[2].clut;
-        return sefCreateResourceSlot(effectId, pairs, 3, position, unused, scale, 2, slotIndex, 0.0f);
+        return sefCreateResourceSlot(effectId, pairs, 3, position, firstBlock, scale, 2, slotIndex, 0.0f);
     } else if (kind == 4) {
         pairs[0].image = sources[1].image;
         pairs[0].clut = sources[1].clut;
         pairs[1].image = sources[2].image;
         pairs[1].clut = sources[2].clut;
-        return sefCreateResourceSlot(effectId, pairs, 4, position, unused, scale, 2, slotIndex, 0.0f);
+        return sefCreateResourceSlot(effectId, pairs, 4, position, firstBlock, scale, 2, slotIndex, 0.0f);
     } else if (kind >= 5 && kind <= 7) {
         pairs[0].image = sources[3].image;
         pairs[0].clut = sources[3].clut;
         pairs[1].image = sources[0].image;
         pairs[1].clut = sources[0].clut;
-        return sefCreateResourceSlot(effectId, pairs, kind, position, unused, scale, 2, slotIndex, 1.0f);
+        return sefCreateResourceSlot(effectId, pairs, kind, position, firstBlock, scale, 2, slotIndex, 1.0f);
     } else if (kind >= 8 && kind <= 10) {
         pairs[0].image = sources[0].image;
         pairs[0].clut = sources[0].clut;
@@ -757,7 +770,7 @@ ResourceSlot *sefCreateKindResourceSlot(int effectId, SefImageSource *sources, i
         pairs[2].clut = sources[4].clut;
         pairs[3].image = sources[0].image;
         pairs[3].clut = sources[0].clut;
-        return sefCreateResourceSlot(effectId, pairs, kind, position, unused, scale, 4, slotIndex, 1.0f);
+        return sefCreateResourceSlot(effectId, pairs, kind, position, firstBlock, scale, 4, slotIndex, 1.0f);
     } else if (kind >= 11 && kind <= 13) {
         pairs[0].image = sources[3].image;
         pairs[0].clut = sources[3].clut;
@@ -765,7 +778,7 @@ ResourceSlot *sefCreateKindResourceSlot(int effectId, SefImageSource *sources, i
         pairs[1].clut = sources[0].clut;
         pairs[2].image = sources[7].image;
         pairs[2].clut = sources[7].clut;
-        return sefCreateResourceSlot(effectId, pairs, kind, position, unused, scale, 3, slotIndex, 1.0f);
+        return sefCreateResourceSlot(effectId, pairs, kind, position, firstBlock, scale, 3, slotIndex, 1.0f);
     } else if (kind >= 22 && kind <= 24) {
         pairs[0].image = sources[0].image;
         pairs[0].clut = sources[0].clut;
@@ -775,7 +788,7 @@ ResourceSlot *sefCreateKindResourceSlot(int effectId, SefImageSource *sources, i
         pairs[2].clut = sources[7].clut;
         pairs[3].image = sources[0].image;
         pairs[3].clut = sources[0].clut;
-        return sefCreateResourceSlot(effectId, pairs, kind, position, unused, scale, 4, slotIndex, 1.0f);
+        return sefCreateResourceSlot(effectId, pairs, kind, position, firstBlock, scale, 4, slotIndex, 1.0f);
     } else if (kind >= 14 && kind <= 16) {
         pairs[0].image = sources[8].image;
         pairs[0].clut = sources[8].clut;
@@ -787,7 +800,7 @@ ResourceSlot *sefCreateKindResourceSlot(int effectId, SefImageSource *sources, i
         pairs[3].clut = sources[11].clut;
         pairs[4].image = sources[12].image;
         pairs[4].clut = sources[12].clut;
-        return sefCreateResourceSlot(effectId, pairs, kind, position, unused, scale, 5, slotIndex, 1.0f);
+        return sefCreateResourceSlot(effectId, pairs, kind, position, firstBlock, scale, 5, slotIndex, 1.0f);
     } else if (kind >= 17 && kind <= 19) {
         pairs[0].image = sources[0].image;
         pairs[0].clut = sources[0].clut;
@@ -799,7 +812,7 @@ ResourceSlot *sefCreateKindResourceSlot(int effectId, SefImageSource *sources, i
         pairs[3].clut = sources[14].clut;
         pairs[4].image = sources[15].image;
         pairs[4].clut = sources[15].clut;
-        return sefCreateResourceSlot(effectId, pairs, kind, position, unused, scale, 5, slotIndex, 0.0f);
+        return sefCreateResourceSlot(effectId, pairs, kind, position, firstBlock, scale, 5, slotIndex, 0.0f);
     } else if (kind == 20) {
         pairs[0].image = sources[18].image;
         pairs[0].clut = sources[18].clut;
@@ -807,13 +820,13 @@ ResourceSlot *sefCreateKindResourceSlot(int effectId, SefImageSource *sources, i
         pairs[1].clut = sources[17].clut;
         pairs[2].image = sources[19].image;
         pairs[2].clut = sources[19].clut;
-        return sefCreateResourceSlot(effectId, pairs, 20, position, unused, scale, 3, slotIndex, 0.0f);
+        return sefCreateResourceSlot(effectId, pairs, 20, position, firstBlock, scale, 3, slotIndex, 0.0f);
     } else if (kind == 21) {
         pairs[0].image = sources[20].image;
         pairs[0].clut = sources[20].clut;
         pairs[1].image = sources[21].image;
         pairs[1].clut = sources[21].clut;
-        return sefCreateResourceSlot(effectId, pairs, 21, position, unused, scale, 2, slotIndex, 0.0f);
+        return sefCreateResourceSlot(effectId, pairs, 21, position, firstBlock, scale, 2, slotIndex, 0.0f);
     } else {
         return 0;
     }
@@ -829,8 +842,9 @@ void sefGetCylinderPos(Vector4 *vector, f32 scale, f32 yScale) {
 
 void sefGetUnitDirection(AlignedVector4 *vector);
 
-/* Scales the vector in place: by -scale when scale is negative, else by scale times sefRandf(). */
-void sefScaleVectorRandom(AlignedVector4 *vector, f32 scale) {
+/* Writes a random unit direction (sefGetUnitDirection) into vector and scales it: by -scale when scale is negative,
+ * else by scale times sefRandf(). */
+void sefGetRandomScaledDirection(AlignedVector4 *vector, f32 scale) {
     f32 factor;
 
     sefGetUnitDirection(vector);
@@ -877,11 +891,13 @@ void sefRotationZRows(SefRotationRow *rows, f32 angle) {
 Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 f32 sefRandAngle(void);
 
-/* Writes a random rotation (angles 0, random, random about Y, X, Z) into the first three rows of rows. */
+/* Writes a random rotation into the first three rows of rows: angle x 0, y and z random, composed by
+ * MMathRotateMatrixYXZ. */
 void sefRandomRotateMatrix(SefRotationRow *rows)
 {
     Vector4 angles;
-    /* The rotation is copied out as doublewords (ld/sd), so the matrix is also seen as u64 words. */
+    /* The original copies the three rows out as six doublewords (ld/sd), so the matrix is also seen as u64 words:
+     * the plain copy rows[row].element[column] = matrix[row][column] compiles to a lwc1/swc1 loop (39 insns for 29). */
     union {
         Matrix4 rows;
         u64 words[8];
@@ -910,7 +926,7 @@ typedef struct SefEmitterParams {
     int interval;           /* +0x00: frames between spawns; 0 spawns every frame */
     int count;              /* +0x04: particles per spawn */
     f32 life;               /* +0x08 */
-    f32 spread;             /* +0x0C: scale handed to sefScaleVectorRandom for the start position */
+    f32 spread;             /* +0x0C: scale handed to sefGetRandomScaledDirection for the start position */
     f32 size;               /* +0x10 */
     f32 scaleW;             /* +0x14: stored in the particle's scale.w */
     short shade;            /* +0x18: red, green and blue */
@@ -919,13 +935,16 @@ typedef struct SefEmitterParams {
     unsigned char unmodeled_1e[0x20 - 0x1E];
 } SefEmitterParams;
 
-extern SefEmitterParams sefEmitterParamsKinds0To7[][4];
+/* The parameter rows of kinds 5 to 7 (sefEmitterParamsKinds5To7, 0x5E6F80), addressed from the row of kind 0: the original
+ * indexes [kind][line] from 0x5E6D00, five rows (0x80 bytes each) before the table, which lies inside srsRecordTable
+ * (+0x630). The same access as (sefEmitterParamsKinds5To7 - 5)[kind] or [kind - 5] costs two instructions (fd 137/135). */
+extern SefEmitterParams D_005E6D00[][4];
 f32 sefNoiseNext(void);
 void *MMathNormalizeVector2(void *destination, const Vector4 *source);
 
-/* Emitters of effect kinds 0 to 7 (four per kind): once per frame, spawns up to count particles into free
+/* Emitters of effect kinds 0 to 7 (parameter rows of four per kind): once per frame, spawns up to count particles into free
  * entries of the ring. */
-void sefSpawnKinds0To7(ResourceSlot *slot, int index) {
+void sefSpawnKinds5To7(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
     SefEmitterParams *params;
     SefFadeParticle *particle;
@@ -942,7 +961,7 @@ void sefSpawnKinds0To7(ResourceSlot *slot, int index) {
     emitter = &slot->body.emitters[index];
     fire = 0;
     frame = emitter->elapsed;
-    params = &sefEmitterParamsKinds0To7[slot->body.kind][index];
+    params = &D_005E6D00[slot->body.kind][index];
     lastFrame = params->lastFrame;
     if (params->interval == 0 || frame % params->interval == 0) {
         fire = 1;
@@ -964,7 +983,7 @@ void sefSpawnKinds0To7(ResourceSlot *slot, int index) {
                     particle = &sefEntryPool.entries[id].fade;
                     emitter->particles[cursor] = id;
                     spawned++;
-                    sefScaleVectorRandom(&particle->position, params->spread);
+                    sefGetRandomScaledDirection(&particle->position, params->spread);
                     sefRotationZRows(particle->rotation, sefRandAngle());
                     particle->scale.x = particle->scale.y = particle->scale.z = params->size;
                     particle->scale.w = params->scaleW;
@@ -993,10 +1012,13 @@ void sefSpawnKinds0To7(ResourceSlot *slot, int index) {
    asm reads (an extra "m" operand; the instructions read it through the register operand). Plain forms compiled
    in all three spawners that use it (sefSpawnKinds8To10, 22Up, 14To16): Vu0SefSubVectorXYZ with
    &entry->drift.position and no position local, as sefSpawnKinds11To13 and 17To19 write it; the same with the
-   local kept; the local also used for the position.y/w stores; params computed before frame; row inlined. Each
-   swaps two callee-saved registers (the parameter row takes $17/$18 that the original gives the position pointer,
-   and the other way round, fd 191/212, 193/214, 193/214) or does worse; only the extra operand gives the
-   original allocation. */
+   local kept; the local also used for the position.y/w stores; params computed before frame; row inlined. Also
+   tried in sefSpawnKinds8To10: a static inline function for the asm, a const params row, the position local
+   declared before params or in the loop body, position set after the ring store or after the first
+   sefGetRandomScaledDirection call, a SefDriftParticle pointer instead of the union entry, a velocity pointer local,
+   params set only before the loop. Each swaps two callee-saved registers (the parameter row takes $17/$18 that
+   the original gives the position pointer, and the other way round, fd 191/212, 193/214, 193/214) or does
+   worse; only the extra operand gives the original allocation. */
 #define SefVelocityTowards(velocity, target, position) \
     __asm__ __volatile__( \
         "lqc2 vf1, 0(%1)\n" \
@@ -1009,7 +1031,7 @@ void sefSpawnKinds0To7(ResourceSlot *slot, int index) {
 
 extern SefEmitterParams sefEmitterParamsKinds8To10[];
 
-/* Emitters of effect kinds 8 to 10 (four per kind): 0 and 3 spin in place, 1 and 2 fly towards a random point
+/* Emitters of effect kinds 8 to 10 (parameter rows of four per kind): 0 and 3 spin in place, 1 and 2 fly towards a random point
    above the origin; emitter 1 shrinks its particles after the ninth. */
 void sefSpawnKinds8To10(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1058,7 +1080,7 @@ void sefSpawnKinds8To10(ResourceSlot *slot, int index) {
         entry = &sefEntryPool.entries[id];
         position = &entry->drift.position;
         emitter->particles[cursor] = id;
-        sefScaleVectorRandom(position, params->spread);
+        sefGetRandomScaledDirection(position, params->spread);
         entry->drift.scale.w = params->scaleW;
         entry->drift.growth.w = 1.0f;
         if (index == 0 || index == 3) {
@@ -1082,7 +1104,7 @@ void sefSpawnKinds8To10(ResourceSlot *slot, int index) {
             entry->drift.growth.x = sefNoiseNext() * params->size + 1.0f;
             entry->drift.growth.y = sefNoiseNext() * params->size + 1.0f;
             entry->drift.growth.z = sefNoiseNext() * params->size + 1.0f;
-            sefScaleVectorRandom(&direction, -2.0f);
+            sefGetRandomScaledDirection(&direction, -2.0f);
             direction.y += 1.5f;
             SefVelocityTowards(&entry->drift.velocity, &direction, position);
             MMathNormalizeVector2(&entry->drift.velocity, &entry->drift.velocity);
@@ -1106,7 +1128,8 @@ void sefSpawnKinds8To10(ResourceSlot *slot, int index) {
 
 extern SefEmitterParams sefEmitterParamsKinds11To13[];
 
-/* Emitters of effect kinds 11 to 13 (five per kind): each spawn emits count particles, until lastFrame. */
+/* Emitters of effect kinds 11 to 13 (parameter rows of five per kind; sefCreateKindResourceSlot creates three emitters):
+ * each spawn emits up to count particles while free entries last, until lastFrame. */
 void sefSpawnKinds11To13(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
     SefPoolEntry *entry;
@@ -1152,7 +1175,7 @@ void sefSpawnKinds11To13(ResourceSlot *slot, int index) {
         }
         entry = &sefEntryPool.entries[id];
         emitter->particles[cursor] = id;
-        sefScaleVectorRandom(&entry->drift.position, params->spread);
+        sefGetRandomScaledDirection(&entry->drift.position, params->spread);
         entry->drift.growth.w = 1.0f;
         entry->drift.scale.w = params->scaleW;
         if (index != 2) {
@@ -1168,7 +1191,7 @@ void sefSpawnKinds11To13(ResourceSlot *slot, int index) {
             entry->drift.growth.x = sefNoiseNext() * 1.5f + 1.0f;
             entry->drift.growth.y = sefNoiseNext() * 1.5f + 1.0f;
             entry->drift.growth.z = sefNoiseNext() * 1.5f + 1.0f;
-            sefScaleVectorRandom(&direction, -2.0f);
+            sefGetRandomScaledDirection(&direction, -2.0f);
             direction.y += 1.5f;
             Vu0SefSubVectorXYZ(&entry->drift.velocity, &direction, &entry->drift.position);
             MMathNormalizeVector2(&entry->drift.velocity, &entry->drift.velocity);
@@ -1195,7 +1218,7 @@ extern SefEmitterParams sefEmitterParamsKinds22Up[];
 /* Emitters 1 and 2 of these kinds add xglSRand() & SEF_SHADE_TINT_MASK, 0 to 31, to the shade. */
 #define SEF_SHADE_TINT_MASK 0x1F
 
-/* Emitters of effect kinds 22 and up (four per kind): like sefSpawnKinds8To10 with its emitters 1 and 2 facing a random
+/* Emitters of effect kinds 22 and up (parameter rows of four per kind): like sefSpawnKinds8To10 with its emitters 1 and 2 facing a random
    angle, adding a random tint to the shade and emitter 2 shrinking its particles. */
 void sefSpawnKinds22Up(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1246,7 +1269,7 @@ void sefSpawnKinds22Up(ResourceSlot *slot, int index) {
         entry = &sefEntryPool.entries[id];
         position = &entry->drift.position;
         emitter->particles[cursor] = id;
-        sefScaleVectorRandom(position, params->spread);
+        sefGetRandomScaledDirection(position, params->spread);
         entry->drift.scale.w = params->scaleW;
         entry->drift.growth.w = 1.0f;
         if (index == 0 || index == 3) {
@@ -1271,7 +1294,7 @@ void sefSpawnKinds22Up(ResourceSlot *slot, int index) {
             entry->drift.growth.x = sefNoiseNext() * params->size + 1.0f;
             entry->drift.growth.y = sefNoiseNext() * params->size + 1.0f;
             entry->drift.growth.z = sefNoiseNext() * params->size + 1.0f;
-            sefScaleVectorRandom(&direction, -2.0f);
+            sefGetRandomScaledDirection(&direction, -2.0f);
             direction.y += 1.5f;
             SefVelocityTowards(&entry->drift.velocity, &direction, position);
             MMathNormalizeVector2(&entry->drift.velocity, &entry->drift.velocity);
@@ -1295,7 +1318,7 @@ void sefSpawnKinds22Up(ResourceSlot *slot, int index) {
 
 extern SefEmitterParams sefEmitterParamsKinds14To16[];
 
-/* Emitters of effect kinds 14 to 16 (five per kind): 0 to 2 fly outwards along their start position, 3 and 4 fly
+/* Emitters of effect kinds 14 to 16 (parameter rows of five per kind): 0 to 2 fly outwards along their start position, 3 and 4 fly
    towards a random point. */
 void sefSpawnKinds14To16(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1345,7 +1368,7 @@ void sefSpawnKinds14To16(ResourceSlot *slot, int index) {
         entry = &sefEntryPool.entries[id];
         position = &entry->drift.position;
         emitter->particles[cursor] = id;
-        sefScaleVectorRandom(position, params->spread);
+        sefGetRandomScaledDirection(position, params->spread);
         entry->drift.scale.w = params->scaleW;
         entry->drift.growth.w = 1.0f;
         entry->drift.scale.x = entry->drift.scale.y = entry->drift.scale.z = params->size;
@@ -1376,7 +1399,7 @@ void sefSpawnKinds14To16(ResourceSlot *slot, int index) {
             entry->drift.red = entry->drift.green = entry->drift.blue = params->shade;
             entry->drift.landed = 0;
             entry->drift.speed = sefNoiseNext() * 0.01f + 0.01f;
-            sefScaleVectorRandom(&direction, -2.0f);
+            sefGetRandomScaledDirection(&direction, -2.0f);
             SefVelocityTowards(&entry->drift.velocity, &direction, position);
             MMathNormalizeVector2(&entry->drift.velocity, &entry->drift.velocity);
         }
@@ -1396,7 +1419,7 @@ void sefSpawnKinds14To16(ResourceSlot *slot, int index) {
 
 extern SefEmitterParams sefEmitterParamsKinds17To19[];
 
-/* Emitters of effect kinds 17 to 19 (five per kind, sefEmitterParamsKinds17To19 indexed from kind 0): 0 and 1 start on a cylinder,
+/* Emitters of effect kinds 17 to 19 (parameter rows of five per kind, sefEmitterParamsKinds17To19 indexed from kind 0): 0 and 1 start on a cylinder,
    2 at a random offset, 3 and 4 on a cylinder and fly towards a random point. */
 void sefSpawnKinds17To19(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
@@ -1414,7 +1437,7 @@ void sefSpawnKinds17To19(ResourceSlot *slot, int index) {
 
     due = 0;
     emitter = &slot->body.emitters[index];
-    params = &sefEmitterParamsKinds17To19[index + slot->body.kind * 5];
+    params = &sefEmitterParamsKinds17To19[index + (slot->body.kind - 17) * 5];
     frame = emitter->elapsed;
     lastFrame = params->lastFrame;
     if (params->interval == 0 || frame % params->interval == 0) {
@@ -1444,7 +1467,7 @@ void sefSpawnKinds17To19(ResourceSlot *slot, int index) {
         entry->drift.scale.w = params->scaleW;
         entry->drift.growth.w = 1.0f;
         if (index == 2) {
-            sefScaleVectorRandom(&entry->drift.position, params->spread);
+            sefGetRandomScaledDirection(&entry->drift.position, params->spread);
             sefRotationZRows(entry->drift.rotation, sefRandAngle());
             entry->drift.scale.x = entry->drift.scale.y = entry->drift.scale.z = params->size;
             entry->drift.growth.x = entry->drift.growth.y = entry->drift.growth.z = sefNoiseNext() + 1.0f;
@@ -1480,7 +1503,7 @@ void sefSpawnKinds17To19(ResourceSlot *slot, int index) {
             }
             sefGetCylinderPos(&entry->drift.position, 0.2f, 0.0f);
             entry->drift.position.y = 0.1f;
-            sefScaleVectorRandom(&direction, -2.0f);
+            sefGetRandomScaledDirection(&direction, -2.0f);
             direction.y += 1.0f;
             direction.z += 2.0f;
             Vu0SefSubVectorXYZ(&entry->drift.velocity, &direction, &entry->drift.position);
@@ -1565,7 +1588,8 @@ void sefSpawnKind20(ResourceSlot *slot, int index) {
     }
 }
 
-/* Emitters of effect kind 21: one particle per emitter, once, on the first whole frame handled. */
+/* Emitters of effect kind 21: tries to spawn one particle on the first whole frame handled. The one-shot latch is set
+ * before the search, so a failed search or allocation is not retried. */
 void sefSpawnKind21(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
     SefPoolEntry *entry;
@@ -1770,7 +1794,7 @@ INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026FB88);
 INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026FFE0);
 
 /* Group update of effect kind 20 (sefUpdateHandlers): emitter 1 shifts the colour and
- * grows for 30 frames, emitter 2 turns 6 degrees a frame and pulses its size. */
+ * grows at ages 0 to 30 while alive, emitter 2 turns 6 degrees a frame and pulses its size. */
 void sefUpdateKind20Particles(ResourceSlot *slot, int index) {
     SefEmitter *emitter;
     SefPoolEntry *entry;
@@ -1888,9 +1912,9 @@ void sefRunEmitters(ResourceSlot *target) {
     if (sefClipTestDisabled != 0) {
         return;
     }
-    for (index = 0; index < 192; index++) {
+    for (index = 0; index < SEF_RESOURCE_SLOT_COUNT; index++) {
         slot = &sefResourceTable[index];
-        if (slot->body.active == 0) {
+        if (slot->body.activePairs == 0) {
             continue;
         }
         if (target != 0 && target != slot) {
@@ -2045,8 +2069,9 @@ u8 *xglPacketReserve(int count);
         : "memory")
 
 /* Draws the live particles of emitter emitterIndex of slot: per particle five quadwords (its matrix with rows 0 to 2
- * scaled by its size, then its colour, tinted by slot->tint), in blocks of up to 0x79 quadwords. The spinning
- * emitters turn the matrix by the particle age first; axisOffset moves it along row 0. */
+ * scaled by its size, then its colour, tinted by slot->tint), 24 particles per full block (two header quadwords
+ * plus 120 particle quadwords, 0x7A in all). The spinning emitters turn the matrix by the particle age first;
+ * axisOffset moves it along row 0. */
 void sefDrawEmitter(ResourceSlot *slot, int emitterIndex) {
     Matrix4 matrix;
     Vector4 angles;
@@ -2176,7 +2201,7 @@ void sefDrawResources(int slotIndex) {
     if (sefActiveCount <= 0) {
         return;
     }
-    if ((unsigned int)slotIndex >= 192) {
+    if ((unsigned int)slotIndex >= SEF_RESOURCE_SLOT_COUNT) {
         return;
     }
     sefLastDrawnKind = -1;
@@ -2228,8 +2253,8 @@ void sefCollectPersistentSlots(SefSavedEffect *list, int count) {
     int index;
 
     slot = sefResourceTable;
-    for (index = 0; index < 192; index++, slot++) {
-        if (slot->body.active != 0 && count < 64 && (slot->body.flags & RESOURCE_FLAG_PERSISTENT)) {
+    for (index = 0; index < SEF_RESOURCE_SLOT_COUNT; index++, slot++) {
+        if (slot->body.activePairs != 0 && count < 64 && (slot->body.flags & RESOURCE_FLAG_PERSISTENT)) {
             QuadwordCopyT0(&list[count].position, &slot->position);
             QuadwordCopyT0(&list[count].rotation, &slot->rotation);
             QuadwordCopyT0(&list[count].scale, &slot->scale);

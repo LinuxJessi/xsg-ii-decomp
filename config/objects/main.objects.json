@@ -402,7 +402,7 @@
     },
     {
      "c_split": false,
-     "end": "0x005E6D00",
+     "end": "0x005E6D28",
      "ordinal": 177,
      "piece": "srs",
      "start": "0x005E65C0",
@@ -413,7 +413,7 @@
      "end": "0x005E6D60",
      "ordinal": 180,
      "piece": "sdv_180",
-     "start": "0x005E6D00",
+     "start": "0x005E6D28",
      "tu": "sdv_180"
     },
     {
@@ -81501,24 +81501,24 @@
     ".data": {
      "anchored": [
       "0x005e65c0",
-      "0x005e66e1"
+      "0x005e6d28"
      ],
      "bounds": [
       "0x005e6381",
-      "0x005e6d00"
+      "0x005e6d28"
      ],
-     "end": "0x005E6D00",
+     "end": "0x005E6D28",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x005E6D00",
+       "end": "0x005E6D28",
        "name": "srs",
        "start": "0x005E65C0"
       }
      ],
-     "size": 1856,
+     "size": 1896,
      "splat_type": "data",
      "start": "0x005E65C0"
     },
@@ -81951,11 +81951,11 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x005e6d00",
+      "0x005e6d40",
       "0x005e6d51"
      ],
      "bounds": [
-      "0x005e66e1",
+      "0x005e6d28",
       "0x005e6d60"
      ],
      "end": "0x005E6D60",
@@ -81966,12 +81966,12 @@
        "c_split": false,
        "end": "0x005E6D60",
        "name": "sdv_180",
-       "start": "0x005E6D00"
+       "start": "0x005E6D28"
       }
      ],
-     "size": 96,
+     "size": 56,
      "splat_type": "data",
-     "start": "0x005E6D00"
+     "start": "0x005E6D28"
     },
     ".sdata": {
      "anchored": [
@@ -82922,9 +82922,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "sefScaleVectorRandom",
+     "name": "sefGetRandomScaledDirection",
      "size": 116,
-     "splat_name": "sefScaleVectorRandom",
+     "splat_name": "sefGetRandomScaledDirection",
      "va": "0x0026ce30",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82967,9 +82967,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "sefSpawnKinds0To7",
+     "name": "sefSpawnKinds5To7",
      "size": 540,
-     "splat_name": "sefSpawnKinds0To7",
+     "splat_name": "sefSpawnKinds5To7",
      "va": "0x0026d6a8",
      "name_basis": "address",
      "provenance": "estimated"

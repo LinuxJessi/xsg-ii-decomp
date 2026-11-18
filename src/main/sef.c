@@ -3933,7 +3933,7 @@ typedef struct SefRecordView {
 extern SefCameraState D_00471E20;   /* scaffold items 0x471E20/0x471E60/0x471EA0: one struct over three items, see blocked-b01.md */
 extern short D_0069DB80;
 extern float sefStepScale;
-extern int D_0069DBAC;
+extern int sefActiveOwnerKey;
 extern AlignedVector4 sefOriginVector;
 void sefRebuildEntryTable(void);
 void sefUpdateEntryTransforms(void);
@@ -4036,7 +4036,7 @@ int sefStepEffectRecords(int only)
             loadTag = record->loadTag;
             sefPointTimeScale = record->coord_b * sefTimeScale;
             /* The three global stores keep their one-member view casts: plain stores change the code. */
-            ((SefWordView *) &D_0069DBAC)->value = ownerKey;
+            ((SefWordView *) &sefActiveOwnerKey)->value = ownerKey;
             ((SefWordView *) &sefCurrentLoadTag)->value = loadTag;
             ((SefRecordView *) &sefCurrentRecord)->record = record;
             record->coord_a += sefPointTimeScale;
@@ -4060,10 +4060,10 @@ int sefStepEffectRecords(int only)
             sefLoadRequestBuffer((int) *(SefRecordOwnerScale **) &record->owner, (int) *(void **) record->unmodeled_054, object, record->values[0],
                           record->values[1], record->values[2], record->requestTail, record->flags & SEF_RECORD_SKIP_REGISTER);
             sefPointMotion.floorBase = 0.0f;
-            if (((D_0069DBAC >> 28) & 3) == 1 && record->owner != 0) {
+            if (((sefActiveOwnerKey >> 28) & 3) == 1 && record->owner != 0) {
                 sefPointMotion.floorBase = ((SefRecordOwnerScale *) record->owner)->scale;
             }
-            sefGetGroupCenter((float *) &sefOriginVector, D_0069DBAC, record->value);
+            sefGetGroupCenter((float *) &sefOriginVector, sefActiveOwnerKey, record->value);
             ((Vector4 *) record)->w = 1.0f;
             if (sefBuildEffectMatrix((Vector4 *) record->firstBlock, (Vector4 *) record, (Vector4 *) record->secondBlock, 0)) {
                 record->flags |= 0x1000000;
@@ -4885,7 +4885,7 @@ void sefLoadEffect(int key) {
 
 unsigned char D_0069DBA0[8] = "load";
 SefEffectRecord *sefCurrentRecord = 0;
-int D_0069DBAC = 0;
+int sefActiveOwnerKey = 0;
 int D_0069DBB0 = 0;
 SefTransformState *sefLinkedPoint = 0;
 
@@ -4894,7 +4894,7 @@ void sdvExecAlters(void);
 void sefRunEmitters(int);
 
 /* One step of the effect update. sefExecEffect calls it when sefFlagTest(1) returns 0, and sefExecEffectSteps calls
- * it per step for id 0. Clears sefEntryCounts first and D_0069DB80/82/84 last. */
+ * it per step for id 0. Clears sefEntryCounts first and D_0069DB80, _hitSignal and D_0069DB84 last. */
 void sefExecStep(void) {
     memset(sefEntryCounts, 0, 0x488);
     sefAdvanceGroupKey();
@@ -5092,7 +5092,7 @@ void func_00260840(unsigned char *request) {
 
 }
 
-const unsigned char D_0068C450[16] = "delete wait eft";
+const unsigned char sefDeleteWaitEffectLabel[16] = "delete wait eft";
 
 /* Deletes the wait effect for the id (string "delete wait eft"): finds the wait-slot record of srsRecordTable whose
  * effect number is key and releases the effect records bound to it with sefReleaseEffectRecord. Called by
@@ -5112,7 +5112,7 @@ void sefDeleteWaitEffect(int key)
 
     for (i = 0; i < sefEffectRecordCount; i++) {
         if ((sefEffectRecords[i].inUse != 0) && (sefEffectRecords[i].entryId == keyIndex)) {
-            func_002602F8(sefEffectRecords[i].ownerKey, D_0068C450);
+            func_002602F8(sefEffectRecords[i].ownerKey, sefDeleteWaitEffectLabel);
             sefReleaseEffectRecord(i);
         }
     }
@@ -5582,7 +5582,7 @@ void sefDestroyRecordEffects(SefEffectRecord *record, int setFlag)
         table = ((SefRecordOwner *)&record->inUse)->table;
         loadTag = record->loadTag;
         record->coord_a = 0;
-        ((SefWordView *) &D_0069DBAC)->value = ownerKey;
+        ((SefWordView *) &sefActiveOwnerKey)->value = ownerKey;
         sefCurrentLoadTag = loadTag;
         sefCurrentRecord = record;
         sefLoadEffectSlots(table, slotIndex, record->loadFlags);

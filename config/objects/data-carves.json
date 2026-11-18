@@ -109137,7 +109137,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0068C450"
+      "sefDeleteWaitEffectLabel"
      ],
      "c_input_spans": [
       {
@@ -109151,7 +109151,7 @@
         592
        ],
        "symbols": [
-        "D_0068C450"
+        "sefDeleteWaitEffectLabel"
        ]
       }
      ],
@@ -110122,7 +110122,7 @@
      ],
      "generated_by": [],
      "c_owned_symbols": [
-      "D_0069DBAC"
+      "sefActiveOwnerKey"
      ],
      "c_input_spans": [
       {
@@ -110136,7 +110136,7 @@
         128
        ],
        "symbols": [
-        "D_0069DBAC"
+        "sefActiveOwnerKey"
        ]
       }
      ],
@@ -110570,6 +110570,41 @@
        ],
        "symbols": [
         "srsEffectKindPrefix"
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/srs.o"
+     }
+    },
+    {
+     "range": [
+      "0x005e66d0",
+      "0x005e6d28"
+     ],
+     "generated": [
+      "0x005e66d0",
+      "0x005e6d28"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "srsRecordTable"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".data",
+       "range": [
+        "0x005e66d0",
+        "0x005e6d28"
+       ],
+       "object_range": [
+        272,
+        1896
+       ],
+       "symbols": [
+        "srsRecordTable"
        ]
       }
      ],
@@ -111161,10 +111196,30 @@
       "D_0069B36C",
       "D_0069B370"
      ],
-     "also_referenced_by_c": [
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/main/build/c/sdv_181.o"
+     }
+    },
+    {
+     "range": [
+      "0x0069b378",
+      "0x0069b380"
+     ],
+     "generated": [
+      "0x0069b378",
+      "0x0069b380"
+     ],
+     "generated_by": [
+      "sdvDrawSpecial"
+     ],
+     "c_owned_symbols": [
       "D_0069B378",
       "D_0069B37C"
      ],
+     "also_referenced_by_c": [],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
@@ -111189,7 +111244,7 @@
       "D_0068C580"
      ],
      "also_referenced_by_c": [
-      "D_0068C590"
+      "sdvOriginPoint"
      ],
      "basis": {
       "kind": "derived",
