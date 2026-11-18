@@ -126,7 +126,7 @@ int handleStateGet(unsigned int handle);
 extern int ov01SceneDone;
 struct SaveStack *ov01StackNew(void);
 void runtimeInit(void);
-int func_00A9CEE8(struct SbImageHeader *key, struct SbImageHeader *library);
+int sbLibraryLink(struct SbImageHeader *key, struct SbImageHeader *library);
 void sbStartImage(struct SbImageHeader *image);
 void ov01StepSceneScript(int context);
 void ov01StepInit(int context);
@@ -211,7 +211,7 @@ void ov01StepSceneScript(int context)
 
     runtimeInit();
     key = ov01ScriptKeyGet();
-    if (func_00A9CEE8(key, ov01ScriptImageGet()) == 0) {
+    if (sbLibraryLink(key, ov01ScriptImageGet()) == 0) {
         for (;;) {
         }
     }

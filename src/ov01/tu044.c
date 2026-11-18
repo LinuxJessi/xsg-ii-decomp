@@ -249,7 +249,24 @@ int sbIsSblImage(int *header) {
     return *header == 0x204C4253;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", func_00A9CEE8);
+int sbLinkImage(struct SbImageHeader *image, struct VmKeyTable *library);
+
+/*
+ * Links the library image (an SBL image) into image (sbLinkImage) and makes it the image's key table. Returns 0
+ * when linking fails; hangs on a library that is not an SBL image.
+ */
+int sbLibraryLink(struct SbImageHeader *image, struct VmKeyTable *library)
+{
+    if (sbLinkImage(image, library) == 0) {
+        return 0;
+    }
+    if (!sbIsSblImage((int *)library)) {
+        for (;;) {
+        }
+    }
+    image->keys = library;
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbLinkImage);
 

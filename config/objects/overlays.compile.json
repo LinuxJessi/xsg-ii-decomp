@@ -2786,7 +2786,7 @@
       "asm/nonmatchings/ov01/tu044/sbNativeOwnerAdd.s",
       "asm/nonmatchings/ov01/tu044/sbIsSbImage.s",
       "asm/nonmatchings/ov01/tu044/sbIsSblImage.s",
-      "asm/nonmatchings/ov01/tu044/func_00A9CEE8.s",
+      "asm/nonmatchings/ov01/tu044/sbLibraryLink.s",
       "asm/nonmatchings/ov01/tu044/sbLinkImage.s",
       "asm/nonmatchings/ov01/tu044/sbFindNative.s",
       "asm/nonmatchings/ov01/tu044/sbFlagsGet.s",

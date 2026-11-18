@@ -3379,6 +3379,7 @@
    "0x00a9bf08": "atkTblBuild",
    "0x00a9c670": "dataBoxPtrGet",
    "0x00a9c6d8": "dataBoxChk",
+   "0x00a9cee8": "sbLibraryLink",
    "0x00aa1be0": "grGpInit",
    "0x00aa27e8": "grPacketSend",
    "0x00aa29b8": "grFBAdrGet",
