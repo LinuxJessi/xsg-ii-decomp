@@ -111243,9 +111243,7 @@
      "c_owned_symbols": [
       "D_0068C580"
      ],
-     "also_referenced_by_c": [
-      "sdvOriginPoint"
-     ],
+     "also_referenced_by_c": [],
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",

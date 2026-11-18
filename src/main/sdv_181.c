@@ -8,7 +8,6 @@
 #include "main/sdv_181.h"
 #include "main/tu152.h"
 #include "main/sdv_033.h"
-#include "quadword.h"
 
 /* A key sequence: keys holds rows of stride halfwords, the first of each row being the frame
  * the row starts at (see the SDV_KEY_ values below). */
@@ -555,7 +554,7 @@ typedef union SdvKeyBytes {
 typedef struct SdvSpecialTable {
     unsigned short kind;      /* +0x00 */
     short part;               /* +0x02 */
-    unsigned short modes;     /* +0x04 sdvSpecialFlags turns it into the work flags */
+    unsigned short modes;     /* +0x04 the work flags: bits 0-3 are bits 0-3 ORed with bits 4-7, bits 4-7 are bits 8-11 */
     SdvKeyBytes keys[1];      /* +0x06 */
 } SdvSpecialTable;
 
@@ -1187,157 +1186,9 @@ INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvFreeSpecialSlots);
 
 /* The number of slots a special lists. */
 #define SDV_SPECIAL_SLOT_COUNT 6
-/* Kinds from this one on are screen effects: they interpolate all four size halfwords of a key. */
-#define SDV_SPECIAL_KIND_SCREEN 10
-
-/* (0, 0, 0, 1): the offset sdvExecSpecial asks sefGetPoint for. */
-extern AlignedVector4 sdvOriginPoint;
-extern const Matrix4 MMathUnitMatrix;
-Matrix4 *sefGetPoint(Vector4 *destination, Vector4 *offset, int kind);
-
-/* Loads MMathUnitMatrix into destination: rows 0..2 through vf3..vf1, row 3 stored from vf0 (0, 0, 0, 1). */
-static inline void sdvLoadUnitMatrix(Matrix4 *destination)
-{
-    __asm__ __volatile__(
-        "lqc2 vf1, 32(%1)\n"
-        "lqc2 vf2, 16(%1)\n"
-        "lqc2 vf3, 0(%1)\n"
-        "sqc2 vf0, 48(%0)\n"
-        "sqc2 vf1, 32(%0)\n"
-        "sqc2 vf2, 16(%0)\n"
-        "sqc2 vf3, 0(%0)\n"
-        :
-        : "r" (destination), "r" (&MMathUnitMatrix)
-        : "memory");
-}
-
-/* One step of a key interpolation: from + (to - from) * t / 256, rounded; from itself when both are equal. */
-#define SDV_LERP(from, to, t) ((to) == (from) ? (from) : ((((to) - (from)) * (t) + 0x80) >> 8) + (from))
-
-/* The SdvSpecialWork.flags of a table: bits 0-3 are modes bits 0-3 ORed with bits 4-7, bits 4-7 are modes bits 8-11. */
-static inline int sdvSpecialFlags(short modes)
-{
-    return (modes >> 4) | (modes & 0xF);
-}
-
 /* Runs one special: every row its sequence reaches takes a free special record (the row names the record's
-   table), then the key of each slot's record is interpolated and its frame counted. A key followed by a frame
-   above SDV_KEY_END frees the record once its frame is passed; a following SDV_KEY_END holds the key. */
-void sdvExecSpecial(SdvSpecial *special, int base)
-{
-    AlignedVector4 point;
-    SdvSpecialWork *record;
-    SdvSpecialTable *table;
-    SdvKeyBytes *keys;
-    SdvSpecialKey *key;
-    SdvSpecialKey *next;
-    Matrix4 *matrix;
-    unsigned int step;
-    int kind;
-    int t;
-    int i;
-    int j;
-    short *fromSize;
-    short *toSize;
-    short *size;
-
-    if (special == 0 || special->sequence.keys == 0) {
-        return;
-    }
-    step = sdvExecSeqTbl(&special->sequence);
-    while (step < SDV_KEY_END) {
-        for (i = 0; i < SDV_SPECIAL_SLOT_COUNT; i++) {
-            if (special->slotIds[i] <= 0 && (special->slotIds[i] = sdvFindFreeSpecialWork()) > 0) {
-                record = &sdvSpecialTable[special->slotIds[i]];
-                record->table = (SdvSpecialTable *) scGetImmAdrImmIdx2(
-                    base, (unsigned short *) (special->sequence.keys + step * special->sequence.stride), 1);
-                record->frame = 0;
-                record->keyIndex = 0;
-                record->flags = sdvSpecialFlags(record->table->modes);
-                record->decreaseWait = 1;
-                record->clip = 0;
-                if (record->table != 0) {
-                    matrix = sefGetPoint(&point, &sdvOriginPoint, record->table->part);
-                    if (matrix != 0) {
-                        record->clip = 1;
-                        QuadwordCopyMatrixT0(record->matrix, matrix);
-                    } else {
-                        record->clip = 0;
-                        sdvLoadUnitMatrix(&record->matrix);
-                    }
-                }
-                break;
-            }
-        }
-        if (i == SDV_SPECIAL_SLOT_COUNT) {
-            break;
-        }
-        step = sdvCheckSeqKey(&special->sequence);
-    }
-
-    for (i = 0; i < special->sequence.position && i < SDV_SPECIAL_SLOT_COUNT; i++) {
-        record = &sdvSpecialTable[special->slotIds[i]];
-        table = record->table;
-        if (table == 0) {
-            continue;
-        }
-        kind = table->kind & 0xFF;
-        keys = table->keys;
-        key = &keys[record->keyIndex].key;
-        next = key + 1;
-        if (key->frame != SDV_KEY_END && record->frame >= key->frame) {
-            if (record->frame > key->frame && next->frame > SDV_KEY_END) {
-                if (kind >= SDV_SPECIAL_KIND_SCREEN && kind < SDV_SPECIAL_KIND_SCREEN + 6
-                    && record->key.decrease == 0) {
-                    gifStateClearModeValue();
-                }
-                record->table = 0;
-                record->flags &= ~SDV_FLAG_MODE_SET;
-                sdvClearSpecialRecord(special->slotIds[i]);
-                special->slotIds[i] = 0;
-                continue;
-            }
-            if (next->frame >= SDV_KEY_END) {
-                record->key = *key;
-                record->decreaseWait = 1;
-            } else if (key->frame != next->frame) {
-                t = ((record->frame - key->frame) << 8) / (next->frame - key->frame);
-                record->key.depth = SDV_LERP(key->depth, next->depth, t);
-                record->key.color[0] = SDV_LERP(key->color[0], next->color[0], t);
-                record->key.color[1] = SDV_LERP(key->color[1], next->color[1], t);
-                record->key.color[2] = SDV_LERP(key->color[2], next->color[2], t);
-                record->key.color[3] = SDV_LERP(key->color[3], next->color[3], t);
-                record->key.x = SDV_LERP(key->x, next->x, t);
-                record->key.y = SDV_LERP(key->y, next->y, t);
-                /* z moves toward the next key's intensity (as the original does) once the two z differ. */
-                record->key.z = next->z == key->z ? key->z : (((next->intensity - key->z) * t + 0x80) >> 8) + key->z;
-                record->key.intensity = SDV_LERP(key->intensity, next->intensity, t);
-                record->key.decrease = key->decrease;
-                if (record->decreaseWait < 0) {
-                    record->decreaseWait = 1;
-                }
-                if (kind >= SDV_SPECIAL_KIND_SCREEN) {
-                    fromSize = &key->width;
-                    toSize = &next->width;
-                    size = &record->key.width;
-                    for (j = 0; j < 4; j++) {
-                        size[j] = SDV_LERP(fromSize[j], toSize[j], t);
-                    }
-                } else {
-                    record->key.width = SDV_LERP(key->width, next->width, t);
-                    record->key.height = SDV_LERP(key->height, next->height, t);
-                }
-            }
-        }
-        if (record->frame < SDV_KEY_END) {
-            record->frame++;
-            if (record->frame >= next->frame) {
-                record->decreaseWait = -1;
-                record->keyIndex++;
-            }
-        }
-    }
-}
+   table), then the key of each slot's record is interpolated and its frame counted. */
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvExecSpecial);
 
 /* sefActiveOwnerKey value while a battle runs: the clip matrix is used and boxes stay square. */
 #define SDV_BATTLE_MODE 0x1012F003
