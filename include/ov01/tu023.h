@@ -137,6 +137,9 @@ int actStepCounterValue(void);
 void actStockClearBoost1(void);
 /* Drops unit from the stock; *stockIndex receives its stock position, or -1. */
 int actStockRemoveStock(struct Ov01Object *unit, int *stockIndex);
+/* Drops unit from the two boost slots or from the stock; *stockIndex receives its stock position, or -1. */
+int actStockRemove(struct Ov01Object *unit, int *stockIndex);
+void battleResultAdd(struct Ov01Object *unit);
 void sdvInitSpecialWork(void);
 
 /*

@@ -2108,7 +2108,74 @@ int unitBindRequest(Ov01Tu033Request *request)
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96050);
+/* Object flags a unit loses when it leaves the action stock here (UNIT_FLAG_STOCKED and two more). */
+#define UNIT_FLAGS_STOCK_CLEAR 0x4208
+
+/* Battle unit keys from this one on are monsters (pool B); below are the party slots. */
+#define UNIT_KEY_POOL_B_FIRST 16
+
+/* menuStatPanelNew kind func_00A96050 opens for a defeated monster in action step 2. */
+#define STAT_PANEL_DEFEAT 7
+
+/*
+ * For every unit: a unit that cannot act or has no HP left (and is not the battle state's last object) is taken out
+ * of the action stock; then, once its move commands are queued, a monster adds its battle result, arms the menus,
+ * releases its sequence and aura effects (and opens stat panel 7 in action step 2 when its key record has a step
+ * rate), a party unit releases its effects through func_00A95608; both report to the unit's script (event 8) with
+ * the index of the unit's source. Returns 1.
+ */
+int func_00A96050(void)
+{
+    UnitScriptEvent event;
+    struct UnitTableRef table;
+    int stockIndex;
+    int count;
+    int i;
+
+    count = unitTblGet(UNIT_SIDE_ALL, &table.units);
+    for (i = 0; i < count; i++) {
+        if (table.units[i] == 0) {
+            continue;
+        }
+        if (unitCanAct(table.units[i]) == 0 || table.units[i]->stats->hp == 0) {
+            if (table.units[i] != battleStateGet()->lastObject) {
+                while (actStockRemove(table.units[i], &stockIndex) != 0) {
+                    if (stockIndex > 0) {
+                        objPathShift(stockIndex);
+                    }
+                }
+                table.units[i]->flags &= ~UNIT_FLAGS_STOCK_CLEAR;
+            }
+        }
+        if (unitQueueMoveCommands(table.units[i]) == 0) {
+            continue;
+        }
+        if (table.units[i]->stats->key >= UNIT_KEY_POOL_B_FIRST) {
+            battleResultAdd(table.units[i]);
+            menuUnitPanelArmTimer();
+            menuIconListClose();
+            menuTimedSeqArmTick();
+            sefApplyRecordMode(table.units[i]->unit, (table.units[i]->stats->sequenceIndex << 12) | 8,
+                               SEF_RECORD_MODE_RELEASE);
+            sefApplyRecordMode(table.units[i]->unit, AURA_KEY(1), SEF_RECORD_MODE_RELEASE);
+            sefApplyRecordMode(table.units[i]->unit, AURA_KEY(2), SEF_RECORD_MODE_RELEASE);
+            sefApplyRecordMode(table.units[i]->unit, AURA_KEY(3), SEF_RECORD_MODE_RELEASE);
+            if (actStepCounterValue() == 2 && tableKeyRecordGet(table.units[i]->stats->key)->stepRate != 0) {
+                menuStatPanelNew(STAT_PANEL_DEFEAT);
+            }
+        } else {
+            func_00A95608(table.units[i]);
+        }
+        event.unit = table.units[i];
+        if (table.units[i]->stats->source != 0) {
+            event.words[0] = unitTblIndexOf(table.units[i]->stats->source);
+        } else {
+            event.words[0] = 0;
+        }
+        unitScriptEventSend(8, &event);
+    }
+    return 1;
+}
 
 int func_00A96510(Ov01Object *unit, int commandKind, int hitDamage, int hitMode);
 

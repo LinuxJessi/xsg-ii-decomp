@@ -20,5 +20,6 @@ int unitCmdRun(Ov01Object *object, int cmdId, int flip);
 int unitCmdMoveJump(Ov01Object *object, int phase, int unusedFlag);
 int unitCmdHoverFade(Ov01Object *object, int cmdId, int flip);
 float unitDefArea(Ov01Object *object);
+int unitQueueMoveCommands(Ov01Object *object);
 
 #endif /* INCLUDE_OV01_TU016_H */
