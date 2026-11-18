@@ -46,7 +46,7 @@ void ov01StepBattle(int context)
 
 void ov01StepAwaitObjectsIdle(int context);
 void ov01StepBeginFinish(int context);
-void ov01StepFinish(void);
+void ov01StepFinish(int context);
 
 /* Battle step: waits until battleEndCheck reports the battle over, then opens a
  * panel object (screenFadeOutStart) and moves on to ov01StepAwaitObjectsIdle. */
@@ -78,7 +78,7 @@ void ov01StepBeginFinish(int context)
 
 /* Last step of the scene: releases its entry and sets ov01SceneDone, the scene
  * done flag that the frame loop (ov01SceneIsDone) polls. */
-void ov01StepFinish(void)
+void ov01StepFinish(int context)
 {
     ov01CallbackSlotRelease();
     ov01SceneDone = 1;
