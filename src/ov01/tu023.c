@@ -48,41 +48,6 @@ struct PtStatusBlock {
 
 
 /*
- * Hit record of one target: calcHitRoll rolls for it and calcHitRecordFill fills it; the status
- * steps (calcCritDamage, calcHitStateStep, calcHitRowGate, calcFollowKind) read it.
- */
-struct HitRecord {
-    StatOwner *target;                      /* +0x00 */
-    unsigned char unmodeled_04[0x8 - 0x4];  /* +0x04..+0x07 */
-    int damage;                             /* +0x08: calcAttackDamage result, or the calcRestoreValue result for type 2 */
-    int followResult;                       /* +0x0c: calcFollowKind result, stored by calcAttackDamage */
-    int backAttack;                         /* +0x10: calcBackAttack's facing test for kind 1; 1 skips calcHitRoll and adds 50 to calcCritDamage's chance */
-    int stepState;                          /* +0x14: 1 to 3, written by calcHitRowGate and calcHitStateStep */
-    union {
-        int word;                           /* calcHitMode result, or the calcKindHitMode result for type 2: bit 8 set once taken, bit 9 blocks it */
-        unsigned char kind;                 /* its low byte: the hit kind calcHitInflict tests */
-    } hitMode;                              /* +0x18 */
-    int inflictRow;                         /* +0x1c: row calcHitInflict inflicts */
-    int inflictMask;                        /* +0x20: bits calcHitInflict inflicts */
-    int cureRow;                            /* +0x24: row calcHitCure clears */
-    int cureMask;                           /* +0x28: bits calcHitCure clears */
-    unsigned char unmodeled_2c[0x30 - 0x2C]; /* +0x2c..+0x2f */
-};
-
-/*
- * Command record of one attack, with the hit record of its current target. battleAttackResolve
- * and calcHitApply build one on their frame; tgtFindFirst reads its attacker and action.
- */
-struct AttackCommand {
-    StatOwner *attacker;                    /* +0x00 */
-    int kind;                               /* +0x04: 4 selects the base chance 200 in calcStatInflictRate */
-    int actionIdx;                          /* +0x08: index tecRecordGet takes */
-    int id;                                 /* +0x0C: the lookup key (the third argument of calcHitApply) */
-    struct HitRecord hit;                   /* +0x10 */
-};
-
-
-/*
  * Slot records: 0x40-byte records in slotRecordTable. Record k (k = slot index 0..15)
  * starts at D_61C3C0 + k * 0x40, so slotRecordTable is record 1. slotRecordGet takes
  * the slot index from the owner's key (+0x62 of its block). The bit numbers passed in
@@ -172,14 +137,11 @@ void battleEntryLoad(StatBlock *entry, int key);
  * cap and ep cap.
  */
 StatOwner *battleContextBind(int key, int contextIndex);
-int calcEpCost(StatOwner *owner, int index);
-struct TecRecord *calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
 int calcHpDmg(StatOwner *attacker, StatOwner *target, int hitMode, int damage);
 int calcEpAdjust(StatOwner *unit, int delta);
 int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey);
 int unitHasEffectCode(StatOwner *unit, int effectCode);
 /* calcHpAdjust: HP at +0x5C moves by delta, clamped to [0, max] (max is the unaligned int at +0x2); returns 1 while HP stays above 0. calcHpDmg calls it. */
-int calcHpAdjust(StatOwner *unit, int delta);
 int calcHitRateGet(StatOwner *owner);
 int calcEvadeRate(StatOwner *owner);
 int calcStatResist(StatOwner *owner, int row, int statBit);
@@ -197,8 +159,6 @@ void unitEntryKindAdd(StatOwner *owner, int kind);
 int calcBackAttack(int *attackerSlot, int *targetSlot);
 int unitIsInFacingArc(int originAddress, int targetAddress);
 int unitStatsRefresh(StatOwner *unit);
-int calcStatGet(StatOwner *owner, int row, int mask);
-int calcStatReset(StatOwner *owner, int row, int mask);
 void calcStatTurn(StatOwner *owner);
 signed char calcStatDefTurnGet(int row, int statBit);
 int calcStatIdx2Bit(int statIdx);
@@ -214,7 +174,6 @@ int slotFlagSet(StatOwner *owner, int bit);
 int slotFlagTest(StatOwner *owner, int bit);
 int slotFlagClear(StatOwner *owner, int bit);
 int slotCodeSet(StatOwner *owner, int bit);
-int slotCodeTest(StatOwner *owner, int bit);
 int slotPairTest(int index);
 int slotMarkSet(StatOwner *owner, int bit);
 int slotMarkTest(StatOwner *owner, int bit);
@@ -228,11 +187,8 @@ int unitCanAct(StatOwner *unit);
 int unitValueCalc(StatOwner *obj);
 void unitValueReset(StatOwner *obj);
 int battleEffectResolve(StatOwner *command, int index, StatOwner *entity);
-int tgtSideOf(StatOwner *entity, int flags);
-int calcEntryUsable(StatOwner *entity, int index);
 int tgtCmdAccepts(struct AttackCommand *record, StatOwner *value);
 struct BoostGauge *boostGaugeGet(StatOwner *unit);
-int boostGaugeAddStock(struct BoostGauge *gauge, int amount);
 int boostGaugeAddProgress(struct BoostGauge *gauge, int amount);
 struct ActStepCounter *actStepCounterGet(void);
 void sdvSpecialBitSet(int index);
@@ -640,7 +596,7 @@ void battleContextApplyLookup(int key, int lookupKey)
 int battleAttackResolve(int attackerKey, int targetKey, int lookupKey)
 {
     int words[12];
-    struct AttackCommand command;
+    struct AttackHit attack;
     StatOwner *owner;
     BattleLookupEntry *lookup;
     struct TecRecord *technique;
@@ -649,10 +605,10 @@ int battleAttackResolve(int attackerKey, int targetKey, int lookupKey)
 
     owner = battleContextBind(attackerKey, 0);
     lookup = battleLookupGet(lookupKey);
-    command.kind = 3;
-    command.actionIdx = lookup->tecIndex;
-    command.attacker = owner;
-    command.id = lookupKey;
+    attack.command.kind = 3;
+    attack.command.actionIdx = lookup->tecIndex;
+    attack.command.attacker = owner;
+    attack.command.id = lookupKey;
     lookup = battleLookupGet(lookupKey);
     technique = tecRecordGet(lookup->tecIndex);
     if (technique->flags & 8) {
@@ -664,9 +620,9 @@ int battleAttackResolve(int attackerKey, int targetKey, int lookupKey)
     for (wordIndex = 0; wordIndex < count; wordIndex++) {
         StatOwner *unit = battleContextBind(words[wordIndex], 1);
 
-        command.hit.target = unit;
-        calcHitRecordFill(&command, &command.hit);
-        calcHpDmg(command.attacker, command.hit.target, command.hit.hitMode.word, command.hit.damage);
+        attack.hit.target = unit;
+        calcHitRecordFill(&attack.command, &attack.hit);
+        calcHpDmg(attack.command.attacker, attack.hit.target, attack.hit.hitMode.word, attack.hit.damage);
         battleSlotCommit(unit);
     }
     lookup = battleLookupGet(lookupKey);
@@ -1193,8 +1149,10 @@ int calcEpCost(StatOwner *owner, int index)
     return cost;
 }
 
-/* calcHitRecordFill: fills a hit record for one target (its mode is set by calcHitMode). */
-struct TecRecord *calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit)
+/* calcHitRecordFill: fills a hit record for one target (its mode is set by calcHitMode). It returns nothing: its
+ * callers' code needs a void result (attackQueue keeps the hit word in $2), and the closing tecRecordGet call,
+ * whose result is unused, compiles to the same tail call. */
+void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit)
 {
     struct TecRecord *command;
     int packedMode;
@@ -1224,7 +1182,7 @@ struct TecRecord *calcHitRecordFill(struct AttackCommand *action, struct HitReco
             hit->damage = calcAttackDamage(action, hit);
         }
     }
-    return tecRecordGet(action->actionIdx);
+    tecRecordGet(action->actionIdx);
 }
 
 /* calcHitRoll: rnd(99) rolls checked against the record's bytes at +0x4 and +0x5 and the target's flags; returns 0, 1 or 2. Returns 0 when the unit's state byte at +0x70 is set. */
@@ -2105,7 +2063,7 @@ int calcHpDmg(StatOwner *attacker, StatOwner *target, int hitMode, int damage)
 /* calcHitApply: applies one filled hit record to its target: HP and EP, status set and clear, flags. */
 int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
 {
-    struct AttackCommand command;
+    struct AttackHit attack;
     struct HitAction *action;
     struct TecRecord *entry;
     struct BoostGauge *gauge;
@@ -2118,19 +2076,19 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
     action = hitActionGet(lookupKey);
     entry = tecRecordGet(action->entry);
     amount = action->amount;
-    command.kind = 4;
-    command.hit.target = target;
-    command.attacker = source;
-    command.actionIdx = action->entry;
-    command.id = lookupKey;
+    attack.command.kind = 4;
+    attack.hit.target = target;
+    attack.command.attacker = source;
+    attack.command.actionIdx = action->entry;
+    attack.command.id = lookupKey;
 
     flags = entry->kindBits.effectFlags;
     if (flags & 0x1) {
-        calcHpAdjust(target, calcRestoreValue(&command, &command.hit, 1, 1));
+        calcHpAdjust(target, calcRestoreValue(&attack.command, &attack.hit, 1, 1));
         flags = entry->kindBits.effectFlags;
     }
     if (flags & 0x2) {
-        calcEpAdjust(target, calcRestoreValue(&command, &command.hit, 2, 1));
+        calcEpAdjust(target, calcRestoreValue(&attack.command, &attack.hit, 2, 1));
         flags = entry->kindBits.effectFlags;
     }
     if (flags & 0x4) {
@@ -2140,8 +2098,8 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
         }
         statBit = 1;
         do {
-            if (calcStatGet(command.hit.target, statRow, statBit) != 0 &&
-                ov01RollPercent(calcStatInflictRate(&command, &command.hit.target, statRow, statBit)) != 0) {
+            if (calcStatGet(attack.hit.target, statRow, statBit) != 0 &&
+                ov01RollPercent(calcStatInflictRate(&attack.command, &attack.hit.target, statRow, statBit)) != 0) {
                 calcStatReset(target, statRow, statBit);
             }
             statBit *= 2;
@@ -2149,7 +2107,7 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
         flags = entry->kindBits.effectFlags;
     }
     if (flags & 0x8) {
-        calcHpAdjust(target, calcRestoreValue(&command, &command.hit, 1, 1));
+        calcHpAdjust(target, calcRestoreValue(&attack.command, &attack.hit, 1, 1));
         flags = entry->kindBits.effectFlags;
     }
     if (flags & 0x10) {
@@ -2183,7 +2141,7 @@ int calcHitApply(StatOwner *source, StatOwner *target, int lookupKey)
             battleSlotsRefresh();
             break;
         case 2:
-            calcHpAdjust(target, -calcRestoreValue(&command, &command.hit, 0x40, 1));
+            calcHpAdjust(target, -calcRestoreValue(&attack.command, &attack.hit, 0x40, 1));
             break;
         }
     }
@@ -3459,7 +3417,7 @@ s32 unitValueDecay(StatOwner *obj)
 
 /*
  * Returns the signed state byte of record index, or 0 when unit has effect code 0x13.
- * The caller (func_00A92E30) adds the result to the unit's valueLevel (+0x64).
+ * The caller (attackQueue) adds the result to the unit's valueLevel (+0x64).
  */
 s8 unitRecordStateGet(StatOwner *unit, s32 index)
 {
@@ -3475,7 +3433,7 @@ s8 unitRecordStateGet(StatOwner *unit, s32 index)
 /*
  * Returns 1 when exactly one of the two units has key (+0x62) below 16, the same
  * split tgtSideOf reads; 0 when both or neither are below it. When it returns 1,
- * func_00A97890 walks all units (team 2) instead of one target.
+ * tgtSelectTurnEnd walks all units (team 2) instead of one target.
  */
 s32 unitSidesDiffer(StatOwner *unitA, StatOwner *unitB)
 {
@@ -3950,7 +3908,7 @@ int calcLevelsMeetRecord(StatOwner *entity, int record_index)
  * Collects into found the pair records 60..89 that hold code and whose partner code the acting unit satisfies,
  * and returns how many.
  */
-int calcPairedRecords(int unused_arg0, int code, int *found)
+int calcPairedRecords(StatOwner *unused, int code, int *found)
 {
     StatOwner *actingUnit;
     unsigned char pairFirst;

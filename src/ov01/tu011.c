@@ -5,6 +5,8 @@
 #include "shared.h"
 #include "main/tu051.h"
 #include "main/xenoActor.h"
+#include "ov01/tu008.h"
+#include "ov01/tu011.h"
 #include "ov01/tu012.h"
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
@@ -41,22 +43,6 @@ void unitRemove(Ov01Object *unit)
         battleStateClearStatus(unit);
     }
 }
-
-/* One 12-byte entry of an attach record; only its first word is read here. */
-struct AttachEntry {
-    int value;
-    unsigned char unmodeled_04[0x8];
-};
-
-/*
- * Attach record passed to unitAttachChild: its entries start at +0xC. Entries 0 to 3 give
- * the new actor's resources; entry index + 4 gives its rsrc[XAct_Rsrc_5]. The callers
- * pass indexes 0 and 1, so six entries are modelled.
- */
-struct AttachRecord {
-    unsigned char unmodeled_00[0xC];
-    struct AttachEntry entries[6];
-};
 
 /*
  * Source record of unitBindActors: 12-byte entries from +0x14. Entries 0 to 3 give the unit
@@ -133,8 +119,10 @@ int unitBindActors(Ov01Object *unit, struct SpawnRecord *spawn)
  * Attaches a new child actor to the unit's actor from the attach record's entries. The
  * record's entry index + 4 is written to every actor of the unit and to the new one.
  */
-int unitAttachChild(Ov01Object *unit, struct AttachRecord *attach, int index)
+int unitAttachChild(Ov01Object *unit, struct DataEntry *entry, int index)
 {
+    /* The file buffers are read as words (XenoActor.rsrc is int), through the AttachRecord view. */
+    struct AttachRecord *attach = (struct AttachRecord *)entry;
     struct XenoActor *child;
     int i;
 

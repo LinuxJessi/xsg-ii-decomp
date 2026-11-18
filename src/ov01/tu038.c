@@ -7,7 +7,7 @@
  * ov01StepOpenHandles -> ov01StepBindAndShow -> ov01StepLoadPartyIds (party ids) -> ov01StepSpawnPartyMember
  * (spawn party member) -> ov01StepLoadPartyMember -> ov01StepAwaitPartyLoad -> ov01StepNextPartyMember
  * (next member) -> ov01StepStartEnemies -> ov01StepSpawnEnemy (spawn enemy) -> ov01StepLoadEnemy
- * -> ov01StepAwaitEnemyLoad -> ov01StepNextEnemy (next enemy or battle start) -> func_00A9AF68
+ * -> ov01StepAwaitEnemyLoad -> ov01StepNextEnemy (next enemy or battle start) -> ov01StepBattle
  * (tu039).
  */
 #include "common.h"
@@ -17,11 +17,28 @@
 #include "ov01/tu008.h"
 #include "ov01/tu009.h"
 #include "ov01/tu012.h"
+#include "ov01/tu022.h"
+#include "ov01/tu036.h"
+#include "ov01/tu037.h"
 #include "ov01/tu038.h"
+#include "ov01/tu039.h"
 #include "ov01/tu040.h"
+#include "ov01/tu041.h"
+#include "ov01/tu044.h"
 #include "ov01/tu046.h"
+#include "ov01/tu047.h"
 #include "ov01/tu049.h"
+#include "ov01/tu050.h"
+#include "ov01/tu051.h"
+#include "ov01/tu052.h"
+#include "ov01/tu055.h"
+#include "ov01/tu056.h"
+#include "ov01/tu058.h"
+#include "ov01/tu060.h"
+#include "ov01/tu061.h"
+#include "ov01/tu062.h"
 #include "ov01/tu070.h"
+#include "ov01/tu071.h"
 
 /*
  * Spawn record of the party list ov01PartyList and the enemy list ov01EnemyList.
@@ -56,11 +73,9 @@ void monsSlotCopyParams(int first, int second);
 int monsSlotCreate(void);
 void monsSlotShow(void *slot);
 int monsTblValueGet(void);
-void func_00A9BCC8(int first, int *out);
 void menuStatRecordsCreate(void);
 unsigned char *ptGetStatusBlock(void);
 UnitSpawnRecord *ov01PartyListGet(void);
-void effectPosTableSet(int value);
 Ov01Object *unitPlCreate(int id);
 Ov01Object *unitEnCreate(int id);
 void unitBindActors(Ov01Object *object, struct DataSlot *slot);
@@ -111,7 +126,6 @@ int handleStateGet(unsigned int handle);
 extern int ov01SceneDone;
 struct SaveStack *ov01StackNew(void);
 void runtimeInit(void);
-int func_00A9CEE8(struct SbImageHeader *key, struct SbImageHeader *library);
 void sbStartImage(struct SbImageHeader *image);
 void ov01StepSceneScript(int context);
 void ov01StepInit(int context);
@@ -196,7 +210,7 @@ void ov01StepSceneScript(int context)
 
     runtimeInit();
     key = ov01ScriptKeyGet();
-    if (func_00A9CEE8(key, ov01ScriptImageGet()) == 0) {
+    if (sbLibraryLink(key, ov01ScriptImageGet()) == 0) {
         for (;;) {
         }
     }
@@ -233,14 +247,14 @@ void ov01StepAwaitBlockLoad(int context) {
 void ov01StepOpenHandles(int context) {
     extern int ov01StreamBuffer[];
     extern int D_00AB5CD4[];
-    int out_value;
+    UnitScriptEvent event;
 
     menuTexFlushTaskStart();
     seVoiceStartTagged(2, 4);
     D_00AB5CD4[0] = monsSlotCreate();
     ov01StreamBuffer[0] = dataStreamOpen(monsTblValueGet(), 0);
-    out_value = 0;
-    func_00A9BCC8(6, &out_value);
+    event.unit = 0;
+    unitScriptEventSend(6, &event);
     ov01StepSetNext(context, ov01StepBindAndShow);
     ov01StackPush(context, ov01StepAwaitLoads);
 }
@@ -263,7 +277,7 @@ void ov01StepLoadPartyIds(int context) {
     int entry_index;
     unsigned char *src;
     unsigned char byte;
-    int result;
+    struct EffectPosRecord *positions;
 
     source_index = 0;
     entry_index = 0;
@@ -276,8 +290,8 @@ void ov01StepLoadPartyIds(int context) {
         ov01PartyList[entry_index].id = byte;
         entry_index += 1;
     } while (source_index < 3);
-    result = posDataGet();
-    effectPosTableSet(result);
+    positions = posDataGet();
+    effectPosTableSet(positions);
     ov01StepSetNext(context, ov01StepSpawnPartyMember);
 }
 
@@ -306,7 +320,19 @@ void ov01StepSpawnPartyMember(int context) {
 
 /* Binds the spawned party member and starts its load (ov01LoadRequest); continues
  * to ov01StepAwaitPartyLoad. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu038", ov01StepLoadPartyMember);
+void ov01StepAwaitPartyLoad(int context);
+
+void ov01StepLoadPartyMember(int context)
+{
+    Ov01Command command;
+
+    unitBindActors(ov01CurUnit, ov01CurSlot);
+    unitFadeIn(ov01CurUnit);
+    command.command = UNIT_CMD_FINISH;
+    unitQueueAppend(ov01CurUnit, &command);
+    ov01LoadRequest(ov01CurSlot);
+    ov01StepSetNext(context, ov01StepAwaitPartyLoad);
+}
 
 /* Waits for the party member's load, then continues to ov01StepNextPartyMember. */
 void ov01StepAwaitPartyLoad(int context) {
@@ -374,7 +400,48 @@ void ov01StepAwaitEnemyLoad(int context) {
     }
 }
 
-/* Next enemy: while the enemy list has an entry at ov01EnemyIndex it returns to
- * ov01StepSpawnEnemy; past the end it sets up the battle (menus, objects, func_00A9A2F8,
- * unitSelectPlTarget) and continues to func_00A9AF68. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu038", ov01StepNextEnemy);
+/* ov01 0x00AA4670, in a part of the overlay that has no C file yet. */
+void menuValuePanelCreate(void);
+
+/* Enemies in an enemy list at most; the list ends early at a record with id 0. */
+#define OV01_ENEMY_MAX 5
+/* streamPlayByKey key of the line a party member says when the battle starts. */
+#define BATTLE_START_STREAM 6
+
+/*
+ * Next enemy: spawns the next one of the enemy list (ov01StepSpawnEnemy); after the last it builds the battle
+ * menus and panels, starts the battle music and the opening line of a party member (unitSelectPlTarget), probes
+ * the heap and continues to ov01StepBattle.
+ */
+void ov01StepNextEnemy(int context)
+{
+    Ov01Object *speaker;
+
+    ov01EnemyIndex++;
+    if (ov01EnemyIndex < OV01_ENEMY_MAX && ov01EnemyList[ov01EnemyIndex].id != 0) {
+        ov01StepSetNext(context, ov01StepSpawnEnemy);
+        return;
+    }
+    objPathInit();
+    menuCursorCreate();
+    menuIconListCreate();
+    menuValuePanelCreate();
+    func_00AA5248();
+    menuWepSpPanelNew();
+    menuTargetListNew();
+    menuUnitPanelNew();
+    menuIconListNew();
+    menuTimedSeqNew();
+    menuPanelCreate();
+    menuTgtStatusNew();
+    dataObjCreateAtOrigin();
+    battleStartBonusApply();
+    bgmPlayTrack(bgmIndexGet());
+    speaker = unitSelectPlTarget(0);
+    if (speaker != 0) {
+        streamPlayByKey(speaker, BATTLE_START_STREAM);
+    }
+    cfEventGet();
+    ov01HeapProbeLargeAlloc();
+    ov01StepSetNext(context, ov01StepBattle);
+}

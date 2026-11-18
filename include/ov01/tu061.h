@@ -4,5 +4,6 @@
 /* Functions of src/ov01/tu061.c that other files call. */
 
 void menuTimedSeqArmTick(void);
+void menuTimedSeqNew(void);
 
 #endif /* INCLUDE_OV01_TU061_H */

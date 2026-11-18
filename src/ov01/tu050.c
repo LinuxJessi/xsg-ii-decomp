@@ -4,7 +4,9 @@
 #include "common.h"
 #include "ov01/tu005.h"
 #include "ov01/tu023.h"
+#include "ov01/tu036.h"
 #include "ov01/tu048.h"
+#include "ov01/tu050.h"
 #include "ov01/tu051.h"
 
 typedef MenuObject PathObject;
@@ -25,7 +27,6 @@ extern PathObject *objPathTable[OBJ_PATH_COUNT];
 /* ActStock.pickSource value that shows the moving path object instead of point 0. */
 #define PATH_STOCK_SOURCE_MOVING 2
 
-void *tgtUnitGet(void);
 void func_00AA7770(GrPacket *packet, int x, int y, int key, int mode, int fade);
 
 int objStdMove(void *target);
@@ -149,7 +150,28 @@ void objPathDraw(PathObject *object)
     grPacketSend(&packet);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu050", objPathReset);
+/* Puts every path object back on its own point, stopped, its fade restarted (staggered by -12 per object); all
+ * but the last are shown. */
+void objPathReset(void)
+{
+    PathObject *object;
+    int i;
+
+    for (i = 0; i < OBJ_PATH_COUNT; i++) {
+        object = objPathTable[i];
+        object->kind.path.index = i;
+        object->kind.path.fade = i * -12;
+        object->moving = 0;
+        object->slide.pos.x = objPathPoints[i].x;
+        object->slide.pos.y = objPathPoints[i].y;
+        object->slide.pos.z = 0;
+        if (i < OBJ_PATH_MOVING) {
+            object->kind.path.shown = 1;
+        } else {
+            object->kind.path.shown = 0;
+        }
+    }
+}
 
 /* Moves each of the first four path objects one point back (to index - 1);
  * one already at point 0 is hidden instead. */

@@ -118716,6 +118716,232 @@
      }
     }
    ]
+  },
+  "ov01/tu033": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba470",
+      "0x00aba4a0"
+     ],
+     "generated": [
+      "0x00aba470",
+      "0x00aba4a0"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "jtbl_00ABA470"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00aba470",
+        "0x00aba4a0"
+       ],
+       "symbols": [],
+       "anonymous_emission": true,
+       "credit": "verified",
+       "object_range": [
+        0,
+        48
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu033.o"
+     }
+    },
+    {
+     "range": [
+      "0x00aba4a0",
+      "0x00aba510"
+     ],
+     "generated": [
+      "0x00aba4a0",
+      "0x00aba510"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "jtbl_00ABA4A0"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00aba4a0",
+        "0x00aba510"
+       ],
+       "symbols": [],
+       "anonymous_emission": true,
+       "credit": "verified",
+       "object_range": [
+        48,
+        160
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu033.o"
+     }
+    },
+    {
+     "range": [
+      "0x00aba510",
+      "0x00aba530"
+     ],
+     "generated": [
+      "0x00aba510",
+      "0x00aba530"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "jtbl_00ABA510"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00aba510",
+        "0x00aba530"
+       ],
+       "symbols": [],
+       "anonymous_emission": true,
+       "credit": "verified",
+       "object_range": [
+        160,
+        192
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu033.o"
+     }
+    },
+    {
+     "range": [
+      "0x00aba540",
+      "0x00aba564"
+     ],
+     "generated": [
+      "0x00aba540",
+      "0x00aba564"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "jtbl_00ABA540"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00aba540",
+        "0x00aba564"
+       ],
+       "symbols": [],
+       "anonymous_emission": true,
+       "credit": "verified",
+       "object_range": [
+        192,
+        228
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu033.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu035": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba590",
+      "0x00aba5b0"
+     ],
+     "generated": [
+      "0x00aba590",
+      "0x00aba5a4"
+     ],
+     "generated_by": [
+      "battleEndCheck"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA590"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu035.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu036": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba640",
+      "0x00aba698"
+     ],
+     "generated": [
+      "0x00aba640",
+      "0x00aba698"
+     ],
+     "generated_by": [
+      "battleSelectionGet",
+      "tgtUnitAdrGet"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA640",
+      "jtbl_00ABA670"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu036.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu042": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00aba740",
+      "0x00aba880"
+     ],
+     "generated": [
+      "0x00aba740",
+      "0x00aba878"
+     ],
+     "generated_by": [
+      "unitParaFieldGet",
+      "unitParaFieldSet"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00ABA740",
+      "jtbl_00ABA7E0"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu042.o"
+     }
+    }
+   ]
   }
  }
 }

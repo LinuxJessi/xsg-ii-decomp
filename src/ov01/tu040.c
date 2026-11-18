@@ -12,7 +12,7 @@ void func_00A9B0F8(void) {
 /*
  * The two images of the scene in gameWork (main): resBuffer holds the SB script image (the key of its threads),
  * imageEnd the SBL library image dataThinkScriptLoad reads behind it. ov01StepSceneScript links the library under
- * the key (func_00A9CEE8 calls sbLinkImage and keeps the image when sbIsSblImage accepts it); ov01SceneRelease
+ * the key (sbLibraryLink calls sbLinkImage and keeps the image when sbIsSblImage accepts it); ov01SceneRelease
  * releases the key's threads (sbThreadsRelease).
  */
 
@@ -22,6 +22,6 @@ struct SbImageHeader *ov01ScriptKeyGet(void) {
 }
 
 /* The scene's SBL library image (gameWork.imageEnd, an address main keeps as int). */
-struct SbImageHeader *ov01ScriptImageGet(void) {
-    return (struct SbImageHeader *)gameWork.imageEnd;
+struct VmKeyTable *ov01ScriptImageGet(void) {
+    return (struct VmKeyTable *)gameWork.imageEnd;
 }

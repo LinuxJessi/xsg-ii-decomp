@@ -3,6 +3,7 @@
  */
 #include "common.h"
 #include "ov01/tu005.h"
+#include "ov01/tu055.h"
 
 typedef struct Ov01Object {
     unsigned char unmodeled_00[0x04];

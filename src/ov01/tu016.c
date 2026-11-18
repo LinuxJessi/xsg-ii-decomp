@@ -92,7 +92,6 @@ float objPoseHorizontalDistance(Ov01Object *object);
 float objPoseSlideLimit(Ov01Object *unusedFirst, Ov01Object *value, int rowKey);
 float unitDefArea(Ov01Object *object);
 int *effectPosGet(int index);
-void streamPlayByKey(int, int);
 void unitRemove(void);
 void cmdListPtrGet(void **fifo, void **list);
 int ov01FifoGetUsed(void *fifo);

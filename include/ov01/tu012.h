@@ -13,6 +13,9 @@
 
 /* Command-table indices (unitCommandTable in src/ov01/tu012.c) that the unit move and mode handlers store as step status. */
 enum {
+    UNIT_CMD_MODE_DISPATCH = 0x0A,
+    UNIT_CMD_JUMP_EFFECT = 0x0B,    /* func_00A85EA0: issues UNIT_CMD_MOVE_CHA_JUMP and effect 0xB */
+    UNIT_CMD_HOVER_EFFECT = 0x0C,   /* func_00A85F30: issues UNIT_CMD_MOVE_CHA_HOVER and effect 0xC */
     UNIT_CMD_MOVE_CHA_RUN = 0x16,
     UNIT_CMD_MOVE_POS_JUMP = 0x17,
     UNIT_CMD_MOVE_CHA_JUMP = 0x18,
@@ -20,6 +23,12 @@ enum {
     UNIT_CMD_MOVE_POS_HOVER = 0x1A,
     UNIT_CMD_MODE_RAMP = 0x1B,
     UNIT_CMD_MOVE_RATIO = 0x1C,
+    UNIT_CMD_MOVE_RAMP = 0x1D,      /* unitCmdMoveRamp */
+    UNIT_CMD_FINISH = 0x1E,         /* unitCmdFinish */
+    UNIT_CMD_PHASE_2C_WAIT = 0x1F,  /* unitCmdPhase2CWait */
+    UNIT_CMD_CLEAR_ACTIVE = 0x20,
+    UNIT_CMD_PHASE_2B_WAIT = 0x21,
+    UNIT_CMD_DEACTIVATE = 0x22,     /* func_00A86CB0: clears UNIT_FLAG_ACTIVE */
     UNIT_CMD_MODE_START = 0x27
 };
 
@@ -123,7 +132,7 @@ struct StatBlock {
     int spawnArgC;                          /* +0xF8: the spawn record's spawnArgC (tu038), unitCreate's argument 4 */
     int spawnArgD;                          /* +0xFC: the spawn record's spawnArgD (tu038), unitCreate's argument 5 */
     StatOwner *source;                      /* +0x100: the unit whose effect sum battleResultAdd adds; unitFaceTarget's target argument */
-    unsigned char unmodeled_104[0x2];       /* +0x104..+0x105 */
+    short sourceAction;                     /* +0x104: the action index of source (attackQueue) */
     short handle;                           /* +0x106: passed to handleFree by unitCmdRelease */
 };
 
@@ -147,6 +156,7 @@ typedef struct Ov01Command {
 
 /* Ov01Object.flags bits: a unit that is down (the draws and the target pickers leave it out) and a unit in the
  * action stock. */
+#define UNIT_FLAG_HIDDEN 0x2      /* set by unitSetBindFlags with ACTOR_STATE_HIDDEN on the unit's actors */
 #define UNIT_FLAG_DOWN 0x4
 #define UNIT_FLAG_STOCKED 0x8
 
@@ -181,11 +191,14 @@ void unitUpdate(Ov01Object *object);
 void unitUnbind(Ov01Object *object);
 int unitCurrentPhase(Ov01Object *object);
 void unitSetPhase(Ov01Object *object, int phase);
+void unitSetTimedPhase(Ov01Object *object, int phase);
+void unitBindSetup(Ov01Object *object);
+void unitClearSnapshot(Ov01Object *object);
 void unitSetSelector(Ov01Object *object, int selector);
 void unitRefreshPhase(Ov01Object *object);
 void unitSetVectorZ(Ov01Object *object, float scaleZ);
 int unitIsDone(Ov01Object *object);
-int unitEffectKeyFree(int unused, int keyHigh, int keyLow);
+int unitEffectKeyFree(Ov01Object *unit, int keyHigh, int keyLow);
 void unitLoadSnapshot(Ov01Object *object, int id);
 void unitSetAngleDegrees(Ov01Object *object, int degrees);
 void unitSetAngleRadians(Ov01Object *object, f32 angle);

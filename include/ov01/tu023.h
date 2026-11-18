@@ -43,6 +43,47 @@ struct ActStock {
 };
 
 struct ActStock *actStockGet(void);
+
+/*
+ * Hit record of one target: calcHitRoll rolls for it and calcHitRecordFill fills it; the status
+ * steps (calcCritDamage, calcHitStateStep, calcHitRowGate, calcFollowKind) read it.
+ */
+struct HitRecord {
+    struct Ov01Object *target;                      /* +0x00 */
+    int reaction;                           /* +0x04: the UNIT_CMD_* the target answers with (attackQueue) */
+    int damage;                             /* +0x08: calcAttackDamage result (calcRestoreValue for type 2) */
+    int followResult;                       /* +0x0c: calcFollowKind result, stored by calcAttackDamage */
+    /* +0x10: calcBackAttack's facing test for kind 1; 1 skips calcHitRoll and adds 50 to calcCritDamage's chance */
+    int backAttack;
+    int stepState;                          /* +0x14: 1 to 3, written by calcHitRowGate and calcHitStateStep */
+    union {
+        /* calcHitMode result (calcKindHitMode for type 2): bit 8 set once taken, bit 9 blocks it */
+        int word;
+        unsigned char kind;                 /* its low byte: the hit kind calcHitInflict tests */
+    } hitMode;                              /* +0x18 */
+    int inflictRow;                         /* +0x1c: row calcHitInflict inflicts */
+    int inflictMask;                        /* +0x20: bits calcHitInflict inflicts */
+    int cureRow;                            /* +0x24: row calcHitCure clears */
+    int cureMask;                           /* +0x28: bits calcHitCure clears */
+};
+
+/*
+ * Command record of one attack (16 bytes); tgtFindFirst reads its attacker and action. The tu033 command
+ * handlers (func_00A92C18 builds it, func_00A92D98, func_00A92DF0, func_00A93288) take one too.
+ */
+struct AttackCommand {
+    struct Ov01Object *attacker;                    /* +0x00 */
+    int kind;                               /* +0x04: 4 selects the base chance 200 in calcStatInflictRate */
+    int actionIdx;                          /* +0x08: index tecRecordGet takes */
+    int id;                                 /* +0x0C: the lookup key (the third argument of calcHitApply) */
+};
+
+/* An attack command with the hit record of its current target, as battleAttackResolve and calcHitApply build
+ * them on their frame. */
+struct AttackHit {
+    struct AttackCommand command;           /* +0x00 */
+    struct HitRecord hit;                   /* +0x10 */
+};
 StatOwner *actStockPick(void);
 int unitCanAct(StatOwner *unit);
 
@@ -58,6 +99,29 @@ struct BoostGauge *boostGaugeSelect(int flag);
 int calcStatBit2Idx(int statBit);
 void calcActStockSet(struct Ov01Object *unit, int slot);
 int calcBoostOk(struct Ov01Object *obj, int id);
+int calcEntryUsable(struct Ov01Object *entity, int index);
+/* Unit HP and status rows: calcHpAdjust returns 1 while HP stays above 0, calcStatGet the set bits of mask in
+ * row, calcStatReset/calcStatAltReset clear them (both return 1). */
+int calcHpAdjust(struct Ov01Object *unit, int delta);
+int calcStatGet(struct Ov01Object *owner, int row, int mask);
+int calcStatReset(struct Ov01Object *owner, int row, int mask);
+int calcStatAltReset(struct Ov01Object *owner, int statIdx, int mask);
+void calcHitRecordFill(struct AttackCommand *action, struct HitRecord *hit);
+int calcEpCost(struct Ov01Object *owner, int index);
+int slotCodeTest(struct Ov01Object *owner, int bit);
+int tgtRecordCanTarget(struct Ov01Object *target, int id);
+int unitLevelAdd(struct Ov01Object *unit, int amount);
+int unitCurrentAdd(struct Ov01Object *unit, int amount);
+int boostGaugeAddStock(struct BoostGauge *gauge, int amount);
+/* The record finders below write the indices they find to found and return their count. */
+int calcKeyBandRecords(struct Ov01Object *entity, int *found);
+int calcCurrentMeetsRecord(struct Ov01Object *entity, int index);
+int calcKeyPairRecords(struct Ov01Object *entity, int *found);
+int calcLevelsMeetRecord(struct Ov01Object *entity, int record_index);
+int calcPairedRecords(struct Ov01Object *unused, int code, int *found);
+int calcPairEntryUsable(struct Ov01Object *entity, int index);
+int slotFlagCollect(struct Ov01Object *subject, int *found);
+int tgtSideAccepts(struct Ov01Object *obj, int id);
 int actLevelChanceRoll(struct Ov01Object *owner, int index);
 int actStepCounterValue(void);
 void actStockClearBoost1(void);
@@ -95,5 +159,7 @@ struct BattleResultRow {
 struct BattleResult *battleResultGet(void);
 int battleResultApply(struct BattleResultRow *rows);
 int partySnapshotGet(StatOwner ***snapshots);
+void battleWorkTablesReset(void);
+int tgtSideOf(struct Ov01Object *entity, int flags);
 
 #endif /* INCLUDE_OV01_TU023_H */

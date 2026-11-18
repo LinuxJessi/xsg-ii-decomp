@@ -1,7 +1,10 @@
 #include "common.h"
 #include "shared.h"
+#include "ov01/tu012.h"
+#include "ov01/tu017.h"
 #include "ov01/tu048.h"
 #include "ov01/tu049.h"
+#include "ov01/tu051.h"
 
 /* GIF packet words are written as doubleword descriptors by the openers and
  * as 32-bit lanes by the vertex writers. Both are the same packet storage. */
@@ -117,25 +120,21 @@ void menuTexFlushDraw(void)
     menuTexFlush();
 }
 
-/* Creates one stat record per unit of the unit table (record pointers in menuStatRecords):
- * origin x = 16 + 167 * created index, y = 12.0, +0x04 the step, +0x08 the draw. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatRecordsCreate);
 
 /* Step of a stat record: eases three displayed floats (+0x98, +0x9C, +0xA0) toward
  * the unit's stat fields (at +0x94 -> +0x144), snapping within 0.5 and clamped. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatGaugeStep);
 
-void menuStatRecordDraw(int, GrPacket *);
+void menuStatRecordDraw(MenuObject *record, GrPacket *packet);
 
-/* Draw callback of a stat record (record + 0x08). `first` is the record pointer
- * passed through an int parameter: menuStatRecordDraw reads its origin at +0x10 and
- * its unit at +0x94. Retyping it needs its owner. */
-void menuStatRecordSubmit(int first)
+/* Draw callback of a stat record (MenuObject.draw): menuStatRecordDraw reads its origin (slide) and its unit. */
+void menuStatRecordSubmit(MenuObject *record)
 {
     GrPacket packet;
 
     grGpInit(&packet);
-    menuStatRecordDraw(first, &packet);
+    menuStatRecordDraw(record, &packet);
     grPacketSend(&packet);
 }
 

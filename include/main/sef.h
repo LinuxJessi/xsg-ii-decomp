@@ -224,6 +224,8 @@ typedef struct SefSlotTable {
 } SefSlotTable;
 
 int loadWaitPending(void);
+void sefReleaseWaitSlot(int key);
+void sefSetGateForId(int owner, int id);
 void xglCdWaitUntilIdle(void);
 
 int sefFlagTest(int mask);
@@ -234,6 +236,7 @@ int sefCountMarkedEntries(SefEffectRecord *record);
 int sefCountOwnerValue(int owner, unsigned short value);
 void sefClearOwnerValueFlags(int owner, unsigned short value, int mask);
 void sefReleaseOwnedRecords(int owner);
+int sefOwnerPairInUse(int owner, int ownerKey);
 void sefPruneHandleSlots(void);
 void sefRegisterHandle(int handle, int value);
 
@@ -248,5 +251,6 @@ typedef struct SefEntryCounts {
 extern SefEntryCounts sefEntryCounts[];
 /* Address of the counter entry entry_index (tu163.c). */
 void *func_00259638(int entry_index);
+void sefExecEffect(void);
 
 #endif /* INCLUDE_MAIN_SEF_H */

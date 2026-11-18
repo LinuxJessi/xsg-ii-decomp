@@ -6,5 +6,6 @@
 int menuPanelRowAlloc(void);
 int menuPanelRowFree(int y);
 void menuTexFlushTaskStart(void);
+void menuPanelRowsReset(void);
 
 #endif /* INCLUDE_OV01_TU049_H */

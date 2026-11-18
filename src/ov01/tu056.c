@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ov01/tu037.h"
 #include "ov01/tu048.h"
+#include "ov01/tu056.h"
 
 /* dataTid2WepSp (already named): searches the 0xC-byte wepSpTbl entries for the technique id in $4. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu056", dataTid2WepSp);

@@ -16,5 +16,6 @@ void dataCountersClear(void);
 void dataVPadModeSet(int mode);
 void dataVPadReset(void);
 void dataVPadSet(int virtualPad);
+void dataObjCreateAtOrigin(void);
 
 #endif /* INCLUDE_OV01_TU022_H */

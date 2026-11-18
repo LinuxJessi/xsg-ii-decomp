@@ -266,16 +266,12 @@ extern struct BattleResultEntry *battleResultEntries;
 extern const unsigned char D_0068B490[];
 extern const char battleResultCountFormat[];
 int sprintf(unsigned char *dst, const char *format, int count, void *unit);
-unsigned char *func_00A9B7D8(int item, int arg);
-unsigned char *func_00A9B8D8(int item, int arg);
-unsigned char *func_00A9B950(int item, int arg);
-unsigned char *func_00A9B9C8(int item, int arg);
 
 /* Draws the entry list: each 16-byte record dispatches by type to a draw helper. */
 void battleResultDrawEntries(int x, int y) {
     unsigned char countText[16];
     int i;
-    unsigned char *itemText;
+    char *itemText;
     int highlighted;
 
     i = 0;
@@ -290,10 +286,10 @@ void battleResultDrawEntries(int x, int y) {
         itemText = 0;
         switch (battleResultEntries[i].category) {
         case 1:
-            itemText = func_00A9B8D8(battleResultEntries[i].id, 0);
+            itemText = hitActionTextGet(battleResultEntries[i].id, 0);
             break;
         case 2:
-            itemText = func_00A9B7D8(battleResultEntries[i].id, 0);
+            itemText = itemTextGet(battleResultEntries[i].id, 0);
             break;
         case 3:
             itemText = func_00A9B9C8(battleResultEntries[i].id, 0);

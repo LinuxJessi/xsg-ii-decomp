@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ov01/tu005.h"
 #include "ov01/tu051.h"
+#include "ov01/tu052.h"
 
 int actStockHasBoost(void);
 void *objSlotAlloc(void);

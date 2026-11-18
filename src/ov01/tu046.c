@@ -3,10 +3,12 @@
  */
 #include "common.h"
 #include "main/sef.h"
+#include "ov01/tu020.h"
 #include "ov01/tu022.h"
 #include "ov01/tu017.h"
 #include "ov01/tu023.h"
 #include "ov01/tu041.h"
+#include "ov01/tu042.h"
 #include "ov01/tu044.h"
 #include "ov01/tu046.h"
 #include "ov01/tu070.h"
@@ -160,19 +162,57 @@ int posDataSet(SbThread *thread)
     return 1;
 }
 
-/* Returns the entry posDataSet stored. */
-int posDataGet(void)
+/* Returns the entry posDataSet stored: the effect position table (effectPosTableSet). */
+struct EffectPosRecord *posDataGet(void)
 {
-    return posDataEntry;
+    return (struct EffectPosRecord *)posDataEntry;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu046", monsTblSet);
+/* The monster table entry monsTblSet selected (the enemy list, an array of spawn records); monsTblGet returns it.
+ * While monsTblSet works it is its cursor over the candidate list, entries {table, value}. */
+extern int *monsTblEntry;
 
-/* Entry monsTblSet selects: the first one whose word is zero; monsTblGet returns it. */
-extern int monsTblEntry;
+/* At most this many candidates in a monster table list (the list ends at an entry whose table word is 0). */
+#define MONS_TBL_CANDIDATES_MAX 1000
+
+/*
+ * Native monsTblSet(list, choice): counts the candidates of global list `list` (entries {table, value}, ended by a
+ * zero table word), takes candidate `choice` (0 when out of range), passes its value to monsTblValueSet and selects
+ * the first entry of its table. Jumps to SB_JUMP_ARGUMENTS without two arguments or candidates.
+ */
+int monsTblSet(SbThread *thread)
+{
+    int count;
+    int choice;
+    int *entry; /* the chosen entry goes through a local before monsTblEntry, as in the original's register use */
+
+    if (VM_PLUGIN_CNT_GET(thread) < 2) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    for (count = 0; count < MONS_TBL_CANDIDATES_MAX; count++) {
+        monsTblEntry = (int *)vmSubEntryGet(thread, vmArgGet(thread, 1), count);
+        if (monsTblEntry[0] == 0) {
+            break;
+        }
+    }
+    if (count <= 0) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    choice = vmArgGet(thread, 2);
+    if (choice >= count) {
+        choice = 0;
+    }
+    entry = (int *)vmSubEntryGet(thread, vmArgGet(thread, 1), choice);
+    monsTblEntry = entry;
+    monsTblValueSet(entry[1]);
+    monsTblEntry = (int *)vmSubEntryGet(thread, monsTblEntry[0], 0);
+    return 1;
+}
 
 /* Returns the monster table entry monsTblSet selected. */
-int monsTblGet(void)
+void *monsTblGet(void)
 {
     return monsTblEntry;
 }
@@ -201,7 +241,6 @@ int cameraSettingGet(void)
     return D_00AE0C28;
 }
 
-void thinkDispatch(StatOwner *unit, int argTwo, int argThree, StatOwner *unitFour);
 
 int thinkSet(SbThread *thread)
 {
@@ -274,7 +313,7 @@ int atkTbl(SbThread *thread)
     unit = unitTblEntryGet(vmArgGet(thread, 1));
     entryIndex = vmArgGet(thread, 2);
     table = vmEntryGet(thread, entryIndex);
-    return func_00A9BF08(unit, table, value);
+    return atkTblBuild(unit, table, value);
 }
 
 
@@ -305,7 +344,6 @@ void *actorGet(SbThread *thread)
     return unitTblEntryGet(vmArgGet(thread, 1))->unit;
 }
 
-int unitParaFieldGet(StatOwner *unit, int argTwo);
 
 int unitParaGet(SbThread *thread)
 {
@@ -321,7 +359,6 @@ int unitParaGet(SbThread *thread)
     return unitParaFieldGet(unit, argTwo);
 }
 
-void unitParaFieldSet(StatOwner *unit, int argTwo, int argThree);
 
 int unitParaSet(SbThread *thread)
 {
@@ -432,7 +469,6 @@ int tecParaGet(SbThread *thread)
     return tecParaFieldGet(argOne, argTwo);
 }
 
-int calcStatGet(StatOwner *unit, int argTwo, int argThree);
 
 int unitStatGet(SbThread *thread)
 {
