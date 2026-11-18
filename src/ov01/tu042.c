@@ -167,7 +167,7 @@ RecordTexts *func_00A9B580(int index)
         return 0;
     }
     table = (unsigned char *)&batTable70Offset - 48 + batTable70Offset;
-    return table + (index - 1) * 4;
+    return (RecordTexts *) (table + (index - 1) * 4);
 }
 
 /* Records of batTable74Offset (entries 1..0x63). */
@@ -180,7 +180,7 @@ TextRecord8 *func_00A9B5B8(int index)
         return 0;
     }
     table = (unsigned char *)&batTable74Offset - 52 + batTable74Offset;
-    return table + (index - 1) * 8;
+    return (TextRecord8 *) (table + (index - 1) * 8);
 }
 
 /* Records of pairLinkTableOffset (entries 1..0x10). */
