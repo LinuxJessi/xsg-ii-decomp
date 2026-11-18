@@ -36,6 +36,10 @@
 #include "ov01/tu036.h"
 #include "ov01/tu038.h"
 #include "ov01/tu054.h"
+#include "ov01/tu059.h"
+#include "ov01/tu060.h"
+#include "ov01/tu061.h"
+#include "ov01/tu062.h"
 #include "ov01/tu066.h"
 #include "ov01/tu067.h"
 #include "ov01/tu068.h"
@@ -487,18 +491,9 @@ int func_00A93288(struct AttackCommand *owner) {
     return unitEffectKeyFree(owner->attacker, status, entry->extent) != 0;
 }
 
-struct Tu033Request {
-    Ov01Object *object;
-    unsigned char unmodeled_04[4];
-    int second;
-    unsigned char unmodeled_0c[0xC];
-    int flags;
-};
-
-
-/* func_00A932E0: forwards a request's object, second word and flags to func_00AA4DB8 (fourth argument 0). */
-void func_00A932E0(int unused_arg0, struct Tu033Request *request) {
-    func_00AA4DB8(request->object, request->second, request->flags, 0);
+/* func_00A932E0: forwards a hit's target, damage and hit mode to func_00AA4DB8 (fourth argument 0). */
+void func_00A932E0(struct AttackCommand *command, struct HitRecord *hit) {
+    func_00AA4DB8(hit->target, hit->damage, hit->hitMode.word, 0);
 }
 
 /* eventQueueNext: the record at the read cursor, or 0 when the queue is drained. */
@@ -888,7 +883,109 @@ int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94260);
+/* HitRecord.hitMode.kind: no hit (no damage, nothing inflicted), and the hits whose effect carries the technique's
+ * actionBits (hit-point damage). */
+#define HIT_KIND_NONE 0
+#define HIT_KIND_PLAIN 1
+/* The flags byte of HitRecord.hitMode (bits 8 to 15): bit 8 taken, bit 9 blocked. */
+#define HIT_FLAG_TAKEN 0x1
+#define HIT_FLAG_BLOCKED 0x2
+/* Bit of the actor's sef entry flags (sefGetEntryFlags) that lets func_00A94260 show the hit panels. */
+#define SEF_ENTRY_SHOW_HIT 0x4
+/* The hit effects func_00A94260 starts on a target: group 0x136, the low key per step state and for a taken hit. */
+#define HIT_EFFECT_GROUP 0x136
+#define HIT_EFFECT_TAKEN 0x11
+#define HIT_EFFECT_STEP1 0x12
+#define HIT_EFFECT_STEP2 0x14
+#define HIT_EFFECT_STEP3 0x13
+
+/*
+ * Shows the hits of a kind-3 attack event (entry) of command: per kind-5 record, once per attack and target, the
+ * stat panels of the hit while the target's sef entry allows it; then, for the attack kinds of func_00A93128, the
+ * target's reaction command, its unit panel (the target cursor's unit) and the hit effects. A jump-effect reaction
+ * is queued only once per target. Returns 1.
+ */
+int func_00A94260(EventQueueEntry *entry, struct AttackCommand *command)
+{
+    struct HitRecord *hit;
+    int hits;
+    int i;
+    int mode;
+    int kind;
+    int flags;
+    int effect;
+
+    hits = entry->data.args.hits;
+    for (i = 0; i < hits; i++) {
+        hit = &eventQueueFindKind5(i)->data.kind5;
+        mode = hit->hitMode.word;
+        kind = mode & 0xFF;
+        flags = (mode >> 8) & 0xFF;
+        if (sefGetEntryFlags((int)hit->target->unit) & SEF_ENTRY_SHOW_HIT) {
+            func_00A932E0(command, hit);
+            menuTimedSeqStart(hit->target);
+            if (!(hit->target->flags & UNIT_FLAG_HIT_PANELS)) {
+                if (kind == HIT_KIND_NONE) {
+                    menuStatPanelNew(MENU_STAT_PANEL_NO_HIT);
+                } else if (flags & HIT_FLAG_BLOCKED) {
+                    menuStatPanelNew(MENU_STAT_PANEL_BLOCKED);
+                }
+                if (flags & HIT_FLAG_TAKEN) {
+                    if (actStepCounterGet()->bonusFlag == 1) {
+                        menuStatPanelNew(MENU_STAT_PANEL_TAKEN_BONUS);
+                    } else {
+                        menuStatPanelNew(MENU_STAT_PANEL_TAKEN);
+                    }
+                }
+                if (hit->backAttack == 1) {
+                    menuStatPanelNew(MENU_STAT_PANEL_BACK_ATTACK);
+                }
+                hit->target->flags |= UNIT_FLAG_HIT_PANELS;
+            }
+        }
+        if (func_00A93128(command->attacker, command->kind) != 0) {
+            if (hit->reaction == UNIT_CMD_JUMP_EFFECT && (hit->target->flags & UNIT_FLAG_HIT_REACTED)) {
+                continue;
+            }
+            unitCmdRequestQueue(&command->attacker, hit);
+            /* Hit kinds 5 and 6 change neither HP nor EP (calcHpDmg): no unit panel or effects. */
+            if (kind != HIT_KIND_NONE && kind != 5 && kind != 6) {
+                if (tgtUnitGet() == hit->target) {
+                    menuIconListAppend(hit->target);
+                }
+                if (!(hit->target->flags & UNIT_FLAG_HIT_REACTED)) {
+                    if (tgtUnitGet() == hit->target) {
+                        menuUnitPanelOpen(hit->target, hit->stepState);
+                        menuTimedSeqStart(hit->target);
+                        func_00AA76F8(actStepCounterGet()->stepState);
+                    }
+                    switch (hit->stepState) {
+                    case 1:
+                        effect = HIT_EFFECT_STEP1;
+                        break;
+                    case 2:
+                        effect = HIT_EFFECT_STEP2;
+                        break;
+                    case 3:
+                        effect = HIT_EFFECT_STEP3;
+                        break;
+                    default:
+                        effect = 0;
+                        break;
+                    }
+                    if (effect != 0 && kind == HIT_KIND_PLAIN) {
+                        unitEffectStart(hit->target, HIT_EFFECT_GROUP, effect);
+                    }
+                    if (flags & HIT_FLAG_TAKEN) {
+                        unitEffectStart(hit->target, HIT_EFFECT_GROUP, HIT_EFFECT_TAKEN);
+                    }
+                }
+            }
+            hit->target->flags |= UNIT_FLAG_HIT_REACTED;
+        }
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94500);
 
@@ -1268,10 +1365,8 @@ void unitTransformBegin(Ov01Object *unit, int action)
     decoFlagsSetAll();
 }
 
-int func_00A94260();
-
 int func_00A95018(EventQueueEntry *entry, struct AttackCommand *owner) {
-    func_00A94260();
+    func_00A94260(entry, owner);
     return func_00A93288(owner);
 }
 
@@ -1398,9 +1493,6 @@ int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec)
 #define EFFECT_HIT_ROW 0xF000
 #define EFFECT_HIT_ROW_SHIFT 12
 #define EFFECT_HIT_ROW_OTHER 3
-
-/* HitRecord.hitMode.kind of the hits whose effect carries the technique's actionBits. */
-#define HIT_KIND_PLAIN 1
 
 /* Starts the effects of a kind-3 attack event: per kind-4 record the technique's effect on the attacker (and its
  * pair partner, gateFlag 1), once per kind-5 record (hit) with that hit's target. A pair technique runs only its

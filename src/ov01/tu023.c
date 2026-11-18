@@ -72,22 +72,6 @@ struct SlotRecord {
 };
 
 
-/*
- * The step counter actStepCounter: step runs 0..3; at step 3 `hold` is a random value of 4 or
- * more. actStepCounterSet draws the multiplier and clears the words from +0xC.
- */
-struct ActStepCounter {
-    int step;                               /* +0x00 */
-    int hold;                               /* +0x04 */
-    int multiplier;                         /* +0x08: 2, 4 or 10; battleResultAdd's rate at phase 2 */
-    union {
-        int cleared0C;                      /* +0x0C: cleared by actStepCounterSet */
-        int levelGranted;                   /* the same word: set once calcAttackDamage has granted the attacker a level */
-    };
-    int bonusFlag;                          /* +0x10: set by calcCritDamage's bonus roll */
-    int stepState;                          /* +0x14: 1 to 3, set by calcHitStateStep and calcHitRowGate */
-};
-
 extern StatBlock battleSlotTable[];
 extern StatBlock battleEntryPoolA[BATTLE_ENTRY_POOL_A_COUNT];
 extern StatBlock battleEntryPoolB[BATTLE_ENTRY_POOL_B_COUNT];
@@ -179,7 +163,6 @@ int battleEffectResolve(StatOwner *command, int index, StatOwner *entity);
 int tgtCmdAccepts(struct AttackCommand *record, StatOwner *value);
 struct BoostGauge *boostGaugeGet(StatOwner *unit);
 int boostGaugeAddProgress(struct BoostGauge *gauge, int amount);
-struct ActStepCounter *actStepCounterGet(void);
 void sdvSpecialBitSet(int index);
 signed char actEntryFlagGet(int index);
 signed char func_00A91B90(int index);

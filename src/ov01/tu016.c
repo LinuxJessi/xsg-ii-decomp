@@ -187,9 +187,9 @@ void unitSlotsClear(Ov01Object *object, int rowKey) {
     }
 }
 
-/* Clears the object's flag bits 0x100 and 0x40000 (no name is known for them yet). */
+/* Clears the object's per-attack hit flags. */
 void func_00A86F20(Ov01Object *object) {
-    object->flags &= ~(0x100 | 0x40000);
+    object->flags &= ~(UNIT_FLAG_HIT_REACTED | UNIT_FLAG_HIT_PANELS);
 }
 
 /* Queues the object's commands for its motion mode: mode 3 queues 29 first,

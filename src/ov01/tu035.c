@@ -395,7 +395,6 @@ int tgtSelectStatusGet(void)
 int unitSidesDiffer(StatOwner *unitA, StatOwner *unitB);
 void battleEntryClearReset(StatOwner *owner);
 void battleStateClearWords(StatOwner *owner);
-void menuUnitPanelOpen(Ov01Object *unit, int mode);
 int unitStateAdvance(StatOwner *owner);
 int unitEntriesAllMarked(StatOwner *owner);
 
