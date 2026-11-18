@@ -128,7 +128,6 @@ extern void battleEntryActivate(Ov01Object *unit, int kind);
 extern void func_00A84880(Ov01Object *object);
 extern void XenoActorSetChannelFlag80(struct XenoActor *actor);
 
-extern void runtimeVecPtrGet(DoublewordVector4 **first, DoublewordVector4 **second);
 
 Ov01Object *unitCreateSide(int kind, int side)
 {
