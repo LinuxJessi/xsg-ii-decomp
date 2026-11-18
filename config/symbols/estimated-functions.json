@@ -3024,7 +3024,7 @@
      1
     ],
     [
-     "func_00A92E30",
+     "attackQueue",
      11087408,
      588,
      1
@@ -3042,7 +3042,7 @@
      1
     ],
     [
-     "func_00A93168",
+     "unitCmdRequestQueue",
      11088232,
      284,
      1
@@ -3120,7 +3120,7 @@
      1
     ],
     [
-     "func_00A93710",
+     "eventUnitCommand",
      11089680,
      376,
      1
@@ -3138,7 +3138,7 @@
      1
     ],
     [
-     "func_00A93B70",
+     "unitsMarkUninvolved",
      11090800,
      380,
      1
@@ -3174,7 +3174,7 @@
      1
     ],
     [
-     "func_00A946C0",
+     "attackSpecialStep",
      11093696,
      1112,
      1
@@ -3192,13 +3192,13 @@
      1
     ],
     [
-     "func_00A94D28",
+     "unitDataBoxDrop",
      11095336,
      388,
      1
     ],
     [
-     "func_00A94EB0",
+     "unitTransformBegin",
      11095728,
      356,
      1
@@ -3222,13 +3222,13 @@
      1
     ],
     [
-     "func_00A95198",
+     "actionTransformSlotGet",
      11096472,
      60,
      1
     ],
     [
-     "func_00A951D8",
+     "tecEffectGroupGet",
      11096536,
      140,
      1
@@ -3264,7 +3264,7 @@
      1
     ],
     [
-     "func_00A95680",
+     "unitStatusAuraUpdate",
      11097728,
      400,
      1
@@ -3300,13 +3300,13 @@
      1
     ],
     [
-     "func_00A95C00",
+     "unitSlotShowHidePart",
      11099136,
      92,
      1
     ],
     [
-     "func_00A95C60",
+     "unitSlotHideShowPart",
      11099232,
      76,
      1
@@ -3390,7 +3390,7 @@
      1
     ],
     [
-     "func_00A968C8",
+     "unitsReviveDown",
      11102408,
      364,
      1
@@ -3450,7 +3450,7 @@
      1
     ],
     [
-     "func_00A97288",
+     "battleEndCheck",
      11104904,
      404,
      1
@@ -3486,7 +3486,7 @@
      1
     ],
     [
-     "func_00A977A0",
+     "tgtSelectStatusUpdate",
      11106208,
      224,
      1
@@ -3498,7 +3498,7 @@
      1
     ],
     [
-     "func_00A97890",
+     "tgtSelectTurnEnd",
      11106448,
      460,
      1
@@ -3516,7 +3516,7 @@
      1
     ],
     [
-     "func_00A97B90",
+     "tgtSelectAuto",
      11107216,
      216,
      1
@@ -3528,13 +3528,13 @@
      1
     ],
     [
-     "func_00A97C78",
+     "tgtSelectManual",
      11107448,
      236,
      1
     ],
     [
-     "func_00A97D68",
+     "choiceMenuOpenItems",
      11107688,
      412,
      1
@@ -3546,13 +3546,13 @@
      1
     ],
     [
-     "func_00A97F40",
+     "itemMenuPick",
      11108160,
      160,
      1
     ],
     [
-     "func_00A97FE0",
+     "choiceMenuOpenTecs",
      11108320,
      412,
      1
@@ -3564,13 +3564,13 @@
      1
     ],
     [
-     "func_00A981B8",
+     "tecMenuPick",
      11108792,
      160,
      1
     ],
     [
-     "func_00A98258",
+     "choiceMenuOpenLevels",
      11108952,
      428,
      1
@@ -3582,13 +3582,13 @@
      1
     ],
     [
-     "func_00A98440",
+     "levelMenuPick",
      11109440,
      160,
      1
     ],
     [
-     "func_00A984E0",
+     "choiceMenuOpenPairs",
      11109600,
      428,
      1
@@ -3600,13 +3600,13 @@
      1
     ],
     [
-     "func_00A986C8",
+     "pairMenuPick",
      11110088,
      160,
      1
     ],
     [
-     "func_00A98768",
+     "choiceMenuOpenPaired",
      11110248,
      444,
      1
@@ -3618,13 +3618,13 @@
      1
     ],
     [
-     "func_00A98960",
+     "pairedMenuPick",
      11110752,
      160,
      1
     ],
     [
-     "func_00A98A00",
+     "choiceMenuOpenTgtIds",
      11110912,
      428,
      1
@@ -3636,7 +3636,7 @@
      1
     ],
     [
-     "func_00A98BE8",
+     "tgtIdMenuPick",
      11111400,
      160,
      1
@@ -3786,7 +3786,7 @@
      1
     ],
     [
-     "func_00A9A100",
+     "ov01SoftResetPressed",
      11116800,
      52,
      1
@@ -3828,7 +3828,7 @@
      1
     ],
     [
-     "func_00A9A2F8",
+     "battleStartBonusApply",
      11117304,
      440,
      1
@@ -3972,7 +3972,7 @@
      1
     ],
     [
-     "func_00A9AF68",
+     "ov01StepBattle",
      11120488,
      152,
      1
@@ -4176,25 +4176,25 @@
      1
     ],
     [
-     "func_00A9B750",
+     "battleLookupTextGet",
      11122512,
      132,
      1
     ],
     [
-     "func_00A9B7D8",
+     "itemTextGet",
      11122648,
      116,
      1
     ],
     [
-     "func_00A9B850",
+     "statusTextGet",
      11122768,
      132,
      1
     ],
     [
-     "func_00A9B8D8",
+     "hitActionTextGet",
      11122904,
      116,
      1
@@ -4212,19 +4212,19 @@
      1
     ],
     [
-     "func_00A9BA40",
+     "pairLinkTextGet",
      11123264,
      116,
      1
     ],
     [
-     "func_00A9BAB8",
+     "calcLevelTextGet",
      11123384,
      116,
      1
     ],
     [
-     "func_00A9BB30",
+     "tgtIdTextGet",
      11123504,
      116,
      1
@@ -4248,7 +4248,7 @@
      1
     ],
     [
-     "func_00A9BCC8",
+     "unitScriptEventSend",
      11123912,
      152,
      1
@@ -4266,7 +4266,7 @@
      1
     ],
     [
-     "func_00A9BF08",
+     "atkTblBuild",
      11124488,
      360,
      1
@@ -4542,7 +4542,7 @@
      1
     ],
     [
-     "func_00A9CEE8",
+     "sbLibraryLink",
      11128552,
      120,
      1

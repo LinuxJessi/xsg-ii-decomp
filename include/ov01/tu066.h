@@ -4,6 +4,7 @@
 /* Functions of src/ov01/tu066.c that other files call. */
 
 void decoFlagsClearAll(void);
+int decoFlagsSetAll(void);
 void decoFlagsClearFirst(void);
 void decoFlagsSetFirst(void);
 

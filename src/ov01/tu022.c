@@ -91,9 +91,7 @@ unsigned short dataPadRead(int port);
 int dataKeyRegister(StatOwner *unit, unsigned short key);
 int dataKeyFind(StatOwner *unit, struct DataKeyEntry **found);
 int dataKeyValueGet(StatOwner *unit, int key);
-void *tgtUnitGet(void);
 int dataKeyCheck(StatOwner *unit, int key, void *tgt);
-void unitLevelAdd(StatOwner *unit, int amount);
 
 int dataKeyInputStep(StatOwner *unit)
 {
@@ -424,20 +422,16 @@ int menuWepSpPanelUpdate(StatOwner *unit)
     return slotKey;
 }
 
-int slotCodeTest(StatOwner *unit, int index);
 int dataBoxChkCategory1(int index);
 int effectPosCountFree(StatOwner *unit);
 int battleMaskWordsUnmatched(StatOwner *unit, void *out);
-int calcKeyBandRecords(StatOwner *unit, void *out);
-int calcKeyPairRecords(StatOwner *unit, void *out);
-int slotFlagCollect(StatOwner *unit, void *out);
 int calcCfEventKeyTest(StatOwner *unit);
 
 
 /* Key test of the slot menu: keys 11 to 19 each pick one check; key 11 always passes. */
 int dataSlotKeyTest(StatOwner *unit, int key)
 {
-    unsigned char scratch[112];
+    int scratch[28];
     int count;
     int i;
 
@@ -472,7 +466,7 @@ int dataSlotKeyTest(StatOwner *unit, int key)
         }
         break;
     case 14:
-        if (calcKeyPairRecords(unit, scratch + 32) > 0) {
+        if (calcKeyPairRecords(unit, scratch + 8) > 0) {
             return 1;
         }
         break;

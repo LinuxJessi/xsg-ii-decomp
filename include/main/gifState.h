@@ -101,5 +101,7 @@ void gifStateSetFbp(int fbp);
 void gifStateSetBlur(int blur);
 void gifStateBuildBreakShards(GifBreakShard *shards, GifBreakPoint *points);
 void gifBreakShardUpdate(GifBreakShard *shard, f32 ratio);
+int gifStateEffectReady(void);
+void gifStateDisableEffect(void);
 
 #endif /* INCLUDE_MAIN_GIFSTATE_H */

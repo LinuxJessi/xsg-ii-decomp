@@ -8,5 +8,7 @@ struct TiWindWorld;
 void tiWindApplyAll(void *first_input, void *second_input);
 void tiWindSolveCellPairs(struct TiWindWorld *world);
 void tiWindPointSetEnabled(unsigned int index, int enabled);
+void tiWindClearTables(void);
+void tiWindAdvanceAll(void);
 
 #endif /* INCLUDE_MAIN_TIWINDBASE_H */

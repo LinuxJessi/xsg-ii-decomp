@@ -5,6 +5,7 @@
 #include "shared.h"
 #include "ov01/tu001.h"
 #include "ov01/tu067.h"
+#include "ov01/tu068.h"
 
 /*
  * Partial layout of the task ov01TaskClaim returns (the same task as tu067's

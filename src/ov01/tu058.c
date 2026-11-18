@@ -12,6 +12,7 @@
 INCLUDE_ASM("asm/nonmatchings/ov01/tu058", menuUnitPanelNew);
 
 #include "shared.h"
+#include "ov01/tu058.h"
 
 /*
  * The unit status panel record. Only the evidenced fields are modeled: the

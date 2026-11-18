@@ -3,6 +3,7 @@
  */
 #include "common.h"
 #include "main/tu022.h"
+#include "main/tu156.h"
 #include "main/xgl_2.h"
 #include "main/tu063.h"
 #include "main/tu077.h"
@@ -23,6 +24,7 @@
 #include "ov01/tu042.h"
 #include "ov01/tu044.h"
 #include "ov01/tu046.h"
+#include "ov01/tu047.h"
 #include "ov01/tu054.h"
 #include "ov01/tu066.h"
 #include "ov01/tu071.h"
@@ -179,8 +181,6 @@ int setMoveCmd(SbThread *call)
 
 void xglLightSetDefault(XglLightSet *lightSet);
 void pxySetDefaultLight(XglLightSet *light);
-void func_00253048(XglLightSet *lights);
-LightBlocks *lightBlockGet(void);
 
 /* Native initLight: makes the light block the default light set of xgl, the pxy models and tu156. The block is
  * the 0x180-byte light set the battle actors copy as LightBlocks (unitCreateSide, unitTblBodySetLight). */
@@ -526,7 +526,6 @@ void runEffGet(int *first, int *second)
     *second = D_00AE0C30;
 }
 
-void decoFlagsSetAll(void);
 
 int decoDisp(SbThread *call)
 {
@@ -614,14 +613,14 @@ int objx(SbThread *call)
 int streamPlay(SbThread *call)
 {
     int streamId;
-    int streamHandle;
+    const char *streamHandle;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
         sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     streamId = vmArgGet(call, 1);
-    streamHandle = vmKeyedEntryGet(call, streamId);
+    streamHandle = (const char *)vmKeyedEntryGet(call, streamId);
     soundSlotReopen(1);
     streamSetLevel(1);
     streamSlotSetFile(1, streamHandle);

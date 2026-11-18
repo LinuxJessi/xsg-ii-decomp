@@ -18,6 +18,7 @@
 #include "main/pad_raw.h"
 #include "main/tu093.h"
 #include "main/tu048.h"
+#include "ov01/tu042.h"
 
 /* Script strings of the text draw commands (0x0068A3F0, .rodata, 80 bytes with zero fill). */
 const char D_0068A3F0[80] = "$init;$bg2;$shadow+1,+3,000000;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
@@ -611,10 +612,6 @@ void menuSkillModelTailLoad(void) {
 int msgRangeSetText();
 int selectionBlockTestBit();
 int selectionEntryBitOutsideMask(int group, int slot, int sub, int mask);
-char *func_00A9B8D8();
-char *func_00A9B9C8();
-char *func_00A9B750();
-char *func_00A9B7D8();
 extern u8 D_0069D518;
 extern char *menuTutorialLine;
 extern unsigned char D_006A52E0[];
@@ -686,7 +683,7 @@ void menuMessageTextUpdate(void) {
                 }
             } else {
                 if (D_006A5150[0].capacity != 0) {
-                    nextText = func_00A9B8D8(selectionWindowList[D_006A5150[0].cursor], 1);
+                    nextText = hitActionTextGet(selectionWindowList[D_006A5150[0].cursor], 1);
                 } else {
                     nextText = menuMainTxdEntry(402);
                 }
@@ -712,7 +709,7 @@ void menuMessageTextUpdate(void) {
             break;
         case 2: {
             if (D_006A5180[0].capacity != 0) {
-                nextText = func_00A9B750(D_0069E238[D_006A5180[0].cursor], 1);
+                nextText = battleLookupTextGet(D_0069E238[D_006A5180[0].cursor], 1);
             } else {
                 nextText = menuMainTxdEntry(411);
             }
@@ -769,7 +766,7 @@ void menuMessageTextUpdate(void) {
 
                 if ((cursorWords[4] & 1) != 0) {
                     if (D_0069D4E0 != 0) {
-                        nextText = func_00A9B7D8(ptGetMenuMember()->buffer->items[cursorWords[0]], 1);
+                        nextText = itemTextGet(ptGetMenuMember()->buffer->items[cursorWords[0]], 1);
                     } else {
                         entry = ptGetMenuMember()->buffer->items[cursorWords[0]];
                         if (selectionEntryBitOutsideMask(entry >> 5 & 3, entry >> 2 & 7, entry & 3, D_0069D508) != 0) {
@@ -781,7 +778,7 @@ void menuMessageTextUpdate(void) {
                 } else if (D_0069D4E0 != 0) {
                     if (D_006A4928[0].cursor == 0) {
                         if (selectionPlainCount != 0) {
-                            nextText = func_00A9B7D8(selectionPlainList[D_006A51C8[0].cursor], 1);
+                            nextText = itemTextGet(selectionPlainList[D_006A51C8[0].cursor], 1);
                         } else {
                             nextText = menuMainTxdEntry(434);
                         }

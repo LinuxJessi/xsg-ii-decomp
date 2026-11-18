@@ -40,6 +40,16 @@ struct DataMotionFile {
     unsigned char unmodeled_0C[0xC];
 };
 
+/* The entry block: the model entry files from +0x08 (pxy, txy, xhr, epf), the motion records at +0x38 and
+ * alt_index at +0x50. */
+struct DataEntry {
+    struct DataFileHead head;
+    struct DataModelFiles model;
+    struct DataFileRecord motions[2];
+    int alt_index;
+    unsigned char unmodeled_54[0x14];
+};
+
 /* The voice files of a slot at +0x130: the prj record (loaded_index is the voice) and the vsf record. */
 struct DataSlot {
     struct DataFileHead head;
@@ -54,6 +64,7 @@ struct DataSlot {
 void dataBatDatLoad(void);
 void dataBattleSeLoad(void);
 void dataBattleSeRelease(void);
+char *dataBattleActionPathGet(int kind, int mode);
 void dataFaceFileLoad(void);
 void dataSlotUnload(struct DataSlot *slot);
 int dataStatBufGet(void);
@@ -65,5 +76,9 @@ int unitEffectSlotAcquire(int key);
  * and dataSlotReset calls it without an argument, so the declaration has no parameter list. */
 struct DataSlot *dataUnitLoad(int id);
 struct DataSlot *dataSlotFind();
+/* The model entry of a table index and the motion entry of a table index, motion and suffix. */
+struct DataEntry *dataModelEntryLoad(int table_index);
+struct DataEntry *dataMotEntryLoad(int table_index, int index, int suffix_index);
+void dataFileInit(void);
 
 #endif /* INCLUDE_OV01_TU008_H */

@@ -11,6 +11,7 @@
 #include "ov01/tu033.h"
 #include "ov01/tu036.h"
 #include "ov01/tu042.h"
+#include "ov01/tu071.h"
 
 /* keyHigh of the high modes (mode 16 and up): unitActionKey uses 320, unitMoveKey uses 330. */
 #define ACTION_KEY_BASE 320
@@ -18,12 +19,13 @@
 
 void unitRunCommands(Ov01Object *object);
 
-/* Per-frame step: clears flag 0x20000, runs the command queue, copies the unit's snapshot into the pose, then calls func_00A95680. */
+/* Per-frame step: clears flag 0x20000, runs the command queue, copies the unit's snapshot into the pose, then calls
+ * unitStatusAuraUpdate. */
 void unitUpdate(Ov01Object *object) {
     object->flags &= ~0x00020000u;
     unitRunCommands(object);
     object->pose.snapshot.vector = object->unit->position;
-    func_00A95680(object);
+    unitStatusAuraUpdate(object);
 }
 
 void func_00A84880(void) {
@@ -191,12 +193,13 @@ int unitIsDone(Ov01Object *object) {
 
 int sefNoOwnerFlaggedRecords(int key);
 
-/* The key is keyHigh << 12 | keyLow; the unused first argument is kept for the calling convention. */
-int unitEffectKeyFree(int unused, int keyHigh, int keyLow) {
+/* The key is keyHigh << 12 | keyLow; the unit is not read. */
+int unitEffectKeyFree(Ov01Object *unit, int keyHigh, int keyLow) {
     return sefNoOwnerFlaggedRecords((keyHigh << 0xC) | keyLow) != 0;
 }
 
 #include "ov01/tu041.h"
+#include "ov01/tu054.h"
 
 /* Loads the snapshot vector from the table entry for id (three ints divided by 100) and records id in the motion. */
 void unitLoadSnapshot(Ov01Object *object, int id) {
@@ -471,7 +474,6 @@ int seVoiceStartTagged(int tag, int id);
 int calcStatEffectSum(Ov01Object *object, int effectMask, int statMask);
 void calcEpAdjust(Ov01Object *object, int amount);
 void calcHpAdjust(Ov01Object *object, int amount);
-void func_00AA4DB8(Ov01Object *object, int amount, int kind, int sign);
 void unitLevelAdd(Ov01Object *object, int level);
 void unitCurrentAdd(Ov01Object *object, int amount);
 int unitHasEffectCode(Ov01Object *object, int code);
@@ -593,7 +595,6 @@ int unitCmdAction(Ov01Object *object, Ov01Command *command) {
 }
 
 int func_001EDCA0(void);
-void streamPlayByKey(void *owner, int mode);
 
 int unitCmdPlayVoice(Ov01Object *object, Ov01Command *step) {
     tecRecordGet(step->code);
