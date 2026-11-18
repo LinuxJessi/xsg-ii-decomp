@@ -250,6 +250,7 @@
  *   Vu0ApplyMatrix33XYZ(d, m, v)    d.xyz = m (3x3) * v.xyz, d.w = v.w
  *   Vu0ApplyMatrix2XYZ(d, a, b, v)  d.xyz = b * (a * (v.xyz, 1)), d.w = v.w
  *   Vu0UnitMatrix(d)                m = identity
+ *   Vu0CopyUnitMatrix(d, s)         m = the identity table at s, row 3 from vf0
  *   Vu0SetOrigin(d)                 v = (0, 0, 0, 1)
  *   Vu0MMathCopyPoint(d, v)         d = (v.xyz, 1) through vf1 (MMathEvalHermiteKeys)
  */
@@ -320,6 +321,21 @@
         "sqc2 vf3, 0(%0)\n" \
         : \
         : "r" (destination) \
+        : "memory")
+
+/* destination = the matrix at source (an identity table such as MMathUnitMatrix): rows 0-2 loaded into vf3..vf1,
+ * row 3 stored from vf0 (0, 0, 0, 1). */
+#define Vu0CopyUnitMatrix(destination, source) \
+    __asm__ __volatile__( \
+        "lqc2 vf1, 32(%1)\n" \
+        "lqc2 vf2, 16(%1)\n" \
+        "lqc2 vf3, 0(%1)\n" \
+        "sqc2 vf0, 48(%0)\n" \
+        "sqc2 vf1, 32(%0)\n" \
+        "sqc2 vf2, 16(%0)\n" \
+        "sqc2 vf3, 0(%0)\n" \
+        : \
+        : "r" (destination), "r" (source) \
         : "memory")
 
 /* The current matrix (vf26-vf29, as the vu0* rotation functions of tu152/tu153 keep it) = identity: rows 0-2

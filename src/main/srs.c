@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/sef.h"
+#include "main/sm_initilize.h"
 #include "main/srs.h"
 #include "main/sv_get_image_item.h"
 #include "main/xgl_cd.h"
@@ -482,8 +483,6 @@ void srsResetKeyTable(void)
 #define SRS_SLOT_BUFFER_SIZE 0x1C000 /* buffer of a wait-slot record */
 #define SRS_BLOCK_BUFFER_SIZE 0x10000 /* buffer srsLoadEffectBlock gives wait slot 0 */
 
-/* Defined as void smAlloc(int) in sm_initilize.c; the allocation comes back in $v0. */
-void *smAlloc(int size);
 extern const char srsEspCfdefPath[];
 extern const char srsEspDefaultPath[];
 

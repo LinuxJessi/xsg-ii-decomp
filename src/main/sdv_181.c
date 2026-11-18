@@ -1195,24 +1195,8 @@ extern AlignedVector4 sdvOriginPoint;
 extern const Matrix4 MMathUnitMatrix;
 Matrix4 *sefGetPoint(Vector4 *destination, Vector4 *offset, int kind);
 
-/* Loads MMathUnitMatrix into destination: rows 0..2 through vf3..vf1, row 3 stored from vf0 (0, 0, 0, 1). */
-static inline void sdvLoadUnitMatrix(Matrix4 *destination)
-{
-    __asm__ __volatile__(
-        "lqc2 vf1, 32(%1)\n"
-        "lqc2 vf2, 16(%1)\n"
-        "lqc2 vf3, 0(%1)\n"
-        "sqc2 vf0, 48(%0)\n"
-        "sqc2 vf1, 32(%0)\n"
-        "sqc2 vf2, 16(%0)\n"
-        "sqc2 vf3, 0(%0)\n"
-        :
-        : "r" (destination), "r" (&MMathUnitMatrix)
-        : "memory");
-}
-
-/* One step of a key interpolation: from + (to - from) * t / 256, rounded; from itself when both are equal. */
-#define SDV_LERP(from, to, t) ((to) == (from) ? (from) : ((((to) - (from)) * (t) + 0x80) >> 8) + (from))
+/* One step of a key interpolation: from + (to - from) * blend / 256, rounded; from itself when both are equal. */
+#define SDV_LERP(from, to, blend) ((to) == (from) ? (from) : ((((to) - (from)) * (blend) + 0x80) >> 8) + (from))
 
 /* The SdvSpecialWork.flags of a table: bits 0-3 are modes bits 0-3 ORed with bits 4-7, bits 4-7 are modes bits 8-11. */
 static inline int sdvSpecialFlags(short modes)
@@ -1234,7 +1218,7 @@ void sdvExecSpecial(SdvSpecial *special, int base)
     Matrix4 *matrix;
     unsigned int step;
     int kind;
-    int t;
+    int blend;
     int i;
     int j;
     short *fromSize;
@@ -1263,7 +1247,7 @@ void sdvExecSpecial(SdvSpecial *special, int base)
                         QuadwordCopyMatrixT0(record->matrix, matrix);
                     } else {
                         record->clip = 0;
-                        sdvLoadUnitMatrix(&record->matrix);
+                        Vu0CopyUnitMatrix(&record->matrix, &MMathUnitMatrix);
                     }
                 }
                 break;
@@ -1301,17 +1285,19 @@ void sdvExecSpecial(SdvSpecial *special, int base)
                 record->key = *key;
                 record->decreaseWait = 1;
             } else if (key->frame != next->frame) {
-                t = ((record->frame - key->frame) << 8) / (next->frame - key->frame);
-                record->key.depth = SDV_LERP(key->depth, next->depth, t);
-                record->key.color[0] = SDV_LERP(key->color[0], next->color[0], t);
-                record->key.color[1] = SDV_LERP(key->color[1], next->color[1], t);
-                record->key.color[2] = SDV_LERP(key->color[2], next->color[2], t);
-                record->key.color[3] = SDV_LERP(key->color[3], next->color[3], t);
-                record->key.x = SDV_LERP(key->x, next->x, t);
-                record->key.y = SDV_LERP(key->y, next->y, t);
+                blend = ((record->frame - key->frame) << 8) / (next->frame - key->frame);
+                record->key.depth = SDV_LERP(key->depth, next->depth, blend);
+                record->key.color[0] = SDV_LERP(key->color[0], next->color[0], blend);
+                record->key.color[1] = SDV_LERP(key->color[1], next->color[1], blend);
+                record->key.color[2] = SDV_LERP(key->color[2], next->color[2], blend);
+                record->key.color[3] = SDV_LERP(key->color[3], next->color[3], blend);
+                record->key.x = SDV_LERP(key->x, next->x, blend);
+                record->key.y = SDV_LERP(key->y, next->y, blend);
                 /* z moves toward the next key's intensity (as the original does) once the two z differ. */
-                record->key.z = next->z == key->z ? key->z : (((next->intensity - key->z) * t + 0x80) >> 8) + key->z;
-                record->key.intensity = SDV_LERP(key->intensity, next->intensity, t);
+                record->key.z = next->z == key->z
+                    ? key->z
+                    : (((next->intensity - key->z) * blend + 0x80) >> 8) + key->z;
+                record->key.intensity = SDV_LERP(key->intensity, next->intensity, blend);
                 record->key.decrease = key->decrease;
                 if (record->decreaseWait < 0) {
                     record->decreaseWait = 1;
@@ -1321,11 +1307,11 @@ void sdvExecSpecial(SdvSpecial *special, int base)
                     toSize = &next->width;
                     size = &record->key.width;
                     for (j = 0; j < 4; j++) {
-                        size[j] = SDV_LERP(fromSize[j], toSize[j], t);
+                        size[j] = SDV_LERP(fromSize[j], toSize[j], blend);
                     }
                 } else {
-                    record->key.width = SDV_LERP(key->width, next->width, t);
-                    record->key.height = SDV_LERP(key->height, next->height, t);
+                    record->key.width = SDV_LERP(key->width, next->width, blend);
+                    record->key.height = SDV_LERP(key->height, next->height, blend);
                 }
             }
         }
@@ -1593,11 +1579,11 @@ void sdvDrawSpecial(SdvSpecial *special)
             }
             break;
         /* kinds 10-14: screen effects, handed to gifState (kind 10 + mode) */
-        case 10:
-        case 11:
-        case 12:
-        case 13:
-        case 14: {
+        case SDV_SPECIAL_KIND_SCREEN:
+        case SDV_SPECIAL_KIND_SCREEN + 1:
+        case SDV_SPECIAL_KIND_SCREEN + 2:
+        case SDV_SPECIAL_KIND_SCREEN + 3:
+        case SDV_SPECIAL_KIND_SCREEN + 4: {
             unsigned char modeSet;
             float *vector = scale.f;
 
@@ -1613,7 +1599,7 @@ void sdvDrawSpecial(SdvSpecial *special)
                 record->decreaseWait = 0;
             }
             if (modeSet == 0) {
-                gifStateSetMode(kind - 10);
+                gifStateSetMode(kind - SDV_SPECIAL_KIND_SCREEN);
                 record->flags |= SDV_FLAG_MODE_SET;
             }
             if (sdvTransOffset(screen, offset, record->table->part, key->depth, vector, argument, 0) == 0) {
