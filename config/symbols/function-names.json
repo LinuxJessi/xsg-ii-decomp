@@ -3355,6 +3355,7 @@
    "0x00a99d50": "tgtUnitGet",
    "0x00a99d70": "tgtUnitSet",
    "0x00a9a100": "ov01SoftResetPressed",
+   "0x00a9a2f8": "battleStartBonusApply",
    "0x00a9b3b8": "tecRecordGet",
    "0x00a9b418": "effectIdListGet",
    "0x00a9b450": "slotPairRowGet",

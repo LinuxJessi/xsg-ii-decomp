@@ -5,7 +5,7 @@
 
 int ov01SceneFrameCount(void);
 void ov01SceneRelease(void);
-void func_00A9A2F8(void);
+void battleStartBonusApply(void);
 struct Ov01Object *unitSelectPlTarget(struct Ov01Object *keep);
 
 #endif /* INCLUDE_OV01_TU037_H */

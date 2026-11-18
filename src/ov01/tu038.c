@@ -438,7 +438,7 @@ void ov01StepNextEnemy(int context)
     menuPanelCreate();
     menuTgtStatusNew();
     dataObjCreateAtOrigin();
-    func_00A9A2F8();
+    battleStartBonusApply();
     bgmPlayTrack(bgmIndexGet());
     speaker = unitSelectPlTarget(0);
     if (speaker != 0) {

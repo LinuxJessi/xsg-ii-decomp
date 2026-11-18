@@ -224,10 +224,9 @@ StatOwner *unitSelectPlTarget(StatOwner *keep)
     return picked[idx];
 }
 
-/* Once-per-battle setup of the unit state; still unidentified (see the naming notes). */
 void *memset(void *destination, int value, unsigned int size);
 
-/* cfEvent bits of the battle start bonuses func_00A9A2F8 grants. */
+/* cfEvent bits of the battle start bonuses battleStartBonusApply grants. */
 #define CF_EVENT_BOOST_BONUS 0x1
 #define CF_EVENT_PARTY_BONUS 0x2
 /* Effect group of the battle start bonus effect; its record is 1 (boost), 2 (party) or 3 (both). */
@@ -238,7 +237,7 @@ void *memset(void *destination, int value, unsigned int size);
  * CF_EVENT_PARTY_BONUS raises the party units (units with key 11..15 get 100 or 200 current, the others 1..2
  * levels). With any bonus every unit's unitValue is cleared and the bonus effect starts.
  */
-void func_00A9A2F8(void)
+void battleStartBonusApply(void)
 {
     struct EffectRequest request;
     Ov01Object **units;

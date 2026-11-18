@@ -2275,7 +2275,7 @@
       "asm/nonmatchings/ov01/tu037/ov01SceneFrameCount.s",
       "asm/nonmatchings/ov01/tu037/ov01SceneIsDone.s",
       "asm/nonmatchings/ov01/tu037/unitSelectPlTarget.s",
-      "asm/nonmatchings/ov01/tu037/func_00A9A2F8.s"
+      "asm/nonmatchings/ov01/tu037/battleStartBonusApply.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
