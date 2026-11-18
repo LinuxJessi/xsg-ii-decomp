@@ -3343,6 +3343,8 @@
    "0x00a95c00": "unitSlotShowHidePart",
    "0x00a95c60": "unitSlotHideShowPart",
    "0x00a968c8": "unitsReviveDown",
+   "0x00a96aa8": "eventPairBegin",
+   "0x00a96e38": "eventPairEnd",
    "0x00a97288": "battleEndCheck",
    "0x00a97d68": "choiceMenuOpenItems",
    "0x00a97f40": "itemMenuPick",

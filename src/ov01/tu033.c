@@ -84,8 +84,8 @@ enum {
     EVENT_KIND_LOADS_IDLE = 7,          /* ov01LoadsIdle */
     EVENT_KIND_STREAM_OPEN = 14,        /* ov01StreamOpen */
     EVENT_KIND_STREAM_BIND = 15,        /* ov01StreamBind */
-    EVENT_KIND_PAIR_BEGIN = 16,         /* func_00A96AA8: unbinds the pair and hides its monster slots */
-    EVENT_KIND_PAIR_END = 17,           /* func_00A96E38: shows and releases the monster slots again */
+    EVENT_KIND_PAIR_BEGIN = 16,         /* eventPairBegin: unbinds the pair and hides its monster slots */
+    EVENT_KIND_PAIR_END = 17,           /* eventPairEnd: shows and releases the monster slots again */
     EVENT_KIND_STOCK_BEGIN = 18,        /* func_00A97110 */
     EVENT_KIND_STOCK_BOOST_CLEAR = 19   /* eventActStockBoostClear */
 };
@@ -1846,8 +1846,8 @@ int ov01StreamBind(void)
 /*
  * The pair technique events place three units: the commanding unit (args unit), its partner (args target) and the
  * unit's partner object. Index 0 is the unit, 1 the partner, 2 the partner object: pairEventPos holds the spots
- * func_00A96AA8 moves them to, pairSavedPos and pairSavedAngle the positions and facing angles it replaced, which
- * func_00A96E38 puts back.
+ * eventPairBegin moves them to, pairSavedPos and pairSavedAngle the positions and facing angles it replaced, which
+ * eventPairEnd puts back.
  */
 extern DoublewordAlignedVector4 pairEventPos[3];
 extern DoublewordAlignedVector4 pairSavedPos[3];
@@ -1874,7 +1874,7 @@ extern float pairSavedAngle[3];
  * The positions are copied with __builtin_memcpy: a struct assignment from an array element moves the vector with
  * ldl/ldr, and its stores keep the partner object's stats load from staying after them.
  */
-int func_00A96AA8(EventQueueEntry *entry)
+int eventPairBegin(EventQueueEntry *entry)
 {
     struct MonsSlot **slots;
     Ov01Object **units;
@@ -1971,12 +1971,12 @@ void unitValueRefresh(Ov01Object *object);
  * EVENT_KIND_PAIR_END handler. Step 0 binds the partner and the unit again (pausing slot 0 of the PAIR_SLOT_UNIT_KEY
  * unit for the pair techniques PAIR_SLOT_PAIR_A and PAIR_SLOT_PAIR_B) and the unit's partner object unless the
  * technique has TEC_TARGET_ALL, hides the stream slot and starts the screen flash (returns 0). Step 1 counts
- * ATTACK_FILL_FRAMES calls and falls through into step 2 on every call, as in func_00A96AA8. Step 2 puts the saved
+ * ATTACK_FILL_FRAMES calls and falls through into step 2 on every call, as in eventPairBegin. Step 2 puts the saved
  * positions and angles back, unbinds every unit, releases the stream slot, shows the first monster slot, refreshes
  * the partner's value, clears the second stock boost, sets the default sef gate, clears the deco flags, sends the
  * pair end script event for the unit and returns 1.
  */
-int func_00A96E38(EventQueueEntry *entry)
+int eventPairEnd(EventQueueEntry *entry)
 {
     UnitScriptEvent event;
     Ov01Object **units;

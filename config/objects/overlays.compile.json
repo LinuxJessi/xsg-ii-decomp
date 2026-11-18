@@ -1981,8 +1981,8 @@
       "asm/nonmatchings/ov01/tu033/unitsReviveDown.s",
       "asm/nonmatchings/ov01/tu033/ov01StreamOpen.s",
       "asm/nonmatchings/ov01/tu033/ov01StreamBind.s",
-      "asm/nonmatchings/ov01/tu033/func_00A96AA8.s",
-      "asm/nonmatchings/ov01/tu033/func_00A96E38.s"
+      "asm/nonmatchings/ov01/tu033/eventPairBegin.s",
+      "asm/nonmatchings/ov01/tu033/eventPairEnd.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
