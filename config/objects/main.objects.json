@@ -86780,7 +86780,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 5,
+    "of": 6,
     "migration_hints": [],
     "records": []
    },
@@ -86829,6 +86829,15 @@
      "va": "0x002747f0",
      "name_basis": "address",
      "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "wrapIntRange",
+     "size": 40,
+     "splat_name": "wrapIntRange",
+     "va": "0x00274808",
+     "name_basis": "address",
+     "provenance": "estimated"
     }
    ],
    "owners": {
@@ -86863,13 +86872,13 @@
    },
    "text": {
     "start": "0x00274738",
-    "end": "0x00274808",
-    "code_end": "0x00274808",
-    "size": 208,
+    "end": "0x00274830",
+    "code_end": "0x00274830",
+    "size": 248,
     "splat": "c",
     "splat_range": [
      "0x00274738",
-     "0x00274808"
+     "0x00274830"
     ],
     "note": null
    },
@@ -86938,20 +86947,11 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 32,
+    "of": 31,
     "migration_hints": [],
     "records": []
    },
    "functions": [
-    {
-     "binding": "GLOBAL",
-     "name": "wrapIntRange",
-     "size": 40,
-     "splat_name": "wrapIntRange",
-     "va": "0x00274808",
-     "name_basis": "address",
-     "provenance": "estimated"
-    },
     {
      "binding": "GLOBAL",
      "name": "xglIsInRange",
@@ -87338,13 +87338,13 @@
     }
    },
    "text": {
-    "start": "0x00274808",
+    "start": "0x00274830",
     "end": "0x00277720",
     "code_end": "0x0027771c",
-    "size": 12056,
+    "size": 12016,
     "splat": "c",
     "splat_range": [
-     "0x00274808",
+     "0x00274830",
      "0x00277720"
     ],
     "note": null

@@ -1,23 +1,10 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu206.h"
 #include "vu0_macro.h"
 #include "gs.h"
 #include "main/tu207.h"
 #include "main/xgl_2.h"
-
-/* Wraps value once into lower..upper: one period (upper - lower + 1) down when above upper, one up when below lower. */
-int wrapIntRange(int value, int lower, int upper)
-{
-    int period = upper - lower + 1;
-
-    if (upper < value) {
-        value -= period;
-    }
-    if (value < lower) {
-        value += period;
-    }
-    return value;
-}
 
 /* Inclusive range test: lower <= value <= upper. */
 int xglIsInRange(int value, int lower, int upper)
@@ -1154,10 +1141,6 @@ int recordPulseColor(void)
 /* At stage 2, while updates are not suspended, steps the angle recordAngle by 92 and wraps it into 0..360. */
 void recordStepAngle(int stage)
 {
-    /* Block-scope declaration, a codegen device: with only the definition above in scope, fd.sh recordStepAngle
-       gives bne $4,$2 where the original has bnel at 0x275EB4 (17/18 in place); with it, 18/18. */
-    int wrapIntRange(int value, int lower, int upper);
-
     if (recordUpdatePaused.paused == 0 && stage == 2) {
         recordAngle += 0x5C;
         recordAngle = wrapIntRange(recordAngle, 0, 0x168);
