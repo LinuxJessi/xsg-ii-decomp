@@ -136,9 +136,9 @@ void *smAllocFromPool(u32 size, SmCell *first_cell, int total_units, int find_on
   return result;
 }
 
-void smAlloc(int size)
+void *smAlloc(int size)
 {
-  smAllocFromPool((size + 0x7FF) & ~0x7FF, smPool.first_cell, smPool.total_units, 0);
+  return smAllocFromPool((size + 0x7FF) & ~0x7FF, smPool.first_cell, smPool.total_units, 0);
 }
 
 void smFindFree(int size)

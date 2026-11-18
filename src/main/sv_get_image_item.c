@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "main/sv_get_image_item.h"
 #include "main/srs.h"
+#include "main/sm_initilize.h"
 #include "vu0_macro.h"
 #include "gs.h"
 
@@ -1318,7 +1319,6 @@ void srsReleaseOtherOwnerEffectSlots(void)
     }
 }
 
-void *smAlloc(int size);
 void *GameResBufferAlloc(int size);
 void loadWaitAdd(int id, int slot);
 int sefCanonicalEffectId(int effectId);

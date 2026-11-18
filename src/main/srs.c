@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/sef.h"
+#include "main/sm_initilize.h"
 #include "main/srs.h"
 #include "main/sv_get_image_item.h"
 #include "main/xgl_cd.h"
@@ -480,9 +481,8 @@ void srsResetKeyTable(void)
 #define SRS_ESP_PACKAGE_INDEX 999
 #define SRS_ESP_PACKAGE_SUB 500
 #define SRS_SLOT_BUFFER_SIZE 0x1C000 /* buffer of a wait-slot record */
+#define SRS_BLOCK_BUFFER_SIZE 0x10000 /* buffer srsLoadEffectBlock gives wait slot 0 */
 
-/* Defined as void smAlloc(int) in sm_initilize.c; the allocation comes back in $v0. */
-void *smAlloc(int size);
 extern const char srsEspCfdefPath[];
 extern const char srsEspDefaultPath[];
 
@@ -694,5 +694,45 @@ void srsLoadPendingEffects(SefSlotTable *slotTable)
     }
 }
 
-/* Loads the .esp package of effectKey (its low 10 bits dropped) into wait slot 0 (record 1, image mapper 1). */
-INCLUDE_ASM("asm/main/nonmatchings/srs", srsLoadEffectBlock);
+void sefReleaseRecordsByQuery(void);
+
+/* Loads the .esp package of effectKey (its low 10 bits dropped) into wait slot
+ * 0 (record 1, image mapper 1), allocating its 0x10000-byte buffer on first
+ * use. When the slot already holds the same key, only its image mapper is
+ * registered again. Returns -1 without a buffer, else 1. */
+int srsLoadEffectBlock(int effectKey)
+{
+    int key = effectKey & ~0x3FF;
+    void *buffer = srsRecordTable.waitSlots[0].handle;
+    int result = -1;
+    char *name;
+    int size;
+
+    if (buffer != 0 && srsRecordTable.waitSlots[0].key == key) {
+        svDeleteImageMapper(1);
+        srsRecordTable.waitSlots[0].busy = 1;
+        srsMapPendingResources();
+        return 1;
+    }
+    if (buffer == 0) {
+        srsRecordTable.waitSlots[0].handle = smAlloc(SRS_BLOCK_BUFFER_SIZE);
+    } else {
+        svDeleteImageMapper(1);
+        memset(&srsRecordTable.waitSlots[0], 0, sizeof(SrsRecord));
+        srsRecordTable.waitSlots[0].handle = buffer;
+        sefReleaseRecordsByQuery();
+    }
+    if (srsRecordTable.waitSlots[0].handle != 0) {
+        name = srsGetEspName(key);
+        srsRecordTable.waitSlots[0].busy = 1;
+        size = fileLoad(srsRecordTable.waitSlots[0].handle, name, 0);
+        if (size <= 0) {
+            srsRecordTable.waitSlots[0].busy = 0;
+        } else if (size <= SRS_BLOCK_BUFFER_SIZE) {
+            srsRecordTable.waitSlots[0].key = key;
+            xglCdWaitUntilIdle();
+        }
+        result = 1;
+    }
+    return result;
+}
