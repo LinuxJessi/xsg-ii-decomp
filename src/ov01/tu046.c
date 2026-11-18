@@ -184,7 +184,7 @@ int monsTblSet(SbThread *thread)
 {
     int count;
     int choice;
-    int *entry;
+    int *entry; /* the chosen entry goes through a local before monsTblEntry, as in the original's register use */
 
     if (VM_PLUGIN_CNT_GET(thread) < 2) {
         sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);

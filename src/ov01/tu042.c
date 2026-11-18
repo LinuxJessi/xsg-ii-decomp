@@ -272,6 +272,9 @@ short *stringOffsetsGet(int index)
     return (short *) (table + (index - 1) * 2);
 }
 
+/* The *TextGet getters below decrement index after the table call: decremented first, the copy of index and the
+ * decrement merge into one instruction, unlike the original. */
+
 /* Text `field` of record `index` (numbered from 1) of the battleLookupGet table; 0 for another field. */
 char *battleLookupTextGet(int index, int field)
 {
@@ -502,6 +505,7 @@ int atkTblBuild(Ov01Object *unit, AtkTbl *table, int rows)
     Ov01Object **units;
     int *word;
     unsigned char *keys;
+    /* Byte offset of the slot in the key row: with keys[row] the address add takes the other operand order. */
     int offset;
     int row;
     int tec;

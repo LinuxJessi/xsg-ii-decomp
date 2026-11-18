@@ -242,7 +242,7 @@ void battleStartBonusApply(void)
 {
     struct EffectRequest request;
     Ov01Object **units;
-    Ov01Object **list;
+    Ov01Object **list; /* the second loop walks a copy of units; on units itself it reloads units every pass */
     int count;
     int i;
     int record;
