@@ -2411,7 +2411,7 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu039/func_00A9AF68.s",
+      "asm/nonmatchings/ov01/tu039/ov01StepBattle.s",
       "asm/nonmatchings/ov01/tu039/ov01StepStartFadeOut.s",
       "asm/nonmatchings/ov01/tu039/ov01StepAwaitObjectsIdle.s",
       "asm/nonmatchings/ov01/tu039/ov01StepBeginFinish.s",

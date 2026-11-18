@@ -7,7 +7,7 @@
  * ov01StepOpenHandles -> ov01StepBindAndShow -> ov01StepLoadPartyIds (party ids) -> ov01StepSpawnPartyMember
  * (spawn party member) -> ov01StepLoadPartyMember -> ov01StepAwaitPartyLoad -> ov01StepNextPartyMember
  * (next member) -> ov01StepStartEnemies -> ov01StepSpawnEnemy (spawn enemy) -> ov01StepLoadEnemy
- * -> ov01StepAwaitEnemyLoad -> ov01StepNextEnemy (next enemy or battle start) -> func_00A9AF68
+ * -> ov01StepAwaitEnemyLoad -> ov01StepNextEnemy (next enemy or battle start) -> ov01StepBattle
  * (tu039).
  */
 #include "common.h"
@@ -414,7 +414,7 @@ void streamPlayByKey(Ov01Object *object, int key);
 /*
  * Next enemy: spawns the next one of the enemy list (ov01StepSpawnEnemy); after the last it builds the battle
  * menus and panels, starts the battle music and the opening line of a party member (unitSelectPlTarget), probes
- * the heap and continues to func_00A9AF68.
+ * the heap and continues to ov01StepBattle.
  */
 void ov01StepNextEnemy(int context)
 {
@@ -446,5 +446,5 @@ void ov01StepNextEnemy(int context)
     }
     cfEventGet();
     ov01HeapProbeLargeAlloc();
-    ov01StepSetNext(context, func_00A9AF68);
+    ov01StepSetNext(context, ov01StepBattle);
 }

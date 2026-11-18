@@ -29,5 +29,6 @@ void msgWindowCloseForTalk(void);
 int msgWindowHasMore(void);
 void msgUpdateTimed(void);
 void msgClose(void);
+void msgPanelSetTimecode(int hours, int minutes, int seconds, int frames);
 
 #endif /* INCLUDE_MAIN_TU148_H */
