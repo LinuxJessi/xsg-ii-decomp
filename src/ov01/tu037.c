@@ -229,6 +229,7 @@ void *memset(void *destination, int value, unsigned int size);
 /* cfEvent bits of the battle start bonuses battleStartBonusApply grants. */
 #define CF_EVENT_BOOST_BONUS 0x1
 #define CF_EVENT_PARTY_BONUS 0x2
+#define CF_EVENT_BONUSES (CF_EVENT_BOOST_BONUS | CF_EVENT_PARTY_BONUS)
 /* Effect group of the battle start bonus effect; its record is 1 (boost), 2 (party) or 3 (both). */
 #define BONUS_EFFECT_GROUP 0x154
 
@@ -247,7 +248,7 @@ void battleStartBonusApply(void)
     int record;
 
     record = 0;
-    if (cfEventGet() & (CF_EVENT_BOOST_BONUS | CF_EVENT_PARTY_BONUS)) {
+    if (cfEventGet() & CF_EVENT_BONUSES) {
         count = unitTblGet(0, &units);
         if (cfEventGet() & CF_EVENT_BOOST_BONUS) {
             record = 1;
@@ -265,7 +266,7 @@ void battleStartBonusApply(void)
             }
             record = 2;
         }
-        if ((cfEventGet() & (CF_EVENT_BOOST_BONUS | CF_EVENT_PARTY_BONUS)) == (CF_EVENT_BOOST_BONUS | CF_EVENT_PARTY_BONUS)) {
+        if ((cfEventGet() & CF_EVENT_BONUSES) == CF_EVENT_BONUSES) {
             record = 3;
         }
         if (count > 0) {

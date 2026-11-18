@@ -2429,7 +2429,8 @@ void menuDrawItemList(int x, int y, LicenseCursor *cursor)
         if (!selectionEntryIsEligible(firstRow + i)) {
             rowStyle |= 2;
         }
-        textDrawSegment(x + 0x18, y + 0x30 + i * 0x14, hitActionTextGet(selectionWindowList[firstRow + i], 0), rowStyle);
+        textDrawSegment(x + 0x18, y + 0x30 + i * 0x14, hitActionTextGet(selectionWindowList[firstRow + i], 0),
+                        rowStyle);
     }
     if (cursor->flags & 1) {
         menuPlaceCursor(x + 0xA, y + 0x30 + (cursor->index - firstRow) * 0x14, 0x9D, cursor->flags & 1);

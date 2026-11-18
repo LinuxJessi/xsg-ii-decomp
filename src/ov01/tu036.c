@@ -232,7 +232,8 @@ void func_00A98180(void) {
 
 extern int tecMenuChoice;
 
-/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in tecMenuChoice, 0 when choiceMenuEntryFlags flags it. */
+/* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in tecMenuChoice, 0 when choiceMenuEntryFlags
+ * flags it. */
 int func_00A981B8(void) {
     int cursor_index;
     s16 entry_id;
@@ -388,8 +389,9 @@ extern int pairedMenuCount;
 #define PAIRED_MENU_UNIT_SIZE 1
 
 /*
- * Paired technique menu (its text entry is the enemy cursor's): lists the techniques paired with the one picked last (tecMenuChoice, calcPairedRecords)
- * with their EP cost, greyed out when unit cannot use them now (calcPairEntryUsable), and opens it.
+ * Paired technique menu (its text entry is the enemy cursor's): lists the techniques paired with the one picked
+ * last (tecMenuChoice, calcPairedRecords) with their EP cost, greyed out when unit cannot use them now
+ * (calcPairEntryUsable), and opens it.
  */
 void choiceMenuOpenPaired(Ov01Object *unit)
 {

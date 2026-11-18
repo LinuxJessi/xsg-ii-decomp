@@ -86,11 +86,24 @@ void thinkSendEnd(struct Ov01Object *unit);
 void thinkDispatch(struct Ov01Object *unit, int command, int arg, struct Ov01Object *target);
 
 /* The records of the bat.dat tables (the getters below, numbered from 1). */
+/* The first two halfwords of a bat.dat record that has texts: the offsets of its RECORD_TEXT_NAME and
+ * RECORD_TEXT_INFO texts from the start of its table (the *TextGet getters). */
+typedef struct RecordTexts {
+    short text[2];
+} RecordTexts;
+
+/* The 8-byte records func_00A9B5B8 returns. */
+typedef struct TextRecord8 {
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x4];
+} TextRecord8;
+
 /* The entry battleLookupGet returns. */
 typedef struct BattleLookupEntry BattleLookupEntry;
 
 struct BattleLookupEntry {
-    unsigned char unmodeled_00[6];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[2];
     unsigned short flags;                   /* +0x06 */
     short tecIndex;                         /* +0x08: the index tecRecordGet takes */
     unsigned char firstCode;                /* +0x0A */
@@ -140,7 +153,8 @@ struct TecRecord {
 typedef struct StatusRecord StatusRecord;
 
 struct StatusRecord {
-    unsigned char unmodeled_00[0x6];        /* +0x00..+0x05 */
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x2];
     /* +0x06: bit 0x2000 marks an effect that lives in the slot table; 0x8000 and 0x4000 are tested by
      * battleSlotExport */
     unsigned short slotFlags;
@@ -152,27 +166,31 @@ struct StatusRecord {
 typedef struct ItemRecord ItemRecord;
 
 struct ItemRecord {
-    unsigned char unmodeled_00[0xA];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x6];
     short code;                             /* +0xA */
+    unsigned char unmodeled_0C[0x4];
 };
 
 typedef struct HitAction HitAction;
 
 /* Action row hitActionGet returns: the entry index and the amount. */
 struct HitAction {
-    unsigned char unmodeled_00[0x4];        /* +0x00..+0x03 */
+    RecordTexts texts;                      /* +0x00 */
     unsigned short flags;                   /* +0x04: tested by dataSlotKeyTest (tu022) */
     unsigned char unmodeled_06[0x2];        /* +0x06..+0x07 */
     short entry;                            /* +0x08: index tecRecordGet takes */
     unsigned char unmodeled_0a[0x2];        /* +0x0A..+0x0B */
     short amount;                           /* +0x0C: selects the +0x40 action; nonzero picks row 2 */
+    unsigned char unmodeled_0e[0x2];        /* +0x0E..+0x0F */
 };
 
 /* Link record pairLinkGet returns: the required level and the two slot indices it pairs. */
 typedef struct PairLink PairLink;
 
 struct PairLink {
-    unsigned char unmodeled_00[0x8];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x4];
     short tecIndex;                         /* +0x8: the technique a pair selection uses (battleSelectionGet) */
     short requiredLevel;                    /* +0xA */
     short slotFirst;                        /* +0xC */
@@ -183,17 +201,20 @@ typedef struct CalcLevelRecord CalcLevelRecord;
 
 /* The record calcLevelRecordGet returns; +0xA is its required level, +0xC the entry mask calcEntryMaskTest tests. */
 struct CalcLevelRecord {
-    unsigned char unmodeled_000[0x8];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_004[0x4];
     short tecIndex;                         /* +0x8: the technique a level selection uses (battleSelectionGet) */
     short requiredLevel;
     short entryMask;
+    unsigned char unmodeled_00E[0x2];
 };
 
 typedef struct TgtIdRecord TgtIdRecord;
 
 /* The record tgtIdRecordGet returns for an id: +0x8 is the action index tecRecordGet takes, +0xE the minimum level. */
 struct TgtIdRecord {
-    unsigned char unmodeled_00[0x8];
+    RecordTexts texts;                      /* +0x00 */
+    unsigned char unmodeled_04[0x4];
     short actionIndex;                      /* +0x08: the index tecRecordGet takes */
     short modelIndex;                       /* +0x0A: the model entry func_00A95CF0 loads (0: none) */
     unsigned short modelJoint;              /* +0x0C: the joint that model is attached at (StatBlock.pairSecond[2]) */
@@ -238,8 +259,8 @@ BattleLookupEntry *battleLookupGet(int index);
 ItemRecord *itemRecordGet(int index);
 StatusRecord *statusRecordGet(int index);
 HitAction *hitActionGet(int index);
-void *func_00A9B580(int index);
-void *func_00A9B5B8(int index);
+RecordTexts *func_00A9B580(int index);
+struct TextRecord8 *func_00A9B5B8(int index);
 PairLink *pairLinkGet(int index);
 CalcLevelRecord *calcLevelRecordGet(int index);
 TgtIdRecord *tgtIdRecordGet(int index);

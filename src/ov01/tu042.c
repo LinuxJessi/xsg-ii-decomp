@@ -159,7 +159,7 @@ HitAction *hitActionGet(int index)
 
 /* Records of batTable70Offset (entries 1..0x63). */
 
-void *func_00A9B580(int index)
+RecordTexts *func_00A9B580(int index)
 {
     unsigned char *table;
 
@@ -172,7 +172,7 @@ void *func_00A9B580(int index)
 
 /* Records of batTable74Offset (entries 1..0x63). */
 
-void *func_00A9B5B8(int index)
+TextRecord8 *func_00A9B5B8(int index)
 {
     unsigned char *table;
 
@@ -275,15 +275,15 @@ short *stringOffsetsGet(int index)
 /* Text `field` of record `index` (numbered from 1) of the battleLookupGet table; 0 for another field. */
 char *battleLookupTextGet(int index, int field)
 {
-    char *table;
+    BattleLookupEntry *table;
 
-    table = (char *)battleLookupGet(1);
+    table = battleLookupGet(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 12);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 12 + 2);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
     }
     return 0;
 }
@@ -291,15 +291,15 @@ char *battleLookupTextGet(int index, int field)
 /* Text `field` of record `index` (numbered from 1) of the itemRecordGet table; 0 for another field. */
 char *itemTextGet(int index, int field)
 {
-    char *table;
+    ItemRecord *table;
 
-    table = (char *)itemRecordGet(1);
+    table = itemRecordGet(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 16);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 16 + 2);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
     }
     return 0;
 }
@@ -307,15 +307,15 @@ char *itemTextGet(int index, int field)
 /* Text `field` of record `index` (numbered from 1) of the statusRecordGet table; 0 for another field. */
 char *statusTextGet(int index, int field)
 {
-    char *table;
+    StatusRecord *table;
 
-    table = (char *)statusRecordGet(1);
+    table = statusRecordGet(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 12);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 12 + 2);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
     }
     return 0;
 }
@@ -323,15 +323,15 @@ char *statusTextGet(int index, int field)
 /* Text `field` of record `index` (numbered from 1) of the hitActionGet table; 0 for another field. */
 char *hitActionTextGet(int index, int field)
 {
-    char *table;
+    HitAction *table;
 
-    table = (char *)hitActionGet(1);
+    table = hitActionGet(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 16);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 16 + 2);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
     }
     return 0;
 }
@@ -339,15 +339,15 @@ char *hitActionTextGet(int index, int field)
 /* Text `field` of record `index` (numbered from 1) of the func_00A9B580 table; 0 for another field. */
 char *func_00A9B950(int index, int field)
 {
-    char *table;
+    RecordTexts *table;
 
-    table = (char *)func_00A9B580(1);
+    table = func_00A9B580(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 4);
+        return (char *)table + table[index].text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 4 + 2);
+        return (char *)table + table[index].text[RECORD_TEXT_INFO];
     }
     return 0;
 }
@@ -355,15 +355,15 @@ char *func_00A9B950(int index, int field)
 /* Text `field` of record `index` (numbered from 1) of the func_00A9B5B8 table; 0 for another field. */
 char *func_00A9B9C8(int index, int field)
 {
-    char *table;
+    TextRecord8 *table;
 
-    table = (char *)func_00A9B5B8(1);
+    table = func_00A9B5B8(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 8);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 8 + 2);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
     }
     return 0;
 }
@@ -371,15 +371,15 @@ char *func_00A9B9C8(int index, int field)
 /* Text `field` of record `index` (numbered from 1) of the pairLinkGet table; 0 for another field. */
 char *pairLinkTextGet(int index, int field)
 {
-    char *table;
+    PairLink *table;
 
-    table = (char *)pairLinkGet(1);
+    table = pairLinkGet(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 16);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 16 + 2);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
     }
     return 0;
 }
@@ -387,15 +387,15 @@ char *pairLinkTextGet(int index, int field)
 /* Text `field` of record `index` (numbered from 1) of the calcLevelRecordGet table; 0 for another field. */
 char *calcLevelTextGet(int index, int field)
 {
-    char *table;
+    CalcLevelRecord *table;
 
-    table = (char *)calcLevelRecordGet(1);
+    table = calcLevelRecordGet(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 16);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 16 + 2);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
     }
     return 0;
 }
@@ -403,15 +403,15 @@ char *calcLevelTextGet(int index, int field)
 /* Text `field` of record `index` (numbered from 1) of the tgtIdRecordGet table; 0 for another field. */
 char *tgtIdTextGet(int index, int field)
 {
-    char *table;
+    TgtIdRecord *table;
 
-    table = (char *)tgtIdRecordGet(1);
+    table = tgtIdRecordGet(1);
     index--;
     switch (field) {
     case RECORD_TEXT_NAME:
-        return table + *(short *)(table + index * 16);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_NAME];
     case RECORD_TEXT_INFO:
-        return table + *(short *)(table + index * 16 + 2);
+        return (char *)table + table[index].texts.text[RECORD_TEXT_INFO];
     }
     return 0;
 }

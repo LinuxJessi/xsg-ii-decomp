@@ -18,7 +18,8 @@
 
 void unitRunCommands(Ov01Object *object);
 
-/* Per-frame step: clears flag 0x20000, runs the command queue, copies the unit's snapshot into the pose, then calls unitStatusAuraUpdate. */
+/* Per-frame step: clears flag 0x20000, runs the command queue, copies the unit's snapshot into the pose, then calls
+ * unitStatusAuraUpdate. */
 void unitUpdate(Ov01Object *object) {
     object->flags &= ~0x00020000u;
     unitRunCommands(object);

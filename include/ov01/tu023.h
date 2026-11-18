@@ -51,12 +51,14 @@ struct ActStock *actStockGet(void);
 struct HitRecord {
     struct Ov01Object *target;                      /* +0x00 */
     int reaction;                           /* +0x04: the UNIT_CMD_* the target answers with (attackQueue) */
-    int damage;                             /* +0x08: calcAttackDamage result, or the calcRestoreValue result for type 2 */
+    int damage;                             /* +0x08: calcAttackDamage result (calcRestoreValue for type 2) */
     int followResult;                       /* +0x0c: calcFollowKind result, stored by calcAttackDamage */
-    int backAttack;                         /* +0x10: calcBackAttack's facing test for kind 1; 1 skips calcHitRoll and adds 50 to calcCritDamage's chance */
+    /* +0x10: calcBackAttack's facing test for kind 1; 1 skips calcHitRoll and adds 50 to calcCritDamage's chance */
+    int backAttack;
     int stepState;                          /* +0x14: 1 to 3, written by calcHitRowGate and calcHitStateStep */
     union {
-        int word;                           /* calcHitMode result, or the calcKindHitMode result for type 2: bit 8 set once taken, bit 9 blocks it */
+        /* calcHitMode result (calcKindHitMode for type 2): bit 8 set once taken, bit 9 blocks it */
+        int word;
         unsigned char kind;                 /* its low byte: the hit kind calcHitInflict tests */
     } hitMode;                              /* +0x18 */
     int inflictRow;                         /* +0x1c: row calcHitInflict inflicts */

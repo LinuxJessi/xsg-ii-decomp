@@ -25,7 +25,8 @@ typedef union MenuCursorSlide {
 
 /* A sliding menu object, an objSlotAlloc slot: the menu cursor (menuCursor),
  * the icon list (menuIconListObj) and the five path objects of objPathTable
- * (tu050) and the stat records of menuStatRecords (tu049) are built this way. From +0x94 on the fields depend on the kind. */
+ * (tu050) and the stat records of menuStatRecords (tu049) are built this way. From +0x94 on the fields depend
+ * on the kind. */
 typedef struct MenuObject MenuObject;
 
 struct MenuObject {

@@ -40,7 +40,8 @@ struct DataMotionFile {
     unsigned char unmodeled_0C[0xC];
 };
 
-/* The entry block: the model entry files from +0x08 (pxy, txy, xhr, epf), the motion records at +0x38 and alt_index at +0x50. */
+/* The entry block: the model entry files from +0x08 (pxy, txy, xhr, epf), the motion records at +0x38 and
+ * alt_index at +0x50. */
 struct DataEntry {
     struct DataFileHead head;
     struct DataModelFiles model;
