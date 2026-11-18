@@ -178,7 +178,66 @@ void menuStatRecordsCreate(void)
 
 /* Step of a stat record: eases three displayed floats (+0x98, +0x9C, +0xA0) toward
  * the unit's stat fields (at +0x94 -> +0x144), snapping within 0.5 and clamped. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu049", menuStatGaugeStep);
+/* Shown values closer than this to their unit value snap to it. */
+#define MENU_STAT_SNAP 0.5f
+
+/* The negation of the distance as its own inline call (codegen: a plain -delta_ in the ternary does not give
+ * the original's compare chain). */
+static inline float menuStatNeg(float v)
+{
+    return -v;
+}
+
+/* Moves a shown gauge value a RATE fraction towards its unit value, or snaps it there when it is close. A plain
+ * block, not do/while(0): the loop note of a do/while is a scheduling barrier and keeps the shown[0] load behind
+ * the stats load. */
+#define MENU_STAT_EASE(shown, value, rate)                                     \
+    {                                                                          \
+        float current_ = (shown);                                              \
+        float delta_ = (value) - current_;                                     \
+        if ((delta_ < 0.0f ? menuStatNeg(delta_) : delta_) < MENU_STAT_SNAP) { \
+            (shown) = (value);                                                 \
+        } else {                                                               \
+            (shown) = current_ + ((value) - current_) * (rate);                \
+        }                                                                      \
+    }
+
+/* Update of a stat record: unless it is sliding, eases the shown HP, EP and third gauge towards the unit's values
+ * and caps them at their maxima (the third gauge at 3 for keys 1..10, which show the level). */
+void menuStatGaugeStep(MenuObject *record)
+{
+    StatBlock *stats;
+    float *hpShown;
+    float *epShown;
+    float *thirdShown;
+
+    if (record->moving != 0) {
+        return;
+    }
+    hpShown = &record->kind.stat.shown[0];
+    thirdShown = &record->kind.stat.shown[2];
+    epShown = &record->kind.stat.shown[1];
+    stats = record->kind.stat.unit->stats;
+    MENU_STAT_EASE(*hpShown, stats->hp, 0.125f);
+    if (stats->maxHp < *hpShown) {
+        *hpShown = stats->maxHp;
+    }
+    MENU_STAT_EASE(*epShown, stats->ep, 0.125f);
+    if (stats->maxEp < *epShown) {
+        *epShown = stats->maxEp;
+    }
+    if ((unsigned int)(stats->keyUnsigned - 1) < 10) {
+        MENU_STAT_EASE(*thirdShown, stats->level, 0.25f);
+        if (*thirdShown > 3.0f) {
+            *thirdShown = 3.0f;
+        }
+    } else {
+        MENU_STAT_EASE(*thirdShown, stats->current, 0.125f);
+        if (*thirdShown > stats->currentMax) {
+            *thirdShown = stats->currentMax;
+        }
+    }
+}
 
 void menuStatRecordDraw(MenuObject *record, GrPacket *packet);
 
