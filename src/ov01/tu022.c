@@ -19,18 +19,6 @@ extern short padData;
 
 #define VIRTUAL_PAD_BIT_COUNT 14
 
-/* Sound ids played by the slot and cursor code (SE_CURSOR_MOVE is the same id as tu098.c). */
-#define SE_CURSOR_MOVE 0x01000001
-#define SE_CONFIRM 0x01000002
-#define SE_REFUSE 0x01000003
-
-/* Key codes of the key functions: DATA_KEY_CANCEL is the cancel press (PAD_CROSS), DATA_KEY_NONE a key that
- * is not registered, not found or refused. */
-enum DataKeyCode {
-    DATA_KEY_CANCEL = 20,
-    DATA_KEY_NONE = 21
-};
-
 /* Bits of DataObject.flags. */
 enum DataFlag {
     DATA_FLAG_MATCHED = 0x1,
@@ -58,7 +46,6 @@ struct DataState {
 extern struct DataState dataState;
 extern struct DataObject *dataObject;
 extern int D_00AB596C;
-void menuWepSpPanelReset(void);
 void *dataObjCreate(f32 x, f32 y, f32 z);
 void dataObjDrawSprite(struct DataObject *obj, u32 *packet);
 void menuTexFlush(void);
@@ -74,7 +61,8 @@ void dataVPadReset(void) {
     menuWepSpPanelReset();
 }
 
-void func_00A88E98(void) {
+/* Clears the counters; battleSelectStep passes unit, it is not used. */
+void func_00A88E98(StatOwner *unit) {
     dataCountersClear();
 }
 
@@ -87,7 +75,6 @@ typedef union DataFlagsView {
 struct DataKeyEntry;
 extern int dataKeyCount;
 extern int dataKeyRegistry[8];
-unsigned short dataPadRead(int port);
 int dataKeyRegister(StatOwner *unit, unsigned short key);
 int dataKeyFind(StatOwner *unit, struct DataKeyEntry **found);
 int dataKeyValueGet(StatOwner *unit, int key);
@@ -975,8 +962,8 @@ int dataEntryListInit(void *obj)
 
 /* Steps the cursor (next mask 0x2000, prev mask 0x8000), stores the selected entry in *out and returns
  * whether the index changed. The key block for dataTargetMatchKey holds 1 at word 0 and the entry at word 2;
- * the frame reserves 0x20 bytes for it. */
-int dataEntryCursorStep(struct DataObject *obj, int *out)
+ * the frame reserves 0x20 bytes for it. The unit battleSelectStep passes is not used. */
+int dataEntryCursorStep(StatOwner *unit, int *out)
 {
     struct DataObject *target = dataObject;
     int matchKey[8];
@@ -1061,7 +1048,7 @@ int dataTargetListInit(StatOwner **selected, StatOwner *target, int flags)
 
 int ov01SceneFrameCount(void);
 
-int dataUnitCursorCycle(void **out, int mode)
+int dataUnitCursorCycle(StatOwner **out, int mode)
 {
     struct DataObject *target = dataObject;
     struct DataState *state = &dataState;

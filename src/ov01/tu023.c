@@ -169,7 +169,6 @@ signed char func_00A91B90(int index);
 /* Refreshes the hp and ep of the slots 1 to 15 from their battle blocks, then commits each. */
 void battleSlotsRefresh(void);
 /* Defined in other files. */
-int dataBoxDecCategory1(int lookup_key);
 int unitTblGet(int side, StatOwner ***table);
 
 /* ---- old ov01/tu023 ---- */

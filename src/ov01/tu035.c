@@ -7,6 +7,7 @@
 #include "ov01/tu005.h"
 #include "ov01/tu012.h"
 #include "ov01/tu017.h"
+#include "ov01/tu022.h"
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
 #include "ov01/tu035.h"
@@ -99,7 +100,6 @@ enum {
     TGT_STATUS_TIME_UP = 5              /* time limit reached */
 };
 
-unsigned short dataPadRead(int port);
 
 /* bgmPlayTrack track of the victory. */
 #define TGT_VICTORY_BGM 6
@@ -551,11 +551,8 @@ void tgtSelectModeEnd(void)
 /* BattleState.selection value that leaves the menu without a command. */
 #define TGT_SELECTION_BACK 0x15
 
-void dataStateSetMode(u32 value, int flags);
 int dataUnitListInit(void **selected, int side);
 int dataUnitCursorStep(void **out);
-void dataTargetShow(void *unit, unsigned char *targetFlags);
-void battleSelectStep(Ov01Object *object);
 
 /* Manual candidate: opens the target menu on the first call (the unit list of the
  * candidate's side), runs the battle menu and, once a command was chosen, queues it;

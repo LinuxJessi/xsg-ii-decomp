@@ -5,5 +5,9 @@
 void menuWepSpPanelNew(void);
 void menuTargetListNew(void);
 void menuTgtStatusNew(void);
+void menuWepSpPanelShow(void);
+void menuWepSpPanelHide(void);
+void menuTargetListShow(void);
+void menuTargetListHide(void);
 
 #endif /* INCLUDE_OV01_TU056_H */
