@@ -16,9 +16,6 @@ int vsprintf(char *buffer, const char *format, va_list args);
 extern char *cfeFileTemp;
 
 /* The assert texts "pFileTemp" and "size < MAX_OF_FILESIZE", and the source file name. */
-extern const char cfeAssertFileTemp[];
-extern const char cfeAssertFileSize[];
-extern const char cfeFileControlSourceName[];
 #define MAX_OF_FILESIZE 0x60000
 
 /* Closes a descriptor: a thin wrapper over sceClose. */
@@ -94,7 +91,7 @@ void cfeFileLogf(const char *format, ...) {
 int cfeFileTempWrite(const char *name)
 {
     if (cfeFileTemp == 0) {
-        assertFailed(cfeAssertFileTemp, cfeFileControlSourceName, 140);
+        assertFailed("pFileTemp", "../cfeFileControl.euc.c", 140);
     }
     return xglDebFileWrite(name, cfeFileTemp, strlen(cfeFileTemp) + 1);
 }
@@ -105,28 +102,31 @@ int cfeFileTempRead(const char *name, char **buffer)
     int size;
 
     if (cfeFileTemp == 0) {
-        assertFailed(cfeAssertFileTemp, cfeFileControlSourceName, 151);
+        assertFailed("pFileTemp", "../cfeFileControl.euc.c", 151);
     }
     size = xglDebFileRead(name, cfeFileTemp);
     if (!(size < MAX_OF_FILESIZE)) {
-        assertFailed(cfeAssertFileSize, cfeFileControlSourceName, 154);
+        assertFailed("size < MAX_OF_FILESIZE", "../cfeFileControl.euc.c", 154);
     }
     *buffer = cfeFileTemp;
     return size;
 }
 
-extern const char cfeFileLogOpenBrace[];
-
 /* Opens a block in the log: writes "{" at the current indent, then indents one level. */
 void cfeFileLogBlockBegin(void) {
-    cfeFileLogf(cfeFileLogOpenBrace);
+    cfeFileLogf("{\n");
     cfeFileLogIndentAdd(1);
 }
-
-extern const char cfeFileLogCloseBrace[];
 
 /* Closes a block in the log: unindents one level, then writes "}" at that indent. */
 void cfeFileLogBlockEnd(void) {
     cfeFileLogIndentAdd(-1);
-    cfeFileLogf(cfeFileLogCloseBrace);
+    cfeFileLogf("}\n");
 }
+
+/* Data items of this file: the log indent counter, the indent string pointer (to the "\t" string of main/tu141's
+ * rodata) and the pFileTemp buffer pointer. */
+int cfeFileLogIndent = 0;
+extern const char D_0068D0C0[];
+const char *cfeFileLogIndentStr = D_0068D0C0;
+char *cfeFileTemp = 0;

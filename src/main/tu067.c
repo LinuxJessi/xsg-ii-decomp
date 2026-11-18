@@ -12,6 +12,7 @@
 #include "main/tu114.h"
 #include "main/xenoActor.h"
 #include "main/tu272.h"
+#include "main/tu048.h"
 
 /* The XenoActor of a map object (xenoActor.c); only the fields this file touches. */
 struct XenoActor {
@@ -24,21 +25,54 @@ struct XenoActor {
     Vector4 scale;              /* +0x090 */
     unsigned char unmodeled_0a0[0x10];
     float radius;               /* +0x0B0 */
-    unsigned char unmodeled_0b4[0x5D4 - 0xB4];
+    float height;               /* +0x0B4 */
+    unsigned char unmodeled_0b8[0xBC - 0xB8];
+    unsigned int drawFlags;     /* +0x0BC: bit 3 set by uwamonoCreateRecord */
+    unsigned char unmodeled_0c0[0x5D4 - 0xC0];
     int mode;                   /* +0x5D4: the motion XenoActorCheckMode compares against */
-    unsigned char unmodeled_5d8[0x748 - 0x5D8];
+    unsigned char unmodeled_5d8[0x5EC - 0x5D8];
+    int resource0;              /* +0x5EC: fields 0, 1, 2, 4 and 3 of the resource GameResLoadID returns */
+    int resource1;              /* +0x5F0 */
+    int resource2;              /* +0x5F4 */
+    unsigned char unmodeled_5f8[0x5FC - 0x5F8];
+    int resource4;              /* +0x5FC */
+    unsigned char unmodeled_600[0x610 - 0x600];
+    void *sharedResource;       /* +0x610: the resource GameResLoadID returns for 0x30041 */
+    unsigned char unmodeled_614[0x618 - 0x614];
+    int resource3;              /* +0x618 */
+    unsigned char unmodeled_61c[0x748 - 0x61C];
     unsigned short hitFlags;    /* +0x748 */
     unsigned char unmodeled_74a[0x758 - 0x74A];
     int ground;                 /* +0x758: map block 0x100 entry of the ground (changeId) */
     unsigned char unmodeled_75c[0x768 - 0x75C];
     float probeRadius;          /* +0x768: set together with radius by setPlayer */
-    unsigned char unmodeled_76c[0x798 - 0x76C];
+    unsigned char unmodeled_76c[0x794 - 0x76C];
+    int moved;                  /* +0x794: the record index (uwamonoCreateRecord) */
     int kind;                   /* +0x798 */
 };
 
 /* The per-object state block of a map object record (record+0x334; tu085.c's UwamonoState). */
 typedef struct UwamonoState {
-    unsigned char unmodeled_00[0x5F];
+    int owner;                  /* +0x00: the record index, stored by uwamonoCreateRecord */
+    unsigned char unmodeled_04[4];
+    int row;                    /* +0x08: the key row of the record, -1 when it has none */
+    unsigned char unmodeled_0c[0x20 - 0x0C];
+    float rangeMin;             /* +0x20: -2.5 */
+    int restFrames;             /* +0x24: stored 0 */
+    float rangeMax;             /* +0x28: 10.0 */
+    unsigned char unmodeled_2c[0x30 - 0x2C];
+    float rangeStep;            /* +0x30: 3.0 */
+    unsigned char unmodeled_34[0x3C - 0x34];
+    float paceA;                /* +0x3C: 0.02 */
+    float paceB;                /* +0x40: 0.04 */
+    float paceC;                /* +0x44: PI / 3 (60 degrees) */
+    float paceD;                /* +0x48: 5.0 */
+    int zeroLimit;              /* +0x4C: stored 0 */
+    short countA0;              /* +0x50: 20 */
+    short countA1;              /* +0x52: 4 */
+    short countB0;              /* +0x54: 20 */
+    short countB1;              /* +0x56: 4 */
+    unsigned char unmodeled_58[0x5F - 0x58];
     unsigned char mode;         /* +0x5F */
     unsigned char unmodeled_60[0x7C - 0x60];
     int id;                     /* +0x7C */
@@ -47,6 +81,13 @@ typedef struct UwamonoState {
     unsigned char unmodeled_84[0x37C0 - 0x84];
     Vector4 path[128];          /* +0x37C0: the points between the record and its target (uwamonoSetTarget) */
     short pathStep;             /* +0x3FC0 */
+    unsigned char unmodeled_3fc2[0x3FF0 - 0x3FC2];
+    int tailIndex;              /* +0x3FF0: stored 0 */
+    unsigned char unmodeled_3ff4[0x4042 - 0x3FF4];
+    short rowBytes[8];          /* +0x4042: the eight bytes of the key row */
+    unsigned char unmodeled_4052[0x4078 - 0x4052];
+    int indexTable[16];         /* +0x4078: entry v holds v */
+    unsigned char unmodeled_40b8[0x40C0 - 0x40B8]; /* the stride of uwamonoMotionStates */
 } UwamonoState;
 
 /* A vector of a map object record (tu072's EnepcPoint): accessed through the union, with alias set 0,
@@ -56,6 +97,12 @@ typedef union UwamonoVector {
     Vector4 vector;
 } UwamonoVector;
 
+/* One 0x40-byte row of the table at mapObjectTable: a placement matrix, its rotation rows then the position. */
+typedef struct ObjTableEntry {
+    float rotation[3][4];       /* +0x00 */
+    Vector4 position;           /* +0x30 */
+} ObjTableEntry;
+
 /* One 0x870-byte record of uwamonoRecords (the table tu050.c declares as MapObjectRecord);
  * only the fields the natives below touch are named. */
 typedef struct UwamonoRecord {
@@ -63,7 +110,8 @@ typedef struct UwamonoRecord {
     unsigned char kind;         /* +0x002: MAP_KIND_* */
     unsigned char unmodeled_003;
     int key;                    /* +0x004 */
-    unsigned char unmodeled_008[8];
+    int type;                   /* +0x008: the model type, -1 once the record is freed (kind 8) */
+    unsigned char unmodeled_00c[4];
     UwamonoVector position;     /* +0x010 */
     unsigned char unmodeled_020[0x20];
     float rotation[4];          /* +0x040: read as an array by objxRotate */
@@ -91,11 +139,19 @@ typedef struct UwamonoRecord {
     short transparencyCount;    /* +0x220 */
     unsigned char unmodeled_222[0x260 - 0x222];
     signed char rotationOrder;  /* +0x260: the order the rotation angles are applied in (setRotateTurn) */
-    unsigned char unmodeled_261[0x2F0 - 0x261];
+    unsigned char unmodeled_261[0x264 - 0x261];
+    ObjTableEntry *transform;   /* +0x264: the table row the model draws with */
+    unsigned char unmodeled_268[0x270 - 0x268];
+    ObjTableEntry objectEntry;  /* +0x270: a copy of the table row (kind 2) */
+    ObjTableEntry objectCopy;   /* +0x2B0: a second copy of the same row */
     float matrix[4][4];         /* +0x2F0: the placement matrix, its last row the position */
     struct XenoActor *actor;    /* +0x330 */
     UwamonoState *motions;      /* +0x334 */
-    unsigned char unmodeled_338[0x546 - 0x338];
+    float form;                 /* +0x338: 1.0 or 5.0, picked by the entry's ES range */
+    union {
+        short value;            /* 1 for an actor record; written through the union (alias set 0) */
+    } formSet;                  /* +0x33C */
+    unsigned char unmodeled_33e[0x546 - 0x33E];
     short parent;               /* +0x546: index of the record this one is attached to or looks at */
     short attached;             /* +0x548 */
     unsigned char unmodeled_54a[6];
@@ -105,11 +161,15 @@ typedef struct UwamonoRecord {
     unsigned char unmodeled_574[0xC];
     float extent;               /* +0x580: the player's radius (setPlayer) */
     float height;               /* +0x584 */
-    unsigned char unmodeled_588[9];
+    unsigned char unmodeled_588[8];
+    unsigned char shape;        /* +0x590: 0 normal, 2 for a large entry (uwamonoCreateRecord) */
     signed char locaterType;    /* +0x591: setLocater's type argument, 10 for the second locater */
-    unsigned char unmodeled_592[0x618 - 0x592];
+    unsigned char unmodeled_592[0x5A0 - 0x592];
+    int effectId;               /* +0x5A0: 0x10000035 for an actor record */
+    unsigned char unmodeled_5a4[0x618 - 0x5A4];
     int lookLink;               /* +0x618: index of the record this one looks at */
-    unsigned char unmodeled_61c[0x10];
+    short eventRow;             /* +0x61C: the event index of a kind 8 record */
+    unsigned char unmodeled_61e[0x10 - 2];
     signed char riderSide;      /* +0x62C */
     unsigned char unmodeled_62d[0xB];
     void *effect;               /* +0x638: sef effect record */
@@ -135,29 +195,34 @@ enum {
 
 extern UwamonoRecord uwamonoRecords[];
 extern int uwamonoCurrentIndex;
+/* The uwamono motion states (0x40C0-byte records, one per counted slot id record);
+ * unnamed in the symbol map: D_002BD600 (tu083 counts its leading records). */
+extern UwamonoState D_002BD600[];
+
+/* One 16-byte row of the key table uwamonoKeyRows (uwamonoCreateRecord searches it by fourth). */
+typedef struct UwamonoKeyRow {
+    short key;                  /* +0x0 */
+    unsigned char gateIfClear;  /* +0x2: read while control bit 11 is clear */
+    unsigned char gateIfSet;    /* +0x3: read while control bit 11 is set */
+    int value;                  /* +0x4 */
+    unsigned char bytes[8];     /* +0x8 */
+} UwamonoKeyRow;
+
+/* The key table pointer (.sdata 0x69D1DC, unnamed in the symbol map). */
+extern UwamonoKeyRow *D_0069D1DC;
+
+/* One 8-byte row of uwamonoEventTable: a short at +2 selects the case, a short at +4 is its argument. */
+typedef struct UwamonoEventRow {
+    unsigned char unmodeled_00[2];
+    short selector;             /* +0x2 */
+    short arg;                  /* +0x4 */
+    unsigned char unmodeled_06[2];
+} UwamonoEventRow;
+
+extern UwamonoEventRow *uwamonoEventTable;
 
 /* A bit of gameWork.control; tu051.h cannot be included here, its record types clash with this file's. */
 #define CONTROL_SCRIPTED 0x8000 /* include/main/tu051.h */
-
-/* The game work block (tu050.c's MainWork, tu051.c's CameraState); only the fields this file uses. */
-typedef struct GameWork {
-    unsigned char unmodeled_000[6];
-    unsigned short loadedFromSave;  /* +0x006: 1 when the game was loaded from a save (getParam 7) */
-    int control;                    /* +0x008: CONTROL_SCRIPTED while a script controls the player */
-    unsigned char unmodeled_00c[0x10];
-    int stateArg;                   /* +0x01C: tu050.c's stateArg */
-    unsigned char unmodeled_020[0x2D0 - 0x20];
-    float frameScale;               /* +0x2D0: elapsed frames, scales the per-frame movement */
-    unsigned char unmodeled_2d4[4];
-    float playerParams[5][2];       /* +0x2D8: setPlayer arguments 4 to 8 (percent) in [i][0] */
-    int climbFrames;                /* +0x300: setPlayer argument 9, the ladder-step divisor (tu075.c) */
-    unsigned char unmodeled_304[0x374 - 0x304];
-    float playerRate;               /* +0x374: setPlayer argument 10 (ten-thousandths) */
-    unsigned char unmodeled_378[4];
-    float playerScale;              /* +0x37C: setPlayer argument 11 (percent) */
-} GameWork;
-
-extern GameWork gameWork;
 
 /* A one-member union: the original reads the vector it points at with alias set 0 (tu050.c's MapVector). */
 typedef union MapVector {
@@ -180,6 +245,18 @@ void uwamonoClearRotateResetWord(int index);
 int uwamonoSetTarget(int index, int target, short flag);
 void uwamonoStartMove(int index, MapVector *destination, int frames, signed char hasMotion, int motion, signed char mode);
 int uwamonoCreateRecord(int key, int kind, int entry, int fourth, int fifth);
+int uwamonoCountLeadingInUse(void);
+int slotIdRecordCountLeading(void);
+int uwamonoInitRecord(short index);
+int GameResLoadID(int id, void **buffer, unsigned int *size, void *callback);
+void XenoActorAllocMatrices(struct XenoActor *actor);
+void XenoActorSetChannelValue(struct XenoActor *actor, float value);
+int sefStartEffectKeyDefault(int first, int second);
+void *sefSpawnEffectRecordById(int effectId, UwamonoVector *position, unsigned char *firstBlock);
+signed char *func_A9B548(int id);
+signed char *func_A9B4D0(int id);
+void func_A9B580(int id);
+signed char *func_A9B5B8(int id);
 void uwamonoReleaseRecord(int index);
 void sefSetRecordOwner(void *record, void *owner);
 void sefSetRecordOwnerMarked(void *record, void *owner);
@@ -230,12 +307,6 @@ typedef struct PxyHeader {
     unsigned char unmodeled_00[0x68];
     int entry_offset;           /* +0x68: nml_model_set.c offset68: offset of the 0x40-byte entry matrices */
 } PxyHeader;
-
-/* One 0x40-byte row of the table at mapObjectTable: a placement matrix, its rotation rows then the position. */
-typedef struct ObjTableEntry {
-    float rotation[3][4];       /* +0x00 */
-    Vector4 position;           /* +0x30 */
-} ObjTableEntry;
 
 extern PxyHeader *mapObjectTable;
 int pxyFindEntryIndex(PxyHeader *header, const char *name);
@@ -327,7 +398,7 @@ int objxGetParam(int call)
             result = uwamonoRecords[uwamonoCurrentIndex].actor->kind;
             break;
         case 7:
-            result = gameWork.loadedFromSave != 0 ? -2 : gameWork.stateArg;
+            result = gameWork.loadStage != 0 ? -2 : gameWork.entryKey;
             break;
         case 8:
             result = (gameWork.control & 0x800) >> 11;
@@ -1014,8 +1085,14 @@ int objxFootId(int call)
 }
 
 int func_A9CDB0(void *module, void *nativeTable);
+
+typedef struct ObjxNative {
+    const char *name;
+    void (*function)();
+} ObjxNative;
+
 /* Native entries of the objx module: (name, function) pairs of 8 bytes. */
-extern unsigned char objxNatives[];
+extern ObjxNative objxNatives[];
 /* Module name "objx". */
 extern unsigned char objxModuleName[];
 
@@ -1066,7 +1143,253 @@ int runtimeSetNumber(int call)
     return uwamonoCreateRecord(key, kind, entry, fourth, func_A9F1C0(call, 5) != 0 ? -1 : func_A9F0C0(call, 5));
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu067", uwamonoCreateRecord);
+/* .data of this file (0x3E6DC0): the objx script natives. */
+ObjxNative objxNatives[16] = {
+    { "getParam", objxGetParam },
+    { "move", objxMove },
+    { "rotate", objxRotate },
+    { "scale", objxScale },
+    { "transparent", objxTransparent },
+    { "offsetPivot", objxOffsetPivot },
+    { "setRotateTurn", objxSetRotateTurn },
+    { "setStepMove", setStepMove },
+    { "setStepRotate", setStepRotate },
+    { "enableFlags", objxEnableFlags },
+    { "disableFlags", objxDisableFlags },
+    { "setParent", objxSetParent },
+    { "setPair", objxSetPair },
+    { "changeId", objxChangeId },
+    { "footId", objxFootId },
+    { 0, 0 },
+};
+
+
+/* Creates the map object record for key, kind and entry in the first free slot and returns its index, or -1
+ * when fourth names a key row that the gate bytes hide. The kind decides how the record is set up. */
+int uwamonoCreateRecord(int key, int kind, int entry, int fourth, int fifth)
+{
+    UwamonoRecord *record;
+    struct XenoActor *actor;
+    UwamonoState *state;
+    ObjTableEntry *table;
+    signed char *v;
+    int *res = 0;
+    int *resources;
+    int index;
+    int row = -1;
+    int set;
+    int arg;
+    int i;
+    UwamonoKeyRow *keyRows;
+    Vector4 position;
+    Vector4 rotation;
+
+    if (kind == MAP_KIND_ACTOR && fourth != -1) {
+        for (i = 0; i < 512; i++) {
+            keyRows = D_0069D1DC;
+            if (keyRows[i].key == fourth) {
+                row = i;
+                break;
+            }
+        }
+        if (i == 512) {
+            return -1;
+        }
+        set = gameWork.control & 0x800;
+        if (gameWork.rowFlags[set != 0][row] == 1) {
+            if (set == 0) {
+                if (D_0069D1DC[row].gateIfClear == 0) {
+                    return -1;
+                }
+            } else {
+                if (D_0069D1DC[row].gateIfSet == 0) {
+                    return -1;
+                }
+            }
+        }
+        entry = D_0069D1DC[row].value;
+    }
+
+    index = uwamonoCountLeadingInUse();
+    record = &uwamonoRecords[index];
+    record->id = (short) key;
+    record->kind = kind;
+    record->key = entry;
+
+    switch (kind) {
+    case MAP_KIND_ACTOR:
+    case MAP_KIND_ACTOR_STATIC:
+    case MAP_KIND_PART:
+        GameResLoadID(entry, (void **) &res, 0, 0);
+        resources = res;
+        actor = XenoActorAlloc();
+        record->actor = actor;
+        actor->resource0 = resources[0];
+        actor->resource1 = resources[1];
+        actor->resource2 = resources[2];
+        actor->resource4 = resources[4];
+        actor->resource3 = resources[3];
+        while (GameResLoadID(0x30041, (void **) &res, 0, 0) == -1) {
+        }
+        actor->sharedResource = res;
+        XenoActorAllocMatrices(actor);
+        XenoActorSetChannelValue(actor, 0.0f);
+        XenoActorSetMode(actor, 0);
+        record->position.coords[0] = actor->position.x;
+        record->position.coords[1] = actor->position.y;
+        record->position.coords[2] = actor->position.z;
+        record->position.coords[3] = actor->position.w;
+        record->formSet.value = 1;
+        actor->kind = entry;
+        actor->drawFlags |= 8;
+        actor->moved = index;
+        if (kind != MAP_KIND_PART) {
+            record->motions = &D_002BD600[slotIdRecordCountLeading()];
+        }
+        if (kind == MAP_KIND_ACTOR_STATIC) {
+            record->motions->owner = index;
+        }
+        if (entry <= 0x6FFFF) {
+            record->extent = actor->radius = 0.6f;
+            record->height = actor->height = 1.8f;
+            record->shape = 0;
+        } else {
+            record->extent = actor->radius = 0.0f;
+            record->shape = 2;
+        }
+        if ((unsigned int) (entry - 0x10000) < 0x4000) {
+            record->form = 1.0f;
+        } else {
+            record->form = 5.0f;
+        }
+        if (kind == MAP_KIND_ACTOR) {
+            state = record->motions;
+            state->paceA = 0.02f;
+            state->paceB = 0.04f;
+            state->paceC = 1.0471976f;
+            state->paceD = 5.0f;
+            state->owner = index;
+            state->zeroLimit = 0;
+            state->countB0 = state->countA0 = 20;
+            state->countB1 = state->countA1 = 4;
+            state->rangeMin = -2.5f;
+            state->rangeMax = 10.0f;
+            state->rangeStep = 3.0f;
+            state->mode = 0;
+            state->restFrames = 0;
+            state->row = row;
+            state->tailIndex = 0;
+            if (row != -1) {
+                keyRows = D_0069D1DC;
+                for (i = 0; i < 8; i++) {
+                    state->rowBytes[i] = keyRows[row].bytes[i];
+                }
+            }
+            for (i = 15; i >= 0; i--) {
+                state->indexTable[i] = i;
+            }
+        }
+        record->flags &= ~0x60000;
+        record->effectId = 0x10000035;
+        XenoActorPushMatrix(actor);
+        break;
+
+    case MAP_KIND_MODEL_REQUEST:
+        record->kind = MAP_KIND_MODEL;
+        record->type = record->key;
+        if (record->key == 12) {
+            if (gameWork.eventFlags[fourth] == 1) {
+                record->kind = MAP_KIND_FREE;
+                record->type = -1;
+                return index;
+            }
+            switch (uwamonoEventTable[fourth].selector) {
+            case 1:
+                v = func_A9B548(uwamonoEventTable[fourth].arg);
+                arg = (uwamonoRecords[uwamonoCurrentIndex].form == 1.0f ? v[10] : v[11]) + 12;
+                break;
+            case 2:
+                v = func_A9B4D0(uwamonoEventTable[fourth].arg);
+                arg = (uwamonoRecords[uwamonoCurrentIndex].form == 1.0f ? v[12] : v[13]) + 12;
+                break;
+            case 3:
+                func_A9B580(uwamonoEventTable[fourth].arg);
+                arg = 18;
+                break;
+            case 4:
+                v = func_A9B5B8(uwamonoEventTable[fourth].arg);
+                arg = (uwamonoRecords[uwamonoCurrentIndex].form == 1.0f ? v[4] : v[5]) + 12;
+                break;
+            default:
+                arg = 12;
+                break;
+            }
+            if (fifth != -1) {
+                arg = fifth + 12;
+            }
+            record->eventRow = (short) fourth;
+            record->type = arg;
+        }
+        record->key = -1;
+        record->position.coords[0] = record->position.coords[1] = record->position.coords[2] = 0.0f;
+        record->position.coords[3] = 1.0f;
+        record->rotation[0] = record->rotation[1] = record->rotation[2] = 0.0f;
+        record->rotation[3] = 1.0f;
+        uwamonoInitRecord((short) index);
+        record->transform = &record->objectEntry;
+        break;
+
+    case MAP_KIND_MODEL:
+        if (entry == -1) {
+            rotation.x = rotation.y = rotation.z = position.x = position.y = position.z = 0.0f;
+        } else {
+            func_001EF6A0(&position, entry);
+            func_001EF6E0(&rotation, entry);
+        }
+        record->position.coords[0] = position.x;
+        record->position.coords[1] = position.y;
+        record->position.coords[2] = position.z;
+        record->position.coords[3] = position.w;
+        record->rotation[0] = rotation.x;
+        record->rotation[1] = rotation.y;
+        record->rotation[2] = rotation.z;
+        record->rotation[3] = rotation.w;
+        uwamonoInitRecord((short) index);
+        if (entry != -1) {
+            table = (ObjTableEntry *) ((unsigned char *) mapObjectTable + mapObjectTable->entry_offset) + entry;
+            record->objectEntry = *table;
+            record->transform = table;
+            record->objectCopy = *table;
+        } else {
+            record->transform = &record->objectEntry;
+        }
+        break;
+
+    case MAP_KIND_EFFECT:
+        rotation.x = rotation.y = rotation.z = position.x = position.y = position.z = 0.0f;
+        record->position.coords[0] = position.x;
+        record->position.coords[1] = position.y;
+        record->position.coords[2] = position.z;
+        record->position.coords[3] = position.w;
+        record->rotation[0] = rotation.x;
+        record->rotation[1] = rotation.y;
+        record->rotation[2] = rotation.z;
+        record->rotation[3] = rotation.w;
+        record->flags = 2;
+        record->shape = 0;
+        sefStartEffectKeyDefault(0, entry);
+        record->effect = sefSpawnEffectRecordById(entry, &record->position, 0);
+        break;
+
+    case MAP_KIND_FLAG:
+        record->position.coords[0] = record->position.coords[1] = record->position.coords[2] = 0.0f;
+        record->position.coords[3] = 1.0f;
+        break;
+    }
+
+    record->riderSide = 0;
+    return index;
+}
 
 /* One 16-byte row of the pose table at uwamonoEntries (tu083.c). */
 typedef struct UwamonoEntry {
@@ -1176,8 +1499,8 @@ int runtimeSetPlayer(int call)
     gameWork.playerParams[3][0] = func_A9F1C0(call, 7) != 0 ? gameWork.playerParams[3][0] : (float) func_A9F0C0(call, 7) / 100.0f;
     gameWork.playerParams[4][0] = func_A9F1C0(call, 8) != 0 ? gameWork.playerParams[4][0] : (float) func_A9F0C0(call, 8) / 100.0f;
     gameWork.climbFrames = func_A9F1C0(call, 9) != 0 ? gameWork.climbFrames : func_A9F0C0(call, 9);
-    gameWork.playerRate = func_A9F1C0(call, 10) != 0 ? gameWork.playerRate : (float) func_A9F0C0(call, 10) / 10000.0f;
-    gameWork.playerScale = func_A9F1C0(call, 11) != 0 ? gameWork.playerScale : (float) func_A9F0C0(call, 11) / 100.0f;
+    gameWork.gravity = func_A9F1C0(call, 10) != 0 ? gameWork.gravity : (float) func_A9F0C0(call, 10) / 10000.0f;
+    gameWork.bounceDivisor = func_A9F1C0(call, 11) != 0 ? gameWork.bounceDivisor : (float) func_A9F0C0(call, 11) / 100.0f;
     if (func_A9F1C0(call, 12) == 0) {
         childKey = func_A9F0C0(call, 12);
         if (childKey >= 0) {
@@ -1188,3 +1511,5 @@ int runtimeSetPlayer(int call)
     }
     return 1;
 }
+
+unsigned char objxModuleName[8] = "objx";

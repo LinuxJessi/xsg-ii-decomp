@@ -110,3 +110,7 @@ void tiWindAnimUpdate(f32 time)
         }
     }
 }
+
+const DoublewordAlignedVector4 D_0068F800 = { 0.0f, 0.0f, 1.0f, 1.0f };
+const char D_0068F810[8] = "pHeader";
+const char D_0068F818[24] = "../TiWindAnim.euc.c";

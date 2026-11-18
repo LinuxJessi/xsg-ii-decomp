@@ -2,6 +2,8 @@
 #include "main/pad.h"
 #include "main/tu012.h"
 #include "main/xgl_1_016.h"
+#include "main/res_get_path.h"
+#include "main/tu048.h"
 
 /* One port of the pad record PadData, the full 0x80 bytes (xglPadRead
  * scales the port index by 128): the raw pad buffer, the decoded buttons
@@ -122,9 +124,92 @@ void DebugTextViewInit(DebugTextView *view, char *text) {
     view->height = 200;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu060", DebugTextViewUpdate);
+/* "^" marks text above the first line shown. */
+extern const char D_0069D020[];
+/* ">" marks the selected line. */
+extern char D_0069D028[];
+/* "v" marks text below the last line shown. */
 
-extern const char D_006886B0[];
+/* Scrolls the view by the pad (UP/DOWN move the selection, RIGHT/LEFT move
+ * twenty lines), then draws the lines from view->top. Returns whether CIRCLE is
+ * pressed: MovieListTest plays the selected movie then. */
+const char D_0069D020[8] = "^";
+
+char D_0069D028[8] = ">";
+
+int DebugTextViewUpdate(DebugTextView *view) {
+    char line[0x40];
+    char *top;
+    char *p;
+    int y;
+    int i;
+    int circle;
+    int circleMask = PAD_CIRCLE;
+    McTestPadPort *pad = &PadData.ports[0];
+
+    if (pad->repeated & PAD_UP) {
+        view->cursor = DebugTextPrevLine(view->cursor, view->text);
+    }
+    if (pad->repeated & PAD_DOWN) {
+        view->cursor = DebugTextNextLine(view->cursor);
+    }
+    if (view->scrolls & 1) {
+        if (PadData.ports[0].pressed & PAD_RIGHT) {
+            for (i = 19; i >= 0; i--) {
+                view->cursor = DebugTextNextLine(view->cursor);
+            }
+        }
+        if (PadData.ports[0].pressed & PAD_LEFT) {
+            for (i = 19; i >= 0; i--) {
+                view->cursor = DebugTextPrevLine(view->cursor, view->text);
+            }
+        }
+    }
+    y = view->y;
+    top = view->top;
+    circle = (PadData.ports[0].pressed & circleMask) != 0;
+    if (view->text < top) {
+        if (top >= view->cursor) {
+            view->top = DebugTextPrevLine(top, view->text);
+        }
+        if (view->text < view->top) {
+            xglFontDebugPrintf(16, y, D_0069D020);
+        }
+    }
+    while (y < view->height && *top != 0) {
+        if (view->cursor == top) {
+            xglFontDebugPrintf(24, y, D_0069D028);
+        }
+        p = line;
+        for (;;) {
+            switch (*top) {
+            case '\r':
+                break;
+            default:
+                if (*top == '\n') {
+                    break;
+                }
+                *p++ = *top++;
+                continue;
+            }
+            break;
+        }
+        do {
+            top++;
+        } while (*top == '\r' || *top == '\n');
+        *p = 0;
+        xglFontDebugPrintf(32, y, line);
+        y += 8;
+    }
+    if (*top != 0) {
+        if (view->cursor >= DebugTextPrevLine(top, view->text)) {
+            view->top = DebugTextNextLine(view->top);
+        }
+        xglFontDebugPrintf(16, y - 8, "v");
+    }
+    return circle;
+}
+
 void xglFontDebugHex(int x, int y, int value, int digits);
 
 /* Pad test page: the right/left and down/up repeats set the small and big
@@ -160,7 +245,7 @@ void func_001E9B28(void) {
             actuatorMode ^= 1;
             PadData.ports[0].actuatorMode = actuatorMode;
         }
-        xglFontDebugPrintf(0, 0, D_006886B0, small, big, actuatorMode);
+        xglFontDebugPrintf(0, 0, "%2x %2x %1d", small, big, actuatorMode);
         x = 16;
         pad = PadData.ports;
         for (port = 0; port < 2; port++) {
@@ -208,11 +293,6 @@ void func_001E9B28(void) {
 
 /* Font test page: the proportional fonts and a few kanji rows; circle and
  * cross reload font 0 and 1. */
-extern const char D_006886C0[];
-extern const char D_006886E0[];
-extern const char D_006886F0[];
-extern const char D_00688730[];
-extern const char D_00688770[];
 /* The half-width katakana table "$prop1;%s" prints. */
 extern char D_002BD130[];
 
@@ -223,11 +303,11 @@ void FontTestP1(void) {
     if (PadData.ports[0].pressed & PAD_CROSS) {
         xglFontLoad(1, 0);
     }
-    xglFontDebugPrintf(16, 16, D_006886C0);
-    xglFontDebugPrintf(16, 32, D_006886E0, D_002BD130);
-    xglFontDebugPrintf(16, 144, D_006886F0);
-    xglFontDebugPrintf(16, 160, D_00688730);
-    xglFontDebugPrintf(16, 176, D_00688770, 0xAE);
+    xglFontDebugPrintf(16, 16, "$prop0;$han1;0123456789abcdef");
+    xglFontDebugPrintf(16, 32, "$prop1;%s", D_002BD130);
+    xglFontDebugPrintf(16, 144, "$prop0;$han1;a\xA4\xA1\xA4\xA2\xA4\xA3\xA4\xA4\xA4\xA5" "a:;\xAD\xA1\xAD\xBE\xA6\xB8\xA1\xFB\xA1\xBD\xA1\xDF\xA1\xF9\xA1\xFA\xA2\xA2\xA2\xA3\xA2\xA4\xA2\xF6\xA1\xDA\xA1\xDB'");
+    xglFontDebugPrintf(16, 160, "$prop1;$han1;a\xA4\xA1\xA4\xA2\xA4\xA3\xA4\xA4\xA4\xA5" "a:;\xAD\xA1\xAD\xBE\xA6\xB8\xA1\xFB\xA1\xBD\xA1\xDF\xA1\xF9\xA1\xFA\xA2\xA2\xA2\xA3\xA2\xA4\xA2\xF6\xA1\xDA\xA1\xDB'");
+    xglFontDebugPrintf(16, 176, "$prop0;$han1;%c", 0xAE);
 }
 
 /* Font test: left and right would turn pages, but only page 0 is left. */
@@ -257,7 +337,365 @@ void FontTest(void) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu060", SoundTest);
+/* A sound project file (.prj) read into the debug buffer at 0x01010000. */
+typedef struct SoundProjectEntry {
+    unsigned char unk00[0xD];
+    char hidden;         /* 0x0D */
+    unsigned char unk0E[0x20 - 0xE];
+    char name[0x10];     /* 0x20 */
+} SoundProjectEntry;
+
+typedef struct SoundProject {
+    unsigned char unk00[8];
+    int count;           /* 0x08 */
+    unsigned char unk0C[4];
+    char name[0x10];     /* 0x10 */
+    char text[0x10];     /* 0x20 */
+    SoundProjectEntry entries[1]; /* 0x30 */
+} SoundProject;
+
+enum SoundTestState {
+    SOUNDTEST_INIT = 0,
+    SOUNDTEST_MENU = 1,
+    SOUNDTEST_BGM = 0x100,
+    SOUNDTEST_SE = 0x200,
+    SOUNDTEST_SE_VOICE = 0x201,
+    SOUNDTEST_ADX = 0x300,
+    SOUNDTEST_VOLUME_INIT = 0x400,
+    SOUNDTEST_VOLUME = 0x401
+};
+
+int printf(const char *, ...);
+void *memset(void *dst, int value, unsigned int size);
+int sprintf(char *, const char *, ...);
+int sceOpen(const char *path, int flags, ...);
+int sceRead(int descriptor, void *buffer, int bytes);
+int sceClose(int descriptor);
+int seBankLoadDefault(int bank, int flags);
+int seBankLoad(int bank, char *name, unsigned int size);
+int seBgmLoad(int bank, char *name, unsigned int size);
+int seBgmStart(int bank, int size);
+void seSetMuted(int group, int muted);
+void seVolumeSet(int volume, int group);
+void seVoiceStop(int voice);
+void seVoiceSetPanVolume(int voice, int volume, int pan);
+int seVoiceStartDefault(int voice);
+void func_0013A618(int first, int flag);
+void func_001A4400(int stereo);
+void func_001A3A18(void);
+void func_001A4010(void);
+void soundSlotStop(int index);
+int soundSlotSetVolume(int index, int level, int extra);
+void adxSetSlotFile(int index, char *name);
+extern unsigned char soundCtrl[];
+extern char D_002BD1B8[];
+extern char D_002BD1D0[];
+extern const char D_0069D038[];
+extern const char D_0069D040[];
+extern const char D_0069D048[];
+
+const char D_0069D038[8] = "\xA2\xA2:%s";
+
+const char D_0069D040[8] = "STEREO";
+
+const char D_0069D048[8] = "%3d";
+
+void SoundTest(void)
+{
+    DebugTextView view;
+    DebugTextView voices;
+    char bgmName[0x100];
+    char seName[0x100];
+    char path[0x100];
+    int stereo;
+    int state;
+    int volume;
+    int bank;
+    int fd;
+    int count;
+    int i;
+    int length;
+    int k;
+    int voice;
+    int pan;
+    int level;
+    int delta;
+    char *file;
+    char *from;
+    char *to;
+    char *dst;
+    unsigned char *line;
+    char *name;
+    char *text;
+
+    seBankLoadDefault(0, 0);
+    for (bank = 2; bank < 0x18; bank++) {
+        seBankLoadDefault(bank, 0);
+    }
+    state = SOUNDTEST_INIT;
+    volume = 0x7F;
+    stereo = 1;
+    while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
+        xglFontDebugPrintf(0x10, 0, "\xA1\xFB:SELECT \xA2\xA4:STOP \xA1\xDF:BACK");
+        switch (state) {
+        case SOUNDTEST_INIT:
+            DebugTextViewInit(&view, D_002BD1B8);
+            state = SOUNDTEST_MENU;
+        case SOUNDTEST_MENU:
+            if (PadData.ports[0].pressed & PAD_SQUARE) {
+                stereo ^= 1;
+                func_001A4400(stereo);
+            }
+            xglFontDebugPrintf(0x10, 0x40, D_0069D038, stereo ? D_0069D040 : "MONAURAL");
+            if (DebugTextViewUpdate(&view)) {
+                memset((void *) 0x01000000, 0, 0x10000);
+                fd = 0;
+                if (*view.cursor == 'S') {
+                    fd = sceOpen("host0:/home/xeno/vcd-f/x2/sound/vsf/_list.txt", 1);
+                    state = SOUNDTEST_SE;
+                } else if (*view.cursor == 'B') {
+                    fd = sceOpen("host0:/home/xeno/vcd-f/x2/sound/smf/_list.txt", 1);
+                    state = SOUNDTEST_BGM;
+                } else if (*view.cursor == 'A') {
+                    fd = sceOpen("host0:/home/xeno/vcd-f/x2/sound/adx/_list.txt", 1);
+                    state = SOUNDTEST_ADX;
+                } else if (*view.cursor == 'V') {
+                    state = SOUNDTEST_VOLUME_INIT;
+                    break;
+                }
+                sceRead(fd, (void *) 0x01000000, 0x10000);
+                sceClose(fd);
+                DebugTextViewInit(&view, (char *) 0x01000000);
+            }
+            break;
+        case SOUNDTEST_BGM:
+            if (PadData.ports[0].pressed & PAD_TRIANGLE) {
+                func_001A3A18();
+            }
+            if (PadData.ports[0].pressed & PAD_CROSS) {
+                state = SOUNDTEST_INIT;
+                break;
+            }
+            if (PadData.ports[0].pressed & PAD_SQUARE) {
+                seSetMuted(1, 1);
+            }
+            if (PadData.ports[0].released & PAD_SQUARE) {
+                seSetMuted(1, 0);
+            }
+            if (PadData.ports[0].repeated & (PAD_LEFT | PAD_RIGHT)) {
+                if (PadData.ports[0].repeated & PAD_LEFT) {
+                    volume--;
+                }
+                if (PadData.ports[0].repeated & PAD_RIGHT) {
+                    volume++;
+                }
+                if (volume < 0) {
+                    volume = 0;
+                }
+                if (volume > 0x7F) {
+                    volume = 0x7F;
+                }
+                seVolumeSet(volume, 0);
+                xglFontDebugPrintf(0, 0x10, D_0069D048, volume);
+            }
+            if (PadData.ports[0].pressed & PAD_R1) {
+                func_0013A618(1, 1);
+            }
+            if (PadData.ports[0].pressed & PAD_R2) {
+                func_0013A618(1, 0);
+            }
+            if (DebugTextViewUpdate(&view)) {
+                int fd;
+                SoundProject *project;
+                unsigned int bgmSize;
+                int bgmChan;
+
+                file = bgmName;
+                for (to = file, from = view.cursor; *from != '.'; from++, to++) {
+                    *to = *from;
+                }
+                *to = 0;
+                bgmSize = 0x19000;
+                bgmChan = 0x100;
+                func_001A3A18();
+                printf("smf result:%d\n", seBgmLoad(bgmChan, bgmName, bgmSize));
+                printf("seq result:%d\n", seBgmStart(1, 0x100));
+                sprintf(seName, "host0:/home/xeno/vcd-f/x2/sound/smf/%s.prj", bgmName);
+                printf("==== %s ====\n", bgmName);
+                fd = sceOpen(seName, 1);
+                sceRead(fd, (void *) 0x01010000, 0x10000);
+                sceClose(fd);
+                project = (SoundProject *) 0x01010000;
+                name = project->name;
+                count = project->count;
+                dst = (char *) project;
+                for (k = 0; k < 16 && *name != 0; k++) {
+                    *dst++ = *name++;
+                }
+                *dst = 0;
+                dst = project->text;
+                for (i = 0, name = project->entries[0].name; i < count; i++) {
+                    char *text = name;
+
+                    line = dst;
+                    for (length = 0; length < 16 && *text != 0; length++) {
+                        *dst++ = *text++;
+                    }
+                    *dst++ = '\n';
+                    name += 0x30;
+                    if (name[-0x43] != 1) {
+                        *dst = 0;
+                        printf(line);
+                    }
+                }
+                *dst = 0;
+            }
+            break;
+        case SOUNDTEST_SE:
+            if (PadData.ports[0].pressed & PAD_CROSS) {
+                state = SOUNDTEST_INIT;
+                break;
+            }
+            if (DebugTextViewUpdate(&view)) {
+                int fd;
+                const char *from;
+                char *to;
+                int size;
+                char *file = seName;
+
+                for (to = file, from = view.cursor; *from != '.';) {
+                    *to++ = *from++;
+                }
+                *to = 0;
+                size = 0x19000;
+                printf("result:%d\n", seBankLoad(0, seName, size));
+                sprintf(path, "host0:/home/xeno/vcd-f/x2/sound/vsf/%s.prj", seName);
+                printf("==== %s ====\n", seName);
+                fd = sceOpen(path, 1);
+                sceRead(fd, (void *) 0x01010000, 0x10000);
+                sceClose(fd);
+                name = ((SoundProject *) 0x01010000)->name;
+                count = ((SoundProject *) 0x01010000)->count;
+                dst = (char *) 0x01010000;
+                for (k = 0; k < 16 && *name != 0; k++) {
+                    *dst++ = *name++;
+                }
+                *dst = 0;
+                dst = ((SoundProject *) 0x01010000)->text;
+                name = ((SoundProject *) 0x01010000)->entries[0].name;
+                for (i = 0; i < count; i++) {
+                    char *text = name;
+
+                    line = dst;
+                    for (length = 0; length < 16 && *text != 0; length++) {
+                        *dst++ = *text++;
+                    }
+                    name += 0x30;
+                    *dst++ = '\n';
+                    if (1 == name[-0x43]) {
+                        *dst = 0;
+                        printf(line);
+                    }
+                }
+                *dst = 0;
+                DebugTextViewInit(&voices, ((SoundProject *) 0x01010000)->text);
+                state = SOUNDTEST_SE_VOICE;
+            }
+            break;
+        case SOUNDTEST_SE_VOICE:
+            voice = 0;
+            for (text = voices.text; text < voices.cursor; text++) {
+                if (*text == '\n') {
+                    voice++;
+                }
+            }
+            if (PadData.ports[0].pressed & PAD_TRIANGLE) {
+                seVoiceStop(voice);
+            }
+            if (PadData.ports[0].pressed & PAD_CROSS) {
+                func_001A4010();
+                state = SOUNDTEST_SE;
+                break;
+            }
+            if (PadData.ports[0].held & PAD_R3) {
+                pan = PadData.ports[0].sticksCentered[0] / 2 + 0x40;
+                level = 0x7F - PadData.ports[0].sticksCentered[1];
+                if (level < 0) {
+                    level = 0;
+                }
+                if (level > 0x7F) {
+                    level = 0x7F;
+                }
+                xglFontDebugPrintf(0, 0x20, D_0069D048, pan);
+                xglFontDebugPrintf(0, 0x28, D_0069D048, level);
+                seVoiceSetPanVolume(voice, level, pan);
+            }
+            if (DebugTextViewUpdate(&voices)) {
+                seVoiceStartDefault(voice);
+            }
+            xglFontDebugPrintf(0, 0x10, "%2d", voice);
+            break;
+        case SOUNDTEST_ADX:
+            if (PadData.ports[0].pressed & PAD_TRIANGLE) {
+                soundSlotStop(0);
+            }
+            if (PadData.ports[0].pressed & PAD_SQUARE) {
+                soundSlotSetVolume(0, 0, 8);
+            }
+            if (PadData.ports[0].pressed & PAD_CROSS) {
+                soundSlotStop(0);
+                state = SOUNDTEST_INIT;
+                break;
+            }
+            if (DebugTextViewUpdate(&view)) {
+                char *file = path;
+                const char *from;
+                char *to;
+
+                for (from = view.cursor, to = file; *from != '.'; from++, to++) {
+                    *to = *from;
+                }
+                *to = 0;
+                soundSlotStop(0);
+                adxSetSlotFile(0, path);
+            }
+            break;
+        case SOUNDTEST_VOLUME_INIT:
+            DebugTextViewInit(&view, D_002BD1D0);
+            state = SOUNDTEST_VOLUME;
+            view.scrolls = 0;
+        case SOUNDTEST_VOLUME:
+            if (PadData.ports[0].pressed & PAD_CROSS) {
+                state = SOUNDTEST_INIT;
+                break;
+            }
+            xglFontDebugPrintf(0x58, 0x10, D_0069D048, soundCtrl[4]);
+            xglFontDebugPrintf(0x58, 0x18, D_0069D048, soundCtrl[5]);
+            xglFontDebugPrintf(0x58, 0x20, D_0069D048, soundCtrl[6]);
+            xglFontDebugPrintf(0x58, 0x28, D_0069D048, soundCtrl[7]);
+            DebugTextViewUpdate(&view);
+            delta = 0;
+            if (PadData.ports[0].repeated & PAD_LEFT) {
+                delta = -1;
+            }
+            if (PadData.ports[0].repeated & PAD_RIGHT) {
+                delta = 1;
+            }
+            if (*view.cursor == 'M') {
+                soundCtrl[4] += delta;
+            } else if (*view.cursor == 'B') {
+                soundCtrl[5] += delta;
+            } else if (*view.cursor == 'S') {
+                soundCtrl[6] += delta;
+            } else if (*view.cursor == 'A') {
+                soundCtrl[7] += delta;
+                soundSlotSetVolume(1, -1, 0);
+            }
+            break;
+        }
+        xglSleep();
+    }
+}
 
 /* Empty callback: nothing to do. */
 void func_001EAB08(void) {
@@ -267,46 +705,45 @@ void func_001EAB08(void) {
 /* Port names: memory card slots 1 and 2, then the HDD. */
 extern const char *D_002BD1E8[];
 
+const char D_006888E0[16] = "\xA5\xDD\xA1\xBC\xA5\xC8\xA3\xB2";
+
+const char D_006888F0[16] = "\xA5\xDD\xA1\xBC\xA5\xC8\xA3\xB1";
+
 const char *func_001EAB10(int port) {
     return D_002BD1E8[port];
 }
 
-int printf(const char *, ...);
-extern const char D_00688900[];
 
 /* Enumerate callback: logs the result it is called with ("callback:%d");
  * always returns -1. */
 int DebugCallbackLog(int result) {
-    printf(D_00688900, result);
+    printf("callback:%d\n", result);
     return -1;
 }
 
 /* Reports of the old-data check: "ep1  :" and "ep1re:" lines carry the seven
  * bytes of an Episode I save entry, "freak:" its first byte. */
-extern const char D_00688910[];
-extern const char D_00688938[];
-extern const char D_00688960[];
-extern const char D_0069D060[];
-extern const char D_0069D068[];
 
 /* Callback of the old-data check (MC_REQ_CHECK_OLD): logs each result; the
  * entry bytes are read only for the entry results 0 to 2. Always returns 0. */
+const char D_0069D058[8] = "\xA3\xC8\xA3\xC4\xA3\xC4";
+
 int func_001EAB50(int result, unsigned char *entry) {
     switch (result) {
     case 0:
-        printf(D_00688910, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6]);
+        printf("ep1  :%d,%2d,%2d,%2d,%2d,%2d,%2d\n", entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6]);
         break;
     case 1:
-        printf(D_00688938, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6]);
+        printf("ep1re:%d,%2d,%2d,%2d,%2d,%2d,%2d\n", entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6]);
         break;
     case 2:
-        printf(D_00688960, entry[0]);
+        printf("freak:%d\n", entry[0]);
         break;
     case -2:
-        printf(D_0069D060);
+        printf("end\n");
         break;
     case -3:
-        printf(D_0069D068);
+        printf("error\n");
         break;
     case -1:
         break;
@@ -334,9 +771,6 @@ typedef struct McIconModel {
 } McIconModel;
 
 /* "  %08x:%d,%d\n" and "  (%f,%f)-(%f,%f)-(%f,%f)\n". */
-extern const char D_00688988[];
-extern const char D_00688998[];
-
 float I2F(int value);
 
 /* Reports the bounding box of an icon model (positions are 1/1024 fixed
@@ -351,7 +785,7 @@ void func_001EAC18(void *icon, float *zoom) {
     float value;
     float minX, maxX, minY, maxY, minZ, maxZ;
 
-    printf(D_00688988, model, shapeCount, vertexCount);
+    printf("  %08x:%d,%d\n", model, shapeCount, vertexCount);
     minX = minY = minZ = 100.0f;
     maxX = maxY = maxZ = -100.0f;
     for (vertex = 0; vertex < vertexCount; vertex++) {
@@ -381,7 +815,7 @@ void func_001EAC18(void *icon, float *zoom) {
         }
         position += 2;
     }
-    printf(D_00688998, minX, maxX, minY, maxY, minZ, maxZ);
+    printf("  (%f,%f)-(%f,%f)-(%f,%f)\n", minX, maxX, minY, maxY, minZ, maxZ);
     *zoom = 1.0f;
     if (0.0f < maxY) {
         minY -= maxY;
@@ -402,12 +836,6 @@ typedef struct McIconImageHeader {
 
 #define MC_ICON_ALIGN(size) (((size) + 0x3F) & -0x40)
 
-extern const char D_0069D070[];
-extern const char D_0069D078[];
-extern const char D_0069D080[];
-extern const char D_006889B8[];
-extern const char D_006889C8[];
-
 int xglCdReadFile(const char *name, void *buffer, int mode, int flags);
 
 /* Loads a card icon image and reports its three icons. The smallest zoom
@@ -419,29 +847,29 @@ void McFileSectionsReport(const char *name, void *image) {
     float iconZoom;
     float minZoom = 1.0f;
 
-    printf(D_0069D070, name);
+    printf("%s\n", name);
     xglCdReadFile(name, image, 0, 0);
     offset = MC_ICON_ALIGN(header->headerSize);
     icons = (char *)image + offset;
-    printf(D_0069D078);
+    printf(" sys\n");
     offset = MC_ICON_ALIGN(header->sysOffset);
     func_001EAC18(icons + offset, &iconZoom);
     if (iconZoom < minZoom) {
         minZoom = iconZoom;
     }
-    printf(D_0069D080);
+    printf(" copy\n");
     offset = MC_ICON_ALIGN(header->copyOffset);
     func_001EAC18(icons + offset, &iconZoom);
     if (iconZoom < minZoom) {
         minZoom = iconZoom;
     }
-    printf(D_006889B8);
+    printf(" delete\n");
     offset = MC_ICON_ALIGN(header->deleteOffset);
     func_001EAC18(icons + offset, &iconZoom);
     if (iconZoom < minZoom) {
         minZoom = iconZoom;
     }
-    printf(D_006889C8, iconZoom);
+    printf(" zoom:%f\n", iconZoom);
 }
 
 /* Free EE RAM the tests use as scratch. */
@@ -451,7 +879,6 @@ void McFileSectionsReport(const char *name, void *image) {
 #define MC_TEST_FILE_COUNT 11
 #define MC_TEST_PATTERN_BASE 0x01100000
 #define IPU_STREAM_BUFFER_BASE 0x02000000
-
 /* Requests of the xglMc queue as MemcardTest issues them. */
 #define MC_REQ_FREE_SPACE 1
 #define MC_REQ_EXIST 2
@@ -462,7 +889,6 @@ void McFileSectionsReport(const char *name, void *image) {
 #define MC_REQ_FORMAT 7
 #define MC_REQ_CHECK_OLD 8
 #define MC_REQ_UNFORMAT 9
-
 /* Status halfwords returned by xglMcMain for each port. */
 #define MC_PORT_READY 1
 #define MC_PORT_BUSY 0xFF
@@ -693,6 +1119,7 @@ typedef struct McThumbnail {
  * 0x50-byte header, the other files the rest from D_0063F890. */
 #define SAVE_DATA_SIZE 0x5160
 #define SAVE_HEADER_SIZE 0x50
+
 /* The two save-image settings this TU reads: the Dolby Digital flag that
  * MovieListTest toggles and the caption mode it forces. */
 typedef struct McTestSaveData {
@@ -704,25 +1131,18 @@ typedef struct McTestSaveData {
     unsigned char caption_all;
     unsigned char unmodeled_3b[SAVE_DATA_SIZE - 0x3B];
 } McTestSaveData;
+
 extern McTestSaveData SaveData;
 extern unsigned char D_0063F890[];
 /* The event flags the triangle button randomizes. */
 extern unsigned char D_0063F8B4[];
 /* The thumbnail saved with the game. */
 extern McThumbnail D_0063F9B4;
-
-/* Strings and a table MemcardTest shares with functions that are still
- * assembly: ">" is the menu cursor (X1's menu_cursor, first emitted by
- * SoundTest), "%2x" is shared with func_001EC8E8, and "%1x", "%2x %2x" and
- * the HDD menu table sit in the next scaffold piece of .sdata. */
-extern char D_0069D028[];
-extern const char D_0069D090[];
 extern const char D_0069D0D0[];
 extern const char D_0069D0D8[];
 /* HDD menu row -> state: MCTEST_STATE_HDD_LOAD_LIST, MCTEST_STATE_HDD_SAVE_INIT
  * (X1 names this static tbl_49). */
 extern unsigned char tbl_49[4];
-
 int xglMcEasySave(const char *path, const void *buffer, int size);
 void xglMcSetEntryNumbers(unsigned char *object, int value, const unsigned char *source);
 int xglHddCheck(void);
@@ -810,7 +1230,7 @@ void MemcardTest(void) {
                 state = MCTEST_STATE_INIT;
             }
         }
-        xglFontDebugPrintf(0, 16, D_0069D090, state);
+        xglFontDebugPrintf(0, 16, "%2x", state);
 
         switch (state) {
         case MCTEST_STATE_INIT:
@@ -1401,26 +1821,238 @@ void MemcardTest(void) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu060", CdSlotTableView);
+extern unsigned char CdSlotCursor;
+extern const char D_0069D0E8[];
+extern const char D_0069D0F0[];
+extern const char D_0069D0F8[];
+extern const char D_00689360[];
+void resPathSlotsLoadModels(int modelId0, int modelId1, int modelId2);
+void resUpdatePathSlot(int slot);
+void resResetPathSlots(void);
+int GameResBlockFreeByOwner(int owner);
+char *xglCdFindFileName(unsigned int file_id);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu060", func_001EC8E8);
+/* CD slot view: UP and DOWN move the cursor over the slots of xglCdSlotTable, the
+ * buttons below load or free paths, and the table is listed from row 0x40. */
+void CdSlotTableView(void) {
+    CdSlot *entry;
+    int index;
+    int owner;
+    int y;
+    McTestPadPort *pad;
+
+    if (PadData.ports[0].repeated & PAD_UP) {
+        CdSlotCursor--;
+        if (CdSlotCursor == 0) {
+            CdSlotCursor = 1;
+        }
+    }
+    if (PadData.ports[0].repeated & PAD_DOWN) {
+        CdSlotCursor++;
+        if (xglCdSlotTable[CdSlotCursor].owner == -1) {
+            do {
+                CdSlotCursor--;
+            } while (xglCdSlotTable[CdSlotCursor].owner == -1);
+        }
+    }
+    pad = &PadData.ports[0];
+    if (pad->pressed & PAD_CIRCLE) {
+        resPathSlotsLoadModels(0x1000A, 0x1001C, 0x10016);
+    }
+    if (pad->pressed & PAD_TRIANGLE) {
+        resPathSlotsLoadModels(0x10016, 0x10026, 0x10002);
+    }
+    if (pad->pressed & PAD_SQUARE) {
+        resUpdatePathSlot(0);
+    }
+    if (pad->pressed & PAD_R1) {
+        resUpdatePathSlot(-1);
+    }
+    if (pad->pressed & PAD_R2) {
+        resResetPathSlots();
+    }
+    if (pad->pressed & PAD_CROSS) {
+        GameResBlockFreeByOwner(xglCdSlotTable[CdSlotCursor].owner);
+    }
+
+    y = 0x40;
+    index = 1;
+    entry = xglCdSlotTable + index;
+    owner = entry->owner;
+    if (owner != -1) {
+        do {
+            const char *name;
+
+            if (owner == 0) {
+                name = D_0069D0E8;
+            } else if ((owner & 0xFF0000) == 0xF00000) {
+                name = entry->buffer;
+            } else {
+                name = xglCdFindFileName(owner & 0xFFFFFF);
+            }
+            if (index == xglCdSlotTable[0].owner) {
+                xglFontDebugPrintf(0xC, y, D_0069D0F0);
+                y += 8;
+            }
+            if (index == CdSlotCursor) {
+                xglFontDebugPrintf(4, y, D_0069D028);
+            }
+            xglFontDebugPrintf(0xC, y, D_0069D0F8, entry->buffer, entry->size);
+            xglFontDebugPrintf(0x78, y, D_00689360, name);
+            y += 8;
+            index++;
+            if (index < GAME_RES_BLOCK_COUNT) {
+                entry = xglCdSlotTable + index;
+                if (entry->owner != -1) {
+                    owner = entry->owner;
+                    continue;
+                }
+            }
+            break;
+        } while (1);
+    }
+}
+
+/* [0]: the slot stepped by the pad, passed to resLoadCfFile/resApplyCfFile; [1]: name or owner
+ * column, toggled by LEFT/RIGHT. */
+extern unsigned char D_0069D100;
+extern unsigned char D_0069D101;
+extern const char D_0069D108[];
+extern const char D_0069D110[];
+void resResetSlotTable(void);
+void resLoadCfFile(int slot);
+void resApplyCfFile(int slot);
+void resResetScriptState(void);
+void resGetEntryTables(unsigned int **rightTable, unsigned int **leftTable);
+
+/* Pad 0 steps the byte flag D_0069D100 (the slot shown by the load and
+ * apply buttons) and toggles D_0069D101 (name or owner column), then the
+ * CD slot table is listed from row 0x40 and the two count-prefixed entry
+ * tables from resGetEntryTables follow in two columns. */
+void func_001EC8E8(void) {
+    McTestPadPort *pad = &PadData.ports[0];
+    CdSlot *entry;
+    const char *name;
+    int owner;
+    int index;
+    int y;
+    unsigned int *leftTable;
+    unsigned int *rightTable;
+
+    if (pad->repeated & PAD_UP) {
+        D_0069D100 += 0xFF;
+    }
+    if (pad->repeated & PAD_DOWN) {
+        D_0069D100 += 1;
+    }
+    if (pad->pressed & (PAD_LEFT | PAD_RIGHT)) {
+        D_0069D101 ^= 1;
+    }
+    if (pad->pressed & PAD_SQUARE) {
+        resResetSlotTable();
+    }
+    if (pad->pressed & PAD_TRIANGLE) {
+        resLoadCfFile(D_0069D100);
+    }
+    if (pad->pressed & PAD_CIRCLE) {
+        resApplyCfFile(D_0069D100);
+    }
+    if (pad->pressed & PAD_CROSS) {
+        resResetScriptState();
+    }
+
+    y = 0x40;
+    index = 1;
+    entry = xglCdSlotTable + index;
+    owner = entry->owner;
+    if (owner != -1) {
+        do {
+            if (owner == 0) {
+                name = D_0069D0E8;
+            } else if ((owner & 0xFF0000) == 0xF00000) {
+                name = entry->buffer;
+            } else {
+                name = xglCdFindFileName(owner);
+            }
+            xglFontDebugPrintf(0xC, y, D_0069D0F8, entry->buffer, entry->size);
+            if (D_0069D101 == 0) {
+                xglFontDebugPrintf(0x78, y, D_00689360, name);
+            } else {
+                xglFontDebugPrintf(0x78, y, D_0069D108, entry->owner);
+            }
+            index++;
+            y += 8;
+            if (index < GAME_RES_BLOCK_COUNT) {
+                entry = xglCdSlotTable + index;
+                if (entry->owner != -1) {
+                    owner = entry->owner;
+                    continue;
+                }
+            }
+            break;
+        } while (1);
+    }
+
+    resGetEntryTables(&rightTable, &leftTable);
+    xglFontDebugPrintf(0x10, 0x18, "%2x", D_0069D100);
+    y += 8;
+    xglFontDebugPrintf(0x10, 0x20, D_0069D110, leftTable[0], rightTable[0]);
+    index = 1;
+    do {
+        if (index < leftTable[0]) {
+            xglFontDebugPrintf(0x20, y, D_0069D108, leftTable[index]);
+        }
+        if (index < rightTable[0]) {
+            xglFontDebugPrintf(0x60, y, D_0069D108, rightTable[index]);
+        }
+        index++;
+        y += 8;
+    } while (index < 0x40);
+}
 
 /* JP: リソーステスト (EN: resource test), with "%d" for the view. */
-extern const char D_00689378[];
 /* The spinner character "*". */
-extern const char D_0069D120[];
 /* Frame counter of the spinner. */
 extern unsigned char D_0069D118;
-
 void resInitPathHeader(int key, int value);
 void resPathSlotsInit(void);
 void resSelectSlot(int search);
 void func_001E1B10(void);
+/* CD slot view: UP and DOWN move the cursor over the slots of xglCdSlotTable, the * buttons below load or free paths, and the table is listed from row 0x40. */
 void CdSlotTableView(void);
+/* Pad 0 steps the byte flag D_0069D100 (the slot shown by the load and * apply buttons) and toggles D_0069D101 (name or owner column), then the * CD slot table is listed from row 0x40 and the two count-prefixed entry * tables from resGetEntryTables follow in two columns. */
 void func_001EC8E8(void);
 
 /* CD slot test: shows the slot table or the second view (SELECT toggles),
  * START reloads the path table. */
+const char D_00689360[24] = "$zoom12;%s$zoom16;";
+
+const char D_0069D0D0[8] = "%1x";
+
+const char D_0069D0D8[8] = "%2x %2x";
+
+unsigned char tbl_49[4] = {
+    0x70, 0x80, 0x00, 0x00
+};
+
+unsigned char CdSlotCursor = 1;
+
+const char D_0069D0E8[8] = "(free)";
+
+const char D_0069D0F0[8] = "----";
+
+const char D_0069D0F8[8] = "%8x %8x";
+
+unsigned char D_0069D100 = 0;
+
+unsigned char D_0069D101 = 0;
+
+const char D_0069D108[8] = "%8x";
+
+const char D_0069D110[8] = "%3d %3d";
+
+unsigned char D_0069D118 = 0;
+
 void CdSlotTest(void) {
     int view = 0;
 
@@ -1428,9 +2060,9 @@ void CdSlotTest(void) {
     resPathSlotsInit();
     resSelectSlot(1);
     while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
-        xglFontDebugPrintf(0, 0, D_00689378, view);
+        xglFontDebugPrintf(0, 0, "\x0B\xA5\xEA\xA5\xBD\xA1\xBC\xA5\xB9\xA5\xC6\xA5\xB9\xA5\xC8%1x", view);
         D_0069D118++;
-        xglFontDebugPrintf(((D_0069D118 * 4) & 0x38) + 0x50, 0, D_0069D120);
+        xglFontDebugPrintf(((D_0069D118 * 4) & 0x38) + 0x50, 0, "*");
         if (PadData.ports[0].pressed & PAD_START) {
             func_001E1B10();
         }
@@ -1450,25 +2082,18 @@ void CdSlotTest(void) {
 }
 
 /* The movie list "host0:/home/xeno/vcd-f/x2u/movie/sfd.lst". */
-extern const char D_00689390[];
 /* JP: ムービーリスト (EN: movie list) title. */
-extern const char D_006893C0[];
 /* JP: ∥：ＤＯＬＢＹ ＤＩＧＩＴＡＬ (EN: dolby digital) "%s". */
-extern const char D_006893D0[];
 /* "VOL%3d". */
-extern const char D_006893F0[];
 /* "ON". */
-extern const char D_0069D128[];
 /* "OFF". */
-extern const char D_0069D130[];
-extern int gameLoopFlags[];
-
 /* Scratch memory of the tests. */
 void *GameResBufferAlloc(int size);
 extern int sceOpen(const char *path, int flags, ...);
 extern int sceRead(int descriptor, void *buffer, int bytes);
 extern int sceClose(int descriptor);
 void *memset(void *destination, int value, unsigned int count);
+/* Scrolls the view by the pad (UP/DOWN move the selection, RIGHT/LEFT move * twenty lines), then draws the lines from view->top. Returns whether CIRCLE is * pressed: MovieListTest plays the selected movie then. */
 int DebugTextViewUpdate(DebugTextView *view);
 void func_001A4400(int flag);
 void GameMovieCaptionPlay(const char *name);
@@ -1490,19 +2115,19 @@ void MovieListTest(void) {
     resInitPathHeader(DEBUG_BUFFER_BASE, DEBUG_BUFFER_BASE);
     list = (char *)GameResBufferAlloc(0x4000);
     memset(list, 0, 0x4000);
-    descriptor = sceOpen(D_00689390, 1);
+    descriptor = sceOpen("host0:/home/xeno/vcd-f/x2u/movie/sfd.lst", 1);
     sceRead(descriptor, list, 0x4000);
     sceClose(descriptor);
     DebugTextViewInit(&view, list);
     SaveData.caption_all = 2; /* the save default: every caption line shown */
-    gameLoopFlags[0] = 0;
+    gameWork.control = 0;
     func_001A4400(0);
     while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
-        xglFontDebugPrintf(0, 0, D_006893C0);
+        xglFontDebugPrintf(0, 0, "\x0B\xBB\xFA\xCB\xEB\xB3\xCE\xC7\xA7");
         if (PadData.ports[0].pressed & PAD_SQUARE) {
             SaveData.dolby_digital ^= 1;
         }
-        xglFontDebugPrintf(0, 0xD0, D_006893D0, SaveData.dolby_digital ? D_0069D128 : D_0069D130);
+        xglFontDebugPrintf(0, 0xD0, "\xA2\xA2\xA1\xA7\xA3\xC4\xA3\xEF\xA3\xEC\xA3\xE2\xA3\xF9\xA3\xC4\xA3\xE9\xA3\xE7\xA3\xE9\xA3\xF4\xA3\xE1\xA3\xEC:%s", SaveData.dolby_digital ? "ON" : "OFF");
         if (PadData.ports[0].repeated & (PAD_L1 | PAD_R1)) {
             if (PadData.ports[0].repeated & PAD_L1) {
                 volume--;
@@ -1517,7 +2142,7 @@ void MovieListTest(void) {
                 volume = 0x7F;
             }
         }
-        xglFontDebugPrintf(0xB0, 0xD0, D_006893F0, volume);
+        xglFontDebugPrintf(0xB0, 0xD0, "\xA3\xCC\xA3\xD2\xA1\xA7VOL%3d", volume);
         if (DebugTextViewUpdate(&view)) {
             cursor = view.cursor;
             out = name;
@@ -1534,13 +2159,9 @@ void MovieListTest(void) {
 }
 
 /* "yajima\\ipu_101.ipu". */
-extern const char D_00689400[];
 /* "%8x %1x %8x". */
-extern const char D_00689418[];
 /* "%dx%d\n". */
-extern const char D_0069D138[];
 /* JP: IPU title. */
-extern const char D_0069D140[];
 
 /* The textured sprite that shows a decoded frame: TEX0 at 0x10, the two
  * XYZ2 vertices at 0x40 and 0x60 and the second vertex's UV at 0x50. */
@@ -1564,7 +2185,6 @@ extern unsigned long long D_002BD260[4];
 extern unsigned long long D_002BD280[6];
 extern unsigned long long D_002BD2B0[8];
 extern IpuSpritePacket D_002BD2F0;
-
 
 typedef struct XglPacket XglPacket;
 
@@ -1590,18 +2210,18 @@ void IpuMovieTest(void) {
     xglMovieInfoInit(&info);
     info.source = (XglMovieSourceHeader *)IPU_STREAM_BUFFER_BASE;
     info.sourceSize = 0x10000;
-    xglMovieOpen(&info, D_00689400);
+    xglMovieOpen(&info, "yajima\\ipu_101.ipu");
     info.imageAddress[0] = (unsigned char *)DEBUG_BUFFER_BASE;
     info.imageAddress[1] = (unsigned char *)(DEBUG_BUFFER_BASE + 0x200000);
     info.workBuffer = (unsigned char *)(DEBUG_BUFFER_BASE + 0x400000);
-    printf(D_0069D138, info.width, info.height);
+    printf("%dx%d\n", info.width, info.height);
     while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
         if (PadData.ports[0].pressed & PAD_CIRCLE) {
             xglMovieRewind(&info);
         }
-        xglFontDebugPrintf(0, 0, D_0069D140);
+        xglFontDebugPrintf(0, 0, "\x0B\xA3\xC9\xA3\xD0\xA3\xD5");
         result = xglMoviePlay(&info);
-        xglFontDebugPrintf(0, 0x20, D_00689418, info.currentFrame, result, frames);
+        xglFontDebugPrintf(0, 0x20, "%8x %1x %8x", info.currentFrame, result, frames);
         frames++;
         packet = xglPacketGetCurrent();
         frame = info.imageAddress[info.bufferIndex ^ 1];
@@ -1631,9 +2251,7 @@ void IpuMovieTest(void) {
 }
 
 /* "yajima\\check.txt". */
-extern const char D_00689428[];
 /* JP: 漢字チェック (EN: kanji check) title. */
-extern const char D_00689440[];
 
 /* Kanji check: lists every distinct two-byte character of check.txt, 16
  * per line, and shows the list; circle prints it. */
@@ -1646,7 +2264,7 @@ void func_001ED1C0(void) {
     unsigned char high;
     unsigned char low;
 
-    xglCdReadFile(D_00689428, (void *)(DEBUG_BUFFER_BASE + 0x800), 0, 0);
+    xglCdReadFile("yajima\\check.txt", (void *)(DEBUG_BUFFER_BASE + 0x800), 0, 0);
     text = (unsigned char *)(DEBUG_BUFFER_BASE + 0x800);
     while (*text != 0) {
         if ((char)*text >= 0) {
@@ -1681,7 +2299,7 @@ void func_001ED1C0(void) {
     out[0] = '\n';
     out[1] = 0;
     while ((PadData.port1.heldAndPressed & PAD_EXIT_COMBO) != PAD_EXIT_COMBO) {
-        xglFontDebugPrintf(0, 0, D_00689440);
+        xglFontDebugPrintf(0, 0, "\x0B\xC2\xE8\xC6\xF3\xBF\xE5\xBD\xE0\xA5\xC1\xA5\xA7\xA5\xC3\xA5\xAF");
         xglFontDebugPrintf(16, 16, (const char *)list);
         if (PadData.ports[0].pressed & PAD_CIRCLE) {
             printf((const char *)list);
@@ -1793,14 +2411,13 @@ int func_001ED420(PointXZ *origin, PointXZ *point1, PointXZ *point2, PointXZ *po
 
 /* "(%3d,%3d)-(%3d,%3d)", " %3d,%3d", "%8x" and "%f". */
 extern const char D_00689458[];
-extern const char D_00689470[];
-extern const char D_0069D108[];
-extern const char D_0069D148[];
 
 /* Segment intersection test: the left and right sticks of pad 2 move the
  * ends of the first segment, those of pad 1 the second; circle squares them
  * up. A crossing is marked with a red cross (state 2 when it lies outside
  * the first segment). */
+const char D_00689458[24] = "(%3d,%3d)-(%3d,%3d)";
+
 void func_001ED568(void) {
     PointXZ start1;
     PointXZ end1;
@@ -1854,7 +2471,7 @@ void func_001ED568(void) {
             to.x = end2.x - start2.x;
             to.z = end2.z - start2.z;
             t = I2F(from.x * from.x + from.z * from.z) / I2F(to.x * from.x + to.z * from.z);
-            xglFontDebugPrintf(0, 0x20, D_0069D148, t);
+            xglFontDebugPrintf(0, 0x20, "%f", t);
             crossing.x = (float)start2.x + (float)to.x * t;
             crossing.z = (float)start2.z + (float)to.z * t;
             break;
@@ -1878,10 +2495,60 @@ void func_001ED568(void) {
         /* crossing is shown every frame: it keeps the last crossing found
          * and is not set before the first one (the original reads the
          * stack slot the same way). */
-        xglFontDebugPrintf(0, 0x10, D_00689470, crossing.x >> 4, crossing.z >> 4);
+        xglFontDebugPrintf(0, 0x10, " %3d,%3d", crossing.x >> 4, crossing.z >> 4);
         xglFontDebugPrintf(0, 0x18, D_0069D0D0, state);
         xglFontDebugPrintf(0, 0x40, D_0069D108,
                            (end1.x - start1.x) * (end2.x - start2.x) + (end1.z - start1.z) * (end2.z - start2.z));
         xglSleep();
     }
 }
+
+const char D_00689480[16] = "RESOURCE";
+const char D_0069D150[8] = "EDGE";
+const char D_0069D158[8] = "NISUI";
+const char D_0069D160[8] = "CAPTION";
+const char D_0069D168[8] = "SOUND";
+const char D_0069D170[8] = "IPU";
+const char D_0069D178[8] = "MEMCARD";
+const char D_0069D180[8] = "HDD";
+const char D_0069D188[8] = "PAD";
+const char D_0069D190[8] = "FONT";
+char D_002BD130[136] = "\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8A\x8B\x8C\x8D\x8E\x8F\n\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9A\x9B\x9C\x9D\x9E\x9F\n\xA0\xA1\xA2\xA3\xA4\xA5\xA6\xA7\xA8\xA9\xAA\xAB\xAC\xAD\xAE\xAF\n\xB0\xB1\xB2\xB3\xB4\xB5\xB6\xB7\xB8\xB9\xBA\xBB\xBC\xBD\xBE\xBF\n\xC0\xC1\xC2\xC3\xC4\xC5\xC6\xC7\xC8\xC9\xCA\xCB\xCC\xCD\xCE\xCF\n\xD0\xD1\xD2\xD3\xD4\xD5\xD6\xD7\xD8\xD9\xDA\xDB\xDC\xDD\xDE\xDF\n\xE0\xE1\xE2\xE3\xE4\xE5\xE6\xE7\xE8\xE9\xEA\xEB\xEC\xED\xEE\xEF\n\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFF";
+char D_002BD1B8[24] = "SE\nBGM\nADX\nVOL\n";
+char D_002BD1D0[24] = "MASTER\nBGM\nSE\nADX\n";
+const char *D_002BD1E8[6] = { D_006888F0, D_006888E0, D_0069D058, 0, 0, 0 };
+unsigned long long D_002BD200[12] = {
+    0, 0x5100000500000000ULL, 0x1000000000000004ULL, 0xEULL,
+    0x8380000000000ULL, 0x50ULL, 0, 0x51ULL,
+    0x1C000000200ULL, 0x52ULL, 0, 0x53ULL
+};
+unsigned long long D_002BD260[4] = {
+    0, 0x5100000100000000ULL, 0x800000000007000ULL, 0
+};
+unsigned long long D_002BD280[6] = {
+    0, 0x5100000200000000ULL, 0x1000000000008001ULL, 0xEULL,
+    0, 0x3FULL
+};
+unsigned long long D_002BD2B0[8] = {
+    0x1000000000008003ULL, 0xEULL, 0x30000ULL, 0x47ULL,
+    0, 0x14ULL, 0, 0x3FULL
+};
+IpuSpritePacket D_002BD2F0 = {
+    { 0x01, 0x80, 0x00, 0x00, 0x00, 0x40, 0x8B, 0x60, 0x1E, 0x53, 0x53, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    0,
+    { 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    0, 0,
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    0, 0,
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    0, 0,
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+};
+DebugLinePacket D_002BD360 = {
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x51, 0x01, 0x80, 0x00, 0x00, 0x00, 0xC0, 0x00, 0x40, 0x1E, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x47, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    192, 192, 192, 128,
+    28672, 29184,
+    { 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00 },
+    36864, 36352,
+    { 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00 }
+};

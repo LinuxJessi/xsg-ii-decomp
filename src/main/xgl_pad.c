@@ -601,3 +601,6 @@ void xglPadRead(void)
 }
 
 unsigned char PadActAlign[6] = { 0x00, 0x01, 0xff, 0xff, 0xff, 0xff };
+
+/* .data of this file (0x63EDE0-0x63EE80): pad state bytes read by the sdv_033.c camera code. */
+unsigned char D_0063EDE0[160] = { 0 };

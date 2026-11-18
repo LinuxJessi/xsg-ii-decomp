@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/xgl_dma.h"
+#include "main/pad_raw.h"
 
 extern u8 *buffer;
 
@@ -266,7 +267,7 @@ u16 D_0063EDA8[] = { 0 };
 
 unsigned short textOptionFlags = 0;
 int D_0063EDAC = 0;
-int D_0063EDB0 = 0;
-int D_0063EDB4[7] = { 0 };
+PadRawWords dataPadRawWords[1] = { { { 0 } } };
+int D_0063EDB8[6] = { 0 };
 unsigned char D_0063EDD0 = 0;
 unsigned char D_0063EDD1[15] = { 0 };

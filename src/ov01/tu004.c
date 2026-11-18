@@ -2,38 +2,43 @@
  * OV01 original TU 4: 0x00a80660..0x00a807e8 (5 functions)
  */
 #include "common.h"
+#include "ov01/tu000.h"
 #include "ov01/tu004.h"
 
 /*
- * Two data object slots of 0x1e0 bytes at dataObjTable, the table that
- * dataObjCreate (func_00A89A08) allocates from through dataObjAlloc. The flags
+ * Two data object slots of 0x1e0 bytes at dataObjTable (struct DataObject, tu004.h), the table that
+ * dataObjCreate (func_00A89A08) allocates through dataObjAlloc. The slot flags
  * word gates the two callbacks: update (dataObjUpdate, +0x4) runs unless flags
  * & 0x2, draw (dataObjDraw, +0x8) unless flags & 0x4. Each callback is called
  * with the slot it belongs to.
  */
-typedef struct DataObjectSlot {
-    int flags;
-    void (*update)(struct DataObjectSlot *slot);
-    void (*draw)(struct DataObjectSlot *slot);
-    unsigned char unmodeled_0c[0x1d4];
-} DataObjectSlot;
 
-extern struct DataObjectSlot dataObjTable[2];
-void ov01SlotRelease(void);
+/* Entries in the two-entry dataObjTable. */
+#define DATA_OBJ_SLOT_COUNT 2
 
+extern struct DataObject dataObjTable[DATA_OBJ_SLOT_COUNT];
+
+/* Releases one unit side slot (unitRemove calls it; tu003 unitSideTable). */
 void unitRelease(void) {
     ov01SlotRelease();
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu004", dataObjResetAll);
+/* Clears both data object slots (ov01ClearTables calls it). */
+void dataObjResetAll(void) {
+    int i;
+
+    for (i = 0; i < DATA_OBJ_SLOT_COUNT; i++) {
+        ov01SlotClear(&dataObjTable[i]);
+    }
+}
 
 /* Update sweep over the data object slots (called by the update sweep ov01UpdateAll). */
 void dataObjUpdateAll(void) {
-    struct DataObjectSlot *slot = dataObjTable;
+    struct DataObject *slot = dataObjTable;
     int i;
 
-    for (i = 0; i < 2; i++) {
-        if (slot->update != 0 && !(slot->flags & 2)) {
+    for (i = 0; i < DATA_OBJ_SLOT_COUNT; i++) {
+        if (slot->update != 0 && !(slot->slotFlags & OV01_SLOT_SKIP_UPDATE)) {
             slot->update(slot);
         }
         slot++;
@@ -42,15 +47,25 @@ void dataObjUpdateAll(void) {
 
 /* Draw sweep over the data object slots (called from the draw frame ov01DrawAll). */
 void dataObjDrawAll(void) {
-    struct DataObjectSlot *slot = dataObjTable;
+    struct DataObject *slot = dataObjTable;
     int i;
 
-    for (i = 0; i < 2; i++) {
-        if (slot->draw != 0 && !(slot->flags & 4)) {
+    for (i = 0; i < DATA_OBJ_SLOT_COUNT; i++) {
+        if (slot->draw != 0 && !(slot->slotFlags & OV01_SLOT_SKIP_DRAW)) {
             slot->draw(slot);
         }
         slot++;
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu004", dataObjAlloc);
+/* Claims the first free data object slot: returns it, or 0 when both slots are claimed (dataObjCreate uses it). */
+struct DataObject *dataObjAlloc(void) {
+    int i;
+
+    for (i = 0; i < DATA_OBJ_SLOT_COUNT; i++) {
+        if (ov01SlotClaim(&dataObjTable[i].slotFlags)) {
+            return &dataObjTable[i];
+        }
+    }
+    return 0;
+}

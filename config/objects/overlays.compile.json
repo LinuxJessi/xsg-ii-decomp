@@ -7,7 +7,7 @@
   "version": "2.96-ee-001003-1",
   "dir": "tool:ee-gcc2.96-realconv-lp7",
   "sha256": {
-   "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+   "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
   },
   "source": "pinned release"
  },
@@ -50,7 +50,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -78,7 +78,7 @@
       "asm/nonmatchings/ov01/tu000/ov01CallbackSlotsClear.s",
       "asm/nonmatchings/ov01/tu000/ov01CallbackSlotsRunUpdate.s",
       "asm/nonmatchings/ov01/tu000/ov01CallbackSlotsRunDraw.s",
-      "asm/nonmatchings/ov01/tu000/func_00A80170.s",
+      "asm/nonmatchings/ov01/tu000/ov01CallbackSlotClaim.s",
       "asm/nonmatchings/ov01/tu000/ov01CallbackSlotRelease.s"
      ],
      "accepted_asm_files": [],
@@ -115,7 +115,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -139,7 +139,7 @@
       "asm/nonmatchings/ov01/tu001/ov01TaskClearAll.s",
       "asm/nonmatchings/ov01/tu001/ov01TaskRunUpdate.s",
       "asm/nonmatchings/ov01/tu001/ov01TaskRunDraw.s",
-      "asm/nonmatchings/ov01/tu001/func_00A802F8.s",
+      "asm/nonmatchings/ov01/tu001/ov01TaskClaim.s",
       "asm/nonmatchings/ov01/tu001/ov01TaskRelease.s"
      ],
      "accepted_asm_files": [],
@@ -176,7 +176,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -197,10 +197,10 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu002/func_00A80368.s",
+      "asm/nonmatchings/ov01/tu002/monsSlotClearAll.s",
       "asm/nonmatchings/ov01/tu002/monsSlotRunUpdate.s",
       "asm/nonmatchings/ov01/tu002/monsSlotRunDraw.s",
-      "asm/nonmatchings/ov01/tu002/func_00A80480.s"
+      "asm/nonmatchings/ov01/tu002/monsSlotClaim.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -236,7 +236,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -261,7 +261,7 @@
       "asm/nonmatchings/ov01/tu003/unitClearAll.s",
       "asm/nonmatchings/ov01/tu003/unitRunUpdate.s",
       "asm/nonmatchings/ov01/tu003/unitRunDraw.s",
-      "asm/nonmatchings/ov01/tu003/func_00A80608.s"
+      "asm/nonmatchings/ov01/tu003/unitSideClaim.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -297,7 +297,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -358,7 +358,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -444,7 +444,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -506,7 +506,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -568,7 +568,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -600,7 +600,7 @@
       "asm/nonmatchings/ov01/tu008/dataFaceFileLoad.s",
       "asm/nonmatchings/ov01/tu008/dataBattleSeLoad.s",
       "asm/nonmatchings/ov01/tu008/dataBattleSeRelease.s",
-      "asm/nonmatchings/ov01/tu008/func_00A81D30.s",
+      "asm/nonmatchings/ov01/tu008/dataCdArenaOpen.s",
       "asm/nonmatchings/ov01/tu008/dataUnitFilesLoad.s",
       "asm/nonmatchings/ov01/tu008/dataMotFileLoad.s",
       "asm/nonmatchings/ov01/tu008/dataVoiceFilesLoad.s",
@@ -614,15 +614,15 @@
       "asm/nonmatchings/ov01/tu008/dataSlotRelease.s",
       "asm/nonmatchings/ov01/tu008/dataSlotFlagSet.s",
       "asm/nonmatchings/ov01/tu008/dataSlotFlagClear.s",
-      "asm/nonmatchings/ov01/tu008/func_00A82560.s",
+      "asm/nonmatchings/ov01/tu008/dataSlotReclaim.s",
       "asm/nonmatchings/ov01/tu008/dataUnitLoad.s",
       "asm/nonmatchings/ov01/tu008/dataUnitFileIdLoad.s",
       "asm/nonmatchings/ov01/tu008/dataMotSetLoad.s",
       "asm/nonmatchings/ov01/tu008/dataVoiceSetLoad.s",
       "asm/nonmatchings/ov01/tu008/dataSlotReset.s",
       "asm/nonmatchings/ov01/tu008/dataModelLoad.s",
-      "asm/nonmatchings/ov01/tu008/func_00A82D50.s",
-      "asm/nonmatchings/ov01/tu008/func_00A82E18.s",
+      "asm/nonmatchings/ov01/tu008/dataModelMotLoad.s",
+      "asm/nonmatchings/ov01/tu008/unitEffectSlotAcquire.s",
       "asm/nonmatchings/ov01/tu008/dataStreamFind.s",
       "asm/nonmatchings/ov01/tu008/dataStreamAcquire.s",
       "asm/nonmatchings/ov01/tu008/func_00A82F60.s",
@@ -638,10 +638,10 @@
       "asm/nonmatchings/ov01/tu008/dataMotNameGet.s",
       "asm/nonmatchings/ov01/tu008/dataVoiceNameGet.s",
       "asm/nonmatchings/ov01/tu008/dataMapNameGet.s",
-      "asm/nonmatchings/ov01/tu008/func_00A83428.s",
-      "asm/nonmatchings/ov01/tu008/func_00A835D0.s",
-      "asm/nonmatchings/ov01/tu008/func_00A83678.s",
-      "asm/nonmatchings/ov01/tu008/func_00A837A0.s"
+      "asm/nonmatchings/ov01/tu008/dataBattleCodePathGet.s",
+      "asm/nonmatchings/ov01/tu008/dataBattleActionPathGet.s",
+      "asm/nonmatchings/ov01/tu008/dataBattleRandomPathGet.s",
+      "asm/nonmatchings/ov01/tu008/battleCodeMatches.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -677,7 +677,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -711,7 +711,7 @@
       "asm/nonmatchings/ov01/tu009/ov01HeapFindFree.s",
       "asm/nonmatchings/ov01/tu009/ov01HeapAlloc.s",
       "asm/nonmatchings/ov01/tu009/ov01HeapFree.s",
-      "asm/nonmatchings/ov01/tu009/func_00A840A8.s",
+      "asm/nonmatchings/ov01/tu009/ov01HeapProbeLargeAlloc.s",
       "asm/nonmatchings/ov01/tu009/func_00A840E8.s"
      ],
      "accepted_asm_files": [],
@@ -748,7 +748,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -808,7 +808,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -830,7 +830,7 @@
      },
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu011/unitRemove.s",
-      "asm/nonmatchings/ov01/tu011/func_00A84518.s",
+      "asm/nonmatchings/ov01/tu011/unitBindActors.s",
       "asm/nonmatchings/ov01/tu011/unitAttachChild.s"
      ],
      "accepted_asm_files": [],
@@ -867,7 +867,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -894,14 +894,14 @@
       "asm/nonmatchings/ov01/tu012/unitClearBindFlags.s",
       "asm/nonmatchings/ov01/tu012/unitBindSetup.s",
       "asm/nonmatchings/ov01/tu012/unitSetBindFlags.s",
-      "asm/nonmatchings/ov01/tu012/func_00A849B8.s",
-      "asm/nonmatchings/ov01/tu012/func_00A849C8.s",
-      "asm/nonmatchings/ov01/tu012/func_00A84B68.s",
+      "asm/nonmatchings/ov01/tu012/unitCurrentPhase.s",
+      "asm/nonmatchings/ov01/tu012/unitSetPhase.s",
+      "asm/nonmatchings/ov01/tu012/unitSetTimedPhase.s",
       "asm/nonmatchings/ov01/tu012/unitSetSelector.s",
       "asm/nonmatchings/ov01/tu012/unitRefreshPhase.s",
       "asm/nonmatchings/ov01/tu012/unitSetVectorZ.s",
       "asm/nonmatchings/ov01/tu012/unitIsDone.s",
-      "asm/nonmatchings/ov01/tu012/func_00A84D80.s",
+      "asm/nonmatchings/ov01/tu012/unitEffectKeyFree.s",
       "asm/nonmatchings/ov01/tu012/unitLoadSnapshot.s",
       "asm/nonmatchings/ov01/tu012/unitSetAngleDegrees.s",
       "asm/nonmatchings/ov01/tu012/unitSetAngleRadians.s",
@@ -909,22 +909,22 @@
       "asm/nonmatchings/ov01/tu012/unitClearSnapshot.s",
       "asm/nonmatchings/ov01/tu012/unitStateScale.s",
       "asm/nonmatchings/ov01/tu012/unitFaceTarget.s",
-      "asm/nonmatchings/ov01/tu012/func_00A85098.s",
-      "asm/nonmatchings/ov01/tu012/func_00A85118.s",
+      "asm/nonmatchings/ov01/tu012/unitActionKey.s",
+      "asm/nonmatchings/ov01/tu012/unitMoveKey.s",
       "asm/nonmatchings/ov01/tu012/unitQueueAppend.s",
       "asm/nonmatchings/ov01/tu012/unitQueueClear.s",
       "asm/nonmatchings/ov01/tu012/unitQueueIsEmpty.s",
       "asm/nonmatchings/ov01/tu012/unitRunCommands.s",
       "asm/nonmatchings/ov01/tu012/unitCmdNoop.s",
-      "asm/nonmatchings/ov01/tu012/func_00A852B8.s",
-      "asm/nonmatchings/ov01/tu012/func_00A853A0.s",
-      "asm/nonmatchings/ov01/tu012/func_00A855D8.s",
-      "asm/nonmatchings/ov01/tu012/func_00A856B8.s",
-      "asm/nonmatchings/ov01/tu012/func_00A85788.s",
-      "asm/nonmatchings/ov01/tu012/func_00A85848.s",
-      "asm/nonmatchings/ov01/tu012/func_00A85910.s",
+      "asm/nonmatchings/ov01/tu012/unitCmdSetPhase.s",
+      "asm/nonmatchings/ov01/tu012/unitCmdStatEffect.s",
+      "asm/nonmatchings/ov01/tu012/unitCmdAction.s",
+      "asm/nonmatchings/ov01/tu012/unitCmdPlayVoice.s",
+      "asm/nonmatchings/ov01/tu012/unitCmdRelease.s",
+      "asm/nonmatchings/ov01/tu012/unitCmdLoadSnapshot.s",
+      "asm/nonmatchings/ov01/tu012/unitCmdSetBattleTransition.s",
       "asm/nonmatchings/ov01/tu012/unitCmdRefreshPhase.s",
-      "asm/nonmatchings/ov01/tu012/func_00A859F8.s"
+      "asm/nonmatchings/ov01/tu012/unitCmdUnbind.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -960,7 +960,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -981,15 +981,15 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu013/func_00A85A80.s",
-      "asm/nonmatchings/ov01/tu013/func_00A85B68.s",
-      "asm/nonmatchings/ov01/tu013/func_00A85CD8.s",
+      "asm/nonmatchings/ov01/tu013/unitCmdModeRamp.s",
+      "asm/nonmatchings/ov01/tu013/unitCmdModeStart.s",
+      "asm/nonmatchings/ov01/tu013/unitCmdModeDispatch.s",
       "asm/nonmatchings/ov01/tu013/unitCmdCodeGet.s",
       "asm/nonmatchings/ov01/tu013/unitCmdModeGet.s",
       "asm/nonmatchings/ov01/tu013/func_00A85EA0.s",
       "asm/nonmatchings/ov01/tu013/func_00A85F30.s",
       "asm/nonmatchings/ov01/tu013/func_00A85FC0.s",
-      "asm/nonmatchings/ov01/tu013/func_00A86270.s"
+      "asm/nonmatchings/ov01/tu013/unitCmdCodeWait.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -1025,7 +1025,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1048,8 +1048,8 @@
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu014/func_00A862D8.s",
       "asm/nonmatchings/ov01/tu014/unitCmdMoveChaRun.s",
-      "asm/nonmatchings/ov01/tu014/func_00A86328.s",
-      "asm/nonmatchings/ov01/tu014/func_00A86370.s",
+      "asm/nonmatchings/ov01/tu014/unitCmdMovePosJump.s",
+      "asm/nonmatchings/ov01/tu014/unitCmdMoveChaJump.s",
       "asm/nonmatchings/ov01/tu014/unitCmdMoveChaHover.s",
       "asm/nonmatchings/ov01/tu014/unitCmdMovePosHover.s",
       "asm/nonmatchings/ov01/tu014/unitCmdMoveCha.s",
@@ -1089,7 +1089,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1110,16 +1110,16 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu015/func_00A865D8.s",
-      "asm/nonmatchings/ov01/tu015/func_00A86658.s",
-      "asm/nonmatchings/ov01/tu015/func_00A866E0.s",
-      "asm/nonmatchings/ov01/tu015/func_00A86790.s",
+      "asm/nonmatchings/ov01/tu015/unitCmdPhase0EWait.s",
+      "asm/nonmatchings/ov01/tu015/unitCmdPhase12Wait.s",
+      "asm/nonmatchings/ov01/tu015/unitCmdPoseArrive.s",
+      "asm/nonmatchings/ov01/tu015/unitCmdPoseArriveWait.s",
       "asm/nonmatchings/ov01/tu015/unitCmdMoveRatio.s",
-      "asm/nonmatchings/ov01/tu015/func_00A86968.s",
+      "asm/nonmatchings/ov01/tu015/unitCmdMoveRamp.s",
       "asm/nonmatchings/ov01/tu015/unitCmdFinish.s",
-      "asm/nonmatchings/ov01/tu015/func_00A86B68.s",
-      "asm/nonmatchings/ov01/tu015/func_00A86BE8.s",
-      "asm/nonmatchings/ov01/tu015/func_00A86C00.s"
+      "asm/nonmatchings/ov01/tu015/unitCmdPhase2CWait.s",
+      "asm/nonmatchings/ov01/tu015/unitCmdClearActive.s",
+      "asm/nonmatchings/ov01/tu015/unitCmdPhase2BWait.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -1155,7 +1155,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1177,29 +1177,29 @@
      },
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu016/func_00A86CB0.s",
-      "asm/nonmatchings/ov01/tu016/func_00A86CC8.s",
+      "asm/nonmatchings/ov01/tu016/unitCmdTurnAim.s",
       "asm/nonmatchings/ov01/tu016/unitCmdStreamPlay.s",
       "asm/nonmatchings/ov01/tu016/unitCmdRemove.s",
-      "asm/nonmatchings/ov01/tu016/func_00A86DF0.s",
-      "asm/nonmatchings/ov01/tu016/func_00A86E48.s",
+      "asm/nonmatchings/ov01/tu016/unitCmdFinishRefresh.s",
+      "asm/nonmatchings/ov01/tu016/unitSlotsClear.s",
       "asm/nonmatchings/ov01/tu016/func_00A86F20.s",
-      "asm/nonmatchings/ov01/tu016/func_00A86F38.s",
+      "asm/nonmatchings/ov01/tu016/unitQueueMoveCommands.s",
       "asm/nonmatchings/ov01/tu016/func_00A86FF0.s",
-      "asm/nonmatchings/ov01/tu016/func_00A87030.s",
+      "asm/nonmatchings/ov01/tu016/unitCmdDstSet.s",
       "asm/nonmatchings/ov01/tu016/objPoseSetSteps.s",
       "asm/nonmatchings/ov01/tu016/objPoseHorizontalDistance.s",
       "asm/nonmatchings/ov01/tu016/objPoseBlend.s",
       "asm/nonmatchings/ov01/tu016/objPoseStep.s",
       "asm/nonmatchings/ov01/tu016/objPoseSlideLimit.s",
-      "asm/nonmatchings/ov01/tu016/func_00A87390.s",
+      "asm/nonmatchings/ov01/tu016/unitDefArea.s",
       "asm/nonmatchings/ov01/tu016/objPosePublish.s",
       "asm/nonmatchings/ov01/tu016/objPoseFetch.s",
-      "asm/nonmatchings/ov01/tu016/func_00A87508.s",
-      "asm/nonmatchings/ov01/tu016/func_00A876E0.s",
-      "asm/nonmatchings/ov01/tu016/func_00A87930.s",
+      "asm/nonmatchings/ov01/tu016/unitCmdRun.s",
+      "asm/nonmatchings/ov01/tu016/unitCmdMoveJump.s",
+      "asm/nonmatchings/ov01/tu016/unitCmdHoverFade.s",
       "asm/nonmatchings/ov01/tu016/objMotionCopyLookup.s",
       "asm/nonmatchings/ov01/tu016/objPoseHeadingUpdate.s",
-      "asm/nonmatchings/ov01/tu016/func_00A87DB8.s"
+      "asm/nonmatchings/ov01/tu016/unitPoseRamp.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -1235,7 +1235,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1263,8 +1263,8 @@
       "asm/nonmatchings/ov01/tu017/unitNumFlag4ClearGet.s",
       "asm/nonmatchings/ov01/tu017/unitNumFlag4ClearStatZeroGet.s",
       "asm/nonmatchings/ov01/tu017/unitNumFlag4SetGet.s",
-      "asm/nonmatchings/ov01/tu017/func_00A88158.s",
-      "asm/nonmatchings/ov01/tu017/func_00A881C8.s",
+      "asm/nonmatchings/ov01/tu017/unitNumFlag1Flag4ClearGet.s",
+      "asm/nonmatchings/ov01/tu017/unitNumBusyGet.s",
       "asm/nonmatchings/ov01/tu017/unitTblIndexOf.s",
       "asm/nonmatchings/ov01/tu017/unitTblEntryGet.s"
      ],
@@ -1302,7 +1302,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1368,7 +1368,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1391,13 +1391,13 @@
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu019/monsSlotReset.s",
       "asm/nonmatchings/ov01/tu019/monsSlotCreate.s",
-      "asm/nonmatchings/ov01/tu019/func_00A88AC0.s",
+      "asm/nonmatchings/ov01/tu019/monsSlotNew.s",
       "asm/nonmatchings/ov01/tu019/monsSlotRelease.s",
-      "asm/nonmatchings/ov01/tu019/func_00A88B60.s",
-      "asm/nonmatchings/ov01/tu019/func_00A88B90.s",
+      "asm/nonmatchings/ov01/tu019/monsSlotCopyParams.s",
+      "asm/nonmatchings/ov01/tu019/monsSlotEmptyUpdate.s",
       "asm/nonmatchings/ov01/tu019/monsActiveSlotsGet.s",
-      "asm/nonmatchings/ov01/tu019/func_00A88BB0.s",
-      "asm/nonmatchings/ov01/tu019/func_00A88C08.s"
+      "asm/nonmatchings/ov01/tu019/monsSlotInsert.s",
+      "asm/nonmatchings/ov01/tu019/monsSlotRemove.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -1433,7 +1433,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1493,7 +1493,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1553,7 +1553,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1576,23 +1576,23 @@
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu022/dataVPadReset.s",
       "asm/nonmatchings/ov01/tu022/func_00A88E98.s",
-      "asm/nonmatchings/ov01/tu022/func_00A88EB0.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89038.s",
-      "asm/nonmatchings/ov01/tu022/func_00A891C0.s",
+      "asm/nonmatchings/ov01/tu022/dataKeyInputStep.s",
+      "asm/nonmatchings/ov01/tu022/dataKeyCheck.s",
+      "asm/nonmatchings/ov01/tu022/dataKeyValueGet.s",
       "asm/nonmatchings/ov01/tu022/dataCountersClear.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89280.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89340.s",
+      "asm/nonmatchings/ov01/tu022/dataKeyRegister.s",
+      "asm/nonmatchings/ov01/tu022/dataKeyFind.s",
       "asm/nonmatchings/ov01/tu022/dataVPadModeSet.s",
       "asm/nonmatchings/ov01/tu022/dataVPadSet.s",
       "asm/nonmatchings/ov01/tu022/dataPadRead.s",
       "asm/nonmatchings/ov01/tu022/menuWepSpPanelReset.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89538.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89580.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89710.s",
+      "asm/nonmatchings/ov01/tu022/dataSlotRowGet.s",
+      "asm/nonmatchings/ov01/tu022/menuWepSpPanelUpdate.s",
+      "asm/nonmatchings/ov01/tu022/dataSlotKeyTest.s",
       "asm/nonmatchings/ov01/tu022/menuWepSpPanelCursorGet.s",
       "asm/nonmatchings/ov01/tu022/menuWepSpPanelRowCountGet.s",
       "asm/nonmatchings/ov01/tu022/menuTargetListCursorReset.s",
-      "asm/nonmatchings/ov01/tu022/func_00A898B8.s",
+      "asm/nonmatchings/ov01/tu022/menuTargetListUpdate.s",
       "asm/nonmatchings/ov01/tu022/menuTargetListCursorGet.s",
       "asm/nonmatchings/ov01/tu022/dataStateReset.s",
       "asm/nonmatchings/ov01/tu022/dataObjCreateAtOrigin.s",
@@ -1601,24 +1601,24 @@
       "asm/nonmatchings/ov01/tu022/dataObjUpdate.s",
       "asm/nonmatchings/ov01/tu022/dataObjDraw.s",
       "asm/nonmatchings/ov01/tu022/dataObjGetPosition.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89CB0.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89D68.s",
+      "asm/nonmatchings/ov01/tu022/dataObjDrawSprite.s",
+      "asm/nonmatchings/ov01/tu022/dataTargetShow.s",
       "asm/nonmatchings/ov01/tu022/dataTargetHide.s",
       "asm/nonmatchings/ov01/tu022/dataObjShow.s",
       "asm/nonmatchings/ov01/tu022/dataObjHide.s",
       "asm/nonmatchings/ov01/tu022/dataTargetMatchKey.s",
-      "asm/nonmatchings/ov01/tu022/func_00A89F08.s",
+      "asm/nonmatchings/ov01/tu022/dataTargetApply.s",
       "asm/nonmatchings/ov01/tu022/dataCursorMove.s",
       "asm/nonmatchings/ov01/tu022/dataStateSetMode.s",
       "asm/nonmatchings/ov01/tu022/func_00A8A150.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A160.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A1E0.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A2E8.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A3B0.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A490.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A538.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A730.s",
-      "asm/nonmatchings/ov01/tu022/func_00A8A878.s",
+      "asm/nonmatchings/ov01/tu022/dataStateModeToggle.s",
+      "asm/nonmatchings/ov01/tu022/dataUnitListInit.s",
+      "asm/nonmatchings/ov01/tu022/dataUnitCursorStep.s",
+      "asm/nonmatchings/ov01/tu022/dataEntryListInit.s",
+      "asm/nonmatchings/ov01/tu022/dataEntryCursorStep.s",
+      "asm/nonmatchings/ov01/tu022/dataTargetListInit.s",
+      "asm/nonmatchings/ov01/tu022/dataUnitCursorCycle.s",
+      "asm/nonmatchings/ov01/tu022/dataSelectedGet.s",
       "asm/nonmatchings/ov01/tu022/dataDummySet.s"
      ],
      "accepted_asm_files": [],
@@ -1634,9 +1634,9 @@
      "name": "tu023",
      "text": [
       "0x00a8a8b8",
-      "0x00a8b930"
+      "0x00a92150"
      ],
-     "functions": 31,
+     "functions": 174,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -1655,7 +1655,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -1696,7 +1696,7 @@
       "asm/nonmatchings/ov01/tu023/battleContextStateGet.s",
       "asm/nonmatchings/ov01/tu023/battleContextApplyLookup.s",
       "asm/nonmatchings/ov01/tu023/battleAttackResolve.s",
-      "asm/nonmatchings/ov01/tu023/func_00A8B658.s",
+      "asm/nonmatchings/ov01/tu023/battleItemUse.s",
       "asm/nonmatchings/ov01/tu023/battleSlotFlagSet.s",
       "asm/nonmatchings/ov01/tu023/battleSlotFlagTest.s",
       "asm/nonmatchings/ov01/tu023/battleSlotFlagClear.s",
@@ -1706,654 +1706,150 @@
       "asm/nonmatchings/ov01/tu023/battleSlotMarkSet.s",
       "asm/nonmatchings/ov01/tu023/battleSlotMarkTest.s",
       "asm/nonmatchings/ov01/tu023/battleSlotMarkClear.s",
-      "asm/nonmatchings/ov01/tu023/battleSlotsRefresh.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 24,
-     "id": "ov01/tu024_00a8b930",
-     "name": "tu024",
-     "text": [
-      "0x00a8b930",
-      "0x00a8ba68"
-     ],
-     "functions": 3,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#24"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu024.c",
-     "object": "build/src/ov01/tu024.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu024/battleSlotSetShort.s",
-      "asm/nonmatchings/ov01/tu024/battleSlotSetByte.s",
-      "asm/nonmatchings/ov01/tu024/battleSlotSetShortLate.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 25,
-     "id": "ov01/tu025_00a8ba68",
-     "name": "tu025",
-     "text": [
-      "0x00a8ba68",
-      "0x00a8bc60"
-     ],
-     "functions": 7,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#25"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu025.c",
-     "object": "build/src/ov01/tu025.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu025/unitPercentAdd.s",
-      "asm/nonmatchings/ov01/tu025/boostAddStock.s",
-      "asm/nonmatchings/ov01/tu025/boostGaugeAddStock.s",
-      "asm/nonmatchings/ov01/tu025/boostAddProgress.s",
-      "asm/nonmatchings/ov01/tu025/boostGaugeAddProgress.s",
-      "asm/nonmatchings/ov01/tu025/unitLevelAdd.s",
-      "asm/nonmatchings/ov01/tu025/unitCurrentAdd.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 26,
-     "id": "ov01/tu026_00a8bc60",
-     "name": "tu026",
-     "text": [
-      "0x00a8bc60",
-      "0x00a8f100"
-     ],
-     "functions": 53,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#26"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu026.c",
-     "object": "build/src/ov01/tu026.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu026/calcHpAdjust.s",
-      "asm/nonmatchings/ov01/tu026/calcEpAdjust.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8BCD8.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8BD48.s",
-      "asm/nonmatchings/ov01/tu026/calcAtkPhy.s",
-      "asm/nonmatchings/ov01/tu026/calcAtkMag.s",
-      "asm/nonmatchings/ov01/tu026/calcDefPhy.s",
-      "asm/nonmatchings/ov01/tu026/calcDefMag.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8C1C8.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8C1E8.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8C278.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8C330.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8C3C8.s",
-      "asm/nonmatchings/ov01/tu026/calcHitRoll.s",
-      "asm/nonmatchings/ov01/tu026/calcHitMode.s",
-      "asm/nonmatchings/ov01/tu026/calcAttackDamage.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8CF88.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D110.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D240.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D320.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D380.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D528.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D6E0.s",
-      "asm/nonmatchings/ov01/tu026/unitStateFlagGet.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D8C0.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D8F0.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D950.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D9C8.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8D9E8.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8DB38.s",
-      "asm/nonmatchings/ov01/tu026/calcComboUpdate.s",
-      "asm/nonmatchings/ov01/tu026/calcHpDmg.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8DD00.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8DFF0.s",
-      "asm/nonmatchings/ov01/tu026/calcStatGet.s",
-      "asm/nonmatchings/ov01/tu026/calcStatSet.s",
-      "asm/nonmatchings/ov01/tu026/calcStatAltSet.s",
-      "asm/nonmatchings/ov01/tu026/calcStatReset.s",
-      "asm/nonmatchings/ov01/tu026/calcStatAltReset.s",
-      "asm/nonmatchings/ov01/tu026/calcStatResetCha.s",
-      "asm/nonmatchings/ov01/tu026/calcStatTurn.s",
-      "asm/nonmatchings/ov01/tu026/calcStatDefTurnGet.s",
-      "asm/nonmatchings/ov01/tu026/calcStatBit2Idx.s",
-      "asm/nonmatchings/ov01/tu026/calcStatIdx2Bit.s",
-      "asm/nonmatchings/ov01/tu026/calcStatInflictPenaltyGet.s",
-      "asm/nonmatchings/ov01/tu026/calcStatInflictRate.s",
-      "asm/nonmatchings/ov01/tu026/func_00A8E808.s",
-      "asm/nonmatchings/ov01/tu026/unitApplyStatBonus.s",
-      "asm/nonmatchings/ov01/tu026/calcStatEffectSum.s",
-      "asm/nonmatchings/ov01/tu026/calcStatEffectValue.s",
-      "asm/nonmatchings/ov01/tu026/unitHasEquipId.s",
-      "asm/nonmatchings/ov01/tu026/unitHasEffectCode.s",
-      "asm/nonmatchings/ov01/tu026/partyHasEffectCode.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 27,
-     "id": "ov01/tu027_00a8f100",
-     "name": "tu027",
-     "text": [
-      "0x00a8f100",
-      "0x00a8f658"
-     ],
-     "functions": 12,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#27"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu027.c",
-     "object": "build/src/ov01/tu027.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu027/slotRecordGet.s",
-      "asm/nonmatchings/ov01/tu027/slotRecordByIndex.s",
-      "asm/nonmatchings/ov01/tu027/slotFlagSet.s",
-      "asm/nonmatchings/ov01/tu027/slotFlagTest.s",
-      "asm/nonmatchings/ov01/tu027/slotFlagClear.s",
-      "asm/nonmatchings/ov01/tu027/slotCodeSet.s",
-      "asm/nonmatchings/ov01/tu027/slotCodeTest.s",
-      "asm/nonmatchings/ov01/tu027/func_00A8F3C0.s",
-      "asm/nonmatchings/ov01/tu027/func_00A8F478.s",
-      "asm/nonmatchings/ov01/tu027/func_00A8F4E8.s",
-      "asm/nonmatchings/ov01/tu027/func_00A8F560.s",
-      "asm/nonmatchings/ov01/tu027/func_00A8F5E0.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 28,
-     "id": "ov01/tu028_00a8f658",
-     "name": "tu028",
-     "text": [
-      "0x00a8f658",
-      "0x00a90368"
-     ],
-     "functions": 11,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#28"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu028.c",
-     "object": "build/src/ov01/tu028.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu028/battleResultReset.s",
-      "asm/nonmatchings/ov01/tu028/battleResultGet.s",
-      "asm/nonmatchings/ov01/tu028/func_00A8F690.s",
-      "asm/nonmatchings/ov01/tu028/partySnapshotBuild.s",
-      "asm/nonmatchings/ov01/tu028/partySnapshotGet.s",
-      "asm/nonmatchings/ov01/tu028/func_00A8F948.s",
-      "asm/nonmatchings/ov01/tu028/func_00A8FA18.s",
-      "asm/nonmatchings/ov01/tu028/func_00A8FC30.s",
-      "asm/nonmatchings/ov01/tu028/func_00A8FE68.s",
-      "asm/nonmatchings/ov01/tu028/unitExpGain.s",
-      "asm/nonmatchings/ov01/tu028/func_00A90118.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 29,
-     "id": "ov01/tu029_00a90368",
-     "name": "tu029",
-     "text": [
-      "0x00a90368",
-      "0x00a90660"
-     ],
-     "functions": 8,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#29"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu029.c",
-     "object": "build/src/ov01/tu029.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu029/func_00A90368.s",
-      "asm/nonmatchings/ov01/tu029/unitValueRefresh.s",
-      "asm/nonmatchings/ov01/tu029/unitValueReset.s",
-      "asm/nonmatchings/ov01/tu029/unitValueCalc.s",
-      "asm/nonmatchings/ov01/tu029/func_00A90500.s",
-      "asm/nonmatchings/ov01/tu029/unitRecordStateGet.s",
-      "asm/nonmatchings/ov01/tu029/unitSidesDiffer.s",
-      "asm/nonmatchings/ov01/tu029/unitCanAct.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 30,
-     "id": "ov01/tu030_00a90660",
-     "name": "tu030",
-     "text": [
-      "0x00a90660",
-      "0x00a912d0"
-     ],
-     "functions": 18,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#30"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu030.c",
-     "object": "build/src/ov01/tu030.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu030/func_00A90660.s",
-      "asm/nonmatchings/ov01/tu030/func_00A907B0.s",
-      "asm/nonmatchings/ov01/tu030/tgtSideOf.s",
-      "asm/nonmatchings/ov01/tu030/func_00A90858.s",
-      "asm/nonmatchings/ov01/tu030/func_00A90988.s",
-      "asm/nonmatchings/ov01/tu030/func_00A90A18.s",
-      "asm/nonmatchings/ov01/tu030/func_00A90A88.s",
-      "asm/nonmatchings/ov01/tu030/tgtCollectUnits.s",
-      "asm/nonmatchings/ov01/tu030/func_00A90CD8.s",
-      "asm/nonmatchings/ov01/tu030/tgtRecordCanTarget.s",
-      "asm/nonmatchings/ov01/tu030/calcEntryMaskTest.s",
-      "asm/nonmatchings/ov01/tu030/func_00A90E38.s",
-      "asm/nonmatchings/ov01/tu030/func_00A90F70.s",
-      "asm/nonmatchings/ov01/tu030/func_00A90FB0.s",
-      "asm/nonmatchings/ov01/tu030/calcLevelsMeetRecord.s",
-      "asm/nonmatchings/ov01/tu030/calcPairedRecords.s",
-      "asm/nonmatchings/ov01/tu030/func_00A911F0.s",
-      "asm/nonmatchings/ov01/tu030/slotFlagCollect.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 31,
-     "id": "ov01/tu031_00a912d0",
-     "name": "tu031",
-     "text": [
-      "0x00a912d0",
-      "0x00a91910"
-     ],
-     "functions": 10,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#31"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu031.c",
-     "object": "build/src/ov01/tu031.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu031/func_00A912D0.s",
-      "asm/nonmatchings/ov01/tu031/func_00A913C8.s",
-      "asm/nonmatchings/ov01/tu031/tgtFindFirst.s",
-      "asm/nonmatchings/ov01/tu031/tgtFindNext.s",
-      "asm/nonmatchings/ov01/tu031/tgtCmdAccepts.s",
-      "asm/nonmatchings/ov01/tu031/func_00A91708.s",
-      "asm/nonmatchings/ov01/tu031/func_00A91730.s",
-      "asm/nonmatchings/ov01/tu031/func_00A91750.s",
-      "asm/nonmatchings/ov01/tu031/calcBoostOk.s",
-      "asm/nonmatchings/ov01/tu031/calcActStockSet.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 32,
-     "id": "ov01/tu032_00a91910",
-     "name": "tu032",
-     "text": [
-      "0x00a91910",
-      "0x00a92150"
-     ],
-     "functions": 21,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#32"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu032.c",
-     "object": "build/src/ov01/tu032.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu032/actLevelChanceRoll.s",
-      "asm/nonmatchings/ov01/tu032/actStepCounterGet.s",
-      "asm/nonmatchings/ov01/tu032/func_00A91978.s",
-      "asm/nonmatchings/ov01/tu032/actStepCounterValue.s",
-      "asm/nonmatchings/ov01/tu032/actStepCounterAdvance.s",
-      "asm/nonmatchings/ov01/tu032/sdvInitSpecialWork.s",
-      "asm/nonmatchings/ov01/tu032/sdvSpecialBitSet.s",
-      "asm/nonmatchings/ov01/tu032/sdvSpecialBitGet.s",
-      "asm/nonmatchings/ov01/tu032/actEntryFlagSet.s",
-      "asm/nonmatchings/ov01/tu032/actEntryFlagGet.s",
-      "asm/nonmatchings/ov01/tu032/func_00A91B68.s",
-      "asm/nonmatchings/ov01/tu032/func_00A91B90.s",
-      "asm/nonmatchings/ov01/tu032/actStockReset.s",
-      "asm/nonmatchings/ov01/tu032/actStockGet.s",
-      "asm/nonmatchings/ov01/tu032/actStockMaxGet.s",
-      "asm/nonmatchings/ov01/tu032/actStockNeedsRefill.s",
-      "asm/nonmatchings/ov01/tu032/actStockMake.s",
-      "asm/nonmatchings/ov01/tu032/actStockPick.s",
-      "asm/nonmatchings/ov01/tu032/actStockRemove.s",
-      "asm/nonmatchings/ov01/tu032/actStockRemoveStock.s",
-      "asm/nonmatchings/ov01/tu032/actStockClearBoost1.s"
+      "asm/nonmatchings/ov01/tu023/battleSlotsRefresh.s",
+      "asm/nonmatchings/ov01/tu023/battleSlotSetShort.s",
+      "asm/nonmatchings/ov01/tu023/battleSlotSetByte.s",
+      "asm/nonmatchings/ov01/tu023/battleSlotSetShortLate.s",
+      "asm/nonmatchings/ov01/tu023/unitPercentAdd.s",
+      "asm/nonmatchings/ov01/tu023/boostAddStock.s",
+      "asm/nonmatchings/ov01/tu023/boostGaugeAddStock.s",
+      "asm/nonmatchings/ov01/tu023/boostAddProgress.s",
+      "asm/nonmatchings/ov01/tu023/boostGaugeAddProgress.s",
+      "asm/nonmatchings/ov01/tu023/unitLevelAdd.s",
+      "asm/nonmatchings/ov01/tu023/unitCurrentAdd.s",
+      "asm/nonmatchings/ov01/tu023/calcHpAdjust.s",
+      "asm/nonmatchings/ov01/tu023/calcEpAdjust.s",
+      "asm/nonmatchings/ov01/tu023/calcHitRateGet.s",
+      "asm/nonmatchings/ov01/tu023/calcEvadeRate.s",
+      "asm/nonmatchings/ov01/tu023/calcAtkPhy.s",
+      "asm/nonmatchings/ov01/tu023/calcAtkMag.s",
+      "asm/nonmatchings/ov01/tu023/calcDefPhy.s",
+      "asm/nonmatchings/ov01/tu023/calcDefMag.s",
+      "asm/nonmatchings/ov01/tu023/calcActionPower.s",
+      "asm/nonmatchings/ov01/tu023/calcStatResist.s",
+      "asm/nonmatchings/ov01/tu023/calcAttackStatusMask.s",
+      "asm/nonmatchings/ov01/tu023/calcEpCost.s",
+      "asm/nonmatchings/ov01/tu023/calcHitRecordFill.s",
+      "asm/nonmatchings/ov01/tu023/calcHitRoll.s",
+      "asm/nonmatchings/ov01/tu023/calcHitMode.s",
+      "asm/nonmatchings/ov01/tu023/calcAttackDamage.s",
+      "asm/nonmatchings/ov01/tu023/calcCritDamage.s",
+      "asm/nonmatchings/ov01/tu023/calcHitInflict.s",
+      "asm/nonmatchings/ov01/tu023/calcHitCure.s",
+      "asm/nonmatchings/ov01/tu023/calcKindHitMode.s",
+      "asm/nonmatchings/ov01/tu023/calcRestoreValue.s",
+      "asm/nonmatchings/ov01/tu023/calcHitStateStep.s",
+      "asm/nonmatchings/ov01/tu023/calcHitRowGate.s",
+      "asm/nonmatchings/ov01/tu023/unitStateFlagGet.s",
+      "asm/nonmatchings/ov01/tu023/unitEntryKindAdd.s",
+      "asm/nonmatchings/ov01/tu023/unitEntriesAllMarked.s",
+      "asm/nonmatchings/ov01/tu023/calcFollowKind.s",
+      "asm/nonmatchings/ov01/tu023/calcBackAttack.s",
+      "asm/nonmatchings/ov01/tu023/unitIsInFacingArc.s",
+      "asm/nonmatchings/ov01/tu023/unitStateAdvance.s",
+      "asm/nonmatchings/ov01/tu023/calcComboUpdate.s",
+      "asm/nonmatchings/ov01/tu023/calcHpDmg.s",
+      "asm/nonmatchings/ov01/tu023/calcHitApply.s",
+      "asm/nonmatchings/ov01/tu023/calcStatusHitRoll.s",
+      "asm/nonmatchings/ov01/tu023/calcStatGet.s",
+      "asm/nonmatchings/ov01/tu023/calcStatSet.s",
+      "asm/nonmatchings/ov01/tu023/calcStatAltSet.s",
+      "asm/nonmatchings/ov01/tu023/calcStatReset.s",
+      "asm/nonmatchings/ov01/tu023/calcStatAltReset.s",
+      "asm/nonmatchings/ov01/tu023/calcStatResetCha.s",
+      "asm/nonmatchings/ov01/tu023/calcStatTurn.s",
+      "asm/nonmatchings/ov01/tu023/calcStatDefTurnGet.s",
+      "asm/nonmatchings/ov01/tu023/calcStatBit2Idx.s",
+      "asm/nonmatchings/ov01/tu023/calcStatIdx2Bit.s",
+      "asm/nonmatchings/ov01/tu023/calcStatInflictPenaltyGet.s",
+      "asm/nonmatchings/ov01/tu023/calcStatInflictRate.s",
+      "asm/nonmatchings/ov01/tu023/unitStatsRefresh.s",
+      "asm/nonmatchings/ov01/tu023/unitApplyStatBonus.s",
+      "asm/nonmatchings/ov01/tu023/calcStatEffectSum.s",
+      "asm/nonmatchings/ov01/tu023/calcStatEffectValue.s",
+      "asm/nonmatchings/ov01/tu023/unitHasEquipId.s",
+      "asm/nonmatchings/ov01/tu023/unitHasEffectCode.s",
+      "asm/nonmatchings/ov01/tu023/partyHasEffectCode.s",
+      "asm/nonmatchings/ov01/tu023/slotRecordGet.s",
+      "asm/nonmatchings/ov01/tu023/slotRecordByIndex.s",
+      "asm/nonmatchings/ov01/tu023/slotFlagSet.s",
+      "asm/nonmatchings/ov01/tu023/slotFlagTest.s",
+      "asm/nonmatchings/ov01/tu023/slotFlagClear.s",
+      "asm/nonmatchings/ov01/tu023/slotCodeSet.s",
+      "asm/nonmatchings/ov01/tu023/slotCodeTest.s",
+      "asm/nonmatchings/ov01/tu023/slotPairSet.s",
+      "asm/nonmatchings/ov01/tu023/slotPairTest.s",
+      "asm/nonmatchings/ov01/tu023/slotMarkSet.s",
+      "asm/nonmatchings/ov01/tu023/slotMarkTest.s",
+      "asm/nonmatchings/ov01/tu023/slotMarkClear.s",
+      "asm/nonmatchings/ov01/tu023/battleResultReset.s",
+      "asm/nonmatchings/ov01/tu023/battleResultGet.s",
+      "asm/nonmatchings/ov01/tu023/battleResultAdd.s",
+      "asm/nonmatchings/ov01/tu023/partySnapshotBuild.s",
+      "asm/nonmatchings/ov01/tu023/partySnapshotGet.s",
+      "asm/nonmatchings/ov01/tu023/battleReviveDownedParty.s",
+      "asm/nonmatchings/ov01/tu023/battleResultApply.s",
+      "asm/nonmatchings/ov01/tu023/battleAbsentUnitsApply.s",
+      "asm/nonmatchings/ov01/tu023/battleGainsAdd.s",
+      "asm/nonmatchings/ov01/tu023/unitExpGain.s",
+      "asm/nonmatchings/ov01/tu023/unitGrowthStep.s",
+      "asm/nonmatchings/ov01/tu023/func_00A90368.s",
+      "asm/nonmatchings/ov01/tu023/unitValueRefresh.s",
+      "asm/nonmatchings/ov01/tu023/unitValueReset.s",
+      "asm/nonmatchings/ov01/tu023/unitValueCalc.s",
+      "asm/nonmatchings/ov01/tu023/unitValueDecay.s",
+      "asm/nonmatchings/ov01/tu023/unitRecordStateGet.s",
+      "asm/nonmatchings/ov01/tu023/unitSidesDiffer.s",
+      "asm/nonmatchings/ov01/tu023/unitCanAct.s",
+      "asm/nonmatchings/ov01/tu023/battleEffectApplies.s",
+      "asm/nonmatchings/ov01/tu023/partyUnitHpLow.s",
+      "asm/nonmatchings/ov01/tu023/tgtSideOf.s",
+      "asm/nonmatchings/ov01/tu023/battleEffectResolve.s",
+      "asm/nonmatchings/ov01/tu023/effectPosIsFree.s",
+      "asm/nonmatchings/ov01/tu023/effectPosCountFree.s",
+      "asm/nonmatchings/ov01/tu023/battleMaskWordsUnmatched.s",
+      "asm/nonmatchings/ov01/tu023/tgtCollectUnits.s",
+      "asm/nonmatchings/ov01/tu023/calcEntryUsable.s",
+      "asm/nonmatchings/ov01/tu023/tgtRecordCanTarget.s",
+      "asm/nonmatchings/ov01/tu023/calcEntryMaskTest.s",
+      "asm/nonmatchings/ov01/tu023/calcKeyBandRecords.s",
+      "asm/nonmatchings/ov01/tu023/calcCurrentMeetsRecord.s",
+      "asm/nonmatchings/ov01/tu023/calcKeyPairRecords.s",
+      "asm/nonmatchings/ov01/tu023/calcLevelsMeetRecord.s",
+      "asm/nonmatchings/ov01/tu023/calcPairedRecords.s",
+      "asm/nonmatchings/ov01/tu023/calcPairEntryUsable.s",
+      "asm/nonmatchings/ov01/tu023/slotFlagCollect.s",
+      "asm/nonmatchings/ov01/tu023/tgtSideAccepts.s",
+      "asm/nonmatchings/ov01/tu023/calcCfEventKeyTest.s",
+      "asm/nonmatchings/ov01/tu023/tgtFindFirst.s",
+      "asm/nonmatchings/ov01/tu023/tgtFindNext.s",
+      "asm/nonmatchings/ov01/tu023/tgtCmdAccepts.s",
+      "asm/nonmatchings/ov01/tu023/boostGaugeGet.s",
+      "asm/nonmatchings/ov01/tu023/boostGaugeSelect.s",
+      "asm/nonmatchings/ov01/tu023/actStockHasBoost.s",
+      "asm/nonmatchings/ov01/tu023/calcBoostOk.s",
+      "asm/nonmatchings/ov01/tu023/calcActStockSet.s",
+      "asm/nonmatchings/ov01/tu023/actLevelChanceRoll.s",
+      "asm/nonmatchings/ov01/tu023/actStepCounterGet.s",
+      "asm/nonmatchings/ov01/tu023/actStepCounterSet.s",
+      "asm/nonmatchings/ov01/tu023/actStepCounterValue.s",
+      "asm/nonmatchings/ov01/tu023/actStepCounterAdvance.s",
+      "asm/nonmatchings/ov01/tu023/sdvInitSpecialWork.s",
+      "asm/nonmatchings/ov01/tu023/sdvSpecialBitSet.s",
+      "asm/nonmatchings/ov01/tu023/sdvSpecialBitGet.s",
+      "asm/nonmatchings/ov01/tu023/actEntryFlagSet.s",
+      "asm/nonmatchings/ov01/tu023/actEntryFlagGet.s",
+      "asm/nonmatchings/ov01/tu023/func_00A91B68.s",
+      "asm/nonmatchings/ov01/tu023/func_00A91B90.s",
+      "asm/nonmatchings/ov01/tu023/actStockReset.s",
+      "asm/nonmatchings/ov01/tu023/actStockGet.s",
+      "asm/nonmatchings/ov01/tu023/actStockMaxGet.s",
+      "asm/nonmatchings/ov01/tu023/actStockNeedsRefill.s",
+      "asm/nonmatchings/ov01/tu023/actStockMake.s",
+      "asm/nonmatchings/ov01/tu023/actStockPick.s",
+      "asm/nonmatchings/ov01/tu023/actStockRemove.s",
+      "asm/nonmatchings/ov01/tu023/actStockRemoveStock.s",
+      "asm/nonmatchings/ov01/tu023/actStockClearBoost1.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -2389,7 +1885,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -2415,14 +1911,14 @@
       "asm/nonmatchings/ov01/tu033/cmdListSet.s",
       "asm/nonmatchings/ov01/tu033/cmdListRunHead.s",
       "asm/nonmatchings/ov01/tu033/cmdExecute.s",
-      "asm/nonmatchings/ov01/tu033/func_00A92A48.s",
-      "asm/nonmatchings/ov01/tu033/func_00A92B10.s",
+      "asm/nonmatchings/ov01/tu033/cmdPairRun.s",
+      "asm/nonmatchings/ov01/tu033/cmdStockRun.s",
       "asm/nonmatchings/ov01/tu033/cmdFindFirstTarget.s",
       "asm/nonmatchings/ov01/tu033/func_00A92C18.s",
       "asm/nonmatchings/ov01/tu033/func_00A92D98.s",
       "asm/nonmatchings/ov01/tu033/func_00A92DF0.s",
       "asm/nonmatchings/ov01/tu033/func_00A92E30.s",
-      "asm/nonmatchings/ov01/tu033/func_00A93080.s",
+      "asm/nonmatchings/ov01/tu033/unitPairPartnerFind.s",
       "asm/nonmatchings/ov01/tu033/func_00A93128.s",
       "asm/nonmatchings/ov01/tu033/func_00A93168.s",
       "asm/nonmatchings/ov01/tu033/func_00A93288.s",
@@ -2448,7 +1944,7 @@
       "asm/nonmatchings/ov01/tu033/func_00A94500.s",
       "asm/nonmatchings/ov01/tu033/func_00A946C0.s",
       "asm/nonmatchings/ov01/tu033/itemRandomPick.s",
-      "asm/nonmatchings/ov01/tu033/func_00A94C20.s",
+      "asm/nonmatchings/ov01/tu033/unitStatusTextShow.s",
       "asm/nonmatchings/ov01/tu033/func_00A94D28.s",
       "asm/nonmatchings/ov01/tu033/func_00A94EB0.s",
       "asm/nonmatchings/ov01/tu033/func_00A95018.s",
@@ -2457,7 +1953,7 @@
       "asm/nonmatchings/ov01/tu033/func_00A95198.s",
       "asm/nonmatchings/ov01/tu033/func_00A951D8.s",
       "asm/nonmatchings/ov01/tu033/func_00A95268.s",
-      "asm/nonmatchings/ov01/tu033/func_00A954D8.s",
+      "asm/nonmatchings/ov01/tu033/unitEffectStart.s",
       "asm/nonmatchings/ov01/tu033/func_00A95540.s",
       "asm/nonmatchings/ov01/tu033/func_00A955C8.s",
       "asm/nonmatchings/ov01/tu033/func_00A95608.s",
@@ -2474,17 +1970,17 @@
       "asm/nonmatchings/ov01/tu033/func_00A95CE0.s",
       "asm/nonmatchings/ov01/tu033/func_00A95CE8.s",
       "asm/nonmatchings/ov01/tu033/func_00A95CF0.s",
-      "asm/nonmatchings/ov01/tu033/func_00A95E40.s",
+      "asm/nonmatchings/ov01/tu033/ov01LoadsIdle.s",
       "asm/nonmatchings/ov01/tu033/unitAttachRequest.s",
       "asm/nonmatchings/ov01/tu033/unitSpawnFromRequest.s",
-      "asm/nonmatchings/ov01/tu033/func_00A95FB0.s",
+      "asm/nonmatchings/ov01/tu033/unitBindRequest.s",
       "asm/nonmatchings/ov01/tu033/func_00A96050.s",
       "asm/nonmatchings/ov01/tu033/battleResolveStatus.s",
       "asm/nonmatchings/ov01/tu033/func_00A96510.s",
-      "asm/nonmatchings/ov01/tu033/func_00A96810.s",
+      "asm/nonmatchings/ov01/tu033/battleStatusQueueWait.s",
       "asm/nonmatchings/ov01/tu033/func_00A968C8.s",
       "asm/nonmatchings/ov01/tu033/ov01StreamOpen.s",
-      "asm/nonmatchings/ov01/tu033/func_00A96A70.s",
+      "asm/nonmatchings/ov01/tu033/ov01StreamBind.s",
       "asm/nonmatchings/ov01/tu033/func_00A96AA8.s",
       "asm/nonmatchings/ov01/tu033/func_00A96E38.s"
      ],
@@ -2522,7 +2018,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -2581,7 +2077,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -2653,7 +2149,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -2705,12 +2201,12 @@
       "asm/nonmatchings/ov01/tu036/battleStateGet.s",
       "asm/nonmatchings/ov01/tu036/thinkNoGet.s",
       "asm/nonmatchings/ov01/tu036/thinkNoSet.s",
-      "asm/nonmatchings/ov01/tu036/func_00A99DC8.s",
-      "asm/nonmatchings/ov01/tu036/func_00A99DD8.s",
+      "asm/nonmatchings/ov01/tu036/cfMonsSetNoGet.s",
+      "asm/nonmatchings/ov01/tu036/cfMonsSetNoSet.s",
       "asm/nonmatchings/ov01/tu036/cfEventGet.s",
       "asm/nonmatchings/ov01/tu036/cfEventSet.s",
       "asm/nonmatchings/ov01/tu036/ov01PartyListGet.s",
-      "asm/nonmatchings/ov01/tu036/func_00A99E18.s",
+      "asm/nonmatchings/ov01/tu036/gattaiCodeGet.s",
       "asm/nonmatchings/ov01/tu036/gattaiCodeSet.s",
       "asm/nonmatchings/ov01/tu036/ov01InitAll.s"
      ],
@@ -2748,7 +2244,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -2815,7 +2311,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -2843,7 +2339,7 @@
       "asm/nonmatchings/ov01/tu038/ov01LoadIsDone.s",
       "asm/nonmatchings/ov01/tu038/ov01StepChainStart.s",
       "asm/nonmatchings/ov01/tu038/ov01StepAwaitLoads.s",
-      "asm/nonmatchings/ov01/tu038/func_00A9A6A0.s",
+      "asm/nonmatchings/ov01/tu038/ov01StepSceneScript.s",
       "asm/nonmatchings/ov01/tu038/ov01StepInit.s",
       "asm/nonmatchings/ov01/tu038/ov01StepStartBlockLoad.s",
       "asm/nonmatchings/ov01/tu038/ov01StepAwaitBlockLoad.s",
@@ -2894,7 +2390,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -2955,7 +2451,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -2977,8 +2473,8 @@
      },
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu040/func_00A9B0F8.s",
-      "asm/nonmatchings/ov01/tu040/func_00A9B100.s",
-      "asm/nonmatchings/ov01/tu040/func_00A9B110.s"
+      "asm/nonmatchings/ov01/tu040/ov01ScriptKeyGet.s",
+      "asm/nonmatchings/ov01/tu040/ov01ScriptImageGet.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -3014,7 +2510,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3074,7 +2570,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3100,23 +2596,23 @@
       "asm/nonmatchings/ov01/tu042/func_00A9B2A0.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B2A8.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B338.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B3B8.s",
+      "asm/nonmatchings/ov01/tu042/tecRecordGet.s",
       "asm/nonmatchings/ov01/tu042/tableKeyRowGet.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B418.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B450.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B490.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B4D0.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B508.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B548.s",
+      "asm/nonmatchings/ov01/tu042/effectIdListGet.s",
+      "asm/nonmatchings/ov01/tu042/slotPairRowGet.s",
+      "asm/nonmatchings/ov01/tu042/battleLookupGet.s",
+      "asm/nonmatchings/ov01/tu042/itemRecordGet.s",
+      "asm/nonmatchings/ov01/tu042/statusRecordGet.s",
+      "asm/nonmatchings/ov01/tu042/hitActionGet.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B580.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B5B8.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B5F0.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B628.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B660.s",
+      "asm/nonmatchings/ov01/tu042/pairLinkGet.s",
+      "asm/nonmatchings/ov01/tu042/calcLevelRecordGet.s",
+      "asm/nonmatchings/ov01/tu042/tgtIdRecordGet.s",
       "asm/nonmatchings/ov01/tu042/tableKeyRecordGet.s",
       "asm/nonmatchings/ov01/tu042/unitExpTblGet.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B6E8.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B720.s",
+      "asm/nonmatchings/ov01/tu042/growthRecordGet.s",
+      "asm/nonmatchings/ov01/tu042/stringOffsetsGet.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B750.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B7D8.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B850.s",
@@ -3133,12 +2629,12 @@
       "asm/nonmatchings/ov01/tu042/thinkDispatch.s",
       "asm/nonmatchings/ov01/tu042/thinkSendEnd.s",
       "asm/nonmatchings/ov01/tu042/func_00A9BF08.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9C070.s",
+      "asm/nonmatchings/ov01/tu042/atkTblFieldGet.s",
       "asm/nonmatchings/ov01/tu042/unitParaFieldGet.s",
       "asm/nonmatchings/ov01/tu042/unitParaFieldSet.s",
       "asm/nonmatchings/ov01/tu042/effectSendOwned.s",
       "asm/nonmatchings/ov01/tu042/effectSendValue.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9C328.s",
+      "asm/nonmatchings/ov01/tu042/tecParaFieldGet.s",
       "asm/nonmatchings/ov01/tu042/msgPutObject.s",
       "asm/nonmatchings/ov01/tu042/msgObjRelease.s",
       "asm/nonmatchings/ov01/tu042/msgIsIdle.s",
@@ -3179,7 +2675,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3252,7 +2748,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3283,8 +2779,8 @@
       "asm/nonmatchings/ov01/tu044/sbSlotFind.s",
       "asm/nonmatchings/ov01/tu044/sbSlotStore.s",
       "asm/nonmatchings/ov01/tu044/sbSlotRemove.s",
-      "asm/nonmatchings/ov01/tu044/sbChainSetValue.s",
-      "asm/nonmatchings/ov01/tu044/func_00A9CC80.s",
+      "asm/nonmatchings/ov01/tu044/sbSlotJumpRequest.s",
+      "asm/nonmatchings/ov01/tu044/sbSlotJump.s",
       "asm/nonmatchings/ov01/tu044/func_00A9CD30.s",
       "asm/nonmatchings/ov01/tu044/sbFatal.s",
       "asm/nonmatchings/ov01/tu044/sbNativeOwnerAdd.s",
@@ -3303,7 +2799,7 @@
       "asm/nonmatchings/ov01/tu044/sbThreadDequeue.s",
       "asm/nonmatchings/ov01/tu044/sbNameTableFind.s",
       "asm/nonmatchings/ov01/tu044/sbNameTableNameOf.s",
-      "asm/nonmatchings/ov01/tu044/func_00A9D608.s",
+      "asm/nonmatchings/ov01/tu044/sbThreadEnqueueByName.s",
       "asm/nonmatchings/ov01/tu044/sbThreadsRelease.s",
       "asm/nonmatchings/ov01/tu044/sbThreadSuspend.s",
       "asm/nonmatchings/ov01/tu044/sbThreadsSuspend.s",
@@ -3338,8 +2834,8 @@
       "asm/nonmatchings/ov01/tu044/sbOpPushLocal.s",
       "asm/nonmatchings/ov01/tu044/sbOpStoreGlobal.s",
       "asm/nonmatchings/ov01/tu044/sbOpStoreLocal.s",
-      "asm/nonmatchings/ov01/tu044/func_00A9E1A0.s",
-      "asm/nonmatchings/ov01/tu044/func_00A9E220.s",
+      "asm/nonmatchings/ov01/tu044/sbOpStoreGlobalKeep.s",
+      "asm/nonmatchings/ov01/tu044/sbOpStoreLocalKeep.s",
       "asm/nonmatchings/ov01/tu044/sbOpJump.s",
       "asm/nonmatchings/ov01/tu044/sbOpJumpIfZero.s",
       "asm/nonmatchings/ov01/tu044/sbOpJumpIfNotZero.s",
@@ -3357,8 +2853,8 @@
       "asm/nonmatchings/ov01/tu044/sbOpEnd.s",
       "asm/nonmatchings/ov01/tu044/sbOpYield.s",
       "asm/nonmatchings/ov01/tu044/sbOpWaitFrames.s",
-      "asm/nonmatchings/ov01/tu044/func_00A9E9E0.s",
-      "asm/nonmatchings/ov01/tu044/func_00A9EA80.s",
+      "asm/nonmatchings/ov01/tu044/sbOpSend.s",
+      "asm/nonmatchings/ov01/tu044/sbOpReceive.s",
       "asm/nonmatchings/ov01/tu044/sbOpIncGlobal.s",
       "asm/nonmatchings/ov01/tu044/sbOpIncLocal.s",
       "asm/nonmatchings/ov01/tu044/sbOpDecGlobal.s",
@@ -3399,7 +2895,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3463,7 +2959,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3554,7 +3050,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3662,7 +3158,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3742,7 +3238,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3808,7 +3304,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3831,11 +3327,11 @@
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu050/objPathInit.s",
       "asm/nonmatchings/ov01/tu050/objMoveUpdate.s",
-      "asm/nonmatchings/ov01/tu050/func_00AA3AA0.s",
+      "asm/nonmatchings/ov01/tu050/objPathDraw.s",
       "asm/nonmatchings/ov01/tu050/objPathReset.s",
       "asm/nonmatchings/ov01/tu050/objPathStep.s",
-      "asm/nonmatchings/ov01/tu050/func_00AA3CF8.s",
-      "asm/nonmatchings/ov01/tu050/func_00AA3D58.s"
+      "asm/nonmatchings/ov01/tu050/objPathSendLast.s",
+      "asm/nonmatchings/ov01/tu050/objPathShift.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -3871,7 +3367,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3932,7 +3428,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -3956,7 +3452,7 @@
       "asm/nonmatchings/ov01/tu052/menuCursorShow.s",
       "asm/nonmatchings/ov01/tu052/menuCursorHide.s",
       "asm/nonmatchings/ov01/tu052/menuIconListCreate.s",
-      "asm/nonmatchings/ov01/tu052/func_00AA43A0.s",
+      "asm/nonmatchings/ov01/tu052/menuIconListUpdate.s",
       "asm/nonmatchings/ov01/tu052/menuIconTableDraw.s"
      ],
      "accepted_asm_files": [],
@@ -3993,7 +3489,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4052,7 +3548,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4116,7 +3612,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4175,7 +3671,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4245,7 +3741,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4306,7 +3802,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4365,7 +3861,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4424,7 +3920,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4487,7 +3983,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4549,7 +4045,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4631,7 +4127,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4704,7 +4200,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4763,7 +4259,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4822,7 +4318,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4882,7 +4378,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -4941,7 +4437,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5000,7 +4496,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5060,7 +4556,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5119,7 +4615,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5182,7 +4678,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5288,7 +4784,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5347,7 +4843,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5406,7 +4902,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5471,7 +4967,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5533,7 +5029,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5611,7 +5107,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5670,7 +5166,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5733,7 +5229,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5796,7 +5292,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5855,7 +5351,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5926,7 +5422,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -5988,7 +5484,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6047,7 +5543,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6107,7 +5603,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6166,7 +5662,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6225,7 +5721,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6285,7 +5781,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6347,7 +5843,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6409,7 +5905,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6472,7 +5968,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },
@@ -6538,7 +6034,7 @@
       "version": "2.96-ee-001003-1",
       "dir": "tool:ee-gcc2.96-realconv-lp7",
       "sha256": {
-       "cc1": "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
       },
       "source": "pinned release"
      },

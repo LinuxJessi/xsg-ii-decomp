@@ -157,11 +157,11 @@ int setPointFromRecord(Vector4 *destination, int x, int y, const GsQueueContext 
     return depth;
 }
 
-void func_0027A960(int preset, Vector4 *quad);
+void gsQuadHalfScreenFill(int preset, Vector4 *quad);
 void gsQueueAddTexturedVertex(int packet, Vector4 *position, Vector4 *uv, void *context);
 void gsQueueAddTexturedKickVertex(int packet, Vector4 *position, Vector4 *uv, void *context);
 
-/* Draws one textured quad count times as a triangle strip: the positions are the preset quad of func_0027A960, the
+/* Draws one textured quad count times as a triangle strip: the positions are the preset quad of gsQuadHalfScreenFill, the
    UVs come from the record's uv rectangle. */
 void quadDrawPreset(GsQueuePresetQuad *record, int packet) {
     Vector4 uvs[4];
@@ -180,7 +180,7 @@ void quadDrawPreset(GsQueuePresetQuad *record, int packet) {
     right = record->texture.right;
     bottom = record->texture.bottom;
     count = record->header.count;
-    func_0027A960(record->positionPreset, positions);
+    gsQuadHalfScreenFill(record->positionPreset, positions);
     uvs[0].y = (float) top;
     uvs[0].x = (float) left;
     uvs[0].z = (float) z;
@@ -204,7 +204,7 @@ void quadDrawPreset(GsQueuePresetQuad *record, int packet) {
 }
 
 /* As quadDrawPreset with the roles swapped: the positions come from the record's rectangle, the UVs are the preset
-   quad of func_0027A960. */
+   quad of gsQuadHalfScreenFill. */
 void quadDrawPresetUv(GsQueuePresetUvQuad *record, int packet) {
     Vector4 uvs[4];
     Vector4 positions[4];
@@ -222,7 +222,7 @@ void quadDrawPresetUv(GsQueuePresetUvQuad *record, int packet) {
     right = record->screen.right;
     bottom = record->screen.bottom;
     count = record->header.count;
-    func_0027A960(record->texturePreset, uvs);
+    gsQuadHalfScreenFill(record->texturePreset, uvs);
     positions[0].y = (float) top;
     positions[0].x = (float) left;
     positions[0].z = (float) z;
@@ -348,18 +348,18 @@ void circleSpriteCorners(Vector4 *points, int x, int y, const GsQueueCircle *rec
     points[1].z = (float) z;
 }
 
-/* Results of func_00278FC8 for one grid cell. */
+/* Results of pointFadeColorStep for one grid cell. */
 enum {
     GRID_CELL_FLAT,
     GRID_CELL_TRANSFORMED,
     GRID_CELL_HIDDEN
 };
 
-int func_00278FC8(Vector4 *transform, float x, float y, GsQueueGrid *record);
+int pointFadeColorStep(Vector4 *transform, float x, float y, GsQueueGrid *record);
 void quadDrawRepeated(int packet, Vector4 *quad, void *context);
 void quadDrawTransformed(int packet, Vector4 *quad, void *context, Vector4 *transform);
 
-/* Draws the record rectangle as rows x columns cells. Once per cell, from the cell's first corner, func_00278FC8
+/* Draws the record rectangle as rows x columns cells. Once per cell, from the cell's first corner, pointFadeColorStep
    (still asm: it loads transformStart and transformEnd at +0x68/+0x6C, compares with c.lt.s and returns 0, 1 or 2)
    fills a transform;
    the cell is then drawn flat, drawn transformed or skipped. endColor, when set, colours the cells (lerped by
@@ -411,7 +411,7 @@ void gridDrawCells(GsQueueGrid *record, int packet) {
                 quad[3].x = (float) ((column + 1) * cellWidth + left);
                 quad[3].y = (float) ((row + 1) * cellHeight + top);
                 quad[3].z = 0.0f;
-                clip = func_00278FC8(&transform, quad[0].x, quad[0].y, record);
+                clip = pointFadeColorStep(&transform, quad[0].x, quad[0].y, record);
                 if (clip == GRID_CELL_HIDDEN) {
                     continue;
                 }

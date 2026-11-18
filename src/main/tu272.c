@@ -1,6 +1,8 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu272.h"
+#include "main/tu048.h"
+#include "main/tu051.h"
 
 extern const float mapHeadingCoefficients[];
 
@@ -191,11 +193,10 @@ f32 mapPlaneDistance(const Vector4 *origin, const Vector4 *point, const Vector4 
     return result;
 }
 
-extern void *mapCurrentBlock;
+static void *mapCurrentBlock;
 extern unsigned char elvActiveMask;
 extern unsigned char elvNoOutMask;
 extern int elvKeepOffFlags[];
-extern char mapBlockErrorMessage[];
 int printf(const char *format, ...);
 
 void mapFixupBlock(MapFixupBlock *block)
@@ -215,7 +216,7 @@ void mapFixupBlock(MapFixupBlock *block)
     }
     switch (block->flags) {
     default:
-        printf(mapBlockErrorMessage);
+        printf("\075\075\075\075\314\244\303\316\244\316\245\320\241\274\245\270\245\347\245\363\244\316\111\104\245\307\241\274\245\277\244\307\244\271\075\075\075\075");
         mapCurrentBlock = 0;
         break;
     case MAP_BLOCK_VALID:
@@ -1277,7 +1278,6 @@ MapRecordSet *mapSetupCollisionObject(DoublewordVector4 *position, int *delta, M
     return set;
 }
 
-extern float mapNearestSearchLimit;
 
 /* Moves the position to the centroid of the record triangle nearest to it in the object's record set. */
 void mapSnapToNearestTriangle(Vector4 *position, MapCollisionObject *object)
@@ -1292,7 +1292,7 @@ void mapSnapToNearestTriangle(Vector4 *position, MapCollisionObject *object)
     set->origin.x = startX;
     startZ = position->z;
     record = set->records;
-    set->origin.w = mapNearestSearchLimit;
+    set->origin.w = 1000000.0f;
     set->probeStart.z = startZ;
     set->origin.z = startZ;
     for (i = 0; i < set->recordCount; i++) {
@@ -1461,7 +1461,6 @@ int mapPushOutByRadius(MapRecordSet *set, MapCollisionObject *object)
     return set->hitFlag != 0.0f;
 }
 
-extern int gameLoopFlags[];
 
 /* Moves the probe: without a block it offsets the position by the bounds; otherwise it probes the record set and returns the hit distance. */
 f32 mapMoveProbe(Vector4 *position, float *delta, MapCollisionObject *object)
@@ -1507,7 +1506,7 @@ start:
                 object->missCount = 0;
             }
         }
-        if (object->record == 0 || (*(int *)&object->flags & 0x5000) != 0 || (gameLoopFlags[0] & 0x20) != 0 || (object->kind & ~0xff) == 0x200) {
+        if (object->record == 0 || (*(int *)&object->flags & 0x5000) != 0 || (gameWork.control & CONTROL_TOP_EXIT) != 0 || (object->kind & ~0xff) == 0x200) {
             set->origin.x = set->probeStart.x;
             set->origin.y = set->probeStart.y;
             set->origin.z = set->probeStart.z;
@@ -1581,3 +1580,5 @@ void func_0029E690(void) {
 int func_0029E698(void) {
     return 0;
 }
+
+float mapHorizontalSlope[1] = { -0.0f };

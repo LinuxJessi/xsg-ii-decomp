@@ -3,32 +3,39 @@
  */
 #include "common.h"
 #include "main/tu022.h"
+#include "main/xgl_2.h"
 #include "main/tu063.h"
 #include "main/tu077.h"
 #include "main/tu079.h"
+#include "main/tu051.h"
+#include "main/pad.h"
 #include "main/sef.h"
 #include "main/xgl_font.h"
+#include "ov01/tu008.h"
 #include "ov01/tu009.h"
+#include "ov01/tu012.h"
+#include "ov01/tu017.h"
 #include "ov01/tu022.h"
-#include "ov01/tu032.h"
+#include "ov01/tu023.h"
+#include "ov01/tu036.h"
 #include "ov01/tu037.h"
 #include "ov01/tu038.h"
 #include "ov01/tu042.h"
 #include "ov01/tu044.h"
+#include "ov01/tu046.h"
 #include "ov01/tu054.h"
 #include "ov01/tu066.h"
 #include "ov01/tu071.h"
 
-int VM_PLUGIN_CNT_GET();
-int vmArgGet(int, int);
 
-/* Passes the low halfword of vmArgGet(call, 1) to dataVPadSet; with no plugin loaded it calls sbChainSetValue(call, 2) and returns 0. */
-int VPadSet(int call)
+/* Passes the low halfword of vmArgGet(call, 1) to dataVPadSet; without an argument it requests the
+ * SB_JUMP_ARGUMENTS jump and returns 0. */
+int VPadSet(SbThread *call)
 {
     int padBits;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     padBits = vmArgGet(call, 1);
@@ -39,10 +46,8 @@ int VPadSet(int call)
 #include "shared.h"
 
 int msgPutObject(int, int, int, int, int, int);
-int vmArgTagIsZero(int, int);
-int vmKeyedEntryGet(int, int);
 
-int msgPut(int call)
+int msgPut(SbThread *call)
 {
     int index;
     int slot;
@@ -53,8 +58,8 @@ int msgPut(int call)
     int yIsDefault;
     int sizeIsGiven;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 3) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     posX = 0x3C;
@@ -89,18 +94,18 @@ int msgPutWait(int unused, int *waiting)
 }
 
 void sefSetOverrideVectors(void *, void *);
-void unitBodySetPosDir(void *, void *);
+void unitBodySetPosDir(Vector4 *pos, Vector4 *dir);
 void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir);
 extern Vector4 runtimePos;
 extern Vector4 runtimeDir;
 
 /* Script command: fills the runtime position and direction vectors from arguments 2 to 8, then copies them to units as flags ask. */
-int runtimeSetFog(int call)
+int runtimeSetFog(SbThread *call)
 {
     int flags;
 
-    if (VM_PLUGIN_CNT_GET() < 8) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 8) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     flags = vmArgGet(call, 1);
@@ -123,31 +128,14 @@ int runtimeSetFog(int call)
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitBodySetPosDir);
 
-/* Unit table entry: only the body pointer at +0x1D0 is used here. */
-typedef struct UnitTblEntry UnitTblEntry;
+int unitTblGet(int side, Ov01Object ***table);
 
-struct UnitTblEntry {
-    unsigned char unmodeled_000[0x1D0];
-    struct UnitBody *body;                 /* +0x1D0 */
-};
-
-int unitTblGet(int side, UnitTblEntry ***table);
-
-/* Partial view of the body: the vector pair at +0x490 and +0x4A0. */
-typedef struct UnitBody UnitBody;
-
-struct UnitBody {
-    unsigned char unmodeled_000[0x490];
-    Vector4 pos;                           /* +0x490..+0x49F */
-    float dir[3];                          /* +0x4A0..+0x4AB */
-};
-
-/* Copies pos and dir into the body of every unit that unitTblGet(2) returns. */
+/* Copies pos and dir into the runtime vectors of the actor of every unit that unitTblGet(2) returns. */
 void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir)
 {
-    UnitTblEntry **units;
-    UnitTblEntry *unit;
-    UnitBody *body;
+    Ov01Object **units;
+    Ov01Object *unit;
+    struct XenoActor *actor;
     int count;
     int i;
 
@@ -155,14 +143,14 @@ void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir)
     for (i = 0; i < count; i++) {
         unit = units[i];
         if (unit != 0) {
-            body = unit->body;
-            body->pos.x = pos->x;
-            body->pos.y = pos->y;
-            body->pos.z = pos->z;
-            body->pos.w = pos->w;
-            body->dir[0] = dir->x;
-            body->dir[1] = dir->y;
-            body->dir[2] = dir->z;
+            actor = unit->unit;
+            actor->runtimeVecA.vector.x = pos->x;
+            actor->runtimeVecA.vector.y = pos->y;
+            actor->runtimeVecA.vector.z = pos->z;
+            actor->runtimeVecA.vector.w = pos->w;
+            actor->runtimeVecB.vector.x = dir->x;
+            actor->runtimeVecB.vector.y = dir->y;
+            actor->runtimeVecB.vector.z = dir->z;
         }
     }
 }
@@ -174,67 +162,74 @@ void runtimeVecPtrGet(void **pos, void **dir)
     *dir = &runtimeDir;
 }
 
-/* Only the word setMoveCmd stores is evidenced; the rest of the block is not modeled. */
-struct MoveCmdBlock {
-    unsigned char unmodeled_00[0x50];
-    int move_cmd; /* +0x50 */
-};
-
-struct MoveCmdBlock *battleStateGet(void);
-
-int setMoveCmd(int call)
+int setMoveCmd(SbThread *call)
 {
-    struct MoveCmdBlock *block;
+    struct BattleState *block;
     int moveCmd;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
-        sbChainSetValue(call, 2);
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     block = battleStateGet();
     moveCmd = vmArgGet(call, 1);
-    block->move_cmd = moveCmd;
+    block->moveCmd = moveCmd;
     return 1;
 }
 
-int xglLightSetDefault(int);
-int pxySetDefaultLight(int);
-int func_00253048(int);
-void *lightBlockGet(void);
+void xglLightSetDefault(XglLightSet *lightSet);
+void pxySetDefaultLight(XglLightSet *light);
+void func_00253048(XglLightSet *lights);
+LightBlocks *lightBlockGet(void);
 
+/* Native initLight: makes the light block the default light set of xgl, the pxy models and tu156. The block is
+ * the 0x180-byte light set the battle actors copy as LightBlocks (unitCreateSide, unitTblBodySetLight). */
 int initLight(void)
 {
-    int lightBlock;
+    XglLightSet *lightSet;
 
-    lightBlock = lightBlockGet();
-    xglLightSetDefault(lightBlock);
-    pxySetDefaultLight(lightBlock);
-    func_00253048(lightBlock);
+    lightSet = (XglLightSet *)lightBlockGet();
+    xglLightSetDefault(lightSet);
+    pxySetDefaultLight(lightSet);
+    func_00253048(lightSet);
     return 1;
 }
 
-extern unsigned char lightBlock[];
+extern LightBlocks lightBlock;
 
-/* Returns the 0x180-byte light block that initLight and runtime.setLight start from. */
-void *lightBlockGet(void) {
-    return lightBlock;
+/* Returns the light block that initLight and runtime.setLight start from. */
+LightBlocks *lightBlockGet(void) {
+    return &lightBlock;
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", runtimeSetLight);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitTblBodySetLight);
+/* Copies the light blocks into the actor of every unit of unitTblGet(2). */
+void unitTblBodySetLight(LightBlocks *light)
+{
+    Ov01Object **units;
+    int count;
+    int i;
+
+    count = unitTblGet(2, &units);
+    for (i = 0; i < count; i++) {
+        if (units[i] != 0) {
+            units[i]->unit->lightBlocks = *light;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu047", pari);
 
 int partyDataGetSlot(int, int);
 
-int partyDataGet(int call)
+int partyDataGet(SbThread *call)
 {
     int partyIndex;
     int slot;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     partyIndex = vmArgGet(call, 1);
@@ -243,14 +238,14 @@ int partyDataGet(int call)
 }
 
 
-int partyDataSet(int call)
+int partyDataSet(SbThread *call)
 {
     int partyIndex;
     int slot;
     int value;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 3) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     partyIndex = vmArgGet(call, 1);
@@ -260,24 +255,25 @@ int partyDataSet(int call)
     return 1;
 }
 
-/* One 0x14-byte entry of the table ov01PartyListGet returns: only +0x04 is written here. */
+/* One 0x14-byte entry of the table ov01PartyListGet returns: only +0x04 and +0x08 are written here. */
 typedef struct PlPosEntry PlPosEntry;
 
 struct PlPosEntry {
     unsigned char unmodeled_000[4];
     int position;                          /* +0x04: written from script argument 2 by plPosInit */
-    unsigned char unmodeled_008[0x14 - 0x08];
+    int direction;                         /* +0x08: degrees 0..360, written by plDirInit */
+    unsigned char unmodeled_00C[0x14 - 0x0C];
 };
 
 PlPosEntry *ov01PartyListGet();
 
-int plPosInit(int call)
+int plPosInit(SbThread *call)
 {
     int entryIndex;
     PlPosEntry *entries;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     entryIndex = vmArgGet(call, 1);
@@ -286,24 +282,68 @@ int plPosInit(int call)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", plDirInit);
+/* Native plDirInit: sets the direction of party entry argument 1 to argument 2,
+ * brought into 0..360 degrees. */
+int plDirInit(SbThread *call)
+{
+    int entryIndex;
+    PlPosEntry *entries;
+    int direction;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitCreate);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    entryIndex = vmArgGet(call, 1);
+    entries = ov01PartyListGet();
+    direction = vmArgGet(call, 2);
+    while (direction < 0) {
+        direction += 360;
+    }
+    if (direction > 360) {
+        direction %= 360;
+    }
+    entries[entryIndex].direction = direction;
+    return 1;
+}
 
-int dataUnitLoad(int);
-int func_00A82E18(int);
+Ov01Object *unitEnCreate(int id);
 
-int unitLoad(int call)
+/* Native unitCreate: creates enemy unit argument 1, loads snapshot argument 2,
+ * turns it to argument 3 degrees and stores arguments 4 and 5 in its stat block
+ * (spawnArgC, spawnArgD); returns the unit, or 0 when it could not be created. */
+int unitCreate(SbThread *call)
+{
+    Ov01Object *unit;
+
+    if (VM_PLUGIN_CNT_GET(call) < 5) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    unit = unitEnCreate(vmArgGet(call, 1));
+    if (unit == 0) {
+        return 0;
+    }
+    unitLoadSnapshot(unit, vmArgGet(call, 2));
+    unitSetAngleDegrees(unit, vmArgGet(call, 3));
+    unit->stats->spawnArgC = vmArgGet(call, 4);
+    unit->stats->spawnArgD = vmArgGet(call, 5);
+    /* The script keeps the unit as its address. */
+    return (int) unit;
+}
+
+
+int unitLoad(SbThread *call)
 {
     int unitIndex;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
     dataUnitLoad(unitIndex);
-    func_00A82E18(unitIndex);
+    unitEffectSlotAcquire(unitIndex);
     return 1;
 }
 
@@ -317,20 +357,65 @@ int unitLoadWait(int unused, int *waiting)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitBind);
+void unitBindActors(Ov01Object *unit, struct DataSlot *slot);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitBind2);
+/* Native unitBind: binds unit (argument 2) to the data slot of argument 1, fades it
+ * in and starts the slot's load; 0 when the slot is not found. */
+int unitBind(SbThread *call)
+{
+    struct DataSlot *slot;
+    Ov01Object *unit;
+
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    slot = dataSlotFind(vmArgGet(call, 1));
+    if (slot == 0) {
+        return 0;
+    }
+    /* Script argument 2 is the unit's address. */
+    unit = (Ov01Object *) vmArgGet(call, 2);
+    unitBindActors(unit, slot);
+    unitFadeIn(unit);
+    func_00A955C8(unit);
+    ov01LoadRequest(slot);
+    return 1;
+}
+
+/* Native unitBind2: unitBind with unitUnbind in place of the fade-in. */
+int unitBind2(SbThread *call)
+{
+    struct DataSlot *slot;
+    Ov01Object *unit;
+
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    slot = dataSlotFind(vmArgGet(call, 1));
+    if (slot == 0) {
+        return 0;
+    }
+    /* Script argument 2 is the unit's address. */
+    unit = (Ov01Object *) vmArgGet(call, 2);
+    unitBindActors(unit, slot);
+    unitUnbind(unit);
+    func_00A955C8(unit);
+    ov01LoadRequest(slot);
+    return 1;
+}
 
 void arrowCreate(int, int, int);
 
-int arrowOn(int call)
+int arrowOn(SbThread *call)
 {
     int index;
     int slot;
     int value;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 3) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     index = vmArgGet(call, 1);
@@ -349,10 +434,10 @@ int arrowOff(void)
 
 extern int bgmIndex;
 
-int bgmPlay(int call)
+int bgmPlay(SbThread *call)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     bgmIndex = vmArgGet(call, 1);
@@ -371,7 +456,23 @@ int bgmStop(void)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitTblBitGet);
+/* Bit i set for each occupied entry i of the side-2 unit table. */
+int unitTblBitGet(void)
+{
+    Ov01Object **units;
+    int count;
+    int bits;
+    int i;
+
+    count = unitTblGet(2, &units);
+    bits = 0;
+    for (i = 0; i < count; i++) {
+        if (units[i] != 0) {
+            bits |= 1 << i;
+        }
+    }
+    return bits;
+}
 
 
 void frameCntGet(void)
@@ -384,34 +485,33 @@ void ETGet(void) {
     actStepCounterValue();
 }
 
-void *unitTblEntryGet(int);
-int func_00A8D9E8(void *, void *);
+int unitIsInFacingArc(void *, void *);
 
-int unitDirChk(int call)
+int unitDirChk(SbThread *call)
 {
     void *unit;
     void *target;
     int unitIndex;
     int targetIndex;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
     unit = unitTblEntryGet(unitIndex);
     targetIndex = vmArgGet(call, 2);
     target = unitTblEntryGet(targetIndex);
-    return func_00A8D9E8(unit, target);
+    return unitIsInFacingArc(unit, target);
 }
 
 extern int D_00AE0C2C;
 extern int D_00AE0C30;
 
-int runEffSet(int call)
+int runEffSet(SbThread *call)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     D_00AE0C2C = 0x140;
@@ -428,10 +528,10 @@ void runEffGet(int *first, int *second)
 
 void decoFlagsSetAll(void);
 
-int decoDisp(int call)
+int decoDisp(SbThread *call)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     if (vmArgGet(call, 1) == 0) {
@@ -443,10 +543,10 @@ int decoDisp(int call)
 }
 
 
-int decoDisp2(int call)
+int decoDisp2(SbThread *call)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     if (vmArgGet(call, 1) == 0) {
@@ -459,7 +559,7 @@ int decoDisp2(int call)
 
 void textWindowShow(int, int, int, int, int);
 
-int namePut(int call)
+int namePut(SbThread *call)
 {
     int index;
     int slot;
@@ -468,8 +568,8 @@ int namePut(int call)
     int mode;
     int raw;
 
-    if (VM_PLUGIN_CNT_GET() < 5) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 5) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     raw = vmArgGet(call, 4);
@@ -482,16 +582,42 @@ int namePut(int call)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", objx);
+/*
+ * The vector at XenoActor +0x90 as objx writes it: one float per component. Stored as
+ * actor->vector90.x/y/z the function is two instructions shorter than the original; written
+ * through this union view, each store reloads the actor pointer as the original does.
+ */
+typedef union ActorVectorElements {
+    Vector4 vector;
+    float element[4];
+} ActorVectorElements;
+
+/* Native objx: sets the scale of unit argument 1 to argument 2 percent on all three axes. */
+int objx(SbThread *call)
+{
+    Ov01Object *unit;
+    float scale;
+
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    unit = unitTblEntryGet(vmArgGet(call, 1));
+    scale = vmArgGet(call, 2) / 100.0f;
+    ((ActorVectorElements *)&unit->unit->vector90)->element[0] = scale;
+    ((ActorVectorElements *)&unit->unit->vector90)->element[1] = scale;
+    ((ActorVectorElements *)&unit->unit->vector90)->element[2] = scale;
+    return 1;
+}
 
 
-int streamPlay(int call)
+int streamPlay(SbThread *call)
 {
     int streamId;
     int streamHandle;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     streamId = vmArgGet(call, 1);
@@ -502,15 +628,15 @@ int streamPlay(int call)
     return 1;
 }
 
-int unitGetAngleDegrees(int);
+int unitGetAngleDegrees(Ov01Object *unit);
 
-int unitDirGet(int call)
+int unitDirGet(SbThread *call)
 {
     int unitIndex;
-    int unit;
+    Ov01Object *unit;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -518,32 +644,30 @@ int unitDirGet(int call)
     return unitGetAngleDegrees(unit);
 }
 
-float func_00A87390(int);
+float unitDefArea(Ov01Object *unit);
 
-int unitDefAreaGet(int call)
+int unitDefAreaGet(SbThread *call)
 {
     int unitIndex;
-    int unit;
+    Ov01Object *unit;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
     unit = unitTblEntryGet(unitIndex);
-    return (int) (func_00A87390(unit) * 100.0f);
+    return (int) (unitDefArea(unit) * 100.0f);
 }
 
-int cfEventGet(void);
-int cfEventSet(int);
 
-int cfFlagSet(int call)
+int cfFlagSet(SbThread *call)
 {
     int flags;
     int bits;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
-        sbChainSetValue(call, 2);
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     flags = cfEventGet();
@@ -554,13 +678,13 @@ int cfFlagSet(int call)
 
 
 /* Script command: code 0x5A starts the BGM fade through func_001EDC20; any other code goes to soundSlotSetVolume with its value. */
-int runtimeBgmFade(int call)
+int runtimeBgmFade(SbThread *call)
 {
     int code;
     int value;
 
     if (VM_PLUGIN_CNT_GET(call) < 2) {
-        sbChainSetValue(call, 2);
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     code = vmArgGet(call, 1);
@@ -573,17 +697,15 @@ int runtimeBgmFade(int call)
     return 1;
 }
 
-int unitFadeTo(void *, int, int);
-
 /* The second argument is the frame count passed to unitFadeTo (ov01/tu018). */
-int unitFade(int call)
+int unitFade(SbThread *call)
 {
-    void *unit;
+    Ov01Object *unit;
     int unitIndex;
     int frames;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -593,65 +715,35 @@ int unitFade(int call)
     return 1;
 }
 
-/* Partial views of a stock slot: the detail pointer at +0x144 and the count at +0x62. */
-typedef struct StockDetail StockDetail;
-
-struct StockDetail {
-    unsigned char unmodeled_000[0x62];
-    s16 stock;                             /* +0x62 */
-};
-
-typedef struct StockOwner StockOwner;
-
-struct StockOwner {
-    unsigned char unmodeled_000[0x144];
-    StockDetail *detail;                   /* +0x144 */
-};
-
-StockOwner **actStockGet();
-
-s16 stockGet(int call)
+/* Native stockGet: the key of the unit in action stock slot argument 1, or 0 for an empty or invalid slot. */
+s16 stockGet(SbThread *call)
 {
-    s16 stock;
-    StockOwner **owners;
-    StockOwner *owner;
-    StockOwner **ownerSlot;
+    s16 key;
+    StatOwner *owner;
     int slot;
 
     if (VM_PLUGIN_CNT_GET(call) <= 0) {
-        sbChainSetValue(call, 2);
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    stock = 0;
+    key = 0;
     slot = vmArgGet(call, 1);
-    if (slot < 4) {
-        owners = actStockGet();
-        ownerSlot = owners + slot;
-        owner = *ownerSlot;
+    if (slot < ACT_STOCK_SLOTS) {
+        owner = actStockGet()->stock[slot];
         if (owner != 0) {
-            stock = owner->detail->stock;
+            key = owner->stats->key;
         }
     }
-    return stock;
+    return key;
 }
 
-int unitIsDone(void *);
-
-/* Partial view of the unit record: only the flags word at +0x0C is used here. */
-typedef struct UnitMotRecord UnitMotRecord;
-
-struct UnitMotRecord {
-    unsigned char unmodeled_000[0xC];
-    int flags;                             /* +0x0C; bit 0x10 */
-};
-
-int unitMotWait(int call, int *waiting)
+int unitMotWait(SbThread *call, int *waiting)
 {
-    UnitMotRecord *unit;
+    Ov01Object *unit;
     int unitIndex;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
@@ -665,49 +757,41 @@ int unitMotWait(int call, int *waiting)
     return 1;
 }
 
-void XenoActorHidePart(int, int);
+int XenoActorHidePart(struct XenoActor *actor, int part);
 
-/* Partial view of the record unitTblEntryGet returns: only +0x1D0 is used here. */
-typedef struct PartsUnit PartsUnit;
-
-struct PartsUnit {
-    unsigned char unmodeled_000[0x1D0];
-    int parts;                             /* +0x1D0 */
-};
-
-int partsHide(int call)
+int partsHide(SbThread *call)
 {
     int unitIndex;
-    int parts;
+    struct XenoActor *actor;
     int value;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
-    parts = ((PartsUnit *) unitTblEntryGet(unitIndex))->parts;
+    actor = unitTblEntryGet(unitIndex)->unit;
     value = vmKeyedEntryGet(call, vmArgGet(call, 2));
-    XenoActorHidePart(parts, value);
+    XenoActorHidePart(actor, value);
     return 1;
 }
 
-void XenoActorShowPart(int, int);
+int XenoActorShowPart(struct XenoActor *actor, int part);
 
-int partsShow(int call)
+int partsShow(SbThread *call)
 {
     int unitIndex;
-    int parts;
+    struct XenoActor *actor;
     int value;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 2) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     unitIndex = vmArgGet(call, 1);
-    parts = ((PartsUnit *) unitTblEntryGet(unitIndex))->parts;
+    actor = unitTblEntryGet(unitIndex)->unit;
     value = vmKeyedEntryGet(call, vmArgGet(call, 2));
-    XenoActorShowPart(parts, value);
+    XenoActorShowPart(actor, value);
     return 1;
 }
 
@@ -715,18 +799,42 @@ int put(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", sampPadRead);
+extern PadRecord PadData;
+
+/* Native sampPadRead: the d-pad bits of pad 0 - pressed (argument 1), repeated
+ * (2) or held (any other value). */
+int sampPadRead(SbThread *call)
+{
+    int value;
+
+    if (VM_PLUGIN_CNT_GET(call) <= 0) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    switch (vmArgGet(call, 1)) {
+    case 1:
+        value = PadData.directionPressed;
+        break;
+    case 2:
+        value = PadData.directionRepeated;
+        break;
+    default:
+        value = PadData.directionHeld;
+        break;
+    }
+    return value;
+}
 
 
-int sampFontPut(int call)
+int sampFontPut(SbThread *call)
 {
     int index;
     int slot;
     int raw;
     int key;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(call, 2);
+    if (VM_PLUGIN_CNT_GET(call) < 3) {
+        sbSlotJumpRequest(call, SB_JUMP_ARGUMENTS);
         return 0;
     }
     index = vmArgGet(call, 1);
@@ -752,7 +860,7 @@ void runtimeInitState(void)
     D_00AE0C2C = 0;
     D_00AE0C30 = 0;
     bgmIndex = 0;
-    memset(lightBlock, 0, 0x180);
+    memset(&lightBlock, 0, sizeof(LightBlocks));
     memset(&runtimePos, 0, sizeof(Vector4));
     memset(&runtimeDir, 0, sizeof(Vector4));
 }
@@ -766,7 +874,7 @@ void runtimeInit(void)
 {
     sbResetNativeCounts();
     runtimeInitState();
-    sbNativeOwnerAdd(&D_00ABACA0, &D_00AB60A0);
+    sbNativeOwnerAdd(D_00ABACA0, D_00AB60A0);
     mathInit();
     cameraRegisterNatives();
 }

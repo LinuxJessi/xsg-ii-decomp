@@ -1,6 +1,7 @@
 #ifndef INCLUDE_MAIN_TU051_H
 #define INCLUDE_MAIN_TU051_H
 
+#include "main/tu048.h"
 #include "shared.h"
 
 /* Types used by the map object code (tu051.c, tu075.c); the actor is only partly recovered. */
@@ -29,8 +30,14 @@ enum XActRsrc {
     XAct_Rsrc_Count
 };
 
+/* The light block copied into every actor of a battle unit (tu010.c unitCreateSide). */
+typedef struct LightBlocks {
+    u64 word[48];
+} LightBlocks;
+
 struct XenoActor {
     unsigned char unmodeled_000[0x10];
+    /* 0x010: ov01 reads it as a float array (tu019 zeroes x/y/z that way) and moves it as two words (tu012, tu016). */
     AlignedVector4 position;                /* 0x010 */
     AlignedVector4 previousPosition;        /* 0x020: x and z before this frame's move (tiWaterUpdateSource) */
     unsigned char unmodeled_030[0x10];
@@ -44,9 +51,15 @@ struct XenoActor {
     float radius;                           /* 0x0B0 */
     unsigned char unmodeled_0b4[8];
     int drawFlags;                          /* 0x0BC: 0x4 hides the actor, 0x08000000 draws it translucent */
-    float alpha;                            /* 0x0C0 */
-    int drawMode;                           /* 0x0C4: 1 while attached as a part (uwamonoAttachPlayerParts) */
-    unsigned char unmodeled_0c8[0x150 - 0xC8];
+    float alpha;                            /* 0x0C0: tu033 pauses a battle actor by setting it to 0, a fade writes its progress */
+    int drawMode;                           /* 0x0C4: 1 while attached as a part (uwamonoAttachPlayerParts), 2 on a battle unit's root */
+    unsigned char unmodeled_0c8[4];
+    float drawParam;                        /* 0x0CC: 0.5 with drawMode 2 */
+    unsigned char unmodeled_0d0[0x100 - 0xD0];
+    Matrix4 matrix;                         /* 0x100: the matrix unitFaceTarget applies with xglVectorMulMat */
+    float focusX;                           /* 0x140: focus offset, damped by cfeDampDirOffset */
+    float focusY;                           /* 0x144 */
+    unsigned char unmodeled_148[0x150 - 0x148];
     float moveAngle;                        /* 0x150: XenoActorUpdateMoveState advances it to 1 (xenoActor.c names) */
     float moveVelocity;                     /* 0x154 */
     float shadowValue;                      /* 0x158 */
@@ -54,7 +67,12 @@ struct XenoActor {
     int moveState;                          /* 0x160: the state XenoActorUpdateMoveState switches on (0..7) */
     float shadowValue2;                     /* 0x164 */
     float shadowValue3;                     /* 0x168 */
-    unsigned char unmodeled_16c[0x4C0 - 0x16C];
+    unsigned char unmodeled_16c[0x190 - 0x16C];
+    LightBlocks lightBlocks;                /* 0x190 */
+    unsigned char unmodeled_310[0x490 - 0x310];
+    DoublewordVector4 runtimeVecA;          /* 0x490: runtimeVecPtrGet's outputs, copied into every battle actor */
+    DoublewordVector4 runtimeVecB;          /* 0x4A0 */
+    unsigned char unmodeled_4b0[0x4C0 - 0x4B0];
     u32 visibility[8];                      /* 0x4C0: one bit per geometry of the pack (xenoActor.c's name);
                                              * a cut-scene actor's flag records set them */
     unsigned char unmodeled_4e0[0x5A4 - 0x4E0];
@@ -63,7 +81,7 @@ struct XenoActor {
     u32 flags;                              /* 0x5CC */
     float frame;                            /* 0x5D0: the scene frame (tiWaterSceneLoop counts it to 120) */
     int mode;                               /* 0x5D4: the motion XenoActorCheckMode compares against */
-    unsigned char unmodeled_5d8[4];
+    u32 phaseLock;                          /* 0x5D8: nonzero keeps unitSetPhase from its early return and clears its value */
     int requested_mode;                     /* 0x5DC */
     unsigned char unmodeled_5e0[4];
     int selector;                           /* 0x5E4: the last selector (xenoActor.c cachedSelector) */
@@ -78,7 +96,9 @@ struct XenoActor {
     unsigned char unmodeled_61c[0x640 - 0x61C];
     int channel[4];                         /* 0x640: the tiMRPackage channel block (xenoActor.c handle640) */
     XenoMotionState motion[2];              /* 0x650, 0x6A0: the TiMRPackage states A and B of the channel block */
-    unsigned char unmodeled_6f0[0x740 - 0x6F0];
+    unsigned char unmodeled_6f0[0x710 - 0x6F0];
+    struct XenoHrc *table;                  /* 0x710: the joint table XenoActorGetHrcPoint reads */
+    unsigned char unmodeled_714[0x740 - 0x714];
     unsigned char hitBuffer[8];             /* 0x740: the result block of mapMoveProbe */
     unsigned short hitFlags;                /* 0x748 */
     unsigned short groundFlags;             /* 0x74A: 0x10 while on a slope */
@@ -99,6 +119,7 @@ struct XenoActor {
     union {
         int kind;                           /* 0x798: 0x10000..0x13FFF for an ES (the mecha the party rides) */
     };
+    int state;                              /* 0x79C: written by XenoActorSetState; XenoActorDrawMotion reads it and clears it */
 };
 
 /* The motion number table of a map object (+0x4078: one entry per walk mode). */
@@ -198,22 +219,6 @@ typedef struct UwamonoObject {
     unsigned char unmodeled_74a[0x870 - 0x74A];
 } UwamonoObject;
 
-/* gameWork as far as its control word: the files that read more of it keep their own view. */
-typedef struct GameWorkControl {
-    unsigned char unmodeled_00[8];
-    int control;                            /* +0x08: CONTROL_* */
-} GameWorkControl;
-
-/* Bits of gameWork.control. */
-#define CONTROL_PAUSED 0x1
-#define CONTROL_SCRIPTED 0x8000
-#define CONTROL_REPLAYED 0x10000
-#define CONTROL_SEARCHING 0x20000
-#define CONTROL_TOP_EXIT 0x20 /* reaching the top of a ladder moves on to the top state (tu075.c) */
-/* Set while a cut scene runs (cfePlugIn.c sets it at the start, clears it at the end). */
-#define CONTROL_CFE_SCENE 0x200
-#define CONTROL_CFE_NO_FADE 0x100000 /* set with it: events then start no fade-out (tu069.c) */
-#define CONTROL_SOFT_RESET 0x10000000 /* the soft-reset pad combo was pressed; Title will not start a game while it is set */
 
 extern UwamonoObject uwamonoRecords[];
 extern int uwamonoCurrentIndex;

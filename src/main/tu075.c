@@ -6,17 +6,19 @@
 #include "main/tu075.h"
 #include "main/xenoActor.h"
 #include "main/xgl_font.h"
+#include "main/tu048.h"
 
-static short ladderRungIndex;
-static float ladderClimbFrom;
-static float ladderClimbTo;
+/* Ladder climb state. */
+static short ladderRungIndex;           /* the rung the climb started from */
+static float ladderClimbFrom;           /* height at the start of the current rung step */
+static float ladderClimbTo;             /* height at the end of the current rung step */
 static float ladderFootHeight;
-static short ladderClimbFrame;
+static short ladderClimbFrame;          /* frames elapsed in the current rung step */
 static short uwamonoLadderSlot;
-static signed char ladderExitSide;
-static short ladderFrame;
-static short ladderExitFrames;
-static float ladderExitOffset;
+static signed char ladderExitSide;      /* 1 when leaving sideways from a rung, 0 at the foot */
+static short ladderFrame;               /* cleared when the exit starts */
+static short ladderExitFrames;          /* frames of the exit motion (0x20 foot, 0x2A side) */
+static float ladderExitOffset;          /* height offset applied during the exit (-0.13 near a rung top) */
 
 const char D_006899D0[16] = "\x0d" "\x02" "\xa5" "\xcf" "\xa5" "\xb7" "\xa5" "\xb4" "";
 const char D_006899E0[16] = "\xb9" "\xe2" "\xa4" "\xb5" "\xb9" "\xe7" "\xb3" "\xca" "%3d";
@@ -24,7 +26,7 @@ const char D_006899F0[16] = "\xba" "\xb8" "\xbe" "\xba" "\xb9" "\xdf" "\xb2" "\x
 const char D_00689A00[16] = "\xb1" "\xa6" "\xbe" "\xba" "\xb9" "\xdf" "\xb2" "\xc4" "\xc7" "\xbd" "%3d";
 
 void func_A9CDB0(void *, void *);
-extern unsigned char uwamonoNativeTable[];
+extern void *uwamonoNativeTable[];
 extern unsigned char D_0069D310[];
 
 /* Registers the uwamono native table uwamonoNativeTable with the module name D_0069D310. */
@@ -79,14 +81,6 @@ typedef struct LadderSlot {
     unsigned char unmodeled_cb[5];
 } LadderSlot;
 
-typedef struct LadderGameWork {
-    unsigned char unmodeled_000[8];
-    int flags;                              /* 0x008 */
-    unsigned char exitPhase;                /* 0x00C: 2 once the parabolic exit lands */
-    unsigned char unmodeled_00d[0x300 - 0xD];
-    int climbFrames;                        /* 0x300 */
-} LadderGameWork;
-
 extern LadderSlot ladderSlots[];
 
 /* The 8-byte ladder state block in .sdata: only the state is read or written in this TU.  As a
@@ -97,7 +91,6 @@ typedef struct LadderStateWork {
 } LadderStateWork;
 
 extern LadderStateWork uwamonoLadderState;
-extern LadderGameWork gameWork;
 extern PadRecord PadData;
 
 #define LADDER_PI 3.1415927f
@@ -127,30 +120,18 @@ enum {
     LADDER_FOOT_EXIT_FRAMES = 0x20
 };
 
-/* Ladder climb state (names are the scaffold's data labels). */
-/* index of the rung the climb started from */
-/* height at the start of the current rung step */
-/* height at the end of the current rung step */
-/* frames elapsed in the current rung step */
-/* 1 when leaving sideways from a rung, 0 at the foot */
-/* cleared when the exit starts */
-/* frames of the exit motion (0x20 foot, 0x2A side) */
-/* height offset applied during the exit (-0.13 near a rung top) */
-/* Covers the .bss span 0x6A1B2C..0x6A1D30 (ladderStepHeights is its element 1, see the extern below). */
-static float ladderRungHeights[129];
-/* rung step heights, read at the current rung index */
+/* Rung heights: element 63 is the rung the climb starts on; read at the current rung index. */
+static float ladderStepHeights[128];
+/* Where the exit moves the player to. */
 static AlignedVector4 ladderExitPoint;
-/* where the exit moves the player to */
 void uwamonoSetMotion(int index, int motion, float speed);
 void uwamonoSendEvent(int kind, int id, int value);
 void cameraApplyAllSlots(int arg);
 float unduGetSlotHeight(int index, Vector4 *point, int arg2, int arg3, int arg4);
-void func_0028B060(struct XenoActor *actor);
+void XenoActorWrapRotation(struct XenoActor *actor);
 float sinf(float angle);
 float cosf(float angle);
 void Get_MiddlePoint(const Vector4 *first, const Vector4 *second, int current, int total, Vector4 *destination);
-void XenoActorSetFirstWord(struct XenoActor *actor, int word);
-extern float ladderStepHeights[];
 
 void uwamonoLadderApproach(void)
 {
@@ -232,13 +213,11 @@ void uwamonoLadderApproach(void)
 incr:
     ladderFrame = nextFrame;
 done:
-    func_0028B060(actor);
+    XenoActorWrapRotation(actor);
 }
 
 void Get_MiddlePoint_Parabora(const Vector4 *first, const Vector4 *second, int current, int total,
                               float height, Vector4 *destination);
-void XenoActorShiftJoints(struct XenoActor *actor, int, int, int, int);
-void XenoActorSetChannelValue(struct XenoActor *actor, float value);
 
 /* The actor seen from its landing flags: hitFlags is read and written as a bit-field of this view,
  * which also holds the position, so the flag accesses alias the position copy and not the shorts. */
@@ -273,9 +252,9 @@ void uwamonoParabolaMove(void)
         if (ladderExitSide != 0) {
             cameraApplyAllSlots(0);
         }
-        gameWork.exitPhase = 2;
+        gameWork.inputDelay = 2;
     }
-    func_0028B060(actor);
+    XenoActorWrapRotation(actor);
 }
 
 float Get_Distance(const Vector4 *a, const Vector4 *b);
@@ -387,7 +366,7 @@ finalize:
     XenoActorSetChannelValue(actor, 4.0f);
     uwamonoSetMotion(uwamonoCurrentIndex, 0, 1.0f);
     uwamonoLadderApproach();
-    func_0028B060(actor);
+    XenoActorWrapRotation(actor);
     return 1;
     } while (0);
 }
@@ -413,7 +392,7 @@ void uwamonoLadderMove(void)
     compass = uwamonoCompassSector(slot->angle);
     side = 0.0f;
     climb = side; /* both start at zero; kept as a chained copy for the original code generation */
-    if (!(gameWork.flags & CONTROL_SCRIPTED)) {
+    if (!(gameWork.control & CONTROL_SCRIPTED)) {
         stickX = PadData.directionX;
         stickY = PadData.directionY;
         if (stickX >= 32.0f || stickX <= -32.0f) {
@@ -499,7 +478,7 @@ void uwamonoLadderMove(void)
             seVoiceStartDefault(0x200000D);
             ladderClimbFrame = 1;
             ladderClimbFrom = actor->position.y;
-            ladderClimbTo = ladderRungHeights[ladderRungIndex--];
+            ladderClimbTo = ladderStepHeights[ladderRungIndex-- - 1];
             uwamonoLadderState.state = LADDER_STATE_CLIMB_DOWN;
             uwamonoSetMotion(uwamonoCurrentIndex, 0x14, -2.0f);
             XenoActorSetPlayRange(actor, 0, 0x1D);
@@ -509,7 +488,7 @@ void uwamonoLadderMove(void)
         if (climb > 0.0f) {
             if (slot->position.y + slot->height <= actor->position.y + 0.8f) {
                 uwamonoSendEvent(4, ladderSlots[uwamonoLadderSlot].id, 0);
-                if (gameWork.flags & CONTROL_TOP_EXIT) {
+                if (gameWork.control & CONTROL_TOP_EXIT) {
                     uwamonoLadderState.state = LADDER_STATE_TOP;
                 }
                 return;
@@ -517,7 +496,7 @@ void uwamonoLadderMove(void)
             seVoiceStartDefault(0x200000D);
             ladderClimbFrame = 1;
             ladderClimbFrom = actor->position.y;
-            ladderClimbTo = ladderRungHeights[ladderRungIndex++ + 2];
+            ladderClimbTo = ladderStepHeights[ladderRungIndex++ + 1];
             uwamonoLadderState.state = LADDER_STATE_CLIMB_UP;
             uwamonoSetMotion(uwamonoCurrentIndex, 0x14, 2.0f);
             XenoActorSetPlayRange(actor, 0, 0x1D);
@@ -617,7 +596,7 @@ void uwamonoLadderMove(void)
         ladderFrame = 0;
         uwamonoLadderState.state = LADDER_STATE_EXIT;
     }
-    func_0028B060(actor);
+    XenoActorWrapRotation(actor);
 }
 
 void uwamonoHaltPursuit(int);
@@ -672,53 +651,27 @@ int uwamonoUpdateLadderState(void)
     return 1;
 }
 
-const char D_00689A60[16] = "setEntrance";
-const char D_00689A70[16] = "setLadder";
-const char D_00689A80[16] = "GetCamAng";
-const char D_00689A90[16] = "GetCamPos";
-const char D_00689AA0[16] = "GetRefAng";
-const char D_00689AB0[16] = "GetRefPos";
-const char D_00689AC0[16] = "MovePers";
-const char D_00689AD0[16] = "MoveBank";
-const char D_00689AE0[16] = "HandShake";
-const char D_00689AF0[16] = "MoveBankStop";
-const char D_00689B00[16] = "MovePersStop";
-const char D_00689B10[16] = "MoveCamStop";
-const char D_00689B20[16] = "MoveRefStop";
-const char D_00689B30[16] = "WaitMoveCam";
-const char D_00689B40[16] = "WaitMoveRef";
-const char D_00689B50[16] = "MoveCamMode";
-const char D_00689B60[16] = "MoveRefMode";
-const char D_00689B70[16] = "OffsCamAng";
-const char D_00689B80[16] = "OffsCamPos";
-const char D_00689B90[16] = "SetCamAct3";
-const char D_00689BA0[16] = "SetCamAct2R";
-const char D_00689BB0[16] = "SetCamAct2";
-const char D_00689BC0[16] = "SetCamActR";
-const char D_00689BD0[16] = "SetCamAct";
-const char D_00689BE0[16] = "SetCamAng";
-const char D_00689BF0[16] = "SetCamPos";
-const char D_00689C00[16] = "SetRefCamAct3R";
-const char D_00689C10[16] = "SetRefCamActR";
-const char D_00689C20[16] = "SetRefAng";
-const char D_00689C30[16] = "SetRefActR";
-const char D_00689C40[16] = "SetRefAct";
-const char D_00689C50[16] = "SetRefPos";
-const char D_00689C60[16] = "cfBattleCam";
-const char D_00689C70[16] = "cfSelectCHG";
-const char D_00689C80[16] = "cfRangeMode";
-const char D_00689C90[16] = "cfRotRange";
-const char D_00689CA0[16] = "cfChange";
-const char D_00689CB0[16] = "PosReset";
-const char D_00689CC0[16] = "AngleMode";
-const char D_00689CD0[16] = "umnReturn";
-const char D_00689CE0[16] = "ptSetArray";
-const char D_00689CF0[16] = "ptGetLeader";
-const char D_00689D00[16] = "ptSetPilot";
-const char D_00689D10[32] = "ptChangeMode\x00" "\x00" "\x00" "\x00" "PartsNames";
-
 unsigned char D_0069D310[8] = "uwamono";
 
-unsigned char D_002B5D9C[12] = { 0 };
+/* .data of this file (0x3E6FF0): the uwamono script natives. */
+int uwamonoSetDoorAll(int source);
+int uwamonoSetKowaremonoAll(int source);
+int uwamonoSendSignal(int source);
+int uwamonoSetCollisionSize(int source);
+int setCollisionScale(int source);
 
-
+/* Native table of the uwamono module. */
+void *uwamonoNativeTable[12] = {
+    "setDoorAll",
+    uwamonoSetDoorAll,
+    "setKowaremonoAll",
+    uwamonoSetKowaremonoAll,
+    "SendSignal",
+    uwamonoSendSignal,
+    "setCollisionSize",
+    uwamonoSetCollisionSize,
+    "setCollisionScale",
+    setCollisionScale,
+    0,
+    0
+};

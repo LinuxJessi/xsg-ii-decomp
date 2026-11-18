@@ -1,28 +1,35 @@
 #include "common.h"
-
-INCLUDE_ASM("asm/main/nonmatchings/tu233", talkStashPrefix);
-
-/*
- * The talk text box as tu233 reads it (the same object as tu232's
- * TalkTextBox): the text buffer pointer at +0x2c and the speaker name pointer
- * at +0x60, where tu232 has its second_pass word.
- */
-typedef struct TalkBoxContext {
-    unsigned char unmodeled_00[0x2c];
-    unsigned char *text;                   /* two leading bytes are stashed around the print */
-    unsigned char unmodeled_30[0x30];
-    char *speaker_name;                    /* text up to NUL or ']' is the name plate */
-} TalkBoxContext;
+#include "main/tu233.h"
 
 /* Two leading bytes of the text, stashed into talkPrefixStash by talkStashPrefix. */
 extern signed char talkPrefixStash[2];
 
+/* Moves the two leading bytes of the text into talkPrefixStash and blanks them in the text; the second only when it is non-zero. */
+void talkStashPrefix(MsgSlot *box)
+{
+    MsgSlotText *body;
+    signed char *text;
+
+    /* The original clears both stash bytes with one halfword store (a single sh of $zero). Plain
+       talkPrefixStash[0] = 0; talkPrefixStash[1] = 0; compiles to two sb and changes the stash addressing
+       (26 differing rows). */
+    *(short *)talkPrefixStash = 0;
+    body = &box->u.text; /* body address kept in a register, as in the original */
+    text = (signed char *)body->reveal;
+    talkPrefixStash[0] = text[0];
+    text[0] = 0;
+    if (text[1] != 0) {
+        talkPrefixStash[1] = text[1];
+        text[1] = 0;
+    }
+}
+
 /* Puts the stashed leading bytes back into the text; the second byte only when it is non-zero. */
-void talkRestorePrefix(TalkBoxContext *box)
+void talkRestorePrefix(MsgSlot *box)
 {
     unsigned char *text;
 
-    text = box->text;
+    text = (unsigned char *) box->u.text.reveal; /* reveal is const char * for readers; the stashed prefix is written back through it */
     text[0] = talkPrefixStash[0];
     if (talkPrefixStash[1] != 0) {
         text[1] = talkPrefixStash[1];
@@ -30,26 +37,31 @@ void talkRestorePrefix(TalkBoxContext *box)
 }
 
 /* Copies the speaker name into buffer up to NUL or ']' and terminates it. */
-void talkCopySpeakerName(unsigned char *buffer, TalkBoxContext *box)
+void talkCopySpeakerName(unsigned char *buffer, MsgSlot *box)
 {
     char *src;
     int ch;
     int next;
     unsigned char out;
 
-    src = box->speaker_name;
+    src = box->u.text.speaker_name;
     if (src != 0) {
         ch = *src;
         out = *src;
-        if (ch != 0 && ch != 0x5D) {
+        if (ch != 0 && ch != ']') {
             do {
                 *buffer = out;
                 buffer += 1;
                 src += 1;
                 next = *src;
                 out = *src;
-            } while (next != 0 && next != 0x5D);
+            } while (next != 0 && next != ']');
         }
         *buffer = 0;
     }
 }
+
+/* Scaffold data of this file (.sdata), in address order. The string items are read by the other main TUs
+ * (main/tu234 and others) through their own extern declarations. */
+signed char talkPrefixStash[2] = { 0, 0 };
+extern unsigned char sellNoItemsText[];

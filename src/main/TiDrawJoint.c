@@ -99,10 +99,10 @@ void tiDrawJointTransformPoints(unsigned int count, float matrix[4][4], const Ve
 }
 
 extern TiDrawJointGifState tiDrawJointGifState;
-extern const char tiDrawJointAssertSrc[];
-extern const char tiDrawJointFileName[];
-extern const char tiDrawJointAssertCol[];
-extern const char tiDrawJointAssertVif1Pk[];
+const char tiDrawJointAssertSrc[8] = "pSrc";
+const char tiDrawJointFileName[24] = "../TiDrawJoint.euc.c";
+const char tiDrawJointAssertCol[8] = "pCol";
+const char tiDrawJointAssertVif1Pk[8] = "pVIF1PK";
 void sceVif1PkCnt(void *packet, unsigned int count);
 void sceVif1PkOpenDirectHLCode(void *packet, unsigned int count);
 void sceVif1PkAddDirectDataN(void *packet, void *data, unsigned int qwc);
@@ -195,8 +195,8 @@ void tiDrawJointPackPoints(unsigned int count, const Vector4 *source, const unsi
     }
 }
 
-extern const char tiDrawJointAssertTransMat[];
-extern Vector4 tiDrawJointAxisPointsX[];
+const char tiDrawJointAssertTransMat[16] = "pTransMat";
+extern AlignedVector4 tiDrawJointAxisPointsX[];
 extern Vector4 tiDrawJointAxisPointsY[];
 extern Vector4 tiDrawJointAxisPointsZ[];
 extern unsigned int tiDrawJointAxisColourX[];
@@ -227,10 +227,10 @@ void tiDrawJointDrawPoints(float matrix[4][4], float value)
     tiDrawJointPackPoints(2, screen, tiDrawJointAxisColourZ, 1);
 }
 
-extern const char D_0068F788[];
-extern Vector4 tiDrawJointMeshPoints[];
-extern Vector4 tiDrawJointMeshTransformed[];
-extern Vector4 D_00989C50[];
+const char D_0068F788[16] = "pCurrMat";
+static Vector4 tiDrawJointMeshPoints[16];
+static Vector4 tiDrawJointMeshTransformed[16];
+static Vector4 D_00989C50[16];
 
 /* Draws the 16-point mesh tiDrawJointMeshPoints through current_matrix (asserted as pCurrMat).
  * colour reaches the packet builder in its colour position (asserted as pCol there). */
@@ -301,7 +301,7 @@ extern unsigned int tiDrawJointColourDefault[];
 extern unsigned int tiDrawJointColourSelectA[];
 extern unsigned int tiDrawJointColourDefaultE[];
 extern unsigned int tiDrawJointColourSelectE[];
-extern const char tiDrawJointAssertGlobalMat[];
+const char tiDrawJointAssertGlobalMat[16] = "pGlobalMat";
 
 typedef struct TiDrawJointEntry64 {
     int matrixIndex;
@@ -548,3 +548,40 @@ void tiDrawJointDrawLists(TiDrawJointState *state, float (*pGlobalMat)[4][4], fl
     state->selectMesh1 = -1;
     state->selectMesh2 = -1;
 }
+/* Per-joint GIF tag state; the struct is 19 bytes, the rest of its 32-byte slot is alignment fill. */
+TiDrawJointGifState tiDrawJointGifState = { 1, { 0, 0, 0 }, 0, 3, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0 };
+
+/* Axis end points (index 1 is moved to the axis length) and their colours. */
+AlignedVector4 tiDrawJointAxisPointsX[2] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+unsigned int tiDrawJointAxisColourX[4] = { 0xffu, 0u, 0u, 0xffu };
+Vector4 tiDrawJointAxisPointsY[2] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+unsigned int tiDrawJointAxisColourY[4] = { 0u, 0xffu, 0u, 0xffu };
+Vector4 tiDrawJointAxisPointsZ[2] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+unsigned int tiDrawJointAxisColourZ[4] = { 0u, 0u, 0xffu, 0xffu };
+
+/* Base of the 16-point mesh, before orientation. */
+Vector4 tiDrawJointMeshBase[16] = {
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, -0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, -0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, -0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, -0.0f, 1.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f }
+};
+
+Vector4 tiDrawJointRefAxis[1] = { { 1.0f, 0.0f, 0.0f, 1.0f } };
+
+unsigned int tiDrawJointColourDefault[4] = { 0x60u, 0x60u, 0xaau, 0xffu };
+unsigned int tiDrawJointColourSelectA[4] = { 0xccu, 0xaau, 0xffu, 0xffu };
+unsigned int tiDrawJointColourDefaultE[4] = { 0xaau, 0x60u, 0x60u, 0xffu };
+unsigned int tiDrawJointColourSelectE[4] = { 0xffu, 0xccu, 0xaau, 0xffu };

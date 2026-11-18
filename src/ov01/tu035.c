@@ -3,22 +3,19 @@
  */
 #include "common.h"
 #include "ov01/tu012.h"
-
-typedef struct TgtObject TgtObject;
+#include "ov01/tu023.h"
+#include "ov01/tu035.h"
+#include "ov01/tu042.h"
 
 typedef struct TgtSlot TgtSlot;
 
 typedef struct TgtSelectState TgtSelectState;
 
 /*
- * A battle candidate. Its flags word at +0x0c: 0x08 is set when tgtSelectBegin takes it, 0x10 is the
- * highlight (set by tgtSelectActivate, cleared by tgtSelectUnhighlight below), 0x20 gates the cursor stage,
- * 0x01 is set and 0x1000 cleared when tgtSelectConfirm picks it.
+ * A battle candidate is a unit object (Ov01Object in ov01/tu012.h). Its flags word at +0x0c: 0x08 is set when
+ * tgtSelectBegin takes it, 0x10 is the highlight (set by tgtSelectActivate, cleared by tgtSelectUnhighlight
+ * below), 0x20 gates the cursor stage, 0x01 is set and 0x1000 cleared when tgtSelectConfirm picks it.
  */
-struct TgtObject {
-    int unmodeled_00[3];
-    int flags;
-};
 
 /* Three-entry table set up by tgtSelectInit: index is the slot number, value starts at 180. */
 struct TgtSlot {
@@ -36,8 +33,8 @@ struct TgtSlot {
  */
 struct TgtSelectState {
     int flags;
-    TgtObject *current;
-    TgtObject *last_object;
+    Ov01Object *current;
+    Ov01Object *last_object;
     int unmodeled_0c[4];
     int phase;
     int cleared_20;
@@ -52,17 +49,16 @@ struct TgtSelectState {
 
 extern TgtSlot ov01PartyTable[];
 extern TgtSelectState tgtSelectState;
-extern TgtObject *tgtSelectCurrent;
+extern Ov01Object *tgtSelectCurrent;
 extern int tgtSelectStatus;
 extern int tgtSelectMode;
 void *memset(void *s, int c, unsigned int n);
 void func_00A9BCC8(int selector, void *object);
-void thinkSendEnd(int value);
 void tgtSelectActivate(void);
 void tgtSelectBegin(void);
 void tgtSelectCursor(int inputHandled);
 void tgtSelectExecute(void);
-void func_00A977A0(void);
+int func_00A977A0(void);
 int tgtSelectPadInput(void);
 
 /* Clears the selection state, numbers the three slots and arms the begin stage (flag 1). */
@@ -79,8 +75,9 @@ void tgtSelectInit(void)
     tgtSelectState.phase = 0;
 }
 
-/* Runs the stage handlers whose bits are set in state->flags, then the status update. */
-void tgtSelectStep(void)
+/* Runs the stage handlers whose bits are set in state->flags, then the status update;
+ * returns its result (1 when the selection is done). */
+int tgtSelectStep(void)
 {
     TgtSelectState *state = &tgtSelectState;
     int inputHandled;
@@ -98,18 +95,55 @@ void tgtSelectStep(void)
     if (state->flags & 8) {
         tgtSelectExecute();
     }
-    func_00A977A0();
+    return func_00A977A0();
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu035", func_00A97288);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu035", tgtSelectBegin);
+/* Candidate flags tgtSelectBegin sets and clears when it takes a candidate. */
+#define TGT_OBJECT_TAKEN 0x8
+#define TGT_OBJECT_CLEARED_ON_TAKE 0x200
+/* Stage bits of TgtSelectState.flags. */
+#define TGT_STAGE_BEGIN 0x1
+#define TGT_STAGE_ACTIVATE 0x2
+
+void objPathReset(void);
+void objPathStep(void);
+void objPathSendLast(void);
+void func_00A90368(Ov01Object *object);
+
+/* Stage 1: takes the next candidate (actStockPick), arms the activate stage and moves
+ * the path objects for the stock level. */
+void tgtSelectBegin(void)
+{
+    Ov01Object *object;
+    int level;
+
+    object = actStockPick();
+    tgtSelectState.current = object;
+    if (object != 0) {
+        object->flags = (object->flags & ~TGT_OBJECT_CLEARED_ON_TAKE) | TGT_OBJECT_TAKEN;
+        tgtSelectState.flags = (tgtSelectState.flags & ~TGT_STAGE_BEGIN) | TGT_STAGE_ACTIVATE;
+        switch (actStockGet()->pickSource) {
+        case 1:
+            objPathStep();
+            break;
+        case 0:
+            objPathReset();
+            break;
+        default:
+            objPathSendLast();
+            break;
+        }
+        func_00A90368(tgtSelectState.current);
+    }
+}
 
 /* Stage 2: once unitQueueIsEmpty reports the current candidate ready, highlights it and moves to the cursor stage (flag 4). */
 void tgtSelectActivate(void)
 {
     TgtSelectState *state = &tgtSelectState;
-    TgtObject *object;
+    Ov01Object *object;
 
     if (unitQueueIsEmpty(state->current) != 0) {
         object = state->current;
@@ -127,7 +161,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu035", tgtSelectCursor);
  * Confirms object: it becomes last_object and the execute stage (flag 8) is armed. If the current
  * candidate has lost its highlight, the selection is dropped and the cursor stage (flag 4) cleared.
  */
-void tgtSelectConfirm(TgtObject *object)
+void tgtSelectConfirm(Ov01Object *object)
 {
     TgtSelectState *state = &tgtSelectState;
     int flags;
@@ -159,10 +193,10 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu035", func_00A97890);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu035", tgtSelectPadInput);
 
-void tgtSelectUnhighlight(int value)
+void tgtSelectUnhighlight(Ov01Object *unit)
 {
     tgtSelectCurrent->flags &= ~0x10;
-    thinkSendEnd(value);
+    thinkSendEnd(unit);
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu035", func_00A97B90);

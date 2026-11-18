@@ -2,8 +2,9 @@
 #include "shared.h"
 #include "main/tu051.h"
 #include "main/tu077.h"
+#include "main/tu048.h"
 
-/* gameWork.flags bits that the camera commands set. */
+/* gameWork.camera.flags bits that the camera commands set. */
 enum CameraFlagBits {
     CAMERA_FLAG_POS_RESET = 0x20,
     CAMERA_FLAG_BATTLE = 0x200
@@ -15,7 +16,7 @@ enum CameraMoveBits {
     CAMERA_MOVE_CAM = 2
 };
 
-/* gameWork.shakeMode bits: one per shake channel (shakeA, shakeB, shakeC). */
+/* gameWork.camera.shakeFlags bits: one per shake channel (shakeA, shakeB, shakeC). */
 enum CameraShakeChannel {
     CAMERA_SHAKE_CHANNEL_A = 1,
     CAMERA_SHAKE_CHANNEL_B = 2,
@@ -38,7 +39,7 @@ void func_A9CDB0(void *, void *);
 int *func_A9F298(int handle, int value);
 struct CameraOffsetRecord *cameraApplyAnchorOffset(float *out, int slot_1, int slot_2, float *in);
 struct CameraOffsetRecord *cameraAnchorGet(float *scratch, int slot_1, int slot_2);
-extern u8 ladderNatives[];
+extern void *ladderNatives[];
 extern u8 ladderModuleName[];
 
 void ladderRegisterNatives(void) {
@@ -80,80 +81,20 @@ struct CameraShakeRecord {
     short frames;
 };
 
-/* The camera block of gameWork as the camera functions of this file read it.
- * The pers (+0x160) and bank (+0x170) blocks share one layout; their stop
- * words are the int views of wordA/floatB. */
-struct CameraWork {
-    /* 0x000 */ unsigned char unmodeled_000[0xD0];
-    /* 0x0D0 */ unsigned short flags;
-    /* 0x0D2 */ unsigned char modeByteA;
-    /* 0x0D3 */ unsigned char modeByteB;
-    /* 0x0D4 */ unsigned char unmodeled_0d4[0x1];
-    /* 0x0D5 */ unsigned char cfSlotIndex;
-    /* 0x0D6 */ unsigned char unmodeled_0d6[0x1A];
-    /* 0x0F0 */ union {
-        unsigned char shakeMode;
-        unsigned char handShakeFlags;
-    };
-    /* 0x0F1 */ unsigned char unmodeled_0F1[0xF];
-    /* 0x100 */ struct CameraShakeRecord shakeA;
-    /* 0x110 */ struct CameraShakeRecord shakeB;
-    /* 0x120 */ struct CameraShakeRecord shakeC;
-    /* 0x130 */ int handShakeWord0;
-    /* 0x134 */ int handShakeWord1;
-    /* 0x138 */ int handShakeWord2;
-    /* 0x13C */ int handShakeWord3;
-    /* 0x140 */ unsigned char unmodeled_140[0x4];
-    /* 0x144 */ int refStopWord0;
-    /* 0x148 */ int refStopWord1;
-    /* 0x14C */ unsigned char unmodeled_14c[0x8];
-    /* 0x154 */ int camStopWord0;
-    /* 0x158 */ int camStopWord1;
-    /* 0x15C */ unsigned char unmodeled_15c[0x6];
-    /* 0x162 */ unsigned char persByteA;
-    /* 0x163 */ signed char persByteB;
-    /* 0x164 */ int persWordA;
-    /* 0x168 */ float persFloatB;
-    /* 0x16C */ int persWordB;
-    /* 0x170 */ unsigned char unmodeled_170[0x2];
-    /* 0x172 */ unsigned char bankByteA;
-    /* 0x173 */ signed char bankByteB;
-    /* 0x174 */ int bankWordA;
-    /* 0x178 */ float bankFloatB;
-    /* 0x17C */ int bankWordB;
-    /* 0x180 */ union { int refAnchorIndex; float refAnchorIndexFloat; };
-    /* 0x184 */ union { short refAnchorSubIndex; float refAnchorSubIndexFloat; };
-    /* 0x188 */ unsigned char lockFlag02;
-    /* 0x189 */ unsigned char lockFlag04;
-    /* 0x18A */ unsigned char lockFlag08;
-    /* 0x18B */ unsigned char lockFlags21;
-    /* 0x18C */ unsigned char cfHokanByte;
-    /* 0x18D */ unsigned char unmodeled_18d[0x2];
-    /* 0x18F */ u8 northOutOfRange;
-    /* 0x190 */ f32 northRad;
-    /* 0x194 */ unsigned char unmodeled_194[0xC];
-    /* 0x1A0 */ Vector4 refOffset;    /* offset from the reference anchor (cameraSetRefAct, SetRefCamActR) */
-    /* 0x1B0 */ Vector4 rotRange;     /* camera.cfRotRange limits in radians */
-    /* 0x1C0 */ Vector4 camPos;       /* camera position (orbit result) */
-    /* 0x1D0 */ Vector4 refPos;       /* reference position, written by cameraSetRefPos */
-    /* 0x1E0 */ Vector4 camAngles;    /* camera angles x, y in radians; w is a distance (GetCamAng reads it in centi units) */
-    /* 0x1F0 */ unsigned char unmodeled_1F0[0x30];
-    /* 0x220 */ Vector4 camMovePos;   /* target position while a camera move is pending */
-    /* 0x230 */ Vector4 refMovePos;   /* target while a reference move is pending; w is the MoveBank angle */
-    /* 0x240 */ Vector4 camMoveAngles; /* target angles while a camera move is pending */
-};
+/* gameWork.camera.range.anchorIndex and anchorSubIndex as union members (alias set 0). Lever: SetRefCamActR stores
+   them after the vectors; plain members let the scheduler move the stores. */
+typedef struct {
+    unsigned char unmodeled_000[0x180];
+    union { int anchorIndex; };
+    union { short anchorSubIndex; };
+} CameraAnchorAlias0;
 
 static u8 cameraRefMoveFlag;
 static u8 cameraCamMoveFlag;
 static u8 cameraMoveMode;
 /* Script argument count of the camera command now running; cameraCheckArgCount compares it with argc. */
 static u8 cameraArgCount;
-extern u8 cameraRangeMode[];
-extern f32 D_002B5EEC[];
-extern f32 cameraPersAngle[];
-extern f32 cameraBankAngle[];
 /* The camera state block: every command below reads or writes its fields. */
-extern struct CameraWork gameWork;
 int func_A9F0A8(void);
 void func_A9CC70(int handle, int level);
 int func_A9F0C0(int handle, int mode);
@@ -185,8 +126,8 @@ int cameraMode(int scriptHandle) {
     }
     modeA = func_A9F0C0(scriptHandle, 1);
     modeB = func_A9F0C0(scriptHandle, 2);
-    gameWork.modeByteA = modeA;
-    gameWork.modeByteB = modeB;
+    gameWork.camera.cameraType = modeA;
+    gameWork.camera.cameraSubType = modeB;
     return 1;
 }
 
@@ -199,7 +140,7 @@ int cameraPosReset(int scriptHandle) {
     if (cameraCheckArgCount(scriptHandle) == 0) {
         return 0;
     }
-    gameWork.flags |= CAMERA_FLAG_POS_RESET;
+    gameWork.camera.flags |= CAMERA_FLAG_POS_RESET;
     return 1;
 }
 
@@ -213,12 +154,12 @@ struct CameraStopBlock {
 };
 
 struct CameraSlotRecord {
-    unsigned char modeA;               /* +0x00: copy of gameWork.modeByteA */
+    unsigned char modeA;               /* +0x00: copy of gameWork.camera.cameraType */
     unsigned char unmodeled_01;
-    unsigned char slotIndex;           /* +0x02: copy of gameWork byte 0xD5 */
+    unsigned char slotIndex;           /* +0x02: copy of gameWork.camera.mode */
     unsigned char unmodeled_03[0xD];
-    struct CameraStopBlock stopBlock;  /* +0x10: copy of gameWork 0x140..0x14F */
-    struct CameraRefBlock refBlock;        /* +0x20: copy of gameWork 0x180..0x1F0 */
+    struct CameraStopBlock stopBlock;  /* +0x10: copy of gameWork.camera.slot[0] */
+    struct CameraRefBlock refBlock;        /* +0x20: copy of gameWork.camera.range from anchorIndex */
     unsigned char unmodeled_90[0x40];
 };
 
@@ -234,10 +175,10 @@ int cameraCfSet(int scriptHandle) {
     }
     recordIndex = func_A9F0C0(scriptHandle, 1);
     slot = &cameraCfSlots[recordIndex];
-    slot->modeA = gameWork.modeByteA;
-    slot->slotIndex = gameWork.cfSlotIndex;
-    *(struct CameraStopBlock *)&slot->stopBlock = *(struct CameraStopBlock *)&gameWork.unmodeled_0d4[0x6C];
-    *(struct CameraRefBlock *)&slot->refBlock = *(struct CameraRefBlock *)&gameWork.refAnchorIndex;
+    slot->modeA = gameWork.camera.cameraType;
+    slot->slotIndex = gameWork.camera.mode;
+    *(struct CameraStopBlock *)&slot->stopBlock = *(struct CameraStopBlock *)&gameWork.camera.slot[0];
+    *(struct CameraRefBlock *)&slot->refBlock = *(struct CameraRefBlock *)&gameWork.camera.range.anchorIndex;
     return 1;
 }
 
@@ -251,9 +192,9 @@ int cfChange(int scriptHandle) {
     }
     recordIndex = func_A9F0C0(scriptHandle, 1);
     slot = &cameraCfSlots[recordIndex];
-    slot->modeA = gameWork.modeByteA;
-    slot->slotIndex = gameWork.cfSlotIndex;
-    *(struct CameraRefBlock *)&slot->refBlock = *(struct CameraRefBlock *)&gameWork.refAnchorIndex;
+    slot->modeA = gameWork.camera.cameraType;
+    slot->slotIndex = gameWork.camera.mode;
+    *(struct CameraRefBlock *)&slot->refBlock = *(struct CameraRefBlock *)&gameWork.camera.range.anchorIndex;
     return 1;
 }
 
@@ -276,10 +217,10 @@ int cameraCfRotRange(int scriptHandle) {
     radY = cameraCentiDegToRad(func_A9F0C0(scriptHandle, 2));
     radZ = cameraCentiDegToRad(func_A9F0C0(scriptHandle, 3));
     radW = cameraCentiDegToRad(func_A9F0C0(scriptHandle, 4));
-    gameWork.rotRange.x = radX;
-    gameWork.rotRange.y = radY;
-    gameWork.rotRange.z = radZ;
-    gameWork.rotRange.w = radW;
+    gameWork.camera.range.angleLimits.x = radX;
+    gameWork.camera.range.angleLimits.y = radY;
+    gameWork.camera.range.angleLimits.z = radZ;
+    gameWork.camera.range.angleLimits.w = radW;
     return 1;
 }
 
@@ -300,10 +241,10 @@ int cameraCfLock(int scriptHandle) {
         return 0;
     }
     lockFlags = func_A9F0C0(scriptHandle, 1);
-    gameWork.lockFlags21 = lockFlags & 0x21;
-    gameWork.lockFlag02 = lockFlags & 0x2;
-    gameWork.lockFlag04 = lockFlags & 0x4;
-    gameWork.lockFlag08 = lockFlags & 0x8;
+    gameWork.camera.range.probeMode = lockFlags & 0x21;
+    gameWork.camera.range.lockX = lockFlags & 0x2;
+    gameWork.camera.range.lockY = lockFlags & 0x4;
+    gameWork.camera.range.lockZ = lockFlags & 0x8;
     return 1;
 }
 
@@ -312,7 +253,7 @@ int cameraCfRangeMode(int handle) {
     if (cameraCheckArgCount(handle) == 0) {
         return 0;
     }
-    cameraRangeMode[0] = func_A9F0C0(handle, 1);
+    gameWork.camera.range.rangeMode = func_A9F0C0(handle, 1);
     return 1;
 }
 
@@ -356,8 +297,8 @@ int cameraCfHokan(int scriptHandle)
     }
     entry->key = key;
     entry->subKey = subKey;
-    entry->unmodeled_02[0] = gameWork.cfHokanByte;
-    *(struct CameraBlock16 *)&entry->unmodeled_02[2] = *(struct CameraBlock16 *)&gameWork.unmodeled_0d4[0x6C];
+    entry->unmodeled_02[0] = gameWork.camera.range.rangeMode;
+    *(struct CameraBlock16 *)&entry->unmodeled_02[2] = *(struct CameraBlock16 *)&gameWork.camera.slot[0];
     return 1;
 }
 
@@ -366,15 +307,15 @@ int cameraCfBattleCam(int scriptHandle) {
     if (cameraCheckArgCount(scriptHandle) == 0) {
         return 0;
     }
-    gameWork.flags &= 0xFDFF;
+    gameWork.camera.flags &= 0xFDFF;
     if (func_A9F0C0(scriptHandle, 1) != 0) {
-        gameWork.flags |= CAMERA_FLAG_BATTLE;
+        gameWork.camera.flags |= CAMERA_FLAG_BATTLE;
     }
-    gameWork.refStopWord1 = 0;
-    gameWork.camStopWord1 = 0;
-    *(int *) &gameWork.persFloatB = 0;
-    gameWork.bankFloatB = 0;
-    gameWork.flags = (gameWork.flags & 0xFFEF) | 0x80;
+    gameWork.camera.slot[0].duration = 0;
+    gameWork.camera.slot[1].duration = 0;
+    *(int *) &gameWork.camera.slot[2].duration = 0;
+    gameWork.camera.slot[3].duration = 0;
+    gameWork.camera.flags = (gameWork.camera.flags & 0xFFEF) | 0x80;
     return 1;
 }
 
@@ -388,11 +329,10 @@ int cfNorth(int handle) {
     }
     looked_up = func_A9F0C0(handle, 1);
     out_of_range = (u32)looked_up + 0x8CA0U > 0x11940U;
-    gameWork.northOutOfRange = out_of_range;
-    gameWork.northRad = cameraCentiDegToRad(looked_up);
+    gameWork.camera.range.rangeFlag = out_of_range;
+    gameWork.camera.range.northAngle = cameraCentiDegToRad(looked_up);
     return 1;
 }
-
 
 int cameraSetRefPos(int scriptHandle) {
     f32 posX;
@@ -407,18 +347,18 @@ int cameraSetRefPos(int scriptHandle) {
     posY = cameraCentiToFloat(func_A9F0C0(scriptHandle, 2));
     posZ = cameraCentiToFloat(func_A9F0C0(scriptHandle, 3));
     if (cameraRefMoveFlag == 0) {
-        gameWork.refPos.x = posX;
-        gameWork.refPos.y = posY;
-        gameWork.refPos.z = posZ;
-        gameWork.refAnchorIndex = CAMERA_ANCHOR_NONE;
-        gameWork.refAnchorSubIndex = 0;
-        gameWork.refOffset.x = 0;
-        gameWork.refOffset.y = 0;
-        gameWork.refOffset.z = 0;
+        gameWork.camera.range.lookAt.x = posX;
+        gameWork.camera.range.lookAt.y = posY;
+        gameWork.camera.range.lookAt.z = posZ;
+        gameWork.camera.range.anchorIndex = CAMERA_ANCHOR_NONE;
+        gameWork.camera.range.anchorSubIndex = 0;
+        gameWork.camera.range.offset.x = 0;
+        gameWork.camera.range.offset.y = 0;
+        gameWork.camera.range.offset.z = 0;
     } else {
-        gameWork.refMovePos.x = posX;
-        gameWork.refMovePos.y = posY;
-        gameWork.refMovePos.z = posZ;
+        gameWork.camera.to.lookAt.x = posX;
+        gameWork.camera.to.lookAt.y = posY;
+        gameWork.camera.to.lookAt.z = posZ;
     }
     cameraRefMoveFlag = 0;
     return 1;
@@ -448,19 +388,19 @@ int cameraSetRefAct(int scriptHandle) {
     offset.w = 0.0f;
     cameraApplyAnchorOffset(&position.x, anchorIndex, anchorSubIndex, &offset.x);
     if (cameraRefMoveFlag == 0) {
-        gameWork.refPos.x = position.x;
-        gameWork.refPos.y = position.y;
-        gameWork.refPos.z = position.z;
-        gameWork.refOffset.x = offset.x;
-        gameWork.refOffset.y = offset.y;
-        gameWork.refOffset.z = offset.z;
-        gameWork.refAnchorIndex = anchorIndex;
-        gameWork.refAnchorSubIndex = anchorSubIndex;
-        gameWork.refOffset.w = offset.w;
+        gameWork.camera.range.lookAt.x = position.x;
+        gameWork.camera.range.lookAt.y = position.y;
+        gameWork.camera.range.lookAt.z = position.z;
+        gameWork.camera.range.offset.x = offset.x;
+        gameWork.camera.range.offset.y = offset.y;
+        gameWork.camera.range.offset.z = offset.z;
+        gameWork.camera.range.anchorIndex = anchorIndex;
+        gameWork.camera.range.anchorSubIndex = anchorSubIndex;
+        gameWork.camera.range.offset.w = offset.w;
     } else {
-        gameWork.refMovePos.x = position.x;
-        gameWork.refMovePos.y = position.y;
-        gameWork.refMovePos.z = position.z;
+        gameWork.camera.to.lookAt.x = position.x;
+        gameWork.camera.to.lookAt.y = position.y;
+        gameWork.camera.to.lookAt.z = position.z;
     }
     cameraRefMoveFlag = 0;
     return 1;
@@ -503,21 +443,21 @@ int SetRefActR(int act)
             float input_z = input.z;
             float input_w = input.w;
 
-            gameWork.refAnchorSubIndex = frame_b;
-            gameWork.refOffset.w = input_w;
-            gameWork.refPos.x = transformed_x;
-            gameWork.refPos.y = transformed_y;
-            gameWork.refPos.z = transformed_z;
-            gameWork.refOffset.x = input_x;
-            gameWork.refOffset.y = input_y;
-            gameWork.refOffset.z = input_z;
-            gameWork.refAnchorIndex = frame_a;
+            gameWork.camera.range.anchorSubIndex = frame_b;
+            gameWork.camera.range.offset.w = input_w;
+            gameWork.camera.range.lookAt.x = transformed_x;
+            gameWork.camera.range.lookAt.y = transformed_y;
+            gameWork.camera.range.lookAt.z = transformed_z;
+            gameWork.camera.range.offset.x = input_x;
+            gameWork.camera.range.offset.y = input_y;
+            gameWork.camera.range.offset.z = input_z;
+            gameWork.camera.range.anchorIndex = frame_a;
         }
         else
         {
-            gameWork.refMovePos.x = transformed[0];
-            gameWork.refMovePos.y = transformed[1];
-            gameWork.refMovePos.z = transformed[2];
+            gameWork.camera.to.lookAt.x = transformed[0];
+            gameWork.camera.to.lookAt.y = transformed[1];
+            gameWork.camera.to.lookAt.z = transformed[2];
         }
         cameraRefMoveFlag = 0;
         ok = 1;
@@ -525,7 +465,7 @@ int SetRefActR(int act)
     return ok;
 }
 
-extern u8 D_003E7040[];
+extern Vector4 D_003E7040;
 void xglMatrixStackUnit(void);
 void xglMatrixStackTrans(void *);
 void xglMatrixStackRotX(float);
@@ -544,29 +484,29 @@ int cameraSetRefAng(int scriptHandle) {
     }
     rotX = cameraCentiDegToRad(func_A9F0C0(scriptHandle, 1));
     rotY = cameraCentiDegToRad(func_A9F0C0(scriptHandle, 2));
-    offset.x = gameWork.camPos.x;
-    offset.y = gameWork.camPos.y;
-    offset.z = gameWork.camPos.z;
+    offset.x = gameWork.camera.range.lockPosition.x;
+    offset.y = gameWork.camera.range.lockPosition.y;
+    offset.z = gameWork.camera.range.lockPosition.z;
     offset.w = 1.0f;
     xglMatrixStackUnit();
     xglMatrixStackTrans(&offset);
     xglMatrixStackRotY(rotY);
     xglMatrixStackRotX(rotX);
-    xglMatrixStackTrans(D_003E7040);
+    xglMatrixStackTrans(&D_003E7040);
     xglMatrixStackSave(matrix);
     if (cameraRefMoveFlag == 0) {
-        gameWork.refPos.x = matrix[3][0];
-        gameWork.refPos.y = matrix[3][1];
-        gameWork.refPos.z = matrix[3][2];
-        gameWork.refAnchorIndex = CAMERA_ANCHOR_NONE;
-        gameWork.refAnchorSubIndex = 0;
-        gameWork.refOffset.x = 0;
-        gameWork.refOffset.y = 0;
-        gameWork.refOffset.z = 0;
+        gameWork.camera.range.lookAt.x = matrix[3][0];
+        gameWork.camera.range.lookAt.y = matrix[3][1];
+        gameWork.camera.range.lookAt.z = matrix[3][2];
+        gameWork.camera.range.anchorIndex = CAMERA_ANCHOR_NONE;
+        gameWork.camera.range.anchorSubIndex = 0;
+        gameWork.camera.range.offset.x = 0;
+        gameWork.camera.range.offset.y = 0;
+        gameWork.camera.range.offset.z = 0;
     } else {
-        gameWork.refMovePos.x = matrix[3][0];
-        gameWork.refMovePos.y = matrix[3][1];
-        gameWork.refMovePos.z = matrix[3][2];
+        gameWork.camera.to.lookAt.x = matrix[3][0];
+        gameWork.camera.to.lookAt.y = matrix[3][1];
+        gameWork.camera.to.lookAt.z = matrix[3][2];
     }
     cameraRefMoveFlag = 0;
     return 1;
@@ -577,9 +517,9 @@ int RefLock(int scriptHandle) {
     if (cameraCheckArgCount(scriptHandle) == 0) {
         return 0;
     }
-    gameWork.refStopWord1 = 0;
-    gameWork.refAnchorSubIndex = 0;
-    gameWork.refAnchorIndex = CAMERA_ANCHOR_NONE;
+    gameWork.camera.slot[0].duration = 0;
+    gameWork.camera.range.anchorSubIndex = 0;
+    gameWork.camera.range.anchorIndex = CAMERA_ANCHOR_NONE;
     return 1;
 }
 
@@ -611,35 +551,35 @@ int SetRefCamActR(int scriptHandle) {
     orbitAngles.y = orbitAngles.y + anchorRecord->offsetY;
     cameraOrbitPosition(&orbitPos.x, &position.x, &orbitAngles.x);
     if (cameraRefMoveFlag == 0) {
-        gameWork.refOffset.w = 1.0f;
-        gameWork.refPos.x = position.x;
-        gameWork.refPos.y = position.y;
-        gameWork.refPos.z = position.z;
-        gameWork.refAnchorIndex = CAMERA_ANCHOR_NONE;
-        gameWork.refOffset.x = offset.x;
-        gameWork.refOffset.y = offset.y;
-        gameWork.refOffset.z = offset.z;
-        gameWork.refAnchorSubIndex = 0;
+        gameWork.camera.range.offset.w = 1.0f;
+        gameWork.camera.range.lookAt.x = position.x;
+        gameWork.camera.range.lookAt.y = position.y;
+        gameWork.camera.range.lookAt.z = position.z;
+        ((CameraAnchorAlias0 *)&gameWork)->anchorIndex = CAMERA_ANCHOR_NONE;
+        gameWork.camera.range.offset.x = offset.x;
+        gameWork.camera.range.offset.y = offset.y;
+        gameWork.camera.range.offset.z = offset.z;
+        ((CameraAnchorAlias0 *)&gameWork)->anchorSubIndex = 0;
     } else {
-        gameWork.refMovePos.x = position.x;
-        gameWork.refMovePos.y = position.y;
-        gameWork.refMovePos.z = position.z;
+        gameWork.camera.to.lookAt.x = position.x;
+        gameWork.camera.to.lookAt.y = position.y;
+        gameWork.camera.to.lookAt.z = position.z;
     }
     cameraRefMoveFlag = 0;
     if (cameraCamMoveFlag == 0) {
-        gameWork.camPos.x = orbitPos.x;
-        gameWork.camPos.y = orbitPos.y;
-        gameWork.camPos.z = orbitPos.z;
-        gameWork.camAngles.x = orbitAngles.x;
-        gameWork.camAngles.y = orbitAngles.y;
-        gameWork.camAngles.w = orbitAngles.w;
+        gameWork.camera.range.lockPosition.x = orbitPos.x;
+        gameWork.camera.range.lockPosition.y = orbitPos.y;
+        gameWork.camera.range.lockPosition.z = orbitPos.z;
+        gameWork.camera.range.angles.x = orbitAngles.x;
+        gameWork.camera.range.angles.y = orbitAngles.y;
+        gameWork.camera.range.angles.w = orbitAngles.w;
     } else {
-        gameWork.camMovePos.x = orbitPos.x;
-        gameWork.camMovePos.y = orbitPos.y;
-        gameWork.camMovePos.z = orbitPos.z;
-        gameWork.camMoveAngles.x = orbitAngles.x;
-        gameWork.camMoveAngles.y = orbitAngles.y;
-        gameWork.camMoveAngles.w = orbitAngles.w;
+        gameWork.camera.to.position.x = orbitPos.x;
+        gameWork.camera.to.position.y = orbitPos.y;
+        gameWork.camera.to.position.z = orbitPos.z;
+        gameWork.camera.to.angles.x = orbitAngles.x;
+        gameWork.camera.to.angles.y = orbitAngles.y;
+        gameWork.camera.to.angles.w = orbitAngles.w;
     }
     cameraCamMoveFlag = 0;
     return 1;
@@ -697,35 +637,35 @@ int SetRefCamAct3R(int scriptHandle)
     orbitAngles.y = orbitAngles.y + betweenAngles[1];
     cameraOrbitPosition(&orbitPos.x, &position.x, &orbitAngles.x);
     if (cameraRefMoveFlag == 0) {
-        gameWork.refOffset.w = 1.0f;
-        gameWork.refPos.x = position.x;
-        gameWork.refPos.y = position.y;
-        gameWork.refPos.z = position.z;
-        gameWork.refOffset.x = 0.0f;
-        gameWork.refOffset.y = 0.0f;
-        gameWork.refOffset.z = 0.0f;
-        gameWork.refAnchorIndex = CAMERA_ANCHOR_NONE;
-        gameWork.refAnchorSubIndex = 0;
+        gameWork.camera.range.offset.w = 1.0f;
+        gameWork.camera.range.lookAt.x = position.x;
+        gameWork.camera.range.lookAt.y = position.y;
+        gameWork.camera.range.lookAt.z = position.z;
+        gameWork.camera.range.offset.x = 0.0f;
+        gameWork.camera.range.offset.y = 0.0f;
+        gameWork.camera.range.offset.z = 0.0f;
+        gameWork.camera.range.anchorIndex = CAMERA_ANCHOR_NONE;
+        gameWork.camera.range.anchorSubIndex = 0;
     } else {
-        gameWork.refMovePos.x = position.x;
-        gameWork.refMovePos.y = position.y;
-        gameWork.refMovePos.z = position.z;
+        gameWork.camera.to.lookAt.x = position.x;
+        gameWork.camera.to.lookAt.y = position.y;
+        gameWork.camera.to.lookAt.z = position.z;
     }
     cameraRefMoveFlag = 0;
     if (cameraCamMoveFlag == 0) {
-        gameWork.camPos.x = orbitPos.x;
-        gameWork.camPos.y = orbitPos.y;
-        gameWork.camPos.z = orbitPos.z;
-        gameWork.camAngles.x = orbitAngles.x;
-        gameWork.camAngles.y = orbitAngles.y;
-        gameWork.camAngles.w = orbitAngles.w;
+        gameWork.camera.range.lockPosition.x = orbitPos.x;
+        gameWork.camera.range.lockPosition.y = orbitPos.y;
+        gameWork.camera.range.lockPosition.z = orbitPos.z;
+        gameWork.camera.range.angles.x = orbitAngles.x;
+        gameWork.camera.range.angles.y = orbitAngles.y;
+        gameWork.camera.range.angles.w = orbitAngles.w;
     } else {
-        gameWork.camMovePos.x = orbitPos.x;
-        gameWork.camMovePos.y = orbitPos.y;
-        gameWork.camMovePos.z = orbitPos.z;
-        gameWork.camMoveAngles.x = orbitAngles.x;
-        gameWork.camMoveAngles.y = orbitAngles.y;
-        gameWork.camMoveAngles.w = orbitAngles.w;
+        gameWork.camera.to.position.x = orbitPos.x;
+        gameWork.camera.to.position.y = orbitPos.y;
+        gameWork.camera.to.position.z = orbitPos.z;
+        gameWork.camera.to.angles.x = orbitAngles.x;
+        gameWork.camera.to.angles.y = orbitAngles.y;
+        gameWork.camera.to.angles.w = orbitAngles.w;
     }
     cameraCamMoveFlag = 0;
     return 1;
@@ -747,15 +687,15 @@ int cameraSetCamPos(int scriptHandle)
     posZ = cameraCentiToFloat(func_A9F0C0(scriptHandle, 3));
     if (cameraCamMoveFlag == 0)
     {
-        gameWork.camPos.x = posX;
-        gameWork.camPos.y = posY;
-        gameWork.camPos.z = posZ;
+        gameWork.camera.range.lockPosition.x = posX;
+        gameWork.camera.range.lockPosition.y = posY;
+        gameWork.camera.range.lockPosition.z = posZ;
     }
     else
     {
-        gameWork.camMovePos.x = posX;
-        gameWork.camMovePos.y = posY;
-        gameWork.camMovePos.z = posZ;
+        gameWork.camera.to.position.x = posX;
+        gameWork.camera.to.position.y = posY;
+        gameWork.camera.to.position.z = posZ;
     }
     cameraCamMoveFlag = 0;
     return 1;
@@ -782,17 +722,17 @@ int cameraSetCamAng(int act)
         input.w = cameraCentiToFloat(raw_w);
         if (cameraCamMoveFlag == 0)
         {
-            gameWork.camAngles.w = input.w;
-            gameWork.camAngles.x = input.x;
-            gameWork.camAngles.y = input.y;
-            cameraOrbitPosition(&gameWork.camPos.x, &gameWork.refPos.x, &input.x);
+            gameWork.camera.range.angles.w = input.w;
+            gameWork.camera.range.angles.x = input.x;
+            gameWork.camera.range.angles.y = input.y;
+            cameraOrbitPosition(&gameWork.camera.range.lockPosition.x, &gameWork.camera.range.lookAt.x, &input.x);
         }
         else
         {
-            gameWork.camMoveAngles.w = input.w;
-            gameWork.camMoveAngles.x = input.x;
-            gameWork.camMoveAngles.y = input.y;
-            cameraOrbitPosition(&gameWork.camMovePos.x, &gameWork.refMovePos.x, &input.x);
+            gameWork.camera.to.angles.w = input.w;
+            gameWork.camera.to.angles.x = input.x;
+            gameWork.camera.to.angles.y = input.y;
+            cameraOrbitPosition(&gameWork.camera.to.position.x, &gameWork.camera.to.lookAt.x, &input.x);
         }
         cameraCamMoveFlag = 0;
         ok = 1;
@@ -827,15 +767,15 @@ int SetCamAct(int act)
         cameraApplyAnchorOffset(transformed, frame_a, frame_b, &input.x);
         if (cameraCamMoveFlag == 0)
         {
-            gameWork.camPos.x = transformed[0];
-            gameWork.camPos.y = transformed[1];
-            gameWork.camPos.z = transformed[2];
+            gameWork.camera.range.lockPosition.x = transformed[0];
+            gameWork.camera.range.lockPosition.y = transformed[1];
+            gameWork.camera.range.lockPosition.z = transformed[2];
         }
         else
         {
-            gameWork.camMovePos.x = transformed[0];
-            gameWork.camMovePos.y = transformed[1];
-            gameWork.camMovePos.z = transformed[2];
+            gameWork.camera.to.position.x = transformed[0];
+            gameWork.camera.to.position.y = transformed[1];
+            gameWork.camera.to.position.z = transformed[2];
         }
         cameraCamMoveFlag = 0;
         ok = 1;
@@ -870,15 +810,15 @@ int SetCamActR(int act)
         cameraApplyAnchorOffset(transformed, frame_a, frame_b, &input.x);
         if (cameraCamMoveFlag == 0)
         {
-            gameWork.camPos.x = transformed[0];
-            gameWork.camPos.y = transformed[1];
-            gameWork.camPos.z = transformed[2];
+            gameWork.camera.range.lockPosition.x = transformed[0];
+            gameWork.camera.range.lockPosition.y = transformed[1];
+            gameWork.camera.range.lockPosition.z = transformed[2];
         }
         else
         {
-            gameWork.camMovePos.x = transformed[0];
-            gameWork.camMovePos.y = transformed[1];
-            gameWork.camMovePos.z = transformed[2];
+            gameWork.camera.to.position.x = transformed[0];
+            gameWork.camera.to.position.y = transformed[1];
+            gameWork.camera.to.position.z = transformed[2];
         }
         cameraCamMoveFlag = 0;
         ok = 1;
@@ -909,21 +849,21 @@ int SetCamAct2(int scriptHandle)
     cameraOrbitPosition(orbitPos, anchorPos, &angles.x);
     if (cameraCamMoveFlag == 0)
     {
-        gameWork.camPos.x = orbitPos[0];
-        gameWork.camPos.y = orbitPos[1];
-        gameWork.camPos.z = orbitPos[2];
-        gameWork.camAngles.x = angles.x;
-        gameWork.camAngles.y = angles.y;
-        gameWork.camAngles.w = angles.w;
+        gameWork.camera.range.lockPosition.x = orbitPos[0];
+        gameWork.camera.range.lockPosition.y = orbitPos[1];
+        gameWork.camera.range.lockPosition.z = orbitPos[2];
+        gameWork.camera.range.angles.x = angles.x;
+        gameWork.camera.range.angles.y = angles.y;
+        gameWork.camera.range.angles.w = angles.w;
     }
     else
     {
-        gameWork.camMovePos.x = orbitPos[0];
-        gameWork.camMovePos.y = orbitPos[1];
-        gameWork.camMovePos.z = orbitPos[2];
-        gameWork.camMoveAngles.x = angles.x;
-        gameWork.camMoveAngles.y = angles.y;
-        gameWork.camMoveAngles.w = angles.w;
+        gameWork.camera.to.position.x = orbitPos[0];
+        gameWork.camera.to.position.y = orbitPos[1];
+        gameWork.camera.to.position.z = orbitPos[2];
+        gameWork.camera.to.angles.x = angles.x;
+        gameWork.camera.to.angles.y = angles.y;
+        gameWork.camera.to.angles.w = angles.w;
     }
     cameraCamMoveFlag = 0;
     return 1;
@@ -968,12 +908,12 @@ int SetCamAct2R(int act)
             float input_y = input.y;
             float input_w = input.w;
 
-            gameWork.camAngles.w = input_w;
-            gameWork.camPos.y = transformed_y;
-            gameWork.camPos.z = transformed_z;
-            gameWork.camAngles.x = input_x;
-            gameWork.camAngles.y = input_y;
-            gameWork.camPos.x = transformed_x;
+            gameWork.camera.range.angles.w = input_w;
+            gameWork.camera.range.lockPosition.y = transformed_y;
+            gameWork.camera.range.lockPosition.z = transformed_z;
+            gameWork.camera.range.angles.x = input_x;
+            gameWork.camera.range.angles.y = input_y;
+            gameWork.camera.range.lockPosition.x = transformed_x;
         }
         else
         {
@@ -984,12 +924,12 @@ int SetCamAct2R(int act)
             float input_y = input.y;
             float input_w = input.w;
 
-            gameWork.camMoveAngles.w = input_w;
-            gameWork.camMovePos.y = transformed_y;
-            gameWork.camMovePos.z = transformed_z;
-            gameWork.camMoveAngles.x = input_x;
-            gameWork.camMoveAngles.y = input_y;
-            gameWork.camMovePos.x = transformed_x;
+            gameWork.camera.to.angles.w = input_w;
+            gameWork.camera.to.position.y = transformed_y;
+            gameWork.camera.to.position.z = transformed_z;
+            gameWork.camera.to.angles.x = input_x;
+            gameWork.camera.to.angles.y = input_y;
+            gameWork.camera.to.position.x = transformed_x;
         }
         cameraCamMoveFlag = 0;
         ok = 1;
@@ -1041,15 +981,15 @@ int SetCamAct3(int scriptHandle)
     posZ = (endAnchor[2] - startAnchor[2]) * blend + startAnchor[2] + offsetZ;
     if (cameraCamMoveFlag == 0)
     {
-        gameWork.camPos.x = posX;
-        gameWork.camPos.y = posY;
-        gameWork.camPos.z = posZ;
+        gameWork.camera.range.lockPosition.x = posX;
+        gameWork.camera.range.lockPosition.y = posY;
+        gameWork.camera.range.lockPosition.z = posZ;
     }
     else
     {
-        gameWork.camMovePos.x = posX;
-        gameWork.camMovePos.y = posY;
-        gameWork.camMovePos.z = posZ;
+        gameWork.camera.to.position.x = posX;
+        gameWork.camera.to.position.y = posY;
+        gameWork.camera.to.position.z = posZ;
     }
     cameraCamMoveFlag = 0;
     return 1;
@@ -1069,20 +1009,20 @@ int OffsCamPos(int scriptHandle)
     posX = cameraCentiToFloat(func_A9F0C0(scriptHandle, 1));
     posY = cameraCentiToFloat(func_A9F0C0(scriptHandle, 2));
     posZ = cameraCentiToFloat(func_A9F0C0(scriptHandle, 3));
-    posX += gameWork.camPos.x;
-    posY += gameWork.camPos.y;
-    posZ += gameWork.camPos.z;
+    posX += gameWork.camera.range.lockPosition.x;
+    posY += gameWork.camera.range.lockPosition.y;
+    posZ += gameWork.camera.range.lockPosition.z;
     if (cameraCamMoveFlag == 0)
     {
-        gameWork.camPos.x = posX;
-        gameWork.camPos.y = posY;
-        gameWork.camPos.z = posZ;
+        gameWork.camera.range.lockPosition.x = posX;
+        gameWork.camera.range.lockPosition.y = posY;
+        gameWork.camera.range.lockPosition.z = posZ;
     }
     else
     {
-        gameWork.camMovePos.x = posX;
-        gameWork.camMovePos.y = posY;
-        gameWork.camMovePos.z = posZ;
+        gameWork.camera.to.position.x = posX;
+        gameWork.camera.to.position.y = posY;
+        gameWork.camera.to.position.z = posZ;
     }
     cameraCamMoveFlag = 0;
     return 1;
@@ -1101,33 +1041,31 @@ int OffsCamAng(int scriptHandle)
     angles.y = cameraCentiDegToRad(func_A9F0C0(scriptHandle, 2));
     angles.z = 0.0f;
     angles.w = cameraCentiToFloat(func_A9F0C0(scriptHandle, 3));
-    angles.x += gameWork.camAngles.x;
-    angles.y += gameWork.camAngles.y;
-    angles.w += gameWork.camAngles.w;
+    angles.x += gameWork.camera.range.angles.x;
+    angles.y += gameWork.camera.range.angles.y;
+    angles.w += gameWork.camera.range.angles.w;
     if (cameraCamMoveFlag == 0)
     {
-        gameWork.camAngles.x = angles.x;
-        gameWork.camAngles.y = angles.y;
-        gameWork.camAngles.w = angles.w;
-        cameraOrbitPosition(&gameWork.camPos.x, &gameWork.refPos.x, &angles.x);
+        gameWork.camera.range.angles.x = angles.x;
+        gameWork.camera.range.angles.y = angles.y;
+        gameWork.camera.range.angles.w = angles.w;
+        cameraOrbitPosition(&gameWork.camera.range.lockPosition.x, &gameWork.camera.range.lookAt.x, &angles.x);
     }
     else
     {
-        gameWork.camMoveAngles.x = angles.x;
-        gameWork.camMoveAngles.y = angles.y;
-        gameWork.camMoveAngles.w = angles.w;
-        cameraOrbitPosition(&gameWork.camMovePos.x, &gameWork.refMovePos.x, &angles.x);
+        gameWork.camera.to.angles.x = angles.x;
+        gameWork.camera.to.angles.y = angles.y;
+        gameWork.camera.to.angles.w = angles.w;
+        cameraOrbitPosition(&gameWork.camera.to.position.x, &gameWork.camera.to.lookAt.x, &angles.x);
     }
     cameraCamMoveFlag = 0;
     return 1;
 }
 
-extern int D_002B5EE8[];
-
 int CamLock(int value) {
     cameraArgCount = 0;
     if (cameraCheckArgCount(value) != 0) {
-        D_002B5EE8[0] = 0;
+        gameWork.camera.slot[1].duration = 0;
         return 1;
     }
     return 0;
@@ -1178,14 +1116,12 @@ int cameraMove(int act)
     return ok;
 }
 
-extern f32 cameraRefMoveProgress[];
-
 int WaitMoveRef(int scriptHandle, int *waitFlag) {
     cameraArgCount = 0;
     if (cameraCheckArgCount(scriptHandle) == 0) {
         return 0;
     }
-    if (cameraRefMoveProgress[0] < 1.0f) {
+    if (gameWork.camera.slot[0].fraction < 1.0f) {
         *waitFlag = 1;
     }
     return 1;
@@ -1196,7 +1132,7 @@ int WaitMoveCam(int handle, int *flag) {
     if (cameraCheckArgCount(handle) == 0) {
         return 0;
     }
-    if (D_002B5EEC[0] < 1.0f) {
+    if (gameWork.camera.slot[1].fraction < 1.0f) {
         *flag = 1;
     }
     return 1;
@@ -1207,8 +1143,8 @@ int MoveRefStop(int handle) {
     if (cameraCheckArgCount(handle) == 0) {
         return 0;
     }
-    gameWork.refStopWord0 = 0;
-    gameWork.refStopWord1 = 0;
+    gameWork.camera.slot[0].progress = 0;
+    gameWork.camera.slot[0].duration = 0;
     return 1;
 }
 
@@ -1217,8 +1153,8 @@ int MoveCamStop(int handle) {
     if (cameraCheckArgCount(handle) == 0) {
         return 0;
     }
-    gameWork.camStopWord0 = 0;
-    gameWork.camStopWord1 = 0;
+    gameWork.camera.slot[1].progress = 0;
+    gameWork.camera.slot[1].duration = 0;
     return 1;
 }
 
@@ -1227,8 +1163,8 @@ int MovePersStop(int scriptHandle) {
     if (cameraCheckArgCount(scriptHandle) == 0) {
         return 0;
     }
-    gameWork.persWordA = 0;
-    *(int *) &gameWork.persFloatB = 0;
+    gameWork.camera.slot[2].progress = 0;
+    *(int *) &gameWork.camera.slot[2].duration = 0;
     return 1;
 }
 
@@ -1237,8 +1173,8 @@ int MoveBankStop(int scriptHandle) {
     if (cameraCheckArgCount(scriptHandle) == 0) {
         return 0;
     }
-    gameWork.bankWordA = 0;
-    gameWork.bankFloatB = 0.0f;
+    gameWork.camera.slot[3].progress = 0;
+    gameWork.camera.slot[3].duration = 0.0f;
     return 1;
 }
 
@@ -1262,31 +1198,31 @@ int cameraShake(int scriptHandle)
     paramC = func_A9F0C0(scriptHandle, 4);
     frames = func_A9F0C0(scriptHandle, 5);
     step = amplitude / I2F(frames);
-    gameWork.shakeMode = shakeMode;
+    gameWork.camera.shakeFlags = shakeMode;
     if (shakeMode & CAMERA_SHAKE_CHANNEL_A)
     {
-        gameWork.shakeA.amplitude = amplitude;
-        gameWork.shakeA.step = step;
-        gameWork.shakeA.paramA = paramA;
-        gameWork.shakeA.paramB = 0;
-        gameWork.shakeA.paramC = paramC;
-        gameWork.shakeA.frames = frames;
+        gameWork.camera.waves[0].value = amplitude;
+        gameWork.camera.waves[0].step = step;
+        gameWork.camera.waves[0].period = paramA;
+        gameWork.camera.waves[0].phase = 0;
+        gameWork.camera.waves[0].hold = paramC;
+        gameWork.camera.waves[0].remaining = frames;
     }
     if (shakeMode & CAMERA_SHAKE_CHANNEL_B)
     {
-        gameWork.shakeB.amplitude = amplitude;
-        gameWork.shakeB.step = step;
-        gameWork.shakeB.paramA = paramA;
-        gameWork.shakeB.paramC = paramC;
-        gameWork.shakeB.frames = frames;
+        gameWork.camera.waves[1].value = amplitude;
+        gameWork.camera.waves[1].step = step;
+        gameWork.camera.waves[1].period = paramA;
+        gameWork.camera.waves[1].hold = paramC;
+        gameWork.camera.waves[1].remaining = frames;
     }
     if (shakeMode & CAMERA_SHAKE_CHANNEL_C)
     {
-        gameWork.shakeC.amplitude = amplitude;
-        gameWork.shakeC.step = step;
-        gameWork.shakeC.paramA = paramA;
-        gameWork.shakeC.paramC = paramC;
-        gameWork.shakeC.frames = frames;
+        gameWork.camera.waves[2].value = amplitude;
+        gameWork.camera.waves[2].step = step;
+        gameWork.camera.waves[2].period = paramA;
+        gameWork.camera.waves[2].hold = paramC;
+        gameWork.camera.waves[2].remaining = frames;
     }
     return 1;
 }
@@ -1296,11 +1232,11 @@ int HandShake(int scriptHandle) {
     if (cameraCheckArgCount(scriptHandle) == 0) {
         return 0;
     }
-    gameWork.handShakeWord2 = 0;
-    gameWork.handShakeFlags ^= 8;
-    gameWork.handShakeWord3 = 0;
-    gameWork.handShakeWord0 = 0;
-    gameWork.handShakeWord1 = 0;
+    gameWork.camera.sway[2] = 0;
+    gameWork.camera.shakeFlags ^= 8;
+    gameWork.camera.sway[3] = 0;
+    gameWork.camera.sway[0] = 0;
+    gameWork.camera.sway[1] = 0;
     return 1;
 }
 
@@ -1309,7 +1245,7 @@ int cameraSetBank(int handle) {
     if (cameraCheckArgCount(handle) == 0) {
         return 0;
     }
-    cameraBankAngle[0] = cameraCentiDegToRad(func_A9F0C0(handle, 1));
+    gameWork.camera.range.lookAt.w = cameraCentiDegToRad(func_A9F0C0(handle, 1));
     return 1;
 }
 
@@ -1318,7 +1254,7 @@ int cameraSetPers(int handle) {
     if (cameraCheckArgCount(handle) == 0) {
         return 0;
     }
-    cameraPersAngle[0] = cameraCentiDegToRad(func_A9F0C0(handle, 1));
+    gameWork.camera.range.lockPosition.w = cameraCentiDegToRad(func_A9F0C0(handle, 1));
     return 1;
 }
 
@@ -1336,12 +1272,12 @@ int MoveBank(int act)
         angle_raw = func_A9F0C0(act, 1);
         bank_byte = func_A9F0C0(act, 2);
         bank_raw = func_A9F0C0(act, 3);
-        gameWork.refMovePos.w = cameraCentiDegToRad(angle_raw);
-        gameWork.bankByteB = bank_byte;
-        gameWork.bankByteA = 0;
-        gameWork.bankWordB = 0;
-        gameWork.bankWordA = 0;
-        gameWork.bankFloatB = I2F(bank_raw);
+        gameWork.camera.to.lookAt.w = cameraCentiDegToRad(angle_raw);
+        gameWork.camera.slot[3].easeMode = bank_byte;
+        gameWork.camera.slot[3].blendMode = 0;
+        gameWork.camera.slot[3].fraction = 0;
+        gameWork.camera.slot[3].progress = 0;
+        gameWork.camera.slot[3].duration = I2F(bank_raw);
         ok = 1;
     }
     return ok;
@@ -1361,12 +1297,12 @@ int MovePers(int scriptHandle)
         angleCenti = func_A9F0C0(scriptHandle, 1);
         persByte = func_A9F0C0(scriptHandle, 2);
         persRaw = func_A9F0C0(scriptHandle, 3);
-        gameWork.camMovePos.w = cameraCentiDegToRad(angleCenti);
-        gameWork.persByteB = persByte;
-        gameWork.persByteA = 0;
-        gameWork.persWordB = 0;
-        gameWork.persWordA = 0;
-        gameWork.persFloatB = I2F(persRaw);
+        gameWork.camera.to.position.w = cameraCentiDegToRad(angleCenti);
+        gameWork.camera.slot[2].easeMode = persByte;
+        gameWork.camera.slot[2].blendMode = 0;
+        gameWork.camera.slot[2].fraction = 0;
+        gameWork.camera.slot[2].progress = 0;
+        gameWork.camera.slot[2].duration = I2F(persRaw);
         ok = 1;
     }
     return ok;
@@ -1382,9 +1318,9 @@ int cameraGetRefPos(int scriptHandle) {
         return 0;
     }
     outWords = func_A9F298(scriptHandle, func_A9F0C0(scriptHandle, 1));
-    refPosY = gameWork.refPos.y;
-    refPosZ = gameWork.refPos.z;
-    outWords[0] = cameraFloatToCenti(gameWork.refPos.x);
+    refPosY = gameWork.camera.range.lookAt.y;
+    refPosZ = gameWork.camera.range.lookAt.z;
+    outWords[0] = cameraFloatToCenti(gameWork.camera.range.lookAt.x);
     outWords[1] = cameraFloatToCenti(refPosY);
     outWords[2] = cameraFloatToCenti(refPosZ);
     return 1;
@@ -1399,8 +1335,8 @@ int GetRefAng(int scriptHandle) {
         return 0;
     }
     outWords = func_A9F298(scriptHandle, func_A9F0C0(scriptHandle, 1));
-    angleY = gameWork.camAngles.y;
-    outWords[0] = cameraRadToCentiDeg(gameWork.camAngles.x);
+    angleY = gameWork.camera.range.angles.y;
+    outWords[0] = cameraRadToCentiDeg(gameWork.camera.range.angles.x);
     outWords[1] = cameraRadToCentiDeg(angleY);
     return 1;
 }
@@ -1415,9 +1351,9 @@ int GetCamPos(int scriptHandle) {
         return 0;
     }
     outWords = func_A9F298(scriptHandle, func_A9F0C0(scriptHandle, 1));
-    camPosY = gameWork.camPos.y;
-    camPosZ = gameWork.camPos.z;
-    outWords[0] = cameraFloatToCenti(gameWork.camPos.x);
+    camPosY = gameWork.camera.range.lockPosition.y;
+    camPosZ = gameWork.camera.range.lockPosition.z;
+    outWords[0] = cameraFloatToCenti(gameWork.camera.range.lockPosition.x);
     outWords[1] = cameraFloatToCenti(camPosY);
     outWords[2] = cameraFloatToCenti(camPosZ);
     return 1;
@@ -1433,15 +1369,15 @@ int GetCamAng(int scriptHandle) {
         return 0;
     }
     outWords = func_A9F298(scriptHandle, func_A9F0C0(scriptHandle, 1));
-    camAngleY = gameWork.camAngles.y;
-    camAngleW = gameWork.camAngles.w;
-    outWords[0] = cameraRadToCentiDeg(gameWork.camAngles.x);
+    camAngleY = gameWork.camera.range.angles.y;
+    camAngleW = gameWork.camera.range.angles.w;
+    outWords[0] = cameraRadToCentiDeg(gameWork.camera.range.angles.x);
     outWords[1] = cameraRadToCentiDeg(camAngleY);
     outWords[2] = cameraFloatToCenti(camAngleW);
     return 1;
 }
 
-extern u8 cameraNatives[];
+extern void *cameraNatives[];
 extern u8 cameraModuleName[];
 
 void cameraRegisterNatives(void) {
@@ -1450,21 +1386,6 @@ void cameraRegisterNatives(void) {
     cameraCamMoveFlag = 0;
     cameraMoveMode = 0;
 }
-
-f32 cameraRefMoveProgress[] = { 0.0f };
-unsigned char D_002B5EE0[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-int D_002B5EE8[] = { 0 };
-f32 D_002B5EEC[] = { 0.0f };
-unsigned char D_002B5EF0[16] = { 0 };
-unsigned char D_002B5F00[28] = { 0 };
-u8 cameraRangeMode[] = { 0, 0, 0, 0 };
-
-unsigned char D_002B5F20[16] = { 0 };
-unsigned char D_002B5F30[44] = { 0 };
-
-f32 cameraPersAngle[4] = { 0 };
-f32 cameraBankAngle[33] = { 0 };
-unsigned char D_002B5FF0[208] = { 0 };
 
 unsigned char ladderModuleName[8] = "ladder";
 unsigned char uwamonoLadderState[8] = "";
@@ -1482,11 +1403,133 @@ unsigned char D_0069D378[8] = "cfSet";
 unsigned char D_0069D380[8] = "mode";
 unsigned char D_0069D388[8] = "reset";
 unsigned char cameraModuleName[8] = "camera";
-unsigned char D_0069D398[8] = "random";
-unsigned char D_0069D3A0[8] = "cos";
-unsigned char D_0069D3A8[8] = "sin";
-unsigned char D_0069D3B0[8] = "atan";
 
 const f32 cameraCentiScale = 0.00999999978f;
 const f32 cameraRadPerCentiDeg = 0.000174532935f;
 const f32 cameraRadPerCentiDegDiv = 0.000174532935f;
+
+void ladderSetLadder();
+void ladderSetEntrance();
+
+/* .data of this file (0x3E7020-0x3E71E8): the ladder and camera script natives. */
+
+/* Native table of the ladder module. */
+void *ladderNatives[8] = {
+    "setLadder",
+    ladderSetLadder,
+    "setEntrance",
+    ladderSetEntrance,
+    0,
+    0,
+    0,
+    0
+};
+
+/* Camera reference position: x = 0, y = 0, z = -10, w = 1. */
+Vector4 D_003E7040 = { 0.0f, 0.0f, -10.0f, 1.0f };
+
+/* Native table of the camera module. */
+void *cameraNatives[102] = {
+    (void *) D_0069D388,
+    talkReset,
+    (void *) D_0069D380,
+    cameraMode,
+    "AngleMode",
+    AngleMode,
+    "PosReset",
+    cameraPosReset,
+    (void *) D_0069D378,
+    cameraCfSet,
+    "cfChange",
+    cfChange,
+    "cfRotRange",
+    cameraCfRotRange,
+    "cfRangeMode",
+    cameraCfRangeMode,
+    (void *) D_0069D370,
+    cameraCfCamId,
+    (void *) D_0069D368,
+    cameraCfLock,
+    "cfSelectCHG",
+    cameraCfSelectChg,
+    (void *) D_0069D360,
+    cameraCfHokan,
+    "cfBattleCam",
+    cameraCfBattleCam,
+    (void *) D_0069D358,
+    cfNorth,
+    "SetRefPos",
+    cameraSetRefPos,
+    "SetRefAct",
+    cameraSetRefAct,
+    "SetRefActR",
+    SetRefActR,
+    "SetRefAng",
+    cameraSetRefAng,
+    (void *) D_0069D350,
+    RefLock,
+    "SetRefCamActR",
+    SetRefCamActR,
+    "SetRefCamAct3R",
+    SetRefCamAct3R,
+    "SetCamPos",
+    cameraSetCamPos,
+    "SetCamAng",
+    cameraSetCamAng,
+    "SetCamAct",
+    SetCamAct,
+    "SetCamActR",
+    SetCamActR,
+    "SetCamAct2",
+    SetCamAct2,
+    "SetCamAct2R",
+    SetCamAct2R,
+    "SetCamAct3",
+    SetCamAct3,
+    "OffsCamPos",
+    OffsCamPos,
+    "OffsCamAng",
+    OffsCamAng,
+    (void *) D_0069D348,
+    CamLock,
+    "MoveRefMode",
+    cameraMoveRefMode,
+    "MoveCamMode",
+    MoveCamMode,
+    (void *) D_0069D340,
+    cameraMove,
+    "WaitMoveRef",
+    WaitMoveRef,
+    "WaitMoveCam",
+    WaitMoveCam,
+    "MoveRefStop",
+    MoveRefStop,
+    "MoveCamStop",
+    MoveCamStop,
+    "MovePersStop",
+    MovePersStop,
+    "MoveBankStop",
+    MoveBankStop,
+    (void *) D_0069D338,
+    cameraShake,
+    "HandShake",
+    HandShake,
+    (void *) D_0069D330,
+    cameraSetBank,
+    (void *) D_0069D328,
+    cameraSetPers,
+    "MoveBank",
+    MoveBank,
+    "MovePers",
+    MovePers,
+    "GetRefPos",
+    cameraGetRefPos,
+    "GetRefAng",
+    GetRefAng,
+    "GetCamPos",
+    GetCamPos,
+    "GetCamAng",
+    GetCamAng,
+    0,
+    0
+};

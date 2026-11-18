@@ -2,6 +2,7 @@
 #include "main/sdv_033.h"
 #include "main/pad.h"
 #include "main/tu021.h"
+#include "main/tu048.h"
 #include "main/tu051.h"
 #include "main/tu086.h"
 #include "main/xenoActor.h"
@@ -12,7 +13,7 @@
 #define CAMERA_STATE_GAME 4
 /* Frames the camera update waits at start (scratchpad phase). */
 #define CAMERA_INITIAL_WAIT 40
-/* Bits of the camera flags word at gameWork+0xD0 (the same bits as Xenosaga I's GAME_CAMERA_FLAG_*). */
+/* Bits of gameWork.camera.flags. */
 #define CAMERA_FLAG_DISABLED 0x8            /* the camera is not updated */
 #define CAMERA_FLAG_TRACK_PLAYER 0x20       /* refresh the old player position and the track index */
 #define CAMERA_FLAG_MODE_CHANGED 0x40       /* a new camera block was selected */
@@ -66,36 +67,15 @@
 #define UWAMONO_ATTACH_TABLE_WORDS 32
 #define UWAMONO_ATTACH_PARTS 2
 
-/* The camera range block at gameWork+0x180: an anchor index, the range mode and four staged vectors. */
-struct CameraRange {
-    int anchorIndex;                    /* +0x00: -1 when no anchor */
-    short anchorSubIndex;               /* +0x04: -1 when no anchor */
-    unsigned char unmodeled_006[0x2];
-    unsigned char lockX;  /* +0x008 */
-    unsigned char lockY;  /* +0x009 */
-    unsigned char lockZ;  /* +0x00A */
-    unsigned char probeMode;  /* +0x00B */
-    signed char rangeMode;              /* +0x0C: scaffold cameraRangeMode */
-    unsigned char unmodeled_0D[2];
-    signed char rangeFlag;              /* +0x0F */
-    unsigned char unmodeled_10[0x10];
-    Vector4 offset;                   /* +0x20 */
-    Vector4 angleLimits;                   /* +0x30 */
-    Vector4 lockPosition;                   /* +0x40: w is the scaffold cameraPersAngle at gameWork+0x1CC */
-    Vector4 lookAt;  /* +0x050 */
-    Vector4 angles;                   /* +0x60 */
-};
-
-/* One of the four camera slots (0 look-at, 1 position and angles, 2 perspective, 3 roll): a timed transition set by
-   cameraSlotSetup. */
-struct CameraSlot {
-    unsigned char unmodeled_00[2];
-    unsigned char blendMode;            /* +0x02: stored by cameraSlotSetup when >= 0; slot 1 blends the position when 0, the angles otherwise */
-    unsigned char easeMode;             /* +0x03: stored by cameraSlotSetup when >= 0; the mode of cameraEase */
-    float progress;  /* +0x004 */
-    float duration;                      /* +0x08: the frames of the transition as a float; a slot is active when nonzero */
-    float fraction;                     /* +0x0C: the eased fraction of the transition, 1.0 when the frames were 0 */
-};
+/* gameWork.control and gameWork.camera.flags as union members (alias set 0). Lever: the camera flags mask in
+   cameraAdvanceTracks and the control reads and the |= 0x400 of the ladder block keep their order only through
+   this view; every other access uses the plain members. */
+typedef struct {
+    unsigned char unmodeled_000[8];
+    union { int control; };
+    unsigned char unmodeled_00C[0xC4];
+    union { unsigned short flags; };
+} GameWorkAlias0;
 
 /* One camera record of cameraCfSlots (208 bytes): its flag is cleared and its index set to -1 by cameraReset. */
 struct CameraRecord {
@@ -156,7 +136,7 @@ typedef union CameraWords3 {
     int w[4];
 } CameraWords3;
 
-/* The probe block mapMoveProbe fills for the ground under the player. */
+/* The probe block mapMoveProbe fills for the ground under the player (0x40 bytes, init_uwamono_sys.c's UwamonoProbeRequest). */
 typedef struct UwamonoProbe {
     int clearedA;                           /* +0x00 */
     int clearedB;                           /* +0x04 */
@@ -166,19 +146,20 @@ typedef struct UwamonoProbe {
     unsigned char unmodeled_14[0x4];
     int ground;                             /* +0x18 */
     unsigned int scratchWork;               /* +0x1C */
+    unsigned char recordIndex;              /* +0x20: read back by cameraUpdateFrame */
+    unsigned char unmodeled_21[0x1F];
 } UwamonoProbe;
 
 static int cameraPlayerProbe[6];
 static int D_0069E568[10];
 static DoublewordAlignedVector4 cameraPlayerPositionOld;
-static UwamonoProbe D_0069E5A0[2];
+static UwamonoProbe D_0069E5A0;
 static CameraWords3 D_0069E5E0;
-static UwamonoProbe cameraPositionProbe[2];
+static UwamonoProbe cameraPositionProbe;
 static CameraWords3 cameraProbePosition;
 static CameraSlotBlock D_0069E640;
 extern CameraSlotTable cameraSlotTable;
 static CameraSlotTable D_006A0040;
-extern unsigned char D_002B5E6C[];
 static unsigned char D_0069E180;
 
 /* Saves the camera slot records, the slot table and the track index to their save blocks. */
@@ -186,138 +167,12 @@ void cameraSaveState(void)
 {
     D_0069E640 = cameraCfSlots;
     D_006A0040 = cameraSlotTable;
-    D_0069E180 = D_002B5E6C[0];
+    D_0069E180 = gameWork.camera.trackIndex;
 }
-
-/* Triangle wave record: amplitude is the current peak, step the amount it decays per cycle; period and phase
-   are in frames, hold delays the decay, remaining counts the cycles left. */
-struct CameraWave {
-    float amplitude;                    /* +0x00 */
-    float step;                         /* +0x04 */
-    unsigned short period;              /* +0x08 */
-    unsigned short phase;               /* +0x0A */
-    unsigned short hold;                /* +0x0C */
-    unsigned short remaining;           /* +0x0E */
-};
-
-/* A plain view of the flags word: cameraSetMode accesses it without the union alias set. */
-typedef struct {
-    unsigned char unmodeled_000[0xD0];
-    unsigned short flags;
-} CameraFlagsView;
 
 /* A 128-bit GPR value: stored with sq. */
 typedef unsigned int XglQuadword __attribute__((mode(TI)));
 
-/* The camera state block at gameWork. */
-struct CameraState {
-    unsigned char unmodeled_000[8];
-    /* A one-member union: the original reads this field with alias set 0, after the stores before it. */
-    union {
-        int control;                    /* +0x08: player control flags (0x1 paused, 0x8000 scripted, 0x10000 replayed input) */
-    };
-    unsigned char unmodeled_00C[0xC4];
-    union { unsigned short flags; };               /* +0xD0: 0x10 set by cameraApplySlots, 0x20 by cameraSetIndex and cameraApplyAllSlots, 0x40 by cameraSetMode */
-    unsigned char cameraType;           /* +0xD2: the camera type of the active record */
-    unsigned char unmodeled_0D3;
-    signed char recordIndex;            /* +0xD4: the camera record in use */
-    signed char mode;                   /* +0xD5: set by cameraSetMode */
-    unsigned char allSlotsFlagA;  /* +0x0D6 */
-    unsigned char allSlotsFlagB;  /* +0x0D7: also the anchor pending flag of the range update */
-    unsigned char previousRecordIndex;  /* +0xD8 */
-    unsigned char anchorLocked;  /* +0x0D9 */
-    unsigned char previousCameraType;   /* +0xDA */
-    unsigned char unmodeled_0DB;
-    signed char trackIndex;             /* +0xDC: set by cameraSetIndex */
-    unsigned char unmodeled_0DD[0x3];
-    XglQuadword wordE0;                 /* +0xE0: cleared when the record kind changes */
-    unsigned char shakeFlags;  /* +0x0F0 */
-    unsigned char unmodeled_0F1[0xF];
-    struct CameraWave waves[3];  /* +0x100 */
-    float sway[4];  /* +0x130 */
-    struct CameraSlot slot[4];
-    int anchorIndex;  /* +0x180 */
-    short anchorSubIndex;  /* +0x184 */
-    unsigned char unmodeled_186[0x6];
-    unsigned char anchorReady;  /* +0x18C */
-    unsigned char unmodeled_18D[0x2];
-    unsigned char rangeFlag;  /* +0x18F */
-    float stickAngle;                   /* +0x190: the camera yaw the stick directions are relative to */
-    unsigned char unmodeled_194[0xC];
-    /* The current camera: offset (the anchor offset), position, look-at point, perspective, roll and the pitch, yaw
-       and distance between position and look-at. The from* fields are the values a slot transition starts from
-       (cameraApplySlots copies the current ones there) and the to* fields the values it ends at (cameraCommitSlots). */
-    float offsetX;
-    float offsetY;
-    float offsetZ;
-    unsigned char unmodeled_1AC[0x14];
-    float positionX;
-    float positionY;
-    float positionZ;
-    float perspective;
-    float lookAtX;
-    float lookAtY;
-    float lookAtZ;
-    float roll;
-    float pitch;
-    float yaw;
-    unsigned char unmodeled_1E8[0x4];
-    float distance;
-    float fromPositionX;
-    float fromPositionY;
-    float fromPositionZ;
-    float fromPerspective;
-    float fromLookAtX;
-    float fromLookAtY;
-    float fromLookAtZ;
-    float fromRoll;
-    float fromPitch;
-    float fromYaw;
-    unsigned char unmodeled_218[0x4];
-    float fromDistance;
-    float toPositionX;  /* +0x220 */
-    float toPositionY;  /* +0x224 */
-    float toPositionZ;  /* +0x228 */
-    float toPerspective;  /* +0x22C */
-    float toLookAtX;  /* +0x230 */
-    float toLookAtY;  /* +0x234 */
-    float toLookAtZ;  /* +0x238 */
-    float toRoll;  /* +0x23C */
-    float toPitch;  /* +0x240 */
-    float toYaw;  /* +0x244 */
-    unsigned char unmodeled_248[0x4];
-    float toDistance;  /* +0x24C */
-    float fromOffsetX;
-    float fromOffsetY;
-    float fromOffsetZ;
-    unsigned char unmodeled_25C[0x4];
-    Vector4 anchorOffset;               /* +0x260: the anchor offset vector (D_002B5FF0 in the other units) */
-    float anchorBase[3];  /* +0x270 */
-    unsigned char unmodeled_27C[0x54];
-    float frameScale;                   /* +0x2D0: elapsed frames, scales the per-frame movement */
-    unsigned char unmodeled_2D4[4];
-    float field_2d8;
-    unsigned char unmodeled_2DC[4];
-    float field_2e0;
-    unsigned char unmodeled_2E4[4];
-    float field_2e8;
-    unsigned char unmodeled_2EC[4];
-    float field_2f0;
-    unsigned char unmodeled_2F4[4];
-    float field_2f8;
-    unsigned char unmodeled_2FC[4];
-    int field_300;
-    unsigned char unmodeled_304[0xC];
-    int replayStatus;                   /* +0x310: ground status recorded with the input */
-    int replayStickX;                   /* +0x314 */
-    int replayStickY;                   /* +0x318 */
-    unsigned char unmodeled_31C[0x14];
-    short fadeTimer;                    /* +0x330: frames left of the rider fade */
-    unsigned char unmodeled_332[0x16];
-    DoublewordAlignedVector4 extent;    /* +0x348 (MainWork in tu050) */
-};
-
-extern struct CameraState gameWork;
 void cameraSetIndex(int index);
 void cameraUpdateFrame(void);
 
@@ -388,28 +243,28 @@ void cameraInit(void)
     float startZ;
 
     cameraStudioReset();
-    memset(&gameWork.flags, 0, 432);
-    gameWork.flags = 0x80;
-    cameraRangeSetDefaults((struct CameraRange *) &gameWork.anchorIndex);
+    memset(&gameWork.camera.flags, 0, 432);
+    gameWork.camera.flags = 0x80;
+    cameraRangeSetDefaults(&gameWork.camera.range);
     perspective = CAMERA_DEFAULT_PERSPECTIVE;
     startY = 3.0f;
     startZ = 10.0f;
-    gameWork.toPerspective = perspective;
+    gameWork.camera.to.position.w = perspective;
     do {
     } while (0);
-    gameWork.positionY = startY;
-    gameWork.positionZ = startZ;
-    gameWork.lookAtZ = 0.0f;
+    gameWork.camera.range.lockPosition.y = startY;
+    gameWork.camera.range.lockPosition.z = startZ;
+    gameWork.camera.range.lookAt.z = 0.0f;
     do {
     } while (0);
-    gameWork.fromPerspective = perspective;
+    gameWork.camera.from.position.w = perspective;
     do {
     } while (0);
-    gameWork.positionX = 0.0f;
+    gameWork.camera.range.lockPosition.x = 0.0f;
     do {
     } while (0);
-    gameWork.lookAtX = 0.0f;
-    gameWork.lookAtY = 0.0f;
+    gameWork.camera.range.lookAt.x = 0.0f;
+    gameWork.camera.range.lookAt.y = 0.0f;
     do {
     } while (0);
 }
@@ -422,7 +277,6 @@ struct CameraSlotEntry {
     int word0C;                         /* +0x0C */
     unsigned char unmodeled_10[0x4];
 };
-
 
 void cameraInit(void);
 void cameraSetMode(int mode, int arg1, int arg2);
@@ -459,11 +313,10 @@ void cameraReset(void)
     cameraProbePosition.word[0] = 0;
     cameraProbePosition.word[1] = 0;
     cameraProbePosition.word[2] = 0;
-    gameWork.mode = 0;
-    gameWork.trackIndex = -1;
+    gameWork.camera.mode = 0;
+    gameWork.camera.trackIndex = -1;
     cameraSetMode(-1, 0, 0);
 }
-
 
 int mapFindBlockEntry(int, int);
 void mapProbeInit(UwamonoProbe *probe);
@@ -472,7 +325,7 @@ void cameraSetMode(int mode, int arg1, int arg2)
 {
     int probeBlock;
 
-    if (gameWork.mode == mode && D_0069E5A0[0].ground != 0 && cameraPositionProbe[0].ground != 0) {
+    if (gameWork.camera.mode == mode && D_0069E5A0.ground != 0 && cameraPositionProbe.ground != 0) {
         return;
     }
     probeBlock = 0;
@@ -485,34 +338,33 @@ void cameraSetMode(int mode, int arg1, int arg2)
     } else {
         mode = -1;
     }
-    gameWork.mode = mode;
-    mapProbeInit(&D_0069E5A0[0]);
-    D_0069E5A0[0].scratchWork = 0x70000170;
-    D_0069E5A0[0].ground = probeBlock;
-    D_0069E5A0[0].clearedB = 0;
-    D_0069E5A0[0].clearedA = 0;
-    D_0069E5A0[0].range = 1000.0f;
-    D_0069E5A0[0].mask08 = 0x802;
-    mapProbeInit(&cameraPositionProbe[0]);
-    cameraPositionProbe[0].scratchWork = 0x70000170;
-    ((CameraFlagsView *)&gameWork)->flags |= CAMERA_FLAG_MODE_CHANGED;
-    cameraPositionProbe[0].mask08 = 0x802;
-    cameraPositionProbe[0].ground = probeBlock;
-    cameraPositionProbe[0].range = 1000.0f;
-    cameraPositionProbe[0].clearedA = 0;
-    cameraPositionProbe[0].clearedB = 0;
+    gameWork.camera.mode = mode;
+    mapProbeInit(&D_0069E5A0);
+    D_0069E5A0.scratchWork = 0x70000170;
+    D_0069E5A0.ground = probeBlock;
+    D_0069E5A0.clearedB = 0;
+    D_0069E5A0.clearedA = 0;
+    D_0069E5A0.range = 1000.0f;
+    D_0069E5A0.mask08 = 0x802;
+    mapProbeInit(&cameraPositionProbe);
+    cameraPositionProbe.scratchWork = 0x70000170;
+    gameWork.camera.flags |= CAMERA_FLAG_MODE_CHANGED;
+    cameraPositionProbe.mask08 = 0x802;
+    cameraPositionProbe.ground = probeBlock;
+    cameraPositionProbe.range = 1000.0f;
+    cameraPositionProbe.clearedA = 0;
+    cameraPositionProbe.clearedB = 0;
 }
-
 
 void cameraSetIndex(int index)
 {
     int block;
 
     if (index < 0) {
-        index = gameWork.trackIndex;
+        index = gameWork.camera.trackIndex;
     }
     for (;;) {
-        gameWork.trackIndex = index;
+        gameWork.camera.trackIndex = index;
         block = mapFindBlockEntry(1536, index);
         cameraPlayerProbe[6] = block;
         if (index < 0) {
@@ -523,7 +375,7 @@ void cameraSetIndex(int index)
         }
         index = -1;
     }
-    gameWork.flags |= CAMERA_FLAG_TRACK_PLAYER;
+    gameWork.camera.flags |= CAMERA_FLAG_TRACK_PLAYER;
 }
 
 float I2F(int value);
@@ -546,12 +398,6 @@ int cameraSlotSetup(struct CameraSlot *slot, int blend_mode, int ease_mode, int 
     }
 }
 
-/* slot[0..3] of gameWork, reached by their own symbols (the scaffold names them): the original addresses
-   the camera state as slot symbol minus its offset, and the relocations only match through these names. */
-extern unsigned char D_002B5ED0[];
-extern struct CameraSlot D_002B5EE0[];
-extern struct CameraSlot D_002B5EF0[];
-extern struct CameraSlot D_002B5F00[];
 /* Stores the blend and ease modes when they are >= 0, zeroes the slot's progress, then the frames as a float and the fraction (0, or 1.0 when the frames are 0). */ int cameraSlotSetup(struct CameraSlot *slot, int blend_mode, int ease_mode, int frames);
 
 #define CAMERA_SLOT_MASK(slot) (1 << (slot))
@@ -562,16 +408,16 @@ extern struct CameraSlot D_002B5F00[];
 void cameraApplySlots(int slot_mask, int blend_mode, int ease_mode, int frames)
 {
     if (slot_mask == 0) {
-        if (gameWork.slot[0].duration != 0.0f) {
+        if (gameWork.camera.slot[0].duration != 0.0f) {
             slot_mask = CAMERA_SLOT_MASK(0);
         }
-        if (gameWork.slot[1].duration != 0.0f) {
+        if (gameWork.camera.slot[1].duration != 0.0f) {
             slot_mask |= CAMERA_SLOT_MASK(1);
         }
-        if (gameWork.slot[2].duration != 0.0f) {
+        if (gameWork.camera.slot[2].duration != 0.0f) {
             slot_mask |= CAMERA_SLOT_MASK(2);
         }
-        if (gameWork.slot[3].duration != 0.0f) {
+        if (gameWork.camera.slot[3].duration != 0.0f) {
             slot_mask |= CAMERA_SLOT_MASK(3);
         }
         if (slot_mask == 0) {
@@ -579,37 +425,33 @@ void cameraApplySlots(int slot_mask, int blend_mode, int ease_mode, int frames)
         }
     }
     if (slot_mask & CAMERA_SLOT_MASK(0)) {
-        struct CameraState *state = (struct CameraState *)((unsigned char *)D_002B5ED0 - 0x140);
-        cameraSlotSetup((struct CameraSlot *)D_002B5ED0, blend_mode, ease_mode, frames);
-        state->fromLookAtX = state->lookAtX;
-        state->fromLookAtY = state->lookAtY;
-        state->fromLookAtZ = state->lookAtZ;
+        cameraSlotSetup(&gameWork.camera.slot[0], blend_mode, ease_mode, frames);
+        gameWork.camera.from.lookAt.x = gameWork.camera.range.lookAt.x;
+        gameWork.camera.from.lookAt.y = gameWork.camera.range.lookAt.y;
+        gameWork.camera.from.lookAt.z = gameWork.camera.range.lookAt.z;
     }
     if (slot_mask & CAMERA_SLOT_MASK(1)) {
-        struct CameraState *state = (struct CameraState *)((unsigned char *)D_002B5EE0 - 0x150);
-        cameraSlotSetup(D_002B5EE0, blend_mode, ease_mode, frames);
-        state->fromPositionX = state->positionX;
-        state->fromPositionY = state->positionY;
-        state->fromPositionZ = state->positionZ;
-        state->fromPitch = state->pitch;
-        state->fromYaw = state->yaw;
-        state->fromDistance = state->distance;
-        state->fromOffsetX = state->offsetX;
-        state->fromOffsetY = state->offsetY;
-        state->fromOffsetZ = state->offsetZ;
+        cameraSlotSetup(&gameWork.camera.slot[1], blend_mode, ease_mode, frames);
+        gameWork.camera.from.position.x = gameWork.camera.range.lockPosition.x;
+        gameWork.camera.from.position.y = gameWork.camera.range.lockPosition.y;
+        gameWork.camera.from.position.z = gameWork.camera.range.lockPosition.z;
+        gameWork.camera.from.angles.x = gameWork.camera.range.angles.x;
+        gameWork.camera.from.angles.y = gameWork.camera.range.angles.y;
+        gameWork.camera.from.angles.w = gameWork.camera.range.angles.w;
+        gameWork.camera.fromOffset.x = gameWork.camera.range.offset.x;
+        gameWork.camera.fromOffset.y = gameWork.camera.range.offset.y;
+        gameWork.camera.fromOffset.z = gameWork.camera.range.offset.z;
     }
     if (slot_mask & CAMERA_SLOT_MASK(2)) {
-        struct CameraState *state = (struct CameraState *)((unsigned char *)D_002B5EF0 - 0x160);
-        cameraSlotSetup(D_002B5EF0, blend_mode, ease_mode, frames);
-        state->fromPerspective = state->perspective;
+        cameraSlotSetup(&gameWork.camera.slot[2], blend_mode, ease_mode, frames);
+        gameWork.camera.from.position.w = gameWork.camera.range.lockPosition.w;
     }
     if (slot_mask & CAMERA_SLOT_MASK(3)) {
-        struct CameraState *state = (struct CameraState *)((unsigned char *)D_002B5F00 - 0x170);
-        cameraSlotSetup(D_002B5F00, blend_mode, ease_mode, frames);
-        state->fromRoll = state->roll;
+        cameraSlotSetup(&gameWork.camera.slot[3], blend_mode, ease_mode, frames);
+        gameWork.camera.from.lookAt.w = gameWork.camera.range.lookAt.w;
     }
     if (frames != 0) {
-        gameWork.flags |= CAMERA_FLAG_SLOTS_APPLIED;
+        gameWork.camera.flags |= CAMERA_FLAG_SLOTS_APPLIED;
     }
 }
 
@@ -693,9 +535,9 @@ struct CameraAnchor *cameraApplyAnchorOffset(Vector4 *position, int anchorIndex,
 void cameraApplyAllSlots(void)
 {
     cameraApplySlots(0xF, 0, 3, 0xF);
-    gameWork.allSlotsFlagB = 1;
-    gameWork.flags |= CAMERA_FLAG_TRACK_PLAYER;
-    gameWork.allSlotsFlagA = 1;
+    gameWork.camera.allSlotsFlagB = 1;
+    gameWork.camera.flags |= CAMERA_FLAG_TRACK_PLAYER;
+    gameWork.camera.allSlotsFlagA = 1;
 }
 
 /* One 20-byte entry of cameraSlotTable: the signed key and sub-key cameraSlotFind matches. */
@@ -890,12 +732,12 @@ void cameraPullInAlongSight(void)
     int i;
 
     Vu0SubVectorXYZ(&scratch->sight, &scratch->goal, &scratch->lookAt);
-    probeCleared = cameraPositionProbe[0].clearedA;
+    probeCleared = cameraPositionProbe.clearedA;
     if (probeCleared == 0) {
         QuadwordCopy(&scratch->probePosition, &cameraProbePosition);
-        mapBindAndSnapObject(&scratch->probePosition, &cameraPositionProbe[0]);
-        mapMoveProbe(&scratch->probePosition, 0, &cameraPositionProbe[0]);
-        probeCleared = cameraPositionProbe[0].clearedA;
+        mapBindAndSnapObject(&scratch->probePosition, &cameraPositionProbe);
+        mapMoveProbe(&scratch->probePosition, 0, &cameraPositionProbe);
+        probeCleared = cameraPositionProbe.clearedA;
     }
     noHit = -1000.0f;
     upperLimit = D_0069AE48;
@@ -908,8 +750,8 @@ void cameraPullInAlongSight(void)
         float riseToFloor;
         QuadwordCopy(&scratch->probePosition, &cameraProbePosition);
         Vu0SubVectorXYZ(&scratch->probeDelta, &scratch->goal, &cameraProbePosition);
-        cameraPositionProbe[0].clearedA = probeCleared;
-        floorHeight = cameraProbeSlide(&scratch->probePosition, &scratch->probeDelta, &cameraPositionProbe[0]);
+        cameraPositionProbe.clearedA = probeCleared;
+        floorHeight = cameraProbeSlide(&scratch->probePosition, &scratch->probeDelta, &cameraPositionProbe);
         if (floorHeight == noHit) {
             if (probeCleared == 0) {
                 QuadwordCopy(&cameraProbePosition, &scratch->goal);
@@ -977,15 +819,15 @@ void cameraSearchOrbitPitch(void)
     scratch = (CameraSearchScratch *)0x70000000;
     scratch->orbit.y = scratch->record->range.angles.y;
     scratch->orbit.w = scratch->record->range.angles.w;
-    if (cameraPositionProbe[0].clearedA == 0) {
+    if (cameraPositionProbe.clearedA == 0) {
         *(int *)&scratch->orbit.x = 0;
         cameraOrbitPosition((AlignedVector4 *)&cameraProbePosition, &scratch->lookAt, &scratch->orbit);
-        mapBindAndSnapObject((AlignedVector4 *)&cameraProbePosition, &cameraPositionProbe[0]);
-        mapMoveProbe((AlignedVector4 *)&cameraProbePosition, 0, &cameraPositionProbe[0]);
+        mapBindAndSnapObject((AlignedVector4 *)&cameraProbePosition, &cameraPositionProbe);
+        mapMoveProbe((AlignedVector4 *)&cameraProbePosition, 0, &cameraPositionProbe);
         scratch->orbit.x = scratch->actor->position.x;
         cameraOrbitPosition(&scratch->position, &scratch->lookAt, &scratch->orbit);
         Vu0SubVectorXYZ(&scratch->probe, &scratch->position, (AlignedVector4 *)&cameraProbePosition);
-        cameraProbeSlide((AlignedVector4 *)&cameraProbePosition, &scratch->probe, &cameraPositionProbe[0]);
+        cameraProbeSlide((AlignedVector4 *)&cameraProbePosition, &scratch->probe, &cameraPositionProbe);
     }
 
     pitch = scratch->record->range.angles.x;
@@ -994,11 +836,11 @@ void cameraSearchOrbitPitch(void)
     pitchStep = CAMERA_SEARCH_STEP_FINE;
     QuadwordCopy(&scratch->probe, (AlignedVector4 *)&cameraProbePosition);
     Vu0SubVectorXYZ(&scratch->delta, &scratch->position, (AlignedVector4 *)&cameraProbePosition);
-    cameraPositionProbe[0].mask08 |= 0x1000;
+    cameraPositionProbe.mask08 |= 0x1000;
     if (scratch->record->range.probeMode == CAMERA_PROBE_MODE_SLIDE) {
-        floorHeight = cameraProbeSlide(&scratch->probe, &scratch->delta, &cameraPositionProbe[0]);
+        floorHeight = cameraProbeSlide(&scratch->probe, &scratch->delta, &cameraPositionProbe);
     } else {
-        floorHeight = mapMoveProbe(&scratch->probe, &scratch->delta, &cameraPositionProbe[0]);
+        floorHeight = mapMoveProbe(&scratch->probe, &scratch->delta, &cameraPositionProbe);
     }
 
     if (floorHeight != -1000.0f) {
@@ -1011,16 +853,16 @@ void cameraSearchOrbitPitch(void)
         pitchStep = CAMERA_SEARCH_STEP_COARSE;
         QuadwordCopy(&scratch->probe, &scratch->lookAt);
         QuadwordCopy(&scratch->position, &scratch->probe);
-        cameraPositionProbe[0].mask08 |= 0x1000;
-        floorHeight = mapMoveProbe(&scratch->probe, 0, &cameraPositionProbe[0]);
+        cameraPositionProbe.mask08 |= 0x1000;
+        floorHeight = mapMoveProbe(&scratch->probe, 0, &cameraPositionProbe);
         if (floorHeight == -1000.0f) {
             pitch = 0.0f;
             scratch->orbit.x = pitch;
             cameraOrbitPosition(&scratch->probe, &scratch->lookAt, &scratch->orbit);
             pitchStep = -CAMERA_SEARCH_STEP_COARSE;
             QuadwordCopy(&scratch->position, &scratch->probe);
-            cameraPositionProbe[0].mask08 |= 0x1000;
-            floorHeight = mapMoveProbe(&scratch->probe, 0, &cameraPositionProbe[0]);
+            cameraPositionProbe.mask08 |= 0x1000;
+            floorHeight = mapMoveProbe(&scratch->probe, 0, &cameraPositionProbe);
         }
     }
 
@@ -1041,8 +883,8 @@ void cameraSearchOrbitPitch(void)
                     scratch->delta.x = (scratch->probe.x + scratch->delta.x) - ((AlignedVector4 *)(AlignedVector4 *)&cameraProbePosition)->x;
                     scratch->delta.y = (floorHeight + scratch->delta.y) - ((AlignedVector4 *)(AlignedVector4 *)&cameraProbePosition)->y;
                     scratch->delta.z = (scratch->probe.z + scratch->delta.z) - ((AlignedVector4 *)(AlignedVector4 *)&cameraProbePosition)->z;
-                    cameraPositionProbe[0].mask08 |= 0x1000;
-                    cameraProbeSlide((AlignedVector4 *)&cameraProbePosition, &scratch->delta, &cameraPositionProbe[0]);
+                    cameraPositionProbe.mask08 |= 0x1000;
+                    cameraProbeSlide((AlignedVector4 *)&cameraProbePosition, &scratch->delta, &cameraPositionProbe);
                 } else {
                     QuadwordCopy((AlignedVector4 *)&cameraProbePosition, &scratch->probe);
                     ((AlignedVector4 *)(AlignedVector4 *)&cameraProbePosition)->y = floorHeight;
@@ -1053,7 +895,7 @@ void cameraSearchOrbitPitch(void)
             scratch->orbit.x = pitch;
             cameraOrbitPosition(&scratch->position, &scratch->lookAt, &scratch->orbit);
             Vu0SubVectorXYZ(&scratch->delta, &scratch->position, &scratch->probe);
-            floorHeight = mapMoveProbe(&scratch->probe, &scratch->delta, &cameraPositionProbe[0]);
+            floorHeight = mapMoveProbe(&scratch->probe, &scratch->delta, &cameraPositionProbe);
             if (floorHeight == -1000.0f) {
                 if (flip == 1) {
                     pitchStep = -pitchStep * 0.5f;
@@ -1115,14 +957,14 @@ void cameraUpdateFollow(void)
     float lookAtZ;
 
     scratch = (struct CameraScratch *)0x70000000;
-    cameraApplyAnchorOffset(&scratch->lookAt, scratch->anchorIndex, -1, (Vector4 *)&gameWork.offsetX);
+    cameraApplyAnchorOffset(&scratch->lookAt, scratch->anchorIndex, -1, &gameWork.camera.range.offset);
     scratch->lookAt.w = 1.0f;
     lookAtX = scratch->lookAt.x;
-    gameWork.lookAtX = lookAtX;
+    gameWork.camera.range.lookAt.x = lookAtX;
     lookAtY = scratch->lookAt.y;
-    gameWork.lookAtY = lookAtY;
+    gameWork.camera.range.lookAt.y = lookAtY;
     lookAtZ = scratch->lookAt.z;
-    gameWork.lookAtZ = lookAtZ;
+    gameWork.camera.range.lookAt.z = lookAtZ;
     cameraOrbitPosition(&scratch->position, &scratch->lookAt, &scratch->record->range.angles);
     if (D_0069E608[0] != 0) {
         if (scratch->record->range.probeMode == 0) {
@@ -1142,19 +984,18 @@ void cameraUpdateFollow(void)
         CAMERA_PAD->position.z = record->range.lockPosition.z;
     }
     cameraAnglesBetween(&scratch->angles, &scratch->lookAt, &scratch->position);
-    gameWork.pitch = CAMERA_PAD->angles.x;
-    gameWork.yaw = *(float *)0x70000094;
-    gameWork.distance = *(float *)0x7000009C;
+    gameWork.camera.range.angles.x = CAMERA_PAD->angles.x;
+    gameWork.camera.range.angles.y = *(float *)0x70000094;
+    gameWork.camera.range.angles.w = *(float *)0x7000009C;
     /* The CameraVector union: the original orders these three stores with alias set 0. */
     ((CameraVector *)&cameraProbePosition)->vector.x = *(float *)0x700000C0;
     ((CameraVector *)&cameraProbePosition)->vector.y = *(float *)0x700000C4;
-    gameWork.positionX = *(float *)0x700000C0;
-    gameWork.positionY = *(float *)0x700000C4;
-    gameWork.positionZ = ((CameraVector *)&cameraProbePosition)->vector.z = *(float *)0x700000C8;
-    gameWork.perspective = scratch->record->range.lockPosition.w;
-    gameWork.roll = scratch->record->range.lookAt.w;
+    gameWork.camera.range.lockPosition.x = *(float *)0x700000C0;
+    gameWork.camera.range.lockPosition.y = *(float *)0x700000C4;
+    gameWork.camera.range.lockPosition.z = ((CameraVector *)&cameraProbePosition)->vector.z = *(float *)0x700000C8;
+    gameWork.camera.range.lockPosition.w = scratch->record->range.lockPosition.w;
+    gameWork.camera.range.lookAt.w = scratch->record->range.lookAt.w;
 }
-
 
 /* Copies the record's anchor vectors into gameWork when D_0069E568 is set, applies the anchor offset when the
    record has an anchor, and writes the angles from the staged vector to gameWork. */
@@ -1168,35 +1009,34 @@ void cameraUpdateFromRecord(void)
 
     if (D_0069E568[0] != 0) {
         record = CAMERA_PAD->record;
-        gameWork.positionX = record->range.lockPosition.x;
-        gameWork.positionY = record->range.lockPosition.y;
-        gameWork.positionZ = record->range.lockPosition.z;
-        gameWork.lookAtX = record->range.lookAt.x;
-        gameWork.lookAtY = record->range.lookAt.y;
-        gameWork.lookAtZ = record->range.lookAt.z;
-        gameWork.perspective = record->range.lockPosition.w;
-        gameWork.roll = record->range.lookAt.w;
+        gameWork.camera.range.lockPosition.x = record->range.lockPosition.x;
+        gameWork.camera.range.lockPosition.y = record->range.lockPosition.y;
+        gameWork.camera.range.lockPosition.z = record->range.lockPosition.z;
+        gameWork.camera.range.lookAt.x = record->range.lookAt.x;
+        gameWork.camera.range.lookAt.y = record->range.lookAt.y;
+        gameWork.camera.range.lookAt.z = record->range.lookAt.z;
+        gameWork.camera.range.lockPosition.w = record->range.lockPosition.w;
+        gameWork.camera.range.lookAt.w = record->range.lookAt.w;
     } else {
         record = CAMERA_PAD->record;
     }
-    ((CameraVector *)&cameraProbePosition)->vector.x = gameWork.positionX;
-    ((CameraVector *)&cameraProbePosition)->vector.y = gameWork.positionY;
-    ((CameraVector *)&cameraProbePosition)->vector.z = gameWork.positionZ;
+    ((CameraVector *)&cameraProbePosition)->vector.x = gameWork.camera.range.lockPosition.x;
+    ((CameraVector *)&cameraProbePosition)->vector.y = gameWork.camera.range.lockPosition.y;
+    ((CameraVector *)&cameraProbePosition)->vector.z = gameWork.camera.range.lockPosition.z;
     if (record->range.anchorIndex >= 0) {
-        cameraApplyAnchorOffset(&anchorPosition, record->range.anchorIndex, record->range.anchorSubIndex, (Vector4 *)&gameWork.offsetX);
-        gameWork.lookAtX = anchorPosition.x;
-        gameWork.lookAtY = anchorPosition.y;
-        gameWork.lookAtZ = anchorPosition.z;
+        cameraApplyAnchorOffset(&anchorPosition, record->range.anchorIndex, record->range.anchorSubIndex, &gameWork.camera.range.offset);
+        gameWork.camera.range.lookAt.x = anchorPosition.x;
+        gameWork.camera.range.lookAt.y = anchorPosition.y;
+        gameWork.camera.range.lookAt.z = anchorPosition.z;
     }
-    (CAMERA_PAD->lookAt.x) = gameWork.lookAtX;
-    (*(float *)0x70000034) = gameWork.lookAtY;
-    (*(float *)0x70000038) = gameWork.lookAtZ;
+    (CAMERA_PAD->lookAt.x) = gameWork.camera.range.lookAt.x;
+    (*(float *)0x70000034) = gameWork.camera.range.lookAt.y;
+    (*(float *)0x70000038) = gameWork.camera.range.lookAt.z;
     cameraAnglesBetween(&CAMERA_PAD->angles, &CAMERA_PAD->lookAt, &cameraProbePosition);
-    gameWork.pitch = *(float *)0x70000090;
-    gameWork.yaw = *(float *)0x70000094;
-    gameWork.distance = *(float *)0x7000009C;
+    gameWork.camera.range.angles.x = *(float *)0x70000090;
+    gameWork.camera.range.angles.y = *(float *)0x70000094;
+    gameWork.camera.range.angles.w = *(float *)0x7000009C;
 }
-
 
 /* Stages the current camera position and the anchor-adjusted look-at point for cameraApplyView (scratchpad +0x30). */
 void cameraStageLookAt(void)
@@ -1204,19 +1044,19 @@ void cameraStageLookAt(void)
     Vector4 anchorPosition;
     int anchorIndex;
 
-    cameraProbePosition.v.x = gameWork.positionX;
-    cameraProbePosition.v.y = gameWork.positionY;
-    cameraProbePosition.v.z = gameWork.positionZ;
-    anchorIndex = gameWork.anchorIndex;
+    cameraProbePosition.v.x = gameWork.camera.range.lockPosition.x;
+    cameraProbePosition.v.y = gameWork.camera.range.lockPosition.y;
+    cameraProbePosition.v.z = gameWork.camera.range.lockPosition.z;
+    anchorIndex = gameWork.camera.range.anchorIndex;
     if (anchorIndex >= 0) {
-        cameraApplyAnchorOffset(&anchorPosition, anchorIndex, gameWork.anchorSubIndex, (Vector4 *)&gameWork.offsetX);
-        gameWork.lookAtX = anchorPosition.x;
-        gameWork.lookAtY = anchorPosition.y;
-        gameWork.lookAtZ = anchorPosition.z;
+        cameraApplyAnchorOffset(&anchorPosition, anchorIndex, gameWork.camera.range.anchorSubIndex, &gameWork.camera.range.offset);
+        gameWork.camera.range.lookAt.x = anchorPosition.x;
+        gameWork.camera.range.lookAt.y = anchorPosition.y;
+        gameWork.camera.range.lookAt.z = anchorPosition.z;
     }
-    CAMERA_PAD->lookAt.x = gameWork.lookAtX;
-    *(float *)0x70000034 = gameWork.lookAtY;
-    *(float *)0x70000038 = gameWork.lookAtZ;
+    CAMERA_PAD->lookAt.x = gameWork.camera.range.lookAt.x;
+    *(float *)0x70000034 = gameWork.camera.range.lookAt.y;
+    *(float *)0x70000038 = gameWork.camera.range.lookAt.z;
 }
 
 /* Classifies angle against the arc from limits[0] to limits[1] (both wrapped into [0, 2pi)): -1 inside the arc,
@@ -1278,21 +1118,21 @@ void cameraClampAngles(int afterCommit)
     int limitIndex;
     int moved;
 
-    if (afterCommit == 0 || gameWork.anchorReady != 0) {
-        yaw = gameWork.yaw;
-        pitch = gameWork.pitch;
+    if (afterCommit == 0 || gameWork.camera.range.rangeMode != 0) {
+        yaw = gameWork.camera.range.angles.y;
+        pitch = gameWork.camera.range.angles.x;
         yawDelta = yaw;
         limitIndex = cameraAngleLimitIndex(&(CAMERA_PAD->record)->range.angleLimits.z, yaw);
         if (limitIndex >= 0) {
             yaw = (&(CAMERA_PAD->record)->range.angleLimits.z)[limitIndex];
-            depth = gameWork.lookAtZ - gameWork.positionZ;
+            depth = gameWork.camera.range.lookAt.z - gameWork.camera.range.lockPosition.z;
             tanYaw = xglSin(yaw) / xglCos(yaw);
-            gameWork.lookAtX = gameWork.positionX + depth * tanYaw;
-            cameraAnglesBetween(&CAMERA_PAD->angles, (Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.positionX);
-            gameWork.pitch = CAMERA_PAD->angles.x;
-            pitch = gameWork.pitch;
-            gameWork.yaw = CAMERA_PAD->angles.y;
-            gameWork.distance = CAMERA_PAD->angles.w;
+            gameWork.camera.range.lookAt.x = gameWork.camera.range.lockPosition.x + depth * tanYaw;
+            cameraAnglesBetween(&CAMERA_PAD->angles, &gameWork.camera.range.lookAt, &gameWork.camera.range.lockPosition);
+            gameWork.camera.range.angles.x = CAMERA_PAD->angles.x;
+            pitch = gameWork.camera.range.angles.x;
+            gameWork.camera.range.angles.y = CAMERA_PAD->angles.y;
+            gameWork.camera.range.angles.w = CAMERA_PAD->angles.w;
         }
         yawDelta = yaw - yawDelta;
         while (yawDelta < -CAMERA_PI) {
@@ -1308,12 +1148,12 @@ void cameraClampAngles(int afterCommit)
         if (limitIndex >= 0) {
             pitch = (&(CAMERA_PAD->record)->range.angleLimits.x)[limitIndex];
         }
-        gameWork.pitch = pitch;
-        gameWork.yaw = yaw;
-        eye.x = gameWork.positionX;
-        eye.y = gameWork.positionY;
-        back.z = -gameWork.distance;
-        eye.z = gameWork.positionZ;
+        gameWork.camera.range.angles.x = pitch;
+        gameWork.camera.range.angles.y = yaw;
+        eye.x = gameWork.camera.range.lockPosition.x;
+        eye.y = gameWork.camera.range.lockPosition.y;
+        back.z = -gameWork.camera.range.angles.w;
+        eye.z = gameWork.camera.range.lockPosition.z;
         back.x = 0.0f;
         back.y = 0.0f;
         back.w = 1.0f;
@@ -1325,22 +1165,22 @@ void cameraClampAngles(int afterCommit)
         xglMatrixStackTrans((float *)&back);
         xglMatrixStackSave(matrix);
         moved = 0;
-        shift = gameWork.lookAtX - matrix[12];
+        shift = gameWork.camera.range.lookAt.x - matrix[12];
         if (shift < -0.1f || 0.1f < shift) {
             moved = 1;
         }
-        shift = gameWork.lookAtY - matrix[13];
+        shift = gameWork.camera.range.lookAt.y - matrix[13];
         if (shift < -0.1f || 0.1f < shift) {
             moved = 1;
         }
-        shift = gameWork.lookAtZ - matrix[14];
+        shift = gameWork.camera.range.lookAt.z - matrix[14];
         if (shift < -0.1f || 0.1f < shift) {
             moved = 1;
         }
         CAMERA_PAD->moved = moved;
-        gameWork.lookAtX = matrix[12];
-        gameWork.lookAtY = matrix[13];
-        gameWork.lookAtZ = matrix[14];
+        gameWork.camera.range.lookAt.x = matrix[12];
+        gameWork.camera.range.lookAt.y = matrix[13];
+        gameWork.camera.range.lookAt.z = matrix[14];
     }
 }
 
@@ -1349,46 +1189,46 @@ void cameraClampAngles(int afterCommit)
    joint and root. Returns 1 when it ran, 0 otherwise. */
 int cameraCommitSlots(void)
 {
-    struct CameraState *state = &gameWork;
+    GameWork *state = &gameWork;
     Vector4 jointPosition;
     Vector4 rootPosition;
 
-    if ((state->flags & CAMERA_FLAG_SLOTS_APPLIED) != 0) {
+    if ((state->camera.flags & CAMERA_FLAG_SLOTS_APPLIED) != 0) {
         float anchorX;
         float anchorY;
         float anchorZ;
 
-        state->toLookAtX = state->lookAtX;
-        state->toLookAtY = state->lookAtY;
-        state->toLookAtZ = state->lookAtZ;
-        state->toRoll = state->roll;
-        state->toPositionX = state->positionX;
-        state->toPositionY = state->positionY;
-        state->toPositionZ = state->positionZ;
-        state->toPerspective = state->perspective;
-        state->toPitch = state->pitch;
-        state->toYaw = state->yaw;
-        state->toDistance = state->distance;
-        if (state->allSlotsFlagB != 0) {
-            cameraApplyAnchorOffset(&jointPosition, state->anchorIndex, state->anchorSubIndex, 0);
-            cameraApplyAnchorOffset(&rootPosition, state->anchorIndex, -1, 0);
-            anchorX = (state->anchorBase[0] + rootPosition.x) - jointPosition.x;
-            anchorY = (state->anchorBase[1] + rootPosition.y) - jointPosition.y;
-            anchorZ = (state->anchorBase[2] + rootPosition.z) - jointPosition.z;
-            state->fromOffsetX = anchorX;
-            state->offsetX = anchorX;
-            state->fromOffsetY = anchorY;
-            state->offsetY = anchorY;
-            state->fromOffsetZ = anchorZ;
-            state->offsetZ = anchorZ;
-            if (state->anchorReady != 0) {
+        state->camera.to.lookAt.x = state->camera.range.lookAt.x;
+        state->camera.to.lookAt.y = state->camera.range.lookAt.y;
+        state->camera.to.lookAt.z = state->camera.range.lookAt.z;
+        state->camera.to.lookAt.w = state->camera.range.lookAt.w;
+        state->camera.to.position.x = state->camera.range.lockPosition.x;
+        state->camera.to.position.y = state->camera.range.lockPosition.y;
+        state->camera.to.position.z = state->camera.range.lockPosition.z;
+        state->camera.to.position.w = state->camera.range.lockPosition.w;
+        state->camera.to.angles.x = state->camera.range.angles.x;
+        state->camera.to.angles.y = state->camera.range.angles.y;
+        state->camera.to.angles.w = state->camera.range.angles.w;
+        if (state->camera.allSlotsFlagB != 0) {
+            cameraApplyAnchorOffset(&jointPosition, state->camera.range.anchorIndex, state->camera.range.anchorSubIndex, 0);
+            cameraApplyAnchorOffset(&rootPosition, state->camera.range.anchorIndex, -1, 0);
+            anchorX = (state->camera.anchorBase[0] + rootPosition.x) - jointPosition.x;
+            anchorY = (state->camera.anchorBase[1] + rootPosition.y) - jointPosition.y;
+            anchorZ = (state->camera.anchorBase[2] + rootPosition.z) - jointPosition.z;
+            state->camera.fromOffset.x = anchorX;
+            state->camera.range.offset.x = anchorX;
+            state->camera.fromOffset.y = anchorY;
+            state->camera.range.offset.y = anchorY;
+            state->camera.fromOffset.z = anchorZ;
+            state->camera.range.offset.z = anchorZ;
+            if (state->camera.range.rangeMode != 0) {
                 if (CAMERA_PAD->seen != 0 && CAMERA_PAD->moved == 0) {
-                    if (state->anchorLocked == 0) {
-                        state->slot[0].duration = 0.0f;
+                    if (state->camera.anchorLocked == 0) {
+                        state->camera.slot[0].duration = 0.0f;
                     }
                 }
             }
-            gameWork.allSlotsFlagB = 0;
+            gameWork.camera.allSlotsFlagB = 0;
         }
         return 1;
     }
@@ -1478,7 +1318,7 @@ void cameraLerpVector(Vector4 *destination, const Vector4 *from, const Vector4 *
         : : "r"(destination), "r"(to), "r"(from), "r"(fraction) : "memory");
 }
 
-/* Advances the wave one frame and returns its offset: rising from -amplitude to amplitude over the first half of the
+/* Advances the wave one frame and returns its offset: rising from -value to value over the first half of the
    period, falling back over the second; zero once no cycles remain. */
 float cameraWaveStep(struct CameraWave *wave)
 {
@@ -1501,17 +1341,17 @@ float cameraWaveStep(struct CameraWave *wave)
         wave->hold = wave->hold - 1;
     } else {
         wave->remaining = wave->remaining - 1;
-        wave->amplitude = wave->amplitude - wave->step;
-        if (wave->amplitude < 0.0f) {
-            wave->amplitude = 0.0f;
+        wave->value = wave->value - wave->step;
+        if (wave->value < 0.0f) {
+            wave->value = 0.0f;
         }
     }
     half = wave->period >> 1;
-    doubled = wave->amplitude + wave->amplitude;
+    doubled = wave->value + wave->value;
     if (wave->phase < half) {
-        result = (doubled * I2F(wave->phase)) / I2F(half) - wave->amplitude;
+        result = (doubled * I2F(wave->phase)) / I2F(half) - wave->value;
     } else {
-        result = wave->amplitude - (doubled * I2F(wave->phase - half)) / I2F(half);
+        result = wave->value - (doubled * I2F(wave->phase - half)) / I2F(half);
     }
     return result;
 }
@@ -1556,139 +1396,139 @@ void cameraAdvanceTracks(float *tracks)
     float cz;
 
     scratch = (union { CameraTravel *p; } *)0x70000010;
-    if (gameWork.slot[0].progress < gameWork.slot[0].duration) {
-        gameWork.slot[0].progress += CAMERA_PAD->step;
-        gameWork.slot[0].fraction = cameraEase((unsigned char)gameWork.slot[0].easeMode, gameWork.slot[0].progress, gameWork.slot[0].duration);
-        cameraLerpVector((Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.fromLookAtX, (Vector4 *)&gameWork.toLookAtX, gameWork.slot[0].fraction);
+    if (gameWork.camera.slot[0].progress < gameWork.camera.slot[0].duration) {
+        gameWork.camera.slot[0].progress += CAMERA_PAD->step;
+        gameWork.camera.slot[0].fraction = cameraEase((unsigned char)gameWork.camera.slot[0].easeMode, gameWork.camera.slot[0].progress, gameWork.camera.slot[0].duration);
+        cameraLerpVector(&gameWork.camera.range.lookAt, &gameWork.camera.from.lookAt, &gameWork.camera.to.lookAt, gameWork.camera.slot[0].fraction);
     }
 
-    if (gameWork.slot[1].progress < gameWork.slot[1].duration) {
-        gameWork.slot[1].progress += CAMERA_PAD->step;
-        e = cameraEase((unsigned char)gameWork.slot[1].easeMode, gameWork.slot[1].progress, gameWork.slot[1].duration);
-        gameWork.slot[1].fraction = e;
-        if (gameWork.slot[1].blendMode == 0) {
-            cameraLerpVector((Vector4 *)&gameWork.positionX, (Vector4 *)&gameWork.fromPositionX, (Vector4 *)&gameWork.toPositionX, e);
-            cameraAnglesBetween(&CAMERA_PAD->angles, (Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.positionX);
-            gameWork.pitch = CAMERA_PAD->angles.x;
-            gameWork.yaw = CAMERA_PAD->angles.y;
-            gameWork.distance = CAMERA_PAD->angles.w;
+    if (gameWork.camera.slot[1].progress < gameWork.camera.slot[1].duration) {
+        gameWork.camera.slot[1].progress += CAMERA_PAD->step;
+        e = cameraEase((unsigned char)gameWork.camera.slot[1].easeMode, gameWork.camera.slot[1].progress, gameWork.camera.slot[1].duration);
+        gameWork.camera.slot[1].fraction = e;
+        if (gameWork.camera.slot[1].blendMode == 0) {
+            cameraLerpVector(&gameWork.camera.range.lockPosition, &gameWork.camera.from.position, &gameWork.camera.to.position, e);
+            cameraAnglesBetween(&CAMERA_PAD->angles, &gameWork.camera.range.lookAt, &gameWork.camera.range.lockPosition);
+            gameWork.camera.range.angles.x = CAMERA_PAD->angles.x;
+            gameWork.camera.range.angles.y = CAMERA_PAD->angles.y;
+            gameWork.camera.range.angles.w = CAMERA_PAD->angles.w;
         } else {
-            gameWork.pitch = cameraLerpAngle(gameWork.fromPitch, gameWork.toPitch, e);
-            gameWork.yaw = cameraLerpAngle(gameWork.fromYaw, gameWork.toYaw, e);
-            gameWork.distance = cameraLerpFloat(gameWork.fromDistance, gameWork.toDistance, e);
-            cameraOrbitPosition((Vector4 *)&gameWork.positionX, (Vector4 *)&gameWork.lookAtX, (Vector4 *)&gameWork.pitch);
+            gameWork.camera.range.angles.x = cameraLerpAngle(gameWork.camera.from.angles.x, gameWork.camera.to.angles.x, e);
+            gameWork.camera.range.angles.y = cameraLerpAngle(gameWork.camera.from.angles.y, gameWork.camera.to.angles.y, e);
+            gameWork.camera.range.angles.w = cameraLerpFloat(gameWork.camera.from.angles.w, gameWork.camera.to.angles.w, e);
+            cameraOrbitPosition(&gameWork.camera.range.lockPosition, &gameWork.camera.range.lookAt, &gameWork.camera.range.angles);
         }
-        cameraLerpVector((Vector4 *)&gameWork.offsetX, (Vector4 *)&gameWork.fromOffsetX, (Vector4 *)tracks, gameWork.slot[1].fraction);
+        cameraLerpVector(&gameWork.camera.range.offset, &gameWork.camera.fromOffset, (Vector4 *)tracks, gameWork.camera.slot[1].fraction);
     }
 
-    p2 = gameWork.slot[2].progress;
-    lim2 = gameWork.slot[2].duration;
+    p2 = gameWork.camera.slot[2].progress;
+    lim2 = gameWork.camera.slot[2].duration;
     if (p2 < lim2) {
         float next2 = p2 + CAMERA_PAD->step;
-        gameWork.slot[2].progress = next2;
-        d2 = cameraEase((unsigned char)gameWork.slot[2].easeMode, next2, lim2);
-        gameWork.slot[2].fraction = d2;
-        gameWork.perspective = cameraLerpFloat(gameWork.fromPerspective, gameWork.toPerspective, gameWork.slot[2].fraction);
+        gameWork.camera.slot[2].progress = next2;
+        d2 = cameraEase((unsigned char)gameWork.camera.slot[2].easeMode, next2, lim2);
+        gameWork.camera.slot[2].fraction = d2;
+        gameWork.camera.range.lockPosition.w = cameraLerpFloat(gameWork.camera.from.position.w, gameWork.camera.to.position.w, gameWork.camera.slot[2].fraction);
         p2 = next2;
     }
 
-    p3 = gameWork.slot[3].progress;
-    lim3 = gameWork.slot[3].duration;
+    p3 = gameWork.camera.slot[3].progress;
+    lim3 = gameWork.camera.slot[3].duration;
     if (p3 < lim3) {
         float next3 = p3 + CAMERA_PAD->step;
-        gameWork.slot[3].progress = next3;
-        d3 = cameraEase((unsigned char)gameWork.slot[3].easeMode, next3, lim3);
-        gameWork.slot[3].fraction = d3;
-        gameWork.roll = cameraLerpAngle(gameWork.fromRoll, gameWork.toRoll, gameWork.slot[3].fraction);
+        gameWork.camera.slot[3].progress = next3;
+        d3 = cameraEase((unsigned char)gameWork.camera.slot[3].easeMode, next3, lim3);
+        gameWork.camera.slot[3].fraction = d3;
+        gameWork.camera.range.lookAt.w = cameraLerpAngle(gameWork.camera.from.lookAt.w, gameWork.camera.to.lookAt.w, gameWork.camera.slot[3].fraction);
         p3 = next3;
     }
 
-    if (gameWork.slot[0].progress >= gameWork.slot[0].duration) {
-        gameWork.slot[0].fraction = 1.0f;
-        gameWork.fromLookAtX = gameWork.lookAtX;
-        gameWork.fromLookAtY = gameWork.lookAtY;
-        gameWork.fromLookAtZ = gameWork.lookAtZ;
-        gameWork.slot[0].progress = 0.0f;
-        gameWork.slot[0].duration = 0.0f;
+    if (gameWork.camera.slot[0].progress >= gameWork.camera.slot[0].duration) {
+        gameWork.camera.slot[0].fraction = 1.0f;
+        gameWork.camera.from.lookAt.x = gameWork.camera.range.lookAt.x;
+        gameWork.camera.from.lookAt.y = gameWork.camera.range.lookAt.y;
+        gameWork.camera.from.lookAt.z = gameWork.camera.range.lookAt.z;
+        gameWork.camera.slot[0].progress = 0.0f;
+        gameWork.camera.slot[0].duration = 0.0f;
     }
 
-    if (gameWork.slot[1].progress >= gameWork.slot[1].duration) {
-        gameWork.slot[1].fraction = 1.0f;
-        gameWork.fromPositionX = gameWork.positionX;
-        gameWork.fromPositionY = gameWork.positionY;
-        gameWork.fromPositionZ = gameWork.positionZ;
-        gameWork.fromPitch = gameWork.pitch;
-        gameWork.fromYaw = gameWork.yaw;
-        gameWork.fromDistance = gameWork.distance;
-        gameWork.flags = gameWork.flags & 0xffef;
-        gameWork.slot[1].progress = 0.0f;
-        gameWork.slot[1].duration = 0.0f;
-        gameWork.offsetX = tracks[0];
-        gameWork.offsetY = tracks[1];
-        gameWork.offsetZ = tracks[2];
+    if (gameWork.camera.slot[1].progress >= gameWork.camera.slot[1].duration) {
+        gameWork.camera.slot[1].fraction = 1.0f;
+        gameWork.camera.from.position.x = gameWork.camera.range.lockPosition.x;
+        gameWork.camera.from.position.y = gameWork.camera.range.lockPosition.y;
+        gameWork.camera.from.position.z = gameWork.camera.range.lockPosition.z;
+        gameWork.camera.from.angles.x = gameWork.camera.range.angles.x;
+        gameWork.camera.from.angles.y = gameWork.camera.range.angles.y;
+        gameWork.camera.from.angles.w = gameWork.camera.range.angles.w;
+        ((GameWorkAlias0 *)&gameWork)->flags = ((GameWorkAlias0 *)&gameWork)->flags & 0xffef;
+        gameWork.camera.slot[1].progress = 0.0f;
+        gameWork.camera.slot[1].duration = 0.0f;
+        gameWork.camera.range.offset.x = tracks[0];
+        gameWork.camera.range.offset.y = tracks[1];
+        gameWork.camera.range.offset.z = tracks[2];
     }
 
     if (p2 >= lim2) {
-        gameWork.slot[2].fraction = 1.0f;
-        gameWork.fromPerspective = gameWork.perspective;
-        gameWork.slot[2].progress = 0.0f;
-        gameWork.slot[2].duration = 0.0f;
+        gameWork.camera.slot[2].fraction = 1.0f;
+        gameWork.camera.from.position.w = gameWork.camera.range.lockPosition.w;
+        gameWork.camera.slot[2].progress = 0.0f;
+        gameWork.camera.slot[2].duration = 0.0f;
     }
 
     if (p3 >= lim3) {
-        gameWork.slot[3].fraction = 1.0f;
-        gameWork.fromRoll = gameWork.roll;
-        gameWork.slot[3].progress = 0.0f;
-        gameWork.slot[3].duration = 0.0f;
+        gameWork.camera.slot[3].fraction = 1.0f;
+        gameWork.camera.from.lookAt.w = gameWork.camera.range.lookAt.w;
+        gameWork.camera.slot[3].progress = 0.0f;
+        gameWork.camera.slot[3].duration = 0.0f;
     }
 
     *(int *)0x700000C0 = 0;
     *(int *)0x700000C4 = 0;
     *(int *)0x700000C8 = 0;
-    if (gameWork.shakeFlags != 0) {
-        CAMERA_PAD->position.x = cameraWaveStep(&gameWork.waves[0]);
-        *(float *)0x700000C4 = cameraWaveStep(&gameWork.waves[1]);
-        *(float *)0x700000C8 = cameraWaveStep(&gameWork.waves[2]);
-        if (gameWork.waves[0].remaining == 0) {
-            gameWork.shakeFlags &= 0xFE;
+    if (gameWork.camera.shakeFlags != 0) {
+        CAMERA_PAD->position.x = cameraWaveStep(&gameWork.camera.waves[0]);
+        *(float *)0x700000C4 = cameraWaveStep(&gameWork.camera.waves[1]);
+        *(float *)0x700000C8 = cameraWaveStep(&gameWork.camera.waves[2]);
+        if (gameWork.camera.waves[0].remaining == 0) {
+            gameWork.camera.shakeFlags &= 0xFE;
         }
-        if (gameWork.waves[1].remaining == 0) {
-            gameWork.shakeFlags &= 0xFD;
+        if (gameWork.camera.waves[1].remaining == 0) {
+            gameWork.camera.shakeFlags &= 0xFD;
         }
-        if (gameWork.waves[2].remaining == 0) {
-            gameWork.shakeFlags &= 0xFB;
+        if (gameWork.camera.waves[2].remaining == 0) {
+            gameWork.camera.shakeFlags &= 0xFB;
         }
-        if ((gameWork.shakeFlags & 0x8) != 0) {
+        if ((gameWork.camera.shakeFlags & 0x8) != 0) {
             r1 = xglFRand();
             r2 = xglFRand();
             k1 = D_0069AEC0;
             k2 = D_0069AEC4;
-            t1 = -(gameWork.sway[0] + gameWork.sway[2]) * ((r1 - 1.0f) * k1) + (r2 - 1.5f) * k2;
+            t1 = -(gameWork.camera.sway[0] + gameWork.camera.sway[2]) * ((r1 - 1.0f) * k1) + (r2 - 1.5f) * k2;
             r3 = xglFRand();
             r4 = xglFRand();
-            t2 = -(gameWork.sway[1] + gameWork.sway[3]) * ((r3 - 1.0f) * k1) + (r4 - 1.5f) * k2;
-            gameWork.sway[2] += t1;
-            gameWork.sway[0] += gameWork.sway[2];
-            CAMERA_PAD->position.x += gameWork.sway[0];
-            gameWork.sway[3] += t2;
-            gameWork.sway[1] += gameWork.sway[3];
-            CAMERA_PAD->position.y += gameWork.sway[1];
+            t2 = -(gameWork.camera.sway[1] + gameWork.camera.sway[3]) * ((r3 - 1.0f) * k1) + (r4 - 1.5f) * k2;
+            gameWork.camera.sway[2] += t1;
+            gameWork.camera.sway[0] += gameWork.camera.sway[2];
+            CAMERA_PAD->position.x += gameWork.camera.sway[0];
+            gameWork.camera.sway[3] += t2;
+            gameWork.camera.sway[1] += gameWork.camera.sway[3];
+            CAMERA_PAD->position.y += gameWork.camera.sway[1];
         }
     }
 
-    scratch->p->position.x = gameWork.positionX;
-    cy = gameWork.positionY;
+    scratch->p->position.x = gameWork.camera.range.lockPosition.x;
+    cy = gameWork.camera.range.lockPosition.y;
     scratch->p->position.y = cy;
-    cz = gameWork.positionZ;
+    cz = gameWork.camera.range.lockPosition.z;
     scratch->p->position.z = cz;
     {
         CameraTravel *q = scratch->p;
-        q->fov = gameWork.perspective;
-        q->chase_position.x = gameWork.lookAtX;
+        q->fov = gameWork.camera.range.lockPosition.w;
+        q->chase_position.x = gameWork.camera.range.lookAt.x;
     }
-    scratch->p->chase_position.y = gameWork.lookAtY;
-    scratch->p->chase_position.z = gameWork.lookAtZ;
-    scratch->p->rotation.z = gameWork.roll + CAMERA_PAD->position.z;
+    scratch->p->chase_position.y = gameWork.camera.range.lookAt.y;
+    scratch->p->chase_position.z = gameWork.camera.range.lookAt.z;
+    scratch->p->rotation.z = gameWork.camera.range.lookAt.w + CAMERA_PAD->position.z;
     cameraAnglesBetween(&CAMERA_PAD->angles, &scratch->p->chase_position, &scratch->p->position);
     scratch->p->rotation.y = *(float *)0x70000094 + *(float *)0x700000C0;
     scratch->p->rotation.x = *(float *)0x70000090 + *(float *)0x700000C4;
@@ -1697,12 +1537,6 @@ void cameraAdvanceTracks(float *tracks)
 }
 
 /* The ground probe block at cameraPlayerProbe: a UwamonoProbe followed by the record index the probe was last mapped to. */
-typedef struct CameraGroundProbe {
-    UwamonoProbe probe;
-    unsigned char recordIndex;          /* +0x20 */
-} CameraGroundProbe;
-
-extern Vector4 D_002B5FF0;
 void cameraApplyView(void);
 void cameraUpdateFollow(void);
 void cameraUpdateFromRecord(void);
@@ -1730,7 +1564,7 @@ typedef struct CameraFrameScratch {
 void cameraUpdateFrame(void)
 {
     XglCamera *camera;
-    CameraGroundProbe *probe;
+    UwamonoProbe *probe;
     struct CameraAnchor *anchor;
     struct CameraRecord *record;
     struct CameraSlot *slot;
@@ -1743,8 +1577,8 @@ void cameraUpdateFrame(void)
     float ret;
     CameraFrameScratch *scratch = (CameraFrameScratch *)0x70000000;
 
-    if (!(gameWork.flags & CAMERA_FLAG_DISABLED)) {
-        if (gameWork.flags & CAMERA_FLAG_VIEW_ONLY) {
+    if (!(gameWork.camera.flags & CAMERA_FLAG_DISABLED)) {
+        if (gameWork.camera.flags & CAMERA_FLAG_VIEW_ONLY) {
             cameraApplyView();
             return;
         }
@@ -1762,94 +1596,94 @@ void cameraUpdateFrame(void)
         }
         scratch->anchorMatched = 0;
         scratch->scale = 1.0f;
-        gameWork.shakeFlags = 0;
+        gameWork.camera.shakeFlags = 0;
         scratch->anchor = uwamonoSlotTable[uwamonoCurrentIndex].head.actor;
         if (!(control & 0x400)) {
-            if (control & 0x20) {
+            if (control & CONTROL_TOP_EXIT) {
                 cameraStudioReset();
-                gameWork.flags |= CAMERA_FLAG_SNAP;
+                gameWork.camera.flags |= CAMERA_FLAG_SNAP;
             } else {
-                flags = gameWork.flags;
+                flags = gameWork.camera.flags;
                 if (flags & CAMERA_FLAG_SNAP) {
-                    gameWork.flags = flags | (CAMERA_FLAG_SNAP | CAMERA_FLAG_MODE_CHANGED | CAMERA_FLAG_TRACK_PLAYER);
-                    gameWork.recordIndex = 0;
-                    probe = (CameraGroundProbe *)cameraPlayerProbe;
-                    mapProbeInit(&probe->probe);
-                    probe->probe.scratchWork = 0x70000170;
-                    probe->probe.mask08 = 0x800;
+                    gameWork.camera.flags = flags | (CAMERA_FLAG_SNAP | CAMERA_FLAG_MODE_CHANGED | CAMERA_FLAG_TRACK_PLAYER);
+                    gameWork.camera.recordIndex = 0;
+                    probe = (UwamonoProbe *)cameraPlayerProbe;
+                    mapProbeInit(probe);
+                    probe->scratchWork = 0x70000170;
+                    probe->mask08 = 0x800;
                     cameraSetIndex(-1);
-                    gameWork.mode = 0;
+                    gameWork.camera.mode = 0;
                     cameraSetMode(-1, 0, 0);
-                    flags = gameWork.flags;
+                    flags = gameWork.camera.flags;
                 }
                 if (flags & CAMERA_FLAG_TRACK_PLAYER) {
                     cameraSetIndex(-1);
                     cameraPlayerPositionOld = (scratch->anchor)->position;
-                    ((CameraFlagsView *)&gameWork)->flags &= 0xFFDF;
-                    gameWork.recordIndex = -1;
-                    D_0069E5A0[0].clearedA = 0;
-                    cameraPositionProbe[0].clearedA = 0;
-                    ((CameraGroundProbe *)cameraPlayerProbe)->probe.clearedA = 0;
+                    gameWork.camera.flags &= 0xFFDF;
+                    gameWork.camera.recordIndex = -1;
+                    D_0069E5A0.clearedA = 0;
+                    cameraPositionProbe.clearedA = 0;
+                    ((UwamonoProbe *)cameraPlayerProbe)->clearedA = 0;
                 }
                 recordIndex = 0;
                 {
-                    CameraGroundProbe *probe = (CameraGroundProbe *)cameraPlayerProbe;
-                    if (probe->probe.ground != 0) {
+                    UwamonoProbe *probe = (UwamonoProbe *)cameraPlayerProbe;
+                    if (probe->ground != 0) {
                         anchor = scratch->anchor;
                         Vu0SubVector(&scratch->delta, &anchor->position, &cameraPlayerPositionOld);
                         ret = mapMoveProbe(&cameraPlayerPositionOld, &scratch->delta, probe);
                         recordIndex = probe->recordIndex + 1;
                         if (__builtin_fabsf(cameraPlayerPositionOld.y - ret) > 4.0f) {
-                            probe->probe.mask08 |= 0x1000;
+                            probe->mask08 |= 0x1000;
                         }
                     }
                 }
                 record = &cameraCfSlots.record[recordIndex];
                 scratch->record = record;
                 scratch->slot = &record->slot;
-                previous = gameWork.recordIndex;
+                previous = gameWork.camera.recordIndex;
                 if (previous != recordIndex) {
-                    gameWork.previousRecordIndex = gameWork.recordIndex;
-                    gameWork.recordIndex = recordIndex;
+                    gameWork.camera.previousRecordIndex = gameWork.camera.recordIndex;
+                    gameWork.camera.recordIndex = recordIndex;
                     entry = cameraSlotFind(previous, (signed char)recordIndex);
                     if (entry != 0) {
                         scratch->slot = &entry->slot;
-                        anchorReady = gameWork.anchorReady = entry->anchorReady;
+                        anchorReady = gameWork.camera.range.rangeMode = entry->anchorReady;
                     } else {
                         record = scratch->record;
-                        anchorReady = gameWork.anchorReady = (unsigned char)record->range.rangeMode;
+                        anchorReady = gameWork.camera.range.rangeMode = (unsigned char)record->range.rangeMode;
                     }
                     cameraSetMode((signed char)scratch->record->index02, 0, 0);
-                    if (gameWork.allSlotsFlagA == 0) {
+                    if (gameWork.camera.allSlotsFlagA == 0) {
                         slot = scratch->slot;
                         cameraApplySlots(0xF, slot->blendMode, slot->easeMode, (int)slot->duration);
-                        if (gameWork.anchorIndex != -1) {
+                        if (gameWork.camera.range.anchorIndex != -1) {
                             record = scratch->record;
-                            if (gameWork.anchorIndex == record->range.anchorIndex
+                            if (gameWork.camera.range.anchorIndex == record->range.anchorIndex
                                 && !(*(long long *)&record->range.lockX & 0xFFFFFF)) {
                                 scratch->anchorMatched = 1;
                             }
                         }
                     }
                     record = scratch->record;
-                    if (gameWork.cameraType != record->unmodeled_00) {
-                        gameWork.previousCameraType = gameWork.cameraType;
-                        gameWork.cameraType = record->unmodeled_00;
-                        gameWork.wordE0 = 0;
-                        gameWork.unmodeled_0D3 = 0;
+                    if (gameWork.camera.cameraType != record->unmodeled_00) {
+                        gameWork.camera.previousCameraType = gameWork.camera.cameraType;
+                        gameWork.camera.cameraType = record->unmodeled_00;
+                        *(XglQuadword *)gameWork.camera.typeState = 0;
+                        gameWork.camera.cameraSubType = 0;
                     }
-                    *(struct CameraRange *)&gameWork.anchorIndex = record->range;
-                    gameWork.anchorReady = anchorReady;
-                    gameWork.allSlotsFlagB = 1;
+                    gameWork.camera.range = record->range;
+                    gameWork.camera.range.rangeMode = anchorReady;
+                    gameWork.camera.allSlotsFlagB = 1;
                 }
-                if (gameWork.flags & CAMERA_FLAG_SNAP) {
-                    gameWork.slot[0].duration = 0.0f;
-                    gameWork.flags &= 0xFFEF;
-                    gameWork.slot[1].duration = 0.0f;
-                    gameWork.slot[2].duration = 0.0f;
-                    gameWork.slot[3].duration = 0.0f;
+                if (gameWork.camera.flags & CAMERA_FLAG_SNAP) {
+                    gameWork.camera.slot[0].duration = 0.0f;
+                    gameWork.camera.flags &= 0xFFEF;
+                    gameWork.camera.slot[1].duration = 0.0f;
+                    gameWork.camera.slot[2].duration = 0.0f;
+                    gameWork.camera.slot[3].duration = 0.0f;
                 }
-                switch (gameWork.cameraType) {
+                switch (gameWork.camera.cameraType) {
                 case CAMERA_TYPE_FOLLOW:
                     cameraUpdateFollow();
                     cameraClampAngles(0);
@@ -1869,16 +1703,16 @@ void cameraUpdateFrame(void)
                     cameraAdvanceTracks((float *)&scratch->record->range.offset);
                     break;
                 }
-                cameraApplyAnchorOffset(&gameWork.anchorOffset, gameWork.anchorIndex, -1, 0);
-                gameWork.anchorBase[0] = gameWork.lookAtX - gameWork.anchorOffset.x;
-                gameWork.anchorBase[1] = gameWork.lookAtY - gameWork.anchorOffset.y;
-                gameWork.anchorBase[2] = gameWork.lookAtZ - gameWork.anchorOffset.z;
-                gameWork.anchorLocked = scratch->anchorLocked;
-                if (gameWork.rangeFlag != 0) {
-                    gameWork.stickAngle = scratch->camera->travel.rotation.y;
+                cameraApplyAnchorOffset(&gameWork.camera.anchorOffset, gameWork.camera.range.anchorIndex, -1, 0);
+                gameWork.camera.anchorBase[0] = gameWork.camera.range.lookAt.x - gameWork.camera.anchorOffset.x;
+                gameWork.camera.anchorBase[1] = gameWork.camera.range.lookAt.y - gameWork.camera.anchorOffset.y;
+                gameWork.camera.anchorBase[2] = gameWork.camera.range.lookAt.z - gameWork.camera.anchorOffset.z;
+                gameWork.camera.anchorLocked = scratch->anchorLocked;
+                if (gameWork.camera.range.rangeFlag != 0) {
+                    gameWork.camera.range.northAngle = scratch->camera->travel.rotation.y;
                 }
-                gameWork.allSlotsFlagA = 0;
-                gameWork.flags &= 0xFF3F;
+                gameWork.camera.allSlotsFlagA = 0;
+                gameWork.camera.flags &= 0xFF3F;
             }
         }
     }
@@ -1925,7 +1759,7 @@ void cameraApplyView(void)
         *(int *)&scratch->height = 0;
     }
     cameraStageLookAt();
-    cameraAdvanceTracks(&gameWork.offsetX);
+    cameraAdvanceTracks(&gameWork.camera.range.offset.x);
     xglCameraMove(scratch->camera);
 }
 
@@ -2169,12 +2003,12 @@ void uwamonoChangePlayerModel(int request)
     }
 
     gameWork.control &= ~CONTROL_SCRIPTED;
-    gameWork.field_2d8 = 6.0f;
-    gameWork.field_2e0 = D_0069AECC;
-    gameWork.field_2f8 = 1.0f;
-    gameWork.field_2f0 = 1.0f;
-    gameWork.field_2e8 = 1.0f;
-    gameWork.field_300 = 15;
+    gameWork.playerParams[0][0] = 6.0f;
+    gameWork.playerParams[1][0] = D_0069AECC;
+    gameWork.playerParams[4][0] = 1.0f;
+    gameWork.playerParams[3][0] = 1.0f;
+    gameWork.playerParams[2][0] = 1.0f;
+    gameWork.climbFrames = 15;
 
     for (i = 0; i < UWAMONO_ATTACH_PARTS; i++) {
         if (uwamonoPartIndices[i] != -1) {
@@ -2243,22 +2077,14 @@ void uwamonoChangePlayerModel(int request)
         record->scale.z = D_0069AED8;
         record->scale.y = D_0069AED8;
         record->scale.x = D_0069AED8;
-        gameWork.field_2d8 = 20.0f;
-        gameWork.field_2e0 = 1.0f;
+        gameWork.playerParams[0][0] = 20.0f;
+        gameWork.playerParams[1][0] = 1.0f;
     }
     uwamonoReleaseHandles();
     seFootBanksLoad();
 }
 
 #define NULL ((void *) 0)
-
-/* One entry of elvSlopeTable. */
-typedef struct UwamonoSlope {
-    float x;
-    float z;
-    float push;
-    float speed;
-} UwamonoSlope;
 
 extern int D_0069B978;
 extern int D_0069B97C;
@@ -2268,7 +2094,6 @@ extern signed char D_0069B9B6;
 static float D_0069E184;
 static int D_0069E188;
 extern PadRecord PadData;
-extern UwamonoSlope elvSlopeTable[];
 extern float D_002B9C98[];
 extern unsigned char D_002B9CA8[];
 extern UwamonoProbe uwamonoProbeTemplate;
@@ -2338,7 +2163,6 @@ void func_0029E690(void);
 /* Candidate target points and their reach (10 entries). */
 extern Vector4 D_0033EE00[];
 extern float D_0033EE90[];
-extern int gameLoopFlags[];
 float Get_Distance(const Vector4 *from, const Vector4 *to);
 int uwamonoTryClearTarget(int index, signed char threshold);
 int uwamonoFindNearbyTarget(int index);
@@ -2375,7 +2199,7 @@ void uwamonoPickTarget(short index)
         uwamonoUpdateTargetVector(index);
         return;
     }
-    if (gameLoopFlags[0] & CONTROL_SCRIPTED) {
+    if (gameWork.control & CONTROL_SCRIPTED) {
         uwamonoTryClearTarget(index, 0);
         return;
     }
@@ -2603,7 +2427,7 @@ void uwamonoPlayerUpdate(void)
                     gameWork.replayStatus = actor->status;
                 }
                 if (stick_x == 0 && stick_y == 0) {
-                    D_0069E184 = gameWork.stickAngle;
+                    D_0069E184 = gameWork.camera.range.northAngle;
                 }
                 x = I2F(stick_x);
                 y = I2F(stick_y);
@@ -2800,7 +2624,7 @@ void uwamonoPlayerUpdate(void)
                 float factor;
 
                 if (slope & 8) {
-                    UwamonoSlope *entry = &elvSlopeTable[slope & 7];
+                    GameWorkSlope *entry = &gameWork.slopes[slope & 7];
                     float push = frameScale * entry->push * 256.0f;
 
                     actor->velocity.x += entry->x * push;
@@ -2858,12 +2682,12 @@ void uwamonoPlayerUpdate(void)
             uwamonoPushOutOfActor(uwamonoCurrentIndex, uwamonoRecords[target].actor);
         }
         actor->velocity.x = actor->velocity.z = 0.0f;
-        if (!(gameWork.control & 0x20) && (actor->status & ~0x1F) == GROUND_LADDER) {
+        if (!(((GameWorkAlias0 *)&gameWork)->control & CONTROL_TOP_EXIT) && (actor->status & ~0x1F) == GROUND_LADDER) {
             if (!(gameWork.control & 0x420)) {
                 gameWork.control |= 0x400;
                 uwamonoSendEvent(3, (actor->status & 0x1F) + 1, 0);
             }
-            gameWork.control |= 0x400;
+            ((GameWorkAlias0 *)&gameWork)->control |= 0x400;
         } else {
             gameWork.control &= ~0x400;
         }
@@ -3020,684 +2844,6 @@ void *uwamonoCurrentRecord(void)
     return &uwamonoRecords[uwamonoCurrentIndex];
 }
 
-const char D_0069B9B8[8] = "jinH04";
-const char D_0069B9C0[8] = "jinH03";
-const char D_0069B9C8[8] = "jrH04";
-const char D_0069B9D0[8] = "jrH02";
-const char D_0069B9D8[8] = "jinH01";
-const char D_0069B9E0[8] = "jin02";
-const char D_0069B9E8[8] = "jin01";
-const char D_0069B9F0[8] = "jin00";
-const char D_0069B9F8[8] = "jinH00";
-const char D_0069BA00[8] = "ziggy01";
-const char D_0069BA08[8] = "ziggy00";
-const char D_0069BA10[8] = "ziggy02";
-const char D_0069BA18[8] = "mm_ym01";
-const char D_0069BA20[8] = "momoH03";
-const char D_0069BA28[8] = "momo02";
-const char D_0069BA30[8] = "momo01";
-const char D_0069BA38[8] = "momo00";
-const char D_0069BA40[8] = "momoH00";
-const char D_0069BA48[8] = "jrH01";
-const char D_0069BA50[8] = "jr03";
-const char D_0069BA58[8] = "jr02";
-const char D_0069BA60[8] = "jr01";
-const char D_0069BA68[8] = "jr00";
-const char D_0069BA70[8] = "jrH00";
-const char D_0069BA78[8] = "chaos03";
-const char D_0069BA80[8] = "chaos02";
-const char D_0069BA88[8] = "chaos01";
-const char D_0069BA90[8] = "chaos00";
-const char D_0069BA98[8] = "shion04";
-const char D_0069BAA0[8] = "shion03";
-const char D_0069BAA8[8] = "shion05";
-const char D_0069BAB0[8] = "_";
-const char D_0069BAB8[8] = "shion00";
-const char D_0069BAC0[8] = "yuriH01";
-const char D_0069BAC8[8] = "yuriH00";
-const char D_0069BAD0[8] = "popeH00";
-const char D_0069BAD8[8] = "bos001";
-const char D_0069BAE0[8] = "bos013";
-const char D_0069BAE8[8] = "canan01";
-const char D_0069BAF0[8] = "tonny00";
-const char D_0069BAF8[8] = "kirsh01";
-const char D_0069BB00[8] = "kirsh00";
-const char D_0069BB08[8] = "yuri01";
-const char D_0069BB10[8] = "yuri00";
-const char D_0069BB18[8] = "mary00";
-const char D_0069BB20[8] = "kebin01";
-const char D_0069BB28[8] = "kebin00";
-const char D_0069BB30[8] = "pope00";
-const char D_0069BB38[8] = "allen01";
-const char D_0069BB40[8] = "umnm03";
-const char D_0069BB48[8] = "du103";
-const char D_0069BB50[8] = "gfgf03";
-const char D_0069BB58[8] = "gfgm03";
-const char D_0069BB60[8] = "vecf400";
-const char D_0069BB68[8] = "vecm400";
-const char D_0069BB70[8] = "umnf02";
-const char D_0069BB78[8] = "umnm02";
-const char D_0069BB80[8] = "umnfh00";
-const char D_0069BB88[8] = "umnmh00";
-const char D_0069BB90[8] = "umnf01";
-const char D_0069BB98[8] = "umnm01";
-const char D_0069BBA0[8] = "uso006";
-const char D_0069BBA8[8] = "uso005";
-const char D_0069BBB0[8] = "bos030";
-const char D_0069BBB8[8] = "uso012";
-const char D_0069BBC0[8] = "uso011";
-const char D_0069BBC8[8] = "org00";
-const char D_0069BBD0[8] = "thief04";
-const char D_0069BBD8[8] = "thief03";
-const char D_0069BBE0[8] = "thief02";
-const char D_0069BBE8[8] = "thief01";
-const char D_0069BBF0[8] = "thief00";
-const char D_0069BBF8[8] = "bar00";
-const char D_0069BC00[8] = "yurim00";
-const char D_0069BC08[8] = "umnf00";
-const char D_0069BC10[8] = "umnm00";
-const char D_0069BC18[8] = "clean00";
-const char D_0069BC20[8] = "bread00";
-const char D_0069BC28[8] = "king00";
-const char D_0069BC30[8] = "mouth00";
-const char D_0069BC38[8] = "scott00";
-const char D_0069BC40[8] = "engm00";
-const char D_0069BC48[8] = "realf00";
-const char D_0069BC50[8] = "realm00";
-const char D_0069BC58[8] = "du202";
-const char D_0069BC60[8] = "du201";
-const char D_0069BC68[8] = "du102";
-const char D_0069BC70[8] = "du101";
-const char D_0069BC78[8] = "gfgf02";
-const char D_0069BC80[8] = "gfgf01";
-const char D_0069BC88[8] = "gfgm02";
-const char D_0069BC90[8] = "gfgm01";
-const char D_0069BC98[8] = "hyaku00";
-const char D_0069BCA0[8] = "du200";
-const char D_0069BCA8[8] = "du100";
-const char D_0069BCB0[8] = "gomi00";
-const char D_0069BCB8[8] = "water00";
-const char D_0069BCC0[8] = "denki00";
-const char D_0069BCC8[8] = "engm02";
-const char D_0069BCD0[8] = "engm01";
-const char D_0069BCD8[8] = "uticm00";
-const char D_0069BCE0[8] = "urtvf00";
-const char D_0069BCE8[8] = "urtvm00";
-const char D_0069BCF0[8] = "gfgf00";
-const char D_0069BCF8[8] = "gfgm00";
-const char D_0069BD00[8] = "vecf300";
-const char D_0069BD08[8] = "vecm300";
-const char D_0069BD10[8] = "vecf200";
-const char D_0069BD18[8] = "vecf100";
-const char D_0069BD20[8] = "vecm200";
-const char D_0069BD28[8] = "vecm100";
-const char D_0069BD30[8] = "robo02";
-const char D_0069BD38[8] = "robo01";
-const char D_0069BD40[8] = "rat00";
-const char D_0069BD48[8] = "dog00";
-const char D_0069BD50[8] = "cat00";
-const char D_0069BD58[8] = "cook200";
-const char D_0069BD60[8] = "cook100";
-const char D_0069BD68[8] = "spy00";
-const char D_0069BD70[8] = "robo00";
-const char D_0069BD78[8] = "ukun00";
-const char D_0069BD80[8] = "oldf201";
-const char D_0069BD88[8] = "oldf200";
-const char D_0069BD90[8] = "oldf101";
-const char D_0069BD98[8] = "oldf100";
-const char D_0069BDA0[8] = "oldm201";
-const char D_0069BDA8[8] = "oldm200";
-const char D_0069BDB0[8] = "oldm101";
-const char D_0069BDB8[8] = "oldm100";
-const char D_0069BDC0[8] = "man401";
-const char D_0069BDC8[8] = "man400";
-const char D_0069BDD0[8] = "man301";
-const char D_0069BDD8[8] = "man300";
-const char D_0069BDE0[8] = "man201";
-const char D_0069BDE8[8] = "man200";
-const char D_0069BDF0[8] = "man101";
-const char D_0069BDF8[8] = "man100";
-const char D_0069BE00[8] = "kidf300";
-const char D_0069BE08[8] = "kidm300";
-const char D_0069BE10[8] = "girl501";
-const char D_0069BE18[8] = "girl500";
-const char D_0069BE20[8] = "girl401";
-const char D_0069BE28[8] = "girl400";
-const char D_0069BE30[8] = "girl301";
-const char D_0069BE38[8] = "girl300";
-const char D_0069BE40[8] = "girl201";
-const char D_0069BE48[8] = "girl200";
-const char D_0069BE50[8] = "girl101";
-const char D_0069BE58[8] = "girl100";
-const char D_0069BE60[8] = "boy601";
-const char D_0069BE68[8] = "boy600";
-const char D_0069BE70[8] = "boy501";
-const char D_0069BE78[8] = "boy500";
-const char D_0069BE80[8] = "boy401";
-const char D_0069BE88[8] = "boy400";
-const char D_0069BE90[8] = "boy301";
-const char D_0069BE98[8] = "boy300";
-const char D_0069BEA0[8] = "boy201";
-const char D_0069BEA8[8] = "boy200";
-const char D_0069BEB0[8] = "boy101";
-const char D_0069BEB8[8] = "boy100";
-const char D_0069BEC0[8] = "kidf201";
-const char D_0069BEC8[8] = "kidf200";
-const char D_0069BED0[8] = "kidf101";
-const char D_0069BED8[8] = "kidf100";
-const char D_0069BEE0[8] = "kidm201";
-const char D_0069BEE8[8] = "kidm200";
-const char D_0069BEF0[8] = "kidm101";
-const char D_0069BEF8[8] = "kidm100";
-const char D_0069BF00[8] = "pcr01b";
-const char D_0069BF08[8] = "pcr05b";
-const char D_0069BF10[8] = "pcr02d";
-const char D_0069BF18[8] = "pcr02c";
-const char D_0069BF20[8] = "pcr02b";
-const char D_0069BF28[8] = "pcr05";
-const char D_0069BF30[8] = "pcr03";
-const char D_0069BF38[8] = "pcr02a";
-const char D_0069BF40[8] = "pcr01a";
-const char D_0069BF48[8] = "npcr12b";
-const char D_0069BF50[8] = "npcr12a";
-const char D_0069BF58[8] = "npcr09b";
-const char D_0069BF60[8] = "npcr19";
-const char D_0069BF68[8] = "npcr18";
-const char D_0069BF70[8] = "npcr17";
-const char D_0069BF78[8] = "npcr16";
-const char D_0069BF80[8] = "npcr15";
-const char D_0069BF88[8] = "npcr14";
-const char D_0069BF90[8] = "npcr13";
-const char D_0069BF98[8] = "npcr12";
-const char D_0069BFA0[8] = "npcr11";
-const char D_0069BFA8[8] = "npcr10";
-const char D_0069BFB0[8] = "npcr09a";
-const char D_0069BFB8[8] = "npcr08";
-const char D_0069BFC0[8] = "npcr07";
-const char D_0069BFC8[8] = "npcr06";
-const char D_0069BFD0[8] = "npcr05";
-const char D_0069BFD8[8] = "npcr04";
-const char D_0069BFE0[8] = "npcr03";
-const char D_0069BFE8[8] = "npcr02b";
-const char D_0069BFF0[8] = "npcr02a";
-const char D_0069BFF8[8] = "npcr01";
-const char D_0069C000[8] = "uma013";
-const char D_0069C008[8] = "gno019";
-const char D_0069C010[8] = "gno018";
-const char D_0069C018[8] = "gno017";
-const char D_0069C020[8] = "gno016";
-const char D_0069C028[8] = "gno015";
-const char D_0069C030[8] = "gno014";
-const char D_0069C038[8] = "gno013";
-const char D_0069C040[8] = "gno012";
-const char D_0069C048[8] = "gno011";
-const char D_0069C050[8] = "gno010";
-const char D_0069C058[8] = "gno009";
-const char D_0069C060[8] = "gno008";
-const char D_0069C068[8] = "gno007";
-const char D_0069C070[8] = "gno006";
-const char D_0069C078[8] = "gno005";
-const char D_0069C080[8] = "gno004";
-const char D_0069C088[8] = "gno003";
-const char D_0069C090[8] = "gno002";
-const char D_0069C098[8] = "gno001";
-const char D_0069C0A0[8] = "uma011";
-const char D_0069C0A8[8] = "cre017";
-const char D_0069C0B0[8] = "cre016";
-const char D_0069C0B8[8] = "cre015";
-const char D_0069C0C0[8] = "uro015";
-const char D_0069C0C8[8] = "uro014";
-const char D_0069C0D0[8] = "uro013";
-const char D_0069C0D8[8] = "uro012";
-const char D_0069C0E0[8] = "uro011";
-const char D_0069C0E8[8] = "uma012";
-const char D_0069C0F0[8] = "cre014";
-const char D_0069C0F8[8] = "cre013";
-const char D_0069C100[8] = "uso010";
-const char D_0069C108[8] = "uso009";
-const char D_0069C110[8] = "uro010";
-const char D_0069C118[8] = "uma010";
-const char D_0069C120[8] = "uma009";
-const char D_0069C128[8] = "uro009";
-const char D_0069C130[8] = "uro008";
-const char D_0069C138[8] = "cre018";
-const char D_0069C140[8] = "cre012";
-const char D_0069C148[8] = "cre011";
-const char D_0069C150[8] = "uso008";
-const char D_0069C158[8] = "uso007";
-const char D_0069C160[8] = "uma008";
-const char D_0069C168[8] = "uro007";
-const char D_0069C170[8] = "uro006";
-const char D_0069C178[8] = "uro005";
-const char D_0069C180[8] = "uma007";
-const char D_0069C188[8] = "uro004";
-const char D_0069C190[8] = "uro003";
-const char D_0069C198[8] = "vma003";
-const char D_0069C1A0[8] = "vma002";
-const char D_0069C1A8[8] = "vma001";
-const char D_0069C1B0[8] = "cre010";
-const char D_0069C1B8[8] = "cre009";
-const char D_0069C1C0[8] = "cre008";
-const char D_0069C1C8[8] = "cre007";
-const char D_0069C1D0[8] = "cre006";
-const char D_0069C1D8[8] = "cre005";
-const char D_0069C1E0[8] = "cre004";
-const char D_0069C1E8[8] = "cre003";
-const char D_0069C1F0[8] = "cre002";
-const char D_0069C1F8[8] = "cre001";
-const char D_0069C200[8] = "uma006";
-const char D_0069C208[8] = "uma005";
-const char D_0069C210[8] = "uma004";
-const char D_0069C218[8] = "uro002";
-const char D_0069C220[8] = "uma003";
-const char D_0069C228[8] = "uso004";
-const char D_0069C230[8] = "uso003";
-const char D_0069C238[8] = "uma002";
-const char D_0069C240[8] = "uma001";
-const char D_0069C248[8] = "uro001";
-const char D_0069C250[8] = "uso002";
-const char D_0069C258[8] = "uso001";
-const char D_0069C260[8] = "bos031";
-const char D_0069C268[8] = "bos029";
-const char D_0069C270[8] = "bos028";
-const char D_0069C278[8] = "bos027";
-const char D_0069C280[8] = "bos026";
-const char D_0069C288[8] = "bos025";
-const char D_0069C290[8] = "bos024";
-const char D_0069C298[8] = "bos023";
-const char D_0069C2A0[8] = "bos022";
-const char D_0069C2A8[8] = "bos021";
-const char D_0069C2B0[8] = "bos020";
-const char D_0069C2B8[8] = "bos019";
-const char D_0069C2C0[8] = "bos018";
-const char D_0069C2C8[8] = "bos017";
-const char D_0069C2D0[8] = "bos016";
-const char D_0069C2D8[8] = "bos015";
-const char D_0069C2E0[8] = "bos014";
-const char D_0069C2E8[8] = "bos012";
-const char D_0069C2F0[8] = "bos011";
-const char D_0069C2F8[8] = "bos010";
-const char D_0069C300[8] = "bos009";
-const char D_0069C308[8] = "bos008";
-const char D_0069C310[8] = "bos007";
-const char D_0069C318[8] = "bos006";
-const char D_0069C320[8] = "bos005";
-const char D_0069C328[8] = "bos004";
-const char D_0069C330[8] = "bos003";
-const char D_0069C338[8] = "bos002";
-const char D_0069C340[8] = "CFEVE22";
-const char D_0069C348[8] = "CFEVE21";
-const char D_0069C350[8] = "CFEVE20";
-const char D_0069C358[8] = "CFEVE19";
-const char D_0069C360[8] = "CFEVE18";
-const char D_0069C368[8] = "CFEVE17";
-const char D_0069C370[8] = "CFEVE16";
-const char D_0069C378[8] = "CFEVE15";
-const char D_0069C380[8] = "CFEVE14";
-const char D_0069C388[8] = "CFEVE13";
-const char D_0069C390[8] = "CFEVE12";
-const char D_0069C398[8] = "CFEVE11";
-const char D_0069C3A0[8] = "CFEVE10";
-const char D_0069C3A8[8] = "CFEVE09";
-const char D_0069C3B0[8] = "CFEVE08";
-const char D_0069C3B8[8] = "CFEVE07";
-const char D_0069C3C0[8] = "CFEVE06";
-const char D_0069C3C8[8] = "CFEVE05";
-const char D_0069C3D0[8] = "CFEVE04";
-const char D_0069C3D8[8] = "CFEVE03";
-const char D_0069C3E0[8] = "CFEVE02";
-const char D_0069C3E8[8] = "CFEVE01";
-const char D_0069C3F0[8] = "idtest";
-const char D_0069C3F8[8] = "pcr04";
-const char D_0069C400[8] = "pcr02";
-const char D_0069C408[8] = "pcr01";
-const char D_0069C410[8] = "pcr00";
-const char D_0069C418[8] = "kanan00";
-const char D_0069C420[8] = "motion\\";
-const char D_0069C428[8] = "07";
-const char D_0069C430[8] = "06";
-const char D_0069C438[8] = "05";
-const char D_0069C440[8] = "04";
-const char D_0069C448[8] = "03";
-const char D_0069C450[8] = "02";
-const char D_0069C458[8] = "01";
-const char D_0069C460[8] = "00";
-const char D_0069C468[8] = "effect\\";
-const char D_0069C470[8] = "mobj299";
-const char D_0069C478[8] = "mobj298";
-const char D_0069C480[8] = "mobj297";
-const char D_0069C488[8] = "mobj296";
-const char D_0069C490[8] = "mobj295";
-const char D_0069C498[8] = "mobj294";
-const char D_0069C4A0[8] = "mobj293";
-const char D_0069C4A8[8] = "mobj292";
-const char D_0069C4B0[8] = "mobj291";
-const char D_0069C4B8[8] = "mobj290";
-const char D_0069C4C0[8] = "mobj289";
-const char D_0069C4C8[8] = "mobj288";
-const char D_0069C4D0[8] = "mobj287";
-const char D_0069C4D8[8] = "mobj286";
-const char D_0069C4E0[8] = "mobj285";
-const char D_0069C4E8[8] = "mobj284";
-const char D_0069C4F0[8] = "mobj283";
-const char D_0069C4F8[8] = "mobj282";
-const char D_0069C500[8] = "mobj281";
-const char D_0069C508[8] = "mobj280";
-const char D_0069C510[8] = "mobj279";
-const char D_0069C518[8] = "mobj278";
-const char D_0069C520[8] = "mobj277";
-const char D_0069C528[8] = "mobj276";
-const char D_0069C530[8] = "mobj275";
-const char D_0069C538[8] = "mobj274";
-const char D_0069C540[8] = "mobj273";
-const char D_0069C548[8] = "mobj272";
-const char D_0069C550[8] = "mobj271";
-const char D_0069C558[8] = "mobj270";
-const char D_0069C560[8] = "mobj269";
-const char D_0069C568[8] = "mobj268";
-const char D_0069C570[8] = "mobj267";
-const char D_0069C578[8] = "mobj266";
-const char D_0069C580[8] = "mobj265";
-const char D_0069C588[8] = "mobj264";
-const char D_0069C590[8] = "mobj263";
-const char D_0069C598[8] = "mobj262";
-const char D_0069C5A0[8] = "mobj261";
-const char D_0069C5A8[8] = "mobj260";
-const char D_0069C5B0[8] = "mobj259";
-const char D_0069C5B8[8] = "mobj258";
-const char D_0069C5C0[8] = "mobj257";
-const char D_0069C5C8[8] = "mobj256";
-const char D_0069C5D0[8] = "mobj255";
-const char D_0069C5D8[8] = "mobj254";
-const char D_0069C5E0[8] = "mobj253";
-const char D_0069C5E8[8] = "mobj252";
-const char D_0069C5F0[8] = "mobj251";
-const char D_0069C5F8[8] = "mobj250";
-const char D_0069C600[8] = "mobj249";
-const char D_0069C608[8] = "mobj248";
-const char D_0069C610[8] = "mobj247";
-const char D_0069C618[8] = "mobj246";
-const char D_0069C620[8] = "mobj245";
-const char D_0069C628[8] = "mobj244";
-const char D_0069C630[8] = "mobj243";
-const char D_0069C638[8] = "mobj242";
-const char D_0069C640[8] = "mobj241";
-const char D_0069C648[8] = "mobj240";
-const char D_0069C650[8] = "mobj239";
-const char D_0069C658[8] = "mobj238";
-const char D_0069C660[8] = "mobj237";
-const char D_0069C668[8] = "mobj236";
-const char D_0069C670[8] = "mobj235";
-const char D_0069C678[8] = "mobj234";
-const char D_0069C680[8] = "mobj233";
-const char D_0069C688[8] = "mobj232";
-const char D_0069C690[8] = "mobj231";
-const char D_0069C698[8] = "mobj230";
-const char D_0069C6A0[8] = "mobj229";
-const char D_0069C6A8[8] = "mobj228";
-const char D_0069C6B0[8] = "mobj227";
-const char D_0069C6B8[8] = "mobj226";
-const char D_0069C6C0[8] = "mobj225";
-const char D_0069C6C8[8] = "mobj224";
-const char D_0069C6D0[8] = "mobj223";
-const char D_0069C6D8[8] = "mobj222";
-const char D_0069C6E0[8] = "mobj221";
-const char D_0069C6E8[8] = "mobj220";
-const char D_0069C6F0[8] = "mobj219";
-const char D_0069C6F8[8] = "mobj218";
-const char D_0069C700[8] = "mobj217";
-const char D_0069C708[8] = "mobj216";
-const char D_0069C710[8] = "mobj215";
-const char D_0069C718[8] = "mobj214";
-const char D_0069C720[8] = "mobj213";
-const char D_0069C728[8] = "mobj212";
-const char D_0069C730[8] = "mobj211";
-const char D_0069C738[8] = "mobj210";
-const char D_0069C740[8] = "mobj209";
-const char D_0069C748[8] = "mobj208";
-const char D_0069C750[8] = "mobj207";
-const char D_0069C758[8] = "mobj206";
-const char D_0069C760[8] = "mobj205";
-const char D_0069C768[8] = "mobj204";
-const char D_0069C770[8] = "mobj203";
-const char D_0069C778[8] = "mobj202";
-const char D_0069C780[8] = "mobj201";
-const char D_0069C788[8] = "mobj200";
-const char D_0069C790[8] = "mobj199";
-const char D_0069C798[8] = "mobj198";
-const char D_0069C7A0[8] = "mobj197";
-const char D_0069C7A8[8] = "mobj196";
-const char D_0069C7B0[8] = "mobj195";
-const char D_0069C7B8[8] = "mobj194";
-const char D_0069C7C0[8] = "mobj193";
-const char D_0069C7C8[8] = "mobj192";
-const char D_0069C7D0[8] = "mobj191";
-const char D_0069C7D8[8] = "mobj190";
-const char D_0069C7E0[8] = "mobj189";
-const char D_0069C7E8[8] = "mobj188";
-const char D_0069C7F0[8] = "mobj187";
-const char D_0069C7F8[8] = "mobj186";
-const char D_0069C800[8] = "mobj185";
-const char D_0069C808[8] = "mobj184";
-const char D_0069C810[8] = "mobj183";
-const char D_0069C818[8] = "mobj182";
-const char D_0069C820[8] = "mobj181";
-const char D_0069C828[8] = "mobj180";
-const char D_0069C830[8] = "mobj179";
-const char D_0069C838[8] = "mobj178";
-const char D_0069C840[8] = "mobj177";
-const char D_0069C848[8] = "mobj176";
-const char D_0069C850[8] = "mobj175";
-const char D_0069C858[8] = "mobj174";
-const char D_0069C860[8] = "mobj173";
-const char D_0069C868[8] = "mobj172";
-const char D_0069C870[8] = "mobj171";
-const char D_0069C878[8] = "mobj170";
-const char D_0069C880[8] = "mobj169";
-const char D_0069C888[8] = "mobj168";
-const char D_0069C890[8] = "mobj167";
-const char D_0069C898[8] = "mobj166";
-const char D_0069C8A0[8] = "mobj165";
-const char D_0069C8A8[8] = "mobj164";
-const char D_0069C8B0[8] = "mobj163";
-const char D_0069C8B8[8] = "mobj162";
-const char D_0069C8C0[8] = "mobj161";
-const char D_0069C8C8[8] = "mobj160";
-const char D_0069C8D0[8] = "mobj159";
-const char D_0069C8D8[8] = "mobj158";
-const char D_0069C8E0[8] = "mobj157";
-const char D_0069C8E8[8] = "mobj156";
-const char D_0069C8F0[8] = "mobj155";
-const char D_0069C8F8[8] = "mobj154";
-const char D_0069C900[8] = "mobj152";
-const char D_0069C908[8] = "mobj151";
-const char D_0069C910[8] = "mobj150";
-const char D_0069C918[8] = "mobj149";
-const char D_0069C920[8] = "mobj148";
-const char D_0069C928[8] = "mobj147";
-const char D_0069C930[8] = "mobj146";
-const char D_0069C938[8] = "mobj145";
-const char D_0069C940[8] = "mobj144";
-const char D_0069C948[8] = "mobj143";
-const char D_0069C950[8] = "mobj142";
-const char D_0069C958[8] = "mobj141";
-const char D_0069C960[8] = "mobj140";
-const char D_0069C968[8] = "mobj139";
-const char D_0069C970[8] = "mobj138";
-const char D_0069C978[8] = "mobj137";
-const char D_0069C980[8] = "mobj136";
-const char D_0069C988[8] = "mobj135";
-const char D_0069C990[8] = "mobj134";
-const char D_0069C998[8] = "mobj133";
-const char D_0069C9A0[8] = "mobj132";
-const char D_0069C9A8[8] = "mobj131";
-const char D_0069C9B0[8] = "mobj130";
-const char D_0069C9B8[8] = "mobj129";
-const char D_0069C9C0[8] = "mobj128";
-const char D_0069C9C8[8] = "mobj127";
-const char D_0069C9D0[8] = "mobj126";
-const char D_0069C9D8[8] = "mobj125";
-const char D_0069C9E0[8] = "mobj124";
-const char D_0069C9E8[8] = "mobj123";
-const char D_0069C9F0[8] = "mobj122";
-const char D_0069C9F8[8] = "mobj121";
-const char D_0069CA00[8] = "mobj120";
-const char D_0069CA08[8] = "mobj119";
-const char D_0069CA10[8] = "mobj118";
-const char D_0069CA18[8] = "mobj117";
-const char D_0069CA20[8] = "mobj116";
-const char D_0069CA28[8] = "mobj115";
-const char D_0069CA30[8] = "mobj114";
-const char D_0069CA38[8] = "mobj113";
-const char D_0069CA40[8] = "mobj112";
-const char D_0069CA48[8] = "mobj111";
-const char D_0069CA50[8] = "mobj110";
-const char D_0069CA58[8] = "mobj109";
-const char D_0069CA60[8] = "mobj108";
-const char D_0069CA68[8] = "mobj107";
-const char D_0069CA70[8] = "mobj106";
-const char D_0069CA78[8] = "mobj105";
-const char D_0069CA80[8] = "mobj104";
-const char D_0069CA88[8] = "mobj103";
-const char D_0069CA90[8] = "mobj102";
-const char D_0069CA98[8] = "mobj101";
-const char D_0069CAA0[8] = "mobj100";
-const char D_0069CAA8[8] = "mobj099";
-const char D_0069CAB0[8] = "mobj098";
-const char D_0069CAB8[8] = "mobj097";
-const char D_0069CAC0[8] = "mobj096";
-const char D_0069CAC8[8] = "mobj095";
-const char D_0069CAD0[8] = "mobj094";
-const char D_0069CAD8[8] = "mobj093";
-const char D_0069CAE0[8] = "mobj092";
-const char D_0069CAE8[8] = "mobj091";
-const char D_0069CAF0[8] = "mobj090";
-const char D_0069CAF8[8] = "mobj089";
-const char D_0069CB00[8] = "mobj088";
-const char D_0069CB08[8] = "mobj087";
-const char D_0069CB10[8] = "mobj086";
-const char D_0069CB18[8] = "mobj085";
-const char D_0069CB20[8] = "mobj084";
-const char D_0069CB28[8] = "mobj083";
-const char D_0069CB30[8] = "mobj082";
-const char D_0069CB38[8] = "mobj081";
-const char D_0069CB40[8] = "mobj080";
-const char D_0069CB48[8] = "mobj079";
-const char D_0069CB50[8] = "mobj078";
-const char D_0069CB58[8] = "mobj077";
-const char D_0069CB60[8] = "mobj076";
-const char D_0069CB68[8] = "mobj075";
-const char D_0069CB70[8] = "mobj074";
-const char D_0069CB78[8] = "mobj073";
-const char D_0069CB80[8] = "mobj072";
-const char D_0069CB88[8] = "mobj071";
-const char D_0069CB90[8] = "mobj070";
-const char D_0069CB98[8] = "mobj069";
-const char D_0069CBA0[8] = "mobj068";
-const char D_0069CBA8[8] = "mobj067";
-const char D_0069CBB0[8] = "mobj066";
-const char D_0069CBB8[8] = "mobj065";
-const char D_0069CBC0[8] = "mobj064";
-const char D_0069CBC8[8] = "mobj063";
-const char D_0069CBD0[8] = "mobj062";
-const char D_0069CBD8[8] = "mobj061";
-const char D_0069CBE0[8] = "mobj060";
-const char D_0069CBE8[8] = "mobj059";
-const char D_0069CBF0[8] = "mobj058";
-const char D_0069CBF8[8] = "mobj057";
-const char D_0069CC00[8] = "mobj056";
-const char D_0069CC08[8] = "mobj055";
-const char D_0069CC10[8] = "mobj054";
-const char D_0069CC18[8] = "mobj053";
-const char D_0069CC20[8] = "mobj052";
-const char D_0069CC28[8] = "mobj051";
-const char D_0069CC30[8] = "mobj050";
-const char D_0069CC38[8] = "mobj049";
-const char D_0069CC40[8] = "mobj048";
-const char D_0069CC48[8] = "mobj047";
-const char D_0069CC50[8] = "mobj046";
-const char D_0069CC58[8] = "mobj045";
-const char D_0069CC60[8] = "mobj044";
-const char D_0069CC68[8] = "mobj043";
-const char D_0069CC70[8] = "mobj042";
-const char D_0069CC78[8] = "mobj041";
-const char D_0069CC80[8] = "mobj040";
-const char D_0069CC88[8] = "mobj038";
-const char D_0069CC90[8] = "mobj037";
-const char D_0069CC98[8] = "mobj036";
-const char D_0069CCA0[8] = "mobj035";
-const char D_0069CCA8[8] = "mobj034";
-const char D_0069CCB0[8] = "mobj033";
-const char D_0069CCB8[8] = "mobj027";
-const char D_0069CCC0[8] = "mobj026";
-const char D_0069CCC8[8] = "mobj025";
-const char D_0069CCD0[8] = "mobj024";
-const char D_0069CCD8[8] = "mobj023";
-const char D_0069CCE0[8] = "mobj022";
-const char D_0069CCE8[8] = "mobj021";
-const char D_0069CCF0[8] = "mobj020";
-const char D_0069CCF8[8] = "mobj019";
-const char D_0069CD00[8] = "mobj018";
-const char D_0069CD08[8] = "mobj017";
-const char D_0069CD10[8] = "mobj016";
-const char D_0069CD18[8] = "mobj014";
-const char D_0069CD20[8] = "mobj013";
-const char D_0069CD28[8] = "mobj012";
-const char D_0069CD30[8] = "mobj011";
-const char D_0069CD38[8] = "mobj010";
-const char D_0069CD40[8] = "mobj009";
-const char D_0069CD48[8] = "mobj008";
-const char D_0069CD50[8] = "mobj007";
-const char D_0069CD58[8] = "mobj006";
-const char D_0069CD60[8] = "mobj005";
-const char D_0069CD68[8] = "mobj004";
-const char D_0069CD70[8] = "mobj003";
-const char D_0069CD78[8] = "mobj002";
-const char D_0069CD80[8] = "mobj001";
-const char D_0069CD88[8] = "mobj000";
-const char D_0069CD90[8] = "npc_020";
-const char D_0069CD98[8] = "npc_019";
-const char D_0069CDA0[8] = "npc_018";
-const char D_0069CDA8[8] = "npc_017";
-const char D_0069CDB0[8] = "npc_016";
-const char D_0069CDB8[8] = "npc_015";
-const char D_0069CDC0[8] = "npc_014";
-const char D_0069CDC8[8] = "npc_013";
-const char D_0069CDD0[8] = "npc_012";
-const char D_0069CDD8[8] = "npc_011";
-const char D_0069CDE0[8] = "npc_010";
-const char D_0069CDE8[8] = "npc_009";
-const char D_0069CDF0[8] = "npc_008";
-const char D_0069CDF8[8] = "npc_007";
-const char D_0069CE00[8] = "npc_006";
-const char D_0069CE08[8] = "npc_005";
-const char D_0069CE10[8] = "npc_004";
-const char D_0069CE18[8] = "npc_003";
-const char D_0069CE20[8] = "npc_002";
-const char D_0069CE28[8] = "npc_001";
-const char D_0069CE30[8] = "cf\\";
-const char D_0069CE38[8] = "oldf";
-const char D_0069CE40[8] = "cat";
-const char D_0069CE48[8] = "cook2";
-const char D_0069CE50[8] = "cook1";
-const char D_0069CE58[8] = "erobo";
-const char D_0069CE60[8] = "kenkyuf";
-const char D_0069CE68[8] = "kenkyum";
-const char D_0069CE70[8] = "faithm";
-const char D_0069CE78[8] = "proudm";
-const char D_0069CE80[8] = "urtvf";
-const char D_0069CE88[8] = "kebin";
-const char D_0069CE90[8] = "albelt";
-const char D_0069CE98[8] = "kidf";
-const char D_0069CEA0[8] = "kidm";
-const char D_0069CEA8[8] = "soldf";
-const char D_0069CEB0[8] = "soldm";
-const char D_0069CEB8[8] = "oldm";
-const char D_0069CEC0[8] = "girl";
-const char D_0069CEC8[8] = "boy";
-const char D_0069CED0[8] = "woman";
-const char D_0069CED8[8] = "man";
-
 const float D_0069AEC8 = 0.639999986f;
 const float D_0069AECC = 0.200000003f;
 const float D_0069AED0 = 0.639999986f;
@@ -3716,4 +2862,52 @@ unsigned char D_0069B9A0[3] = { 0xff, 0xff, 0xff };
 signed char D_0069B9B6 = 0;
 unsigned char D_0069B9B7 = 0;
 
-unsigned char D_002B5ED0[12] = { 0 };
+/* .data of this file, address order (0x2B7CF0-0x2B9CF8). */
+CameraSlotBlock cameraCfSlots = { 0 };
+
+CameraSlotTable cameraSlotTable = { { 0 } };
+
+/* Pairs of 16-bit ids per word: a model id, then the two part models that go with it (see uwamonoAttachIdTable above). */
+unsigned int uwamonoAttachIdTable[UWAMONO_ATTACH_TABLE_WORDS] = {
+    0x00010001, 0x00010006, 0x00010008, 0xFFFFFFFF,
+    0x00010009, 0x0001000D, 0x0001000E, 0xFFFFFFFF,
+    0x0001000F, 0x00010014, 0xFFFFFFFF, 0xFFFFFFFF,
+    0x00010015, 0x0001001A, 0x00010032, 0x00010033,
+    0x0001001B, 0x0001001F, 0x00010020, 0xFFFFFFFF,
+    0x00010022, 0x00010024, 0xFFFFFFFF, 0xFFFFFFFF,
+    0x00010025, 0x00010029, 0x0001002A, 0x0001002B,
+    0x00014005, 0x00014005, 0x00014006, 0x00014007
+};
+
+int uwamonoKeyRangeTable[10 * 17] = {
+    0x10001, 0x10006, 15, 16, 17, 0, 0, 0,
+    0x14005, 29, 9, 14, 49, 10, 15, 50,
+    306, 0x10009, 0x1000d, 3, 4, 5, 0, 0,
+    0, 0x14005, 29, 9, 14, 49, 10, 15,
+    50, 304, 0x1000f, 0x10014, 15, 16, 17, 0,
+    0, 0, 0x14005, 29, 9, 14, 49, 10,
+    15, 50, 303, 0x10015, 0x1001a, 15, 16, 17,
+    0, 0, 0, 0x14005, 29, 9, 14, 49,
+    10, 15, 50, 305, 0x1001b, 0x1001f, 15, 16,
+    17, 0, 0, 0, 0x14005, 29, 9, 14,
+    49, 10, 15, 50, 307, 0x10022, 0x10024, 3,
+    4, 5, 0, 0, 0, 0x14005, 29, 9,
+    14, 49, 10, 15, 50, 301, 0x10025, 0x10029,
+    15, 16, 17, 0, 0, 0, 0x14005, 29,
+    9, 14, 49, 10, 15, 50, 302, 0x14002,
+    0x14002, 25, 26, 26, 0, 0, 0, 0x10023,
+    21, 14, 19, 19, 15, 20, 20, 401,
+    0x14003, 0x14003, 25, 26, 26, 0, 0, 0,
+    0x10023, 19, 14, 19, 19, 15, 20, 20,
+    403, 0x14005, 0x14005, 25, 26, 26, 0, 0,
+    0, 0x10023, 34, 14, 19, 19, 15, 20,
+    20, 402
+};
+
+float D_002B9C98[4] = { 0.5f, 1.0f, 2.0f, 3.0f };
+
+unsigned char D_002B9CA8[16] = {
+    0, 4, 2, 3, 0, 0, 1, 0, 6, 5, 0, 0, 7, 0, 0, 0
+};
+
+UwamonoProbe uwamonoProbeTemplate = { 0 };

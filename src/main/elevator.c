@@ -1,6 +1,7 @@
 #include "common.h"
 #include "debug_break.h"
 #include "main/elevator.h"
+#include "main/tu048.h"
 
 /* The part of the actor body this file reads. */
 struct XenoActor {
@@ -13,11 +14,6 @@ struct UwamonoSlot {
     struct XenoActor *actor;                /* +0x00 */
     struct UwamonoState *state;             /* +0x04 */
     unsigned char unmodeled_08[0x870 - 0x08];
-};
-
-struct ElevatorState {
-    unsigned char unmodeled_00[0xD0];
-    unsigned short flags;                   /* +0xD0: the camera flags word (CameraState.flags in tu051.c) */
 };
 
 #define CAMERA_FLAG_TRACK_PLAYER 0x20 /* src/main/tu051.c */
@@ -38,14 +34,6 @@ struct ElevatorRecord {
     float progress;                         /* +0x4C */
 };
 
-/* One entry of elvSlopeTable (UwamonoSlope in tu051.c). */
-struct ElevatorSlope {
-    float x;
-    float z;
-    float push;
-    float speed;
-};
-
 /* The resource record gameWork.active points at (MainActive in tu050.c). */
 struct MainActive {
     unsigned char unmodeled_00[0x28];
@@ -57,34 +45,40 @@ struct ElevatorSample {
     float value[4];
 };
 
+/* One script native of the module id: its name and its function. */
+struct ElevatorNative {
+    const char *name;
+    int (*native)(int call);
+};
+
 extern int uwamonoCurrentIndex;
 extern struct UwamonoSlot uwamonoSlotTable[];
-extern struct ElevatorState gameWork;
-extern struct ElevatorRecord elvRecords[];
-extern struct MainActive *D_002B5DB8[]; /* gameWork.active (gameWork+0x28) */
 extern unsigned char D_0069D1C0[];
-extern unsigned char D_002BD478[];
+extern struct ElevatorNative D_002BD478[];
 extern unsigned char elvActiveMask;
 extern unsigned char elvNoOutMask;
 extern float I2F(int value);
-extern float elvValueScale;
-extern float elvAngleScale;
 extern int elvKeepOffFlags[];
-extern struct ElevatorSlope elvSlopeTable[];
 extern int printf(const char *format, ...);
 extern float xglSin(float angle);
 extern float xglCos(float angle);
 int mapFindBlockEntry(int id, int index);
 int func_A9F0C0(int call, int index);
 int func_A9F1C0(int call, int index);
+extern const char D_006894A8[];
+/* the assert format: expression, file, line */
+extern const char D_00689508[];
+/* "(no > 0) && (no < 9)" */
+extern const char D_00689520[];
+/* "../elevator.euc.c" */
+extern const char D_00689538[];
+extern const char D_0069D1A0[];
+extern const char D_0069D1A8[];
+extern const char D_0069D1B0[];
+extern const char D_0069D1B8[];
 
-extern const char D_006894A8[]; /* the assert format: expression, file, line */
-extern const char D_00689508[]; /* "(no > 0) && (no < 9)" */
-extern const char D_00689520[]; /* "../elevator.euc.c" */
-extern const char D_00689538[]; /* "(no > 0) && (no < UNDUFLAGKEEPOFF_MAX)" */
-
+/* "(no > 0) && (no < UNDUFLAGKEEPOFF_MAX)" */
 #define UNDUFLAGKEEPOFF_MAX 32
-
 /* The original assert: prints the expression, file and line, then traps.
  * A bare if, not do { } while (0): its loop notes change the schedule. */
 #define ELV_ASSERT(condition, expression, line)                     \
@@ -110,14 +104,92 @@ void elvSetStatusFlag(int elevator_index)
 
     status = uwamonoSlotTable[uwamonoCurrentIndex].actor->status;
     if ((status & ~0xFF) == 0x200 && (status & 0xF) == elevator_index) {
-        gameWork.flags |= CAMERA_FLAG_TRACK_PLAYER;
+        gameWork.camera.flags |= CAMERA_FLAG_TRACK_PLAYER;
     }
 }
 
 /* Per-frame motion of one elevator: interpolates the record position toward
  * its target by elapsed/duration (VU0 lerp), and calls elvSetStatusFlag at the
  * end. Called by DispMapObject with the object that holds the elevator index. */
-INCLUDE_ASM("asm/main/nonmatchings/elevator", elvUpdateMotion);
+/* The part of an elevator holder this function reads and writes back. */
+/* The elevator records, 636 bytes: seven 80-byte records, then the first 76 bytes of
+ * record 8. Its progress word would be ladderRungHeights[0] of tu075.c (0x6A1B2C), so the
+ * storage cannot be eight whole records; the code indexes it with 80-byte records. */
+static struct ElevatorRecord elvRecords[8];
+
+struct ElevatorHolder {
+    unsigned char unmodeled_00[0x10];
+    float position[3];                      /* +0x10: written back from the record */
+    unsigned char unmodeled_1C[0x592 - 0x1C];
+    short elevator_index;                   /* +0x592 (1426) */
+};
+
+void elvUpdateMotion(struct ElevatorHolder *holder)
+{
+    struct ElevatorRecord *record;
+    int progress_bits;
+    float value;
+
+    if (gameWork.control & 1) {
+        return;
+    }
+    record = &elvRecords[holder->elevator_index - 1];
+    if (record->axis_moves[0] == 0) {
+        value = holder->position[0];
+        record->position[0] = value;
+        record->target[0] = value;
+        record->start[0] = value;
+    }
+    if (record->axis_moves[1] == 0) {
+        value = holder->position[1];
+        record->position[1] = value;
+        record->target[1] = value;
+        record->start[1] = value;
+    }
+    if (record->axis_moves[2] == 0) {
+        value = holder->position[2];
+        record->position[2] = value;
+        record->target[2] = value;
+        record->start[2] = value;
+    }
+    record->reference[0] = record->position[0];
+    record->reference[1] = record->position[1];
+    record->reference[2] = record->position[2];
+    if (record->elapsed < record->duration) {
+        record->elapsed = record->elapsed + 1.0f;
+        if (0.0f < record->duration) {
+            record->progress = I2F((int)record->elapsed) / I2F((int)record->duration);
+        } else {
+            record->progress = 1.0f;
+        }
+        __asm__ __volatile__(
+            "mfc1 %0, %1\n\t"
+            "lqc2 $vf2, 0(%3)\n\t"
+            "lqc2 $vf1, 0(%2)\n\t"
+            "qmtc2 %0, $vf3\n\t"
+            "vsub.xyz $vf2xyz, $vf2xyz, $vf1xyz\n\t"
+            "vmulx.xyz $vf2xyz, $vf2xyz, $vf3x\n\t"
+            "vadd.xyz $vf3xyz, $vf2xyz, $vf1xyz\n\t"
+            "sqc2 $vf3, 0(%4)"
+            : "=&r"(progress_bits)
+            : "f"(record->progress), "r"(record->start), "r"(record->target), "r"(record->position)
+            : "memory");
+    }
+    if (record->duration <= record->elapsed) {
+        if (record->duration != 0.0f) {
+            elvSetStatusFlag(holder->elevator_index - 1);
+        }
+        record->elapsed = 0.0f;
+        record->duration = 0.0f;
+        record->progress = 1.0f;
+        record->start[0] = record->position[0];
+        record->start[1] = record->position[1];
+        record->start[2] = record->position[2];
+    }
+    holder->position[0] = record->position[0];
+    holder->position[1] = record->position[1];
+    holder->position[2] = record->position[2];
+}
 
 /* Copies elevator position_out[] and, when asked, the offset of the position
  * from the reference point to delta_out[]. Either pointer may be null. */
@@ -141,7 +213,7 @@ void elvGetPosition(int elevator_index, float *position_out, float *delta_out)
 /* Converts a script value to a float with the scale elvValueScale. */
 float elvValueToFloat(int value)
 {
-    return I2F(value) * elvValueScale;
+    return I2F(value) * 0.01f;
 }
 
 /* Script native id.elvActive: sets or clears bit (no - 1) of elvActiveMask
@@ -238,12 +310,12 @@ int elvMove(int call)
     return 1;
 }
 
-/* Script native id.slopeSet: elvSlopeTable[no - 1] = {-sin, -cos} of the
+/* Script native id.slopeSet: gameWork.slopes[no - 1] = {-sin, -cos} of the
  * angle (second argument times elvAngleScale), then the third and fourth
  * arguments as push and speed. */
 int elvSlopeSet(int call)
 {
-    struct ElevatorSlope *slope;
+    GameWorkSlope *slope;
     int no;
     float angle;
     float push;
@@ -251,8 +323,8 @@ int elvSlopeSet(int call)
 
     no = func_A9F0C0(call, 1);
     ELV_ASSERT((no > 0) && (no < 9), D_00689508, 290);
-    slope = &elvSlopeTable[no - 1];
-    angle = I2F(func_A9F0C0(call, 2)) * elvAngleScale;
+    slope = &gameWork.slopes[no - 1];
+    angle = I2F(func_A9F0C0(call, 2)) * 0.000174532935f;
     push = elvValueToFloat(func_A9F0C0(call, 3));
     speed = elvValueToFloat(func_A9F0C0(call, 4));
     slope->x = -xglSin(angle);
@@ -291,9 +363,9 @@ int preren(int call)
 
     offsetY = func_A9F0C0(call, 1);
     offsetX = func_A9F0C0(call, 2);
-    if (D_002B5DB8[0] != 0) {
-        D_002B5DB8[0]->offsetY = (short) offsetY;
-        D_002B5DB8[0]->offsetX = (short) offsetX;
+    if (gameWork.active != 0) {
+        gameWork.active->offsetY = (short) offsetY;
+        gameWork.active->offsetX = (short) offsetX;
     }
     return 1;
 }
@@ -338,3 +410,23 @@ void elvReset(void)
         duration -= sizeof(struct ElevatorRecord) / sizeof(float);
     }
 }
+
+/* Data of the original .rodata, .data and .sdata sections, in address order. */
+const char D_006894A8[96] = "\n\n************************\n\nAssert(%s)\n    file = %s  line = %d\n\n************************\n\n\n";
+const char D_00689508[24] = "(no > 0) && (no < 9)";
+const char D_00689520[24] = "../elevator.euc.c";
+const char D_00689538[40] = "(no > 0) && (no < UNDUFLAGKEEPOFF_MAX)";
+const char D_00689560[16] = "slopeSet";
+const char D_00689570[16] = "elvNoOut";
+const char D_00689580[16] = "elvActive";
+struct ElevatorNative D_002BD478[9] = {
+    { D_00689580, elvSetActive },
+    { D_0069D1B8, elvMove },
+    { D_00689570, elvSetNoOut },
+    { D_00689560, elvSlopeSet },
+    { D_0069D1B0, elvSetKeepOff },
+    { D_0069D1A8, preren },
+    { D_0069D1A0, preload },
+    { 0, 0 },
+};
+unsigned char D_0069D1C0[8] = "id";

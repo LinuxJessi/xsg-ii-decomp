@@ -18,7 +18,9 @@ X2 has no symbol table, so three things are estimates, and the output says so:
   to the next TU's, so bytes between two objects go to the earlier one. Byte identity
   does not depend on these cuts.
 - The overlay data half, one unsplit `.data` piece plus a `.bss` piece that starts at
-  the zero tail. No evidence yet separates data from rodata there.
+  the zero tail. Where the map gives the overlay a `.rodata` family (map_infer.py
+  OVERLAY_RODATA, ov01), the `.data` piece ends at it and each TU's `.rodata` piece is
+  its own `rodata` subsegment, cut as main's data pieces.
 
 The compile contract of a TU comes from reports/x2-compiler-calibration.md: `-O0` inside
 main's unoptimized zone, otherwise `-O2`; `-G8` when the code has a gp-relative reference,
@@ -51,7 +53,7 @@ DATA_SECTIONS = (".data", ".rodata", ".lit4", ".sdata", ".sbss", ".bss")
 SPLAT_TYPE = {".data": "data", ".rodata": "rodata", ".lit4": "lit4", ".sdata": "sdata",
               ".sbss": "sbss", ".bss": "bss"}
 
-CC1_SHA = "95b5144f302eb7d663788b13022f6bae3e591d8eacd9e84b416fbdf4dc020818"
+CC1_SHA = "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
 AS_SWAP_SHA = "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494"
 AS_PLAIN_SHA = "8c55ab9beeb4834c6cc0e841379b81930e329496f85893e8607d5b772c2b51ff"
 COMPILER_ID = "ee-gcc2_96-realconv-lp7"
@@ -66,7 +68,10 @@ AS_PLAIN_NAME = "LA29-vsqrt-nolabel-laimm (runtime and hand-written objects)"
 # long long % 10, then / 10). dpcmp: the double compare of gifStateEffectFrame.
 SOFT_FLOAT_LIBCALLS = {0x002A7560: "litodp", 0x002A70E8: "dpmul", 0x002A7398: "dpdiv",
                        0x002A76E8: "dptofp", 0x002A6D88: "fptodp", 0x002A4F60: "__divdi3",
-                       0x002A55F8: "__moddi3", 0x002A7510: "dpcmp", 0x002A7080: "dpsub"}
+                       0x002A55F8: "__moddi3", 0x002A7510: "dpcmp", 0x002A7080: "dpsub",
+                       # upstream PR #23 (textTagDrawGlyph casts long long to float) and its siblings
+                       0x002A6818: "__floatdisf", 0x002A7618: "dptoli", 0x002A6BB8: "__fixsfdi",
+                       0x002A6A18: "__fixdfdi"}
 # Addresses main's C reaches that no table offers: entries inside an OV01 function and scaffold
 # data without a label at that address. Hand edits of the output were lost at a regeneration
 # (2026-11-13), so they live here. Renamed labels must be renamed here too.
@@ -77,7 +82,14 @@ EXTRA_PROVIDES = (
     ("D_0069DA40", 0x0069DA40, "tu126 .sdata: 8-byte SJIS mark entry; scaffold label split at +1 (D_0069DA41)"),
     ("D_0069DA48", 0x0069DA48, "tu126 .sdata: 8-byte SJIS mark entry; scaffold label split at +1 (D_0069DA49)"),
     ("D_006AC0C0", 0x006AC0C0, "tu126 saveLabelBuild data; no scaffold label at this address"),
+    ("D_0069D101", 0x0069D101, "tu060 .sdata: second byte of the 8-byte D_0069D100 (func_001EC8E8 name/owner column flag); scaffold label split at +1"),
 )
+# MAIN data an overlay's C reads by name (the overlay asm reaches it with an absolute lui/offset pair that
+# carries no relocation, so no scaffold table offers the name). Same names as main's C.
+OVERLAY_MAIN_DATA = {
+    "ov01": (("D_0069DC7C", 0x0069DC7C, "main .sdata byte (tu110 SaveData.word2E6C source); read by ov01 tu023 battleWorkTablesReset"),
+        ("dataPadRawWords", 0x0063EDB0, "main .data pad state halfwords (xgl_dma.c / tu100.c); read by ov01 tu022 dataPadRead"),),
+}
 CONTRACT_BASIS = ("X1's last patched cc1 and corrected assembler with -g; "
                   "see reports/x2-compiler-calibration.md")
 
@@ -181,6 +193,11 @@ def asm_contract():
 SMALL_DATA_LITERAL_TUS = {
     0x0019A148: "xgl_menu: the three row formats of xglMenuDrawType1Sub (0x69DEF0, 0x69DEF8, 0x69DF00)",
     0x0022D1D8: "tu111: \"NULL\" (0x69D778) of smsg and msgDtl",
+    # Data of 8 bytes or less in .sdata with code identical under -G8 (data pass 6, 2026-11-17).
+    0x00251E30: "sef_print: \"RESET\" (0x69DAD8) and the shared words D_0069DAD0/svSceneFlags in .sdata",
+    0x0027DCB0: "tu225: \"$prop1;\" (0x69DCB0) in .sdata",
+    # The native names of a data table: .sdata literals of a -G8 file (data map review, 2026-11-17).
+    0x001FC558: "tu079: \"math\" (0x69D3B8, mathInit) and the mathNativeTable names (0x69D398-0x69D3B0) in .sdata",
 }
 
 
@@ -235,13 +252,24 @@ def yaml_options(unit, image, overlay):
     return lines
 
 
+# Data tables whose leading pointers splat's string guesser misreads as text: their first words
+# point at .rodata strings whose address bytes (50 5C 68 00, "P\\h") look like a short string.
+# A declared word type keeps them `.word LABEL`, so the scaffold item references its strings
+# (data map review 2026-11-17: the CD file name tables of res_get_path).
+TYPED_DATA_SYMBOLS = {
+    "main": {va: (f"D_{va:08X}", "u32") for va in (0x002B9DE0, 0x002BA1C8, 0x002BA2A0, 0x002BA3E8, 0x002BA538)},
+}
+
+
 def data_symbol_lines(unit):
     """Data labels chosen for one unit's link (tools/tu/x1_port.py plan), after its functions."""
+    typed = "".join(f"{name} = 0x{va:08X}; // type:{kind}\n"
+                    for va, (name, kind) in sorted((TYPED_DATA_SYMBOLS.get(unit) or {}).items()))
     if not REVIEWED_DATA.is_file():
-        return ""
+        return typed
     wanted = json.loads(REVIEWED_DATA.read_bytes()).get("units", {}).get(unit) or {}
-    return "".join(f"{name} = 0x{int(va, 16):08X};\n"
-                   for va, name in sorted(wanted.items(), key=lambda item: int(item[0], 16)))
+    return typed + "".join(f"{name} = 0x{int(va, 16):08X};\n"
+                           for va, name in sorted(wanted.items(), key=lambda item: int(item[0], 16)))
 
 
 def symbol_line(name, va, size=None):
@@ -296,7 +324,20 @@ def build_overlay(unit, image, record, main_names, out):
                                for f in tu["functions"]],
             accepted_asm_files=[], c_functions=[], accepted_asm_functions=[], local_renames={},
             adaptations=[], header_divergence=[]))
+    # A `.rodata` family of the map (tools/tu/map_infer.py OVERLAY_RODATA): the data piece ends where it
+    # starts, and each TU's piece is a splat `rodata` subsegment of that TU, as main's data families.
+    rodata = next((f for f in layout.get("families", []) if f["family"] == "rodata"), None)
+    data_end = hx(rodata["start"]) if rodata else bss_start
+    rodata_rows = []
+    if rodata:
+        stem_of = {tu["ordinal"]: file_names[tu["ordinal"]] for tu in tus}
+        rodata_rows = [[f"{unit}/{stem_of[p['ordinal']]}", h8(hx(p["start"])), h8(hx(p["end"]))]
+                       for p in rodata["owners"]]
+        if hx(rodata["end"]) != bss_start:
+            raise SystemExit(f"x2_scaffold: {unit} .rodata family ends at {rodata['end']}, .bss starts at {h8(bss_start)}")
     lines.append(f"      - [{up(text_end + base)}, data, {data_name}]")
+    for name, start, _ in rodata_rows:
+        lines.append(f"      - [{up(hx(start) + base)}, rodata, {name}]")
     lines.append(f"      - [{up(bss_start + base)}]")
     lines.append(f"      - {{ type: bss, vram: 0x{bss_start:08X}, name: {data_name} }}")
     lines.append(f"  - [{up(bss_start + base)}, pad, {unit}_bss_file_image]")
@@ -316,8 +357,9 @@ def build_overlay(unit, image, record, main_names, out):
     out[f"config/symbols/{unit}.txt"] = table + data_symbol_lines(unit)
     out[f"config/symbols/{unit}.main-symbols.ld"] = (
         "/* MAIN function symbols for overlay links (estimated, tools/tu/x2_scaffold.py) */\n"
-        + "".join(f"{name} = 0x{va:08X};\n" for va, name in sorted(externals.items())))
-    families = {".data": [[data_name, h8(text_end), h8(bss_start)]], ".rodata": []}
+        + "".join(f"{name} = 0x{va:08X};\n" for va, name in sorted(externals.items()))
+        + "".join(f"{name} = 0x{va:08X}; /* {note} */\n" for name, va, note in OVERLAY_MAIN_DATA.get(unit, ())))
+    families = {".data": [[data_name, h8(text_end), h8(data_end)]], ".rodata": rodata_rows}
     families[".bss"] = [[data_name, h8(bss_start), h8(section_end)]] if bss_start < section_end else []
     out[f"config/objects/{unit}.layout.json"] = json_text(dict(
         provenance="estimated", text=layout_text, families=families,

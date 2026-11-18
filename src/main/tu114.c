@@ -1,30 +1,12 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu110.h"
 #include "main/tu114.h"
 #include "main/tu148.h"
 #include "main/xenoActor.h"
+#include "main/tu051.h"
+#include "main/tu048.h"
 
-typedef struct MapModeBlock {
-    u8 unmodeled_0000[0x4084];
-    int mode;
-} MapModeBlock;
-
-typedef struct MapObject {
-    u8 unmodeled_000[0x330];
-    void *handle;
-    MapModeBlock *modeBlock;
-    u8 unmodeled_338[0x570 - 0x338];
-    u32 flags;
-} MapObject;
-
-/*
- * Global block whose word at offset 8 is set to 0x8000 after a successful
- * menu, slot or message-window update (mapObjectBeginMessage and the natives in tu113).
- */
-typedef struct WindowState {
-    u8 unmodeled_00[8];
-    u32 flags;
-} WindowState;
 
 /* Script native slotWinGetResult (table 0x3ec8e0). */
 int slotWinGetResult(int unused_arg0, int *failure_flag)
@@ -60,14 +42,13 @@ void scriptRegisterNatives(void)
 }
 
 void XenoActorSetMode(struct XenoActor *actor, int value);
-extern WindowState gameWork;
 
 void mapObjectBeginMessage(MapObject *object)
 {
     if (object != 0) {
         XenoActorEnableChannel(object->handle);
         XenoActorSetMode(object->handle, 0);
-        gameWork.flags |= 0x8000;
+        gameWork.control |= CONTROL_SCRIPTED;
     }
 }
 
@@ -131,10 +112,6 @@ void talkSetResult(int value)
 {
     talkResult = value;
 }
-
-MapObject *mapActiveObject = 0;
-
-int talkResult = -1;
 
 void getCitizenFlag();
 void getQuestFlag();
@@ -240,30 +217,9 @@ void *segNativeTable[6] = {
     0
 };
 
-unsigned int D_003EC930[10] = {
-    439, 440, 441, 403, 404, 405, 442, 443,
-    444, 0
-};
+/* .sdata of this file (0x69D7B8-0x69D7D0): the module names of scriptRegisterNatives. */
+unsigned char D_0069D7B8[8] = "talk";
 
-unsigned int yg2PathPanelImage[10] = {
-    409, 410, 411, 403, 404, 405, 406, 407,
-    408, 0
-};
+unsigned char D_0069D7C0[8] = "g2path";
 
-unsigned char D_003EC980[40] = {
-    1, 0, 2, 26, 10, 43, 4, 5,
-    7, 42, 8, 45, 30, 46, 49, 25,
-    12, 28, 9, 14, 32, 19, 47, 36,
-    11, 20, 17, 34, 44, 18, 27, 37,
-    48, 40, 23, 39, 0, 0, 0, 0
-};
-
-unsigned char yg2PathNumberText[136] = "Path No. 01 achievement level. \xa2" "\xf6" "\\nGray = In Progress   Blue = Success   Red = Failed\\nPress &03 for details. Press &04 to go back.";
-
-unsigned char yg2PathDigitChars[16] = "0123456789";
-
-unsigned char questFlags[40] = { 0 };
-
-unsigned char citizenFlags[56] = { 0 };
-
-int yg2PathModelHandles[4] = { 0 };
+unsigned char D_0069D7C8[8] = "seg";

@@ -5,6 +5,9 @@
 #include "shared.h"
 #include "main/sef.h"
 #include "ov01/tu001.h"
+#include "ov01/tu033.h"
+#include "ov01/tu035.h"
+#include "ov01/tu023.h"
 #include "ov01/tu042.h"
 
 extern int dataModelKeyTbl[];
@@ -26,9 +29,41 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B2A8);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B338);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B3B8);
+/*
+ * The tables of bat.dat: dataBatDatLoad (tu008) reads the file to batDat (0x0061D040). Its header holds, from
+ * +0x10, 17 words, each the offset of one table from the start of the file; a getter takes the address of its
+ * word, subtracts the word's offset in the header and adds the word. With one header struct,
+ * (unsigned char *)&batDat + batDat.offsets[n], the getters are two instructions shorter, so each keeps the
+ * address of its own word.
+ */
+extern int tecTableOffset;
+extern int effectIdListTableOffset;
+extern int slotPairTableOffset;
+extern int battleLookupTableOffset;
+extern int statusTableOffset;
+extern int itemTableOffset;
+extern int hitActionTableOffset;
+extern int batTable70Offset;
+extern int batTable74Offset;
+extern int pairLinkTableOffset;
+extern int calcLevelTableOffset;
+extern int tgtIdTableOffset;
+extern int growthTableOffset;
+extern int stringTableOffset;
 
-/* tableKeyRowsOffset holds a self-relative offset to a table of 20-byte records; entry numbers start at 1. */
+/* Technique records (0x20 bytes); index 0 and below give 0. */
+TecRecord *tecRecordGet(int index)
+{
+    unsigned char *table;
+
+    if (index <= 0) {
+        return 0;
+    }
+    table = (unsigned char *)&tecTableOffset - 16 + tecTableOffset;
+    return (TecRecord *) (table + (index - 1) * 32);
+}
+
+/* tableKeyRowsOffset: the table of 20-byte key rows; entry numbers start at 1. */
 extern int tableKeyRowsOffset;
 
 /* Row of the table for a key: the key is halfword +0x62 of the unit sub record, and
@@ -40,32 +75,153 @@ void *tableKeyRowGet(int key)
     return table + (key - 1) * 20;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B418);
+/* Records of effectIdListTableOffset (entries numbered from 1). */
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B450);
+short *effectIdListGet(int index)
+{
+    unsigned char *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B490);
+    if (index <= 0) {
+        return 0;
+    }
+    table = (unsigned char *)&effectIdListTableOffset - 24 + effectIdListTableOffset;
+    return (short *) (table + (index - 1) * 6);
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B4D0);
+/* Records of slotPairTableOffset (entries 1..0xF). */
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B508);
+ShortPair *slotPairRowGet(int index)
+{
+    unsigned char *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B548);
+    if (!(index < 0x10)) {
+        return 0;
+    }
+    table = (unsigned char *)&slotPairTableOffset - 28 + slotPairTableOffset;
+    return (ShortPair *) (table + (index - 1) * 12);
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B580);
+/* Records of battleLookupTableOffset (entries 1..0x6D). */
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B5B8);
+BattleLookupEntry *battleLookupGet(int index)
+{
+    unsigned char *table;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B5F0);
+    if (!(index < 0x6E)) {
+        return 0;
+    }
+    table = (unsigned char *)&battleLookupTableOffset - 32 + battleLookupTableOffset;
+    return (BattleLookupEntry *) (table + (index - 1) * 12);
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B628);
+/* Records of itemTableOffset (entries 1..0x28). */
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B660);
+ItemRecord *itemRecordGet(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0x29)) {
+        return 0;
+    }
+    table = (unsigned char *)&itemTableOffset - 40 + itemTableOffset;
+    return (ItemRecord *) (table + (index - 1) * 16);
+}
+
+/* Records of statusTableOffset (entries 1..0x68). */
+
+StatusRecord *statusRecordGet(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0x69)) {
+        return 0;
+    }
+    table = (unsigned char *)&statusTableOffset - 36 + statusTableOffset;
+    return (StatusRecord *) (table + (index - 1) * 12);
+}
+
+/* Records of hitActionTableOffset (entries 1..0x28). */
+
+HitAction *hitActionGet(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0x29)) {
+        return 0;
+    }
+    table = (unsigned char *)&hitActionTableOffset - 44 + hitActionTableOffset;
+    return (HitAction *) (table + (index - 1) * 16);
+}
+
+/* Records of batTable70Offset (entries 1..0x63). */
+
+void *func_00A9B580(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0x64)) {
+        return 0;
+    }
+    table = (unsigned char *)&batTable70Offset - 48 + batTable70Offset;
+    return table + (index - 1) * 4;
+}
+
+/* Records of batTable74Offset (entries 1..0x63). */
+
+void *func_00A9B5B8(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0x64)) {
+        return 0;
+    }
+    table = (unsigned char *)&batTable74Offset - 52 + batTable74Offset;
+    return table + (index - 1) * 8;
+}
+
+/* Records of pairLinkTableOffset (entries 1..0x10). */
+
+PairLink *pairLinkGet(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0x11)) {
+        return 0;
+    }
+    table = (unsigned char *)&pairLinkTableOffset - 56 + pairLinkTableOffset;
+    return (PairLink *) (table + (index - 1) * 16);
+}
+
+/* Records of calcLevelTableOffset (entries 1..0x15). */
+
+CalcLevelRecord *calcLevelRecordGet(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0x16)) {
+        return 0;
+    }
+    table = (unsigned char *)&calcLevelTableOffset - 60 + calcLevelTableOffset;
+    return (CalcLevelRecord *) (table + (index - 1) * 16);
+}
+
+/* Records of tgtIdTableOffset (entries 1..0xA). */
+
+TgtIdRecord *tgtIdRecordGet(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0xB)) {
+        return 0;
+    }
+    table = (unsigned char *)&tgtIdTableOffset - 64 + tgtIdTableOffset;
+    return (TgtIdRecord *) (table + (index - 1) * 16);
+}
 
 /* Self-relative table at tableKeyRecordsOffset: 16-byte entries, valid for index 16..143. */
 extern int tableKeyRecordsOffset;
 
-void *tableKeyRecordGet(int key)
+struct TableKeyRecord *tableKeyRecordGet(int key)
 {
     u32 offset = key - 16;
     unsigned char *table;
@@ -82,13 +238,35 @@ void *tableKeyRecordGet(int key)
 /* Base of the self-relative table at unitExpTableOffset. */
 extern int unitExpTableOffset;
 
-u8 *unitExpTblGet(void) {
-    return (u8 *)&unitExpTableOffset - 72 + unitExpTableOffset;
+UnitExpEntry *unitExpTblGet(void) {
+    return (UnitExpEntry *)((u8 *)&unitExpTableOffset - 72 + unitExpTableOffset);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B6E8);
+/* Records of growthTableOffset (entries 1..0xF). */
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B720);
+GrowthRecord *growthRecordGet(int index)
+{
+    unsigned char *table;
+
+    if (!(index < 0x10)) {
+        return 0;
+    }
+    table = (unsigned char *)&growthTableOffset - 76 + growthTableOffset;
+    return (GrowthRecord *) (table + (index - 1) * 32);
+}
+
+/* Records of stringTableOffset (entries numbered from 1). */
+
+short *stringOffsetsGet(int index)
+{
+    unsigned char *table;
+
+    if (index <= 0) {
+        return 0;
+    }
+    table = (unsigned char *)&stringTableOffset - 80 + stringTableOffset;
+    return (short *) (table + (index - 1) * 2);
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B750);
 
@@ -108,20 +286,6 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BAB8);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BB30);
 
-/* Effect request block sent to the main-side effect queue (sefStartEffectDefault / sefStartEffectWithValue). */
-struct EffectRequest {
-    int head;
-    unsigned char unmodeled_04[0x18];
-    int key; /* (high << 12) | low, see createEffect */
-    unsigned char unmodeled_20[0x18];
-};
-
-/* Owner whose request word (+0x1D0) is copied into the head of an effect request. */
-struct RequestOwner {
-    unsigned char unmodeled_00[0x1D0];
-    int request_word;
-};
-
 /* Message object made by msgPutObject: +0x4 release callback (msgObjRelease), +0xC ref count, +0x10 mode, +0x14 handle. */
 struct MsgObject {
     unsigned char unmodeled_00[0xC];
@@ -130,15 +294,16 @@ struct MsgObject {
     int handle;
 };
 
-int func_00A9B720(int);
-
-int tableStringGet(int index, int mode)
+/* The string table: record 1 of the table at stringTableOffset is its offset list; each offset counts from the list. */
+char *tableStringGet(int index, int mode)
 {
     int base;
 
-    base = func_00A9B720(1);
+    /* The list address is added as an int: with char * arithmetic (base + offset, &base[offset],
+     * offsets[index - 1]) the original keeps base in another register. */
+    base = (int)stringOffsetsGet(1);
     if (mode == 1) {
-        return base + *(short *)(((index - 1) << 1) + base);
+        return (char *)(base + *(short *)(((index - 1) << 1) + base));
     }
     return 0;
 }
@@ -162,12 +327,32 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BCC8);
  * shared by natives thinkSet and thinkSet2. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", thinkDispatch);
 
-/* thinkSendEnd: sends opcode 9 through cmdListSet, then calls tgtSelectModeEnd; used by thinkSet and thinkSetEnd. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", thinkSendEnd);
+/* thinkSendEnd: queues the think-end record for the unit (cmdListSet), then ends the
+ * target selection mode (tgtSelectModeEnd); used by thinkSet and thinkSetEnd. */
+void thinkSendEnd(Ov01Object *unit)
+{
+    CmdListBody command;
+
+    command.command = CMD_KIND_THINK_END;
+    cmdListSet(unit, &command);
+    tgtSelectModeEnd();
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BF08);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9C070);
+/* Field `field` of row `index` of the attack table (native atkTblGet). */
+int atkTblFieldGet(int field, AtkTbl *table, int index)
+{
+    /* index[table->rows] rather than table->rows[index]: the plain form swaps the operands of the addu that forms
+     * the row address (0x00A9C084 and 0x00A9C090); only the reversed form keeps the original order. */
+    switch (field) {
+    case 1:
+        return index[table->rows].key;
+    case 2:
+        return index[table->rows].value;
+    }
+    return table->count;
+}
 
 /* unitParaFieldGet: field reader over the unit's +0x144 sub-struct, same 38 field ids as unitParaFieldSet; native unitParaGet. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", unitParaFieldGet);
@@ -178,12 +363,12 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu042", unitParaFieldSet);
 void *memset();
 
 /* Effect request keyed by (high, low), head taken from the owner when one is given; used by native createEffect. */
-void effectSendOwned(int high, int low, struct RequestOwner *owner) {
+void effectSendOwned(int high, int low, StatOwner *owner) {
     struct EffectRequest request;
 
     memset(&request, 0, sizeof(request));
     if (owner != 0) {
-        request.head = owner->request_word;
+        request.head = owner->unit;
     }
     request.key = (high << 0xC) | low;
     sefStartEffectDefault(&request);
@@ -199,9 +384,33 @@ void effectSendValue(int high, int low, Vector4 *position) {
     sefStartEffectWithValue(&request, (int) position);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9C328);
+/* The 32-byte technique record of the tecRecordGet table as the native
+ * tecParaGet reads it (fields 0 to 3). */
 
-/* msgPutObject (core of native msgPut): makes a MsgObject from func_00A802F8, installs msgObjRelease as its
+/* Field `field` of technique `index` (native tecParaGet); 0 for technique 0
+ * or another field. */
+int tecParaFieldGet(int index, int field)
+{
+    TecRecord *tec;
+
+    if (index == 0) {
+        return 0;
+    }
+    tec = tecRecordGet(index);
+    switch (field) {
+    case 0:
+        return tec->flags;
+    case 1:
+        return tec->type;
+    case 2:
+        return tec->kindBits.kind;
+    case 3:
+        return tec->actionBits;
+    }
+    return 0;
+}
+
+/* msgPutObject (core of native msgPut): makes a MsgObject from ov01TaskClaim, installs msgObjRelease as its
  * release callback, submits the request block through textEntryAlloc and sets the busy flag. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu042", msgPutObject);
 
@@ -240,24 +449,37 @@ int msgIsIdle(void) {
     return msgBusy == 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", partyDataGetSlot);
+/* Reads one of the three bytes of gauge `id` (slot order as in partyDataSetSlot); 0 for another slot. */
+int partyDataGetSlot(int id, int slot)
+{
+    struct BoostGauge *gauge;
 
-void *func_00A91730(int id);
-
-/* Writes one of the three slot bytes of record `id`; slot 0 is byte 1, slot 1 byte 2, slot 2 byte 0. */
-void partyDataSetSlot(int id, int slot, int value) {
-    signed char *slots;
-
-    slots = func_00A91730(id);
+    gauge = boostGaugeSelect(id);
     switch (slot) {
     case 0:
-        slots[1] = (signed char) value;
+        return gauge->stock;
+    case 1:
+        return gauge->progress;
+    case 2:
+        return gauge->maxStock;
+    }
+    return 0;
+}
+
+/* Writes one of the three slot bytes of record `id`; slot 0 is stock, slot 1 progress, slot 2 maxStock. */
+void partyDataSetSlot(int id, int slot, int value) {
+    struct BoostGauge *gauge;
+
+    gauge = boostGaugeSelect(id);
+    switch (slot) {
+    case 0:
+        gauge->stock = (signed char) value;
         return;
     case 1:
-        slots[2] = (signed char) value;
+        gauge->progress = (signed char) value;
         break;
     case 2:
-        slots[0] = (signed char) value;
+        gauge->maxStock = (signed char) value;
         break;
     }
 }

@@ -207,6 +207,8 @@ void bgLayerLoadAll(void) {
     bgLayerLoad(BG_FRONT);
 }
 
+/* Typed over BgLayer, the file's own view of the record (alias-0 position stores); main/xenoActor.h declares
+   XenoActorAlloc/XenoActorRelease over struct XenoActor *, so this file does not include it. */
 extern BgLayer *XenoActorAlloc(void);
 extern void XenoActorAllocMatrices(BgLayer *actor);
 extern void XenoActorSetChannelValue(BgLayer *actor, float value);

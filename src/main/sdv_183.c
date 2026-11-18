@@ -245,29 +245,6 @@ void sdvSetCameraParam(SdvCameraParam *camera, int kind, short *angles, int scal
     sefGetPosition(&camera->point, offset, kind);
 }
 
-/* Triangle wave record of the camera shake (struct CameraWave of tu051.c, private there): amplitude is the current
-   peak, step the amount it decays per cycle; period and phase are in frames, hold delays the decay,
-   remaining counts the cycles left. */
-struct CameraWave {
-    float amplitude;                    /* +0x00 */
-    float step;                         /* +0x04 */
-    unsigned short period;              /* +0x08 */
-    unsigned short phase;               /* +0x0A */
-    unsigned short hold;                /* +0x0C */
-    unsigned short remaining;           /* +0x0E */
-};
-
-/* One of the four camera slots (0 look-at, 1 position and angles, 2 perspective, 3 roll): a timed transition
-   (struct CameraSlot of tu051.c, private there). */
-struct CameraSlot {
-    unsigned char unmodeled_00[2];
-    unsigned char blendMode;            /* +0x02 */
-    unsigned char easeMode;             /* +0x03 */
-    float progress;                     /* +0x04 */
-    float duration;                     /* +0x08: the transition's frames as a float; active when nonzero */
-    float fraction;                     /* +0x0C: the eased fraction of the transition, 1.0 when the frames were 0 */
-};
-
 /* The camera block of gameWork (struct CameraState in tu051.c, private there) from its flags word at +0xD0:
    the 432 bytes cameraInit clears. The original addresses it through this symbol, so the field names of
    CameraState are kept at their offsets minus 0xD0. */
@@ -276,9 +253,9 @@ typedef struct SdvCameraWork {
     unsigned char unmodeled_02[0x20 - 0x02];
     unsigned char shakeFlags;           /* +0x20: the wave mask of the current shake key */
     unsigned char unmodeled_21[0x30 - 0x21];
-    struct CameraWave waves[3];         /* +0x30 */
+    CameraWave waves[3];         /* +0x30 */
     float sway[4];                      /* +0x60 */
-    struct CameraSlot slot[4];          /* +0x70 */
+    CameraSlot slot[4];          /* +0x70 */
     int anchorIndex;                    /* +0xB0: the object the look-at follows, -1 for none */
     short anchorSubIndex;               /* +0xB4: its part */
     unsigned char unmodeled_B6[0xD0 - 0xB6];
@@ -481,7 +458,7 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
     signed char blend;                  /* key's blend mode while applying it */
     signed char blendMode;              /* key's blend and ease modes, read again for the slot transition */
     unsigned char easeMode;
-    struct CameraWave *wave;
+    CameraWave *wave;
     float amplitude;                    /* the shake key's amplitude in radians */
     int bit;
     int i;
@@ -521,7 +498,7 @@ int sdvProgressPrm(int kind, SdvScheduleChannel *channel, int keySize, int frame
                             wave->period = shakeKey->period;
                             wave->hold = shakeKey->hold;
                             wave->remaining = shakeKey->cycles;
-                            wave->amplitude = amplitude;
+                            wave->value = amplitude;
                             if (shakeKey->cycles != 0) {
                                 wave->step = amplitude / (float)shakeKey->cycles;
                             } else {

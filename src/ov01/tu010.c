@@ -1,8 +1,13 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu051.h"
+#include "main/xenoActor.h"
+#include "ov01/tu005.h"
+#include "ov01/tu010.h"
+#include "ov01/tu012.h"
 
-typedef struct ObjectTask ObjectTask;
 typedef struct XglTaskPrefix XglTaskPrefix;
+
 typedef struct XglTaskScheduler XglTaskScheduler;
 
 /*
@@ -31,117 +36,17 @@ struct ObjectTask {
 };
 
 extern void *memset(void *destination, int value, unsigned int count);
-
 extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
                                 int (*callback)(XglTaskPrefix *task),
                                 XglTaskPrefix *entry);
-
-/*
- * Actor.cmdTarget's type: unitCmdPosAdj saves and restores the whole command
- * target with aligned ld/sd pairs (0x00a04aa4..0x00a04ab8,
- * 0x00a04aec..0x00a04af8), where a plain Vector4 (4-byte aligned) copies
- * through ldl/ldr/sdl/sdr. The u64 pair is the alignment spelling of
- * MCamVector (src/ov01/m_cam.c) and GameVector8 (src/main/game.c) and carries
- * no meaning of its own; the components are read through `vector` and the whole is copied as one 8-byte value (unitCmdPosAdj's savedTarget). Its 8-byte
- * alignment rounds the partial Actor view's sizeof from 0x76C to 0x770;
- * no offset moves and nothing in this TU takes sizeof(Actor).
- */
-typedef union UnitVector {
-    Vector4 vector;
-    u64 pair[2];
-} UnitVector;
-
-/*
- * unitCmdDirSet/unitCmdDivSet (0x00a05a60, 0x00a05ba8) also read and blend
- * the x/z components of the Vector4 at +0x90 against a move command's target
- * coordinate; y and w of that Vector4 are untouched by any function this TU
- * claims.
- */
-typedef struct Actor {
-    u32 flags;
-    void (*update)(struct Actor *actor);
-    void (*draw)(struct Actor *actor);
-    u32 quadword_alignment_gap;
-    Vector4 position;
-    Vector4 previous_position;
-    Vector4 velocity;
-    Vector4 acceleration;
-    Vector4 rotation;
-    Vector4 scale;
-    int runFrameCounter;   /* +0x70: unitCmdRun tests it modulo 3 to space
-                             * out its footstep decoEffCall. */
-    int moveState;         /* +0x74: unitCmdMove's own move-command step;
-                             * 0 issues the move (unitCmdDstSet/unitCmdVASet
-                             * and, for a jump, unitCmdDirSet) and advances to
-                             * 1, which then waits for unitCmdJump/unitCmdWarp
-                             * to report arrival before calling
-                             * unitCmdMoveNext. */
-    int movePhase;          /* +0x78: reset to 0 by unitCmdMove when a move
-                             * starts; unitCmdJump/unitCmdWarp (still asm)
-                             * advance it through their own per-move-kind
-                             * phases. */
-    int movePhaseTimer;     /* +0x7C: unitCmdWarp zeroes it every time it
-                             * advances movePhase; no claimed function here
-                             * reads it. */
-    ObjectTask *targetUnit; /* +0x80: unitCmdDstSet's mode-0 path reads the
-                             * command target's own CalcUnitParam/table
-                             * position through it. */
-    unsigned char unmodeled_84[0x90 - 0x84];
-    UnitVector cmdTarget; /* +0x90: unitCmdDirSet reads x/z against
-                            * motionActor->position to face the pending move
-                            * command; unitCmdDivSet blends x/z toward that
-                            * position by a supplied ratio. y and w are
-                            * untouched by any function this TU claims. */
-    unsigned char unmodeled_a0[0xC0 - 0xA0];
-    float transparency;   /* +0xC0: unitActdraw draws translucent below 1.0 */
-    unsigned char unmodeled_c4[0xD0 - 0xC4];
-    float posSnapX;        /* +0xD0: unitCmdJump's arrival check rounds it
-                             * and compares against posSnapZ*0.5 rounded. */
-    float hopLength;       /* +0xD4: replaces four bytes of filler
-                             * (unmodeled_d4) in this existing local Actor
-                             * view. unitCmdMoveChaJump2 takes its address
-                             * (`addiu $19,$2,0xD4`, 0x00a040dc), stores the
-                             * command distance divided by 3 (`swc1 $f13,0($19)`,
-                             * 0x00a04114) and reloads it to aim each
-                             * intermediate hop (`lwc1 $f0,0($19)`, 0x00a04170). */
-    float posSnapZ;        /* +0xD8 */
-    unsigned char unmodeled_dc[0xE0 - 0xDC];
-    int motionFrame;      /* +0xE0: unitActupdate advances it before
-                             ACT_updateMotion */
-    unsigned char unmodeled_e4[0xF0 - 0xE4];
-    int motion;            /* +0xF0: unitMotGet returns it plus one */
-    float moveOriginY;     /* +0xF4: unitCmdRun/unitCmdJump save cmdTarget's
-                             * y/z here before a stand/attack phase and
-                             * restore them afterward; the paired x value at
-                             * this same phase reuses the four bytes of
-                             * `motion` above through a cast (see the .c
-                             * file), never through a new field here. */
-    float moveOriginZ;     /* +0xF8 */
-    unsigned char unmodeled_fc[0x6F0 - 0xFC];
-    int moveFlags;          /* +0x6F0: unitCmdRun/unitCmdHover/unitCmdFloat/
-                              * unitCmdJump test bit 0x1000 of it to detect
-                              * that a move command has reached its target. */
-    float moveElapsed;      /* +0x6F4: unitCmdJump reads it as a frame count
-                              * source for its arrival check. */
-    float moveStepRate;      /* +0x6F8: unitCmdFloat/unitCmdJump write a
-                              * per-frame interpolation rate here. */
-    unsigned char unmodeled_6fc[0x714 - 0x6FC];
-    float interpTime;      /* +0x714: unitSetInterpTime's write target */
-    unsigned char unmodeled_718[0x760 - 0x718];
-    float floatStepX;      /* +0x760: unitCmdFloat adds it to its motion
-                             * actor's position.x each step while floating. */
-    unsigned char unmodeled_764[0x768 - 0x764];
-    float floatStepZ;      /* +0x768 */
-} Actor;
 
 /*
  * Partial view of the unit record beyond the published ObjectTask prefix
  * (task+work, ending at +0x14, include/shared.h): unitSetInterpTime and
  * unitMotGet both follow a pointer immediately after that prefix, and
  * unitWpnMotSet reads a 4-entry pointer array starting eight bytes further.
- * Both point at Actor objects: unitWpnMotSet forwards the entry it reads to
- * ACT_animGetData/ACT_setMotion, whose first parameter is already
- * Actor-typed (src/main/act_2.c). No other byte of this wider record is
+ * Both point at actors (struct XenoActor): unitWpnMotSet forwards the entry it reads to
+ * ACT_animGetData/ACT_setMotion. No other byte of this wider record is
  * claimed, and the relationship between this pointer and ObjectTask.work is
  * not evidenced here.
  */
@@ -150,10 +55,10 @@ typedef struct UnitRecord UnitRecord;
 struct UnitRecord {
     ObjectTask task;                   /* +0x00..+0x13: the ObjectTask
                                          * prefix, opaque here */
-    Actor *motionActor;                /* +0x14 */
+    struct XenoActor *motionActor;                /* +0x14 */
     unsigned char unmodeled_018[0x1c - 0x18]; /* +0x18..+0x1b */
-    Actor *wpnActor[4];                /* +0x1c */
-    Actor *subActor;                   /* +0x2c: unitRemoveActor disposes it
+    struct XenoActor *wpnActor[4];                /* +0x1c */
+    struct XenoActor *subActor;                   /* +0x2c: unitRemoveActor disposes it
                                          * first when it is set */
 };
 
@@ -174,18 +79,40 @@ void unitInit(void)
     unitEnNum = 0;
 }
 
+Ov01Object *unitCreateSide(int kind, int side);
+extern void unitTblSet(int side, Ov01Object *unit);
+
 /*
  * Player unit creation: unitCreateSide with side 0, then the unit goes into
  * player slot 0 of the table (unitTblSet(0, unit)). Returns the unit or 0.
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu010", unitPlCreate);
+Ov01Object *unitPlCreate(int id)
+{
+    Ov01Object *unit;
+
+    unit = unitCreateSide(id, 0);
+    if (unit != 0) {
+        unitTblSet(0, unit);
+    }
+    return unit;
+}
 
 /*
  * Enemy unit creation: unitCreateSide with side 1, a 0x60 flag set in the
  * unit's word at +0xC, then unitTblSet(1, unit). Script-facing unitCreate
  * (ov01/tu047) reaches it. Returns the unit or 0.
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu010", unitEnCreate);
+Ov01Object *unitEnCreate(int id)
+{
+    Ov01Object *unit;
+
+    unit = unitCreateSide(id, 1);
+    unit->flags |= 0x60;
+    if (unit != 0) {
+        unitTblSet(1, unit);
+    }
+    return unit;
+}
 
 /*
  * Unit creation core for one side (0 player, 1 enemy): clears the word at
@@ -193,4 +120,82 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu010", unitEnCreate);
  * unitUpdate and func_00A84880 at +4 and +8, and creates the XenoActor root
  * kept at +0x1D0. Returns the unit or 0.
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu010", unitCreateSide);
+extern Ov01Object *unitSideClaim(int kind, int side);
+extern u32 battleEntryFindByKey(int kind);
+extern StatBlock *battleEntryAcquire(Ov01Object *unit, int kind);
+extern void battleEntryActivate(Ov01Object *unit, int kind);
+extern void func_00A84880(Ov01Object *object);
+extern void XenoActorSetChannelFlag80(struct XenoActor *actor);
+
+extern LightBlocks *lightBlockGet(void);
+extern void runtimeVecPtrGet(DoublewordVector4 **first, DoublewordVector4 **second);
+
+Ov01Object *unitCreateSide(int kind, int side)
+{
+    Ov01Object *unit;
+    struct XenoActor *actor;
+    struct XenoActor *root;
+    u32 found;
+    int notFound;
+    StatBlock *battleEntry;
+    DoublewordVector4 *vecA;
+    DoublewordVector4 *vecB;
+    int i;
+    unsigned short slotFlag;
+    unit = unitSideClaim(kind, side);
+    if (unit == 0) {
+        return 0;
+    }
+    unit->flags = 0;
+    dataLookupReset(&unit->commandQueue);
+    /* The pose block is the matrix block (ov01/tu022 passes it the same way). */
+    ov01MatrixBlockInit((struct MatrixBlock *) &unit->pose);
+    unit->update = unitUpdate;
+    unit->draw = func_00A84880;
+    found = battleEntryFindByKey(kind);
+    notFound = found < 1;
+    battleEntry = battleEntryAcquire(unit, kind);
+    unit->stats = battleEntry;
+    if (battleEntry == 0) {
+        return 0;
+    }
+    if (notFound == 1) {
+        battleEntryActivate(unit, kind);
+    }
+    root = XenoActorAlloc();
+    unit->unit = root;
+    actor = root;
+    if (kind < 141 || kind > 143) {
+        actor->drawFlags = 0x10001;
+    }
+    actor->alpha = 0.0f;
+    if (kind != 125) {
+        actor->drawMode = 2;
+        actor->drawParam = 0.5f;
+    }
+    XenoActorSetChannelFlag80(actor);
+    actor->lightBlocks = *lightBlockGet();
+    runtimeVecPtrGet(&vecA, &vecB);
+    root->runtimeVecA = *vecA;
+    root->runtimeVecB = *vecB;
+    for (i = 0; i < 3; i++) {
+        if (unit->stats->pairFirst[i] != 0) {
+            actor = XenoActorAlloc();
+            slotFlag = unit->stats->pairSecond[i];
+            unit->children[i] = actor;
+            actor->drawFlags = 0x10001;
+            actor->alpha = 0.0f;
+            if ((slotFlag & 0x4000) != 0) {
+                actor->drawFlags = 0x10005;
+            }
+            actor->lightBlocks = *lightBlockGet();
+            do {
+                actor->runtimeVecA = *vecA;
+                actor->runtimeVecB = *vecB;
+            } while (0);
+        } else {
+            unit->children[i] = 0;
+        }
+    }
+    return unit;
+}

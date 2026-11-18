@@ -7,26 +7,96 @@
 #include "main/tu110.h"
 #include "main/xgl_font.h"
 
+/* Admitted aligned(1) scalar: maxHp sits at the unaligned offset 2 of the record. */
+typedef signed int UnalignedS32 __attribute__((aligned(1)));
+
+/* The character record returned by battleContextStateGet (OV01): HP and EP with their maxima
+   (ov01 tu026.c calcHpAdjust / calcEpAdjust read the same offsets), stats and level. */
+typedef struct MenuPartyRecord {
+    unsigned char unmodeled_00[2];
+    UnalignedS32 maxHp;                     /* 0x02 */
+    short maxEp;                            /* 0x06 */
+    short strength;                         /* 0x08: "Str" ("Pow" in split mode) */
+    short vitality;                         /* 0x0A: "Vit" ("Arm" in split mode) */
+    short etherAttack;                      /* 0x0C: "Eatk" */
+    short etherDefense;                     /* 0x0E: "Edef" */
+    signed char dexterity;                  /* 0x10: "Dex" */
+    signed char evasion;                    /* 0x11: "Eva" */
+    signed char agility;                    /* 0x12: "Agl" */
+    signed char level;                      /* 0x13 */
+    unsigned char unmodeled_14[0x48];
+    int hp;                                 /* 0x5C */
+    short ep;                               /* 0x60 */
+    unsigned char unmodeled_62[0x108 - 0x62]; /* menuDrawCharStats copies 0x108 bytes */
+} MenuPartyRecord;
+
+/* The two-choice (yes/no) prompt at main 0x006a57d8. highlight is the track of the moving highlight
+ * band: current_pair.x its x, current_pair.y the highlighted row's y (choiceUpdate keeps it as the
+ * target y). state is the selected option (0 or 1, 2 once closed); buffer, firstOptionText and
+ * secondOptionText are the prompt text and the two option labels drawn by choiceDraw. */
+typedef struct ChoiceState {
+    struct FontTrack highlight;             /* 0x00 */
+    struct FontTrack fade;                  /* 0x1C: current_pair.x is the opacity choiceDraw applies */
+    unsigned char state;                    /* 0x38 */
+    unsigned char unmodeled_39[0x3C - 0x39];
+    unsigned char *buffer;                  /* 0x3C */
+    void *firstOptionText;                  /* 0x40: the word choiceFirstOptionText names */
+    void *secondOptionText;                 /* 0x44: the word choiceSecondOptionText names */
+} ChoiceState;
+
+/* The countdown object at main 0x006a5820. countdownInit sets count, countdownTick counts it down
+ * (a pad button zeroes it), countdownDraw draws text with fade.current_pair.x as its opacity. */
+typedef struct CountdownState {
+    int count;
+    struct FontTrack fade;              /* 0x04 */
+    unsigned char *text;                /* 0x20 */
+    unsigned char unmodeled_24[0x60 - 0x24]; /* the object spans 0x6a5820..0x6a5880; nothing reads past +0x24 */
+} CountdownState;
+
+struct FontDrawItem packetRequest = { 0 };
+char textDigits[16] = "0123456789";
+int D_003EB240[10] = { 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2, 0xf3 };
+int D_003EB268[10] = { 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc };
+int menuPanelFrame[10] = { 0x116, 0x117, 0x118, 0x119, 0x11a, 0x11b, 0x11c, 0x11d, 0x11e };
+int D_003EB2B8[20] = { 0x105, 0x106, 0x107, 0xff, 0x100, 0x101, 0x102, 0x103, 0x104, 0x0, 0x117, 0x117, 0x117, 0x11a, 0x11a, 0x11a, 0x11d, 0x11d, 0x11d };
+int D_0069D580 = 0xFFFFF0;
+int textCursorY = 0;
+signed char textCharSpacing = 4;
+unsigned char D_0069D750[8] = { 0x19, 0x03 };
+/* Style record of msgRangeDrawRevealed: 8 bytes, the layout of msgStyleReset below. */
+unsigned char D_0069D758[8] = { 0x0f, 0x44, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00 };
+
+static signed char D_0069E268[8];
+static char textDecimalBuffer[16];
+static char textSignedDecimalBuffer[16];
+static MenuPartyRecord D_006A5530;
+static struct FontTrack D_006A5638;
+static struct FontTrack D_006A5658;
+static struct FontTrack D_006A5678;
+static struct FontTrack menuCursorPos;
+static struct FontTrack menuCursorSize;
+static unsigned char msgBuffer[256];
+static ChoiceState choiceState;
+static CountdownState countdownState;
+
 /* Font draw state word; the draw call in textDrawSegment takes it as its third argument. */
-extern int D_0069D580;
 
 void func_0021A520(void)
 {
     D_0069D580 = 0xFFFFF0;
 }
 
-/* Font control tags textDrawSegment prints around a segment: the opening tag, the
- * colour tag whose two wave bytes it rewrites, and the alpha tag whose fourth byte it
- * rewrites. */
-extern unsigned char D_0069D588[];
+/* Font control tags textDrawSegment prints before a segment (defined after it): the colour
+ * tag whose two wave bytes it rewrites and the alpha tag whose fourth byte it rewrites. */
 extern unsigned char D_0069D590[8];
-extern unsigned char D_0069D598[4];
+extern unsigned char D_0069D598[8];
 /* Closing tags of the colour and alpha tags. */
-extern unsigned char D_0068A600[];
-extern unsigned char D_0068A610[];
-
 int xglTickWave(float divisor, float amplitude);
 u8 fontObjGetOpacity(void);
+
+const unsigned char D_0068A600[16] = "$colc0c0c0;";
+
+const unsigned char D_0068A610[32] = "$alpha0,0,0,0,0,0x80;";
 
 /* One text segment: optional colour and alpha control tags, then the draw call.
  * flags bit 0 pulses the colour, bit 1 halves the alpha, bit 2 scales it by the font opacity. */
@@ -37,7 +107,7 @@ void textDrawSegment(int x, int y, void *text, int flags)
     if (text == 0) {
         return;
     }
-    xglFontPrint(0, 0, D_0069D580, D_0069D588);
+    xglFontPrint(0, 0, D_0069D580, "\031\003");
     if (flags & 1) {
         D_0069D590[2] = D_0069D590[3] = xglTickWave(32.0f, 24.0f) + 0x68;
         xglFontPrint(0, 0, D_0069D580, D_0069D590);
@@ -59,10 +129,38 @@ void textDrawSegment(int x, int y, void *text, int flags)
     }
 }
 
-/* Multi-line text: a backslash-n escape starts a new line, textCursorY is the y cursor. */
-INCLUDE_ASM("asm/main/nonmatchings/tu101", textDrawLines);
+unsigned char D_0069D590[8] = { 0x0C, 0xC0, 0xC0, 0xC0 };
+unsigned char D_0069D598[8] = { 0x0F, 0x44, 0x00, 0x80 };
 
-extern struct FontDrawItem packetRequest;
+/* Multi-line text: a backslash-n escape starts a new line, textCursorY is the y cursor. */
+
+int textDrawLines(int x, int y, unsigned char *text, int flags)
+{
+    unsigned char *first = text;
+    int lines;
+
+    textCursorY = (y >= 0) ? y : textCursorY;
+    lines = 0;
+    /* "\\n" escapes become a newline and the BEL byte 7; the byte is re-read after the rewrite. */
+    while (*text != 0) {
+        if (*text == '\\' && text[1] == 'n') {
+            text[0] = '\n';
+            text[1] = 7;
+            lines++;
+        } else if (*text == '\n') {
+            lines++;
+        }
+        if ((signed char)*text < 0) {
+            text++;
+        }
+        text++;
+    }
+    textDrawSegment(x, textCursorY, first, flags);
+    textCursorY += lines * 20;
+    textCursorY += 30;
+    return textCursorY;
+}
+
 /* Returns nothing: textDrawDigits and textDrawDigitsWideAlt reload packetRequest.x after
    the call instead of using a result. */
 void fontObjDraw(struct FontDrawItem *item);
@@ -90,7 +188,6 @@ void packetSubmitRequestEx(int cell, int x, int y, int width, int height, int fl
     fontObjDraw(&packetRequest);
 }
 
-extern signed char textCharSpacing;
 unsigned long long fontObjGetColor(void);
 u16 fontObjCellOffsetX(int index);
 
@@ -485,9 +582,6 @@ void textDrawTitle(int windowLayer, int x, int y, char *text)
     }
 }
 
-extern char textDecimalBuffer[16];
-extern const char textDigits[];
-
 /* Formats an integer in decimal into a static buffer with width and zero-pad flag; returns the buffer. */
 char *textFormatDecimal(int value, int digits, int zeroPad)
 {
@@ -597,8 +691,6 @@ void textDrawDecimalShadowZero(int x, int y, int value, int digits, u64 colour)
         }
     }
 }
-
-extern char textSignedDecimalBuffer[];
 
 /* Signed decimal through the shadowed text run: width 1 to 9 plus a '+' or '-' in front of the
    digits, space padding, drawn in a fixed colour. The digits are textDigits[value % 10] of the
@@ -1056,8 +1148,98 @@ void panelDrawNineSliceNormalBlend(void *style, int x, int y, int width, int hei
     fontObjDraw(&packetRequest);
 }
 
-/* Record group of eleven submits, sprite kinds 0x116 to 0x11F. */
-INCLUDE_ASM("asm/main/nonmatchings/tu101", func_0021C6F8);
+/* Record group frame at (x, y) of width by height: corner and edge cells 0x116 to 0x11F with a
+   75-wide title tab (cells 0x11C, 0x11D, 0x11F) on the top edge. */
+void func_0021C6F8(int x, int y, int width, int height)
+{
+    int innerWidth;
+    int innerHeight;
+    int sideHeight;
+    int topLeftCell = 0x11C;
+    int bottomLeftCell = 0x116;
+
+    innerWidth = width - fontObjCellOffsetX(topLeftCell) - fontObjCellOffsetX(0x11E);
+    innerHeight = height - fontObjCellOffsetY(topLeftCell) - fontObjCellOffsetY(bottomLeftCell);
+    packetRequest.cell_index = topLeftCell;
+    packetRequest.x = x;
+    packetRequest.y = y;
+    packetRequest.flags = 1;
+    fontObjDraw(&packetRequest);
+    sideHeight = innerHeight - 33;
+    packetRequest.x += fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.cell_index = 0x11D;
+    packetRequest.size_w = 75;
+    packetRequest.size_h = fontObjCellOffsetY(0x11D);
+    packetRequest.flags = 9;
+    if (innerWidth > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.cell_index = 0x11F;
+    packetRequest.x += 75;
+    packetRequest.flags = 1;
+    fontObjDraw(&packetRequest);
+    packetRequest.x += 40;
+    packetRequest.y += 17;
+    packetRequest.cell_index = 0x11D;
+    packetRequest.size_w = innerWidth - 115;
+    packetRequest.size_h = fontObjCellOffsetY(0x11D);
+    packetRequest.flags = 9;
+    fontObjDraw(&packetRequest);
+    packetRequest.x += packetRequest.size_w;
+    packetRequest.cell_index = 0x11E;
+    packetRequest.flags = 1;
+    fontObjDraw(&packetRequest);
+    packetRequest.x = x;
+    packetRequest.y += fontObjCellOffsetY(packetRequest.cell_index) - 17;
+    packetRequest.cell_index = 0x119;
+    packetRequest.size_w = fontObjCellOffsetX(0x119);
+    packetRequest.size_h = innerHeight;
+    packetRequest.flags = 9;
+    if (sideHeight > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.x += fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.y += 17;
+    packetRequest.cell_index = 0x11A;
+    packetRequest.size_w = innerWidth;
+    packetRequest.size_h = innerHeight - 17;
+    packetRequest.flags = 0x109;
+    if (innerWidth > 0 && sideHeight > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.x += innerWidth;
+    packetRequest.cell_index = 0x11B;
+    packetRequest.size_w = fontObjCellOffsetX(0x11B);
+    packetRequest.flags = 9;
+    if (sideHeight > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.x = x;
+    packetRequest.y += sideHeight + 16;
+    packetRequest.flags = 1;
+    packetRequest.cell_index = bottomLeftCell;
+    packetRequest.size_h -= 16;
+    fontObjDraw(&packetRequest);
+    packetRequest.x += fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.cell_index = 0x117;
+    packetRequest.size_w = innerWidth;
+    packetRequest.size_h = fontObjCellOffsetY(0x117);
+    packetRequest.flags = 9;
+    if (innerWidth > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.x += innerWidth;
+    packetRequest.cell_index = 0x118;
+    packetRequest.flags = 1;
+    fontObjDraw(&packetRequest);
+    packetRequest.x = x + fontObjCellOffsetX(topLeftCell);
+    packetRequest.y = y + fontObjCellOffsetY(topLeftCell);
+    packetRequest.cell_index = 0x11A;
+    packetRequest.size_w = 75;
+    packetRequest.size_h = 33 - fontObjCellOffsetY(0x11D);
+    packetRequest.flags = 9;
+    fontObjDraw(&packetRequest);
+}
 
 /* Fixed-size badge at (x, y): kind 0x136 and the 0x54-wide strip 0x137 (flags 0x819) on the
    left, then from x + 0x64 a small frame of kinds 0x135, 0x11D, 0x11A, 0x117, 0x11E, 0x118 and
@@ -1112,8 +1294,90 @@ void menuDrawBadge(int x, int y) {
 }
 
 /* Record group of ten submits, sprite kinds 0x100 to 0x10A. */
-INCLUDE_ASM("asm/main/nonmatchings/tu101", func_0021CC08);
+/* Nine-piece frame with fixed cells (the panelDrawNineSlice layout with its kinds in place):
+   corners 258/260/261/266, edges 259/255/257/262, centre 256 with flags 0x109; extra cells
+   253 and 254 finish the bottom row. */
+void func_0021CC08(int x, int y, int width, int height)
+{
+    int innerWidth;
+    int innerHeight;
+    int topLeftCell = 258;
+    int topRightCell = 260;
+    int tabCell;
 
+    innerWidth = width - fontObjCellOffsetX(topLeftCell) - fontObjCellOffsetX(topRightCell);
+    innerHeight = height - fontObjCellOffsetY(topLeftCell) - fontObjCellOffsetY(261);
+    packetRequest.cell_index = topLeftCell;
+    packetRequest.y = y;
+    packetRequest.x = x;
+    packetRequest.flags = 1;
+    fontObjDraw(&packetRequest);
+    packetRequest.x += fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.cell_index = 259;
+    packetRequest.size_w = innerWidth;
+    packetRequest.size_h = fontObjCellOffsetY(packetRequest.cell_index);
+    packetRequest.flags = 9;
+    if (innerWidth > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.x += innerWidth;
+    packetRequest.cell_index = topRightCell;
+    packetRequest.flags = 1;
+    fontObjDraw(&packetRequest);
+    packetRequest.x = x;
+    packetRequest.y += fontObjCellOffsetY(packetRequest.cell_index);
+    packetRequest.cell_index = 255;
+    packetRequest.size_w = fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.size_h = innerHeight;
+    packetRequest.flags = 9;
+    if (innerHeight > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.x += fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.cell_index = 256;
+    packetRequest.size_w = innerWidth;
+    packetRequest.flags = 0x109;
+    if (innerWidth > 0 && innerHeight > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.x += innerWidth;
+    packetRequest.cell_index = 257;
+    packetRequest.size_w = fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.flags = 9;
+    if (innerHeight > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.x = x;
+    packetRequest.y += innerHeight;
+    packetRequest.flags = 1;
+    packetRequest.cell_index = 261;
+    fontObjDraw(&packetRequest);
+    packetRequest.x += fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.cell_index = 262;
+    tabCell = 266;
+    packetRequest.size_w = innerWidth - 60 - fontObjCellOffsetX(tabCell);
+    packetRequest.size_h = fontObjCellOffsetY(packetRequest.cell_index);
+    packetRequest.flags = 9;
+    fontObjDraw(&packetRequest);
+    packetRequest.x += packetRequest.size_w;
+    packetRequest.cell_index = tabCell;
+    packetRequest.size_w = 100;
+    packetRequest.size_h = fontObjCellOffsetY(tabCell);
+    packetRequest.flags = 1;
+    fontObjDraw(&packetRequest);
+    packetRequest.x += fontObjCellOffsetX(packetRequest.cell_index);
+    packetRequest.size_w = 60;
+    packetRequest.cell_index = 253;
+    packetRequest.size_h = fontObjCellOffsetY(packetRequest.cell_index);
+    packetRequest.flags = 9;
+    if (innerHeight > 0) {
+        fontObjDraw(&packetRequest);
+    }
+    packetRequest.cell_index = 254;
+    packetRequest.flags = 1;
+    packetRequest.x += packetRequest.size_w;
+    fontObjDraw(&packetRequest);
+}
 
 /* Calls menuDrawOutlineFrame (defined below) and nothing else: the callers' four arguments pass straight through. */
 void func_0021CEE0(int x, int y, int width, int height) {
@@ -1295,7 +1559,24 @@ void menuDrawFixedFrame(int x, int y) {
 }
 
 /* Three-record group (kinds 0x13A to 0x13C) at (x, y, width). */
-INCLUDE_ASM("asm/main/nonmatchings/tu101", func_0021D550);
+void func_0021D550(int x, int y, int width)
+{
+    packetRequest.cell_index = 314;
+    packetRequest.flags = 1;
+    packetRequest.x = x;
+    packetRequest.y = y;
+    fontObjDraw(&packetRequest);
+    packetRequest.cell_index = 316;
+    packetRequest.x = x + width - 10;
+    fontObjDraw(&packetRequest);
+    packetRequest.cell_index = 315;
+    packetRequest.x = x + 10;
+    packetRequest.y = y;
+    packetRequest.size_w = width - 20;
+    packetRequest.size_h = 21;
+    packetRequest.flags |= 8;
+    fontObjDraw(&packetRequest);
+}
 
 /* Border without fill: edge and corner pieces 0x23-0x2A; the tint is set first. */
 void menuDrawBorder(int x, int y, int width, int height, unsigned long long color) {
@@ -1376,7 +1657,6 @@ void menuDrawPanelFrameWide(int x, int y, int width, int height, unsigned long l
     packetSubmitRequest(0x40, (x + width) - 0x1E, y, 5);
     fontObjResetColor();
 }
-
 
 /* Panel frame: border and corner pieces 0x2F-0x35 with the fill in mode 0x106; the tint is set first. */
 /* color is a 64-bit RGBA+Q word, as in menuDrawPanel's 0x3F800000607F7F7F tint. */
@@ -1744,7 +2024,6 @@ void menuDrawScrollFrame(int count)
     packetSubmitRequestEx(0xEA, 0, 0x183 - offset, 0x200, 0x10, 0x801);
 }
 
-
 #include "shared.h"
 
 /* One item of a MenuObject (MenuObject.items[], 0x40 bytes); menuResetRecord empties it. member is
@@ -1771,15 +2050,12 @@ enum MenuItemFlag {
     MENU_ITEM_VALUES = 0x400,           /* layout 4 shows the class and skill points instead of HP and EP */
     MENU_ITEM_TALL = 0x10000,           /* tall variant of layouts 5 to 7 */
     MENU_ITEM_LABEL = 0x100000          /* with MENU_ITEM_MARK_A: the empty slot adds the 0x158/0x159
-                                           marks and the D_0069D748 label */
+                                           marks and the "Canaan" label */
 };
 
-
 void fontObjSetColorRgba(int, int, int, int);
-void func_0021CC08(int, int, int, int);
+/* Record group of ten submits, sprite kinds 0x100 to 0x10A. */ /* Nine-piece frame with fixed cells (the panelDrawNineSlice layout with its kinds in place): corners 258/260/261/266, edges 259/255/257/262, centre 256 with flags 0x109; extra cells 253 and 254 finish the bottom row. */ void func_0021CC08(int x, int y, int width, int height);
 extern unsigned short menuIconKinds[];
-extern struct FontTrack menuCursorPos;
-extern struct FontTrack menuCursorSize;
 
 /* Icon at (x, y): the backing piece 0x157, then the kind stored in menuIconKinds[index]. */
 void menuDrawIndexedIcon(int x, int y, int index)
@@ -2080,11 +2356,9 @@ void menuDrawFrontMemberIcons(int x, int y, int record)
     }
 }
 
-extern unsigned char D_0068A9B0[];
-extern unsigned char D_0069D608[];
-extern unsigned char D_0069D610[];
-extern unsigned char D_0069D618[];
-extern void *D_003EB3C8[];
+extern const char *D_003EB3C8[];
+
+const unsigned char D_0068A9B0[24] = "$zoom6,13;>$zoom13;";
 
 /* Character info line: label, then (mode>0) the group name and (mode>=2) the slot
    name; group>=3 and slot>=4 with mode 2 draws a single "none" segment instead. */
@@ -2092,18 +2366,18 @@ void menuDrawCharInfo(int x, int y, int group, int slot, int mode)
 {
     textDrawSegment(x, y, D_0068A600, 0);
     if (group >= 3 && slot >= 4 && mode == 2) {
-        textDrawSegment(x + 6, y, D_0069D608, 0);
+        textDrawSegment(x + 6, y, "----", 0);
         return;
     }
     textDrawSegment(x, y, D_0068A9B0, 0);
     if (mode <= 0) {
         return;
     }
-    textDrawSegment(x + 6, y, D_0069D610, 0);
+    textDrawSegment(x + 6, y, "Level", 0);
     textDrawSegment(x + 0x30, y, D_003EB3C8[group], 0);
     textDrawSegment(x + 0x3A, y, D_0068A9B0, 0);
     if (mode >= 2) {
-        textDrawSegment(x + 0x40, y, D_0069D618, 0);
+        textDrawSegment(x + 0x40, y, "Class", 0);
         textDrawSegment(x + 0x66, y, D_003EB3C8[4 + slot], 0);
         textDrawSegment(x + 0x76, y, D_0068A9B0, 0);
     }
@@ -2119,7 +2393,6 @@ typedef struct LicenseCursor {
 } LicenseCursor;
 
 int cursorBufferGetAlignedOffset(LicenseCursor *cursor);
-extern unsigned char D_0069D620[];
 unsigned int cursorBufferGetIndex(LicenseCursor *cursor);
 int menuListPageCount(LicenseCursor *cursor);
 /* OV01 dataBoxChkCategory1 (config/symbols/ov01.txt). */
@@ -2128,10 +2401,11 @@ void *func_00A9B8D8(int id, int unused);
 int selectionEntryIsEligible(int index);
 extern u8 selectionWindowCount;
 extern unsigned char selectionWindowList[];
-extern unsigned char D_0069D628[];
-extern unsigned char msgStyleInit[];
+
 #define LICENSE_COLOR_IDLE 0x3F80000000000000LL
 #define LICENSE_COLOR_SELECTED 0x3F80000080120B50LL
+
+const unsigned char msgStyleInit[72] = "$init;$bg2;$shadow+1,+3,000000;$zoom13;$han1;$prop1;$xx0,21;$colc0c0c0;";
 
 /* Item window: up to ten rows of selectionWindowList from the cursor's first visible
    row, each with its count (dataBoxChkCategory1) and name (func_00A9B8D8); ineligible entries
@@ -2144,8 +2418,8 @@ void menuDrawItemList(int x, int y, LicenseCursor *cursor)
     int rowStyle;
 
     menuDrawListWindow(x, y, page, menuListPageCount(cursor));
-    menuDrawTitledFrame(x + 8, y + 0x20, 0xA1, 0xDF, D_0069D620);
-    menuDrawTitledFrame(x + 0xAB, y + 0x20, 0x2D, 0xDF, D_0069D628);
+    menuDrawTitledFrame(x + 8, y + 0x20, 0xA1, 0xDF, "  List");
+    menuDrawTitledFrame(x + 0xAB, y + 0x20, 0x2D, 0xDF, "  Num");
     packetSubmitRequest(0x12B, x + 0x43, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
     for (i = 0; i < 10 && i + firstRow < selectionWindowCount; i++) {
@@ -2185,11 +2459,11 @@ void menuDrawItemListDetail(int x, int y, LicenseCursor *cursor)
     textDrawDigits(x + 0x1A2, y + 0x10C, cursorBufferGetIndex(cursor) + 1, 2);
     menuDrawPageCells(x + 0xC, y + 0x101, cursorBufferGetIndex(cursor), menuListPageCount(cursor), 0x14);
     menuDrawBorder(x + 8, y + 0x20, 0xD8, 0xDF, 0x3F80000080381A1ALL);
-    menuDrawTitledFrame(x + 0xC, y + 0x25, 0xA1, 0xD5, D_0069D620);
-    menuDrawTitledFrame(x + 0xAF, y + 0x25, 0x2D, 0xD5, D_0069D628);
+    menuDrawTitledFrame(x + 0xC, y + 0x25, 0xA1, 0xD5, "  List");
+    menuDrawTitledFrame(x + 0xAF, y + 0x25, 0x2D, 0xD5, "  Num");
     menuDrawBorder(x + 0xE2, y + 0x20, 0xD8, 0xDF, 0x3F80000080381A1ALL);
-    menuDrawTitledFrame(x + 0xE6, y + 0x25, 0xA1, 0xD5, D_0069D620);
-    menuDrawTitledFrame(x + 0x189, y + 0x25, 0x2D, 0xD5, D_0069D628);
+    menuDrawTitledFrame(x + 0xE6, y + 0x25, 0xA1, 0xD5, "  List");
+    menuDrawTitledFrame(x + 0x189, y + 0x25, 0x2D, 0xD5, "  Num");
     packetSubmitRequest(0x12B, x + 0xB4, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
     for (i = 0; i < 18 && i + firstRow < cursor->count; i++) {
@@ -2236,34 +2510,10 @@ typedef struct LicenseRecord {
     unsigned char unmodeled_05;
 } LicenseRecord;
 
-/* Admitted aligned(1) scalar: maxHp sits at the unaligned offset 2 of the record. */
-typedef signed int UnalignedS32 __attribute__((aligned(1)));
-
-/* The character record returned by battleContextStateGet (OV01): HP and EP with their maxima
-   (ov01 tu026.c calcHpAdjust / calcEpAdjust read the same offsets), stats and level. */
-typedef struct MenuPartyRecord {
-    unsigned char unmodeled_00[2];
-    UnalignedS32 maxHp;                     /* 0x02 */
-    short maxEp;                            /* 0x06 */
-    short strength;                         /* 0x08: "Str" ("Pow" in split mode) */
-    short vitality;                         /* 0x0A: "Vit" ("Arm" in split mode) */
-    short etherAttack;                      /* 0x0C: "Eatk" */
-    short etherDefense;                     /* 0x0E: "Edef" */
-    signed char dexterity;                  /* 0x10: "Dex" */
-    signed char evasion;                    /* 0x11: "Eva" */
-    signed char agility;                    /* 0x12: "Agl" */
-    signed char level;                      /* 0x13 */
-    unsigned char unmodeled_14[0x48];
-    int hp;                                 /* 0x5C */
-    short ep;                               /* 0x60 */
-    unsigned char unmodeled_62[0x108 - 0x62]; /* menuDrawCharStats copies 0x108 bytes */
-} MenuPartyRecord;
-
 struct ControlContext *ptGetMenuMember();
 /* OV01 battleContextStateGet (config/symbols/ov01.txt): the state record (BattleState in
    ov01/tu023.c, 0x108 bytes) of the member bound to slot key. */
 MenuPartyRecord *battleContextStateGet(int key);
-
 void *func_00A9B7D8(int id, int unused);
 /* OV01 dataBoxChkCategory2 (config/symbols/ov01.txt). */
 int dataBoxChkCategory2(int value);
@@ -2289,8 +2539,8 @@ void menuDrawPlainItemList(int x, int y, LicenseCursor *cursor)
         textDrawDigits(x + 0xAF, y + 0x10C, page + 1, 2);
         menuDrawPageCells(x + 0xC, y + 0x101, page, pageCount, 8);
     }
-    menuDrawTitledFrame(x + 8, y + 0x20, 0x90, 0xBE, D_0069D620);
-    menuDrawTitledFrame(x + 0x9A, y + 0x20, 0x2D, 0xBE, D_0069D628);
+    menuDrawTitledFrame(x + 8, y + 0x20, 0x90, 0xBE, "  List");
+    menuDrawTitledFrame(x + 0x9A, y + 0x20, 0x2D, 0xBE, "  Num");
     packetSubmitRequest(0x141, x + 0x1E, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
     for (i = 0; i < 8 && i + firstRow < selectionPlainCount; i++) {
@@ -2321,7 +2571,6 @@ void menuDrawPlainItemList(int x, int y, LicenseCursor *cursor)
     }
 }
 
-extern unsigned char D_0069D630[];
 /* OV01 battleContextApplyLookup (config/symbols/ov01.txt). */
 int battleContextApplyLookup(int id, int item);
 void *func_00A9B750(int dispatch_value, int value);
@@ -2343,8 +2592,8 @@ void menuDrawMemberItemList(int x, int y, LicenseCursor *cursor, unsigned char *
 
     firstRow = cursorBufferGetAlignedOffset(cursor);
     func_0021CC08(x, y, 0xE0, 0xAA);
-    menuDrawTitledFrame(x + 8, y + 0x20, 0xA1, 0x6A, D_0069D620);
-    menuDrawTitledFrame(x + 0xAB, y + 0x20, 0x2D, 0x6A, D_0069D630);
+    menuDrawTitledFrame(x + 8, y + 0x20, 0xA1, 0x6A, "  List");
+    menuDrawTitledFrame(x + 0xAB, y + 0x20, 0x2D, 0x6A, "  EP");
     packetSubmitRequest(0x12A, x + 0x41, y + 4, 1);
     packetSubmitRequest(0x43, x + 0x98, y + 0x97, 0x40);
     if (ptState.splitMode == PARTY_SPLIT_ON) {
@@ -2413,26 +2662,14 @@ void menuDrawStatCompare(int x, int y, int value, int compare)
     fontObjResetColor();
 }
 
-extern unsigned char menuPanelFrame[];
-extern unsigned char D_0069D638[];
-extern unsigned char D_0069D640[];
-extern unsigned char D_0069D648[];
-extern unsigned char D_0069D650[];
-extern unsigned char D_0069D658[];
-extern unsigned char D_0069D660[];
-extern unsigned char D_0069D668[];
-extern unsigned char D_0069D670[];
-extern unsigned char D_0069D678[];
-extern unsigned char D_0069D680[];
-extern unsigned char D_0069D688[];
-extern unsigned char D_0068AA10[];
 extern LicenseRecord selectionRecordTable[];
 /* Copy of the member's record taken before the preview equip. */
-extern MenuPartyRecord D_006A5530;
 /* OV01 battleSlotSetByte, battleSlotSetShort and battleSlotGet (config/symbols/ov01.txt). */
 void battleSlotSetByte(int id, int slot, int item);
 void battleSlotSetShort(int id, int slot, int item);
 MenuPartyRecord *battleSlotGet(int id);
+
+const unsigned char D_0068AA10[16] = "Total Exp";
 
 /* Stat comparison panel: saves the member's record, equips item in slot (slot >= 0),
    draws the stat labels and each stat against the saved copy, then the level panel
@@ -2461,27 +2698,27 @@ void menuDrawCharStats(int x, int y, struct ControlContext *member, int item, in
     record = battleContextStateGet(member->id);
     panelDrawNineSlice(menuPanelFrame, x, y, 0x56, 0x8B);
     if (ptState.splitMode == PARTY_SPLIT_ON) {
-        textDrawGlyphString(x + 8, y + 0xA, D_0069D638, MENU_PARTY_TEXT_COLOR);
+        textDrawGlyphString(x + 8, y + 0xA, "Pow", MENU_PARTY_TEXT_COLOR);
     } else {
-        textDrawGlyphString(x + 8, y + 0xA, D_0069D640, MENU_PARTY_TEXT_COLOR);
+        textDrawGlyphString(x + 8, y + 0xA, "Str", MENU_PARTY_TEXT_COLOR);
     }
     if (ptState.splitMode == PARTY_SPLIT_ON) {
-        textDrawGlyphString(x + 8, y + 0x1C, D_0069D648, MENU_PARTY_TEXT_COLOR);
+        textDrawGlyphString(x + 8, y + 0x1C, "Arm", MENU_PARTY_TEXT_COLOR);
     } else {
-        textDrawGlyphString(x + 8, y + 0x1C, D_0069D650, MENU_PARTY_TEXT_COLOR);
+        textDrawGlyphString(x + 8, y + 0x1C, "Vit", MENU_PARTY_TEXT_COLOR);
     }
-    textDrawGlyphString(x + 8, y + 0x2E, D_0069D658, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 8, y + 0x40, D_0069D660, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 8, y + 0x52, D_0069D668, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 8, y + 0x64, D_0069D670, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 8, y + 0x76, D_0069D678, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 0x2A, y + 0xA, D_0069D680, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 0x2A, y + 0x1C, D_0069D680, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 0x2A, y + 0x2E, D_0069D680, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 0x2A, y + 0x40, D_0069D680, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 0x2A, y + 0x52, D_0069D680, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 0x2A, y + 0x64, D_0069D680, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 0x2A, y + 0x76, D_0069D680, MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 8, y + 0x2E, "Dex", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 8, y + 0x40, "Eva", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 8, y + 0x52, "Agl", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 8, y + 0x64, "Eatk", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 8, y + 0x76, "Edef", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x2A, y + 0xA, ":", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x2A, y + 0x1C, ":", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x2A, y + 0x2E, ":", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x2A, y + 0x40, ":", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x2A, y + 0x52, ":", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x2A, y + 0x64, ":", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x2A, y + 0x76, ":", MENU_PARTY_TEXT_COLOR);
     menuDrawStatCompare(x + 0x35, y + 0xA, record->strength, D_006A5530.strength);
     menuDrawStatCompare(x + 0x35, y + 0x1C, record->vitality, D_006A5530.vitality);
     menuDrawStatCompare(x + 0x35, y + 0x2E, record->dexterity, D_006A5530.dexterity);
@@ -2495,10 +2732,10 @@ void menuDrawCharStats(int x, int y, struct ControlContext *member, int item, in
     } else {
         panelDrawNineSlice(menuPanelFrame, x - 0xA3, y + 0x56, 0x9D, 0x35);
     }
-    textDrawGlyphString(x - 0x9E, y + 0x60, D_0069D688, MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x - 0x9E, y + 0x60, "Next Lv", MENU_PARTY_TEXT_COLOR);
     textDrawGlyphString(x - 0x9E, y + 0x74, D_0068AA10, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x - 0x58, y + 0x60, D_0069D680, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x - 0x58, y + 0x74, D_0069D680, MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x - 0x58, y + 0x60, ":", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x - 0x58, y + 0x74, ":", MENU_PARTY_TEXT_COLOR);
     if (ptState.splitMode == PARTY_SPLIT_ON) {
         x += 0x11;
     }
@@ -2528,7 +2765,6 @@ void menuDrawCharStats(int x, int y, struct ControlContext *member, int item, in
 }
 
 extern unsigned char D_003EB380[];
-extern unsigned char D_0069D690[];
 
 /* Equip slot list: one row per entry in items, a text label (func_00A9B7D8's text, the one
    menuDrawPlainItemList lists, while the party split is open, otherwise selectionRecordSetValue's
@@ -2541,7 +2777,7 @@ void menuDrawEquipPanel(int x, int y, LicenseCursor *cursor, unsigned char *item
 
     firstRow = cursorBufferGetAlignedOffset(cursor);
     panelDrawNineSliceFlipCorner(D_003EB380, x, y, 0x9D, rowCount * 0x14 + 0x37);
-    menuDrawTitledFrame(x + 8, y + 0xF, 0x94, rowCount * 0x14 + 0x19, D_0069D690);
+    menuDrawTitledFrame(x + 8, y + 0xF, 0x94, rowCount * 0x14 + 0x19, "  Equip");
     textDrawSegment(0, 0, msgStyleInit, 0);
 
     for (i = 0; i < cursor->count; i++) {
@@ -2560,8 +2796,6 @@ void menuDrawEquipPanel(int x, int y, LicenseCursor *cursor, unsigned char *item
 }
 
 int selectionEntryBitOutsideMask(int group, int slot, int sub, int mask);
-extern unsigned char D_0068AA20[];
-extern unsigned char D_0069D698[];
 
 /* A selection entry: the record index (group << 5) + (slot << 2) + sub. Copied by value
    into selectionEntryOutsideMask: the asm keeps the loaded byte in its own register and masks
@@ -2581,6 +2815,8 @@ static inline int selectionEntryOutsideMask(SelectionRecordId entry, int mask)
     return 0;
 }
 
+const unsigned char D_0068AA20[16] = "  Category";
+
 /* Selection entry list of one category: four rows from the first visible one (an
    entry outside mask shows text 0x190), the kind mark of each entry (0x133, 0x131 or
    0x132), the cursor, and the selected entry's detail (0x7F with an empty list). */
@@ -2596,8 +2832,8 @@ void menuDrawItemCategory(int x, int y, LicenseCursor *cursor, SelectionRecordId
     menuDrawListWindow(x, y, page, menuListPageCount(cursor));
     menuDrawBorder(x + 8, y + 0x1F, 0xD0, 0x2E, 0x3F80000080381A1ALL);
     menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, D_0068AA20);
-    menuDrawTitledFrame(x + 8, y + 0x51, 0xA4, 0x77, D_0069D620);
-    menuDrawTitledFrame(x + 0xAD, y + 0x51, 0x2B, 0x77, D_0069D698);
+    menuDrawTitledFrame(x + 8, y + 0x51, 0xA4, 0x77, "  List");
+    menuDrawTitledFrame(x + 0xAD, y + 0x51, 0x2B, 0x77, " Sort");
     packetSubmitRequest(0x12C, x + 0x35, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
     if (cursor->count != 0) {
@@ -2667,10 +2903,14 @@ struct LookupRecord {
 };
 
 extern struct LookupRecord D_003EBAA8[];
-extern unsigned char D_0068AA30[];
-extern unsigned char D_0068AA40[];
-extern unsigned char D_0068AA50[];
-extern unsigned char D_0068AA60[];
+
+const unsigned char D_0068AA30[16] = "  Normal Attack";
+
+const unsigned char D_0068AA40[16] = "  Single";
+
+const unsigned char D_0068AA50[16] = "  Command";
+
+const unsigned char D_0068AA60[16] = "$zoom12;";
 
 /* Attack command list of a party member: seven rows, each with the command text and
    its kind icons (kind 3 shows text 0x14A for members from 11 on, kind 4 text 0x14B).
@@ -2731,14 +2971,18 @@ void menuDrawAttackCommand(int x, int y, LicenseCursor *cursor, int member)
     }
 }
 
-extern unsigned char D_0068AA70[];
-extern unsigned char D_0068AA88[];
-extern unsigned char D_0068AA98[];
-extern unsigned char D_0068AAA8[];
 int selectionCopilotRecordAt(int member, int nth, unsigned short mask);
 int selectionPairRecordAt(int member, int nth, unsigned short mask);
 int ptGetCopilotId(int id);
 struct ControlContext *ptMemberRecordAt(int index);
+
+const unsigned char D_0068AA70[24] = "  Special Attack";
+
+const unsigned char D_0068AA88[16] = "  Double";
+
+const unsigned char D_0068AA98[16] = "  Charge";
+
+const unsigned char D_0068AAA8[16] = "  Partner";
 
 /* Special attack list of a party member. From member 11 on: the attack's kind text,
    dimmed unless the bit of the member's copilot (ptGetCopilotId: the id in the roster
@@ -2800,28 +3044,19 @@ void menuDrawSpecialAttack(int x, int y, LicenseCursor *cursor, int member, unsi
     }
 }
 
-extern char D_0069D6E0[];
-extern unsigned char D_003EB2B8[];
 int xglFontGetTextWidth(const char *text);
 extern struct LookupRecord D_003EB6D8[];
-extern unsigned char D_0069D6A0[];
-extern unsigned char D_0068AAB8[];
-extern unsigned char D_0069D6A8[];
-extern unsigned char D_0068AAC8[];
-extern unsigned char D_0069D6B0[];
-extern unsigned char D_0069D6B8[];
-extern unsigned char D_0069D6C8[];
-extern unsigned char D_0069D6D0[];
-extern unsigned char D_0068AAD8[];
-extern unsigned char D_0069D6D8[];
-extern unsigned char D_0069D6F8[];
-extern unsigned char D_0069D700[];
 extern struct LookupRecord D_003EBA38[];
 extern struct LookupRecord D_003EC028[];
-extern unsigned char D_0069D6C0[];
-extern unsigned char D_0068AAE8[];
-extern unsigned char D_0069D6E8[];
 int sprintf(char *buffer, const char *format, ...);
+
+const unsigned char D_0068AAB8[16] = "  Details";
+
+const unsigned char D_0068AAC8[16] = "$col708040;";
+
+const unsigned char D_0068AAD8[16] = "Attribute";
+
+const unsigned char D_0068AAE8[16] = "Condition";
 
 /* Command detail panel of an attack command (cursor rows below 7 are member's own
    commands, the others shared ones): "Command" (kind icons, or text 0x14B), "Target",
@@ -2841,23 +3076,23 @@ void menuDrawCommandInfo(int x, int y, LicenseCursor *cursor, int member)
     }
     panelDrawNineSlice(D_003EB2B8, x, y, 0xE0, 0x11F);
     menuDrawBorder(x + 8, y + 0x1F, 0xD0, 0x2E, 0x3F80000080381A1ALL);
-    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, D_0069D6A0);
+    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, "  Name");
     menuDrawTitledFrame(x + 8, y + 0x51, 0xD0, 0xBE, D_0068AAB8);
     packetSubmitRequest(0x128, x + 0x27, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
-    textDrawSegment(0, 0, D_0069D6A8, 0);
+    textDrawSegment(0, 0, "$prop1;", 0);
     textDrawSegment(0, 0, D_0068AAC8, 0);
-    textDrawSegment(x + 0x10, y + 0x60, D_0069D6B0, 0);
-    textDrawSegment(x + 0x10, y + 0x74, D_0069D6B8, 0);
-    textDrawSegment(x + 0x10, y + 0x88, D_0069D6C0, 0);
-    textDrawSegment(x + 0x10, y + 0x9C, D_0069D6C8, 0);
-    textDrawSegment(x + 0x10, y + 0xB0, D_0069D6D0, 0);
+    textDrawSegment(x + 0x10, y + 0x60, "Command", 0);
+    textDrawSegment(x + 0x10, y + 0x74, "Target", 0);
+    textDrawSegment(x + 0x10, y + 0x88, "Zone", 0);
+    textDrawSegment(x + 0x10, y + 0x9C, "Type", 0);
+    textDrawSegment(x + 0x10, y + 0xB0, "Range", 0);
     textDrawSegment(x + 0x10, y + 0xC4, D_0068AAD8, 0);
     textDrawSegment(x + 0x10, y + 0xD8, D_0068AAE8, 0);
-    textDrawSegment(x + 0x10, y + 0xEC, D_0069D6D8, 0);
+    textDrawSegment(x + 0x10, y + 0xEC, "Effect", 0);
     textDrawSegment(0, 0, D_0068A600, 0);
     for (i = 0; i < 8; i++) {
-        textDrawSegment(x + 0x58, y + i * 0x14 + 0x62, D_0069D680, 0);
+        textDrawSegment(x + 0x58, y + i * 0x14 + 0x62, ":", 0);
     }
     textDrawSegment(x + 0x18, y + 0x32, record->text, 0);
     if (record->attributes[0] < 4) {
@@ -2888,7 +3123,7 @@ void menuDrawCommandInfo(int x, int y, LicenseCursor *cursor, int member)
     for (i = 0; i < 9; i++) {
         if ((record->elementMask >> i) & 1) {
             if (separate) {
-                textDrawSegment(x + attributeX + 0x64, y + 0xC7, D_0069D6E0, 0);
+                textDrawSegment(x + attributeX + 0x64, y + 0xC7, "/", 0);
                 attributeX += 7;
             }
             textDrawSegment(x + attributeX + 0x64, y + 0xC7, menuMainTxdEntry(i + 0x130), 0);
@@ -2898,7 +3133,7 @@ void menuDrawCommandInfo(int x, int y, LicenseCursor *cursor, int member)
     }
     if (record->condition != 0) {
         if (record->condition >= 4) {
-            sprintf(countText, D_0069D6E8, record->condition - 3);
+            sprintf(countText, "%1d", record->condition - 3);
             textDrawSegment(x + 0x64, y + 0xDB, menuMainTxdEntry(0x140), 0);
             textDrawSegment(x + 0xA0, y + 0xDB, countText, 0);
         } else {
@@ -2909,8 +3144,6 @@ void menuDrawCommandInfo(int x, int y, LicenseCursor *cursor, int member)
         textDrawSegment(x + 0x64, y + 0xEF, menuMainTxdEntry(record->effect + 0x140), 0);
     }
 }
-
-extern unsigned char D_0069D6F0[];
 
 /* Detail panel of a combination attack: "Partner" (name text 0x10 + partner and
    icon), "Target", "Type", "Attribute" (text 0xEF for types 1 and 2 without
@@ -2926,21 +3159,21 @@ void menuDrawPartnerInfo(int x, int y, LicenseCursor *cursor, int member, unsign
 
     panelDrawNineSlice(D_003EB2B8, x, y, 0xE0, 0x11F);
     menuDrawBorder(x + 8, y + 0x1F, 0xD0, 0x2E, 0x3F80000080381A1ALL);
-    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, D_0069D6A0);
+    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, "  Name");
     menuDrawTitledFrame(x + 8, y + 0x51, 0xD0, 0xBE, D_0068AAB8);
     packetSubmitRequest(0x128, x + 0x27, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
-    textDrawSegment(0, 0, D_0069D6A8, 0);
+    textDrawSegment(0, 0, "$prop1;", 0);
     textDrawSegment(0, 0, D_0068AAC8, 0);
-    textDrawSegment(x + 0x10, y + 0x60, D_0069D6F0, 0);
-    textDrawSegment(x + 0x10, y + 0x74, D_0069D6B8, 0);
-    textDrawSegment(x + 0x10, y + 0x88, D_0069D6C8, 0);
+    textDrawSegment(x + 0x10, y + 0x60, "Partner", 0);
+    textDrawSegment(x + 0x10, y + 0x74, "Target", 0);
+    textDrawSegment(x + 0x10, y + 0x88, "Type", 0);
     textDrawSegment(x + 0x10, y + 0x9C, D_0068AAD8, 0);
     textDrawSegment(x + 0x10, y + 0xB0, D_0068AAE8, 0);
-    textDrawSegment(x + 0x10, y + 0xC4, D_0069D6D8, 0);
+    textDrawSegment(x + 0x10, y + 0xC4, "Effect", 0);
     textDrawSegment(0, 0, D_0068A600, 0);
     for (i = 0; i < 6; i++) {
-        textDrawSegment(x + 0x58, y + i * 0x14 + 0x62, D_0069D680, 0);
+        textDrawSegment(x + 0x58, y + i * 0x14 + 0x62, ":", 0);
     }
     /* i is reused for the record index. */
     i = selectionPairRecordAt(member, cursor->index, mode);
@@ -2952,7 +3185,7 @@ void menuDrawPartnerInfo(int x, int y, LicenseCursor *cursor, int member, unsign
         } else {
             partner = record->attributes[1];
         }
-        textDrawSegment(0, 0, D_0069D6A8, 0);
+        textDrawSegment(0, 0, "$prop1;", 0);
         textDrawSegment(x + 0x64, y + 0x63, menuMainTxdEntry(partner + 0x10), 0);
         menuDrawLitIcon(x + 0xB4, y + 0x61, ptMemberRecordAt(partner - 1)->status->memberIndex);
         if (record->target != 0) {
@@ -2971,7 +3204,7 @@ void menuDrawPartnerInfo(int x, int y, LicenseCursor *cursor, int member, unsign
             for (i = 0; i < 9; i++) {
                 if ((record->elementMask >> i) & 1) {
                     if (separate) {
-                        textDrawSegment(x + attributeX + 0x64, y + 0x9F, D_0069D6E0, 0);
+                        textDrawSegment(x + attributeX + 0x64, y + 0x9F, "/", 0);
                         attributeX += 7;
                     }
                     textDrawSegment(x + attributeX + 0x64, y + 0x9F, menuMainTxdEntry(i + 0x130), 0);
@@ -2981,7 +3214,7 @@ void menuDrawPartnerInfo(int x, int y, LicenseCursor *cursor, int member, unsign
             }
         }
         if (record->condition < 10) {
-            sprintf(countText, D_0069D6E8, record->condition);
+            sprintf(countText, "%1d", record->condition);
             textDrawSegment(x + 0x64, y + 0xB3, menuMainTxdEntry(0x140), 0);
             textDrawSegment(x + 0xA0, y + 0xB3, countText, 0);
         }
@@ -3003,22 +3236,22 @@ void menuDrawCommandDetail(int x, int y, LicenseCursor *cursor, int member)
 
     panelDrawNineSlice(D_003EB2B8, x, y, 0xE0, 0x11F);
     menuDrawBorder(x + 8, y + 0x1F, 0xD0, 0x2E, 0x3F80000080381A1ALL);
-    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, D_0069D6A0);
+    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, "  Name");
     menuDrawTitledFrame(x + 8, y + 0x51, 0xD0, 0xBE, D_0068AAB8);
     packetSubmitRequest(0x128, x + 0x27, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
-    textDrawSegment(0, 0, D_0069D6A8, 0);
+    textDrawSegment(0, 0, "$prop1;", 0);
     textDrawSegment(0, 0, D_0068AAC8, 0);
-    textDrawSegment(x + 0x10, y + 0x60, D_0069D6B0, 0);
-    textDrawSegment(x + 0x10, y + 0x74, D_0069D6B8, 0);
-    textDrawSegment(x + 0x10, y + 0x88, D_0069D6C8, 0);
-    textDrawSegment(x + 0x10, y + 0x9C, D_0069D6D0, 0);
+    textDrawSegment(x + 0x10, y + 0x60, "Command", 0);
+    textDrawSegment(x + 0x10, y + 0x74, "Target", 0);
+    textDrawSegment(x + 0x10, y + 0x88, "Type", 0);
+    textDrawSegment(x + 0x10, y + 0x9C, "Range", 0);
     textDrawSegment(x + 0x10, y + 0xB0, D_0068AAD8, 0);
-    textDrawSegment(x + 0x10, y + 0xC4, D_0069D6D8, 0);
-    textDrawSegment(x + 0x10, y + 0xD8, D_0069D6F8, 0);
+    textDrawSegment(x + 0x10, y + 0xC4, "Effect", 0);
+    textDrawSegment(x + 0x10, y + 0xD8, "Copilot", 0);
     textDrawSegment(0, 0, D_0068A600, 0);
     for (i = 0; i < 7; i++) {
-        textDrawSegment(x + 0x58, y + i * 0x14 + 0x62, D_0069D680, 0);
+        textDrawSegment(x + 0x58, y + i * 0x14 + 0x62, ":", 0);
     }
     textDrawSegment(x + 0x18, y + 0x32, record->text, 0);
     if (record->attributes[0] != 0) {
@@ -3042,7 +3275,7 @@ void menuDrawCommandDetail(int x, int y, LicenseCursor *cursor, int member)
     for (i = 0; i < 9; i++) {
         if ((record->elementMask >> i) & 1) {
             if (separate) {
-                textDrawSegment(x + attributeX + 0x64, y + 0xB3, D_0069D6E0, 0);
+                textDrawSegment(x + attributeX + 0x64, y + 0xB3, "/", 0);
                 attributeX += 7;
             }
             textDrawSegment(x + attributeX + 0x64, y + 0xB3, menuMainTxdEntry(i + 0x130), 0);
@@ -3053,10 +3286,8 @@ void menuDrawCommandDetail(int x, int y, LicenseCursor *cursor, int member)
     if (record->effect != 0) {
         textDrawSegment(x + 0x64, y + 0xC7, menuMainTxdEntry(record->effect + 0x140), 0);
     }
-    textDrawSegment(x + 0x64, y + 0xDB, D_0069D700, 0);
+    textDrawSegment(x + 0x64, y + 0xDB, "None", 0);
 }
-
-extern unsigned char D_0069D708[];
 
 /* Detail panel of a special attack: "Copilot" (icons of the front members whose bit
    is set in the attack's member mask), "Charge" (kind text 0x14D + n), "Target",
@@ -3077,23 +3308,23 @@ void menuDrawCopilotInfo(int x, int y, LicenseCursor *cursor, int member, unsign
 
     panelDrawNineSlice(D_003EB2B8, x, y, 0xE0, 0x11F);
     menuDrawBorder(x + 8, y + 0x1F, 0xD0, 0x2E, 0x3F80000080381A1ALL);
-    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, D_0069D6A0);
+    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xC8, 0x24, "  Name");
     menuDrawTitledFrame(x + 8, y + 0x51, 0xD0, 0xBE, D_0068AAB8);
     packetSubmitRequest(0x128, x + 0x27, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
-    textDrawSegment(0, 0, D_0069D6A8, 0);
+    textDrawSegment(0, 0, "$prop1;", 0);
     textDrawSegment(0, 0, D_0068AAC8, 0);
-    textDrawSegment(x + 0x10, y + 0x60, D_0069D6F8, 0);
-    textDrawSegment(x + 0x10, y + 0x7C, D_0069D708, 0);
-    textDrawSegment(x + 0x10, y + 0x90, D_0069D6B8, 0);
-    textDrawSegment(x + 0x10, y + 0xA4, D_0069D6C8, 0);
-    textDrawSegment(x + 0x10, y + 0xB8, D_0069D6D0, 0);
+    textDrawSegment(x + 0x10, y + 0x60, "Copilot", 0);
+    textDrawSegment(x + 0x10, y + 0x7C, "Charge", 0);
+    textDrawSegment(x + 0x10, y + 0x90, "Target", 0);
+    textDrawSegment(x + 0x10, y + 0xA4, "Type", 0);
+    textDrawSegment(x + 0x10, y + 0xB8, "Range", 0);
     textDrawSegment(x + 0x10, y + 0xCC, D_0068AAD8, 0);
-    textDrawSegment(x + 0x10, y + 0xE0, D_0069D6D8, 0);
+    textDrawSegment(x + 0x10, y + 0xE0, "Effect", 0);
     textDrawSegment(0, 0, D_0068A600, 0);
     /* Rows after the first ("Copilot") sit 8 lower. */
     for (i = 0; i < 7; i++) {
-        textDrawSegment(x + 0x58, y + i * 0x14 + (i <= 0 ? 0x62 : 0x6A), D_0069D680, 0);
+        textDrawSegment(x + 0x58, y + i * 0x14 + (i <= 0 ? 0x62 : 0x6A), ":", 0);
     }
     i = selectionCopilotRecordAt(member, cursor->index, mode);
     if (i != -1) {
@@ -3123,7 +3354,7 @@ void menuDrawCopilotInfo(int x, int y, LicenseCursor *cursor, int member, unsign
         for (i = 0; i < 9; i++) {
             if ((record->elementMask >> i) & 1) {
                 if (separate) {
-                    textDrawSegment(x + attributeX + 0x64, y + 0xCF, D_0069D6E0, 0);
+                    textDrawSegment(x + attributeX + 0x64, y + 0xCF, "/", 0);
                     attributeX += 7;
                 }
                 textDrawSegment(x + attributeX + 0x64, y + 0xCF, menuMainTxdEntry(i + 0x130), 0);
@@ -3151,10 +3382,9 @@ void menuDrawCopilotInfo(int x, int y, LicenseCursor *cursor, int member, unsign
     }
 }
 
-extern unsigned char D_0068AAF8[];
-extern unsigned char D_0069D710[];
-extern unsigned char D_0068AB08[];
-extern unsigned char D_0069D718[];
+const unsigned char D_0068AAF8[16] = "Class Lv";
+
+const unsigned char D_0068AB08[16] = "Learned S :";
 
 /* Class panel: class level ("Class Lv", buffer flags[0] + 1) with the class points (C.Pt),
    learned skills (flags[1]) with the skill points (S.Pt). Nothing without a control context. */
@@ -3165,13 +3395,13 @@ void menuDrawClassInfo(int x, int y)
     if (context != 0) {
         panelDrawNineSlice(menuPanelFrame, x, y, 0xE5, 0x32);
         textDrawGlyphString(x + 0xA, y + 9, D_0068AAF8, MENU_PARTY_TEXT_COLOR);
-        textDrawGlyphString(x + 0x53, y + 9, D_0069D680, MENU_PARTY_TEXT_COLOR);
+        textDrawGlyphString(x + 0x53, y + 9, ":", MENU_PARTY_TEXT_COLOR);
         textDrawDecimal(x + 0x60, y + 9, context->buffer->flags[0] + 1, 3, MENU_PARTY_TEXT_COLOR);
-        textDrawGlyphString(x + 0x86, y + 9, D_0069D710, MENU_PARTY_TEXT_COLOR);
+        textDrawGlyphString(x + 0x86, y + 9, "C.Pt :", MENU_PARTY_TEXT_COLOR);
         textDrawDecimal(x + 0xB1, y + 9, context->limits->classPoints, 5, MENU_PARTY_TEXT_COLOR);
         textDrawGlyphString(x + 0xA, y + 0x1C, D_0068AB08, MENU_PARTY_TEXT_COLOR);
         textDrawDecimal(x + 0x60, y + 0x1C, context->buffer->flags[1], 3, MENU_PARTY_TEXT_COLOR);
-        textDrawGlyphString(x + 0x86, y + 0x1C, D_0069D718, MENU_PARTY_TEXT_COLOR);
+        textDrawGlyphString(x + 0x86, y + 0x1C, "S.Pt :", MENU_PARTY_TEXT_COLOR);
         textDrawDecimal(x + 0xB1, y + 0x1C, context->limits->skillPoints, 5, MENU_PARTY_TEXT_COLOR);
     }
 }
@@ -3179,11 +3409,6 @@ void menuDrawClassInfo(int x, int y)
 int selectionCanOpenSlot(struct ControlContext *context, int group, int slot);
 int selectionCanTakeSub(struct ControlContext *context, int group, int slot, int sub);
 int selectionRecordIndex(int group, int slot, int sub);
-extern unsigned char D_0068AB18[];
-extern unsigned char D_0069D720[];
-extern unsigned char D_0069D728[];
-extern unsigned char D_0069D730[];
-extern unsigned char D_0069D738[];
 extern unsigned short D_003EC0E8[4][8];
 
 #define LICENSE_ROW_PITCH 0x17 /* rows of the group and sub pages */
@@ -3192,6 +3417,8 @@ extern unsigned short D_003EC0E8[4][8];
 #define LICENSE_MARK_FILL 0x3F80000080407080LL
 #define LICENSE_MARK_CMD 0x80 /* request command of one mark */
 #define LICENSE_MARK_BITS 4
+
+const unsigned char D_0068AB18[16] = "  License";
 
 /* License board page: three tabs (mode 0, 1, 2), each with its own list of rows. */
 void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCursor *slotCursor,
@@ -3213,25 +3440,25 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
     switch (mode) {
     case 0:
     default:
-        menuDrawTitledFrame(x + 8, y + 0x51, 0x9F, 0xAE, D_0069D620);
+        menuDrawTitledFrame(x + 8, y + 0x51, 0x9F, 0xAE, "  List");
         menuDrawTitledFrame(x + 0xA9, y + 0x51, 0x44, 0xAE, D_0068AB18);
         cursor = groupCursor;
         break;
     case 1:
-        menuDrawTitledFrame(x + 8, y + 0x51, 0xA9, 0xAE, D_0069D620);
-        menuDrawTitledFrame(x + 0xB3, y + 0x51, 0x3A, 0xAE, D_0069D720);
+        menuDrawTitledFrame(x + 8, y + 0x51, 0xA9, 0xAE, "  List");
+        menuDrawTitledFrame(x + 0xB3, y + 0x51, 0x3A, 0xAE, "  C.Pt");
         cursor = slotCursor;
         break;
     case 2:
-        menuDrawTitledFrame(x + 8, y + 0x51, 0xA9, 0x77, D_0069D620);
-        menuDrawTitledFrame(x + 0xB3, y + 0x51, 0x3A, 0x77, D_0069D728);
+        menuDrawTitledFrame(x + 8, y + 0x51, 0xA9, 0x77, "  List");
+        menuDrawTitledFrame(x + 0xB3, y + 0x51, 0x3A, 0x77, "  S.Pt");
         cursor = subCursor;
         break;
     }
     firstRow = cursorBufferGetAlignedOffset(cursor);
     func_0021CC08(x, y, 0xF5, 0x11F);
     menuDrawBorder(x + 8, y + 0x1F, 0xE5, 0x2E, 0x3F80000080381A1ALL);
-    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xDD, 0x24, D_0069D730);
+    menuDrawTitledFrame(x + 0xC, y + 0x24, 0xDD, 0x24, "  Route");
     packetSubmitRequest(0x12E, x + 0x4C, y + 4, 1);
     textDrawSegment(0, 0, msgStyleInit, 0);
     menuDrawCharInfo(x + 0x18, y + 0x31, groupCursor->index, slotCursor->index, mode);
@@ -3276,9 +3503,9 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
         default:
             textDrawSegment(x + 0x18, y + 0x62 + i * LICENSE_ROW_PITCH, menuMainTxdEntry(i + 0x36), rowStyle);
             if (unlocked) {
-                textDrawGlyphString(x + 0xB8, y + 0x66 + i * LICENSE_ROW_PITCH, D_0069D738, color);
+                textDrawGlyphString(x + 0xB8, y + 0x66 + i * LICENSE_ROW_PITCH, "PASS", color);
             } else {
-                textDrawGlyphString(x + 0xBA, y + 0x66 + i * LICENSE_ROW_PITCH, D_0069D608, color);
+                textDrawGlyphString(x + 0xBA, y + 0x66 + i * LICENSE_ROW_PITCH, "----", color);
             }
             break;
         case 1:
@@ -3291,7 +3518,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
                 fontObjResetColor();
             }
             if ((board->header[groupCursor->index] >> i) & 1) {
-                textDrawGlyphString(x + 0xBF, y + 0x66 + i * LICENSE_ROW_PITCH_COMPACT, D_0069D608, color);
+                textDrawGlyphString(x + 0xBF, y + 0x66 + i * LICENSE_ROW_PITCH_COMPACT, "----", color);
             } else {
                 if (D_003EC0E8[groupCursor->index][i] > ptGetMenuMember()->limits->classPoints) {
                     fontObjSetOpacity(0x40);
@@ -3309,7 +3536,7 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
                 if (outside) {
                     rowStyle |= 2;
                     textDrawSegment(x + 0x10, y + 0x62 + i * LICENSE_ROW_PITCH, menuMainTxdEntry(0x190), rowStyle);
-                    textDrawGlyphString(x + 0xBF, y + 0x66 + i * LICENSE_ROW_PITCH, D_0069D608, color);
+                    textDrawGlyphString(x + 0xBF, y + 0x66 + i * LICENSE_ROW_PITCH, "----", color);
                 } else {
                     textDrawSegment(x + 0x10, y + 0x62 + i * LICENSE_ROW_PITCH,
                                     selectionSetValue(groupCursor->index, slotCursor->index, i, 0), rowStyle);
@@ -3396,10 +3623,13 @@ void menuDrawLicenseBoard(int x, int y, LicenseCursor *groupCursor, LicenseCurso
 
 /* The save settings the option page shows (saveDataSetDefaults sets them: +0x28 = 1, +0x3A = 2, the rest 0). */
 extern ConfigSaveSettings SaveData;
-extern signed char D_0069E268[8];           /* the shown value of each option row */
-extern signed char D_003EB3F8[];            /* per option: value label group, 0 when it shows none */
-extern unsigned char D_0068AB28[];
-extern unsigned char D_0068AB38[];
+/* the shown value of each option row */
+extern signed char D_003EB3F8[];
+/* per option: value label group, 0 when it shows none */
+
+const unsigned char D_0068AB28[16] = "  Configuration";
+
+const unsigned char D_0068AB38[16] = "  Instruction";
 
 /* Option page: eight option rows (items holds their ids), the default row (index 8) and the cursor. */
 void menuDrawConfig(int x, int y, LicenseCursor *cursor, unsigned char *items)
@@ -3450,7 +3680,7 @@ void menuDrawConfig(int x, int y, LicenseCursor *cursor, unsigned char *items)
     }
 }
 
-extern unsigned char D_0068AB48[];
+const unsigned char D_0068AB48[24] = "  Controller";
 
 /* Controller page: the pad picture with its shaded parts and the four button labels. */
 void menuDrawControllerConfig(void)
@@ -3502,9 +3732,6 @@ void xglClockRead(void *clock_time);
 unsigned int xglClockDayTime2UInt(void *clock_time);
 void xglClockUInt2DayTime(void *clock_time, unsigned int elapsed);
 
-extern unsigned char D_0069D740[];
-
-
 void menuDrawPlayTime(int x, int y)
 {
     struct PlayTime playTime;
@@ -3516,9 +3743,9 @@ void menuDrawPlayTime(int x, int y)
     rowY = y + 0xF;
     xglClockUInt2DayTime(&playTime, now - ptState.progress->playTime);
     playTimeClamp(&playTime);
-    menuDrawTitledFrame(x, y, 0x6B, 0x21, D_0069D740);
-    textDrawGlyphString(x + 0x23, rowY, D_0069D680, MENU_PARTY_TEXT_COLOR);
-    textDrawGlyphString(x + 0x3F, rowY, D_0069D680, MENU_PARTY_TEXT_COLOR);
+    menuDrawTitledFrame(x, y, 0x6B, 0x21, "  Time");
+    textDrawGlyphString(x + 0x23, rowY, ":", MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x3F, rowY, ":", MENU_PARTY_TEXT_COLOR);
     textDrawDecimal(x + 0x10, rowY, playTime.hours, 2, MENU_PARTY_TEXT_COLOR);
     textDrawDecimalZero(x + 0x2D, rowY, (unsigned char) playTime.minutes, 2, MENU_PARTY_TEXT_COLOR);
     textDrawDecimalZero(x + 0x49, rowY, (unsigned char) playTime.seconds, 2, MENU_PARTY_TEXT_COLOR);
@@ -3568,7 +3795,6 @@ void menuDrawStatIcon(int kind, int x, int y, u64 colour)
     packetSubmitRequest(kind + 8, x, y, 4);
 }
 
-
 void menuDrawLevel(int x, int y, int level)
 {
     fontObjSetColor(0x3F80000080805939LL);
@@ -3605,7 +3831,7 @@ void menuDrawHp(int x, int y, int hp, int maxHp)
     menuDrawStatIcon(0, x, y, 0x3F80000080572000LL);
     fontObjResetColor();
     menuHpColours(hp, maxHp, &shadowColour, &faceColour);
-    textDrawGlyphString(x + 0x3C, y + 4, D_0069D6E0, MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x3C, y + 4, "/", MENU_PARTY_TEXT_COLOR);
     textDrawDecimal(x + 0x45, y + 4, maxHp, 4, MENU_PARTY_TEXT_COLOR);
     fontObjSetColor(faceColour);
     textDrawDecimal(x + 0x18, y + 4, hp, 4, shadowColour);
@@ -3617,7 +3843,7 @@ void menuDrawEp(int x, int y, int ep, int maxEp)
     fontObjSetColor(0x3F800000807D763FLL);
     menuDrawStatIcon(1, x, y, 0x3F80000080572000LL);
     fontObjResetColor();
-    textDrawGlyphString(x + 0x3C, y + 4, D_0069D6E0, MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x3C, y + 4, "/", MENU_PARTY_TEXT_COLOR);
     textDrawDecimal(x + 0x21, y + 4, ep, 3, MENU_PARTY_TEXT_COLOR);
     textDrawDecimal(x + 0x45, y + 4, maxEp, 3, MENU_PARTY_TEXT_COLOR);
 }
@@ -3631,7 +3857,7 @@ void menuDrawHpWide(int x, int y, int hp, int maxHp)
     menuDrawStatIcon(0, x, y, 0x3F80000080572000LL);
     fontObjResetColor();
     menuHpColours(hp, maxHp, &shadowColour, &faceColour);
-    textDrawGlyphString(x + 0x44, y + 4, D_0069D6E0, MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x44, y + 4, "/", MENU_PARTY_TEXT_COLOR);
     textDrawDecimal(x + 0x4D, y + 4, maxHp, 5, MENU_PARTY_TEXT_COLOR);
     fontObjSetColor(faceColour);
     textDrawDecimal(x + 0x18, y + 4, hp, 5, shadowColour);
@@ -3643,7 +3869,7 @@ void menuDrawEpWide(int x, int y, int ep, int maxEp)
     fontObjSetColor(0x3F800000807D763FLL);
     menuDrawStatIcon(1, x, y, 0x3F80000080572000LL);
     fontObjResetColor();
-    textDrawGlyphString(x + 0x44, y + 4, D_0069D6E0, MENU_PARTY_TEXT_COLOR);
+    textDrawGlyphString(x + 0x44, y + 4, "/", MENU_PARTY_TEXT_COLOR);
     textDrawDecimal(x + 0x29, y + 4, ep, 3, MENU_PARTY_TEXT_COLOR);
     textDrawDecimal(x + 0x4D, y + 4, maxEp, 3, MENU_PARTY_TEXT_COLOR);
 }
@@ -3669,7 +3895,7 @@ void menuDrawHpShadow(int x, int y, int hp, int maxHp)
     menuDrawStatIcon(0, x, y, LICENSE_COLOR_IDLE);
     fontObjResetColor();
     menuHpColours(hp, maxHp, &shadowColour, &faceColour);
-    textDrawShadow(x + 0x3C, y + 4, D_0069D6E0, LICENSE_COLOR_IDLE);
+    textDrawShadow(x + 0x3C, y + 4, "/", LICENSE_COLOR_IDLE);
     textDrawDecimalShadow(x + 0x45, y + 4, maxHp, 4, LICENSE_COLOR_IDLE);
     fontObjSetColor(faceColour);
     textDrawDecimalShadow(x + 0x18, y + 4, hp, 4, LICENSE_COLOR_IDLE);
@@ -3683,7 +3909,7 @@ void menuDrawEpShadow(int x, int y, int ep, int maxEp)
     fontObjSetColor(0x3F800000807D763FLL);
     menuDrawStatIcon(1, x, y, LICENSE_COLOR_IDLE);
     fontObjResetColor();
-    textDrawShadow(x + 0x3C, y + 4, D_0069D6E0, LICENSE_COLOR_IDLE);
+    textDrawShadow(x + 0x3C, y + 4, "/", LICENSE_COLOR_IDLE);
     textDrawDecimalShadow(x + 0x21, y + 4, ep, 3, LICENSE_COLOR_IDLE);
     textDrawDecimalShadow(x + 0x45, y + 4, maxEp, 3, LICENSE_COLOR_IDLE);
 }
@@ -3699,7 +3925,7 @@ void menuDrawHpWideShadow(int x, int y, int hp, int maxHp)
     menuDrawStatIcon(0, x, y, LICENSE_COLOR_IDLE);
     fontObjResetColor();
     menuHpColours(hp, maxHp, &shadowColour, &faceColour);
-    textDrawShadow(x + 0x44, y + 4, D_0069D6E0, LICENSE_COLOR_IDLE);
+    textDrawShadow(x + 0x44, y + 4, "/", LICENSE_COLOR_IDLE);
     textDrawDecimalShadow(x + 0x4D, y + 4, maxHp, 5, LICENSE_COLOR_IDLE);
     fontObjSetColor(faceColour);
     textDrawDecimalShadow(x + 0x18, y + 4, hp, 5, LICENSE_COLOR_IDLE);
@@ -3713,7 +3939,7 @@ void menuDrawEpWideShadow(int x, int y, int ep, int maxEp)
     fontObjSetColor(0x3F800000807D763FLL);
     menuDrawStatIcon(1, x, y, LICENSE_COLOR_IDLE);
     fontObjResetColor();
-    textDrawShadow(x + 0x44, y + 4, D_0069D6E0, LICENSE_COLOR_IDLE);
+    textDrawShadow(x + 0x44, y + 4, "/", LICENSE_COLOR_IDLE);
     textDrawDecimalShadow(x + 0x29, y + 4, ep, 3, LICENSE_COLOR_IDLE);
     textDrawDecimalShadow(x + 0x4D, y + 4, maxEp, 3, LICENSE_COLOR_IDLE);
 }
@@ -3772,11 +3998,9 @@ void menuDrawTrackPanel(int command, struct FontTrack *pos, struct FontTrack *si
     packetSubmitRequest(command + 4, x + width, y, 1);
 }
 
-extern struct FontTrack D_006A5638;
-extern struct FontTrack D_006A5658;
-extern struct FontTrack D_006A5678;
-extern int D_003EBA18[2][4][2]; /* size and tab widths of the four panel kinds */
+extern int D_003EBA18[2][4][2];
 
+/* size and tab widths of the four panel kinds */
 /* Places the shared panel tracks at (x, y) with the sizes of kind (0..3) and draws it with commands 0x94... */
 void menuDrawPanelHighlight(int x, int y, int kind)
 {
@@ -3791,10 +4015,9 @@ void menuDrawPanelHighlight(int x, int y, int kind)
 #define MENU_PARTY_ICON_FILL 0x3F80000080410C3ALL
 #define MENU_PARTY_FADE_SHIFT 7 /* highlight.current_pair.y is a fraction of 128 */
 #define MENU_PARTY_HIDDEN 9 /* layout value that draws nothing */
-extern char D_0069D748[];
 
-void func_0021C6F8(int x, int y, int width, int height);
-void func_0021D550(int x, int y, int height);
+/* Record group frame at (x, y) of width by height: corner and edge cells 0x116 to 0x11F with a 75-wide title tab (cells 0x11C, 0x11D, 0x11F) on the top edge. */ void func_0021C6F8(int x, int y, int width, int height);
+void func_0021D550(int x, int y, int width);
 
 /* Party panel of member for item in one of the layouts 0-8 (MENU_PARTY_HIDDEN draws nothing), at
    (x, y) plus the item's position. */
@@ -3871,7 +4094,7 @@ void menuDrawPartyPanel(MenuItem *item, struct ControlContext *member, int x, in
             fontObjSetColor(0x3F800000807D763FLL);
             menuDrawStatIcon(1, x + 0x94, y + 0xD, 0x3F80000080572000LL);
             fontObjResetColor();
-            textDrawGlyphString(x + 0xBF, y + 0x11, D_0069D6E0, MENU_PARTY_TEXT_COLOR);
+            textDrawGlyphString(x + 0xBF, y + 0x11, "/", MENU_PARTY_TEXT_COLOR);
             textDrawDecimal(x + 0xAC, y + 0x11, record->ep, 2, MENU_PARTY_TEXT_COLOR);
             textDrawDecimal(x + 0xC9, y + 0x11, record->maxEp, 2, MENU_PARTY_TEXT_COLOR);
         }
@@ -3996,7 +4219,6 @@ void menuDrawPartyPanel(MenuItem *item, struct ControlContext *member, int x, in
     fontObjResetOpacity();
 }
 
-
 typedef signed char s8;
 
 typedef int s32;
@@ -4024,7 +4246,7 @@ typedef struct MenuObject {
 void menuPlaceItemCursor(MenuObject *object, s32 index);
 
 /* Draws an empty party slot: background, the mark icon for item->flags, and (MENU_ITEM_LABEL)
- * the 0x158/0x159 marks and the D_0069D748 label; fades the mark the same way menuDrawPartyPanel does. */
+ * the 0x158/0x159 marks and the "Canaan" label; fades the mark the same way menuDrawPartyPanel does. */
 void menuDrawEmptyPartySlot(MenuItem *item, int x, int y) {
     int cornerX;
     int cornerY;
@@ -4038,7 +4260,7 @@ void menuDrawEmptyPartySlot(MenuItem *item, int x, int y) {
         if (item->flags & MENU_ITEM_LABEL) {
             packetSubmitRequest(0x158, cornerX + 8, cornerY - 9, 0x10);
             packetSubmitRequest(0x159, cornerX + 8, cornerY - 9, 0x11);
-            textDrawStringAlt(cornerX + 0x24, cornerY + 5, D_0069D748, MENU_PARTY_TEXT_COLOR);
+            textDrawStringAlt(cornerX + 0x24, cornerY + 5, "Canaan", MENU_PARTY_TEXT_COLOR);
         }
     } else if (item->flags & MENU_ITEM_MARK_B) {
         packetSubmitRequest(0x13F, cornerX + 0x1C, cornerY - 0xC, 1);
@@ -4333,7 +4555,6 @@ void menuDrawItems(MenuObject *object) {
 }
 
 void menuEnableItems(MenuObject *object, s32 enableMask);
-
 /* Switches the grid to layout (the grid variant 5-8 of layouts 0, 1, 3 and 4 when flags 0x10000 is set),
  * sends every item's position track toward its slot (layout 2 rotates the slots so the cursor item takes
  * slot 1 and the item before it slot 0), and re-enables the items for the new layout.
@@ -4341,7 +4562,8 @@ void menuEnableItems(MenuObject *object, s32 enableMask);
  * with no arguments and the asm passes menuHide's own a0/a1 through. */
 void menuSetMode(object, layout)
     MenuObject *object;
-    s32 layout;
+s32 layout;
+
 {
     s32 index;
     s32 slot;
@@ -4801,7 +5023,6 @@ void msgRangeSetText(MsgRange *range, unsigned char *text)
     }
 }
 
-extern unsigned char D_0068ABF0[];
 extern unsigned char msgStyleReset[];
 
 /* Clears the reveal so the next draw starts again from the lead-in. */
@@ -4858,9 +5079,9 @@ int msgRangeDrawIcon(int x, int y, int code, int alpha)
 }
 
 /* The width probe: font tag 0x19 0x03 followed by the glyph copied into bytes 2..4. */
-extern unsigned char D_0069D750[8];
 /* The 0x0F 'D' alpha command; byte 3 is the alpha of the fading token. */
-extern unsigned char D_0069D758[4];
+
+const unsigned char D_0068ABF0[16] = "$prop1;$xx3,0;";
 
 /* Draws the first `drawn` tokens of the message at (x, y), fading in the ones past reveal_pos (alpha
  * 0x80 less 0x10 per token through the 0x0F 'D' font command, each drawn one more pixel to the right
@@ -5019,8 +5240,6 @@ void msgRangeDraw(MsgRange *range, int x, int y)
     }
 }
 
-extern unsigned char msgBuffer[];
-
 /* Appends text to msgBuffer, keeping two-byte (high-bit) characters whole, turning a "\\n" pair into a
  * newline and stopping once the buffer holds 0xFF bytes. */
 void msgBufferAppend(unsigned char *text)
@@ -5061,22 +5280,6 @@ void msgBufferAppend(unsigned char *text)
     }
 }
 
-/* The two-choice (yes/no) prompt at main 0x006a57d8. highlight is the track of the moving highlight
- * band: current_pair.x its x, current_pair.y the highlighted row's y (choiceUpdate keeps it as the
- * target y). state is the selected option (0 or 1, 2 once closed); buffer, firstOptionText and
- * secondOptionText are the prompt text and the two option labels drawn by choiceDraw. */
-typedef struct ChoiceState {
-    struct FontTrack highlight;             /* 0x00 */
-    struct FontTrack fade;                  /* 0x1C: current_pair.x is the opacity choiceDraw applies */
-    unsigned char state;                    /* 0x38 */
-    unsigned char unmodeled_39[0x3C - 0x39];
-    unsigned char *buffer;                  /* 0x3C */
-    void *firstOptionText;                  /* 0x40: the word choiceFirstOptionText names */
-    void *secondOptionText;                 /* 0x44: the word choiceSecondOptionText names */
-} ChoiceState;
-
-extern ChoiceState choiceState;
-
 /* Starts the yes/no prompt: the horizontal track jumps straight to initialOption's slot (the
    fixed row y 0xF8), the opacity track fades in from 0 to 0x7F, and the two option labels
    (choiceSetFirstOptionText/choiceSetSecondOptionText use the same words) come from the
@@ -5097,15 +5300,6 @@ void choiceInit(unsigned char *text, int initialOption)
 
 extern PadRecord PadData[2];
 
-/* The countdown object at main 0x006a5820. countdownInit sets count, countdownTick counts it down
- * (a pad button zeroes it), countdownDraw draws text with fade.current_pair.x as its opacity. */
-typedef struct CountdownState {
-    int count;
-    struct FontTrack fade;              /* 0x04 */
-    unsigned char *text;                /* 0x20 */
-} CountdownState;
-
-extern CountdownState countdownState;
 extern int choiceFirstOptionText[];
 
 /* Sets the text of the first option of the choice prompt (choiceState +0x40); choiceDraw draws it at x 0xB4. */
@@ -5230,7 +5424,7 @@ int countdownTick(void)
     return countdownState.count;
 }
 
-extern unsigned char D_0068AC80[];
+const unsigned char D_0068AC80[16] = "$xx0,28;";
 
 void countdownDraw(void)
 {
@@ -5264,3 +5458,152 @@ void textResetCharSpacing(void)
 {
     textCharSpacing = 4;
 }
+
+/* Party save storage that tu108.c, tu109.c and tu110.c read; this TU's code does not touch it. */
+/* One 0x2B-byte member record (the layout of tu110.c, which copies it whole into the save image). */
+typedef struct SaveMemberName {
+    unsigned char header[4];            /* +0x00 */
+    unsigned char cells[4][8];          /* +0x04 */
+    unsigned char openGroup;            /* +0x24 */
+    unsigned char takenCount;           /* +0x25 */
+    unsigned char entries[4];           /* +0x26 */
+    unsigned char entry_count;          /* +0x2A */
+} SaveMemberName;
+SaveMemberName D_006A5880[10];
+/* The 80-byte party progress record (tu110.c's PartyProgress; tu108.c and tu109.c name its fields). */
+unsigned char D_006A5A30[80];
+
+/* .data of this file from 0x3EB308 (yg2PathFrameImage and yg2PathFrameBorderImage are read by yg2path.c). */
+unsigned char yg2PathFrameImage[80] = {
+    218, 1, 0, 0, 219, 1, 0, 0,
+    220, 1, 0, 0, 221, 1, 0, 0,
+    255, 255, 255, 255, 222, 1, 0, 0,
+    223, 1, 0, 0, 224, 1, 0, 0,
+    225, 1, 0, 0, 0, 0, 0, 0,
+    210, 1, 0, 0, 211, 1, 0, 0,
+    212, 1, 0, 0, 213, 1, 0, 0,
+    255, 255, 255, 255, 214, 1, 0, 0,
+    215, 1, 0, 0, 216, 1, 0, 0,
+    217, 1, 0, 0, 0, 0, 0, 0
+};
+
+unsigned char yg2PathFrameBorderImage[40] = {
+    202, 1, 0, 0, 203, 1, 0, 0,
+    204, 1, 0, 0, 205, 1, 0, 0,
+    255, 255, 255, 255, 206, 1, 0, 0,
+    207, 1, 0, 0, 208, 1, 0, 0,
+    209, 1, 0, 0, 0, 0, 0, 0
+};
+
+unsigned char D_003EB380[40] = {
+    5, 1, 0, 0, 6, 1, 0, 0,
+    7, 1, 0, 0, 255, 0, 0, 0,
+    0, 1, 0, 0, 1, 1, 0, 0,
+    9, 1, 0, 0, 8, 1, 0, 0,
+    9, 1, 0, 0, 0, 0, 0, 0
+};
+
+unsigned short menuIconKinds[16] = {
+    327, 196, 194, 335, 329, 198, 333, 339,
+    341, 337, 325, 323, 331, 0, 0, 0
+};
+
+const char *D_003EB3C8[12] = {
+    "1",
+    "2",
+    "3",
+    "4",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H"
+};
+
+signed char D_003EB3F8[8] = { 1, 4, 2, 1, 6, 0, 0, 5 };
+
+MenuLayoutSlot D_003EB400[10][13] = {
+    {  /* layout 0 */
+        { 1, { 0 }, 21, 116 }, { 1, { 0 }, 45, 203 }, { 1, { 0 }, 69, 290 },
+        { 1, { 0 }, 238, 125 }, { 1, { 0 }, 252, 174 }, { 1, { 0 }, 266, 223 },
+        { 1, { 0 }, 280, 272 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 },
+    },
+    {  /* layout 1 */
+        { 1, { 0 }, 21, 116 }, { 1, { 0 }, 45, 203 }, { 1, { 0 }, 69, 290 },
+        { 1, { 0 }, 238, 125 }, { 1, { 0 }, 252, 182 }, { 1, { 0 }, 266, 239 },
+        { 1, { 0 }, 280, 296 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 },
+    },
+    {  /* layout 2 */
+        { 0, { 0 }, 27, 105 }, { 0, { 0 }, 70, 197 }, { 0, { 0 }, 27, 289 },
+        { 0, { 0 }, -152, 322 }, { 0, { 0 }, -327, 289 }, { 0, { 0 }, -327, 105 },
+        { 0, { 0 }, -152, 72 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 },
+    },
+    {  /* layout 3 */
+        { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 },
+        { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 },
+        { 2, { 0 }, 17, 95 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 },
+    },
+    {  /* layout 4 */
+        { 1, { 0 }, 273, 95 }, { 1, { 0 }, 273, 137 }, { 1, { 0 }, 273, 179 },
+        { 1, { 0 }, 273, 227 }, { 1, { 0 }, 273, 267 }, { 1, { 0 }, 273, 307 },
+        { 1, { 0 }, 273, 347 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 },
+    },
+    {  /* layout 5 */
+        { 1, { 0 }, 21, 116 }, { 1, { 0 }, 69, 251 }, { 1, { 0 }, 275, 116 },
+        { 1, { 0 }, 10, 212 }, { 1, { 0 }, 58, 347 }, { 1, { 0 }, 264, 212 },
+        { 1, { 0 }, 112, 212 }, { 1, { 0 }, 160, 347 }, { 1, { 0 }, 366, 212 },
+        { 0, { 0 }, 291, 299 }, { 0, { 0 }, 393, 299 }, { 0, { 0 }, 291, 337 },
+        { 0, { 0 }, 393, 337 },
+    },
+    {  /* layout 6 */
+        { 1, { 0 }, 21, 116 }, { 1, { 0 }, 69, 251 }, { 1, { 0 }, 275, 116 },
+        { 1, { 0 }, 10, 212 }, { 1, { 0 }, 58, 347 }, { 1, { 0 }, 264, 212 },
+        { 1, { 0 }, 112, 212 }, { 1, { 0 }, 160, 347 }, { 1, { 0 }, 366, 212 },
+        { 1, { 0 }, 291, 299 }, { 1, { 0 }, 393, 299 }, { 1, { 0 }, 291, 337 },
+        { 1, { 0 }, 393, 337 },
+    },
+    {  /* layout 7 */
+        { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 },
+        { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 },
+        { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 },
+        { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 }, { 2, { 0 }, 17, 95 },
+        { 2, { 0 }, 17, 95 },
+    },
+    {  /* layout 8 */
+        { 1, { 0 }, 301, 103 }, { 1, { 0 }, 301, 195 }, { 1, { 0 }, 301, 295 },
+        { 0, { 0 }, 1024, 448 }, { 0, { 0 }, 1024, 448 }, { 0, { 0 }, 1024, 448 },
+        { 0, { 0 }, 1024, 448 }, { 0, { 0 }, 1024, 448 }, { 0, { 0 }, 1024, 448 },
+        { 0, { 0 }, 1024, 448 }, { 0, { 0 }, 1024, 448 }, { 0, { 0 }, 1024, 448 },
+        { 0, { 0 }, 1024, 448 },
+    },
+    {  /* layout 9 */
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 }, { 0, { 0 }, 0, 0 },
+        { 0, { 0 }, 0, 0 },
+    },
+};
+
+/* The four panel kinds' size pair and tab pair (rows [0] and [1] of menuDrawPanelHighlight). The
+   command-detail code above also reads the second half as D_003EBA38 (LookupRecord). */
+int D_003EBA18[2][4][2] = {
+    { { 177, 98 }, { 246, 67 }, { 194, 98 }, { 111, 49 } },
+    { { 78, 32 }, { 78, 32 }, { 95, 32 }, { 43, 18 } }
+};
+
+/* .sdata of this file: style reset record used by msgRangeDraw and msgRangeDrawRevealed. */
+unsigned char msgStyleReset[8] = { 0x0f, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00 };

@@ -8,6 +8,8 @@
 #include "main/tu026.h"
 #include "main/tu051.h"
 #include "main/tu101.h"
+#include "main/tu214.h"
+#include "main/tu234.h"
 #include "main/tu138.h"
 #include "main/sef.h"
 #include "main/tu144.h"
@@ -27,8 +29,8 @@
 #include "main/tu021.h"
 #include "main/xgl_font.h"
 #include "main/xgl_render.h"
+#include "main/tu048.h"
 
-extern unsigned char cfeAssertFile[];
 
 /* The modes of cfeListSetKeyMode / cfeListSetAngleKeyMode: set the key plain or linear (CFE_TRACK_LINEAR), or
  * plain and mark the list's tail to reset its first, second or both direction pairs (CFE_TRACK_RESET_*). */
@@ -39,7 +41,6 @@ extern unsigned char cfeAssertFile[];
 #define CFE_KEY_MODE_RESET_SECOND 4
 
 /* The text "0" of the default cases' assert(0). */
-extern unsigned char cfeAssertZero[];
 
 /* Sets key `key` of the value list to `value` in a CFE_KEY_MODE_* mode: plain (cfeListSetValue) or
  * linear (cfeListSetValueLinear), or plain with reset flags on the list's tail, which is then updated
@@ -80,7 +81,7 @@ void cfeListSetKeyMode(CfeTrackNode **list, int mode, int key, float value)
         }
         break;
     default:
-        assertFailed(cfeAssertZero, cfeAssertFile, 96);
+        assertFailed("0", "../cfePlugIn.euc.c", 96);
         break;
     }
 }
@@ -124,7 +125,7 @@ void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
         }
         break;
     default:
-        assertFailed(cfeAssertZero, cfeAssertFile, 140);
+        assertFailed("0", "../cfePlugIn.euc.c", 140);
         break;
     }
 }
@@ -132,7 +133,7 @@ void cfeListSetAngleKeyMode(CfeTrackNode **list, int mode, int key, float value)
 void xglMatrixStackRotX(float angle);
 void xglMatrixStackRotY(float angle);
 void xglMatrixStackSave(Matrix4 matrix);
-extern const AlignedVector4 cfeForwardVector;
+const AlignedVector4 cfeForwardVector = { 0.0f, 0.0f, 1.0f, 1.0f };
 
 /* The vector cfeForwardVector rotated by angles[0] about X and angles[1] about Y. */
 void cfeRotateVectorXY(float *result, const float *angles)
@@ -167,9 +168,8 @@ int cfeStrCountChar(const char *text, char character)
 
 void *memset(void *destination, int value, unsigned int count);
 char *strcpy(char *destination, const char *source);
-char *strcat(char *destination, const char *source);
-extern const char cfeMesEmpty[];
-extern const char cfeMesFontSettings[];
+const char cfeMesEmpty[8] = { 0 };
+const char cfeMesFontSettings[48] = "$bg3;$prop1;$han1;$xx0,22;$xx1,8;$xx2,0;";
 
 /* The scratchpad, where each line is laid out before it is appended. */
 #define CFE_MES_SCRATCHPAD ((char *) 0x70000000)
@@ -251,9 +251,7 @@ void cfeMesUnescape(char *destination, const char *source)
 }
 
 typedef struct XenoActor XenoActor;
-XenoActor *XenoActorAlloc(void);
 void xglCullingMapSet(int map);
-extern unsigned char cfeResLoadAssertMsg[];
 
 /* The resource block the cfe object loaders read. */
 typedef struct CfeResourceBlock {
@@ -267,8 +265,8 @@ typedef struct CfeResourceBlock {
 int GameResLoadID(int id, void **buffer, unsigned int *size,
                   void (*callback)(int index, void *buffer, unsigned int size, int value));
 
-/* XenoActor.kind (+0x798) as cfeLoadResourceObject writes it: a pointer-typed store outside tu051.h's
- * one-member union (alias set 0), so the pack load after it may move above it as in the original. Through
+/* XenoActor.kind (+0x798) as cfeLoadResourceObject writes it: a pointer-typed store through a view
+ * that only has this member, so the pack load after it may move above it as in the original. Through
  * actor->kind (0.91) or an int view field (gate fails) it cannot. */
 typedef struct CfeActorKindView {
     unsigned char unmodeled_000[0x798];
@@ -287,7 +285,7 @@ XenoActor *cfeLoadResourceObject(int id)
     do {
     } while (xglCdServiceIfPending() != 0);
     if (GameResLoadID(id, &data, 0, 0) == -1) {
-        assertFailed(cfeResLoadAssertMsg, cfeAssertFile, 283);
+        assertFailed("GameResLoadID(Number, &Adrs, NULL, NULL) != -1", "../cfePlugIn.euc.c", 283);
     }
     resource = data;
     actor = XenoActorAlloc();
@@ -353,8 +351,6 @@ void cfeMapInitRecords(CfeMap *group)
 int VM_PLUGIN_CNT_GET(int handle);
 int vmArgGet(int, int);
 char *vmKeyedEntryGet(int, int);
-extern unsigned char cfeArgCount3Assert[];
-extern unsigned char cfeArgCount1Assert[];
 
 void XenoActorAllocMatrices(XenoActor *actor);
 
@@ -381,7 +377,7 @@ XenoActor *cfeLoadActorObject(int id)
     do {
     } while (xglCdServiceIfPending() != 0);
     if (GameResLoadID(id, &data, 0, 0) == -1) {
-        assertFailed(cfeResLoadAssertMsg, cfeAssertFile, 346);
+        assertFailed("GameResLoadID(Number, &Adrs, NULL, NULL) != -1", "../cfePlugIn.euc.c", 346);
     }
     resource = data;
     actor = XenoActorAlloc();
@@ -410,7 +406,6 @@ XenoActor *cfeLoadActorObject(int id)
     return actor;
 }
 
-extern unsigned char cfeActorAssert[];
 
 /* Script command `cfe.ldAt` (1 argument): loads actor argument 1 into the next entry of cfeEntries, copies the play
  * range of its first motion state, sets draw mode 6 and allocates a cleared record block of two words per
@@ -422,11 +417,11 @@ int cfe_0024BA70(int handle)
     void *block;
 
     if (VM_PLUGIN_CNT_GET(handle) != 1) {
-        assertFailed(cfeArgCount1Assert, cfeAssertFile, 394);
+        assertFailed("VM_PLUGIN_CNT_GET() == 1", "../cfePlugIn.euc.c", 394);
     }
     cfeEntries[cfeEntryCount].actor = cfeLoadActorObject(vmArgGet(handle, 1));
     if (cfeEntries[cfeEntryCount].actor == 0) {
-        assertFailed(cfeActorAssert, cfeAssertFile, 398);
+        assertFailed("actor[numActor].pAct", "../cfePlugIn.euc.c", 398);
     }
     actor = cfeEntries[cfeEntryCount].actor;
     /* XenoActor keeps the pack as an int. */
@@ -460,7 +455,7 @@ int cfe_0024BC10(int handle)
 
     data = 0;
     if (VM_PLUGIN_CNT_GET(handle) != 3) {
-        assertFailed(cfeArgCount3Assert, cfeAssertFile, 430);
+        assertFailed("VM_PLUGIN_CNT_GET() == 3", "../cfePlugIn.euc.c", 430);
     }
     slot = vmArgGet(handle, 1);
     index = vmArgGet(handle, 2);
@@ -481,12 +476,10 @@ int cfe_0024BC10(int handle)
     return 1;
 }
 
-extern unsigned char cfeArgCount4Assert[];
-extern unsigned char cfeArgCount5Assert[];
 
 
 /* The initial scale of a command (1, 1, 1). */
-extern const AlignedVector4 cfeUnitScale;
+const AlignedVector4 cfeUnitScale = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 /* Script command `cfe.ldEf` (2 or 3 arguments): starts the effect of the next command of cfeCommands (page index
  * and offset; the 3-argument form also gives the bank flag) and sets the command's position and
@@ -540,7 +533,7 @@ int cfe_0024BEF0(int handle)
     CfeEvalRecord *records;
 
     if (VM_PLUGIN_CNT_GET(handle) != 1) {
-        assertFailed(cfeArgCount1Assert, cfeAssertFile, 502);
+        assertFailed("VM_PLUGIN_CNT_GET() == 1", "../cfePlugIn.euc.c", 502);
     }
     object = cfeLoadResourceObject(vmArgGet(handle, 1));
     /* XenoActor keeps the pack as an int. */
@@ -569,7 +562,6 @@ int cfe_0024BEF0(int handle)
 }
 
 void sprintf(char *, unsigned char *, char *);
-extern unsigned char cfeMotionPathFormat[];
 
 int cfe_0024C030(int handle)
 {
@@ -581,7 +573,7 @@ int cfe_0024C030(int handle)
     data = 0;
     slot = vmArgGet(handle, 1);
     text = vmKeyedEntryGet(handle, vmArgGet(handle, 2));
-    sprintf(buffer, cfeMotionPathFormat, text);
+    sprintf(buffer, "motion/cfevent/%s", text);
     GameResLoadName(buffer, &data, 0, 0);
     do {
     } while (xglCdServiceIfPending() != 0);
@@ -589,8 +581,7 @@ int cfe_0024C030(int handle)
     return 1;
 }
 
-extern char cfeMovieOpenFailedText[];
-extern unsigned char cfeMovieOpenAssert[];
+const char cfeMovieOpenFailedText[24] = "failed movie open\n";
 
 /* Script command `cfe.ldMnt` (1 argument): opens the movie named by argument 1 in the next entry of
  * cfeEvalEntries: reads the file into a new block (walking the block table when the allocation
@@ -619,7 +610,7 @@ int cfe_0024C0D8(int handle)
 ") inside `if (xglMovieOpen(...) != 0)`: the string is the assert's own
      * condition, so the test of cfeMovieOpenFailedText is the assert. */
     if (xglMovieOpen(&entry->movie, 0) != 0 && cfeMovieOpenFailedText != 0) {
-        assertFailed(cfeMovieOpenAssert, cfeAssertFile, 604);
+        assertFailed("!\"failed movie open\\n\"", "../cfePlugIn.euc.c", 604);
     }
     entry->movie.imageAddress[0] = GameResBufferAlloc(entry->movie.imageQwords * 16 + 0x20);
     entry->movie.imageAddress[1] = GameResBufferAlloc(entry->movie.imageQwords * 16 + 0x20);
@@ -655,16 +646,14 @@ void resUpdatePathSlot(int slot);
 void cfeInit(void);
 void tiGlobalCollClearHandle(void);
 void func_001B2724(void);
-void XenoActorRelease(struct XenoActor *actor);
 void fadeClear(void);
 XglCamera *xglStudioGetCamera2(int index);
 extern signed char pxyTickScaleDouble;
 extern int cfePaused;
 extern int cfeStartDelay;
 
-extern GameWorkControl gameWork;
 /* The position the parked record actors are moved to before they are released. */
-extern const AlignedVector4 cfeParkedPosition;
+const AlignedVector4 cfeParkedPosition = { 99999.0f, 99999.0f, 99999.0f, 1.0f };
 
 /* The uwamonoRecords entries and the two flags this command sets on every used record. */
 #define CFE_RECORD_COUNT 256
@@ -739,7 +728,7 @@ int cfe_0024C500(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
-        assertFailed(cfeArgCount5Assert, cfeAssertFile, 756);
+        assertFailed("VM_PLUGIN_CNT_GET() == 5", "../cfePlugIn.euc.c", 756);
     }
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
@@ -774,7 +763,7 @@ int cfe_0024C7B8(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
-        assertFailed(cfeArgCount5Assert, cfeAssertFile, 795);
+        assertFailed("VM_PLUGIN_CNT_GET() == 5", "../cfePlugIn.euc.c", 795);
     }
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
@@ -789,7 +778,6 @@ int cfe_0024C7B8(int handle)
     return 1;
 }
 
-extern unsigned char cfeArgCount6Assert[];
 
 /* Script command `cfe.stKyAtPrts` (6 arguments): sets key `key` of track `column` of flag record `row` of entry `entry`
  * to the 8.8 value (linear through cfeListSetValueLinear when `linear` is set), then walks that track to its
@@ -805,7 +793,7 @@ int cfe_0024C940(int handle)
     CfeTrackNode *node;
 
     if (VM_PLUGIN_CNT_GET(handle) != 6) {
-        assertFailed(cfeArgCount6Assert, cfeAssertFile, 821);
+        assertFailed("VM_PLUGIN_CNT_GET() == 6", "../cfePlugIn.euc.c", 821);
     }
     entry = vmArgGet(handle, 1);
     row = vmArgGet(handle, 2);
@@ -835,7 +823,7 @@ int cfe_0024CB80(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 4) {
-        assertFailed(cfeArgCount4Assert, cfeAssertFile, 856);
+        assertFailed("VM_PLUGIN_CNT_GET() == 4", "../cfePlugIn.euc.c", 856);
     }
     index = vmArgGet(handle, 1);
     key = vmArgGet(handle, 2);
@@ -862,7 +850,7 @@ int cfe_0024CCF8(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
-        assertFailed(cfeArgCount5Assert, cfeAssertFile, 896);
+        assertFailed("VM_PLUGIN_CNT_GET() == 5", "../cfePlugIn.euc.c", 896);
     }
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
@@ -897,7 +885,7 @@ int cfe_0024CF70(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
-        assertFailed(cfeArgCount5Assert, cfeAssertFile, 933);
+        assertFailed("VM_PLUGIN_CNT_GET() == 5", "../cfePlugIn.euc.c", 933);
     }
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
@@ -977,7 +965,7 @@ int cfe_0024D5E0(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 4) {
-        assertFailed(cfeArgCount4Assert, cfeAssertFile, 1021);
+        assertFailed("VM_PLUGIN_CNT_GET() == 4", "../cfePlugIn.euc.c", 1021);
     }
     index = vmArgGet(handle, 1);
     key = vmArgGet(handle, 2);
@@ -1003,7 +991,7 @@ int cfe_0024D738(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
-        assertFailed(cfeArgCount5Assert, cfeAssertFile, 1047);
+        assertFailed("VM_PLUGIN_CNT_GET() == 5", "../cfePlugIn.euc.c", 1047);
     }
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
@@ -1029,7 +1017,7 @@ int cfe_0024D8C0(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
-        assertFailed(cfeArgCount5Assert, cfeAssertFile, 1073);
+        assertFailed("VM_PLUGIN_CNT_GET() == 5", "../cfePlugIn.euc.c", 1073);
     }
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
@@ -1056,7 +1044,7 @@ int cfe_0024DA40(int handle)
     int value;
 
     if (VM_PLUGIN_CNT_GET(handle) != 5) {
-        assertFailed(cfeArgCount5Assert, cfeAssertFile, 1099);
+        assertFailed("VM_PLUGIN_CNT_GET() == 5", "../cfePlugIn.euc.c", 1099);
     }
     index = vmArgGet(handle, 1);
     sub = vmArgGet(handle, 2);
@@ -1081,7 +1069,6 @@ typedef struct CfeMessageRecord {
 } CfeMessageRecord;
 
 extern CfeMessageRecord *cfeMessages;
-extern unsigned char cfeMessageAssert[];
 
 /* Script command `cfe.allocMes` (1 argument): allocates and clears argument 1 message records for cfeMessages. */
 int cfe_0024DBC0(int handle)
@@ -1090,7 +1077,7 @@ int cfe_0024DBC0(int handle)
     int size;
 
     if (VM_PLUGIN_CNT_GET(handle) != 1) {
-        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1124);
+        assertFailed("VM_PLUGIN_CNT_GET() == 1", "../cfePlugIn.euc.c", 1124);
     }
     count = vmArgGet(handle, 1);
     size = count * sizeof(CfeMessageRecord);
@@ -1099,7 +1086,7 @@ int cfe_0024DBC0(int handle)
     }
     cfeMessages = GameResBufferAlloc(size);
     if (cfeMessages == 0) {
-        assertFailed(cfeMessageAssert, cfeAssertFile, 1131);
+        assertFailed("message", "../cfePlugIn.euc.c", 1131);
     }
     memset(cfeMessages, 0, size);
     return 1;
@@ -1148,7 +1135,7 @@ int cfe_0024DE20(int handle)
 {
     int value;
     if (VM_PLUGIN_CNT_GET(handle) != 1) {
-        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1201);
+        assertFailed("VM_PLUGIN_CNT_GET() == 1", "../cfePlugIn.euc.c", 1201);
     }
     value = vmArgGet(handle, 1);
     cfeRangeSetMin(value);
@@ -1160,7 +1147,7 @@ int cfe_0024DE80(int handle)
 {
     int value;
     if (VM_PLUGIN_CNT_GET(handle) != 1) {
-        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1217);
+        assertFailed("VM_PLUGIN_CNT_GET() == 1", "../cfePlugIn.euc.c", 1217);
     }
     value = vmArgGet(handle, 1);
     cfeRangeSetMax(value);
@@ -1180,14 +1167,13 @@ void cfeRunAndWait(const char *file, int id)
     }
 }
 
-void func_0028B268(struct XenoActor *actor, Vector4 *target);
+void XenoActorSetFocusTarget(struct XenoActor *actor, Vector4 *target);
 void cfeDampDirOffset(struct XenoActor *actor, int offset);
 void xglClockSampleDayTime(void);
 void xglClockAccumulate(void);
 void pauseDrawScreen(void);
 void sefExecEffect(void);
-void func_0027C7D0(void);
-void func_0027BFD0(int slot, int kind, unsigned int value, int count);
+void effectRequestToCommand(int slot, int kind, unsigned int value, int count);
 void fadeReset(void);
 void fadeStartIn(int frames);
 void xglFontPrintDirect(const char *text);
@@ -1208,7 +1194,7 @@ int strcmp(const char *first, const char *second);
 #define CFE_SUBTITLE_Y 370
 #define CFE_SUBTITLE_Y2 348
 #define CFE_SUBTITLE_COLOR 0xFFFFFF
-/* The slot value scale for func_0027BFD0; kinds 0x22 and 0x23 take 0.03 of it as kinds 0x1A and 0x1B. */
+/* The slot value scale for effectRequestToCommand; kinds 0x22 and 0x23 take 0.03 of it as kinds 0x1A and 0x1B. */
 #define CFE_SLOT_SCALE 16777215.0f
 #define CFE_SLOT_SHORT 0.03f
 
@@ -1225,7 +1211,7 @@ int cfe_0024DF60(int handle)
     int y;
 
     if (VM_PLUGIN_CNT_GET(handle) != 1) {
-        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1250);
+        assertFailed("VM_PLUGIN_CNT_GET() == 1", "../cfePlugIn.euc.c", 1250);
     }
     while (xglCdServiceIfPending() != 0) {
     }
@@ -1267,7 +1253,7 @@ int cfe_0024DF60(int handle)
     for (i = 0; i < cfeEntryCount; i++) {
         entry = &cfeEntries[i];
         if (entry->flags & CFE_ACTOR_SHOWN) {
-            func_0028B268(entry->actor, &entry->position);
+            XenoActorSetFocusTarget(entry->actor, &entry->position);
         }
         cfeDampDirOffset(entry->actor, entry->dampOffset);
     }
@@ -1332,13 +1318,13 @@ int cfe_0024DF60(int handle)
             fadeClear();
         }
         if (cfeEvalSlots[i].result_int == 0x22) {
-            func_0027BFD0(i, 0x1A, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
+            effectRequestToCommand(i, 0x1A, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
                           cfeEvalSlots[i].sample_int);
         } else if (cfeEvalSlots[i].result_int == 0x23) {
-            func_0027BFD0(i, 0x1B, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
+            effectRequestToCommand(i, 0x1B, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE * CFE_SLOT_SHORT,
                           cfeEvalSlots[i].sample_int);
         } else {
-            func_0027BFD0(i, cfeEvalSlots[i].result_int, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE,
+            effectRequestToCommand(i, cfeEvalSlots[i].result_int, cfeEvalSlots[i].sample_float * CFE_SLOT_SCALE,
                           cfeEvalSlots[i].sample_int);
         }
     }
@@ -1355,7 +1341,7 @@ int cfe_0024DF60(int handle)
 int cfe_0024E688(int handle)
 {
     if (VM_PLUGIN_CNT_GET(handle) != 1) {
-        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1456);
+        assertFailed("VM_PLUGIN_CNT_GET() == 1", "../cfePlugIn.euc.c", 1456);
     }
     sefReleaseOwnedRecords(-1);
     return 1;
@@ -1367,7 +1353,7 @@ int cfe_0024E6D8(int handle)
 {
     int value;
     if (VM_PLUGIN_CNT_GET(handle) != 1) {
-        assertFailed(cfeArgCount1Assert, cfeAssertFile, 1475);
+        assertFailed("VM_PLUGIN_CNT_GET() == 1", "../cfePlugIn.euc.c", 1475);
     }
     value = vmArgGet(handle, 1);
     fadeStartOut(value);
@@ -1452,10 +1438,86 @@ int cfe_0024E738(int handle)
 }
 
 void sbNativeOwnerAdd(void *, void *);
-extern unsigned char cfePlugInTable[];
-extern unsigned char cfePlugInName[];
+
+const char D_0068CF40[8] = "destroy";
+const char D_0068CF48[16] = "stEndFrm";
+const char D_0068CF58[16] = "stStrtFrm";
+const char D_0068CF68[16] = "setMesScr";
+const char D_0068CF78[8] = "setMes";
+const char D_0068CF80[16] = "allocMes";
+const char D_0068CF90[8] = "stKySnd";
+const char D_0068CF98[16] = "stKyScrEff";
+const char D_0068CFA8[8] = "stKyMnt";
+const char D_0068CFB0[8] = "stKyFog";
+const char D_0068CFB8[8] = "stKyMp";
+const char D_0068CFC0[8] = "stKyLgt";
+const char D_0068CFC8[8] = "stKyEf";
+const char D_0068CFD0[8] = "stKyCm";
+const char D_0068CFD8[16] = "stKyAtPrts";
+const char D_0068CFE8[16] = "stKyAtHd";
+const char D_0068CFF8[8] = "stKyAt";
+const char D_0068D000[8] = "stFrm";
+const char D_0068D008[8] = "stFdOut";
+const char D_0068D010[8] = "stFdIn";
+const char D_0068D018[8] = "ldSnd";
+const char D_0068D020[8] = "ldDev";
+const char D_0068D028[8] = "ldMnt";
+const char D_0068D030[8] = "ldMpDev";
+const char D_0068D038[8] = "ldMp";
+const char D_0068D040[8] = "ldEf";
+const char D_0068D048[8] = "ldMt";
+const char D_0068D050[8] = "ldAt";
+const char D_0068D058[8] = "init";
+
+/* One native of the plug-in: the script name and its command function. */
+typedef struct CfePlugInEntry {
+    const char *name;
+    void *function;
+} CfePlugInEntry;
+
+int cfePaused = 0;
+int cfeStartDelay = 0;
+int cfePlugInRecordCount = 0;
+CfeMessageRecord *cfeMessages = 0;
+const char cfePlugInName[16] = "cfe";
+
+CfePlugInEntry cfePlugInTable[30] = {
+    { D_0068D058, cfe_0024C308 },
+    { D_0068D050, cfe_0024BA70 },
+    { D_0068D048, cfe_0024BC10 },
+    { D_0068D040, cfe_0024BD28 },
+    { D_0068D038, cfe_0024BEF0 },
+    { D_0068D030, cfe_0024C030 },
+    { D_0068D028, cfe_0024C0D8 },
+    { D_0068D020, ldDev },
+    { D_0068D018, cfe_0024C278 },
+    { D_0068D010, cfe_0024E688 },
+    { D_0068D008, cfe_0024E6D8 },
+    { D_0068D000, cfe_0024DF60 },
+    { D_0068CFF8, cfe_0024C500 },
+    { D_0068CFE8, cfe_0024C7B8 },
+    { D_0068CFD8, cfe_0024C940 },
+    { D_0068CFD0, cfe_0024CB80 },
+    { D_0068CFC8, cfe_0024CCF8 },
+    { D_0068CFC0, cfe_0024CF70 },
+    { D_0068CFB8, cfe_0024D1E8 },
+    { D_0068CFB0, cfe_0024D5E0 },
+    { D_0068CFA8, cfe_0024D738 },
+    { D_0068CF98, cfe_0024D8C0 },
+    { D_0068CF90, cfe_0024DA40 },
+    { D_0068CF80, cfe_0024DBC0 },
+    { D_0068CF78, cfe_0024DC78 },
+    { D_0068CF68, setMesScr },
+    { D_0068CF58, cfe_0024DE20 },
+    { D_0068CF48, cfe_0024DE80 },
+    { D_0068CF40, cfe_0024E738 },
+    { 0, 0 },
+};
 
 void cfeRegisterPlugIn(void)
 {
     sbNativeOwnerAdd(cfePlugInName, cfePlugInTable);
 }
+
+const char cfeEmptyName[8] = { 0 };
+

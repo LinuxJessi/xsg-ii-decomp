@@ -13,52 +13,78 @@
  */
 #include "common.h"
 #include "ov01/tu005.h"
+#include "ov01/tu008.h"
+#include "main/tu051.h"
 #include "ov01/tu012.h"
-#include "ov01/tu019.h"
-#include "ov01/tu031.h"
-#include "ov01/tu032.h"
+#include "ov01/tu023.h"
 #include "ov01/tu033.h"
+#include "ov01/tu042.h"
+#include "ov01/tu036.h"
+#include "ov01/tu038.h"
 #include "ov01/tu066.h"
 #include "ov01/tu070.h"
-
-/* cmdSystemInit: clears the command list and fifo, the event table and its counters. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdSystemInit);
 
 extern char cmdList[];   /* cmdList: 0x20-byte entries, unit then command body */
 extern char cmdFifo[];   /* cmdFifo: fifo control block */
 
-struct UnitSub {
-    unsigned char unmodeled_00[0x1E];
-    short page;
-    unsigned char unmodeled_20[0x3C];
-    int state;
-    unsigned char unmodeled_60[2];
-    short key;
-    unsigned char unmodeled_64[6];
-    short level;
+/* Command list entries (0x20 bytes each); the fifo ring runs over them. */
+#define CMD_LIST_COUNT 0x20
+#define CMD_LIST_ENTRY_SIZE 0x20
+
+/* Payloads the appenders copy whole into a record (four, six and eleven words). */
+
+/* The four-word payload of eventQueueAdd and eventQueueAddKind4. */
+typedef struct EventQueueArgs {
+    unsigned char unmodeled_00[0x4];
+    int tecIndex;                       /* +0x04: the tec whose EP cost cmdStockRun charges */
+    unsigned char unmodeled_08[0x4];
+    Ov01Object *target;                 /* +0x0C: the partner / stocked unit of events 0x10 and 0x12 */
+} EventQueueArgs;
+
+typedef struct EventQueueArgs11 {
+    int words[11];
+} EventQueueArgs11;
+
+/* One 0x30-byte record of eventQueueTable (eventQueueTable); kind is its first word,
+ * the payload layout depends on the appender. */
+typedef struct EventQueueEntry {
+    int kind;
+    union {
+        EventQueueArgs args;          /* eventQueueAdd, eventQueueAddKind4 */
+        struct {
+            void *object;
+            CmdListBody args;
+        } kind1;                      /* eventQueueAddKind1 */
+        EventQueueArgs11 kind5;       /* eventQueueAddKind5 */
+    } data;
+} EventQueueEntry;
+
+/* Record kinds by their handler in eventQueueHandlers (the kinds the code here queues). */
+enum {
+    EVENT_KIND_WAIT_UNIT_QUEUE = 2,     /* eventWaitUnitQueue */
+    EVENT_KIND_LOADS_IDLE = 7,          /* ov01LoadsIdle */
+    EVENT_KIND_STREAM_OPEN = 14,        /* ov01StreamOpen */
+    EVENT_KIND_STREAM_BIND = 15,        /* ov01StreamBind */
+    EVENT_KIND_PAIR_BEGIN = 16,         /* func_00A96AA8: unbinds the pair and hides its monster slots */
+    EVENT_KIND_PAIR_END = 17,           /* func_00A96E38: shows and releases the monster slots again */
+    EVENT_KIND_STOCK_BEGIN = 18,        /* func_00A97110 */
+    EVENT_KIND_STOCK_BOOST_CLEAR = 19   /* eventActStockBoostClear */
 };
 
-/* Unit slot of a table: flags bit 0x4 is the pause bit, aux the speed (1.0 running, 0 paused). */
-struct UnitSlot {
-    unsigned char unmodeled_00[0xBC];
-    int flags;
-    float aux;
-};
+/* Records of eventQueueTable (eventQueueReserve stops at this count). */
+#define EVENT_QUEUE_COUNT 0x40
 
-struct UnitTable {
-    unsigned char unmodeled_000[0x144];
-    struct UnitSub *sub;
-    unsigned char unmodeled_148[0x1D0 - 0x148];
-    int handle;
-    unsigned char unmodeled_1d4[0x1DC - 0x1D4];
-    /* extent of slots not recovered; indexed by the caller's index */
-    struct UnitSlot *slots[1];
-};
+extern EventQueueEntry eventQueueTable[EVENT_QUEUE_COUNT];
+extern int eventQueueCount;
+extern int eventQueueCursor;
+/* Cleared with the event queue: eventRetryCount counts the runs of a record whose
+ * handler is not done yet, eventStepStarted is a handler's own flag (unitBindRequest
+ * sets it once the bind load runs); both are cleared when a record is done. */
+extern int eventRetryCount;
+extern int eventStepStarted;
 
-struct UnitActor {
-    unsigned char unmodeled_00[0x1D0];
-    struct UnitSlot *unit;
-};
+/* cmdSystemInit: clears the command list and fifo, the event table and its counters. */
+INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdSystemInit);
 
 /* cmdListPtrGet: the command fifo and the command list, through two out pointers. */
 void cmdListPtrGet(void **fifo_out, void **list_out) {
@@ -66,8 +92,32 @@ void cmdListPtrGet(void **fifo_out, void **list_out) {
     *list_out = cmdList;
 }
 
+/* Ov01Object.flags bit of a held (paused) unit. */
+
+/* One 0x20-byte cmdList entry: the unit, then the command body at +0x08. The
+ * unit is kept as a word, as XS1's CmdListEntry (battle_init.c) keeps it. */
+typedef struct CmdListEntry {
+    int unit;                         /* +0x00 */
+    unsigned char unmodeled_04[0x04];
+    CmdListBody body;                 /* +0x08 */
+} CmdListEntry;
+
 /* cmdListSet: queues one unit's command record at the fifo's write position. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdListSet);
+void cmdListSet(void *unit, CmdListBody *command)
+{
+    void *fifo;
+    void *list;
+    CmdListEntry *entry;
+
+    cmdListPtrGet(&fifo, &list);
+    /* XS1 cmdListSet's form: the byte offset plus the list address as integers.
+     * With pointer arithmetic (list + index) the unit store is scheduled after
+     * the body copy. */
+    entry = (CmdListEntry *)((char *)(ov01FifoGetTail(fifo) * sizeof(CmdListEntry)) + (int)list);
+    entry->unit = (int)unit;
+    entry->body = *command;
+    ov01FifoPush(fifo);
+}
 
 /* cmdListRunHead: runs the head command of the list unless its unit is held; pops it on success. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdListRunHead);
@@ -75,9 +125,62 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdListRunHead);
 /* cmdExecute: runs one command body, a switch on its kind, queueing events on the way. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdExecute);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92A48);
+void eventQueueAdd(int kind, EventQueueArgs *args);
+void eventQueueAddKind1(void *object, CmdListBody *args);
+void func_00A92C18(Ov01Object *unit, CmdListBody *command);
+Ov01Object *unitPairPartnerFind(Ov01Object *unit, int value);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92B10);
+/* Unit command indices (CmdListBody.command) the two command handlers below queue. */
+#define CMD_EVENT_MOTION_3 3
+#define CMD_EVENT_MOTION_9 9
+
+/* A pair command: queues stream open, loads idle, stream bind and pair begin (args target
+ * set to the partner unitPairPartnerFind finds for the command's pair record), the command
+ * for the unit and the partner, motion 9 for the partner, the follow-up and the pair end. */
+void cmdPairRun(Ov01Object *unit, CmdListBody *command, EventQueueArgs *args)
+{
+    Ov01Object *partner;
+    CmdListBody motion;
+
+    partner = unitPairPartnerFind(unit, command->pairIndex);
+    eventQueueAdd(EVENT_KIND_STREAM_OPEN, args);
+    eventQueueAdd(EVENT_KIND_LOADS_IDLE, args);
+    eventQueueAdd(EVENT_KIND_STREAM_BIND, args);
+    args->target = partner;
+    eventQueueAdd(EVENT_KIND_PAIR_BEGIN, args);
+    eventQueueAddKind1(unit, command);
+    eventQueueAddKind1(partner, command);
+    motion.command = CMD_EVENT_MOTION_9;
+    eventQueueAddKind1(partner, &motion);
+    func_00A92C18(unit, command);
+    eventQueueAdd(EVENT_KIND_PAIR_END, args);
+}
+
+int calcEpCost(Ov01Object *unit, int value);
+int calcEpAdjust(Ov01Object *unit, int delta);
+
+/* A stock command: the stocked unit (args target) gets the stock begin and motion 3,
+ * pays the EP calcEpCost gives for the args tec, then the command runs for the unit
+ * (wait for its queue, then the follow-up) and the stocked unit ends with motion 9 and
+ * the boost clear. */
+void cmdStockRun(Ov01Object *unit, CmdListBody *command, EventQueueArgs *args)
+{
+    Ov01Object *stocked;
+    CmdListBody motion;
+
+    stocked = actStockGet()->boost[1];
+    args->target = stocked;
+    eventQueueAdd(EVENT_KIND_STOCK_BEGIN, args);
+    motion.command = CMD_EVENT_MOTION_3;
+    eventQueueAddKind1(stocked, &motion);
+    calcEpAdjust(stocked, -calcEpCost(stocked, args->tecIndex));
+    eventQueueAddKind1(unit, command);
+    eventQueueAdd(EVENT_KIND_WAIT_UNIT_QUEUE, args);
+    func_00A92C18(unit, command);
+    motion.command = CMD_EVENT_MOTION_9;
+    eventQueueAddKind1(stocked, &motion);
+    eventQueueAdd(EVENT_KIND_STOCK_BOOST_CLEAR, args);
+}
 
 struct Tu033CallSource {
     unsigned char unmodeled_00[8];
@@ -116,34 +219,27 @@ int cmdFindFirstTarget(int target, struct Tu033CallSource *source)
     return tgtFindFirst(&record, source->from_0c);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92C18);
-
+/* The command record func_00A92C18 builds for func_00A92D98 / func_00A92DF0:
+ * the unit (as a word), the command kind and two command words. */
 struct Tu033Owner {
     int key;
-    unsigned char unmodeled_04[4];
-    int handle;
+    int kind;                            /* +0x04 */
+    int handle;                          /* +0x08 */
+    int target;                          /* +0x0C */
 };
 
-struct SlotEntry {
-    unsigned char flags;
-    unsigned char unmodeled_01[6];
-    signed char slot;
-    int index;
-    unsigned char unmodeled_0c[0xE];
-    short extent;
-    signed char state;
-};
+INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92C18);
+
 
 int func_00A92E30(void *, int, void *);
-struct SlotEntry *func_00A9B3B8(int);
 
 int func_00A92D98(struct Tu033Owner *owner, int value) {
-    struct SlotEntry *entry;
+    TecRecord *entry;
     int slot;
     int result;
 
-    entry = func_00A9B3B8(owner->handle);
-    slot = entry->slot;
+    entry = tecRecordGet(owner->handle);
+    slot = entry->kindBits.slot;
     result = slot < 8;
     if (result != 0 && slot >= 0) {
         result = func_00A92E30(owner, value, entry);
@@ -152,12 +248,39 @@ int func_00A92D98(struct Tu033Owner *owner, int value) {
 }
 
 void func_00A92DF0(struct Tu033Owner *owner, int value) {
-    func_00A92E30(owner, value, func_00A9B3B8(owner->handle));
+    func_00A92E30(owner, value, tecRecordGet(owner->handle));
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92E30);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93080);
+/* The partner of unit in pair record value: the first unit of side 0 that is
+ * not held and has the other key of the pair; 0 when there is none. */
+Ov01Object *unitPairPartnerFind(Ov01Object *unit, int value)
+{
+    PairLink *pair;
+    Ov01Object **units;
+    Ov01Object *other;
+    int key;
+    int count;
+    int i;
+
+    pair = pairLinkGet(value);
+    if (pair->slotFirst == unit->stats->key) {
+        key = pair->slotSecond;
+    } else {
+        key = pair->slotFirst;
+    }
+    count = unitTblGet(0, &units);
+    for (i = 0; i < count; i++) {
+        other = units[i];
+        if (other != 0 && !(other->flags & UNIT_FLAG_DOWN)) {
+            if (other->stats->key == key) {
+                return other;
+            }
+        }
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93128);
 
@@ -166,16 +289,16 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93168);
 int func_00A951D8(int, void *);
 
 int func_00A93288(struct Tu033Owner *owner) {
-    struct SlotEntry *entry;
+    TecRecord *entry;
     int status;
 
-    entry = func_00A9B3B8(owner->handle);
+    entry = tecRecordGet(owner->handle);
     status = func_00A951D8(owner->key, entry);
-    return func_00A84D80(owner->key, status, entry->extent) != 0;
+    return unitEffectKeyFree(owner->key, status, entry->extent) != 0;
 }
 
 struct Tu033Request {
-    struct Tu033Object *object;
+    Ov01Object *object;
     unsigned char unmodeled_04[4];
     int second;
     unsigned char unmodeled_0c[0xC];
@@ -189,16 +312,6 @@ void func_00A932E0(int unused_arg0, struct Tu033Request *request) {
     func_00AA4DB8((int) request->object, request->second, request->flags, 0);
 }
 
-/* One 0x30-byte record of eventQueueTable (eventQueueTable); kind is its first word. */
-typedef struct EventQueueEntry {
-    int kind;
-    unsigned char unmodeled_04[0x2C];
-} EventQueueEntry;
-
-extern EventQueueEntry eventQueueTable[];
-extern int eventQueueCount;
-extern int eventQueueCursor;
-
 /* eventQueueNext: the record at the read cursor, or 0 when the queue is drained. */
 void *eventQueueNext(void) {
     if (eventQueueCursor < eventQueueCount) {
@@ -209,7 +322,7 @@ void *eventQueueNext(void) {
 
 /* eventQueueReserve: the next free record (the appenders fill it), or 0 when the table is full. */
 void *eventQueueReserve(void) {
-    if (eventQueueCount < 0x40) {
+    if (eventQueueCount < EVENT_QUEUE_COUNT) {
         return eventQueueTable + eventQueueCount;
     }
     return 0;
@@ -217,46 +330,13 @@ void *eventQueueReserve(void) {
 
 #include "shared.h"
 
-/* Object at the owner's +0x1D0; its flags word at +0xBC gets bit 1 in battleUnitsReset. */
-typedef struct Ov01Tu033Object {
-    unsigned char unmodeled_00[0xBC];
-    int flags;
-} Ov01Tu033Object;
-
-/* Handle from unitPlCreate and unitEnCreate; its flags word at +0xC gets bit 8 in unitSpawnFromRequest. */
-typedef struct Ov01Tu033Handle {
-    unsigned char unmodeled_00[0xC];
-    int flags;
-} Ov01Tu033Handle;
-
-/* Slot from func_00A9B3B8; its state byte at +0x1C is compared with 1 in unitAttachRequest. */
+/* Slot from tecRecordGet; its state byte at +0x1C is compared with 1 in unitAttachRequest. */
 typedef struct Ov01Tu033Slot {
     unsigned char unmodeled_00[0x1C];
     signed char state;
 } Ov01Tu033Slot;
 
-struct Tu033Global {
-    unsigned char unmodeled_00[0x38];
-    struct Tu033Object *object;
-    int first;
-    int second;
-    int third;
-    unsigned char unmodeled_48[0x10];
-    int index;
-    f32 scale;
-};
 
-typedef struct Tu033Global Tu033Global;
-
-
-
-/* Owner passed to unitRecreate and func_00A95608 and listed by unitTblGet. */
-typedef struct Ov01Tu033Owner {
-    unsigned char unmodeled_00[0x144];
-    struct UnitSub *sub;
-    unsigned char unmodeled_148[0x88];
-    Ov01Tu033Object *object;
-} Ov01Tu033Owner;
 
 /* Request record: the four-word argument of unitAttachRequest and unitSpawnFromRequest. */
 typedef struct Ov01Tu033Request {
@@ -267,25 +347,18 @@ typedef struct Ov01Tu033Request {
 } Ov01Tu033Request;
 
 
-extern Ov01Tu033Handle *ov01LastUnit;
+extern Ov01Object *ov01LastUnit;
 extern int ov01ModelEntry;
 int dataSlotRelease(s16);
 int dataSlotFlagClear(s16);
-int dataUnitLoad(int);
-int func_00A82E18(int);
-int unitRemove(Ov01Tu033Owner *);
-void unitUnbind(Ov01Tu033Owner *);
-int unitLoadSnapshot(void *, int);
-void unitSetAngleDegrees(void *, int);
-void unitSetAngleRadians(void *, f32);
+int unitEffectSlotAcquire(int);
+int unitRemove(Ov01Object *);
 int unitAttachChild(int, int, int);
-int func_00A93080(int, int);
-int sefApplyRecordMode(void *, int, int);
+int sefApplyRecordMode(struct XenoActor *, int, int);
 int sefSetGateForId(int, int);
-int unitTblGet(int, void ***);
-Ov01Tu033Handle *unitPlCreate(int);
-Ov01Tu033Handle *unitEnCreate(int);
-Tu033Global *battleStateGet(void);
+int unitTblGet(int, Ov01Object ***);
+Ov01Object *unitPlCreate(int);
+Ov01Object *unitEnCreate(int);
 
 /*
  * eventQueueFindKind4: the ordinal'th kind-4 record counting back from the last
@@ -350,19 +423,75 @@ EventQueueEntry *eventQueueFindKind5(int ordinal)
 }
 
 /* eventQueueAddKind1: appends a kind-1 record holding a pointer and an 0x18-byte payload. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", eventQueueAddKind1);
+void eventQueueAddKind1(void *object, CmdListBody *args)
+{
+    EventQueueEntry *entry = eventQueueReserve();
+
+    entry->kind = 1;
+    entry->data.kind1.object = object;
+    entry->data.kind1.args = *args;
+    eventQueueCount++;
+}
 
 /* eventQueueAddKind4: appends a kind-4 record with an 0x10-byte payload. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", eventQueueAddKind4);
+void eventQueueAddKind4(EventQueueArgs *args)
+{
+    EventQueueEntry *entry = eventQueueReserve();
 
-/* eventQueueAddKind5: appends a kind-5 record with an 0x20-byte payload and one more word. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", eventQueueAddKind5);
+    entry->kind = 4;
+    entry->data.args = *args;
+    eventQueueCount++;
+}
+
+/* eventQueueAddKind5: appends a kind-5 record with a 0x2C-byte payload. */
+void eventQueueAddKind5(EventQueueArgs11 *args)
+{
+    EventQueueEntry *entry = eventQueueReserve();
+
+    entry->kind = 5;
+    entry->data.kind5 = *args;
+    eventQueueCount++;
+}
 
 /* eventQueueAdd: appends a record of the given kind, copying 0x10 bytes when a source is given. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", eventQueueAdd);
+void eventQueueAdd(int kind, EventQueueArgs *args)
+{
+    EventQueueEntry *entry = eventQueueReserve();
 
-/* eventQueueRun: calls the handler of each queued record's kind; a failing handler stops the drain. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", eventQueueRun);
+    entry->kind = kind;
+    if (args != 0) {
+        entry->data.args = *args;
+    }
+    eventQueueCount++;
+}
+
+/* Event kinds with a handler in eventQueueHandlers. */
+#define EVENT_KIND_COUNT 0x15
+
+/* Handlers by record kind: nonzero when the record is done. */
+extern int (*eventQueueHandlers[EVENT_KIND_COUNT])(EventQueueEntry *entry);
+
+/* eventQueueRun: calls the handler of each queued record's kind. A record whose
+ * handler is not done yet stops the drain (eventRetryCount counts the retries); a done
+ * record clears both handler counters and is consumed. 0 also for an unknown kind. */
+int eventQueueRun(void)
+{
+    EventQueueEntry *entry;
+
+    for (entry = eventQueueNext(); entry != 0; entry = eventQueueNext()) {
+        if (!(entry->kind < EVENT_KIND_COUNT)) {
+            return 0;
+        }
+        if (eventQueueHandlers[entry->kind](entry) == 0) {
+            eventRetryCount++;
+            return 0;
+        }
+        eventRetryCount = 0;
+        eventStepStarted = 0;
+        eventQueueCursor++;
+    }
+    return 1;
+}
 
 int func_00A93708(void) {
     return 1;
@@ -374,12 +503,12 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93710);
 /* Event record of kind 2: the object whose command queue the event waits on (+4). */
 struct EventWaitRecord {
     unsigned char unmodeled_00[4];
-    int object;
+    Ov01Object *object;
 };
 
 /*
  * eventWaitUnitQueue (proposed eventWaitUnitQueue): the kind-2 handler of the event table
- * D_00AB5AE0. The handler's result is unitQueueIsEmpty's result, which the drain
+ * eventQueueHandlers. The handler's result is unitQueueIsEmpty's result, which the drain
  * reads (nonzero: the queue is empty and the event is done). The return type stays
  * void: the value the drain reads is the one left by the call.
  */
@@ -392,10 +521,10 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A938A0);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93B70);
 
 void func_00A93CF0(void) {
-    struct UnitActor **actors;
-    struct UnitActor **cursor;
-    struct UnitActor *actor;
-    struct UnitSlot *unit;
+    Ov01Object **actors;
+    Ov01Object **cursor;
+    Ov01Object *actor;
+    struct XenoActor *unit;
     int count;
     int remaining;
 
@@ -408,7 +537,7 @@ void func_00A93CF0(void) {
             cursor += 1;
             if (actor != 0) {
                 unit = actor->unit;
-                unit->flags &= 0xFBFFFFFF;
+                unit->drawFlags &= 0xFBFFFFFF;
             }
             remaining -= 1;
         } while (remaining != 0);
@@ -418,15 +547,6 @@ void func_00A93CF0(void) {
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93D50);
 
 int unitHasEffectCode(void *, int);
-int calcBoostOk(void *, int);
-void func_00A954D8(void *, int, int);
-
-typedef struct Tu033Object {
-    u8 unmodeled_00[0xC];
-    int flags;
-    u8 unmodeled_10[0x134];
-    struct UnitSub *sub;
-} Tu033Object;
 
 
 /*
@@ -434,18 +554,18 @@ typedef struct Tu033Object {
  * of an entry, with two effect-code rolls for the low keys, and grants act stock
  * when a roll hits and calcBoostOk accepts the unit.
  */
-int unitTryActStock(struct SlotEntry *entry, struct Tu033Request *request) {
-    Tu033Object *object;
+int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request) {
+    Ov01Object *object;
     int chanceHit;
     int flags;
     int requestFlags;
 
     object = request->object;
-    if (func_00A9B3B8(entry->index)->flags & 8) {
+    if (tecRecordGet(source->tec_id)->flags & 8) {
         return 0;
     }
-    if (object->sub->key < 0x10) {
-        chanceHit = actLevelChanceRoll(object, entry->index) != 0;
+    if (object->stats->key < 0x10) {
+        chanceHit = actLevelChanceRoll(object, source->tec_id) != 0;
         if (unitHasEffectCode(object, 0x2B) != 0) {
             flags = request->flags;
             if ((flags >> 8) & 1) {
@@ -463,11 +583,11 @@ int unitTryActStock(struct SlotEntry *entry, struct Tu033Request *request) {
             }
         }
     } else {
-        chanceHit = actLevelChanceRoll(object, entry->index) != 0;
+        chanceHit = actLevelChanceRoll(object, source->tec_id) != 0;
     }
     if (chanceHit == 1 && calcBoostOk(object, 0) != 0) {
         calcActStockSet(object, 0);
-        func_00A954D8(object, 0x140, 7);
+        unitEffectStart(object, 0x140, 7);
         seVoiceStartTagged(2, 1);
     }
     return 1;
@@ -479,10 +599,118 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94500);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A946C0);
 
-/* itemRandomPick: rnd() picks one item from four weighted groups of D_00AB5A80; its name is shown. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", itemRandomPick);
+/* One weighted group of itemPickGroups: a roll below threshold picks one of its count items. */
+typedef struct ItemPickGroup {
+    int threshold;
+    int count;
+    int *items;
+} ItemPickGroup;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94C20);
+#define ITEM_PICK_GROUPS 4
+
+extern ItemPickGroup itemPickGroups[ITEM_PICK_GROUPS];
+/* The 0x80-byte message line itemRandomPick builds, and the text "!" appended after the item name. */
+extern char itemPickText[];
+extern char itemPickTextEnd[];
+
+void dataBoxIncCategory1(int item);
+char *func_00A9B8D8(int item, int mode);
+char *strcpy(char *destination, const char *source);
+char *strcat(char *destination, const char *source);
+void msgPutObject(int index, int x, char *text, int y, int width, int size);
+
+/* itemRandomPick: rnd() picks one item from four weighted groups of itemPickGroups;
+ * the item is added to the data box and its name is shown. */
+void itemRandomPick(void)
+{
+    int roll;
+    int item;
+    int i;
+
+    roll = rnd(99);
+    item = 0;
+    for (i = 0; i < ITEM_PICK_GROUPS; i++) {
+        if (roll < itemPickGroups[i].threshold) {
+            item = itemPickGroups[i].items[rnd(itemPickGroups[i].count - 1)];
+            break;
+        }
+    }
+    dataBoxIncCategory1(item);
+    strcpy(itemPickText, tableStringGet(1, 1));
+    strcat(itemPickText, func_00A9B8D8(item, 0));
+    strcat(itemPickText, itemPickTextEnd);
+    msgPutObject(0x14, 0x120, itemPickText, 0x2D, 0x1AC, 0x28);
+}
+
+/* StatBlock.flags bits unitStatusTextShow turns into the text mode (1 or 2). */
+#define UNIT_TEXT_MODE_1 0x200
+#define UNIT_TEXT_MODE_2 0x400
+/* StatBlock.slotValue entries unitStatusTextShow marks (values from 0x15 on). */
+#define UNIT_TEXT_SLOT_COUNT 8
+#define UNIT_TEXT_SLOT_MARKED 0x15
+
+/* The unit status block unitStatusTextShow hands to textBlockStart: HP and EP with their caps
+ * and the unit's table key record. */
+typedef struct UnitTextBlock {
+    int hp;                              /* +0x00 */
+    int maxHp;                           /* +0x04 */
+    int ep;                              /* +0x08 */
+    int maxEp;                           /* +0x0C */
+    int points;                          /* +0x10 */
+    int stepRate;                        /* +0x14 */
+    int flat;                            /* +0x18 */
+    int firstId;                         /* +0x1C */
+    int secondId;                        /* +0x20 */
+    unsigned char mode;                  /* +0x24 */
+    unsigned char marked;                /* +0x25: bit i set when slotValue[i] is marked */
+    unsigned char firstCategory;         /* +0x26 */
+    unsigned char secondCategory;        /* +0x27 */
+} UnitTextBlock;
+
+struct TableKeyRecord *tableKeyRecordGet(int key);
+void textBlockStart(int index, int x, UnitTextBlock *block);
+
+/* Shows the status text block of unit: HP and EP with their caps, its table key
+ * record, the text mode from the stat flags and the marked status slots as bits. */
+void unitStatusTextShow(Ov01Object *unit)
+{
+    UnitTextBlock block;
+    StatBlock *stats;
+    struct TableKeyRecord *record;
+    int mode;
+    int bits;
+    int i;
+
+    stats = unit->stats;
+    record = tableKeyRecordGet(stats->key);
+    block.hp = stats->hp;
+    block.maxHp = stats->maxHp;
+    block.ep = stats->ep;
+    block.maxEp = stats->maxEp;
+    block.points = record->points;
+    block.stepRate = record->stepRate;
+    block.flat = record->flat;
+    block.firstCategory = record->firstCategory;
+    block.firstId = record->firstId;
+    block.secondCategory = record->secondCategory;
+    block.secondId = record->secondId;
+    mode = 1;
+    if (!(stats->flags & UNIT_TEXT_MODE_1)) {
+        mode = 0;
+        if (stats->flags & UNIT_TEXT_MODE_2) {
+            mode = 2;
+        }
+    }
+    block.mode = mode;
+    bits = 0;
+    for (i = 0; i < UNIT_TEXT_SLOT_COUNT; i++) {
+        if (unit->stats->slotValue[i] >= UNIT_TEXT_SLOT_MARKED) {
+            bits |= 1 << i;
+        }
+    }
+    block.marked = bits;
+    textBlockStart(0x14, 0x64, &block);
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94D28);
 
@@ -500,23 +728,23 @@ void func_00A95018(int unused_arg0, struct Tu033Owner *owner) {
  * the battle index, keeping the owner's level and the battle scale; the data slot of
  * the owner's key is released first.
  */
-void unitRecreate(Ov01Tu033Owner *owner)
+void unitRecreate(Ov01Object *owner)
 {
     f32 scale;
     int level;
     int index;
 
-    level = owner->sub->level;
+    level = owner->stats->posIndex;
     scale = battleStateGet()->scale;
-    dataSlotFlagClear(owner->sub->key);
-    dataSlotRelease(owner->sub->key);
+    dataSlotFlagClear(owner->stats->key);
+    dataSlotRelease(owner->stats->key);
     unitRemove(owner);
-    index = battleStateGet()->index;
+    index = battleStateGet()->slotIndex;
     ov01LastUnit = unitPlCreate(index);
     unitLoadSnapshot(owner, level);
     unitSetAngleRadians(ov01LastUnit, scale);
     dataUnitLoad(index);
-    func_00A82E18(index);
+    unitEffectSlotAcquire(index);
 }
 
 /*
@@ -525,10 +753,10 @@ void unitRecreate(Ov01Tu033Owner *owner)
  */
 void battleUnitsReset(void)
 {
-    void **items;
+    Ov01Object **items;
     int count;
     int index;
-    Ov01Tu033Owner *owner;
+    Ov01Object *owner;
 
     index = 0;
     count = unitTblGet(2, &items);
@@ -537,89 +765,120 @@ void battleUnitsReset(void)
             owner = items[index];
             index += 1;
             if (owner != 0) {
-                owner->object->flags |= 1;
+                owner->unit->drawFlags |= 1;
                 unitUnbind(owner);
             }
         } while (index < count);
     }
-    battleStateGet()->index = 0;
+    battleStateGet()->slotIndex = 0;
     sefSetGateForId(1, 0x37);
     decoFlagsClearAll();
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95198);
+/* Maps the ids 0x2D5..0x2D7 to 0x8D..0x8F, any other id to 0. */
+int func_00A95198(int id)
+{
+    int value;
+
+    switch (id) {
+    case 0x2D5:
+        value = 0x8D;
+        break;
+    case 0x2D6:
+        value = 0x8E;
+        break;
+    case 0x2D7:
+        value = 0x8F;
+        break;
+    default:
+        value = 0;
+        break;
+    }
+    return value;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A951D8);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95268);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A954D8);
+void *memset(void *destination, int value, unsigned int count);
+void sefStartEffectDefault(void *object);
+
+/* Starts effect (keyHigh, keyLow) on the unit's actor. */
+void unitEffectStart(Ov01Object *object, int keyHigh, int keyLow)
+{
+    struct EffectRequest request;
+
+    memset(&request, 0, sizeof(request));
+    request.key = (keyHigh << 0xC) | keyLow;
+    request.head = object->unit;
+    request.target = object->unit;
+    sefStartEffectDefault(&request);
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95540);
 
-int func_00A95680(struct UnitTable *);
-
-void func_00A955C8(struct UnitTable *table) {
-    sefApplyRecordMode(table->handle, (table->sub->page << 0xc) | 8, 3);
-    func_00A95680(table);
+void func_00A955C8(Ov01Object *object) {
+    sefApplyRecordMode(object->unit, (object->stats->sequenceIndex << 0xc) | 8, 3);
+    func_00A95680(object);
 }
 
-void func_00A95608(Ov01Tu033Owner *owner)
+void func_00A95608(Ov01Object *object)
 {
-    sefApplyRecordMode(owner->object, (owner->sub->page << 0xC) | 8, 2);
-    sefApplyRecordMode(owner->object, 0x12C001, 1);
-    sefApplyRecordMode(owner->object, 0x12C002, 1);
-    sefApplyRecordMode(owner->object, 0x12C003, 1);
+    sefApplyRecordMode(object->unit, (object->stats->sequenceIndex << 0xC) | 8, 2);
+    sefApplyRecordMode(object->unit, 0x12C001, 1);
+    sefApplyRecordMode(object->unit, 0x12C002, 1);
+    sefApplyRecordMode(object->unit, 0x12C003, 1);
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95680);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95810);
 
-/* unitSlotResume: clears the pause bit of the slot and sets its speed to 1.0. */
-void unitSlotResume(struct UnitTable *table, int index)
+/* unitSlotResume: clears the pause bit of the slot and sets its alpha to 1.0. */
+void unitSlotResume(Ov01Object *object, int index)
 {
-    struct UnitSlot *unit;
+    struct XenoActor *unit;
 
-    unit = table->slots[index];
+    unit = object->children[index];
     if (unit != 0)
     {
-        unit->flags &= ~4;
-        unit->aux = 1.0f;
+        unit->drawFlags &= ~4;
+        unit->alpha = 1.0f;
     }
 }
 
-/* unitSlotPause: sets the pause bit of the slot and its speed to 0. */
-void unitSlotPause(struct UnitTable *table, int index) {
-    struct UnitSlot *unit;
+/* unitSlotPause: sets the pause bit of the slot and its alpha to 0. */
+void unitSlotPause(Ov01Object *object, int index) {
+    struct XenoActor *unit;
 
-    unit = table->slots[index];
+    unit = object->children[index];
     if (unit != 0) {
-        unit->aux = 0;
-        unit->flags |= 4;
+        unit->alpha = 0;
+        unit->drawFlags |= 4;
     }
 }
 
-int XenoActorShowPart(struct UnitSlot *, int);
+int XenoActorShowPart(struct XenoActor *, int);
 extern int ov01Slot1Part;
 
 /* unitSlotShowPart (proposed unitSlotShowPart): shows part ov01Slot1Part of slot 1 when the slot exists. */
-void unitSlotShowPart(struct UnitTable *table) {
-    struct UnitSlot *unit;
+void unitSlotShowPart(Ov01Object *object) {
+    struct XenoActor *unit;
 
-    unit = table->slots[1];
+    unit = object->children[1];
     if (unit != 0) {
         XenoActorShowPart(unit, ov01Slot1Part);
     }
 }
 
-int XenoActorHidePart(struct UnitSlot *, int);
+int XenoActorHidePart(struct XenoActor *, int);
 
 /* unitSlotHidePart (proposed unitSlotHidePart): hides part ov01Slot1Part of slot 1 when the slot exists. */
-void unitSlotHidePart(struct UnitTable *table) {
-    struct UnitSlot *unit;
+void unitSlotHidePart(Ov01Object *object) {
+    struct XenoActor *unit;
 
-    unit = table->slots[1];
+    unit = object->children[1];
     if (unit != 0) {
         XenoActorHidePart(unit, ov01Slot1Part);
     }
@@ -651,12 +910,24 @@ int func_00A95CE8(void) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95CF0);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95E40);
+int ov01CdPendingReads(void);
+int loadWaitPending(void);
+
+/* 1 once no CD read and no load wait is pending. */
+int ov01LoadsIdle(void)
+{
+    if (ov01CdPendingReads() == 0) {
+        if (loadWaitPending() == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 /*
  * unitAttachRequest (proposed unitAttachRequest): the kind-8 event handler. It attaches
  * the requested unit to the model entry in ov01ModelEntry; when the slot's state is 1 it
- * also attaches the handle that func_00A93080 matches for the request's value.
+ * also attaches the handle that unitPairPartnerFind matches for the request's value.
  */
 int unitAttachRequest(Ov01Tu033Request *request)
 {
@@ -666,8 +937,9 @@ int unitAttachRequest(Ov01Tu033Request *request)
     if (ov01ModelEntry != 0) {
         id = request->id;
         unitAttachChild(id, ov01ModelEntry, 0);
-        if (func_00A9B3B8(request->index)->state == 1) {
-            matchedHandle = func_00A93080(id, request->value);
+        if (tecRecordGet(request->index)->gateFlag == 1) {
+            /* The kind-8 request carries the unit as its word, and unitAttachChild takes words. */
+            matchedHandle = (int) unitPairPartnerFind((Ov01Object *) id, request->value);
             unitAttachChild(matchedHandle, ov01ModelEntry, 1);
         }
     }
@@ -696,12 +968,35 @@ int unitSpawnFromRequest(Ov01Tu033Request *request)
     unitLoadSnapshot(ov01LastUnit, index);
     unitSetAngleDegrees(ov01LastUnit, value);
     dataUnitLoad(id);
-    func_00A82E18(id);
+    unitEffectSlotAcquire(id);
     ov01LastUnit->flags |= 8;
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95FB0);
+void unitBindActors(Ov01Object *object, struct DataSlot *slot);
+
+/* Bind event handler: binds the data slot of request id to ov01LastUnit, fades
+ * it in and starts the load (returns 0); on the next calls returns 1 once the
+ * load is done. 0 also when the slot is not found. */
+int unitBindRequest(Ov01Tu033Request *request)
+{
+    struct DataSlot *slot;
+
+    if (eventStepStarted == 0) {
+        slot = dataSlotFind(request->id);
+        if (slot == 0) {
+            return 0;
+        }
+        unitBindActors(ov01LastUnit, slot);
+        unitFadeIn(ov01LastUnit);
+        func_00A955C8(ov01LastUnit);
+        ov01LoadRequest(slot);
+        eventStepStarted = 1;
+    } else if (ov01LoadIsDone() != 0) {
+        return 1;
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96050);
 
@@ -719,9 +1014,9 @@ void func_00A96510(void *, int, int, int);
  * for bit 0x4000 of row 3, HP adjust for bit 0x400, and both bits are cleared.
  */
 int battleResolveStatus(void) {
-    Tu033Object **units;
-    Tu033Object *object;
-    Tu033Object *unit;
+    Ov01Object **units;
+    Ov01Object *object;
+    Ov01Object *unit;
     int first;
     int second;
     int third;
@@ -743,13 +1038,13 @@ int battleResolveStatus(void) {
     count = unitTblGet(2, &units);
     for (i = 0; i < count; i++) {
         unit = units[i];
-        if (unit != 0 && unit->sub->state == 0) {
+        if (unit != 0 && unit->stats->hp == 0) {
             if (calcStatGet(unit, 3, 0x4000) != 0) {
                 calcHpAdjust(units[i], 1);
                 unitLevelAdd(units[i], 3);
                 if (calcBoostOk(units[i], 0) != 0) {
                     calcActStockSet(units[i], 0);
-                    func_00A954D8(units[i], 0x140, 7);
+                    unitEffectStart(units[i], 0x140, 7);
                     seVoiceStartTagged(2, 1);
                 }
                 calcStatReset(units[i], 3, 0x4000);
@@ -766,11 +1061,36 @@ int battleResolveStatus(void) {
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96510);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96810);
+void func_00A968C8(void);
+
+/* Waits (returns 0) while a side-2 unit with status bit 0x800 or 0x2000 in row 3
+ * still has queued commands; then runs func_00A968C8 and returns 1. */
+int battleStatusQueueWait(void)
+{
+    Ov01Object **units;
+    Ov01Object *unit;
+    int count;
+    int i;
+
+    count = unitTblGet(2, &units);
+    for (i = 0; i < count; i++) {
+        unit = units[i];
+        if (unit != 0) {
+            if (calcStatGet(unit, 3, 0x800) != 0 || calcStatGet(unit, 3, 0x2000) != 0) {
+                if (unitQueueIsEmpty(unit) == 0) {
+                    return 0;
+                }
+            }
+        }
+    }
+    func_00A968C8();
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A968C8);
 
-void *dataStreamOpen(int, int);
+/* monsSlotCreate (tu019.c) returns a record pointer; this caller keeps its int view (the int global), see tu019.h. */
+int monsSlotCreate(void);
 extern int ov01StreamSlot;
 
 /*
@@ -784,7 +1104,21 @@ int ov01StreamOpen(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96A70);
+void *dataStreamFind(int id);
+void monsSlotCopyParams(int slot, void *stream);
+
+/* Once data stream 0x43 (opened by ov01StreamOpen) is found, hands it to the
+ * MonsSlot in ov01StreamSlot (monsSlotCopyParams) and returns 1; 0 until then. */
+int ov01StreamBind(void)
+{
+    void *stream = dataStreamFind(0x43);
+
+    if (stream == 0) {
+        return 0;
+    }
+    monsSlotCopyParams(ov01StreamSlot, stream);
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96AA8);
 

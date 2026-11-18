@@ -278,17 +278,6 @@ int uwamonoInitRecord(short index)
 }
 
 /* Terminated by a zero entry. Passed to func_A9CDB0 by menuInit. */
-extern char D_0069D3E8[];
-extern char D_0069D3E0[];
-extern char D_0069D3D8[];
-extern char D_0069D3D0[];
-extern const char D_00689D10[];
-extern char D_0069D3C8[];
-extern const char D_00689D00[];
-extern const char D_00689CF0[];
-extern const char D_00689CE0[];
-extern char D_0069D3C0[];
-extern const char D_00689CD0[];
 int ptInit();
 int ptClear();
 int ptJoin();
@@ -302,71 +291,21 @@ int ptTent();
 int umnReturn();
 
 MenuNativeEntry menuNativeTable[12] = {
-    { D_0069D3E8, ptInit },
-    { D_0069D3E0, ptClear },
-    { D_0069D3D8, ptJoin },
-    { D_0069D3D0, ptLeave },
-    { D_00689D10, ptChangeMode },
-    { D_0069D3C8, ptSet },
-    { D_00689D00, ptSetPilot },
-    { D_00689CF0, ptGetLeader },
-    { D_00689CE0, ptSetArray },
-    { D_0069D3C0, ptTent },
-    { D_00689CD0, umnReturn },
+    { "ptInit", ptInit },
+    { "ptClear", ptClear },
+    { "ptJoin", ptJoin },
+    { "ptLeave", ptLeave },
+    { "ptChangeMode", ptChangeMode },
+    { "ptSet", ptSet },
+    { "ptSetPilot", ptSetPilot },
+    { "ptGetLeader", ptGetLeader },
+    { "ptSetArray", ptSetArray },
+    { "ptTent", ptTent },
+    { "umnReturn", umnReturn },
     { 0, 0 },
 };
 
-unsigned char D_003E7270[400] = {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 128, 0, 0, 0,
-    255, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 128, 0, 0, 0,
-    0, 0, 0, 0, 255, 0, 0, 0,
-    0, 0, 0, 0, 128, 0, 0, 0,
-    255, 0, 0, 0, 255, 0, 0, 0,
-    0, 0, 0, 0, 128, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    255, 0, 0, 0, 128, 0, 0, 0,
-    255, 0, 0, 0, 0, 0, 0, 0,
-    255, 0, 0, 0, 128, 0, 0, 0,
-    0, 0, 0, 0, 255, 0, 0, 0,
-    255, 0, 0, 0, 128, 0, 0, 0,
-    255, 0, 0, 0, 255, 0, 0, 0,
-    255, 0, 0, 0, 128, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
-};
+/* .rodata after the table literals; nothing reads it. */
+const char D_00689D20[16] = "PartsNames";
 
 unsigned char D_0069D3F0[8] = "menu";

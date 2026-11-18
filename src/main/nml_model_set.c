@@ -742,7 +742,6 @@ void func_001B9728(void) {
     pxyResetBatchTables();
 }
 
-
 extern int D_0096A2B0;
 void pxyResetSlots(void);
 
@@ -941,9 +940,6 @@ void pxyClearEntryTable(void) {
 void xglLightSetDefault(void *);
 void pxyClearEntryTable(void);
 extern int pxyCameraEnable[4];
-extern int D_00645F94;
-extern int D_00645F98;
-extern int D_00645F9C;
 extern float D_00969E80;
 extern float D_00969E90;
 extern float D_00969EA0;
@@ -957,9 +953,9 @@ extern f32 D_0096A314;
 void pxyInitTables(void)
 {
     pxyCameraEnable[0] = 1;
-    D_00645F94 = 0;
-    D_00645F98 = 0;
-    D_00645F9C = 0;
+    pxyCameraEnable[1] = 0;
+    pxyCameraEnable[2] = 0;
+    pxyCameraEnable[3] = 0;
     xglLightSetDefault(&pxyState);
     memset(&D_00969E80, 0, 0x180);
     D_00969E80 = 1.0f;
@@ -1113,11 +1109,9 @@ void func_001BA358(int value)
   D_0096A2DC = value;
 }
 
-void xglMatrixStackUnit(void);
 void xglMatrixStackRotX(float);
 void xglMatrixStackRotY(float);
 void xglMatrixStackSave(void *);
-void xglVectorMulMat(Vector4 *destination, Matrix4 matrix, const Vector4 *vector);
 void xglVectorCopy_001CC998(Vector4 *destination, const Vector4 *source);
 extern const u64 D_0068F018;
 
@@ -1406,6 +1400,8 @@ void pxyFogPara(PxyFogPara *out, float fogNear, float fogFar, float fogMin, floa
     out->w = (fogFar * fogNear) * (shadeMin - shadeMax) / (fogFar - fogNear);
 }
 
+/* Kept local: xgl_studio.h declares this as returning struct XglCamera *; this file views the camera as its own PxyCamera. */
+PxyCamera *xglStudioSelectGetActiveCamera(int);
 extern AlignedVector4 pxyFogParams;
 void pxyFogPara(PxyFogPara *out, float a, float b, float c, float d);
 
@@ -1414,7 +1410,6 @@ void pxySetFogDist(float fogNear, float fogFar, float fogMin, float fogMax) {
     nmlRenderStatus |= NML_RENDER_FOG;
 }
 
-PxyCamera *xglStudioSelectGetActiveCamera(int);
 void _CurMatrixSet(void *matrix);
 void _CurRotTransPersFog(AlignedVector4 *out, int a0, AlignedVector4 *ptr);
 
@@ -1762,7 +1757,6 @@ float xglPointLength(void *, void *);
 void _ModelCalcClipInitMat1(void *, void *);
 int _ModelCalcClipMat1(void *);
 int nmlModelCalcClipCulling(PxyCamera *, void *);
-void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 void xglVectorScaleXYZ(void *, void *, float);
 void xglVectorAddXYZ_001CCA30(register AlignedVector4 *dst, register AlignedVector4 *first, register AlignedVector4 *second);
 void xglVectorSubXYZ_001CCA68(register AlignedVector4 *dst, register AlignedVector4 *minuend, register AlignedVector4 *subtrahend);
@@ -2085,7 +2079,6 @@ typedef struct PxyTrack {
     int count;    /* +0x04 */
 } PxyTrack;
 
-
 typedef struct PxyTrackEntry {
     int count; /* +0x00 */
     int loopStart;    /* +0x04 */
@@ -2094,7 +2087,6 @@ typedef struct PxyTrackEntry {
     int partOffsets[31]; /* +0x10 */
     signed char frozen;  /* +0x8c */
 } PxyTrackEntry;
-
 
 extern int D_0097A580[];
 
@@ -3364,7 +3356,6 @@ int pxySubmitModelBasic(PxyHeader *header)
     return 0;
 }
 
-
 void xglPacketAddRefOffset(void *packet, int value, int state);
 
 void pxyPlayEntryGroup(int group) {
@@ -3466,7 +3457,6 @@ extern int pxyDrawPass;
 extern u16 sRenderDepthBase;
 extern s16 sRenderPsm;
 void func_001CD108(int);
-void xglDirectQueueBegin(void);
 void xglDirectQueueFlush(void);
 void xglDirectQueueFlushWide(void);
 int pxyPartNotInIndexList(PxyPacket *packet, PxyDrawWork *work);
@@ -3481,7 +3471,6 @@ void func_0012B6E0(XglPacket *packet, int, int, int, int);
 void func_0012B770(XglPacket *packet);
 void func_0012BCE8(XglPacket *packet, void *, int);
 void func_0012B9F8(XglPacket *packet, XglQuadword);
-void xglMatrixMul(void *destination, void *left, void *right);
 
 /* Draws the batches of shadow caster `caster` into its shadow texture at frameBase. */
 void pxyDrawShadowCaster(int caster, u32 frameBase)
@@ -4008,9 +3997,6 @@ void pxyDrawMode3Pass(u32 frameBase)
 }
 
 extern u16 sRenderDisplayBase;
-void func_001CD1AC(void);
-void func_001CD160(void);
-void func_001CD134(void);
 void func_001D4180(void);
 
 /* Writes the GS prelude and frame state of batch into the direct queue, then the entries of the batch. */
@@ -4405,7 +4391,6 @@ void pxyDrawBatch(int mode, PxyBatch *batch, u32 frameBase, int frameMask)
     xglDirectQueueFlush();
     func_001CD160();
 }
-
 
 /* Half the screen, in pixels, as the GS offsets use it. */
 #define SCREEN_HALF_W ((s16)(cameraScreenWidth / 2))
@@ -4866,7 +4851,6 @@ void pxyDrawSeparateBatches(int mode, u32 frameBase)
 extern PxyCamera *D_0096A2E8;
 extern u16 sRenderFrameBase;
 void xglStudioSelect(int);
-void xglPacketModeReset(void);
 void xglPacketInitVuState(void);
 void xglSetFullScreenScissor(void);
 void pxyClearFrame(int, int);
@@ -5153,38 +5137,9 @@ void xglVectorSubXYZ_001CCA68(register AlignedVector4 *dst, register AlignedVect
     Vu0SubVectorXYZ(dst, minuend, subtrahend);
 }
 
-void (*D_00645874[])(void) = { 0 };
-void (*D_00645878[])(void) = { 0 };
-void (*D_0064587C[])(void) = { 0 };
-int gifStateEffectHook[] = { 0 };
-void (*pauseDrawHook[])(void) = { 0 };
-int xglRenderGlobalFadeCallback[] = { 0 };
-int xglRenderStatus[] = { 0 };
-int xglRenderFrameDelta[] = { 0 };
-int xglRenderFrameCount[] = { 0 };
-int D_00645898[] = { 0 };
-int D_0064589C[] = { 0 };
-int D_006458A0[] = { 0 };
-unsigned char D_006458A4[252] = {
-    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x01, 0x06, 0x02, 0x07, 0x04,
-    0x07, 0x05, 0x06, 0x05, 0x02, 0x04, 0x01, 0x02, 0x01, 0x01, 0x02, 0xfe,
-    0xfe, 0x05, 0x02, 0x01, 0x06, 0x05, 0x02, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x07, 0x02, 0x02, 0x03, 0x01, 0x03, 0x07, 0x03, 0x01, 0xff, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x02, 0x01, 0x04, 0x01, 0x05,
-    0x02, 0x05, 0x03, 0x01, 0x07, 0x05, 0x07, 0x01, 0x07, 0xff, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x02, 0x01, 0x04, 0x01, 0x05,
-    0x02, 0x05, 0x03, 0x04, 0x04, 0x02, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05,
-    0x06, 0x04, 0x07, 0x02, 0x07, 0x01, 0x06, 0x02, 0x07, 0xff, 0x00, 0x00,
-    0x07, 0x04, 0x07, 0x04, 0x01, 0x01, 0x06, 0x05, 0x06, 0x01, 0x06, 0xff,
-    0x00, 0x00, 0x00, 0x00, 0x07, 0x05, 0x01, 0x01, 0x01, 0x01, 0x04, 0x04,
-    0x04, 0x05, 0x05, 0x05, 0x06, 0x04, 0x07, 0x02, 0x07, 0x01, 0x06, 0x02,
-    0x07, 0xff, 0x00, 0x00, 0x07, 0x05, 0x02, 0x04, 0x01, 0x02, 0x01, 0x01,
-    0x02, 0x01, 0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x05, 0x04,
-    0x04, 0x01, 0x04, 0xff, 0x07, 0x01, 0x01, 0x05, 0x01, 0x02, 0x07, 0x05,
-    0x01, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x02, 0x01, 0x04,
-    0x01, 0x05, 0x02, 0x05, 0x03, 0x04, 0x04, 0x02, 0x04, 0x01, 0x05, 0x01,
-    0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x05, 0x04, 0x04, 0x02,
-    0x04, 0x01, 0x03, 0x02, 0x03, 0x02, 0x01, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x07, 0x01, 0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x02, 0x04,
-    0x01, 0x02, 0x01, 0x01, 0x02, 0x01, 0x03, 0x02, 0x04, 0x05, 0x04, 0xff,
-};
+/* .data of this file (0x645F10-0x645FB0). */
+int D_00645F10[32] = { 0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23, 8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31 };
+
+int pxyCameraEnable[4] = { 0 };
+
+Vector4 D_00645FA0 = { 0 };

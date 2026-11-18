@@ -7,23 +7,19 @@
 #include "ov01/tu009.h"
 
 /* The fourth argument is a completion callback: ov01CdReadFileAsync passes ov01CdReadCallback in $7. */
-extern void GameResArenaReserve(void);
+extern void *GameResArenaReserve(unsigned int bytesWanted);
 extern u32 GameResFindID(int key, void *buffer);
-/* Scaffold-owned data: the splat names of the words this TU reads. */
-/* ov01HeapStart is the overlay heap range: word 0 is the first block, word 1 (ov01HeapEnd) the end. */
-extern int ov01CdPendingCount; /* pending CD read count */
+/* Overlay data this TU reads: the CD pending count, the heap range (word 0 is the first block,
+ * word 1 the end, set by ov01HeapInit) and the heap end used by ov01HeapNextBlock. */
+extern int ov01CdPendingCount;
 extern u32 ov01HeapStart[2];
 extern u32 ov01HeapEnd;
-
-/*
- * Header of one heap block, 0x40 bytes; the payload follows it. Word 0 is a
- * flags word (bit 0 set = in use). The scaffold declares it as bytes; the asm
- * reads it as one word. Word 4 is the payload size.
- */
-typedef struct Ov01HeapBlock {
-    unsigned char flags[4];
-    int size;
-} Ov01HeapBlock;
+/* Overlay heap size in bytes; ov01HeapInit reserves it from the base. */
+#define OV01_HEAP_BYTES 0xa00000
+/* Bytes of block header before each payload. */
+#define OV01_HEAP_HEADER_SIZE 0x40
+/* Bit 0 of a block's flags word: set while the block is in use. */
+#define OV01_HEAP_FLAG_IN_USE 1
 
 /* Pending CD read count. */
 int ov01CdPendingReads(void)
@@ -53,19 +49,29 @@ void ov01CdReadCallback(int code)
     }
 }
 
-/* Starts one asynchronous CD read (mode 1, completion callback ov01CdReadCallback); a successful start raises the pending count. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu009", ov01CdReadFileAsync);
-
-/* Synchronous CD read (mode 0): true when xglCdReadFile reports success (>= 0). */
-u64 ov01CdReadFileSync(const char *name, void *buffer)
+/* Starts one asynchronous CD read (CD_READ_ASYNC, completion callback ov01CdReadCallback); a successful start raises the pending count. */
+u64 ov01CdReadFileAsync(const char *name, void *buffer)
 {
-    return xglCdReadFile(name, buffer, 0, 0) >= 0;
+    long long result;
+
+    result = xglCdReadFile(name, buffer, CD_READ_ASYNC, (int) ov01CdReadCallback);
+    if (result < 0) {
+        return 0;
+    }
+    ov01CdPendingCount++;
+    return 1;
 }
 
-/* Tail-jumps to GameResArenaReserve: the heap base comes back in $2 (the C prototype says void). */
-void ov01HeapBaseGet(void)
+/* Synchronous CD read (CD_READ_SYNC): true when xglCdReadFile reports success (>= 0). */
+u64 ov01CdReadFileSync(const char *name, void *buffer)
 {
-    GameResArenaReserve();
+    return xglCdReadFile(name, buffer, CD_READ_SYNC, 0) >= 0;
+}
+
+/* Reserves the heap from the resource arena. */
+void *ov01HeapBaseGet(unsigned int size)
+{
+    return GameResArenaReserve(size);
 }
 
 /* Key lookup through GameResFindID: a result inside the heap range gives 0, any other result is returned. */
@@ -82,13 +88,26 @@ u32 ov01LookupNonHeap(int key)
 }
 
 /* Payload pointer to block header: the header sits 0x40 bytes before its payload. */
-int ov01HeapBlockOf(int payload)
+Ov01HeapBlock *ov01HeapBlockOf(void *payload)
 {
-    return payload - 0x40;
+    return (Ov01HeapBlock *) ((unsigned char *) payload - OV01_HEAP_HEADER_SIZE);
 }
 
 /* Heap init, called by the overlay init dataFileInit: base from ov01HeapBaseGet, 0xA00000 bytes, one free block. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu009", ov01HeapInit);
+void ov01HeapInit(void)
+{
+    unsigned int size;
+    Ov01HeapBlock *block;
+
+    size = OV01_HEAP_BYTES;
+    block = ov01HeapBaseGet(size);
+    ov01HeapStart[1] = (unsigned int) block + size;
+    ov01HeapStart[0] = (unsigned int) block;
+    if (block != 0) {
+        block->size = size;
+        block->flags = 0;
+    }
+}
 
 /*
  * Next block header after this one. Block sizes are always multiples of 0x40
@@ -106,7 +125,7 @@ void *ov01HeapNextBlock(Ov01HeapBlock *block)
     if (payloadSize < 0) {
         roundedSize = payloadSize + 63;
     }
-    nextBlock = (unsigned char *) block + ((roundedSize >> 6) << 6) + 0x40;
+    nextBlock = (unsigned char *) block + ((roundedSize >> 6) << 6) + OV01_HEAP_HEADER_SIZE;
     if ((unsigned int) nextBlock >= ov01HeapEnd) {
         return 0;
     }
@@ -114,16 +133,85 @@ void *ov01HeapNextBlock(Ov01HeapBlock *block)
 }
 
 /* First fit: the first block whose flags AND mask are clear and whose size covers the request; NULL when none does. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu009", ov01HeapFindFree);
+Ov01HeapBlock *ov01HeapFindFree(unsigned int mask, int size)
+{
+    Ov01HeapBlock *block;
+
+    block = (Ov01HeapBlock *) ov01HeapStart[0];
+    while (block != 0) {
+        if ((block->flags & mask) == 0) {
+            if (block->size >= size) {
+                return block;
+            }
+        }
+        block = ov01HeapNextBlock(block);
+    }
+    return 0;
+}
 
 /* Allocates size bytes (rounded up to 0x40) from the heap: splits a larger free block and returns the payload, NULL if nothing fits. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu009", ov01HeapAlloc);
+void *ov01HeapAlloc(int size)
+{
+    int oldSize;
+    Ov01HeapBlock *block;
+    Ov01HeapBlock *remainder;
+
+    size = (size + 63) / 64 * 64;
+    block = ov01HeapFindFree(OV01_HEAP_FLAG_IN_USE, size);
+    if (block == 0) {
+        return 0;
+    }
+    oldSize = block->size;
+    block->flags = 3;
+    block->size = size;
+    if (size + OV01_HEAP_HEADER_SIZE < oldSize) {
+        remainder = ov01HeapNextBlock(block);
+        remainder->flags = 0;
+        remainder->size = oldSize - size - OV01_HEAP_HEADER_SIZE;
+    }
+    return (unsigned char *) block + OV01_HEAP_HEADER_SIZE;
+}
 
 /* Frees a payload: clears its in-use bit, then merges each run of free neighbours across the heap. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu009", ov01HeapFree);
+void ov01HeapFree(void *payload)
+{
+    Ov01HeapBlock *block;
+    Ov01HeapBlock *next;
+    unsigned int heapStart;
+
+    block = ov01HeapBlockOf(payload);
+    heapStart = ov01HeapStart[0];
+    if ((unsigned int) block < heapStart || (unsigned int) block >= ov01HeapStart[1]) {
+        return;
+    }
+    block->flags = 0;
+    block = (Ov01HeapBlock *) heapStart;
+    while (block != 0) {
+        while ((block->flags & OV01_HEAP_FLAG_IN_USE) == 0) {
+            next = ov01HeapNextBlock(block);
+            if (next == 0 || (next->flags & OV01_HEAP_FLAG_IN_USE) != 0) {
+                break;
+            }
+            block->size += next->size + OV01_HEAP_HEADER_SIZE;
+        }
+        block = ov01HeapNextBlock(block);
+    }
+}
 
 /* Allocates 0x2A800 bytes and frees them again: 1 when that allocation fits in the heap, 0 otherwise. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu009", func_00A840A8);
+int ov01HeapProbeLargeAlloc(void)
+{
+    void *payload;
+    Ov01HeapBlock *block;
+
+    payload = ov01HeapAlloc(0x2a800);
+    if (payload == 0) {
+        return 0;
+    }
+    block = ov01HeapBlockOf(payload);
+    block->flags = 0;
+    return 1;
+}
 
 int func_00A840E8(void)
 {

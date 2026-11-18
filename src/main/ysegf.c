@@ -8,6 +8,8 @@
 #include "main/xgl_cd.h"
 #include "main/yg2path.h"
 #include "main/ysegf.h"
+#include "main/tu051.h"
+#include "main/tu048.h"
 
 /* Scene states: the rows of ysegfStateTable (0 = list page, 1 = detail page). */
 enum YsegfScene {
@@ -29,7 +31,6 @@ enum YsegfSound {
 #define YSEGF_FLAG_BASE 0x1C1             /* xglFlagsGet bit of entry i is YSEGF_FLAG_BASE + i */
 #define YSEGF_ROW_HEIGHT 101              /* vertical distance between two list rows */
 #define YSEGF_TREASURE_TABLE_SIZE (YSEGF_ENTRY_COUNT * sizeof(YsegfTreasure))
-#define YSEGF_CONTROL_SOFT_RESET 0x10000000 /* same bit as CONTROL_SOFT_RESET in include/main/tu051.h */
 
 typedef struct YsegfTarget {
     u8 unmodeled_00[0x48];
@@ -658,12 +659,6 @@ void XenoActorDisp(void);
 void xglSleep(void);
 void func_001E0E98(void);
 
-typedef struct YsegfGameWork {
-    unsigned char unmodeled_00[8];
-    unsigned int control; /* +0x8: CONTROL_* bits; 0x10000000 is the soft-reset combo */
-} YsegfGameWork;
-
-extern YsegfGameWork gameWork;
 extern PadRecord PadData[2];
 
 /* Scene loop of the 201_menu screen: init, poll pad, run frames until the exit flag is set. */
@@ -672,8 +667,8 @@ void ysegfRunMenu(void)
     int exitFrames;
     int pressed;
     PadRecord *pad;
-    YsegfGameWork *work;
     int held;
+    GameWork *work; /* a local pointer to gameWork: the soft-reset store goes through it */
 
     ysegfExitFlag = 0;
     work = &gameWork;
@@ -687,7 +682,7 @@ void ysegfRunMenu(void)
             held = pad->held;
             if ((held & PAD_SOFT_RESET_HELD) == PAD_SOFT_RESET_HELD) {
                 ysegfExitFlag = 1;
-                work->control |= YSEGF_CONTROL_SOFT_RESET;
+                work->control |= CONTROL_SOFT_RESET;
             }
         }
         if ((pad->pressed & PAD_TRIANGLE) != 0) {
@@ -706,7 +701,7 @@ void ysegfRunMenu(void)
         xglSleep();
     } while (1);
     ysegfReleaseBuffers();
-    if ((gameWork.control & YSEGF_CONTROL_SOFT_RESET) == 0) {
+    if ((gameWork.control & CONTROL_SOFT_RESET) == 0) {
         for (exitFrames = 9; exitFrames >= 0; exitFrames--) {
             func_001BA68C();
             XenoActorSetFlagAll(2);

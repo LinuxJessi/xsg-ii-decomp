@@ -86,3 +86,5 @@ int cfeNodePoolCountInUse(void) {
     }
     return inUseCount;
 }
+
+CfeTrackNode *cfeNodePool = 0;

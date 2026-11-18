@@ -1226,7 +1226,7 @@ def compiler_sizeof(root, tu, ctype):
     try:
         tus = {t['id']: t for t in read_json(root / 'config/tu-build.json')['tus']}
         source = (root / tus[tu]['path']).resolve()
-        cc = root / '.work/toolchains/ee-gcc2.96-realconv-lp7-fsv14-v1/bin'
+        cc = root / '.work/toolchains/ee-gcc2.96-realconv-lp7-fsv16-v1/bin'
         with tempfile.TemporaryDirectory() as folder:
             probe = Path(folder) / ('sizeof_' + source.name)
             probe.write_text(source.read_text(errors='surrogateescape') +

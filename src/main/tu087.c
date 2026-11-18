@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/tu051.h"
+#include "main/tu048.h"
 
 float Get_Distance(const Vector4 *first, const Vector4 *second);
 float Get_Angle(const Vector4 *first, const Vector4 *second);
@@ -68,15 +69,6 @@ void uwamonoPushTrailPoint(int index, float x, float y, float z)
     state->trailPoints[state->trailCount++].w = 1.0f;
 }
 
-struct GameWorkFlags {
-    unsigned char unmodeled_00[8];
-    int flags;
-    unsigned char unmodeled_0c[0x1720 - 0x0c];
-    unsigned char releaseFlagsDefault[0x200];
-    unsigned char releaseFlagsBit800[0x200];
-};
-
-extern struct GameWorkFlags gameWork;
 void uwamonoReleaseRecord(int index);
 
 void uwamonoReleaseChildren(int index)
@@ -93,15 +85,17 @@ void uwamonoReleaseChildren(int index)
     for (i = 0; i < 4; i++) {
         children[i] = state->children[i];
     }
+    /* The flag byte is gameWork.rowFlags[control bit 11][flagIndex], reached by a byte offset from &gameWork:
+     * the indexed form changes the code. */
     if (children[0] == -1 && children[1] == -1 && children[2] == -1 && children[3] == -1) {
         struct UwamonoState *childState;
-        struct GameWorkFlags *selfWork;
+        GameWork *selfWork;
         int offset;
 
         childState = (struct UwamonoState *)uwamonoRecords[index].motions;
         selfWork = &gameWork;
         offset = childState->flagIndex + 0x1920;
-        if (!(selfWork->flags & 0x800)) {
+        if (!(selfWork->control & 0x800)) {
             offset = childState->flagIndex + 0x1720;
         }
         ((unsigned char *)selfWork)[offset] = 1;
@@ -118,7 +112,7 @@ void uwamonoReleaseChildren(int index)
 
             childState = (struct UwamonoState *)uwamonoRecords[child].motions;
             offset = childState->flagIndex + 0x1920;
-            if (!(((struct GameWorkFlags *)workBase)->flags & 0x800)) {
+            if (!(((GameWork *)workBase)->control & 0x800)) {
                 offset = childState->flagIndex + 0x1720;
             }
             *(unsigned char *)(offset + workBase) = 1;

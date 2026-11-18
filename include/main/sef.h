@@ -20,7 +20,7 @@
 #define SEF_RECORD_PENDING 0x10000000
 /* Record flag that sefCountOwnerValue does not count and sefClearOwnerValueFlags keeps. */
 #define SEF_RECORD_EXCLUDE_FLAG 0x8000000
-/* Pending bit of gameLoopFlags[0] that holds the effect draw passes back (the X1 SEF_DRAW_FLAG_PENDING value). */
+/* Pending bit of gameWork.control that holds the effect draw passes back (the X1 SEF_DRAW_FLAG_PENDING value). */
 #define SEF_DRAW_FLAG_PENDING 0x04000000
 /* Canonical spawn id of the first id range (see sefCanonicalEffectId). */
 #define SEF_SPAWN_ID_BASE 0x100C8384

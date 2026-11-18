@@ -13,6 +13,7 @@
 #include "quadword.h"
 #include "vu0_macro.h"
 #include "main/xgl_cd.h"
+#include "main/tu048.h"
 #define SEF_EFFECT_LINE_COUNT 32
 
 /*
@@ -3944,7 +3945,6 @@ extern SefCameraState D_00471E20;   /* scaffold items 0x471E20/0x471E60/0x471EA0
 extern short D_0069DB80;
 extern float sefStepScale;
 extern int D_0069DBAC;
-extern int gameLoopFlags[];
 extern AlignedVector4 sefOriginVector;
 void sefRebuildEntryTable(void);
 void sefUpdateEntryTransforms(void);
@@ -4106,7 +4106,7 @@ int sefStepEffectRecords(int only)
             }
             sdvExecSpecial(&sefEffectRecords[i].special, sefEffectRecords[i].loadTag);
             sdvScheduleAlter(&sefEffectRecords[i].alter, &sefEffectRecords[i].owner, sefEffectRecords[i].entryId, i);
-            if (!(gameLoopFlags[0] & SEF_DRAW_FLAG_PENDING) || sefEffectRecordCount == 128) {
+            if (!(gameWork.control & SEF_DRAW_FLAG_PENDING) || sefEffectRecordCount == 128) {
                 sdvDrawSpecial(&sefEffectRecords[i].special);
             }
             if (alive == 0) {
@@ -4946,27 +4946,18 @@ void sefSetRenderHooks(void)
     sRender.draw3D = sefDrawEffect3DCallback;
 }
 
-/* gameWork state read by sefExecEffect. vector348 is the Vector4 at +0x348. The second argument passed to
- * sefSetOverrideVectors is gameWork + 0x360, one past the end of this struct (the declared size stays; the cast is the Vector4 view). */
-struct SefExecData {
-    unsigned char unmodeled_000[0x348];
-    Vector4 vector348;
-    unsigned char unmodeled_358[0x08];
-};
-
-extern struct SefExecData gameWork;
 
 void sefExecEffect(void)
 {
     if (sefClipTestDisabled == 0) {
-        if (gameWork.vector348.x != 0.0f && gameWork.vector348.y != 0.0f) {
+        if (gameWork.fogDist.x != 0.0f && gameWork.fogDist.y != 0.0f) {
             Vector4 vector;
 
-            vector.x = gameWork.vector348.x;
-            vector.y = gameWork.vector348.y;
-            vector.z = gameWork.vector348.z;
-            vector.w = gameWork.vector348.w;
-            sefSetOverrideVectors(&vector, (Vector4 *) (gameWork.unmodeled_358 + 0x08));
+            vector.x = gameWork.fogDist.x;
+            vector.y = gameWork.fogDist.y;
+            vector.z = gameWork.fogDist.z;
+            vector.w = gameWork.fogDist.w;
+            sefSetOverrideVectors(&vector, &gameWork.fogColor);
         } else {
             sefSetOverrideVectors(0, 0);
         }
@@ -5047,11 +5038,11 @@ void MSeObjProc(unsigned int mode);
 Matrix4 sefCameraMatrix[1] = { 0 };
 
 /* Draw pass installed at sRender +0x30. Guarded by the initialized flag sefInitialized and by the pending bit
- * 0x04000000 of gameLoopFlags (the X1 SEF_DRAW_FLAG_PENDING value). Ends the 3D mode with svDrawScene2D (the
+ * 0x04000000 of gameWork.control (the X1 SEF_DRAW_FLAG_PENDING value). Ends the 3D mode with svDrawScene2D (the
  * _draw3D flag of sv_get_image_item_161.c is cleared there). */
 void sefDrawEffect2D(void) {
     if (sefInitialized != 0) {
-        if (!(gameLoopFlags[0] & SEF_DRAW_FLAG_PENDING)) {
+        if (!(gameWork.control & SEF_DRAW_FLAG_PENDING)) {
             if (sefGetDraw2DFlag() != 0 || sefGetActiveCount() != 0) {
                 sefGetCameraPos(sefCameraMatrix);
                 svDrawScene2D();
@@ -5073,7 +5064,7 @@ void svDrawEffectRecords3D(void);
 
 void sefDrawEffect(void) {
     if (sefInitialized != 0) {
-        if (!(gameLoopFlags[0] & SEF_DRAW_FLAG_PENDING)) {
+        if (!(gameWork.control & SEF_DRAW_FLAG_PENDING)) {
             sefGetCameraPos(sefCameraMatrix);
             svDrawEffectRecords3D();
             if (sefClipTestDisabled != 0) {
@@ -5082,7 +5073,7 @@ void sefDrawEffect(void) {
             }
             return;
         }
-    } else if (!(gameLoopFlags[0] & SEF_DRAW_FLAG_PENDING)) {
+    } else if (!(gameWork.control & SEF_DRAW_FLAG_PENDING)) {
         return;
     }
     sdvClearSpecialWork();
@@ -5095,7 +5086,7 @@ void svDrawScene3D(void);
 void sefDrawEffect3D(void)
 {
     if (sefInitialized != 0) {
-        if ((gameLoopFlags[0] & SEF_DRAW_FLAG_PENDING) == 0) {
+        if ((gameWork.control & SEF_DRAW_FLAG_PENDING) == 0) {
             if (sefGetDraw3DFlag() != 0) {
                 svDrawScene3D();
             }

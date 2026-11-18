@@ -4,7 +4,6 @@
 
 extern u8 *WorkEnd;
 
-
 /*
  * EE Timer 0.  T0_COUNT is the free-running counter and T0_MODE its control
  * word; bit 7 (0x80) of T0_MODE is CUE, which starts the count.
@@ -181,10 +180,3 @@ int xglArxExtract(u32 *dest, u32 *src)
 
 /* Two-letter language codes, one halfword each (first letter in the low byte). */
 const XglLanguageCodes xglLanguageCodeTable = { { 0x6e65, 0x706a, 0x6e65, 0x6564, 0x7266, 0x7469, 0x7365, 0x687a, 0x6f6b } };
-
-/* 24-byte block: the language index (read at +2) that xglGetLanguageCode selects with. */
-unsigned char D_0063F878[24] = { 0 };
-
-unsigned char D_0063F890[24] = { 0 };
-
-unsigned int D_0063F8A8[470] = { 0 };

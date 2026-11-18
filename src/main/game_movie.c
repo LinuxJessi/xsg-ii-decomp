@@ -7,6 +7,7 @@
 #include "main/tu051.h"
 #include "main/xgl_font.h"
 #include "main/xgl_timer0.h"
+#include "main/tu048.h"
 
 char *caption_nextline(char *cursor);
 char *caption_getparam(char *cursor, int *time, char *out);
@@ -301,15 +302,6 @@ void func_001E7C08(void)
     sceVif1PkCloseDirectHLCode(packet);
 }
 
-/* The fields of the global game block this file uses: the control word, the pad input delay and the current map. */
-typedef struct MovieGameWork {
-    unsigned char unmodeled_00[8];
-    int control;                /* +0x08: CONTROL_* bits (main/tu051.h) */
-    unsigned char input_delay;  /* +0x0C */
-    unsigned char unmodeled_0d[0x18 - 0x0D];
-    int mapId;                  /* +0x18 */
-} MovieGameWork;
-
 /* The two save settings the movie player reads. */
 typedef struct MovieSaveSettings {
     unsigned char unmodeled_00[0x29];
@@ -320,7 +312,6 @@ typedef struct MovieSaveSettings {
 
 #define MOVIE_SE_PAUSE 0x2000011
 
-extern MovieGameWork gameWork;
 extern MovieSaveSettings SaveData;
 extern PadRecord PadData;
 extern signed char D_0069E094;
@@ -432,7 +423,7 @@ void GameMovieCaptionPlay(const char *name)
         if (moviePlayerStartFile(&player, path) >= 0) {
             sRender.movie_active = 1;
             D_0069E094 = StudioEntrySkip = 1;
-            gameWork.input_delay = 32;
+            gameWork.inputDelay = 32;
             for (;;) {
                 status = moviePlayerUpdate(&player);
                 if (text != 0) {
@@ -489,12 +480,12 @@ void GameMovieCaptionPlay(const char *name)
                     break;
                 }
                 if (player.frame_stamp >= 0) {
-                    if (gameWork.input_delay != 0) {
-                        gameWork.input_delay--;
+                    if (gameWork.inputDelay != 0) {
+                        gameWork.inputDelay--;
                     } else if (PadData.pressed & PAD_START) {
                         moviePlayerPause(&player, 1);
                         xglClockSampleDayTime();
-                        gameWork.input_delay = 32;
+                        gameWork.inputDelay = 32;
                         if ((PadData.held & PAD_SOFT_RESET_HELD) == PAD_SOFT_RESET_HELD) {
                             gameWork.control |= CONTROL_SOFT_RESET;
                             break;
@@ -507,8 +498,8 @@ void GameMovieCaptionPlay(const char *name)
                         pauseDrawTitleAndHints(skip_hidden);
                         xglSleep();
                         for (;;) {
-                            if (gameWork.input_delay != 0) {
-                                gameWork.input_delay--;
+                            if (gameWork.inputDelay != 0) {
+                                gameWork.inputDelay--;
                             } else if (skip_hidden == 0 && (PadData.pressed & PAD_TRIANGLE)) {
                                 GameMovieCaptionFadeOut();
                                 break;
@@ -524,9 +515,9 @@ void GameMovieCaptionPlay(const char *name)
                             break;
                         }
                         seVoiceStartDefault(MOVIE_SE_PAUSE);
-                        gameWork.input_delay = 32;
+                        gameWork.inputDelay = 32;
                         if (skip_hidden == 0 && (PadData.pressed & PAD_TRIANGLE)) {
-                            gameWork.input_delay = 64;
+                            gameWork.inputDelay = 64;
                             break;
                         }
                         xglClockAccumulate();

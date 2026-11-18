@@ -15,6 +15,7 @@
 #include "main/sdv_033.h"
 #include "main/tu254.h"
 #include "main/xgl_studio.h"
+#include "main/tu048.h"
 
 typedef struct XglPacket XglPacket;
 
@@ -24,28 +25,363 @@ void sceVif1PkCloseDirectHLCode(XglPacket *packet);
 void sceVif1PkCnt(XglPacket *packet, int count);
 void sceVif1PkOpenDirectHLCode(XglPacket *packet, int count);
 void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data, int qwc);
+/* Sets up the frame context of the next draw: the display frame and the texture page in the setup packet, * then the clamp, the texture, the alpha blend and the test state, and sends the queued registers. */
 void gifStateSetupContext(XglPacket *packet, signed char alphaFix);
-
 extern int gifStateOriginX;
 extern int gifStateOriginY;
 
 /* The 512x448 frame buffer in pixels. */
 #define GIF_STATE_WIDTH 512
 #define GIF_STATE_HEIGHT 448
-
 #define NML_WINDOW_COUNT 4
 
+/* The halfword fields of sRender read by the frame effect. */
+typedef struct GifStateRender {
+    unsigned char unmodeled_00[0x14];
+    unsigned short displayBase;             /* 0x14: frame page shown, also the texture source */
+    unsigned char unmodeled_16[4];
+    unsigned short workBase;                /* 0x1A: frame page of the work buffer */
+    unsigned char unmodeled_1c[4];
+    unsigned short drawBase;                /* 0x20: frame page drawn this frame */
+    unsigned short blendBase;               /* 0x22: frame page the effect blends back over the drawn one */
+} GifStateRender;
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateSetupContext);
+extern GifStateRender sRender;
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawRing);
+/* One quadword of gifStatePacket: a data/address pair (A+D) or four raw words (the tag). */
+typedef union GifStateQword {
+    u64 pair[2];                /* A+D: the data, then the register address */
+    u32 word[4];
+} GifStateQword;
 
+/* The setup packet: 15 quadwords (60 words) sent as one transfer; its qwords 6 and 7 get the frame and the
+ * texture of the page each call. */
+extern GifStateQword D_00631450[15];
 
-extern GameWorkControl gameWork;
+#define GIF_SETUP_PACKET_WORDS 60
+
+void sceVif1PkAddDataN(XglPacket *packet, const void *data, int count);
+
+/* Sets up the frame context of the next draw: the display frame and the texture page in the setup packet,
+ * then the clamp, the texture, the alpha blend and the test state, and sends the queued registers. */
+void gifStateSetupContext(XglPacket *packet, signed char alphaFix)
+{
+    unsigned int page;
+
+    D_00631450[6].pair[0] = GS_SET_FRAME(sRender.displayBase, 8, GS_PSMCT32, 0);
+    switch (gifStatus.fbp) {
+    case 0:
+        D_00631450[7].pair[0] = GS_SET_TEX0(sRender.drawBase << 5, 8, GS_PSMCT32, 9, 9, 1, 0, 0, 0, 0, 0, 0);
+        break;
+    case 1:
+        D_00631450[7].pair[0] = GS_SET_TEX0(sRender.blendBase << 5, 8, GS_PSMCT32, 9, 9, 1, 0, 0, 0, 0, 0, 0);
+        break;
+    default:
+        D_00631450[7].pair[0] = GS_SET_TEX0(sRender.drawBase << 5, 8, GS_PSMCT32, 9, 9, 1, 0, 0, 0, 0, 0, 0);
+        break;
+    }
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    gifStateReset();
+    gifStateAddReg(GS_CLAMP_1, GS_SET_CLAMP(1, 1, 0, 0, 0, 0));
+    gifStateFlush();
+    sceVif1PkAddDataN(packet, D_00631450, GIF_SETUP_PACKET_WORDS);
+    gifStateReset();
+    gifStateAddReg(GS_FBA_1, 1);
+    gifStateAddReg(GS_FRAME_1, GS_SET_FRAME(sRender.drawBase, 8, GS_PSMCT32, 0));
+    if (gifStatus.state == 1) {
+        switch (gifStatus.effectAlphaType) {
+        case 1:
+            gifStateAddReg(GS_ALPHA_1, GS_SET_ALPHA(0, 2, 0, 1, 0));
+            break;
+        case 2:
+            gifStateAddReg(GS_ALPHA_1, GS_SET_ALPHA(2, 0, 0, 1, 0));
+            break;
+        case 0:
+        default:
+            gifStateAddReg(GS_ALPHA_1, GS_SET_ALPHA(0, 1, 0, 1, 0));
+            break;
+        }
+    } else {
+        switch (gifStatus.effectAlphaType) {
+        case 1:
+            gifStateAddReg(GS_ALPHA_1, ((((long long) alphaFix) << 56) >> 24) | GS_SET_ALPHA(0, 2, 2, 1, 0));
+            break;
+        case 2:
+            gifStateAddReg(GS_ALPHA_1, ((((long long) alphaFix) << 56) >> 24) | GS_SET_ALPHA(2, 0, 2, 1, 0));
+            break;
+        case 0:
+            gifStateAddReg(GS_ALPHA_1, ((((long long) alphaFix) << 56) >> 24) | GS_SET_ALPHA(0, 1, 2, 1, 0));
+            break;
+        default:
+            gifStateAddReg(GS_ALPHA_1, ((((long long) alphaFix) << 56) >> 24) | GS_SET_ALPHA(0, 1, 2, 1, 0));
+            break;
+        }
+    }
+    gifStateAddReg(GS_CLAMP_1, GS_SET_CLAMP(2, 2, 0, GIF_STATE_WIDTH - 1, 0, GIF_STATE_HEIGHT - 1));
+    gifStateAddReg(GS_TEX1_1, GS_SET_TEX1(0, 0, 1, 1, 0, 0, 0));
+    gifStateAddReg(GS_TEX0_1, GS_SET_TEX0(sRender.displayBase << 5, 8, GS_PSMCT32, 9, 9, 0, 0, 0, 0, 0, 0, 0));
+    gifStateAddReg(GS_TEST_1, GS_SET_TEST(0, 0, 0, 0, 0, 0, 1, 2));
+    gifStateAddReg(GS_TEXFLUSH, 0);
+    gifStateAddReg(GS_ZBUF_1, GS_SET_ZBUF(0, 0x31, 1));
+    gifStateFlush();
+    sceVif1PkCloseDirectHLCode(packet);
+}
+
+float sinf(float angle);
+float cosf(float angle);
+extern int gifStateRingCount;
+/* The GIF tag template of the ring (the vertex count is or-ed in); no symbol name yet. */
+extern u32 D_00631540[4];
+
+/* One ring point: three quadwords, RGBAQ, UV and XYZ2, in the order the ring tag lists them. */
+typedef struct GifRingVertex {
+    u32 rgbaq[4];
+    u32 uv[4];
+    u32 xyz[4];
+} GifRingVertex;
+
+typedef struct GifRingPacket {
+    u32 tag[4];
+    GifRingVertex vertex[(0x4000 - 0x10) / sizeof(GifRingVertex)];
+} GifRingPacket;
+
+#define GIF_RING_PACKET ((GifRingPacket *) 0x70000000)
+/* Scratchpad RAM staging area of the ring packet. */
+#define GIF_SCRATCHPAD 0x70000000
+#define GIF_X(x) ((gifStateOriginX + (x)) * 16 - 8)
+#define GIF_Y(y) ((gifStateOriginY + (y)) * 16 - 9)
+
+/* Draws the shown page again as a ring of sprite points around the effect centre, in two passes: the
+ * outer points at the sub-window radii, then the second ring at the radius of subWindow[1] plus subWindow[3]
+ * with its ratio-scaled start angle. Nothing is drawn while the ratio is 0; then the ratio is lowered by its
+ * step. */
+void gifStateDrawRing(XglPacket *packet)
+{
+    int trailAlpha;
+    int ringAlpha;
+    float step;
+    float angle = 0.0f;
+    float cosine;
+    float sine;
+    u32 *cursor;
+    u32 *ring;
+    u32 *gifTag;
+    unsigned int i;
+    int count;
+    int innerCount;
+    int sub3;
+    int sub2;
+    int sub1;
+    int x;
+    int y;
+    int x2;
+    int y2;
+    int u;
+    int v;
+
+    step = 6.2831855f / gifStateRingCount;
+    if (gifStatus.ratio == 0.0f) {
+        return;
+    }
+    if (gifStatus.subWindow[0] == 0) {
+        trailAlpha = gifStatus.ratio * gifStatus.effectAlpha;
+        ringAlpha = 0;
+    } else {
+        ringAlpha = gifStatus.ratio * gifStatus.effectAlpha;
+        trailAlpha = 0;
+    }
+    gifStatus.ratio -= gifStatus.ratioStep;
+    sub1 = gifStatus.subWindow[1];
+    sub2 = gifStatus.subWindow[2];
+    sub3 = gifStatus.subWindow[3];
+    if (gifStatus.ratio < 0.0f) {
+        gifStatus.ratio = 0.0f;
+    }
+    gifStateSetupContext(packet, 0);
+
+    /* The outer ring: per step one point at the radius sub1 and one at sub1 + sub2 pulled in by the blur. */
+    count = 0;
+    cursor = (void *) (GIF_SCRATCHPAD + 0x10);
+    angle = 0.0f;
+    for (i = 0; i < 2 * gifStateRingCount; i += 2) {
+        cosine = cosf(angle);
+        sine = sinf(angle);
+        x = cosine * sub1 + gifStatus.centerX;
+        y = sine * sub1 + gifStatus.centerY;
+        x2 = cosine * (sub1 + sub2) + gifStatus.centerX;
+        y2 = sine * (sub1 + sub2) + gifStatus.centerY;
+        angle += step;
+        x = x < 0 ? 0 : x;
+        y = y < 0 ? 0 : y;
+        x = x >= GIF_STATE_WIDTH ? GIF_STATE_WIDTH - 1 : x;
+        y = y >= GIF_STATE_HEIGHT ? GIF_STATE_HEIGHT - 1 : y;
+        cursor[0] = 0x80;
+        cursor[1] = 0x80;
+        cursor[2] = 0x80;
+        cursor[3] = ringAlpha;
+        cursor[6] = 0;
+        cursor[7] = 0;
+        cursor[4] = x << 4;
+        cursor[5] = y << 4;
+        cursor[8] = GIF_X(x);
+        cursor[9] = GIF_Y(y);
+        cursor[10] = gifStatus.depth;
+        cursor[11] = 0;
+        cursor += 12;
+
+        cursor[0] = 0x80;
+        cursor[1] = 0x80;
+        cursor[2] = 0x80;
+        cursor[3] = trailAlpha;
+        cosine *= gifStatus.blur;
+        u = x2 - (int) cosine;
+        v = y2 - (int) (sine * gifStatus.blur);
+        v = v < 0 ? 0 : v;
+        u = u < 0 ? 0 : u;
+        v = v >= GIF_STATE_HEIGHT ? GIF_STATE_HEIGHT - 1 : v;
+        u = u >= GIF_STATE_WIDTH ? GIF_STATE_WIDTH - 1 : u;
+        cursor[6] = 0;
+        cursor[7] = 0;
+        cursor[5] = v << 4;
+        cursor[4] = u << 4;
+        cursor[8] = GIF_X(x2);
+        cursor[9] = GIF_Y(y2);
+        cursor[10] = gifStatus.depth;
+        cursor[11] = 0;
+        cursor += 12;
+        count += 2;
+    }
+    count += 2;
+    i = 0;
+    innerCount = 0;
+    gifTag = (void *) GIF_SCRATCHPAD;
+    gifTag[0] = D_00631540[0] | count;
+    gifTag[1] = D_00631540[1];
+    gifTag[2] = D_00631540[2];
+    gifTag[3] = D_00631540[3];
+    /* Close the strip: the first two points again. */
+    gifTag += 4;
+    cursor[0] = gifTag[0];
+    cursor[1] = gifTag[1];
+    cursor[2] = gifTag[2];
+    cursor[3] = gifTag[3];
+    cursor[4] = gifTag[4];
+    cursor[5] = gifTag[5];
+    cursor[6] = gifTag[6];
+    cursor[7] = gifTag[7];
+    cursor[8] = gifTag[8];
+    cursor[9] = gifTag[9];
+    cursor[10] = gifTag[10];
+    cursor[11] = gifTag[11];
+    cursor += 12;
+    gifTag += 12;
+    cursor[0] = gifTag[0];
+    cursor[1] = gifTag[1];
+    cursor[2] = gifTag[2];
+    cursor[3] = gifTag[3];
+    cursor[4] = gifTag[4];
+    cursor[5] = gifTag[5];
+    cursor[6] = gifTag[6];
+    cursor[7] = gifTag[7];
+    cursor[8] = gifTag[8];
+    cursor[9] = gifTag[9];
+    cursor[10] = gifTag[10];
+    cursor[11] = gifTag[11];
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, (void *) GIF_SCRATCHPAD, count * 3 + 1);
+    sceVif1PkCloseDirectHLCode(packet);
+
+    ring = (void *) (GIF_SCRATCHPAD + 0x10);
+    /* Move each outer point onto its inner neighbour. */
+    for (; i < 2 * gifStateRingCount + 2; i += 2) {
+        ring[0] = ring[12];
+        ring[1] = ring[13];
+        ring[2] = ring[14];
+        ring[3] = ring[15];
+        ring[4] = ring[16];
+        ring[5] = ring[17];
+        ring[6] = ring[18];
+        ring[7] = ring[19];
+        ring[8] = ring[20];
+        ring[9] = ring[21];
+        ring[10] = ring[22];
+        ring[11] = ring[23];
+        ring += 24;
+    }
+
+    /* The inner ring: the outer points again at the radius sub1 + sub3, from the ratio-scaled start angle. */
+    angle = step * gifStatus.ratio;
+    ring = (void *) (GIF_SCRATCHPAD + 0x10);
+    for (i = 0; i < 2 * gifStateRingCount; i += 2) {
+        int innerX;
+        int innerY;
+
+        ring += 12;
+        cosine = cosf(angle);
+        sine = sinf(angle);
+        cosine *= sub1 + sub3;
+        cosine += gifStatus.centerX;
+        innerY = sine * (sub1 + sub3) + gifStatus.centerY;
+        innerX = cosine;
+        angle += step;
+        innerY = innerY < 0 ? 0 : innerY;
+        innerX = innerX < 0 ? 0 : innerX;
+        innerX = innerX >= GIF_STATE_WIDTH ? GIF_STATE_WIDTH - 1 : innerX;
+        innerY = innerY >= GIF_STATE_HEIGHT ? GIF_STATE_HEIGHT - 1 : innerY;
+        ring[3] = ringAlpha;
+        ring[5] = innerY << 4;
+        ring[4] = innerX << 4;
+        ring[8] = GIF_X(innerX);
+        ring[9] = GIF_Y(innerY);
+        ring[10] = gifStatus.depth;
+        ring += 12;
+        innerCount += 2;
+    }
+    innerCount += 2;
+    gifTag = (void *) GIF_SCRATCHPAD;
+    gifTag[0] = D_00631540[0] | innerCount;
+    gifTag[1] = D_00631540[1];
+    gifTag[2] = D_00631540[2];
+    gifTag[3] = D_00631540[3];
+    gifTag += 4;
+    ring[0] = gifTag[0];
+    ring[1] = gifTag[1];
+    ring[2] = gifTag[2];
+    ring[3] = gifTag[3];
+    ring[4] = gifTag[4];
+    ring[5] = gifTag[5];
+    ring[6] = gifTag[6];
+    ring[7] = gifTag[7];
+    ring[8] = gifTag[8];
+    ring[9] = gifTag[9];
+    ring[10] = gifTag[10];
+    ring[11] = gifTag[11];
+    ring += 12;
+    gifTag += 12;
+    ring[0] = gifTag[0];
+    ring[1] = gifTag[1];
+    ring[2] = gifTag[2];
+    ring[3] = gifTag[3];
+    ring[4] = gifTag[4];
+    ring[5] = gifTag[5];
+    ring[6] = gifTag[6];
+    ring[7] = gifTag[7];
+    ring[8] = gifTag[8];
+    ring[9] = gifTag[9];
+    ring[10] = gifTag[10];
+    ring[11] = gifTag[11];
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkOpenDirectHLCode(packet, 0);
+    sceVif1PkAddDirectDataN(packet, (void *) GIF_SCRATCHPAD, innerCount * 3 + 1);
+    sceVif1PkCloseDirectHLCode(packet);
+}
+
 /* The smallest texture scale of the blur, 0.9 of the ratio. */
 extern f32 gifBlurMinScale;
 /* The texture scale of each edge point of the blur fan. */
-extern f32 gifBlurScales[512];
+static f32 gifBlurScales[512];
 /* The GIF tag template of the blur fan (the vertex count is or-ed in). */
 extern u32 gifBlurFanTag[4];
 
@@ -64,8 +400,6 @@ typedef struct GifPacket {
 } GifPacket;
 
 #define GIF_PACKET ((GifPacket *) 0x70000000)
-
-#define GIF_GAME_PAUSED 0x1
 /* The edge points are this far apart at least. */
 #define GIF_BLUR_MIN_STEP 4
 
@@ -87,7 +421,7 @@ void gifStateDrawRadialBlur(XglPacket *packet)
         return;
     }
     gifBlurMinScale = gifStatus.ratio * 0.9f;
-    if (!(gameWork.control & GIF_GAME_PAUSED)) {
+    if (!(gameWork.control & CONTROL_PAUSED)) {
         for (pos = 0; pos < 512; pos++) {
             gifBlurScales[pos] = (xglSRand() % 10U) * 0.01f + gifBlurMinScale;
         }
@@ -184,7 +518,7 @@ void gifStateDrawRadialBlur(XglPacket *packet)
     sceVif1PkOpenDirectHLCode(packet, 0);
     sceVif1PkAddDirectDataN(packet, GIF_PACKET, count * 2 + 1);
     sceVif1PkCloseDirectHLCode(packet);
-    if (!(gameWork.control & GIF_GAME_PAUSED)) {
+    if (!(gameWork.control & CONTROL_PAUSED)) {
         gifStatus.ratio -= gifStatus.ratioStep;
         if (gifStatus.ratio < 0.0f) {
             gifStatus.ratio = 0.0f;
@@ -280,8 +614,139 @@ void gifStateDrawCameraQuad(XglPacket *packet)
     gifStatus.ratio -= gifStatus.ratioStep;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/gifState", gifStateDrawJitterGrid);
+/* Spacing of the jitter grid in pixels. */
+extern int gifStateGridStep;
+/* GIF tag templates of the first strip and of each redrawn row (the vertex count is or-ed in). */
+extern u32 D_00631580[4];
+extern u32 D_00631590[4];
 
+/* Draws the shown page as a grid of vertices whose texture coordinates are shifted by a random amount scaled by
+ * the ratio (never on the left column or the top row): the first pass builds a strip of the first two rows,
+ * every later row copies the lower vertex of the strip above and adds a new one, each strip sent as its own
+ * packet. The ratio is then lowered by its step and clamped at 0. The cursor walks the scratchpad packet
+ * eight words (one vertex) at a time; the second vertex of the first pass tests the left column through a
+ * flag, which the original keeps as a separate compare. */
+void gifStateDrawJitterGrid(XglPacket *packet)
+{
+    u32 *cursor;
+    int x;
+    int y;
+    int count = 0;
+    int jitter;
+    int leftColumn;
+    u32 *tag = 0;
+    u32 *rowTag = 0;
+
+    if (gifStatus.ratio != 0.0f) {
+        y = 0;
+        x = y;
+        count = x;
+        cursor = GIF_PACKET->vertex[0].uv;
+        gifStateSetupContext(packet, gifStatus.effectAlpha * gifStatus.ratio);
+        if (gifStatus.blur == 0) {
+            gifStatus.blur = 1;
+        }
+        do {
+            if (x == 0) {
+                jitter = 0;
+            } else {
+                jitter = (int) ((float) (xglSRand() % gifStatus.blur) * gifStatus.ratio);
+            }
+            cursor[0] = (x + jitter) << 4;
+            cursor[1] = y << 4;
+            cursor[2] = 0;
+            cursor[3] = 0;
+            cursor[4] = ((gifStateOriginX + x) << 4) - 8;
+            cursor[5] = ((gifStateOriginY + y) << 4) - 9;
+            cursor[6] = gifStatus.depth;
+            cursor[7] = 0;
+            count++;
+            cursor += 8;
+            y += gifStateGridStep;
+            leftColumn = x == 0;
+            if (leftColumn) {
+                jitter = x;
+            } else {
+                jitter = (int) ((float) (xglSRand() % gifStatus.blur) * gifStatus.ratio);
+            }
+            cursor[0] = (x + jitter) << 4;
+            cursor[1] = y << 4;
+            cursor[2] = 0;
+            cursor[3] = 0;
+            cursor[4] = ((gifStateOriginX + x) << 4) - 8;
+            cursor[5] = ((gifStateOriginY + y) << 4) - 9;
+            cursor[6] = gifStatus.depth;
+            cursor[7] = 0;
+            count++;
+            cursor += 8;
+            y -= gifStateGridStep;
+            x += gifStateGridStep;
+        } while (x < GIF_STATE_WIDTH);
+        tag = GIF_PACKET->tag;
+        tag[0] = D_00631580[0] | count;
+        tag[1] = D_00631580[1];
+        tag[2] = D_00631580[2];
+        tag[3] = D_00631580[3];
+        sceVif1PkCnt(packet, 0);
+        sceVif1PkOpenDirectHLCode(packet, 0);
+        sceVif1PkAddDirectDataN(packet, GIF_PACKET, count * 2 + 1);
+        sceVif1PkCloseDirectHLCode(packet);
+
+        for (y += gifStateGridStep; y < GIF_STATE_HEIGHT; y += gifStateGridStep) {
+            x = 0;
+            count = 0;
+            cursor = GIF_PACKET->vertex[0].uv;
+            do {
+                cursor[0] = cursor[8];
+                cursor[1] = cursor[9];
+                cursor[2] = cursor[10];
+                cursor[3] = cursor[11];
+                cursor[4] = cursor[12];
+                cursor[5] = cursor[13];
+                cursor[6] = cursor[14];
+                cursor[7] = cursor[15];
+                count++;
+                cursor += 8;
+                y += gifStateGridStep;
+                if (x == 0) {
+                    jitter = 0;
+                } else {
+                    jitter = (int) ((float) (xglSRand() % gifStatus.blur) * gifStatus.ratio);
+                }
+                cursor[0] = (x + jitter) << 4;
+                if (y == 0) {
+                    jitter = 0;
+                } else {
+                    jitter = (int) ((float) (xglSRand() % gifStatus.blur) * gifStatus.ratio);
+                }
+                cursor[1] = (y + jitter) << 4;
+                cursor[2] = 0;
+                cursor[3] = 0;
+                cursor[4] = ((gifStateOriginX + x) << 4) - 8;
+                cursor[5] = ((gifStateOriginY + y) << 4) - 9;
+                cursor[6] = gifStatus.depth;
+                cursor[7] = 0;
+                count++;
+                cursor += 8;
+                x += gifStateGridStep;
+                y -= gifStateGridStep;
+            } while (x < GIF_STATE_WIDTH);
+            rowTag = GIF_PACKET->tag;
+            rowTag[0] = D_00631590[0] | count;
+            rowTag[1] = D_00631590[1];
+            rowTag[2] = D_00631590[2];
+            rowTag[3] = D_00631590[3];
+            sceVif1PkCnt(packet, 0);
+            sceVif1PkOpenDirectHLCode(packet, 0);
+            sceVif1PkAddDirectDataN(packet, GIF_PACKET, count * 2 + 1);
+            sceVif1PkCloseDirectHLCode(packet);
+        }
+        gifStatus.ratio -= gifStatus.ratioStep;
+        if (gifStatus.ratio < 0.0f) {
+            gifStatus.ratio = 0.0f;
+        }
+    }
+}
 
 /* The GIF tag template of the fade quad (the vertex count is or-ed in). */
 extern u32 gifFadeQuadTag[4];
@@ -355,31 +820,17 @@ void gifStateDrawFadeQuad(XglPacket *packet)
 void func_002439C8(void) {
 }
 
-/* The halfword fields of sRender read by the frame effect. */
-typedef struct GifStateRender {
-    unsigned char unmodeled_00[0x14];
-    unsigned short displayBase;             /* 0x14: frame page shown, also the texture source */
-    unsigned char unmodeled_16[4];
-    unsigned short workBase;                /* 0x1A: frame page of the work buffer */
-    unsigned char unmodeled_1c[4];
-    unsigned short drawBase;                /* 0x20: frame page drawn this frame */
-    unsigned short blendBase;               /* 0x22: frame page the effect blends back over the drawn one */
-} GifStateRender;
+extern int gifStateBlurDivisor;
+/* blur divisor of the alpha (3) */
+extern int gifStateBlurOffset;
 
-extern GifStateRender sRender;
-extern int gifStateBlurDivisor;                      /* blur divisor of the alpha (3) */
-extern int gifStateBlurOffset;                      /* blur offset in pixels */
-
-
+/* blur offset in pixels */
 /* IEEE-754 1.0f as the raw Q word of RGBAQ. */
 #define GIF_STATE_ONE_BITS 0x3F800000
-
 /* XYZ2 of a sprite corner at (x, y) pixels from the GS origin. */
 #define GIF_STATE_XY(x, y) GS_SET_XYZ(((gifStateOriginX + (x)) << 4) - 8, ((gifStateOriginY + (y)) << 4) - 9, 0)
-
 /* FRAME_1 of a 512-pixel-wide page with the alpha channel masked. */
 #define GIF_STATE_FRAME(base) GS_SET_FRAME(base, 8, GS_PSMCT32, 0xFF000000)
-
 /* TEX0_1 of a 512x512 PSMCT32 page used as a texture. */
 #define GIF_STATE_TEX0(base) GS_SET_TEX0((base) << 5, 8, GS_PSMCT32, 9, 9, 1, 0, 0, 0, 0, 0, 0)
 
@@ -586,7 +1037,6 @@ void gifStateDrawBlurFrame(XglPacket *packet)
     sceVif1PkCloseDirectHLCode(packet);
 }
 
-
 /* A screen position of the break effect, in pixels. */
 typedef struct GifBreakXY {
     f32 x;
@@ -595,7 +1045,6 @@ typedef struct GifBreakXY {
 
 #define GIF_SCREEN_RIGHT 511.0f
 #define GIF_SCREEN_BOTTOM 447.0f
-
 #define GIF_SET_POINT(point, px, py) ((point)[0].f = (px), (point)[1].f = (py))
 #define GIF_SET_VERTEX(vertex, source) ((vertex)[0].f = (source)[0].f, (vertex)[1].f = (source)[1].f)
 
@@ -835,7 +1284,6 @@ void gifStateBuildBreakShards(GifBreakShard *shards, GifBreakPoint *points)
 }
 
 #define GIF_BREAK_VERTICES 24
-
 /* Projection depth of the shards: a vertex at z is scaled by (z + depth) / depth. */
 #define GIF_BREAK_DEPTH 300.0f
 /* The part of the break (1 - ratio) over which the shards spin up. */
@@ -924,18 +1372,11 @@ extern void (*gifStateEffectHook)(XglPacket *packet);
 
 #define GIF_BREAK_SHARDS 24
 
-extern GifBreakPoint gifBreakPoints[3];
-extern GifBreakShard gifBreakShards[GIF_BREAK_SHARDS];
+static GifBreakPoint gifBreakPoints[3];
+static GifBreakShard gifBreakShards[GIF_BREAK_SHARDS];
 extern char D_006315C8[8];
-extern u32 gifBreakGifTagTemplate[4];
-
+extern u32 gifBreakGifTagTemplate[12];
 void *memset(void *dst, int value, unsigned int size);
-
-/* Scratchpad RAM staging area of the shard packet. */
-#define GIF_SCRATCHPAD 0x70000000
-
-#define GIF_X(x) ((gifStateOriginX + (x)) * 16 - 8)
-#define GIF_Y(y) ((gifStateOriginY + (y)) * 16 - 9)
 
 void gifStateEffectFrame(XglPacket *packet)
 {
@@ -1190,15 +1631,8 @@ void func_00246AF8(void) {
  * gifStatePacket; entry 0 is the GIF tag word, the pairs follow in packed mode (A+D).
  * The assert text "numPacket < (STATEPACKET_MAX - 1)" names both.
  */
-extern int gifStateNumPacket;
-
-/* One quadword of gifStatePacket: a data/address pair (A+D) or four raw words (the tag). */
-typedef union GifStateQword {
-    u64 pair[2];                /* A+D: the data, then the register address */
-    u32 word[4];
-} GifStateQword;
-
-extern GifStateQword gifStatePacket[];
+static int gifStateNumPacket;
+static GifStateQword gifStatePacket[128];
 
 /* GIF tag words: end-of-packet flag in the low word, one register descriptor (NREG = 1) in word 1. */
 #define GIF_TAG_EOP 0x8000
@@ -1214,8 +1648,8 @@ void gifStateReset(void) {
 }
 
 /* The assert text and the file name of the packet queue asserts. */
-extern const char gifStatePacketAssert[];
-extern const char gifStateSourceFile[];
+const char gifStatePacketAssert[40] = "numPacket < (STATEPACKET_MAX - 1)";
+const char gifStateSourceFile[24] = "../gifState.euc.c";
 
 /* The queue size the assert names: numPacket < (STATEPACKET_MAX - 1). */
 #define STATEPACKET_MAX 0x80
@@ -1292,7 +1726,6 @@ void nmlModelSetMulColor(Vector4 *color)
     QuadwordCopy(&gifStatus.mulColor, color);
 }
 
-
 /* Sets the alpha type and the alpha value of the effect (gifStatus +0x0C/+0x10). */
 void gifStateSetEffectAlpha(int alphaType, int alpha) {
     gifStatus.effectAlphaType = alphaType;
@@ -1356,7 +1789,6 @@ void gifStateClearModeValue(void) {
     gifStateModeHook = 0;
 }
 
-
 void func_00246EB0(void) {
     func_001BA6F4();
     func_00246AF8();
@@ -1382,7 +1814,6 @@ void gifStateEnableEffect(void)
 void nmlModelEnableSubWindow0(void) {
     nmlModelUseSubWindow(0U, 1);
 }
-
 
 int gifStateEffectReady(void) {
     if (gifStateEffectHook != 0 && gifStatus.state == GIF_EFFECT_FRAME) {
@@ -1440,3 +1871,53 @@ void gifStateUpdateDrawHook(void) {
     gifStateDrawHookSuppressed = 0;
     gifStateDrawHook = 0;
 }
+
+/* .data of this file, in address order. */
+int gifStateOriginX = 0x700;
+int gifStateOriginY = 0x720;
+u32 D_00631448[2] = { 0, 0 };
+GifStateQword D_00631450[15] = {
+    { { 0x0000000000000000ULL, 0x5100000E00000000ULL } },
+    { { 0xD08B400000008001ULL, 0x000EE53531EEEEEEULL } },
+    { { 0x0000000131000000ULL, 0x000000000000004EULL } },
+    { { 0x0000000000071001ULL, 0x0000000000000047ULL } },
+    { { 0x0000000000000000ULL, 0x0000000000000014ULL } },
+    { { 0x0000000000000001ULL, 0x000000000000004AULL } },
+    { { 0x0000000000000000ULL, 0x000000000000004CULL } },
+    { { 0x0000000000000000ULL, 0x0000000000000006ULL } },
+    { { 0x0000008000000080ULL, 0x0000000000000080ULL } },
+    { { 0x0000000000000000ULL, 0x0000000000000000ULL } },
+    { { 0x000071F700006FF8ULL, 0x00000000FFFFFFFFULL } },
+    { { 0x00001C0000002000ULL, 0x0000000000000000ULL } },
+    { { 0x00008DF700008FF8ULL, 0x00000000FFFFFFFFULL } },
+    { { 0x0000000000000000ULL, 0x000000000000003FULL } },
+    { { 0x0000000000000000ULL, 0x000000000000004AULL } }
+};
+u32 D_00631540[4] = { 0x00008000, 0x30AE4000, 0x00000531, 0x00000000 };
+int gifStateRingCount = 0x5A;
+f32 gifBlurMinScale = 0.8f;
+u32 gifBlurFanTag[4] = { 0x00008000, 0x20AEC000, 0x00000053, 0x00000000 };
+u32 gifCameraQuadTag[4] = { 0x00008000, 0x20AE4000, 0x00000053, 0x00000000 };
+int gifStateGridStep = 0xA;
+u32 D_00631580[4] = { 0x00008000, 0x20AE4000, 0x00000053, 0x00000000 };
+u32 D_00631590[4] = { 0x00008000, 0x20AE4000, 0x00000053, 0x00000000 };
+u32 gifFadeQuadTag[4] = { 0x00008000, 0x20AE4000, 0x00000053, 0x00000000 };
+int gifStateBlurDivisor = 3;
+int gifCopyWidth = 0xCC;
+int gifCopyHeight = 0xB3;
+int gifStateBlurOffset = 1;
+int D_006315C0[2] = { 0, 0 };
+char D_006315C8[] = { -128, -16, -96, -96, -64, -64, -32, -32 };
+u32 gifBreakGifTagTemplate[12] = { 0x00008000, 0x30ADC000, 0x00000531 };
+GifEffectDraw gifStateEffectDraws[16] = {
+    gifStateDrawRadialBlur,
+    gifStateDrawRing,
+    gifStateDrawCameraQuad,
+    gifStateDrawJitterGrid,
+    gifStateDrawFadeQuad,
+    gifStateEffectFrame,
+    func_002439C8
+};
+GifStatusBlock gifStatus = { 0 };
+int gifStateDrawHookSuppressed = 0;
+int D_006316A4 = 0;

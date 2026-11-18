@@ -49,7 +49,7 @@ typedef struct GsQueueContext {
     union {
         /* Any type: recordSetSlot copies the first ten words without looking at the type. */
         int params[30]; /* +0x04..+0x7B */
-        /* Types 2 and 20 (recordDrawType2 fills one for func_0027A6F0): gsQueueBeginTriStrip passes frame to
+        /* Types 2 and 20 (recordDrawType2 fills one for spriteBatchDraw): gsQueueBeginTriStrip passes frame to
            gsQueueSetFrame, tex0 to gsQueueSetTex0 and blendKind with color to gsQueueSetBlendColor; count is the
            number of passes, screenRect and textureRect the sprite. */
         struct {
@@ -1164,7 +1164,7 @@ void recordStepAngle(int stage)
     }
 }
 
-void func_0027A6F0(GsQueueContext *context, int packet);
+void spriteBatchDraw(GsQueueContext *context, int packet);
 
 /* Draw handler of record type 2 (D_0063D758[1]): draws the record's texture (its tex0 word) over the whole 512x448
    screen through a type 20 sprite record. */
@@ -1188,14 +1188,14 @@ void recordDrawType2(GsQueueContext *record, int packet)
     sprite.u.queue.textureRect[1] = 0;
     sprite.u.queue.textureRect[2] = 0x200;
     sprite.u.queue.textureRect[3] = 0x1C0;
-    func_0027A6F0(&sprite, packet);
+    spriteBatchDraw(&sprite, packet);
 }
 
 void recordAdvanceRingRadius(int step);
 void recordRingPoint(float *point, float *clampedPoint, float angle, float radius);
 /* libgcc __fixunssfdi, float to unsigned 64-bit integer (negative values give 0), in the libgcc block between
    __moddi3 and fptodp. */
-u64 func_002A6A90(float value);
+u64 __fixunssfdi(float value);
 extern float D_0069DDD8;
 extern int D_0069DDDC;
 
@@ -1264,8 +1264,8 @@ void recordDrawType3(GsQueueContext *record)
     for (radius = D_0069DDDC; radius < 620; radius += 25) {
         recordRingPoint(point, clampedPoint, 0.0f, radius);
         pairs[pairCount].ad.reg = GS_UV;
-        pairs[pairCount].ad.data = GS_SET_UV(func_002A6A90(clampedPoint[0] * 16.0f),
-                                             func_002A6A90(clampedPoint[1] * 16.0f));
+        pairs[pairCount].ad.data = GS_SET_UV(__fixunssfdi(clampedPoint[0] * 16.0f),
+                                             __fixunssfdi(clampedPoint[1] * 16.0f));
         pairCount++;
         pairs[pairCount].ad.reg = GS_XYZ3;
         pairs[pairCount].ad.data = GS_SET_XYZ((int) ((point[0] + 1792.0f) * 16.0f),
@@ -1274,8 +1274,8 @@ void recordDrawType3(GsQueueContext *record)
         for (side = 1; side <= 8; side++) {
             recordRingPoint(point, clampedPoint, side * 45 * D_0069DDD8, radius);
             pairs[pairCount].ad.reg = GS_UV;
-            pairs[pairCount].ad.data = GS_SET_UV(func_002A6A90(clampedPoint[0] * 16.0f),
-                                                 func_002A6A90(clampedPoint[1] * 16.0f));
+            pairs[pairCount].ad.data = GS_SET_UV(__fixunssfdi(clampedPoint[0] * 16.0f),
+                                                 __fixunssfdi(clampedPoint[1] * 16.0f));
             pairCount++;
             pairs[pairCount].ad.reg = GS_XYZF2;
             pairs[pairCount].ad.data = GS_SET_XYZ((int) ((point[0] + 1792.0f) * 16.0f),
@@ -1781,8 +1781,8 @@ void recordDrawType7(void)
         pairs[pairCount].ad.data = innerColor;
         pairCount++;
         pairs[pairCount].ad.reg = GS_UV;
-        pairs[pairCount].ad.data = GS_SET_UV(func_002A6A90(texturePoints.x * 16.0f),
-                                             func_002A6A90(texturePoints.y * 16.0f));
+        pairs[pairCount].ad.data = GS_SET_UV(__fixunssfdi(texturePoints.x * 16.0f),
+                                             __fixunssfdi(texturePoints.y * 16.0f));
         pairCount++;
         pairs[pairCount].ad.reg = GS_XYZF2;
         pairs[pairCount].ad.data = GS_SET_XYZ((int)((screenPoints.x + 1792.0f) * 16.0f),
@@ -1792,8 +1792,8 @@ void recordDrawType7(void)
         pairs[pairCount].ad.reg = GS_RGBAQ;
         pairCount++;
         pairs[pairCount].ad.reg = GS_UV;
-        pairs[pairCount].ad.data = GS_SET_UV(func_002A6A90(texturePoints.z * 16.0f),
-                                             func_002A6A90(texturePoints.w * 16.0f));
+        pairs[pairCount].ad.data = GS_SET_UV(__fixunssfdi(texturePoints.z * 16.0f),
+                                             __fixunssfdi(texturePoints.w * 16.0f));
         pairCount++;
         pairs[pairCount].ad.reg = GS_XYZF2;
         pairs[pairCount].ad.data = GS_SET_XYZ((int)((screenPoints.z + 1792.0f) * 16.0f),

@@ -146,3 +146,10 @@ extern Matrix4 D_00645FB0;
 void tiVu0LoadFixedMatrix(void) {
     Vu0SetCurrentMatrix(D_00645FB0);
 }
+
+Matrix4 D_00645FB0 = {
+    { 1.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 1.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 1.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+};

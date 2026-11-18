@@ -21,9 +21,6 @@ extern Vector4 tiDrawCollisionRing[TI_COLLISION_RING_POINTS];
 extern Vector4 tiDrawCollisionTransformed[];
 /* Second pass of the ring, the input of the collision fill. */
 extern Vector4 D_00646B40[];
-extern char D_0068F830[];
-extern char D_0068F838[];
-extern char D_0068F858[];
 
 /* Builds the 48-point ring at scale: cos/sin pairs in the camera's rotated frame, two points per pass. */
 void tiDrawCollisionBuildRing(float scale)
@@ -81,11 +78,11 @@ void tiDrawCollisionFill(float pTransMat[4][4], void *pCol)
 {
     if (pCol == 0)
     {
-        assertFailed(D_0068F830, D_0068F838, 51);
+        assertFailed("pCol", "../TiDrawCollision.euc.c", 51);
     }
     if (pTransMat == 0)
     {
-        assertFailed(D_0068F858, D_0068F838, 52);
+        assertFailed("pTransMat", "../TiDrawCollision.euc.c", 52);
     }
     tiDrawJointTransformPoints(TI_COLLISION_RING_POINTS, pTransMat, tiDrawCollisionRing, tiDrawCollisionTransformed);
     tiDrawJointScreenPoints(TI_COLLISION_RING_POINTS, tiDrawCollisionTransformed, D_00646B40);
@@ -110,3 +107,8 @@ void tiDrawCollisionUpdate(void *object, void *pCol, float scale)
 void func_002996C8(void)
 {
 }
+
+/* Collision ring data: zero until tiDrawCollisionBuildRing writes it. */
+Vector4 tiDrawCollisionRing[TI_COLLISION_RING_POINTS] = { 0 };
+Vector4 tiDrawCollisionTransformed[48] = { 0 };
+Vector4 D_00646B40[48] = { 0 };

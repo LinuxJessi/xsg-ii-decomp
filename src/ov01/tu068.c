@@ -7,7 +7,7 @@
 #include "ov01/tu067.h"
 
 /*
- * Partial layout of the task func_00A802F8 returns (the same task as tu067's
+ * Partial layout of the task ov01TaskClaim returns (the same task as tu067's
  * ScreenFlashTask): only the words this TU writes are evidenced.  The
  * allocation size is not known here.
  */
@@ -17,14 +17,13 @@ struct ScreenFillTask {
     void (*draw)(void); /* +0x8, set to screenFillGray (grey screen fill) */
 };
 
-void *func_00A802F8(void);
 /* The running grey screen fill, 0 when none. */
 extern struct ScreenFillTask *screenFillTask;
 
 /* Starts a grey screen fill that lasts until screenFillEnd. */
 void screenFillStart(void)
 {
-    struct ScreenFillTask *task = func_00A802F8();
+    struct ScreenFillTask *task = ov01TaskClaim();
 
     if (task != 0)
     {

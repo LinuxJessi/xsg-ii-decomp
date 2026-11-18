@@ -7,6 +7,9 @@
 #include "main/control_entry.h"
 #include "main/test_129.h"
 
+/* Opens the .data of this file (0x631140); read by TiWater.c. */
+float tiWaterTwoPi = 6.28318548f;
+
 /* Debug test menu layout: entry count, the origin and line height of the list, and the slide offset at rest. */
 #define TEST_MENU_ENTRY_COUNT 4
 #define TEST_MENU_ORIGIN_X 20

@@ -4,41 +4,37 @@
 #include "common.h"
 #include "main/sef.h"
 #include "ov01/tu022.h"
-#include "ov01/tu031.h"
+#include "ov01/tu017.h"
+#include "ov01/tu023.h"
 #include "ov01/tu041.h"
 #include "ov01/tu044.h"
 #include "ov01/tu046.h"
 #include "ov01/tu070.h"
 
 /*
- * Script VM context a plugin call receives. The VM keeps its operand stack as
- * 4-byte words: stackCount words are in use, and the word just below the top
- * is the current frame's argument count. Each argument owns an 8-byte slot
- * that ends below that count word, its low word first.
+ * A native receives the running thread. Its operand stack holds 4-byte words: sp words are in use,
+ * and the word just below the top is the current frame's argument count. Each argument owns an
+ * 8-byte slot that ends below that count word, its low word first.
  */
-typedef struct VmPluginContext {
-    unsigned char unmodeled_00[0x04];
-    int stackCount;   /* +0x04: words in use on the operand stack */
-    unsigned char unmodeled_08[0x14 - 0x08];
-    struct VmPluginHeader *header; /* +0x14 */
-    unsigned char unmodeled_18[0x1C - 0x18];
-    int *stack;       /* +0x1C: base of the operand stack */
-} VmPluginContext;
 
-typedef struct VmPluginHeader VmPluginHeader;
+/* The keyed table vmKeyedEntryGet reads: count entries, an index array of
+ * offsets and the data they point into (both offsets from the table start). */
+typedef struct VmKeyTable {
+    unsigned char unmodeled_00[0x08];
+    int count;        /* +0x08 */
+    unsigned char unmodeled_0c[0x14 - 0x0C];
+    int indexOffset;  /* +0x14 */
+    int dataOffset;   /* +0x18 */
+} VmKeyTable;
 
-struct VmPluginHeader {
-    unsigned char unmodeled_00[0x18];
-    int entryOffset; /* +0x18: distance from this header to the entry array */
-};
-
-int VM_PLUGIN_CNT_GET(vm)
-VmPluginContext *vm;
+/* The argument count of the current call: the word below the stack top. */
+int VM_PLUGIN_CNT_GET(SbThread *thread)
 {
-    return vm->stack[vm->stackCount - 1];
+    return thread->stack[thread->sp - 1];
 }
 
 #include "shared.h"
+#include "ov01/tu036.h"
 
 
 
@@ -52,49 +48,47 @@ enum {
     VM_ARG_TAG_BASE = -8
 };
 
-/*
- * Partial view of the object unitTblEntryGet returns (dereferenced here, layout
- * otherwise not evidenced in this TU). Only actorGet's field at +0x1D0 is read.
- * tu017 declares unitTblEntryGet as returning UnitRecord *; its layout ends at
- * +0x2c, so the +0x1D0 actor belongs to that record once it is extended.
- */
-typedef struct UnitView {
-    unsigned char unmodeled_000[0x1D0];
-    void *actor;      /* +0x1D0: actorGet returns it */
-} UnitView;
-
-/* Callers pass no argument: the VM context is already in $a0 from the script dispatcher. */
-int VM_PLUGIN_CNT_GET();
-void sbFatal(VmPluginContext *vm);
 
 /* Returns the low word of argument argIndex (1-based) of the current call. */
-int vmArgGet(VmPluginContext *vm, int argIndex)
+int vmArgGet(SbThread *thread, int argIndex)
 {
     int *frameTop;
     int argCount;
 
-    frameTop = vm->stack + vm->stackCount;
+    frameTop = thread->stack + thread->sp;
     argCount = frameTop[-1];
     if (argCount < argIndex || argIndex == 0) {
-        sbFatal(vm);
+        sbFatal(thread);
     }
     return frameTop[-3 - 2 * (argCount - argIndex)];
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu046", vmArgGetHigh);
+/* Returns the high word of argument argIndex (1-based) of the current call. */
+int vmArgGetHigh(SbThread *thread, int argIndex)
+{
+    int *frameTop;
+    int argCount;
+
+    frameTop = thread->stack + thread->sp;
+    argCount = frameTop[-1];
+    if (argCount < argIndex || argIndex == 0) {
+        sbFatal(thread);
+    }
+    return frameTop[-2 - 2 * (argCount - argIndex)];
+}
 
 /*
  * Reports whether argument argIndex has a zero tag byte: the first byte of
  * its slot's high word. An index past the frame's argument count returns 1.
  */
-int vmArgTagIsZero(VmPluginContext *vm, int argIndex)
+int vmArgTagIsZero(SbThread *thread, int argIndex)
 {
     int *frameTop;
     int argCount;
 
-    frameTop = vm->stack + vm->stackCount;
+    frameTop = thread->stack + thread->sp;
     if (argIndex == 0) {
-        sbFatal(vm);
+        sbFatal(thread);
     }
     argCount = frameTop[-1];
     if (!(argCount >= argIndex)) {
@@ -103,47 +97,66 @@ int vmArgTagIsZero(VmPluginContext *vm, int argIndex)
     return ((unsigned char *) frameTop)[VM_ARG_TAG_BASE - (argCount - argIndex) * VM_ARG_SLOT_BYTES] == 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu046", vmKeyedEntryGet);
+/* Script values tagged VM_KEY_TAG_ENTRY in bits 20..23 are keys of the keyed table. */
+#define VM_KEY_TAG_MASK 0xF00000
+#define VM_KEY_TAG_ENTRY 0x200000
 
-/* Address of word-sized entry `index` of the header's entry array. */
-int vmEntryGet(VmPluginContext *vm, int index)
+/* Address of the keyed-table entry a tagged key names, or 0 for an untagged
+ * value or a key past the table. */
+int vmKeyedEntryGet(SbThread *thread, int key)
 {
-    return (int) ((int *)((char *)vm->header + vm->header->entryOffset) + index);
+    VmKeyTable *table = thread->image->keys;
+    int index;
+
+    if ((key & VM_KEY_TAG_MASK) != VM_KEY_TAG_ENTRY) {
+        return 0;
+    }
+    index = key & ~VM_KEY_TAG_MASK;
+    if (!(index < table->count)) {
+        return 0;
+    }
+    return (int) ((char *)table + table->dataOffset + ((int *)((char *)table + table->indexOffset))[index]);
+}
+
+/* Address of global index of the thread's image (the table sbGlobalGet reads); what lies there depends on the
+ * caller (a message for sbOpSend, an attack table for atkTbl). */
+void *vmEntryGet(SbThread *thread, int index)
+{
+    return (int *)((char *)thread->image + thread->image->global_offset) + index;
 }
 
 /*
  * Entry `index` holds word offsets from the entry array; returns the entry
  * that word `subIndex` of it points to.
  */
-int vmSubEntryGet(VmPluginContext *vm, int index, int subIndex)
+int vmSubEntryGet(SbThread *thread, int index, int subIndex)
 {
-    int *base = (int *)((char *)vm->header + vm->header->entryOffset);
+    int *base = (int *)((char *)thread->image + thread->image->global_offset);
     int *entry = base + index;
 
     return (int) (base + entry[subIndex]);
 }
 
-void func_00A9F2E0(void)
+/* Empty in this build: sbFatal passes the thread and its pc, as for a debug report. */
+void func_00A9F2E0(SbThread *thread, int pc)
 {
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu046", func_00A9F2E8);
 
-int vmEntryGet(VmPluginContext *vm, int index);
-int vmSubEntryGet(VmPluginContext *vm, int index, int subIndex);
 /* Entry chosen by posDataSet; posDataGet returns it. */
 extern int posDataEntry;
 
-int posDataSet(VmPluginContext *vm)
+int posDataSet(SbThread *thread)
 {
     int entryIndex;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) <= 0) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    entryIndex = vmArgGet(vm, 1);
-    posDataEntry = vmSubEntryGet(vm, entryIndex, 0);
+    entryIndex = vmArgGet(thread, 1);
+    posDataEntry = vmSubEntryGet(thread, entryIndex, 0);
     return 1;
 }
 
@@ -164,23 +177,21 @@ int monsTblGet(void)
     return monsTblEntry;
 }
 
-void func_00A99DC8(void);
-
 void monsSetNoGet(void)
 {
-    func_00A99DC8();
+    cfMonsSetNoGet();
 }
 
 /* First argument of the last cameraSet call, stored as given. */
 extern int D_00AE0C28;
 
-int cameraSet(VmPluginContext *vm)
+int cameraSet(SbThread *thread)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) <= 0) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    D_00AE0C28 = vmArgGet(vm, 1);
+    D_00AE0C28 = vmArgGet(thread, 1);
     return 1;
 }
 
@@ -190,145 +201,141 @@ int cameraSettingGet(void)
     return D_00AE0C28;
 }
 
-UnitView *unitTblEntryGet(int unitIndex);
-void thinkDispatch(UnitView *unit, int argTwo, int argThree, UnitView *unitFour);
-void thinkSendEnd(UnitView *unit);
+void thinkDispatch(StatOwner *unit, int argTwo, int argThree, StatOwner *unitFour);
 
-int thinkSet(VmPluginContext *vm)
+int thinkSet(SbThread *thread)
 {
-    UnitView *unitOne;
-    UnitView *unitFour;
+    StatOwner *unitOne;
+    StatOwner *unitFour;
     int argTwo;
     int argThree;
 
-    if (VM_PLUGIN_CNT_GET() < 4) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 4) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unitOne = unitTblEntryGet(vmArgGet(vm, 1));
-    unitFour = unitTblEntryGet(vmArgGet(vm, 4));
-    argTwo = vmArgGet(vm, 2);
-    argThree = vmArgGet(vm, 3);
+    unitOne = unitTblEntryGet(vmArgGet(thread, 1));
+    unitFour = unitTblEntryGet(vmArgGet(thread, 4));
+    argTwo = vmArgGet(thread, 2);
+    argThree = vmArgGet(thread, 3);
     thinkDispatch(unitOne, argTwo, argThree, unitFour);
     thinkSendEnd(unitOne);
     return 1;
 }
 
-int thinkSet2(VmPluginContext *vm)
+int thinkSet2(SbThread *thread)
 {
-    UnitView *unitOne;
-    UnitView *unitFour;
+    StatOwner *unitOne;
+    StatOwner *unitFour;
     int argTwo;
     int argThree;
 
-    if (VM_PLUGIN_CNT_GET() < 4) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 4) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unitOne = unitTblEntryGet(vmArgGet(vm, 1));
-    unitFour = unitTblEntryGet(vmArgGet(vm, 4));
-    argTwo = vmArgGet(vm, 2);
-    argThree = vmArgGet(vm, 3);
+    unitOne = unitTblEntryGet(vmArgGet(thread, 1));
+    unitFour = unitTblEntryGet(vmArgGet(thread, 4));
+    argTwo = vmArgGet(thread, 2);
+    argThree = vmArgGet(thread, 3);
     thinkDispatch(unitOne, argTwo, argThree, unitFour);
     return 1;
 }
 
-int thinkSetEnd(VmPluginContext *vm)
+int thinkSetEnd(SbThread *thread)
 {
-    UnitView *unit;
+    StatOwner *unit;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) <= 0) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unit = unitTblEntryGet(vmArgGet(vm, 1));
+    unit = unitTblEntryGet(vmArgGet(thread, 1));
     thinkSendEnd(unit);
     return 1;
 }
 
-int func_00A9BF08(UnitView *unit, int argTwoValue, int value);
 
-int atkTbl(VmPluginContext *vm)
+int atkTbl(SbThread *thread)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int value;
     int entryIndex;
-    int entry;
+    AtkTbl *table;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 2) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
     value = 0xA;
-    if (vmArgTagIsZero(vm, 3) == 0) {
-        value = vmArgGet(vm, 3);
+    if (vmArgTagIsZero(thread, 3) == 0) {
+        value = vmArgGet(thread, 3);
     }
-    unit = unitTblEntryGet(vmArgGet(vm, 1));
-    entryIndex = vmArgGet(vm, 2);
-    entry = vmEntryGet(vm, entryIndex);
-    return func_00A9BF08(unit, entry, value);
+    unit = unitTblEntryGet(vmArgGet(thread, 1));
+    entryIndex = vmArgGet(thread, 2);
+    table = vmEntryGet(thread, entryIndex);
+    return func_00A9BF08(unit, table, value);
 }
 
-int func_00A9C070(int argOne, int argTwoValue, int argThree);
 
-int atkTblGet(VmPluginContext *vm)
+int atkTblGet(SbThread *thread)
 {
     int argOne;
     int entryIndex;
-    int entry;
+    AtkTbl *table;
     int argThree;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 3) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    entryIndex = vmArgGet(vm, 2);
-    entry = vmEntryGet(vm, entryIndex);
-    argOne = vmArgGet(vm, 1);
-    argThree = vmArgGet(vm, 3);
-    return func_00A9C070(argOne, entry, argThree);
+    entryIndex = vmArgGet(thread, 2);
+    table = vmEntryGet(thread, entryIndex);
+    argOne = vmArgGet(thread, 1);
+    argThree = vmArgGet(thread, 3);
+    return atkTblFieldGet(argOne, table, argThree);
 }
 
-void *actorGet(VmPluginContext *vm)
+void *actorGet(SbThread *thread)
 {
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) <= 0) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    return unitTblEntryGet(vmArgGet(vm, 1))->actor;
+    return unitTblEntryGet(vmArgGet(thread, 1))->unit;
 }
 
-int unitParaFieldGet(UnitView *unit, int argTwo);
+int unitParaFieldGet(StatOwner *unit, int argTwo);
 
-int unitParaGet(VmPluginContext *vm)
+int unitParaGet(SbThread *thread)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int argTwo;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 2) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unit = unitTblEntryGet(vmArgGet(vm, 1));
-    argTwo = vmArgGet(vm, 2);
+    unit = unitTblEntryGet(vmArgGet(thread, 1));
+    argTwo = vmArgGet(thread, 2);
     return unitParaFieldGet(unit, argTwo);
 }
 
-void unitParaFieldSet(UnitView *unit, int argTwo, int argThree);
+void unitParaFieldSet(StatOwner *unit, int argTwo, int argThree);
 
-int unitParaSet(VmPluginContext *vm)
+int unitParaSet(SbThread *thread)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int argTwo;
     int argThree;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 3) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unit = unitTblEntryGet(vmArgGet(vm, 1));
-    argTwo = vmArgGet(vm, 2);
-    argThree = vmArgGet(vm, 3);
+    unit = unitTblEntryGet(vmArgGet(thread, 1));
+    argTwo = vmArgGet(thread, 2);
+    argThree = vmArgGet(thread, 3);
     unitParaFieldSet(unit, argTwo, argThree);
     return 1;
 }
@@ -336,17 +343,17 @@ int unitParaSet(VmPluginContext *vm)
 int sefLoadEffect(int effectKey, int argOne);
 
 /* The effect key packs the group above bit 12 and the effect index below it. */
-int loadEffect(VmPluginContext *vm)
+int loadEffect(SbThread *thread)
 {
     int effectGroup;
     int effectIndex;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 2) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    effectGroup = vmArgGet(vm, 1);
-    effectIndex = vmArgGet(vm, 2);
+    effectGroup = vmArgGet(thread, 1);
+    effectIndex = vmArgGet(thread, 2);
     sefLoadEffect((effectGroup << 0xC) | effectIndex, effectGroup);
     return 1;
 }
@@ -360,11 +367,32 @@ int loadWaitEffect(int unused, int *flag)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu046", createEffect);
+void effectSendOwned(int high, int low, StatOwner *owner);
+
+/* Native createEffect: starts effect (argument 1, argument 2), on the actor of
+ * the unit of argument 3 when that argument is given. */
+int createEffect(SbThread *thread)
+{
+    StatOwner *owner;
+    int high;
+
+    if (VM_PLUGIN_CNT_GET(thread) < 2) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    if (vmArgTagIsZero(thread, 3) != 0) {
+        owner = 0;
+    } else {
+        owner = unitTblEntryGet(vmArgGet(thread, 3));
+    }
+    high = vmArgGet(thread, 1);
+    effectSendOwned(high, vmArgGet(thread, 2), owner);
+    return 1;
+}
 
 void effectSendValue(int argOne, int argTwo, Vector4 *position);
 
-int createEffectPos(VmPluginContext *vm)
+int createEffectPos(SbThread *thread)
 {
     Vector4 position;
     float zRaw;
@@ -372,112 +400,110 @@ int createEffectPos(VmPluginContext *vm)
     int argOne;
     int argTwo;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 2) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    positionKey = vmArgGet(vm, 3);
+    positionKey = vmArgGet(thread, 3);
     position.x = (float) effectPosGet(positionKey)[0] / 100.0f;
     position.y = (float) effectPosGet(positionKey)[1] / 100.0f;
     zRaw = (float) effectPosGet(positionKey)[2];
     position.w = 1.0f;
     position.z = zRaw / 100.0f;
-    argOne = vmArgGet(vm, 1);
-    argTwo = vmArgGet(vm, 2);
+    argOne = vmArgGet(thread, 1);
+    argTwo = vmArgGet(thread, 2);
     effectSendValue(argOne, argTwo, &position);
     return 1;
 }
 
-int func_00A9C328(int argOne, int argTwo);
+int tecParaFieldGet(int argOne, int argTwo);
 
-int tecParaGet(VmPluginContext *vm)
+int tecParaGet(SbThread *thread)
 {
     int argOne;
     int argTwo;
 
-    if (VM_PLUGIN_CNT_GET() < 2) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 2) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    argOne = vmArgGet(vm, 1);
-    argTwo = vmArgGet(vm, 2);
-    return func_00A9C328(argOne, argTwo);
+    argOne = vmArgGet(thread, 1);
+    argTwo = vmArgGet(thread, 2);
+    return tecParaFieldGet(argOne, argTwo);
 }
 
-int calcStatGet(UnitView *unit, int argTwo, int argThree);
+int calcStatGet(StatOwner *unit, int argTwo, int argThree);
 
-int unitStatGet(VmPluginContext *vm)
+int unitStatGet(SbThread *thread)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int argTwo;
     int argThree;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 3) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unit = unitTblEntryGet(vmArgGet(vm, 1));
-    argTwo = vmArgGet(vm, 2);
-    argThree = vmArgGet(vm, 3);
+    unit = unitTblEntryGet(vmArgGet(thread, 1));
+    argTwo = vmArgGet(thread, 2);
+    argThree = vmArgGet(thread, 3);
     return calcStatGet(unit, argTwo, argThree);
 }
 
-int calcStatSet(UnitView *unit, int argTwo, int argThree);
+int calcStatSet(StatOwner *unit, int argTwo, int argThree);
 
-int unitStatSet(VmPluginContext *vm)
+int unitStatSet(SbThread *thread)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int argTwo;
     int argThree;
 
-    if (VM_PLUGIN_CNT_GET() < 3) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) < 3) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unit = unitTblEntryGet(vmArgGet(vm, 1));
-    argTwo = vmArgGet(vm, 2);
-    argThree = vmArgGet(vm, 3);
+    unit = unitTblEntryGet(vmArgGet(thread, 1));
+    argTwo = vmArgGet(thread, 2);
+    argThree = vmArgGet(thread, 3);
     calcStatSet(unit, argTwo, argThree);
     return 1;
 }
 
-int calcBoostOk(UnitView *unit, int mode);
-int func_00A954D8(UnitView *unit, int width, int height);
 
-int counterBoost(VmPluginContext *vm)
+int counterBoost(SbThread *thread)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int applied;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) <= 0) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unit = unitTblEntryGet(vmArgGet(vm, 1));
+    unit = unitTblEntryGet(vmArgGet(thread, 1));
     applied = calcBoostOk(unit, 0);
     if (applied != 0) {
         calcActStockSet(unit, 0);
-        func_00A954D8(unit, 0x140, 7);
+        unitEffectStart(unit, 0x140, 7);
         seVoiceStartTagged(2, 1);
         applied = 1;
     }
     return applied;
 }
 
-int boost(VmPluginContext *vm)
+int boost(SbThread *thread)
 {
-    UnitView *unit;
+    StatOwner *unit;
     int applied;
 
-    if (VM_PLUGIN_CNT_GET() <= 0) {
-        sbChainSetValue(vm, 2);
+    if (VM_PLUGIN_CNT_GET(thread) <= 0) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
         return 0;
     }
-    unit = unitTblEntryGet(vmArgGet(vm, 1));
+    unit = unitTblEntryGet(vmArgGet(thread, 1));
     applied = calcBoostOk(unit, 1);
     if (applied != 0) {
         calcActStockSet(unit, 1);
-        func_00A954D8(unit, 0x140, 7);
+        unitEffectStart(unit, 0x140, 7);
         seVoiceStartTagged(2, 1);
         applied = 1;
     }

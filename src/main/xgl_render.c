@@ -471,7 +471,6 @@ int xglRenderVSyncCallback(int unused);
 void xglRenderDispEnvInit(void);
 void xglRenderClearEnvInit(void);
 
-
 void xglRenderCpUDispOff(void) {
     xglRenderCpUDispFlag = 0;
 }
@@ -645,21 +644,21 @@ void xglRenderDrawFlipPk(XglPacket *packet)
     sceVif1PkCloseDirectHLCode(packet);
 }
 
-extern int D_00645898;
-extern int D_0064589C;
+extern int D_00645898[];
+extern int D_0064589C[];
 
 int xglRenderVSyncCallback(int unused)
 {
     void func_0017D138(int);
 
     VSyncCount = VSyncCount + 1;
-    D_0064589C = D_0064589C + 1;
+    D_0064589C[0] = D_0064589C[0] + 1;
     if (VSyncCount >= (u32) D_0069E094 &&
         ((*(u32 *) GIF_STAT_ADDRESS & GIF_STAT_APATH_MASK) != 0 ||
          (*(u32 *) VIF1_STAT_ADDRESS & VIF1_STAT_VPS_MASK) != 0)) {
-        D_00645898 = 1;
+        D_00645898[0] = 1;
     } else {
-        D_00645898 = 0;
+        D_00645898[0] = 0;
     }
     func_0017D138(0);
     /* sync: orders the GIF/VIF status reads and the flag store before the VSync interrupt returns */
@@ -679,7 +678,7 @@ void xglRenderSyncMove(void)
 {
     extern u16 D_00645830;
     extern u16 D_00645832;
-    extern int xglRenderFrameDelta;
+    extern int xglRenderFrameDelta[];
     void func_00152EA8(void);
     void func_00129C28(void);
     void func_0012A510(int);
@@ -691,9 +690,9 @@ void xglRenderSyncMove(void)
 
     /* VSyncCount is advanced by the VSync interrupt, so every read of it is volatile. */
     if ((u32) D_0069E094 < VSyncCount) {
-        xglRenderFrameDelta = 1;
+        xglRenderFrameDelta[0] = 1;
     } else {
-        xglRenderFrameDelta = 0;
+        xglRenderFrameDelta[0] = 0;
     }
 
     if (pxyTickScaleDouble == 1) {
@@ -967,9 +966,9 @@ void xglRenderSetReso(int resolution)
 }
 
 extern s16 D_00645832;
-extern int xglRenderStatus;
-extern int xglRenderFrameDelta;
-extern int xglRenderFrameCount;
+extern int xglRenderStatus[];
+extern int xglRenderFrameDelta[];
+extern int xglRenderFrameCount[];
 
 void xglRenderSwapBase(void)
 {
@@ -980,8 +979,8 @@ void xglRenderSwapBase(void)
     D_00645830 = D_00645842;
     sRenderDisplayBase = D_00645842;
     D_00645842 = previous_display_base;
-    xglRenderStatus = 0;
-    xglRenderFrameCount += xglRenderFrameDelta;
+    xglRenderStatus[0] = 0;
+    xglRenderFrameCount[0] += xglRenderFrameDelta[0];
 }
 
 void xglRenderDispOff(void)
@@ -1005,8 +1004,8 @@ void xglRenderClearSkipOff(void) {
 }
 
 extern int sceGsResetGraph(int, int, int, int);
-extern int D_006458A0;
-extern unsigned char D_006458A4;
+extern int D_006458A0[];
+extern unsigned char D_006458A4[252];
 void func_00129C28(void);
 void func_0012A510(int);
 void xglRenderGlobalFadeReset(void);
@@ -1027,13 +1026,13 @@ void xglRenderInit(void)
     LoopCount = 0;
     D_0069E094 = 2;
     ScanLineInterpolate = 1;
-    xglRenderStatus = 0;
-    xglRenderFrameCount = 0;
-    xglRenderFrameDelta = 0;
-    D_00645898 = 0;
-    D_0064589C = 0;
-    D_006458A0 = 0;
-    D_006458A4 = 0;
+    xglRenderStatus[0] = 0;
+    xglRenderFrameCount[0] = 0;
+    xglRenderFrameDelta[0] = 0;
+    D_00645898[0] = 0;
+    D_0064589C[0] = 0;
+    D_006458A0[0] = 0;
+    D_006458A4[0] = 0;
     for (i = 0; i < 17; i++) {
         sRender.final_packet_callback[i] = 0;
     }
@@ -1060,12 +1059,12 @@ void xglRenderFinalPacket(void)
 }
 
 /* xglRenderGlobalFadeCallback: cleared by xglRenderGlobalFadeReset; referenced by xglRenderGlobalFade (the fade draw). */
-extern int xglRenderGlobalFadeCallback;
+extern int xglRenderGlobalFadeCallback[];
 /* xglRenderGlobalFadeColor: packed fade colour, one byte per channel as 0xAABBGGRR; written by xglRenderGlobalFadeSet. */
 
 void xglRenderGlobalFadeReset(void) {
     xglRenderGlobalFadeColor = 0;
-    xglRenderGlobalFadeCallback = 0;
+    xglRenderGlobalFadeCallback[0] = 0;
 }
 
 int xglRenderGlobalFadeGet(void) {
@@ -1113,8 +1112,8 @@ void xglRenderGlobalFade(void)
 
     alpha = (int) (((unsigned int) xglRenderGlobalFadeColor >> 24) & 0xff);
     packet = xglPacketGetCurrent();
-    if (xglRenderGlobalFadeCallback != 0) {
-        ((XglRenderFadeCallback) xglRenderGlobalFadeCallback)(packet);
+    if (xglRenderGlobalFadeCallback[0] != 0) {
+        ((XglRenderFadeCallback) xglRenderGlobalFadeCallback[0])(packet);
     }
     if (alpha != 0 && xglRenderGlobalFadeColor != 0) {
         XglGifAd *scratch;
@@ -1206,23 +1205,23 @@ void xglRenderMove(void)
     extern int LoopCount;
 
     func_001CC4EC();
-    if (D_006458A4 == 0) {
+    if (D_006458A4[0] == 0) {
         sefDrawEffect();
     }
-    if (D_006458A4 == 0) {
+    if (D_006458A4[0] == 0) {
         pxyFlush();
     } else {
         pxyResetState();
     }
     gifStateUpdateDrawHook();
-    if (D_006458A4 == 0) {
+    if (D_006458A4[0] == 0) {
         xglRenderFinalPacket();
     }
     xglFontFlush();
-    if (D_006458A4 == 0) {
+    if (D_006458A4[0] == 0) {
         xglRenderGlobalFade();
     }
-    if (ScanLineInterpolate == 2 && D_006458A4 == 0) {
+    if (ScanLineInterpolate == 2 && D_006458A4[0] == 0) {
         xglPacketInterpolate();
     }
     func_001CC51C();
@@ -1238,11 +1237,11 @@ void xglRenderMove(void)
         xglRenderClearEnvMove();
     }
     xglPacketSend();
-    D_006458A0 = D_0064589C / 2 - 1;
-    if (D_006458A0 < 0) {
-        D_006458A0 = 0;
+    D_006458A0[0] = D_0064589C[0] / 2 - 1;
+    if (D_006458A0[0] < 0) {
+        D_006458A0[0] = 0;
     }
-    D_0064589C = 0;
+    D_0064589C[0] = 0;
     pxyBeginFrame();
 }
 
@@ -1285,3 +1284,52 @@ GsDispEnv DispEnv = { 0 };
 u64 D_00645790[6] = { 0 };
 GsClearPacket ClearEnv = { 0 };
 XglRenderState sRender = { 0 };
+
+/* .data of this file after its own (0x645874-0x6459A0): hooks and render state read by several files. */
+void (*D_00645874[])(void) = { 0 };
+
+void (*D_00645878[])(void) = { 0 };
+
+void (*msgFrameHooks[])(void) = { 0 };
+
+int gifStateEffectHook[] = { 0 };
+
+void (*pauseDrawHook[])(void) = { 0 };
+
+int xglRenderGlobalFadeCallback[] = { 0 };
+
+int xglRenderStatus[] = { 0 };
+
+int xglRenderFrameDelta[] = { 0 };
+
+int xglRenderFrameCount[] = { 0 };
+
+int D_00645898[] = { 0 };
+
+int D_0064589C[] = { 0 };
+
+int D_006458A0[] = { 0 };
+
+unsigned char D_006458A4[252] = {
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x01, 0x06, 0x02, 0x07, 0x04,
+    0x07, 0x05, 0x06, 0x05, 0x02, 0x04, 0x01, 0x02, 0x01, 0x01, 0x02, 0xfe,
+    0xfe, 0x05, 0x02, 0x01, 0x06, 0x05, 0x02, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x07, 0x02, 0x02, 0x03, 0x01, 0x03, 0x07, 0x03, 0x01, 0xff, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x02, 0x01, 0x04, 0x01, 0x05,
+    0x02, 0x05, 0x03, 0x01, 0x07, 0x05, 0x07, 0x01, 0x07, 0xff, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x01, 0x02, 0x02, 0x01, 0x04, 0x01, 0x05,
+    0x02, 0x05, 0x03, 0x04, 0x04, 0x02, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05,
+    0x06, 0x04, 0x07, 0x02, 0x07, 0x01, 0x06, 0x02, 0x07, 0xff, 0x00, 0x00,
+    0x07, 0x04, 0x07, 0x04, 0x01, 0x01, 0x06, 0x05, 0x06, 0x01, 0x06, 0xff,
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x05, 0x01, 0x01, 0x01, 0x01, 0x04, 0x04,
+    0x04, 0x05, 0x05, 0x05, 0x06, 0x04, 0x07, 0x02, 0x07, 0x01, 0x06, 0x02,
+    0x07, 0xff, 0x00, 0x00, 0x07, 0x05, 0x02, 0x04, 0x01, 0x02, 0x01, 0x01,
+    0x02, 0x01, 0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x05, 0x04,
+    0x04, 0x01, 0x04, 0xff, 0x07, 0x01, 0x01, 0x05, 0x01, 0x02, 0x07, 0x05,
+    0x01, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x02, 0x01, 0x04,
+    0x01, 0x05, 0x02, 0x05, 0x03, 0x04, 0x04, 0x02, 0x04, 0x01, 0x05, 0x01,
+    0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x05, 0x04, 0x04, 0x02,
+    0x04, 0x01, 0x03, 0x02, 0x03, 0x02, 0x01, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x07, 0x01, 0x06, 0x02, 0x07, 0x04, 0x07, 0x05, 0x06, 0x05, 0x02, 0x04,
+    0x01, 0x02, 0x01, 0x01, 0x02, 0x01, 0x03, 0x02, 0x04, 0x05, 0x04, 0xff,
+};

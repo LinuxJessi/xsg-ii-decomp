@@ -2,17 +2,10 @@
 #include "shared.h"
 #include "main/tu097.h"
 #include "main/tu101.h"
-
-/* Entry of battleResultRows (28 bytes): key selects the entry, the rest are per-row weights. */
-typedef struct ResultRow {
-    int key;
-    int score_a;
-    int score_b;
-    int score_c;
-    int adjust_a;
-    int adjust_b;
-    int adjust_c;
-} ResultRow;
+#include "ov01/tu023.h"
+#include "ov01/tu043.h"
+#include "main/tu051.h"
+#include "main/tu048.h"
 
 /* ptFindRecord result. */
 typedef struct ResultLabel {
@@ -64,7 +57,8 @@ enum BattleResultState {
 #define BATTLE_RESULT_TXD_COUNT_UNIT 0xE6
 
 extern int battleResultScoreMax;
-extern ResultRow *battleResultRows;
+/* The rows battleResultApply (ov01 tu023.c) fills, one per party unit. */
+extern struct BattleResultRow *battleResultRows;
 extern int (*battleResultStats)[4];
 extern unsigned char menuPanelFrame[];
 extern unsigned char battleResultScoreDashes[];
@@ -108,7 +102,7 @@ void *menuMainTxdEntry(int id);
 /* Result row: label, the score and time values, and the adjusted sub-row for entry index. */
 void battleResultDrawRow(int x, int y, int index, int tally)
 {
-    ResultRow *row;
+    struct BattleResultRow *row;
     PtRecord *record;
     ResultLabel *label;
     ResultValue *valueRecord;
@@ -145,26 +139,26 @@ void battleResultDrawRow(int x, int y, int index, int tally)
     menuDrawOutlineFrame(x + 13, y + 28, wideOffset + 173, 66);
     subFrameY = y + 53;
     menuDrawOutlineFrame(cardX + 191, subFrameY, 100, 41);
-    adjust = tally != battleResultScoreMax ? row->adjust_a : 0;
+    adjust = tally != battleResultScoreMax ? row->levelGain : 0;
     panelDrawNineSlice(menuPanelFrame, x + 21, y + 35, wideOffset + 157, 39);
     menuDrawIndexedIcon(x + 27, y + 10, label->icon);
     packetSubmitRequest(288, x + 68, y + 8, 17);
     textDrawShadow(x + 73, y + 11, label->text, 0xFE00ULL << 46);
     menuDrawLevelShadow(x + wideOffset + 140, y + 7, resultText->value_13 - adjust);
-    if (row->adjust_a != 0) {
+    if (row->levelGain != 0) {
         if (adjust == 0) {
             packetSubmitRequest(396, x + wideOffset + 240, y + 3, 17);
         }
         adjust = 0;
         if (tally != battleResultScoreMax) {
-            adjust = row->adjust_b;
+            adjust = row->maxHpGain;
         }
         if (wideOffset != 0) {
             menuDrawHpWideShadow(x + 69, y + 36, resultText->value_5c, (int)(resultText->gauge - adjust));
         } else {
             menuDrawHpShadow(x + 69, y + 36, resultText->value_5c, (int)(resultText->gauge - adjust));
         }
-        adjust = tally != battleResultScoreMax ? row->adjust_c : 0;
+        adjust = tally != battleResultScoreMax ? row->maxEpGain : 0;
         if (wideOffset != 0) {
             menuDrawEpWideShadow(x + 69, y + 52, resultText->value_60, resultText->value_06 - adjust);
         } else {
@@ -209,7 +203,7 @@ void battleResultDrawRow(int x, int y, int index, int tally)
     menuDrawStatIcon(2, markerFillX, y + 54, 0xFE00ULL << 46);
     menuDrawStatIcon(3, markerFillX, y + 72, 0xFE00ULL << 46);
     fontObjResetColor();
-    total = row->score_a;
+    total = row->gainFirst;
     total = func_002A5C88(total * tally, battleResultScoreMax);
     total += battleResultStats[3][index];
     if (total > BATTLE_RESULT_SCORE_CAP) {
@@ -224,28 +218,28 @@ void battleResultDrawRow(int x, int y, int index, int tally)
     } else {
         unsigned long long part;
 
-        part = row->score_c;
+        part = row->gainThird;
         part = func_002A5C88(part * tally, battleResultScoreMax) + battleResultStats[1][index];
         if (part > BATTLE_RESULT_PART_CAP) {
             part = BATTLE_RESULT_PART_CAP;
         }
         textDrawDecimalShadow(cardX + 238, adjust, (int)part, 5, 0xFE00ULL << 46);
-        part = row->score_c;
+        part = row->gainThird;
         part = part * (battleResultScoreMax - tally);
         part = func_002A5C88(part, battleResultScoreMax);
         textDrawSignedDecimalShadow(cardX + 300, adjust, (int)part, 5, 0xFE00ULL << 46);
-        part = row->score_b;
+        part = row->gainSecond;
         part = func_002A5C88(part * tally, battleResultScoreMax) + battleResultStats[2][index];
         if (part > BATTLE_RESULT_PART_CAP) {
             part = BATTLE_RESULT_PART_CAP;
         }
         textDrawDecimalShadow(cardX + 238, lowerRowY, (int)part, 5, 0xFE00ULL << 46);
-        part = row->score_b;
+        part = row->gainSecond;
         part = part * (battleResultScoreMax - tally);
         part = func_002A5C88(part, battleResultScoreMax);
         textDrawSignedDecimalShadow(cardX + 300, lowerRowY, (int)part, 5, 0xFE00ULL << 46);
     }
-    rest = row->score_a;
+    rest = row->gainFirst;
     rest = rest * (battleResultScoreMax - tally);
     rest = func_002A5C88(rest, battleResultScoreMax);
     textDrawSignedDecimalShadow(x + wideOffset + 300, scoreRowY, (int)rest, 5, 0xFE00ULL << 46);
@@ -255,10 +249,10 @@ void battleResultDrawRow(int x, int y, int index, int tally)
 
 #include "main/tu110.h"
 
-/* One 16-byte entry: a (code, amount) pair, its repeat count and the highlight flag. */
+/* One 16-byte entry: a (category, id) pair, its repeat count and the highlight flag. */
 struct BattleResultEntry {
-    int code;
-    int amount;
+    int category;
+    int id;
     int count;
     int highlight;
 };
@@ -271,7 +265,6 @@ extern struct BattleResultEntry *battleResultEntries;
 
 extern const unsigned char D_0068B490[];
 extern const char battleResultCountFormat[];
-int dataBoxChk(int category, int id);
 int sprintf(unsigned char *dst, const char *format, int count, void *unit);
 unsigned char *func_00A9B7D8(int item, int arg);
 unsigned char *func_00A9B8D8(int item, int arg);
@@ -295,18 +288,18 @@ void battleResultDrawEntries(int x, int y) {
 
     for (; i < battleResultEntryCount; i++) {
         itemText = 0;
-        switch (battleResultEntries[i].code) {
+        switch (battleResultEntries[i].category) {
         case 1:
-            itemText = func_00A9B8D8(battleResultEntries[i].amount, 0);
+            itemText = func_00A9B8D8(battleResultEntries[i].id, 0);
             break;
         case 2:
-            itemText = func_00A9B7D8(battleResultEntries[i].amount, 0);
+            itemText = func_00A9B7D8(battleResultEntries[i].id, 0);
             break;
         case 3:
-            itemText = func_00A9B9C8(battleResultEntries[i].amount, 0);
+            itemText = func_00A9B9C8(battleResultEntries[i].id, 0);
             break;
         case 4:
-            itemText = func_00A9B950(battleResultEntries[i].amount, 0);
+            itemText = func_00A9B950(battleResultEntries[i].id, 0);
             break;
         }
         if (itemText != 0) {
@@ -415,40 +408,32 @@ void battleResultDrawCallback(void) {
     battleResultDrawScreen();
 }
 
-/* The 0x50-byte battle result block (ov01 tu028 battleResult). */
-struct BattleResult {
-    int unmodeled_00[3];
-    int code[8];
-    int amount[8];
-    int pairCount;
-};
-
 /* Builds the 16-byte entry records at battleResultEntries from the table at a0 (count at +0x4C). */
 void battleResultBuildEntries(struct BattleResult *result) {
     int entryCount = 0;
     int i;
     int j;
 
-    for (i = 0; i < result->pairCount; i++) {
+    for (i = 0; i < result->count; i++) {
         int found = 0;
 
         for (j = 0; j < entryCount; j++) {
-            if (battleResultEntries[j].code == result->code[i] && battleResultEntries[j].amount == result->amount[i]) {
+            if (battleResultEntries[j].category == result->categories[i] && battleResultEntries[j].id == result->ids[i]) {
                 battleResultEntries[j].count++;
                 found = 1;
                 break;
             }
         }
         if (!found) {
-            battleResultEntries[entryCount].code = result->code[i];
-            battleResultEntries[entryCount].amount = result->amount[i];
+            battleResultEntries[entryCount].category = result->categories[i];
+            battleResultEntries[entryCount].id = result->ids[i];
             battleResultEntries[entryCount].count = 1;
             entryCount++;
         }
     }
     battleResultEntryCount = entryCount;
     for (i = 0; i < battleResultEntryCount; i++) {
-        if (battleResultEntries[i].count + dataBoxChk(battleResultEntries[i].code, battleResultEntries[i].amount) >= 100) {
+        if (battleResultEntries[i].count + dataBoxChk(battleResultEntries[i].category, battleResultEntries[i].id) >= 100) {
             battleResultEntries[i].highlight = 1;
         }
     }
@@ -468,11 +453,6 @@ typedef struct SceneClearEnv {
     unsigned int color_a;
 } SceneClearEnv;
 
-typedef struct SceneGameWork {
-    unsigned char unmodeled_00[8];
-    int control;
-} SceneGameWork;
-
 typedef struct SceneStats {
     int w0;
     int w4;
@@ -485,27 +465,12 @@ typedef struct SceneMember {
     SceneStats *stats;
 } SceneMember;
 
-typedef struct SceneUnit {
-    unsigned char unmodeled_00[0x62];
-    short id;
-} SceneUnit;
-
-typedef struct SceneSlot {
-    unsigned char unmodeled_000[0x144];
-    SceneUnit *unit;
-} SceneSlot;
-
-
 extern SceneClearEnv ClearEnv;
-extern SceneGameWork gameWork;
 extern PadRecord PadData[];
 void xglCdArenaOpen(int size, long long handle);
 void *xglCdSectorAlloc(int size);
 int ov01SceneFrameCount(void);
 int ptGroupCount(void);
-int partySnapshotGet(void ***snapshots);
-void *battleResultGet(int count);
-void func_00A8FA18(void *records);
 void fontObjLoadTexture(int index);
 void bgLayerLoadAll(void);
 void xglCdWaitIdle(void);
@@ -524,7 +489,7 @@ void xglTickAdvance(void);
 void xglSleep(void);
 void xglRenderClearFrame(void);
 void fadeStartOut(int frames);
-void func_00A8F948(void);
+void battleReviveDownedParty(void);
 void bgLayerResetState(void);
 void bgLayerRelease(void);
 void xglCdArenaClose(void);
@@ -535,12 +500,12 @@ void *memset(void *dest, int value, unsigned int count);
 /* Scene loop: clears the environment, builds the entries, runs frames until done. */
 void battleResultScene(void)
 {
-    void **snapshots;
+    StatOwner **snapshots;
     int slotCount;
     int i;
-    SceneSlot *slot;
+    StatOwner *slot;
     SceneMember *member;
-    ResultRow *rec;
+    struct BattleResultRow *rec;
     int bonusTotal;
     int scoreTotal;
     int exitRequested;
@@ -576,7 +541,7 @@ void battleResultScene(void)
         do {
             slot = snapshots[i];
             if (slot != 0) {
-                member = ptFindRecord(slot->unit->id);
+                member = ptFindRecord(slot->stats->key);
                 if (member != 0) {
                     int (*table)[4] = battleResultStats;
                     table[0][i] = member->stats->w4;
@@ -589,8 +554,8 @@ void battleResultScene(void)
         } while (i < battleResultMemberCount);
     }
 
-    battleResultBuildEntries(battleResultGet(battleResultMemberCount));
-    func_00A8FA18(battleResultRows);
+    battleResultBuildEntries(battleResultGet());
+    battleResultApply(battleResultRows);
 
     if (battleResultMemberCount != 0) {
         bonusTotal = 0;
@@ -600,17 +565,17 @@ void battleResultScene(void)
             rec = battleResultRows;
             i = battleResultMemberCount;
             do {
-                bonusTotal += rec->adjust_a;
-                if (battleResultScoreMax < rec->score_a) {
-                    battleResultScoreMax = rec->score_a;
+                bonusTotal += rec->levelGain;
+                if (battleResultScoreMax < rec->gainFirst) {
+                    battleResultScoreMax = rec->gainFirst;
                 }
-                if (battleResultScoreMax < rec->score_b) {
-                    battleResultScoreMax = rec->score_b;
+                if (battleResultScoreMax < rec->gainSecond) {
+                    battleResultScoreMax = rec->gainSecond;
                 }
-                if (battleResultScoreMax < rec->score_c) {
-                    battleResultScoreMax = rec->score_c;
+                if (battleResultScoreMax < rec->gainThird) {
+                    battleResultScoreMax = rec->gainThird;
                 }
-                scoreTotal += rec->score_a + rec->score_b + rec->score_c;
+                scoreTotal += rec->gainFirst + rec->gainSecond + rec->gainThird;
                 rec++;
                 i--;
             } while (i != 0);
@@ -637,8 +602,8 @@ void battleResultScene(void)
             D_0069D91C = (signed char) xglCdServiceIfPending();
             if (((pad->directionPressed & PAD_START) != 0
                     && (pad->held & PAD_SOFT_RESET_HELD) == PAD_SOFT_RESET_HELD)
-                || (gameWork.control & 0x10000000) != 0) {
-                gameWork.control |= 0x10000000;
+                || (gameWork.control & CONTROL_SOFT_RESET) != 0) {
+                gameWork.control |= CONTROL_SOFT_RESET;
                 soundSlotsRestart();
                 soundSlotReopen(0);
                 break;
@@ -717,7 +682,7 @@ void battleResultScene(void)
         }
 
         xglPadSetRepeat(0, PAD_UP | PAD_RIGHT | PAD_DOWN | PAD_LEFT | PAD_L1 | PAD_R1, 8, 1);
-        if ((gameWork.control & 0x10000000) == 0) {
+        if ((gameWork.control & CONTROL_SOFT_RESET) == 0) {
             fadeStartOut(15);
             for (i = 0; i < 16; i++) {
                 XenoActorSetFlagAll(2);
@@ -729,12 +694,12 @@ void battleResultScene(void)
                 xglSleep();
             }
         }
-        func_00A8F948();
+        battleReviveDownedParty();
         bgLayerResetState();
         bgLayerRelease();
         xglCdArenaClose();
         pxyTickScaleDoubleOverride(0);
-        if ((gameWork.control & 0x10000000) == 0) {
+        if ((gameWork.control & CONTROL_SOFT_RESET) == 0) {
             GameResArenaRelease();
             fadeReset();
             fadeStartIn(30);
@@ -751,7 +716,7 @@ int battleResultState = 0;
 int battleResultStateTimer = 0;
 int battleResultScoreMax = 0;
 int battleResultMemberCount = 0;
-ResultRow *battleResultRows = 0;
+struct BattleResultRow *battleResultRows = 0;
 struct BattleResultEntry *battleResultEntries = 0;
 int battleResultEntryCount = 0;
 int (*battleResultStats)[4] = 0;

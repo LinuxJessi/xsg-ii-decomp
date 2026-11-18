@@ -27,7 +27,7 @@ float func_00247570(float x, double y)
 
 extern int cfeRangeMin;
 extern int cfeRangeMax;
-extern int cfeRangeValue;
+static int cfeRangeValue;
 
 /* Steps the value cfeRangeValue by delta and wraps it inside [cfeRangeMin, cfeRangeMax]:
    below the minimum it goes to the maximum, above the maximum to the minimum. */
@@ -107,3 +107,12 @@ int cfeRangeGetMin(void) {
 int cfeRangeGetMax(void) {
     return cfeRangeMax;
 }
+
+/* Range limits (the value is kept inside them) and the entry, command, group and sound-record counts. */
+int cfeRangeMin = 0;
+int cfeRangeMax = 1000;
+int cfeEntryCount = 0;
+int cfeCommandCount = 0;
+int cfeGroupCount = 0;
+int cfeEvalEntryCount = 0;
+int cfeSndRecordCount = 0;

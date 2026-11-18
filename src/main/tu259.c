@@ -141,3 +141,6 @@ f32 xacEvalLinearKeys(TiXacKey *key, TiXacKey *nextKey, f32 time)
     fraction = offsetScaled / span;
     return valueA + (valueB - valueA) * fraction;
 }
+
+f32 D_00646338 = 0.0333333351f;
+f32 tiXacAnimCurveTimeScale = 0.0333333351f;

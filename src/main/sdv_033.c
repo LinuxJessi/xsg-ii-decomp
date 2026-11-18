@@ -5,9 +5,7 @@
 #include "main/xgl_2.h"
 #include "main/xgl_dma.h"
 
-
 extern XglPacket *xglPacketGetCurrent(void);
-
 
 /* EE DMAC channel numbers: the index into the channel table (VIF1 = 1, GIF = 2). */
 #define XGL_DMA_CHANNEL_VIF1 1
@@ -27,8 +25,6 @@ void xglVectorScale(Vector4 *destination, const Vector4 *source, float scale);
 /* The camera draws into the GS 4096x4096 primitive space centred on 2048. */
 #define CAMERA_GS_COORD_SIZE 4096.0f
 #define CAMERA_GS_COORD_CENTER 2048.0f
-
-
 
 /* DISPLAY register of the GS display environment at +0x18. */
 typedef struct CameraDisplayEnv {
@@ -53,7 +49,6 @@ extern void xglPlaneParameter(Vector4 *destination, const Vector4 *p0,
                               const Vector4 *p1, const Vector4 *p2);
 extern signed char aaiVertexIndex[6][3];
 
-
 void *memset(void *, int, unsigned int);
 
 /* Pad state forced by xglCameraSetPadOverride for one frame. */
@@ -75,7 +70,6 @@ static CameraPadOverride cameraPadOverride;
 void xglCameraClearPadOverride(void) {
     memset(&cameraPadOverride, 0, sizeof(cameraPadOverride));
 }
-
 
 /* Stores seven arguments into the pad override record and raises its flag. */
 void xglCameraSetPadOverride(unsigned short held, unsigned short pressed, unsigned short unknown04, unsigned char rightX, unsigned char rightY, unsigned char leftX, unsigned char leftY) {
@@ -815,8 +809,8 @@ typedef struct XglTextureTransSet {
 } XglTextureTransSet;
 
 extern u16 sRenderTextureBase;
-extern u64 D_00645480;
-extern u64 D_006454A0;
+extern u64 D_00645480[];
+extern u64 D_006454A0[];
 extern u32 D_00645450[];
 void sceVif1PkAddDataN(XglPacket *packet, void *data, unsigned int qwc);
 void sceVif1PkRef(XglPacket *packet, void *data, unsigned int qwc, unsigned int a3, unsigned int a4, unsigned int a5);
@@ -835,8 +829,8 @@ void xglPacketTextureTrans(XglTextureTransSet *set) {
         } else {
             blockWidth = entry->size >> 16;
         }
-        D_00645480 = ((u64)(((sRenderTextureBase << 11) + entry->vramOffset) >> 6) << 32) | ((u64)blockWidth << 48);
-        D_006454A0 = width | ((u64)entry->height << 32);
+        D_00645480[0] = ((u64)(((sRenderTextureBase << 11) + entry->vramOffset) >> 6) << 32) | ((u64)blockWidth << 48);
+        D_006454A0[0] = width | ((u64)entry->height << 32);
         sceVif1PkCnt(pCurrentPacket, 0);
         sceVif1PkAddDataN(pCurrentPacket, D_00645450, 28);
         sceVif1PkRef(pCurrentPacket, (u8 *)set + entry->dataOffset, entry->dataSize, 0, 0, 0);
@@ -1137,4 +1131,51 @@ const unsigned char D_0068E7A0[1584] = {
     255, 255, 255, 255, 255, 255, 255, 255
 };
 
-unsigned char D_0063EDE0[160] = { 0 };
+/* .data of this file (0x645370-0x645580): camera and packet tables (data map review 2026-11-17). */
+Vector4 D_00645370 = { .x = 0.08f, .y = 14000.0f, .z = 0.0f, .w = 0.0f };
+
+Vector4 D_00645380 = { 1.0f, 1.0f, 1.0f, 100.0f };
+
+Vector4 D_00645390 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+Vector4 D_006453A0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+Vector4 D_006453B0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+Vector4 D_006453C0 = { 0.0f, 1.0f, 4.0f, 1.0f };
+
+Vector4 D_006453D0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+Vector4 D_006453E0 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+Vector4 D_006453F0 = { 0.0f, 1.0f, 0.0f, 1.0f };
+
+Vector4 D_00645400 = { 0.0f, 1.0f, 0.0f, 1.0f };
+
+Vector4 D_00645410 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+Vector4 D_00645420 = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+signed char aaiVertexIndex[6][3] = { { 0, 2, 4 }, { 1, 0, 5 }, { 0, 1, 2 }, { 3, 1, 7 }, { 2, 3, 6 }, { 4, 6, 5 } };
+
+unsigned int D_00645450[12] = {
+    0, 0, 0, 0x51000006, 32769, 0x50000000, 0xEEEEE, 0,
+    0, 0, 63, 0
+};
+
+u64 D_00645480[4] = { 0x0000000000000000ULL, 0x0000000000000050ULL, 0x0000000000000000ULL, 0x0000000000000051ULL };
+
+u64 D_006454A0[4] = { 0x0000000000000000ULL, 0x0000000000000052ULL, 0x0000000000000000ULL, 0x0000000000000053ULL };
+
+unsigned int D_006454C0[20] = {
+    32769, 0xB0AB4000, 0x31EEEEEE, 1333, 0, 0, 63, 0,
+    0x7FC00A, 1788, 8, 0, 96, 0, 20, 0,
+    0, 0, 6, 0
+};
+
+unsigned int D_00645510[28] = {
+    0x31001, 0, 71, 0, 100, 64, 66, 0,
+    128, 128, 128, 128, 0, 16, 0, 0,
+    28664, 29175, 0, 0, 8192, 7184, 0, 0,
+    36856, 36343, 0, 0
+};

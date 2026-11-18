@@ -11,8 +11,6 @@
 #include "ov01/tu036.h"
 
 /* Callees defined outside this allocation. Results are declared only where a caller reads them. */
-u8 *func_00A91730(int);
-void func_00A99DD8(int);
 void cfEventSet(int);
 void debugValLR(int *, int, int, int);
 int configPlayer(int slot);
@@ -94,10 +92,10 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configEquipPageDraw);
 /* STOCK MUGEN apply (proposed configStockMugenApply): run by configMenuFrame only when the
  * STOCK MUGEN row value is nonzero. Copies byte 0 of the stock record to byte 1. */
 void configStockMugenApply(void) {
-    u8 *stockRecord;
+    struct BoostGauge *stockRecord;
 
-    stockRecord = func_00A91730(0);
-    stockRecord[1] = *func_00A91730(0);
+    stockRecord = boostGaugeSelect(0);
+    stockRecord->stock = boostGaugeSelect(0)->maxStockCount;
 }
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configLearnAllApply);
@@ -143,7 +141,7 @@ int configThink(void)
 /* MONSTER SET row: edits the enemy group number (0..999) and passes it on. */
 int configMonsSet(void) {
     debugValLR(&configMonsSetNo, 0, 999, 1);
-    func_00A99DD8(configMonsSetNo);
+    cfMonsSetNoSet(configMonsSetNo);
     return 0;
 }
 
@@ -249,14 +247,14 @@ int configCpUDisp(void) {
     return 0;
 }
 
-int func_00A99E18();
+int gattaiCodeGet();
 
 /* GATTAI row: an id offset by 0x16000 in 1..0x51. */
 int configGattai(void)
 {
     int gattaiId;
 
-    gattaiId = func_00A99E18() - 0x16000;
+    gattaiId = gattaiCodeGet() - 0x16000;
     debugValLR(&gattaiId, 1, 0x51, 1);
     gattaiCodeSet(gattaiId + 0x16000);
     return 0;
@@ -300,27 +298,24 @@ int configCloth(void)
     return 0;
 }
 
-/* One unit of the battle roster (battleSlotGet returns it, 0x108 bytes each). */
+/* The base unit func_00A9B2A8 returns (the LV UP row reads its level, at +0x13 like StatBlock.expLevel). */
 typedef struct ConfigUnit {
     unsigned char unmodeled_00[0x13];
-    signed char level;         /* +0x13, the LV UP row */
-    unsigned char unmodeled_14[0x90 - 0x14];
-    short subPilotId;          /* +0x90, the SUB PILOT row */
+    signed char level;         /* +0x13 */
 } ConfigUnit;
 
-void *battleSlotGet(int);
 ConfigUnit *func_00A9B2A8(int);
 
 /* SUB PILOT row: edits the sub-pilot id (0..0xA) of the selected unit. */
 int configSubPilot(void)
 {
-    ConfigUnit *unit;
+    StatBlock *unit;
     int subPilotId;
 
     unit = battleSlotGet(configUnitIndex);
-    subPilotId = unit->subPilotId;
+    subPilotId = unit->linkedSlots[1];
     debugValLR(&subPilotId, 0, 0xA, 1);
-    unit->subPilotId = subPilotId;
+    unit->linkedSlots[1] = subPilotId;
     return 0;
 }
 
@@ -329,15 +324,15 @@ void unitSetLevel(int, int);
 /* LV UP row: the minimum comes from the base unit; a change goes through unitSetLevel. */
 int configLvUp(void)
 {
-    ConfigUnit *unit;
+    StatBlock *unit;
     ConfigUnit *baseUnit;
     int level;
 
     unit = battleSlotGet(configUnitIndex);
     baseUnit = func_00A9B2A8(configUnitIndex);
-    level = unit->level;
+    level = unit->expLevel;
     debugValLR(&level, baseUnit->level, 0x63, 1);
-    if (level != unit->level) {
+    if (level != unit->expLevel) {
         unitSetLevel(configUnitIndex, level);
     }
     return 0;

@@ -1,17 +1,9 @@
 #include "common.h"
 #include "shared.h"
 #include "ov01/tu005.h"
+#include "ov01/tu048.h"
 #include "ov01/tu063.h"
-
-/*
- * grGpInit's argument, restated from src/ov01/gr_gp_init.c (the owner keeps
- * it TU-local; header proposal in the PR): a data pointer and a length. A
- * local packet must be the whole record, because grGpInit writes both words.
- */
-typedef struct GrPacket {
-    void *data;
-    int count;
-} GrPacket;
+#include "ov01/tu049.h"
 
 typedef struct MenuRGBA {
     unsigned char r;
@@ -79,7 +71,6 @@ typedef struct MenuTarget {
 s32 objSlotRelease(void *);
 s32 objStdMove(void *);
 s32 slideSetStep(void *, s32);
-s32 menuPanelRowFree(s32);
 
 /* Update step of the timed panel (proposed menuTimedPanelStep): state 1 slides
  * the origin with slideSetStep until objStdMove reports arrival; state 0
@@ -151,12 +142,8 @@ void menuPanelStep(MenuState *menu)
   }
 }
 
-s32 grPutSprOpen();
-void grPutSprClose(void);
 s32 menuStatSprite();
 void menuTexFlush(void);
-void grGpInit(GrPacket *);
-void grPacketSend(GrPacket *);
 
 /* Draws the panel while flag is set (proposed menuPanelDraw): a bar from the left
  * edge at y + 10 and a 128 x 20 box at the origin, both inside one grGpInit packet. */
@@ -180,7 +167,6 @@ void menuPanelDraw(MenuState *menu)
   }
 }
 
-s32 menuPanelRowAlloc();
 
 /* Shows the menu panel (proposed menuPanelShow): slides in from x = -152 on a row
  * taken from menuPanelRowAlloc. */
@@ -257,7 +243,7 @@ void menuNumDraw(int *packet, s32 x, s32 y, s32 value, s32 digits, s32 style) {
     menuNumDrawMode(packet, x, y, value, digits, style, 0);
 }
 
-s32 func_00A907B0();
+s32 partyUnitHpLow();
 
 /* Same printer with the glyph mode taken from the target (proposed menuNumDrawTarget). */
 void menuNumDrawTarget(s32 packet, s32 x, s32 y, s32 value, s32 digits, s32 style, MenuTarget *target) {
@@ -265,7 +251,7 @@ void menuNumDrawTarget(s32 packet, s32 x, s32 y, s32 value, s32 digits, s32 styl
 
     mode = 2;
     if (!(target->flags & 4)) {
-        mode = func_00A907B0(target) != 0;
+        mode = partyUnitHpLow(target) != 0;
     }
     menuNumDrawMode(packet, x, y, value, digits, style, mode);
 }
@@ -293,7 +279,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu062", menuIconPut);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu062", menuStatusIconsDraw);
 
 
-void menuStatusIconPut(int *packet, s32 x, s32 y)
+void menuStatusIconPut(GrPacket *packet, s32 x, s32 y)
 {
   menuStatusIconsTexState(packet);
   grPutSprOpen(packet);

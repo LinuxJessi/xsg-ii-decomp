@@ -13,6 +13,12 @@ typedef struct {
     u32 registers_high;
 } GifTag;
 
+/* One A+D register write of the GIF packets: the value word, then the register address word. */
+typedef struct {
+    u64 data;
+    u64 register_address;
+} GifAdQuad;
+
 /* Each source point contributes three words to the rear-shadow packet. */
 typedef struct {
     int x;
@@ -188,9 +194,9 @@ XglCamera *xglStudioGetCamera2(int camera_index);
 float atan2f(float, float);
 void xglMatrixUnit(Matrix4 matrix);
 void xglMatrixRotY(Matrix4 destination, Matrix4 source, float angle);
-extern u8 shadowCirclePointFlags[];
-extern u8 D_0063E230[];
-extern u8 D_0063E280[];
+extern u8 shadowCirclePointFlags[16];
+extern GifAdQuad D_0063E230[5];
+extern GifAdQuad D_0063E280[3];
 
 typedef struct {
     u64 command_words[4];
@@ -733,7 +739,7 @@ typedef struct {
 } DropShadowQuadIndexTable;
 
 extern const DropShadowQuadIndexTable dropShadowContactQuadIndices;
-extern u8 dropShadowSeparatorQuads[];
+extern GifAdQuad dropShadowSeparatorQuads[3];
 
 /* local view: xgl_2.c defines xglMatrixTrans on Matrix4Block; this file's callers pass Matrix4 views. */
 void xglMatrixTrans(Matrix4 destination, Matrix4 source,
@@ -924,12 +930,6 @@ DropShadowContactRecord *DrawDropShadowSub(ActShadowActor *actor,
     }
     return contacts + segments + 1;
 }
-
-/* One A+D register write of the GIF packets: the value word, then the register address word. */
-typedef struct {
-    u64 data;
-    u64 register_address;
-} GifAdQuad;
 
 typedef struct {
     u32 kind_mask;
@@ -1156,11 +1156,31 @@ void ACT_DrawShadowBegin(void) {
     pxyAddEntry(8, actShadowBeginQuads, 10);
 }
 
-extern u8 D_0063E4B0[];
+extern GifAdQuad D_0063E4B0[3];
 
 void ACT_DrawShadowEnd(void) {
     pxyAddEntry(8, D_0063E4B0, 3);
 }
+
+const DropShadowQuadIndexTable dropCircleQuadIndices = {
+    {
+    { 4, 0, 1, 6 },
+    { 1, 6, 7, 2 },
+    { 7, 2, 3, 5 },
+    { 12, 9, 8, 15 },
+    { 8, 15, 14, 11 },
+    { 14, 11, 10, 13 },
+    { 0, 4, 8, 12 },
+    { 4, 1, 12, 9 },
+    { 1, 7, 9, 15 },
+    { 7, 3, 15, 11 },
+    { 3, 5, 11, 13 },
+    { 5, 2, 13, 10 },
+    { 2, 6, 10, 14 },
+    { 6, 0, 14, 8 },
+    },
+};
+
 
 /* Draws the shadow selected by shadow_type. Types 0-3 and 8-9 draw nothing, 4 and
  * every value from 10 up draw a circle shadow, 5 a Zelda shadow, 6 a drop circle and
@@ -1193,3 +1213,153 @@ void ACT_DrawShadow(ActShadowActor *actor)
         break;
     }
 }
+
+u8 shadowCirclePointFlags[16] = {
+    0x02, 0x03, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x02, 0x03, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00,
+};
+
+GifAdQuad D_0063E230[5] = {
+    { 0x0, 0x5100000400000000 },
+    { 0x3000000000008001, 0xeee },
+    { 0x131000000, 0x4e },
+    { 0x53001, 0x47 },
+    { 0x44, 0x42 },
+};
+
+GifAdQuad D_0063E280[3] = {
+    { 0x0, 0x5100000200000000 },
+    { 0x1000000000008001, 0xe },
+    { 0x31000000, 0x4e },
+};
+
+GifAdQuad dropShadowSeparatorQuads[3] = {
+    { 0x0, 0x5100000200000000 },
+    { 0x1000000000008001, 0xe },
+    { 0x0, 0x3f },
+};
+
+GifAdQuad dropShadowHeaderQuads[5] = {
+    { 0x0, 0x5100000400000000 },
+    { 0x3000000000008001, 0xeee },
+    { 0x0, 0x42 },
+    { 0x0, 0x6 },
+    { 0x0, 0x14 },
+};
+
+GifAdQuad dropShadowTailQuads[3] = {
+    { 0x0, 0x5100000200000000 },
+    { 0x1000000000008001, 0xe },
+    { 0x0, 0x4c },
+};
+
+GifAdQuad dropCircleHeaderQuads[5] = {
+    { 0x0, 0x5100000400000000 },
+    { 0x3000000000008001, 0xeee },
+    { 0x0, 0x42 },
+    { 0x0, 0x6 },
+    { 0x0, 0x14 },
+};
+
+GifAdQuad dropCircleSeparatorQuads[3] = {
+    { 0x0, 0x5100000200000000 },
+    { 0x1000000000008001, 0xe },
+    { 0x0, 0x3f },
+};
+
+GifAdQuad dropCircleTailQuads[3] = {
+    { 0x0, 0x5100000200000000 },
+    { 0x1000000000008001, 0xe },
+    { 0x0, 0x4c },
+};
+
+GifAdQuad actShadowBeginQuads[10] = {
+    { 0x0, 0x5100000900000000 },
+    { 0x8003400000008001, 0xe551eeee },
+    { 0x131000000, 0x4e },
+    { 0x71001, 0x47 },
+    { 0x6fc007fc00a, 0x8 },
+    { 0x0, 0x4c },
+    { 0x0, 0x8000000000 },
+    { 0x71f700006ff8, 0xf00000 },
+    { 0x8df700008ff8, 0xf00000 },
+    { 0x0, 0x4c },
+};
+
+GifAdQuad D_0063E4B0[3] = {
+    { 0x0, 0x5100000200000000 },
+    { 0x1000000000008001, 0xe },
+    { 0x31000000, 0x4e },
+};
+
+static DropShadowContactRecord D_0063E4E0[32] = {
+    { 2, { { 8, 10 } } },
+    { 7, { { 5, 7 } } },
+    { 8, { { 3, 5 } } },
+    { 9, { { 3, 5 } } },
+    { 10, { { 3, 5 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 10, 0 } } },
+    { 2, { { 8, 10 } } },
+    { 3, { { 5, 7 } } },
+    { 4, { { 3, 5 } } },
+    { 5, { { 3, 5 } } },
+    { 6, { { 3, 5 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 10, 0 } } },
+    { 11, { { 8, 10 } } },
+    { 12, { { 6, 8 } } },
+    { 13, { { 8, 10 } } },
+    { 28, { { 3, 5 } } },
+    { 29, { { 8, 10 } } },
+    { SHADOW_CONTACT_END, { .terminal = { -25, 1 } } },
+    { 14, { { 3, 5 } } },
+    { 21, { { 3, 5 } } },
+    { 22, { { 4, 6 } } },
+    { 23, { { 3, 5 } } },
+    { 24, { { 4, 6 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 15, 0 } } },
+    { 14, { { 3, 5 } } },
+    { 15, { { 4, 6 } } },
+    { 16, { { 3, 5 } } },
+    { 17, { { 4, 6 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 15, 0 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 0, 0 } } },
+    { 0, { { 0, 0 } } },
+    { 0, { { 0, 0 } } },
+};
+
+static DropShadowContactRecord D_0063E540[29] = {
+    { 2, { { 80, 100 } } },
+    { 9, { { 50, 70 } } },
+    { 10, { { 30, 50 } } },
+    { 12, { { 30, 50 } } },
+    { 13, { { 30, 50 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 10, 0 } } },
+    { 2, { { 80, 100 } } },
+    { 3, { { 50, 70 } } },
+    { 4, { { 30, 50 } } },
+    { 6, { { 30, 50 } } },
+    { 7, { { 30, 50 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 10, 0 } } },
+    { 15, { { 80, 100 } } },
+    { 16, { { 60, 80 } } },
+    { 17, { { 80, 100 } } },
+    { 34, { { 30, 50 } } },
+    { 35, { { 80, 100 } } },
+    { SHADOW_CONTACT_END, { .terminal = { -25, 1 } } },
+    { 18, { { 30, 50 } } },
+    { 26, { { 30, 50 } } },
+    { 28, { { 40, 60 } } },
+    { 31, { { 40, 60 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 15, 0 } } },
+    { 18, { { 30, 50 } } },
+    { 20, { { 40, 60 } } },
+    { 23, { { 40, 60 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 15, 0 } } },
+    { SHADOW_CONTACT_END, { .terminal = { 0, 0 } } },
+    { 0, { { 0, 0 } } },
+};
+
+DropShadowContactDefinition dropShadowContactDefinitions[3] = {
+    { 0xffff4000, 0x00010000, D_0063E4E0 },
+    { 0xffff4000, 0x00014000, D_0063E540 },
+    { 0, 0, 0 },
+};

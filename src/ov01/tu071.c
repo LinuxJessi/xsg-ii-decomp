@@ -48,14 +48,14 @@ struct TableKeyOwner {
     struct TableKey *key;
 };
 
-int func_00A835D0(s16);
+int dataBattleActionPathGet(s16);
 
 /* Plays the stream that the owner's table key maps to, on slot 1 at the stream level. */
 void streamPlayByKey(struct TableKeyOwner *owner)
 {
     int handle;
 
-    handle = func_00A835D0(owner->key->table_id);
+    handle = dataBattleActionPathGet(owner->key->table_id);
     if (handle != 0) {
         soundSlotReopen(1);
         func_001EDC60(1);

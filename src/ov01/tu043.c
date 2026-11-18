@@ -11,17 +11,12 @@
 #define DATA_BOX_SLOTS 255
 #define DATA_BOX_QUANTITY_MAX 99
 
-extern int dataBoxInc(int category, int id);
-extern int dataBoxChk(int category, int id);
-int dataBoxDec(int category, int id);
-extern u16 *dataBoxPtrGet(int category);
 /* X1 box table names. This overlay's code reaches the tables through dataBoxPtrGet and uses none of these. */
 extern u16 accBox[DATA_BOX_SLOTS];
 extern u16 bltBox[DATA_BOX_SLOTS];
 extern u16 evtBox[DATA_BOX_SLOTS];
 extern u16 itmBox[DATA_BOX_SLOTS];
 extern u16 wpnBox[DATA_BOX_SLOTS];
-u16 *dataBoxPtrGet(int category);
 extern void *memset(void *destination, int value, unsigned int count);
 extern u16 D_61C800[DATA_BOX_SLOTS];
 extern u16 D_61CA00[DATA_BOX_SLOTS];
@@ -37,7 +32,20 @@ void dataBoxClearAll(void) {
 }
 
 /* Quantity table of a category: D_61C800 for 1, D_61CA00 for 2, D_61CC00 for 3, D_61CE00 for 4; NULL for any other value. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu043", dataBoxPtrGet);
+u16 *dataBoxPtrGet(int category)
+{
+    switch (category) {
+    case 1:
+        return D_61C800;
+    case 2:
+        return D_61CA00;
+    case 3:
+        return D_61CC00;
+    case 4:
+        return D_61CE00;
+    }
+    return 0;
+}
 
 int dataBoxChk(int category, int id)
 {

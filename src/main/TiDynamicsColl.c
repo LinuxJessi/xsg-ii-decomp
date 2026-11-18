@@ -86,10 +86,6 @@ void xglMatrixInverse(Matrix4 *destination, Matrix4 *matrix);
 void xglCurMatrixGet(f32 matrix[4][4]);
 void xglCurMatrixSet(f32 matrix[4][4]);
 void xglCurApplyVector(Vector4 *destination, const Vector4 *vector);
-/* assert expression "pMRPack->pGlobalMat" */
-extern unsigned char tiDynamicsCollAssertExpr[];
-/* assert file "../TiDynamicsColl.euc.c" */
-extern unsigned char tiDynamicsCollSourceFile[];
 
 /* Writes the position of the entry for key into dst with w = 1. Below a threshold of 1.1f the entries are indexed
  * directly by key; otherwise the first keyed entry with that key is used. With apply set, dst is then transformed
@@ -154,7 +150,7 @@ void tiDynamicsCollTransformVectors(MRPack *pMRPack)
     entry = (DynamicsCollVectorEntry *) ((u8 *) pMRPack->pDynamicsColl
                                          + pMRPack->pDynamicsColl->vectorEntriesOffset);
     if (pMRPack->pGlobalMat == 0) {
-        assertFailed(tiDynamicsCollAssertExpr, tiDynamicsCollSourceFile, 17);
+        assertFailed("pMRPack->pGlobalMat", "../TiDynamicsColl.euc.c", 17);
     }
     entryIndex = 0;
     if (pMRPack->pDynamicsColl->vectorEntryCount != 0) {

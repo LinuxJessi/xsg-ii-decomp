@@ -333,3 +333,13 @@ void tiMtnBlendUpdateLocal(struct TiMtnBlendContext *ctx) {
         }
     }
 }
+
+/* Assert strings: each one is shared by several routines, so each is one named array. */
+const char D_0068F868[] = "pPack";
+const char D_0068F870[] = "../TiMtnBlend.euc.c";
+const char D_0068F888[] = "pPack->pGlobalMat";
+const char D_0068F8A0[] = "pPack->pBlendMat";
+const char D_0068F8B8[] = "pPack->pLocalMat";
+const char D_0068F8D0[] = "pDest";
+const char D_0068F8D8[] = "pMat1";
+const char D_0068F8E0[] = "pMat2";

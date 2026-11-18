@@ -5,6 +5,7 @@
 #include "main/tu110.h"
 #include "main/tu121.h"
 #include "main/tu148.h"
+#include "main/tu048.h"
 
 /* The 64-bit party values saveWriteImage copies. Their loads stay after the
  * int store before them, so the access goes through a union (alias set 0). */
@@ -98,6 +99,7 @@ PartyMember *ptGetMenuMember(void)
 
 #include "shared.h"
 #include "main/tu100.h"
+
 
 /* Admitted aligned(1) scalar: maxHp sits at the unaligned offset 2 of the record. */
 typedef signed int UnalignedS32 __attribute__((aligned(1)));
@@ -1035,16 +1037,6 @@ typedef struct SaveWords4 {
     int words[4];
 } SaveWords4;
 
-typedef struct SaveGameWork {
-    unsigned char unmodeled_00[8];
-    int control;
-    unsigned char unmodeled_0C[0x14 - 0x0C];
-    int state;
-    int mapId;
-    unsigned char unmodeled_1C[4];
-    long long unmodeled_20[0x362];
-} SaveGameWork;
-
 typedef struct QuestFlagBlock {
     unsigned char bytes[0x24];
 } QuestFlagBlock;
@@ -1118,7 +1110,7 @@ typedef struct SaveImage {
     SaveShortTable shortTables[4];
     int word2E6C;
     SaveWords4 words2E70;
-    SaveGameWork game;
+    GameWork game;
     unsigned char unmodeled_49B0[0x4E80 - 0x49B0];
     QuestFlagBlock questFlags;
     CitizenFlagBlock citizenFlags;
@@ -1139,7 +1131,6 @@ extern SaveShortTable D_0061CC00;
 extern SaveShortTable D_0061CE00;
 extern int D_0069DC7C;
 extern SaveWords4 D_0061D000;
-extern SaveGameWork gameWork;
 extern SaveMemberName D_006A5880[10];
 extern QuestFlagBlock questFlags;
 extern CitizenFlagBlock citizenFlags;
@@ -1263,7 +1254,7 @@ void saveWriteImage(void)
             party->slotValues[i] = 0;
         }
     }
-    *(SaveGameWork *) (unsigned char *) &SaveData.game = gameWork;
+    *(GameWork *) (unsigned char *) &SaveData.game = gameWork;
     *(QuestFlagBlock *) (unsigned char *) &SaveData.questFlags = questFlags;
     *(CitizenFlagBlock *) (unsigned char *) &SaveData.citizenFlags = citizenFlags;
     *(SegFlagBlock *) (unsigned char *) &SaveData.segFlags = segAddrOnFlags;
@@ -1355,10 +1346,10 @@ void saveReadGameWork(void)
     int control;
     int balance;
 
-    gameWork = *(SaveGameWork *) (unsigned char *) &SaveData.game;
-    gameWork.state = gameWork.mapId;
+    gameWork = *(GameWork *) (unsigned char *) &SaveData.game;
+    gameWork.nextMap = gameWork.mapId;
     if (gameWork.mapId == MAP_ID_GAME_END) {
-        gameWork.mapId = gameWork.state = MAP_ID_GAME_END_RESUME;
+        gameWork.mapId = gameWork.nextMap = MAP_ID_GAME_END_RESUME;
         xglFlagsSet8(STORY_PROGRESS_FLAG, 0x75);
     }
     control = gameWork.control;
@@ -1366,7 +1357,7 @@ void saveReadGameWork(void)
     balance = SaveData.balance;
     __builtin_memcpy(&segAddrOnFlags, &SaveData.segFlags, sizeof(segAddrOnFlags));
     __builtin_memcpy(&citizenFlags, &SaveData.citizenFlags, sizeof(citizenFlags));
-    gameWork.control = control & ~(CONTROL_SOFT_RESET | 0x08000000 | 0x04000000 | 0x00100000);
+    gameWork.control = control & ~(CONTROL_SOFT_RESET | 0x08000000 | 0x04000000 | CONTROL_CFE_NO_FADE);
     msgBalanceSet(balance);
 }
 
@@ -1408,7 +1399,6 @@ u8 *ptGetStatusBlock(void) {
 }
 
 extern int talkResult;
-extern int gameLoopFlags[];
 
 int talk_0022D170(void) {
     int previous;
@@ -1418,19 +1408,13 @@ int talk_0022D170(void) {
     if (msgWindowBusy() != 0) {
         return -1;
     }
-    return (gameLoopFlags[0] & 0x20000) ? -1 : previous;
+    return (gameWork.control & CONTROL_SEARCHING) ? -1 : previous;
 }
 
 int talk_0022D1C8(void) {
     talkResult = -1;
     return 1;
 }
-
-/* Four bytes before msgStyleReset that no function in this TU reads (zero in the original). */
-unsigned char D_0069D75C[4] = { 0 };
-
-/* Style reset record used by msgRangeDraw and msgRangeDrawRevealed (tu101.c). */
-unsigned char msgStyleReset[8] = { 0x0f, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00 };
 
 /* Data of main/tu110, in address order. D_003EC474 is the element at +12 of D_003EC468. */
 int D_003EC458[4] = {
@@ -1540,3 +1524,11 @@ PartyState ptState = { 0 };
 unsigned char selectionWindowList[256] = { 0 };
 
 unsigned char selectionPlainList[256] = { 0 };
+
+/* .sdata of this file (0x69D770-0x69D778), also read by tu114.c. */
+MapObject *mapActiveObject = 0;
+
+int talkResult = -1;
+
+/* .bss of this file after its own (0x6ABBC0), read by tu109.c. */
+u16 selectionFlagTable[44];

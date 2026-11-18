@@ -1,15 +1,16 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu048.h"
 #include "main/tu124.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
-#include "ov01/tu026.h"
-#include "ov01/tu032.h"
+#include "main/tu051.h"
+#include "ov01/tu010.h"
+#include "ov01/tu023.h"
 #include "ov01/tu036.h"
 #include "ov01/tu042.h"
 #include "ov01/tu043.h"
 
-typedef struct ObjectTask ObjectTask;
 
 typedef struct XglTaskPrefix XglTaskPrefix;
 
@@ -44,32 +45,7 @@ extern XglTaskPrefix *xglTaskEntryNext(XglTaskScheduler *scheduler,
                                 int (*callback)(XglTaskPrefix *task),
                                 XglTaskPrefix *entry);
 
-/*
- * The battle actor object a unit's actor/weapon slots point to. src/main/
- * chr.h, src/main/near_dir.h, src/main/set_motion.h and src/ov01/unit_cmd.h
- * all restate this same 0x70-byte head verbatim (a TU-local header cannot be
- * included from another TU); this TU adds only the words its own code
- * touches: the float at +0xC0 (transWepIn/transWepOut set it to 0.0/1.0, the
- * same "transparency" member src/ov01/unit_cmd.h restates at that offset)
- * and the flags word at +0x6F0 (hairWindOn ORs in HAIR_WIND_BIT there for
- * every other unit's actor and hairWindOff clears it again).
- */
-typedef struct Actor {
-    u32 flags;
-    void (*update)(struct Actor *actor);
-    void (*draw)(struct Actor *actor);
-    u32 quadword_alignment_gap;
-    Vector4 position;
-    Vector4 previous_position;
-    Vector4 velocity;
-    Vector4 acceleration;
-    Vector4 rotation;
-    Vector4 scale;
-    unsigned char unmodeled_70[0xC0 - 0x70];
-    float transparency; /* +0xC0 */
-    unsigned char unmodeled_c4[0x6F0 - 0xC4];
-    u32 windFlags; /* +0x6F0 */
-} Actor;
+/* The unit's actor and weapon slots point at XenoActors (main/tu051.h). */
 
 /*
  * The unit record scenarioMtd, transWepIn/transWepOut and spWepDispOn
@@ -83,10 +59,10 @@ typedef struct BattleUnit BattleUnit;
 
 struct BattleUnit {
     unsigned char unmodeled_00[0x10];
-    Actor *work;       /* +0x10 */
-    Actor *actor;      /* +0x14 */
+    struct XenoActor *work;       /* +0x10 */
+    struct XenoActor *actor;      /* +0x14 */
     unsigned char unmodeled_18[0x1C - 0x18];
-    Actor *weapon[4];  /* +0x1C */
+    struct XenoActor *weapon[4];  /* +0x1C */
 };
 
 BattleUnit **tgtUnitAdrGet(void);
@@ -253,10 +229,12 @@ void enemyCursorClose(void) {
 }
 
 extern int D_00AC3C80;
-extern int D_00AC4170;
+/* The enemy cursor's text page list for textEntryAlloc: the text (set by
+ * func_00A98960), then 0. */
+extern int enemyCursorPages[2];
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in D_00AC3C80, 0 when choiceMenuEntryFlags flags it;
- * the helper result goes to D_00AC4170 instead of D_00AC4160, the word the other pickers use. */
+ * the helper result goes to enemyCursorPages instead of D_00AC4160, the word the other pickers use. */
 int func_00A98960(void) {
     int cursor_index;
     s16 entry_id;
@@ -268,7 +246,7 @@ int func_00A98960(void) {
             entry_id = choiceMenuEntryIds[cursor_index];
             D_00AC3C80 = entry_id;
             result = func_00A9B750(entry_id, 1);
-            D_00AC4170 = result;
+            enemyCursorPages[0] = result;
             if (choiceMenuEntryFlags[cursor_index] != 0) {
                 D_00AC3C80 = 0;
             }
@@ -311,31 +289,16 @@ int func_00A98BE8(void) {
 
 extern int statBitValues[];
 
-/*
- * The owner's +0x144 pointer names a table whose halfword at +0x92 is
- * indexed by the row argument. bits[1] models only the element this
- * function reads.
- */
-typedef struct StatBitTable StatBitTable;
+/* Rows of status bits of a unit (StatBlock.activeMask; statBitValueGet indexes them). */
+#define STAT_BIT_ROWS 4
 
-typedef struct StatBitOwner StatBitOwner;
-
-struct StatBitTable {
-    unsigned char unmodeled_00[0x92];
-    u16 bits[1];
-};
-
-struct StatBitOwner {
-    unsigned char unmodeled_00[0x144];
-    StatBitTable *table; /* +0x144 */
-};
-
-int statBitValueGet(StatBitOwner *owner, int row, int mask) {
+/* The value of status bit mask of row: -1 when the bit is not active or has no value. */
+int statBitValueGet(Ov01Object *unit, int row, int mask) {
     int *values;
     int index;
     int value;
 
-    if ((owner->table->bits[row] & mask) == 0) {
+    if ((unit->stats->activeMask[row] & mask) == 0) {
         return -1;
     }
     values = statBitValues;
@@ -347,7 +310,41 @@ int statBitValueGet(StatBitOwner *owner, int row, int mask) {
     return -1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", enemyCursorOpen);
+/* Enemy cursor text entry: position, size and style passed to textEntryAlloc. */
+#define ENEMY_CURSOR_X 10
+#define ENEMY_CURSOR_Y 0x58
+#define ENEMY_CURSOR_WIDTH 0x90
+#define ENEMY_CURSOR_HEIGHT 0x14
+#define ENEMY_CURSOR_STYLE 7
+
+ObjectTask *textEntryAlloc(int x, int y, int width, int height, int style, void *pages);
+/* The status shown by the enemy cursor: row and bit mask (enemyCursorStep walks them with statBitValueGet) and
+ * the frames left before the next one. */
+extern int enemyCursorRow;
+extern int enemyCursorBit;
+extern int enemyCursorTimer;
+
+/* Opens the enemy cursor's text entry when the unit has any status bit set. */
+void enemyCursorOpen(Ov01Object *unit)
+{
+    u16 *bits = unit->stats->activeMask;
+    int row;
+
+    for (row = 0; row < STAT_BIT_ROWS; row++) {
+        if (bits[row] != 0) {
+            break;
+        }
+    }
+    if (row < STAT_BIT_ROWS) {
+        enemyCursorPages[1] = 0;
+        enemyCursorPages[0] = 0;
+        pTaskEnCur = textEntryAlloc(ENEMY_CURSOR_X, ENEMY_CURSOR_Y, ENEMY_CURSOR_WIDTH, ENEMY_CURSOR_HEIGHT,
+                                    ENEMY_CURSOR_STYLE, enemyCursorPages);
+        enemyCursorTimer = 0;
+        enemyCursorRow = 0;
+        enemyCursorBit = 1;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", enemyCursorStep);
 
@@ -363,26 +360,10 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectStep);
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectionGet);
 
-/* Only the members tableKeyEntryGet reads are modeled; the rest of the block is
- * left unmodeled. */
-typedef struct TableKey TableKey;
+/* Returns the entry of the key row of the unit's table at index (1-based); the target the callers pass is not used. */
 
-struct TableKey {
-    unsigned char unmodeled_00[0x62];
-    s16 table_id; /* +0x62: the id tableKeyRowGet maps to a table */
-};
-
-typedef struct TableKeyOwner TableKeyOwner;
-
-struct TableKeyOwner {
-    unsigned char unmodeled_00[0x144];
-    TableKey *key; /* +0x144 */
-};
-
-/* Returns the record table for the key: the caller adds the byte offset itself. */
-
-s16 tableKeyEntryGet(TableKeyOwner *owner, int index) {
-    unsigned char *record_table = tableKeyRowGet(owner->key->table_id);
+s16 tableKeyEntryGet(StatOwner *owner, int index, void *target) {
+    unsigned char *record_table = tableKeyRowGet(owner->stats->key);
 
     s16 *entry = (s16 *)(record_table + (index - 1) * sizeof(s16));
 
@@ -401,9 +382,9 @@ void tgtUnitSet(BattleUnit *unit)
     *tgtUnitAdrGet() = unit;
 }
 
-extern unsigned char tgtSelectState[];
+extern struct BattleState tgtSelectState;
 
-void *battleStateGet(void) {
+struct BattleState *battleStateGet(void) {
     return &tgtSelectState;
 }
 
@@ -417,13 +398,26 @@ void thinkNoSet(int value) {
     thinkNo = value;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DC8);
+/*
+ * gameWork (main): encounterTarget is the battle's enemy group number (the MONSTER SET debug row of tu072 sets it,
+ * monsSetNoGet of tu046 reads it), encounterFlags the cf event bits (XS1 keeps cfEvent in its game loop state;
+ * tu039 tests bit 0x20 for the time limit).
+ */
+short cfMonsSetNoGet(void) {
+    return gameWork.encounterTarget;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99DD8);
+void cfMonsSetNoSet(int monsSetNo) {
+    gameWork.encounterTarget = monsSetNo;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", cfEventGet);
+int cfEventGet(void) {
+    return gameWork.encounterFlags;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", cfEventSet);
+void cfEventSet(int cfEvent) {
+    gameWork.encounterFlags = cfEvent;
+}
 
 extern unsigned char ov01PartyTable[];
 
@@ -432,10 +426,29 @@ void *ov01PartyListGet(void) {
     return &ov01PartyTable;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", func_00A99E18);
-
-/* Gattai code word: 0x16000 plus the gattai id. func_00A99E18 reads it back. */
+/* Gattai code word: GATTAI_CODE_BASE plus the gattai id. gattaiCodeGet reads it back. */
 extern int gattaiCode;
+
+#define GATTAI_CODE_BASE 0x16000
+/* Story flag field (8 bits at flag 0x1EE) holding the current gattai id. */
+#define GATTAI_ID_FLAG 0x1EE
+#define GATTAI_ID_FLAG_BITS 8
+
+int xglFlagsGet(int bit_offset, int bit_count);
+
+/* The gattai code: from the story flag when a gattai id is set there,
+ * else the code gattaiCodeSet stored. */
+int gattaiCodeGet(void) {
+    int id = xglFlagsGet(GATTAI_ID_FLAG, GATTAI_ID_FLAG_BITS);
+    int code;
+
+    if (id == 0) {
+        code = gattaiCode;
+    } else {
+        code = id + GATTAI_CODE_BASE;
+    }
+    return code;
+}
 
 void gattaiCodeSet(int code) {
     gattaiCode = code;

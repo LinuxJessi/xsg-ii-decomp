@@ -239,10 +239,6 @@ void tiGlobalCollPushOutCylinders(int handle, void *pNode, void *context) {
     }
 }
 
-/* assert expression "pNode" */
-extern char tiGlobalCollAssertExpr[];
-/* assert file "../TiGlobalColl.euc.c" */
-extern char tiGlobalCollSourceFile[];
 /* Solves one body (context, a pointer in the asm) against
  * the shapes of the current handle: spheres, planes, then cylinders. */
 void tiGlobalCollSolveBody(void *pNode, void *context) {
@@ -250,7 +246,7 @@ void tiGlobalCollSolveBody(void *pNode, void *context) {
 
     handle = tiGlobalCollGetHandle();
     if (pNode == 0) {
-        assertFailed(tiGlobalCollAssertExpr, tiGlobalCollSourceFile, 138);
+        assertFailed("pNode", "../TiGlobalColl.euc.c", 138);
     }
     if (handle != 0) {
         tiGlobalCollPushOutSpheres((TiGlobalCollSet *) handle, pNode, context);
@@ -270,3 +266,11 @@ void tiGlobalCollEvalSubobject(f32 *values, TiGlobalCollObject *obj, f32 amount)
     }
     xacReadJointCurves15(values, &subobjectPtr, amount);
 }
+
+/* Handle slot: 16 bytes in the original, only the first word is read. */
+int tiGlobalCollHandle = 0;
+
+/* Coefficients read by mapHeadingXZ (src/main/tu272.c). */
+float mapHeadingCoefficients[8] = {
+    0.999999344f, -0.333298564f, 0.199465364f, -0.139085338f, 0.0964200422f, -0.055909887f, 0.0218612291f, -0.00405405788f
+};

@@ -4,6 +4,8 @@
 #include "main/m_math_188.h"
 #include "main/tu192.h"
 #include "main/tu051.h"
+#include "quadword.h"
+#include "main/tu152.h"
 
 /* A key of a Hermite track: the point, and the key time in the low half of w. A time of
  * MMATH_HERMITE_END ends the track. */
@@ -109,12 +111,140 @@ int MMathIsWithinDistXZ(struct XenoActor *firstActor, struct XenoActor *secondAc
     return 0;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu154", func_00252980);
+/* Returns 1 when the actor at secondActor stands inside the rectangle of XZ corners the actor firstActor
+ * carries, turned by its facing angle. points[0] is firstActor's position (the VU0 translation row), points[1]
+ * secondActor's, points[2..5] the four corners (limit wide, 50 deep) transformed in place by VU0; the store
+ * asm names the stored vector and its w lane (destW) as outputs. */
+int func_00252980(struct XenoActor *firstActor, struct XenoActor *secondActor, float limit)
+{
+    AlignedVector4 points[6];
+    AlignedVector4 *originPtr;
+    int inside = 0;
+    int i;
+    AlignedVector4 *source;
+    AlignedVector4 *dest;
+    float *destW;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu154", func_00252AB8);
+    points[2].x = -limit;
+    points[2].y = 0.0f;
+    points[2].z = 0.0f;
+    points[2].w = 1.0f;
+    points[3].x = limit;
+    points[3].y = 0.0f;
+    points[3].z = 0.0f;
+    points[3].w = 1.0f;
+    points[4].x = -limit;
+    points[4].y = 0.0f;
+    points[4].z = 50.0f;
+    points[4].w = 1.0f;
+    points[5].x = limit;
+    points[5].y = 0.0f;
+    points[5].z = 50.0f;
+    points[5].w = 1.0f;
 
-int func_00252980(struct XenoActor *firstActor, struct XenoActor *secondActor, float limit);
-int func_00252AB8(struct XenoActor *firstActor, struct XenoActor *secondActor, int kind);
+    originPtr = &points[1];
+    QuadwordCopyT0(originPtr, &secondActor->position);
+    originPtr->y = 0.0f;
+    vu0SetCurrentRotationY(firstActor->rotation.y);
+    QuadwordCopyT0(&points[0], &firstActor->position);
+    points[0].y = 0.0f;
+    __asm__ __volatile__("lqc2 vf29, 0(%0)" : : "r"(&points[0]) : "memory");
+
+    source = &points[2];
+    destW = &points[2].w;
+    dest = &points[2];
+    for (i = 3; i >= 0; i--, destW += 4, dest++, source++) {
+        __asm__ __volatile__(
+            "lqc2 vf1, 0(%0)\n"
+            "vmulax.xyzw ACC, vf26, vf1x\n"
+            "vmadday.xyzw ACC, vf27, vf1y\n"
+            "vmaddaz.xyzw ACC, vf28, vf1z\n"
+            "vmaddw.xyzw vf20, vf29, vf1w\n"
+            : : "r"(source), "r"(destW) : "memory");
+        __asm__ __volatile__("sqc2 vf20, 0(%2)" : "=m"(*dest), "=m"(*destW) : "r"(dest) : "memory");
+    }
+
+    for (i = 2; i < 4; i++) {
+        originPtr = &points[1];
+        inside |= MMathPointInTriangle(&points[i], &points[i + 1], &points[i + 2], originPtr);
+    }
+    return inside;
+}
+
+extern float svDefaultScreenParams[];
+float xglCos(float angle);
+float xglSin(float angle);
+Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
+
+/* Returns 1 when the actor at secondActor stands inside one of the fan triangles around the actor
+ * firstActor, turned by its facing angle: kind - 3 sectors of pi/12 starting at pi/2, each tested at the
+ * two radius scales of the table (50 units long). origin is copied with its four lanes named as asm
+ * outputs; the matrix rows vf26..vf29 are stored without a memory clobber. */
+int func_00252AB8(struct XenoActor *firstActor, struct XenoActor *secondActor, int kind)
+{
+    AlignedVector4 translation;
+    AlignedVector4 origin;
+    AlignedVector4 points[3];
+    Matrix4 matrix;
+    int sectors = kind - 3;
+    float radius;
+    int inside = 0;
+    int sector;
+    int pass;
+    int i;
+    float start;
+    float end;
+    float first;
+    float second;
+    AlignedVector4 *originPtr;
+
+    originPtr = &origin;
+    radius = 50.0f;
+    __asm__ __volatile__("lq $8, 0(%5)\n"
+                         "sq $8, 0(%4)\n"
+                         : "=m"(originPtr->x), "=m"(originPtr->y), "=m"(originPtr->z), "=m"(originPtr->w)
+                         : "r"(originPtr), "r"(&secondActor->position) : "$8", "memory");
+    originPtr->y = 0.0f;
+    vu0SetCurrentRotationY(firstActor->rotation.y);
+    QuadwordCopyT0(&translation, &firstActor->position);
+    translation.y = 0.0f;
+    __asm__ __volatile__("lqc2 vf29, 0(%0)" : : "r"(&translation) : "memory");
+    __asm__ __volatile__(
+        "sqc2 vf26, 0(%0)\n"
+        "sqc2 vf27, 16(%0)\n"
+        "sqc2 vf28, 32(%0)\n"
+        "sqc2 vf29, 48(%0)\n"
+        : : "r"(matrix));
+
+    for (sector = 0; sector < sectors; sector++) {
+        start = sector * 0.2617994f; /* pi/12 */
+        end = start + 0.2617994f;
+        for (pass = 0; pass < 2; pass++) {
+            first = start * svDefaultScreenParams[pass] + 1.5707964f; /* pi/2 */
+            second = end * svDefaultScreenParams[pass] + 1.5707964f;
+            points[0].x = 0.0f;
+            points[0].y = 0.0f;
+            points[0].z = 0.0f;
+            points[0].w = 1.0f;
+            points[1].x = xglCos(first) * radius;
+            points[1].y = 0.0f;
+            points[1].z = xglSin(first) * radius;
+            points[1].w = 1.0f;
+            points[2].x = xglCos(second) * radius;
+            points[2].y = 0.0f;
+            points[2].z = xglSin(second) * radius;
+            points[2].w = 1.0f;
+            for (i = 0; i < 3; i++) {
+                MMathApplyMatrix(&points[i], &matrix, &points[i]);
+            }
+            inside |= MMathPointInTriangle(&points[0], &points[1], &points[2], originPtr);
+        }
+    }
+    return inside;
+}
+
+/* Returns 1 when the actor at secondActor stands inside the rectangle of XZ corners the actor firstActor * carries, turned by its facing angle. points[0] is firstActor's position (the VU0 translation row), points[1] * secondActor's, points[2..5] the four corners (limit wide, 50 deep) transformed in place by VU0; the store * asm names the stored vector and its w lane (destW) as outputs. */ int func_00252980(struct XenoActor *firstActor, struct XenoActor *secondActor, float limit);
+/* Returns 1 when the actor at secondActor stands inside one of the fan triangles around the actor * firstActor, turned by its facing angle: kind - 3 sectors of pi/12 starting at pi/2, each tested at the * two radius scales of the table (50 units long). origin is copied with its four lanes named as asm * outputs; the matrix rows vf26..vf29 are stored without a memory clobber. */ int func_00252AB8(struct XenoActor *firstActor, struct XenoActor *secondActor, int kind);
 
 /* Tests two actors by kind (ov01 passes the XenoActor roots that two battle units keep at +0x1D0): 1 with
  * func_00252980 at half the limit, 2 and 3 by their XZ distance, 4 to 7 with func_00252AB8. 1 when the test
@@ -143,3 +273,7 @@ int func_00252CD8(int kind, struct XenoActor *firstActor, struct XenoActor *seco
     }
     return result != 0;
 }
+
+/* Screen parameters read by func_00252AB8: pass 0 and 1 are the fan scale factors (1 and -1). The first three
+ * Vector4 slots are read by sv_get_image_item.c as scale and offset values. */
+float svDefaultScreenParams[12] = { 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f, 268435360.0f, 0.0f };

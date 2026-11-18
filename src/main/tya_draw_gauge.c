@@ -1,7 +1,10 @@
 #include "common.h"
+#include "main/xenoActor.h"
 #include "main/xgl_timer0.h"
 #include "debug_break.h"
 #include "shared.h"
+#include "main/tu048.h"
+#include "main/tya_draw_gauge.h"
 
 extern unsigned char D_002B7BC0[];
 extern unsigned char D_002B7C88[];
@@ -331,21 +334,9 @@ enum {
     MAP_KIND_MODEL_REQUEST = 8 /* create only: uwamonoCreateRecord turns it into a model or frees it */
 };
 
-/* The game work block at gameWork as this file uses it: the state and map id
- * words (tu050.c MainWork.state, tu110.c SaveGameWork.mapId) and the three
- * 512-byte runs func_001EEF60 and func_001EEF98 clear. */
-typedef struct SceneWork {
-    unsigned char unmodeled_0000[0x14];
-    int state;                          /* +0x0014: -1 after a scene load */
-    int mapId;                          /* +0x0018 */
-    unsigned char unmodeled_001c[0x1520 - 0x1C];
-    unsigned char clearedRuns[3][0x200]; /* +0x1520 */
-} SceneWork;
-
 extern UwamonoRecord uwamonoRecords[];
 extern int uwamonoCurrentIndex;
 extern UwamonoState D_002BD600[];
-extern SceneWork gameWork;
 extern unsigned char D_003C6DC0[];      /* the scene file buffer */
 extern const char D_006895C0[];         /* "sc0000.sb": the digits are rewritten */
 extern const char D_0069D1D0[];         /* "cf\\%s" */
@@ -370,7 +361,6 @@ int xglCdReadFile(const char *name, void *buffer, int mode, int flags);
 int func_A9CEE8(unsigned char *scene, unsigned char *end);
 void func_A9CAD0(unsigned char *scene);
 void uwamonoResetRecords(int index, signed char mode);
-void XenoActorRelease(struct XenoActor *actor);
 void uwamonoClearMoveResetWord(int index);
 void uwamonoClearRotateResetWord(int index);
 void xglMatrixStackUnit(void);
@@ -423,7 +413,7 @@ void func_001EECE0(int id, signed char mode)
     func_A9CAD0(D_003C6DC0);
     gameWork.mapId = id;
     uwamonoRecords[uwamonoCurrentIndex].flags |= 2;
-    gameWork.state = -1;
+    gameWork.nextMap = -1;
     for (slot = 0; slot < 8; slot++) {
         uwamonoEventIds[slot] = -1;
     }
@@ -432,24 +422,24 @@ void func_001EECE0(int id, signed char mode)
 
 #define CLEAR_RUN_LENGTH 512
 
-/* Clears the second and third 512-byte runs of the work block. */
+/* Clears gameWork.rowFlags (both 512-byte rows). */
 void func_001EEF60(void)
 {
     int i;
 
     for (i = 0; i < CLEAR_RUN_LENGTH; i++) {
-        gameWork.clearedRuns[1][i] = 0;
-        gameWork.clearedRuns[2][i] = 0;
+        gameWork.rowFlags[0][i] = 0;
+        gameWork.rowFlags[1][i] = 0;
     }
 }
 
-/* Clears the first 512-byte run of the work block. */
+/* Clears gameWork.eventFlags (512 bytes). */
 void func_001EEF98(void)
 {
     int i;
 
     for (i = 0; i < CLEAR_RUN_LENGTH; i++) {
-        gameWork.clearedRuns[0][i] = 0;
+        gameWork.eventFlags[i] = 0;
     }
 }
 
@@ -677,11 +667,6 @@ struct EnepcParamSet *enepcParamSets = NULL;
 int D_0069D1DC = 0;
 int uwamonoEventTable = 0;
 unsigned char D_0069D1E4[12] = { 0 };
-const char D_0069D1F0[8] = "footId";
-const char D_0069D1F8[8] = "setPair";
-const char D_0069D200[8] = "scale";
-const char D_0069D208[8] = "rotate";
-const char D_0069D210[8] = "move";
 
 const char D_006895C0[16] = "sc0000.sb";
 const char D_006895D0[16] = "cf\\xx\\%sl";
@@ -705,3 +690,21 @@ float D_0033EE00[9][4] = { 0 };
 
 /* Ten radii of D_0033EE90 are cleared here; the 12th float is padding in this layout. */
 float D_0033EE90[12] = { 0 };
+
+/* .data of this file read by tu083.c (0x33EEC0-0x33FDC0; link order, data map review 2026-11-17). */
+/* 16 records of the point table, all zero at startup. */
+UwamonoPoint uwamonoPoints[UWAMONO_POINT_COUNT] = { 0 };
+
+/* Ladder table: 0x0D00 bytes of zero at startup (208-byte records; see LadderSlot in tu075/tu076). */
+unsigned char ladderSlots[3328] = { 0 };
+
+/* .data of this file read by init_uwamono_sys.c and others (0x33FDC0-0x3E6DC0). */
+/*
+ * .data, in address order. The record table of the uwamono system: 256 UwamonoRecord entries of 0x870 bytes
+ * at 0x33FDC0. Every other label below 0x3C6DC0 is a field offset of record 0 (uwamonoMoveRecords,
+ * uwamonoRotateRecords, uwamonoScaleRecords, progEffectTable, ...); the extern declarations above keep
+ * the code's stride and resolve through the linker.
+ */
+UwamonoRecord uwamonoRecords[256] = { 0 };
+
+unsigned char D_003C6DC0[131072] = { 0 };

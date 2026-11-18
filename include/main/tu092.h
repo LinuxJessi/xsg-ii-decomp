@@ -5,6 +5,7 @@
 
 void xglCallbackQueueAdd(int entry);
 void xglCdArenaClose(void);
+void xglCdArenaOpen(int size, long long handle);
 void xglCdBufferClear(void);
 int xglCdBufferRewind(void);
 void xglCdPendingReadsClear(void);

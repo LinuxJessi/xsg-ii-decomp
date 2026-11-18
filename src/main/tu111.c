@@ -109,6 +109,3 @@ char D_0069D798[8] = "smsg";
 char D_0069D7A0[8] = "reset";
 char D_0069D7A8[8] = "check";
 char D_0069D7B0[8] = "addrOn";
-char D_0069D7B8[8] = "talk";
-char D_0069D7C0[8] = "g2path";
-char D_0069D7C8[8] = "seg";

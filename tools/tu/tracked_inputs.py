@@ -62,9 +62,9 @@ TOOL_TOKENS = {
     # since the user decision of 2026-10-28 the fsv8-v1 release (reports/cc1-fsv8-nzinit.md),
     # since the user decision of 2026-10-29 the fsv9-v1 release (reports/cc1-fsv9-anyg.md),
     # since the later user decision of 2026-10-29 the fsv10-v1 release (reports/cc1-fsv10-swu.md),
-    # since the user decision of 2026-11-15 ("Adoptas T") the fsv14-v1 release (reports/cc1-fsv14-typedkill.md).
-    ".work/toolchains/ee-gcc2.96-realconv-lp7-fsv14-v1/bin": "tool:ee-gcc2.96-realconv-lp7",
-    ".work/toolchains/ee-gcc2.96-realconv-lp7-fsv14-v1/bin/cc1": "tool:ee-gcc2.96-realconv-lp7/cc1",
+    # since the user decision of 2026-11-17 ("Nada, aplica U2 como fsv16 y continua") the fsv16-v1 release (reports/cc1-fsv16-alias0kill.md).
+    ".work/toolchains/ee-gcc2.96-realconv-lp7-fsv16-v1/bin": "tool:ee-gcc2.96-realconv-lp7",
+    ".work/toolchains/ee-gcc2.96-realconv-lp7-fsv16-v1/bin/cc1": "tool:ee-gcc2.96-realconv-lp7/cc1",
     ".work/toolchains/compiler-variants/ee-gcc2.9-991111": "tool:ee-gcc2.9-991111",
     ".work/toolchains/compiler-variants/ee-gcc2.9-991111/cc1": "tool:ee-gcc2.9-991111/cc1",
     # Tool id unchanged; since 2026-09-24 it is the nolabel release (reports/as-la29-vsqrt-nolabel.md),
@@ -77,7 +77,7 @@ TOOL_TOKENS = {
 }
 # The same tools named inside prose, where the sentence is the point.
 TOOL_PROSE = {
-    ".work/toolchains/ee-gcc2.96-realconv-lp7-fsv14-v1": "ee-gcc2.96-realconv-lp7",
+    ".work/toolchains/ee-gcc2.96-realconv-lp7-fsv16-v1": "ee-gcc2.96-realconv-lp7",
 }
 
 

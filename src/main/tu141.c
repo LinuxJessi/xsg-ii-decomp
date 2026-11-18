@@ -287,3 +287,19 @@ int cfeFileWrite(int fd, const void *buf, int size) {
 int cfeFileRead(int fd, void *buf, int size) {
     return sceRead(fd, buf, size);
 }
+
+/* The initial actor vector (0, 0, 1, 1) that cfeEvalRecordsInit copies into every entry. */
+const AlignedVector4 cfeActorInitialVector = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+/* The unit quad: four corners (-0.5, 0.5), (0.5, 0.5), (-0.5, -0.5), (0.5, -0.5), each with z 0 and w 1. */
+const CfeEntryCorners cfeUnitQuad = {
+    {
+        { -0.5f, 0.5f, 0.0f, 1.0f },
+        { 0.5f, 0.5f, 0.0f, 1.0f },
+        { -0.5f, -0.5f, 0.0f, 1.0f },
+        { 0.5f, -0.5f, 0.0f, 1.0f },
+    },
+};
+
+/* An 8-byte constant after the quad; no function in this file reads it. */
+const int D_0068D0C0[2] = { 9, 0 };

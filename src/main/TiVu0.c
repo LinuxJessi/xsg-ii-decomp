@@ -1,8 +1,8 @@
 #include "common.h"
 #include "main/tu026.h"
 
-extern char D_0068F5F0[];
-extern char tiVu0AssertFile[];
+extern const char D_0068F5F0[];
+extern const char tiVu0AssertFile[];
 
 /* Unconditional assert(0) at TiVu0.euc.c line 739: a fail-only path with no role shown. */
 void func_002933D0(void)
@@ -19,7 +19,7 @@ void func_002933F8(void)
 #include "shared.h"
 #include "main/TiXacAnimCurve.h"
 
-extern char D_0068F610[];
+extern const char D_0068F610[];
 extern char xacAssertFile[];
 
 extern f32 xacKeyU16ScaleA;
@@ -66,3 +66,10 @@ f32 xacGetKeyPayloadB(TiXacKey *key) {
         return 0.0f;
     }
 }
+
+const char D_0068F5F0[8] = "0";
+const char tiVu0AssertFile[24] = "../TiVu0.euc.c";
+const char D_0068F610[8] = "0";
+
+f32 xacKeyU16ScaleA = 0.0001f;
+f32 xacKeyU16ScaleB = 0.0001f;
