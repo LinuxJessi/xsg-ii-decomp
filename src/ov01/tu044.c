@@ -416,11 +416,46 @@ SbMessage *sbThreadDequeue(struct SbImageHeader *key, int value)
     return sbChainEntryGet(thread, index);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNameTableFind);
+/* The value of the image's name-table entry called name, or -1. */
+int sbNameTableFind(struct SbImageHeader *image, const char *name)
+{
+    SbNameEntry *entries;
+    char *base;
+    int count;
+    int index;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNameTableNameOf);
+    index = 0;
+    count = image->name_count;
+    base = (char *)image + image->name_offset;
+    entries = (SbNameEntry *)base;
+    for (; index < count; index++) {
+        if (strcmp(name, base + entries[index].name_offset) == 0) {
+            return entries[index].value;
+        }
+    }
+    return -1;
+}
 
-int sbNameTableFind(struct SbImageHeader *image, const char *name);
+/* The name of the image's name-table entry with this value, or 0. */
+char *sbNameTableNameOf(struct SbImageHeader *image, int value)
+{
+    SbNameEntry *entries;
+    char *base;
+    int count;
+    int index;
+
+    index = 0;
+    count = image->name_count;
+    base = (char *)image + image->name_offset;
+    entries = (SbNameEntry *)base;
+    for (; index < count; index++) {
+        if (value == entries[index].value) {
+            return base + entries[index].name_offset;
+        }
+    }
+    return 0;
+}
+
 int sbThreadEnqueue(struct SbImageHeader *key, int value, SbMessage *message, SbThread *sender);
 
 /* Enqueues a thread at the entry the image's name table gives for name; 0 when
