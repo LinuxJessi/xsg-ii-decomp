@@ -196,6 +196,7 @@ void sefResetSlotTable(void);
 int loadWaitPending(void);
 void sefReleaseWaitSlot(int key);
 void sefSetGateForId(int owner, int id);
+void sefSetGateDefault(int owner, int id);
 void xglCdWaitUntilIdle(void);
 
 int sefFlagTest(int mask);

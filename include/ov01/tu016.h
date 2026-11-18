@@ -17,5 +17,6 @@ int unitCmdRun(Ov01Object *object, int cmdId, int flip);
 /* The third argument is unused: unitCmdMoveChaJump and unitCmdMovePosJump (tu014) pass the move flag as the sibling run and hover calls do. */
 int unitCmdMoveJump(Ov01Object *object, int phase, int unusedFlag);
 int unitCmdHoverFade(Ov01Object *object, int cmdId, int flip);
+float unitDefArea(Ov01Object *object);
 
 #endif /* INCLUDE_OV01_TU016_H */

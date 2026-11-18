@@ -22,6 +22,7 @@
 #include "ov01/tu010.h"
 #include "ov01/tu011.h"
 #include "ov01/tu012.h"
+#include "ov01/tu016.h"
 #include "ov01/tu019.h"
 #include "ov01/tu017.h"
 #include "ov01/tu018.h"
@@ -34,6 +35,7 @@
 #include "ov01/tu038.h"
 #include "ov01/tu054.h"
 #include "ov01/tu066.h"
+#include "ov01/tu067.h"
 #include "ov01/tu068.h"
 #include "ov01/tu070.h"
 
@@ -48,12 +50,15 @@ extern struct FifoRing cmdFifo;   /* the fifo over the cmdList entries */
 
 /* The four-word payload of eventQueueAdd. */
 typedef struct EventQueueArgs {
-    int actions;                        /* +0x00: kind 3: the kind-4 records of the attack */
+    union {
+        int actions;                    /* kind 3: the kind-4 records of the attack */
+        Ov01Object *unit;               /* the commanding unit (cmdExecute) */
+    };                                  /* +0x00 */
     union {
         int tecIndex;                   /* the tec whose EP cost cmdStockRun charges */
         int hits;                       /* kind 3: the kind-5 records (targets) of the attack */
     };                                  /* +0x04 */
-    unsigned char unmodeled_08[0x4];
+    int pairIndex;                      /* +0x08: the command's pair record (CmdListBody.pairIndex, pairLinkGet) */
     Ov01Object *target;                 /* +0x0C: the partner / stocked unit of events 0x10 and 0x12 */
 } EventQueueArgs;
 
@@ -1838,6 +1843,123 @@ int ov01StreamBind(void)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96AA8);
+/*
+ * The pair technique events place three units: the commanding unit (args unit), its partner (args target) and the
+ * unit's partner object. Index 0 is the unit, 1 the partner, 2 the partner object: pairEventPos holds the spots
+ * func_00A96AA8 moves them to, pairSavedPos and pairSavedAngle the positions and facing angles it replaced, which
+ * func_00A96E38 puts back.
+ */
+extern DoublewordAlignedVector4 pairEventPos[3];
+extern DoublewordAlignedVector4 pairSavedPos[3];
+extern float pairSavedAngle[3];
+
+/* The unit key whose slot 0 is resumed for the pair techniques PAIR_SLOT_PAIR_A and PAIR_SLOT_PAIR_B (and paused
+ * again at the end). */
+#define PAIR_SLOT_UNIT_KEY 3
+#define PAIR_SLOT_PAIR_A 10
+#define PAIR_SLOT_PAIR_B 16
+/* The partner object key that stands at a fixed depth instead of -unitDefArea. */
+#define PAIR_FIXED_DEPTH_KEY 0x8C
+#define PAIR_FIXED_DEPTH -10.0f
+/* TecRecord.flags target bit 8 (all targets): such a technique leaves the partner object where it is. */
+#define TEC_TARGET_ALL 8
+
+/*
+ * EVENT_KIND_PAIR_BEGIN handler. Step 0 takes the pair's required level off both units, binds every unit again,
+ * hides the first monster slot, sets the default sef gate for the technique and starts the screen flash (returns
+ * 0). Step 1 counts ATTACK_FILL_FRAMES calls and, as the original does, falls through into step 2 on every call.
+ * Step 2 moves the partner, the unit and (unless the technique has TEC_TARGET_ALL) the unit's partner object to their
+ * pairEventPos spots, saving positions and angles, unbinds them, hides the first monster slot, shows the stream slot
+ * and returns 1.
+ * The positions are copied with __builtin_memcpy: a struct assignment from an array element moves the vector with
+ * ldl/ldr, and its stores keep the partner object's stats load from staying after them.
+ */
+int func_00A96AA8(EventQueueEntry *entry)
+{
+    struct MonsSlot **slots;
+    Ov01Object **units;
+    Ov01Object *object;
+    Ov01Object *other;
+    struct XenoActor *actor;
+    int tecIndex;
+    int pairIndex;
+    int count;
+    int i;
+
+    tecIndex = entry->data.args.tecIndex;
+    pairIndex = entry->data.args.pairIndex;
+    switch (eventStepStarted) {
+    case 0:
+        object = entry->data.args.unit;
+        unitLevelAdd(object, -pairLinkGet(pairIndex)->requiredLevel);
+        object = entry->data.args.target;
+        unitLevelAdd(object, -pairLinkGet(pairIndex)->requiredLevel);
+        count = unitTblGet(UNIT_SIDE_ALL, &units);
+        for (i = 0; i < count; i++) {
+            other = units[i];
+            if (other != 0) {
+                other->unit->drawFlags &= ~ACTOR_STATE_UNBOUND;
+                unitBindSetup(other);
+            }
+        }
+        monsActiveSlotsGet(&slots);
+        monsSlotHide(slots[0]);
+        sefSetGateDefault(0, tecRecordGet(tecIndex)->extent);
+        decoFlagsSetAll();
+        screenFlashStart();
+        attackFillWait = 0;
+        eventStepStarted++;
+        break;
+    case 1:
+        if (attackFillWait >= ATTACK_FILL_FRAMES) {
+            eventStepStarted = 2;
+        } else {
+            attackFillWait++;
+        }
+        /* fall through */
+    case 2:
+        object = entry->data.args.target;
+        actor = object->unit;
+        __builtin_memcpy(&pairSavedPos[1], &actor->position, sizeof(Vector4));
+        __builtin_memcpy(&actor->position, &pairEventPos[1], sizeof(Vector4));
+        pairSavedAngle[1] = actor->rotation.y;
+        actor->rotation.y = 3.1415927f;
+        unitUnbind(object);
+        if (object->stats->key == PAIR_SLOT_UNIT_KEY
+            && (pairIndex == PAIR_SLOT_PAIR_A || pairIndex == PAIR_SLOT_PAIR_B)) {
+            unitSlotResume(object, 0);
+        }
+        object = entry->data.args.unit;
+        actor = object->unit;
+        __builtin_memcpy(&pairSavedPos[0], &actor->position, sizeof(Vector4));
+        __builtin_memcpy(&actor->position, &pairEventPos[0], sizeof(Vector4));
+        pairSavedAngle[0] = actor->rotation.y;
+        actor->rotation.y = 3.1415927f;
+        unitUnbind(object);
+        if (object->stats->key == PAIR_SLOT_UNIT_KEY
+            && (pairIndex == PAIR_SLOT_PAIR_A || pairIndex == PAIR_SLOT_PAIR_B)) {
+            unitSlotResume(object, 0);
+        }
+        if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
+            object = object->partner;
+            actor = object->unit;
+            __builtin_memcpy(&pairSavedPos[2], &actor->position, sizeof(Vector4));
+            __builtin_memcpy(&actor->position, &pairEventPos[2], sizeof(Vector4));
+            if (object->stats->key == PAIR_FIXED_DEPTH_KEY) {
+                actor->position.z = PAIR_FIXED_DEPTH;
+            } else {
+                actor->position.z = -unitDefArea(object);
+            }
+            pairSavedAngle[2] = actor->rotation.y;
+            actor->rotation.y = 0.0f;
+            unitUnbind(object);
+        }
+        monsActiveSlotsGet(&slots);
+        monsSlotHide(slots[0]);
+        monsSlotShow(ov01StreamSlot);
+        return 1;
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96E38);
