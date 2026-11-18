@@ -1,11 +1,523 @@
 #include "common.h"
 #include "shared.h"
-#include "main/gifState.h"
-#include "main/sdv_183.h"
 #include "main/sef.h"
 #include "main/tu051.h"
-#include "main/tu152.h"
 #include "vu0_macro.h"
+#include "main/TiWindBase.h"
+#include "main/gifState.h"
+#include "main/sdv_181.h"
+#include "main/tu152.h"
+#include "main/sdv_033.h"
+
+/* A key sequence: keys holds rows of stride halfwords, the first of each row being the frame
+ * the row starts at (see the SDV_KEY_ values below). */
+typedef struct SdvSequence {
+    short *keys;            /* +0x00 */
+    short elapsed;          /* +0x04 frames since the sequence started */
+    signed char position;   /* +0x06 current row */
+    signed char stride;     /* +0x07 halfwords per row */
+} SdvSequence;
+
+#define SDV_KEY_END 0x400           /* frame value that ends the table */
+#define SDV_KEY_WAIT_HIT 0x1000     /* the row waits for the hit signal */
+#define SDV_KEY_FRAME_MASK 0xFFF    /* frame of a hit-wait row */
+
+/* Actor select bits of a key row: which actor of the effect request the row applies to. They live in the select
+   column, not the frame column, so LINK_1 and LINK_3 share their values with SDV_KEY_END and SDV_KEY_WAIT_HIT. */
+#define SDV_KEY_SOURCE 0x40         /* the request's source actor */
+#define SDV_KEY_TARGET 0x80         /* the request's target actor */
+#define SDV_KEY_LINK_1 0x400        /* the request's linked actors (links[0..2]) */
+#define SDV_KEY_LINK_2 0x800
+#define SDV_KEY_LINK_3 0x1000
+
+/* The effect request copied into sefRequestBuffer (0x40 bytes). */
+typedef struct SefRequest {
+    struct XenoActor *source;   /* +0x00 */
+    unsigned char unmodeled_04[4];
+    struct XenoActor *target;   /* +0x08 */
+    struct XenoActor *links[3]; /* +0x0C the actors SDV_KEY_LINK_1..3 select */
+    unsigned char unmodeled_18[0x24 - 0x18];
+    unsigned char waitHit;  /* +0x24 nonzero: hit-wait rows report their row */
+} SefRequest;
+
+/* Hit signal of the current effect step; sefExecStep clears it. */
+extern short D_0069DB82;
+
+/* Returns the current row when the sequence reaches it (and advances to the next row), else -1
+ * (sdvExecSeqTbl's key test in X1). */
+int sdvCheckSeqKey(SdvSequence *sequence)
+{
+    int result = -1;
+    short key = sequence->keys[sequence->position * sequence->stride];
+    SefRequest *request = (SefRequest *)sefGetRequestBuffer();
+    int hitFrame = key & SDV_KEY_FRAME_MASK;
+
+    if ((key & SDV_KEY_WAIT_HIT) && D_0069DB82 != 0 && sequence->elapsed >= hitFrame) {
+        if (request->waitHit == 0) {
+            sequence->position++;
+        } else {
+            result = sequence->position++;
+        }
+    } else if (sequence->elapsed >= key) {
+        result = sequence->position++;
+    }
+    return result;
+}
+
+/* Counts one frame (up to 0x3FF) and runs the key test; SDV_KEY_END when the sequence has ended
+ * (sdvExecSeqTbl in X1, which counts after the test). */
+int sdvExecSeqTbl(SdvSequence *sequence)
+{
+    if (sequence->keys[sequence->position * sequence->stride] == SDV_KEY_END) {
+        return SDV_KEY_END;
+    }
+    sequence->elapsed++;
+    if (sequence->elapsed >= 0x400) {
+        sequence->elapsed = 0x3FF;
+    }
+    return sdvCheckSeqKey(sequence);
+}
+
+/* The same key test on a row position kept by the caller and an elapsed frame count passed in;
+ * SDV_KEY_END when the sequence has ended (sdvProgressKey in X1). */
+int sdvProgressKey(short *keys, short *position, int stride, int elapsed)
+{
+    int result = -1;
+    int key = keys[*position * stride];
+    SefRequest *request = (SefRequest *)sefGetRequestBuffer();
+    int waitsForHit = key & SDV_KEY_WAIT_HIT;
+    int hitFrame = key & SDV_KEY_FRAME_MASK;
+
+    if (key == SDV_KEY_END) {
+        return SDV_KEY_END;
+    }
+    if (waitsForHit && D_0069DB82 != 0 && elapsed >= hitFrame) {
+        if (request->waitHit == 0) {
+            (*position)++;
+        } else {
+            result = (*position)++;
+        }
+    } else if (elapsed >= key) {
+        result = (*position)++;
+    }
+    return result;
+}
+
+/* Columns of an effect key row: the halfwords after the row's frame. */
+enum SdvEffectKeyColumn {
+    SDV_EFFECT_KIND = 1,        /* the MSe effect kind */
+    SDV_EFFECT_TARGET = 2,      /* SDV_KEY_TARGET plus the part the effect targets */
+    SDV_EFFECT_OWNER = 3,       /* SDV_KEY_SOURCE or SDV_KEY_LINK_n plus the part it is attached to */
+    SDV_EFFECT_OFFSET_X = 4,    /* offset from that actor, in thousandths */
+    SDV_EFFECT_OFFSET_Y = 5,
+    SDV_EFFECT_OFFSET_Z = 6
+};
+
+/* The 0x40-byte request MSeFire (ov01) copies into a new MSe effect object; kind picks the
+ * creator and effectId goes into the object's +0x4. Each actor comes with the part it is attached at. */
+typedef struct MSeRequest {
+    int kind;                   /* +0x00 */
+    struct XenoActor *owner;    /* +0x04 */
+    int ownerPart;              /* +0x08 */
+    struct XenoActor *link;     /* +0x0C */
+    int linkPart;               /* +0x10 */
+    unsigned char unmodeled_14[0x20 - 0x14];
+    Vector4 offset;             /* +0x20 */
+    struct XenoActor *target;   /* +0x30 */
+    int targetPart;             /* +0x34 */
+    int effectId;               /* +0x38 the effect record's id (sef_164 record +0x6C) */
+    unsigned char unmodeled_3c[0x40 - 0x3C];
+} MSeRequest;
+
+/* Clears a 0x40-byte request block: memset(buffer, 0, 0x40) (ov01 tu075.c). Every MSeRequest
+ * field the select path below leaves unassigned is therefore 0. */
+void func_00AAAEC8(void *buffer);
+void MSeFire(MSeRequest *request);
+
+/* Steps an effect key sequence and fires the MSe effect of the row it reaches, attached to
+ * the actors of the current effect request. */
+void sdvExecEffectSeq(SdvSequence *sequence, int effectId)
+{
+    MSeRequest fire;
+    DoublewordVector4 offset;
+    short *keys;
+    int row;
+    int index;
+    SefRequest *request;
+    int kind;
+    int targetSelect;
+    int ownerSelect;
+
+    if (sequence == 0 || sequence->keys == 0) {
+        return;
+    }
+    index = sdvExecSeqTbl(sequence);
+    if ((unsigned int)index >= 0x400) {
+        return;
+    }
+    request = (SefRequest *)sefGetRequestBuffer();
+    /* The row is read halfword by halfword: through a row pointer gcc keeps the row in keys' register. */
+    keys = sequence->keys;
+    row = index * sequence->stride;
+    kind = keys[row + SDV_EFFECT_KIND];
+    targetSelect = keys[row + SDV_EFFECT_TARGET];
+    ownerSelect = keys[row + SDV_EFFECT_OWNER];
+    offset.vector.x = keys[row + SDV_EFFECT_OFFSET_X];
+    offset.vector.y = keys[row + SDV_EFFECT_OFFSET_Y];
+    offset.vector.z = keys[row + SDV_EFFECT_OFFSET_Z];
+    offset.vector.w = 1.0f;
+    func_00AAAEC8(&fire);
+    Vu0SefScaleVectorXYZNI(&fire.offset, &offset.vector, 0.001f);
+    fire.kind = kind;
+    fire.effectId = effectId;
+    fire.owner = request->source;
+    /* A select is the actor bit plus the part index plus one; 0xA1 (part 0x1F), 0x80 and 0xA2 (part 1)
+     * and the bare SDV_KEY_SOURCE (part 1) are remapped. */
+    if (targetSelect == 0xA1) {
+        fire.target = request->target;
+        fire.targetPart = 0x1F;
+    } else if (targetSelect == SDV_KEY_TARGET || targetSelect == 0xA2) {
+        fire.target = request->target;
+        fire.targetPart = 1;
+    } else if (targetSelect & SDV_KEY_TARGET) {
+        fire.target = request->target;
+        fire.targetPart = targetSelect - (SDV_KEY_TARGET + 1);
+    }
+    if (ownerSelect & SDV_KEY_LINK_1) {
+        fire.link = request->links[0];
+        fire.linkPart = ownerSelect - (SDV_KEY_LINK_1 + 1);
+    } else if (ownerSelect & SDV_KEY_LINK_2) {
+        fire.link = request->links[1];
+        fire.linkPart = ownerSelect - (SDV_KEY_LINK_2 + 1);
+    } else if (ownerSelect & SDV_KEY_LINK_3) {
+        fire.link = request->links[2];
+        fire.linkPart = ownerSelect - (SDV_KEY_LINK_3 + 1);
+    } else if (ownerSelect == SDV_KEY_SOURCE) {
+        fire.ownerPart = 1;
+    } else if (ownerSelect & SDV_KEY_SOURCE) {
+        fire.ownerPart = ownerSelect - (SDV_KEY_SOURCE + 1);
+    }
+    MSeFire(&fire);
+}
+
+/* One row of a shadow key sequence. */
+typedef struct SdvShadowKey {
+    short frame;            /* +0x00 */
+    short flags;            /* +0x02 SDV_KEY_SOURCE / SDV_KEY_TARGET pick the actor */
+    signed char shadowCount; /* +0x04 */
+    signed char state;      /* +0x05 */
+    short velocity;         /* +0x06 tenths */
+    short shadowValue;      /* +0x08 hundredths */
+    short angle;            /* +0x0A hundredths */
+    short shadowValue3;     /* +0x0C hundredths */
+} SdvShadowKey;
+
+/* Steps a shadow key sequence and copies the row it reaches into the shadow fields of the
+ * request's source or target actor. */
+void sdvExecShadowSeq(SdvSequence *sequence)
+{
+    int index;
+    SefRequest *request;
+    SdvShadowKey *key;
+    struct XenoActor *actor;
+    int flags;
+    int state;
+    int shadowCount;
+    int shadowValue3Hundredths;
+    int velocityTenths;
+    int shadowValueHundredths;
+    int angleHundredths;
+    float velocity;
+    float shadowValue;
+    float angle;
+    float shadowValue3;
+
+    if (sequence == 0 || sequence->keys == 0) {
+        return;
+    }
+    index = sdvExecSeqTbl(sequence);
+    if ((unsigned int)index >= 0x400) {
+        return;
+    }
+    request = (SefRequest *)sefGetRequestBuffer();
+    actor = 0;
+    key = (SdvShadowKey *)(sequence->keys + index * sequence->stride);
+    /* The row is read first and scaled afterwards, shadowValue3 last: scaling each halfword as it
+     * is read makes gcc issue the angle product before the shadowValue one. */
+    shadowValue3Hundredths = key->shadowValue3;
+    velocityTenths = key->velocity;
+    shadowValueHundredths = key->shadowValue;
+    angleHundredths = key->angle;
+    flags = key->flags;
+    state = key->state;
+    shadowCount = key->shadowCount;
+    velocity = velocityTenths * 0.1f;
+    shadowValue = shadowValueHundredths * 0.01f;
+    angle = angleHundredths * 0.01f;
+    shadowValue3 = shadowValue3Hundredths * 0.01f;
+    if (flags & SDV_KEY_TARGET) {
+        actor = request->target;
+    } else if (flags & SDV_KEY_SOURCE) {
+        actor = request->source;
+    }
+    if (actor != 0) {
+        actor->moveAngle = angle;
+        actor->shadowValue = shadowValue;
+        actor->moveVelocity = velocity;
+        actor->shadowCount = shadowCount;
+        actor->shadowValue3 = shadowValue3;
+        actor->moveState = state;
+    }
+}
+
+/* One wind slot: the effect key and sub-key that own it. Four slots, the same
+ * count as the directional and point wind tables of TiWindBase. */
+typedef struct TiWindSlot {
+    int key;
+    unsigned short subkey;
+    short aux;
+} TiWindSlot;
+
+extern TiWindSlot tiWindSlots[];
+
+/* Stores key, subkey and aux in the first empty wind slot (key 0) and returns
+ * its index, or -1 when all four slots are in use. */
+int tiWindAcquireSlot(int key, unsigned short subkey, int aux)
+{
+    TiWindSlot *slot;
+    int i;
+
+    slot = tiWindSlots;
+    for (i = 0; i < 4; i++) {
+        if (slot->key == 0) {
+            slot->key = key;
+            slot->subkey = subkey;
+            slot->aux = aux;
+            return i;
+        }
+        slot++;
+    }
+    return -1;
+}
+
+/* Releases every wind slot owned by key and subkey (key 0 matches all slots):
+ * each one is disabled and cleared. */
+void tiWindReleaseSlots(int key, int subkey)
+{
+    TiWindSlot *slot;
+    int i;
+
+    slot = tiWindSlots;
+    for (i = 0; i < 4; i++) {
+        if (key == 0 || (slot->key == key && slot->subkey == (subkey & 0xFFFF))) {
+            tiWindDirSetEnabled(i, 0);
+            tiWindPointSetEnabled(i, 0);
+            slot->key = 0;
+            slot->subkey = 0;
+            slot->aux = 0;
+        }
+        slot++;
+    }
+}
+
+/* Index of the wind slot whose key and subkey match, or -1. */
+int tiWindFindSlot(int key, unsigned short subkey)
+{
+    TiWindSlot *slot;
+    int i;
+
+    slot = tiWindSlots;
+    for (i = 0; i < 4; i++) {
+        if (slot->key == key && slot->subkey == subkey) {
+            return i;
+        }
+        slot++;
+    }
+    return -1;
+}
+
+void *memset(void *s, int c, unsigned int n);
+
+/* Clears the first wind slot only (sizeof of one entry). */
+void tiWindClearFirstSlot(void)
+{
+    memset(tiWindSlots, 0, sizeof(tiWindSlots[0]));
+}
+
+/* Releases all wind slots and clears the first one. */
+void tiWindResetSlots(void)
+{
+    tiWindReleaseSlots(0, 0);
+    tiWindClearFirstSlot();
+}
+
+/* One row of a wind key table (11 halfwords). The two halfwords before the first row are the
+ * table's header: keys[-2] the speed and keys[-1] the wind kind (0 directional, else point).
+ * Lengths are in hundredths. */
+typedef struct TiWindKey {
+    short frame;            /* +0x00 */
+    short positionKind;     /* +0x02 sefGetPosition kind of the offset */
+    short offset[3];        /* +0x04 */
+    short rangeUpper;       /* +0x0A phase bounds */
+    short rangeLower;       /* +0x0C */
+    short radius;           /* +0x0E negative: global wind; 0 or TIWIND_RADIUS_OFF and beyond: wind off */
+    short direction[3];     /* +0x10 directional wind only */
+} TiWindKey;
+
+/* A vector built from key halfwords (see tiWindUpdateKeyframes for why it is a union). */
+typedef union TiWindVector {
+    AlignedVector4 vector;
+} TiWindVector;
+
+#define TIWIND_RADIUS_OFF 20000
+
+int sdvExecSeqTbl(SdvSequence *sequence);
+void sefGetPosition(Vector4 *destination, Vector4 *offset, int kind);
+void *MMathNormalizeVector2(void *destination, const void *source);
+
+/* One length of the key reached: the row's value, moved towards the next key by t (in 256ths of
+ * the interval) when the two keys differ (SDV_BLEND of sdvExecSpecial in X1). */
+#define TIWIND_BLEND(member) \
+    frame_key->member = (next->member == row->member ? row->member \
+        : (row->member + (((next->member - row->member) * t + 0x80) >> 8)) & 0xFFFF)
+
+/* Steps a wind key sequence and applies the key it reaches (interpolated towards the next key)
+ * to the wind slot of key and subkey, acquiring one when needed: the point or directional wind
+ * of the table's kind is placed, given its speed, range and radius and enabled; a radius of 0
+ * or TIWIND_RADIUS_OFF and beyond disables it and releases the slot.
+ * Two plain forms change the output: offset as a bare AlignedVector4 lets gcc load and convert
+ * the y and z halfwords before the x store (hence TiWindVector), and a bare
+ * `if (radius != 0 && radius < TIWIND_RADIUS_OFF)` gives slti/movz instead of the enabled flag's
+ * movn (declared per branch: one function-scope flag gave other registers). */
+void tiWindUpdateKeyframes(SdvSequence *sequence, int key, unsigned short subkey)
+{
+    TiWindKey current;
+    TiWindVector offset;
+    AlignedVector4 position;
+    TiWindKey *frame_key;
+    TiWindKey *row;
+    TiWindKey *next;
+    int index;
+    int found;
+    int kind;
+    int speed;
+    int elapsed;
+    int frame;
+    int nextFrame;
+    int t;
+    int slot;
+    int radius;
+
+    if (sequence == 0 || sequence->keys == 0) {
+        return;
+    }
+    index = sdvExecSeqTbl(sequence);
+    if (index < 0) {
+        index = sequence->position - 1;
+    }
+    if (index < 0) {
+        index = 0;
+    }
+    if (index == SDV_KEY_END) {
+        return;
+    }
+    found = 0;
+    frame_key = &current;
+    row = (TiWindKey *)(sequence->keys + index * sequence->stride);
+    next = row + 1;
+    elapsed = sequence->elapsed;
+    speed = sequence->keys[-2];
+    kind = sequence->keys[-1];
+    frame = row->frame;
+    if (frame != SDV_KEY_END && elapsed >= frame) {
+        nextFrame = next->frame;
+        if (nextFrame >= SDV_KEY_END) {
+            frame_key = row;
+            found = 1;
+        } else if (frame != nextFrame) {
+            t = ((elapsed - frame) << 8) / (nextFrame - frame);
+            TIWIND_BLEND(offset[0]);
+            TIWIND_BLEND(offset[1]);
+            TIWIND_BLEND(offset[2]);
+            TIWIND_BLEND(radius);
+            TIWIND_BLEND(rangeUpper);
+            TIWIND_BLEND(rangeLower);
+            TIWIND_BLEND(direction[0]);
+            TIWIND_BLEND(direction[1]);
+            TIWIND_BLEND(direction[2]);
+            found = 1;
+            frame_key->positionKind = row->positionKind;
+        }
+    }
+    if (found == 0) {
+        return;
+    }
+    slot = tiWindFindSlot(key, subkey);
+    if (slot < 0) {
+        slot = tiWindAcquireSlot(key, subkey, kind);
+        if (slot < 0) {
+            return;
+        }
+    }
+    offset.vector.x = frame_key->offset[0] * 0.01f;
+    offset.vector.y = frame_key->offset[1] * 0.01f;
+    offset.vector.z = frame_key->offset[2] * 0.01f;
+    offset.vector.w = 1.0f;
+    sefGetPosition(&position, &offset.vector, frame_key->positionKind);
+    if (kind != 0) {
+        int enabled;
+
+        tiWindDirSetEnabled(slot, 0);
+        tiWindPointSetPosition(slot, &position.x);
+        tiWindPointSetSpeed(slot, speed * 0.01f);
+        tiWindPointSetRange(slot, frame_key->rangeUpper * 0.01f, frame_key->rangeLower * 0.01f);
+        enabled = 0;
+        radius = frame_key->radius;
+        if (radius != 0 && radius < TIWIND_RADIUS_OFF) {
+            enabled = 1;
+        }
+        if (enabled) {
+            if (radius < 0) {
+                tiWindPointSetRadius(slot, 0.0f, 1);
+            } else {
+                tiWindPointSetRadius(slot, radius * 0.01f, 0);
+            }
+            tiWindPointSetEnabled(slot, 1);
+        } else {
+            tiWindPointSetEnabled(slot, 0);
+            tiWindReleaseSlots(key, subkey);
+        }
+    } else {
+        int enabled;
+
+        tiWindPointSetEnabled(slot, 0);
+        tiWindDirSetPosition(slot, &position.x);
+        offset.vector.x = frame_key->direction[0] * 0.01f;
+        offset.vector.y = frame_key->direction[1] * 0.01f;
+        offset.vector.z = frame_key->direction[2] * 0.01f;
+        offset.vector.w = 1.0f;
+        MMathNormalizeVector2(&offset.vector, &offset.vector);
+        tiWindDirSetDirection(slot, offset.vector.x, offset.vector.y, offset.vector.z);
+        tiWindDirSetSpeed(slot, speed * 0.01f);
+        tiWindDirSetRange(slot, frame_key->rangeUpper * 0.01f, frame_key->rangeLower * 0.01f);
+        enabled = 0;
+        radius = frame_key->radius;
+        if (radius != 0 && radius < TIWIND_RADIUS_OFF) {
+            enabled = 1;
+        }
+        if (enabled) {
+            if (radius < 0) {
+                tiWindDirSetRadius(slot, 0.0f, 1);
+            } else {
+                tiWindDirSetRadius(slot, radius * 0.01f, 0);
+            }
+            tiWindDirSetEnabled(slot, 1);
+        } else {
+            tiWindDirSetEnabled(slot, 0);
+            tiWindReleaseSlots(key, subkey);
+        }
+    }
+}
 
 void sdvClearSpecialWork(void);
 extern short _sdvSpecialBuf[8];
@@ -360,7 +872,6 @@ float sdvNearestAngle(float angle, float current)
     return current + delta;
 }
 
-#include "main/sdv_033.h"
 
 /* The track kinds sdvScheduleCamera passes to sdvProgressPrm. */
 #define SDV_TRACK_POSITION 0
@@ -680,7 +1191,7 @@ int sdvScheduleCamera(SdvCameraSchedule *schedule, int frame)
     return finished;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvTransOffset);
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvTransOffset);
 
 /* Reset: zeroes the slot flags and every special record, then gifStateClearModeValue. */
 void sdvResetSpecialWork(void)
@@ -761,10 +1272,10 @@ typedef struct SdvSpecialOwner {
 
 /* Frees the special slots an owner lists; a screen-effect record (kinds 10-15) with no key decrease, or of
    kind 13, also clears the gifState mode value. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvFreeSpecialSlots);
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvFreeSpecialSlots);
 
 /* Runs one special: its sequence step, slot setup, then the keys of each slot. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecSpecial);
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvExecSpecial);
 
 /* D_0069DBAC value while a battle runs: the clip matrix is used and boxes stay square. */
 #define SDV_BATTLE_MODE 0x1012F003
@@ -783,7 +1294,6 @@ extern short D_005E6D60[9];
 
 int sdvTransOffset(int *screen, int *offset, int part, int depth, float *scale, int argument, void *matrix);
 void nmlModelUseSubWindow(unsigned int index, int enabled);
-void *MMathNormalizeVector2(void *destination, const void *source);
 void sefApplyPartTransform(float *destination, float *source, int part);
 
 #define SDV_SET_COLOR(rgba, source) \
@@ -1126,7 +1636,7 @@ typedef struct SdvAlterRequest {
 } SdvAlterRequest;
 
 /* Builds an alter request from each event the sequence steps onto, then creates it through sdvCreateAlter. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvScheduleAlter);
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvScheduleAlter);
 
 
 /*
@@ -1168,7 +1678,7 @@ void sdvInitAlter(SdvAlter *alter)
 }
 
 /* Takes the first free alter record, stamps a serial and copies the request in. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvCreateAlter);
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvCreateAlter);
 
 /* Zeroes one alter record (same code as sdvInitAlter; the callers tell them apart). */
 void sdvDestroyAlter(SdvAlter *alter)
@@ -1211,13 +1721,13 @@ void sdvDestroyOwnerAlters(int owner)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", func_0026A7A0);
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", func_0026A7A0);
 
 /*
  * Advances one alter record by a frame: the lifetime and frame counters, the sef request, then either the
  * trailing ring (follow) or the next point of each part; a spent record is destroyed.
  */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvExecAlter);
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvExecAlter);
 
 extern void sceVif1PkAddCode(XglPacket *packet, unsigned int tag);
 extern void sceVif1PkCnt(XglPacket *packet, int count);
@@ -1280,7 +1790,7 @@ void sdvSetStripHeader(SdvStripHeader *header, int unused, int qwc, int primitiv
 }
 
 /* Draws one alter's key frames into the packet from xglPacketGetCurrent (sdvDrawAlter). */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_183", sdvDrawAlter);
+INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvDrawAlter);
 
 /* Zeroes all 49 alter records (sdvInitAlters). */
 void sdvInitAlters(void)

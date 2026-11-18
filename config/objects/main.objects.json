@@ -427,10 +427,10 @@
     {
      "c_split": false,
      "end": "0x005E6E70",
-     "ordinal": 183,
-     "piece": "sdv_183",
+     "ordinal": 181,
+     "piece": "sdv_181",
      "start": "0x005E6D60",
-     "tu": "sdv_183"
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -1258,10 +1258,10 @@
     {
      "c_split": false,
      "end": "0x0068C5F0",
-     "ordinal": 183,
-     "piece": "sdv_183",
+     "ordinal": 181,
+     "piece": "sdv_181",
      "start": "0x0068C530",
-     "tu": "sdv_183"
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -2048,27 +2048,11 @@
     },
     {
      "c_split": false,
-     "end": "0x0069B330",
-     "ordinal": 181,
-     "piece": "tu181",
-     "start": "0x0069B324",
-     "tu": "tu181"
-    },
-    {
-     "c_split": false,
-     "end": "0x0069B334",
-     "ordinal": 182,
-     "piece": "tu182",
-     "start": "0x0069B330",
-     "tu": "tu182"
-    },
-    {
-     "c_split": false,
      "end": "0x0069B3A8",
-     "ordinal": 183,
-     "piece": "sdv_183",
-     "start": "0x0069B334",
-     "tu": "sdv_183"
+     "ordinal": 181,
+     "piece": "sdv_181",
+     "start": "0x0069B324",
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -2640,10 +2624,10 @@
     {
      "c_split": false,
      "end": "0x0069DC48",
-     "ordinal": 183,
-     "piece": "sdv_183",
+     "ordinal": 181,
+     "piece": "sdv_181",
      "start": "0x0069DC38",
-     "tu": "sdv_183"
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -3445,19 +3429,11 @@
     },
     {
      "c_split": false,
-     "end": "0x00807EC0",
-     "ordinal": 182,
-     "piece": "tu182",
-     "start": "0x00807EA0",
-     "tu": "tu182"
-    },
-    {
-     "c_split": false,
      "end": "0x00831610",
-     "ordinal": 183,
-     "piece": "sdv_183",
-     "start": "0x00807EC0",
-     "tu": "sdv_183"
+     "ordinal": 181,
+     "piece": "sdv_181",
+     "start": "0x00807EA0",
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -3888,9 +3864,7 @@
   "tu178",
   "tu179",
   "sdv_180",
-  "tu181",
-  "tu182",
-  "sdv_183",
+  "sdv_181",
   "tu185",
   "sm_initilize",
   "tu187",
@@ -82231,9 +82205,9 @@
    "id": "main/tu181",
    "unit": "main",
    "ordinal": 181,
-   "name": "tu181",
-   "path": "src/main/tu181.c",
-   "scaffold_path": "scaffold/src/main/tu181.c",
+   "name": "sdv_181",
+   "path": "src/main/sdv_181.c",
+   "scaffold_path": "scaffold/src/main/sdv_181.c",
    "kind": "gcc",
    "mode": "c",
    "category": "game",
@@ -82280,7 +82254,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 5,
+    "of": 43,
     "migration_hints": [],
     "records": []
    },
@@ -82329,120 +82303,7 @@
      "va": "0x00267388",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c",
-    ".lit4": "asm"
-   },
-   "sections": {
-    ".lit4": {
-     "anchored": [
-      "0x0069b324",
-      "0x0069b32d"
-     ],
-     "bounds": [
-      "0x0069b321",
-      "0x0069b330"
-     ],
-     "end": "0x0069B330",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069B330",
-       "name": "tu181",
-       "start": "0x0069B324"
-      }
-     ],
-     "size": 12,
-     "splat_type": "lit4",
-     "start": "0x0069B324"
-    }
-   },
-   "text": {
-    "start": "0x00266f68",
-    "end": "0x002674a0",
-    "code_end": "0x0026749c",
-    "size": 1336,
-    "splat": "c",
-    "splat_range": [
-     "0x00266f68",
-     "0x002674a0"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "Source file created for the functions of this TU.",
-    "source": {
-     "kind": "file",
-     "path": "src/main/tu181.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu182",
-   "unit": "main",
-   "ordinal": 182,
-   "name": "tu182",
-   "path": "src/main/tu182.c",
-   "scaffold_path": "scaffold/src/main/tu182.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -2.04",
-    "precision of this score band on X1, held out: 0.231 (3/13)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "no name evidence",
-   "name_confidence": "none",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G8"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G8",
-    "g_basis": "1 gp-relative instructions in the code",
-    "g_confidence": "high",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 6,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
+    },
     {
      "binding": "GLOBAL",
      "name": "tiWindAcquireSlot",
@@ -82496,145 +82357,7 @@
      "va": "0x00267618",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c",
-    ".lit4": "asm",
-    ".bss": "asm"
-   },
-   "sections": {
-    ".lit4": {
-     "anchored": [
-      "0x0069b330",
-      "0x0069b331"
-     ],
-     "bounds": [
-      "0x0069b32d",
-      "0x0069b334"
-     ],
-     "end": "0x0069B334",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069B334",
-       "name": "tu182",
-       "start": "0x0069B330"
-      }
-     ],
-     "size": 4,
-     "splat_type": "lit4",
-     "start": "0x0069B330"
     },
-    ".bss": {
-     "anchored": [
-      "0x00807ea0",
-      "0x00807ea1"
-     ],
-     "bounds": [
-      "0x00807da1",
-      "0x00807ec0"
-     ],
-     "end": "0x00807EC0",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00807EC0",
-       "name": "tu182",
-       "start": "0x00807EA0"
-      }
-     ],
-     "size": 32,
-     "splat_type": "bss",
-     "start": "0x00807EA0"
-    }
-   },
-   "text": {
-    "start": "0x002674a0",
-    "end": "0x00267bb8",
-    "code_end": "0x00267bb8",
-    "size": 1816,
-    "splat": "c",
-    "splat_range": [
-     "0x002674a0",
-     "0x00267bb8"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
-    "source": {
-     "kind": "file",
-     "path": "src/main/tu182.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu183",
-   "unit": "main",
-   "ordinal": 183,
-   "name": "sdv_183",
-   "path": "src/main/sdv_183.c",
-   "scaffold_path": "scaffold/src/main/sdv_183.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -1.22",
-    "precision of this score band on X1, held out: 0.19 (19/100)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "X1 file of 2 homolog function(s)",
-   "name_confidence": "medium",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G8"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G8",
-    "g_basis": "41 gp-relative instructions in the code",
-    "g_confidence": "high",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 32,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
     {
      "binding": "GLOBAL",
      "name": "sdvSelectCamera",
@@ -82933,6 +82656,54 @@
     ".bss": "asm"
    },
    "sections": {
+    ".lit4": {
+     "anchored": [
+      "0x0069b324",
+      "0x0069b3a5"
+     ],
+     "bounds": [
+      "0x0069b321",
+      "0x0069b3a8"
+     ],
+     "end": "0x0069B3A8",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x0069B3A8",
+       "name": "sdv_181",
+       "start": "0x0069B324"
+      }
+     ],
+     "size": 132,
+     "splat_type": "lit4",
+     "start": "0x0069B324"
+    },
+    ".bss": {
+     "anchored": [
+      "0x00807ea0",
+      "0x00808cd1"
+     ],
+     "bounds": [
+      "0x00807da1",
+      "0x00831610"
+     ],
+     "end": "0x00831610",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x00831610",
+       "name": "sdv_181",
+       "start": "0x00807EA0"
+      }
+     ],
+     "size": 169840,
+     "splat_type": "bss",
+     "start": "0x00807EA0"
+    },
     ".data": {
      "anchored": [
       "0x005e6d60",
@@ -82949,7 +82720,7 @@
       {
        "c_split": false,
        "end": "0x005E6E70",
-       "name": "sdv_183",
+       "name": "sdv_181",
        "start": "0x005E6D60"
       }
      ],
@@ -82973,37 +82744,13 @@
       {
        "c_split": false,
        "end": "0x0068C5F0",
-       "name": "sdv_183",
+       "name": "sdv_181",
        "start": "0x0068C530"
       }
      ],
      "size": 192,
      "splat_type": "rodata",
      "start": "0x0068C530"
-    },
-    ".lit4": {
-     "anchored": [
-      "0x0069b334",
-      "0x0069b3a5"
-     ],
-     "bounds": [
-      "0x0069b331",
-      "0x0069b3a8"
-     ],
-     "end": "0x0069B3A8",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069B3A8",
-       "name": "sdv_183",
-       "start": "0x0069B334"
-      }
-     ],
-     "size": 116,
-     "splat_type": "lit4",
-     "start": "0x0069B334"
     },
     ".sdata": {
      "anchored": [
@@ -83021,57 +82768,33 @@
       {
        "c_split": false,
        "end": "0x0069DC48",
-       "name": "sdv_183",
+       "name": "sdv_181",
        "start": "0x0069DC38"
       }
      ],
      "size": 16,
      "splat_type": "sdata",
      "start": "0x0069DC38"
-    },
-    ".bss": {
-     "anchored": [
-      "0x00807ec0",
-      "0x00808cd1"
-     ],
-     "bounds": [
-      "0x00807ea1",
-      "0x00831610"
-     ],
-     "end": "0x00831610",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00831610",
-       "name": "sdv_183",
-       "start": "0x00807EC0"
-      }
-     ],
-     "size": 169808,
-     "splat_type": "bss",
-     "start": "0x00807EC0"
     }
    },
    "text": {
-    "start": "0x00267bb8",
+    "start": "0x00266f68",
     "end": "0x0026bc28",
     "code_end": "0x0026bc24",
-    "size": 16496,
+    "size": 19648,
     "splat": "c",
     "splat_range": [
-     "0x00267bb8",
+     "0x00266f68",
      "0x0026bc28"
     ],
     "note": null
    },
    "import": {
     "mode": "c",
-    "note": "X1 C under express order (user 2026-11-05)",
+    "note": "Source file created for the functions of this TU.; joined tu181, tu182, sdv_183 into sdv_181.c (Opok, PR review 2026-11-17: the callee compiled earlier in the file)",
     "source": {
      "kind": "file",
-     "path": "src/main/sdv_183.c",
+     "path": "src/main/sdv_181.c",
      "include_dirs": [
       "include"
      ]

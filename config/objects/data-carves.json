@@ -111213,13 +111213,9 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu181.o"
+      "object": "build/main/build/c/sdv_181.o"
      }
-    }
-   ]
-  },
-  "main/tu182": {
-   ".lit4": [
+    },
     {
      "range": [
       "0x0069b330",
@@ -111239,13 +111235,9 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu182.o"
+      "object": "build/main/build/c/sdv_181.o"
      }
-    }
-   ]
-  },
-  "main/tu183": {
-   ".lit4": [
+    },
     {
      "range": [
       "0x0069b334",
@@ -111272,7 +111264,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/sdv_183.o"
+      "object": "build/main/build/c/sdv_181.o"
      }
     },
     {
@@ -111306,7 +111298,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/sdv_183.o"
+      "object": "build/main/build/c/sdv_181.o"
      }
     }
    ],
@@ -111330,7 +111322,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/sdv_183.o"
+      "object": "build/main/build/c/sdv_181.o"
      }
     },
     {
@@ -111353,7 +111345,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/sdv_183.o"
+      "object": "build/main/build/c/sdv_181.o"
      }
     }
    ]
