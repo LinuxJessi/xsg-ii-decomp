@@ -1319,6 +1319,8 @@
    "0x00ac2458": "tgtIdx",
    "0x00ac245c": "tgtNum",
    "0x00ac3af8": "attackFillWait",
+   "0x00ac3b0c": "attackLastActions",
+   "0x00ac3b10": "attackLastHits",
    "0x00ac3b14": "attackStep",
    "0x00ac3c04": "itemMenuChoice",
    "0x00ac3c08": "tecMenuChoice",

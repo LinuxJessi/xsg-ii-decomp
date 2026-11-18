@@ -198,7 +198,7 @@ int unitCmdMoveRamp(Ov01Object *object, Ov01Command *step)
         unitSetPhase(object, (unitCurrentPhase(object) ^ 0x22) == 0 ? 0x24 : 0x27);
         unitEffectStart(object, 310, 20);
         seObjectVoiceStartDefault(object, 14);
-        if ((object->flags & 0x20) != 0) {
+        if ((object->flags & UNIT_FLAG_SCRIPT_EVENTS) != 0) {
             memset(&message, 0, sizeof(message));
             message.unit = object;
             func_00A9BC20(UNIT_SCRIPT_KIND_PAIR, &message);

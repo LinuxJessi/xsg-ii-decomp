@@ -13,6 +13,8 @@ void objMotionCopyLookup(Ov01Object *object, int action);
 float unitPoseRamp(int index, int reverse);
 int func_00A86FF0(Ov01Object *object);
 void unitCmdDstSet(Ov01Object *object, int cmdId, int mode);
+void unitSlotsClear(Ov01Object *object, int rowKey);
+void func_00A86F20(Ov01Object *object);
 int unitCmdRun(Ov01Object *object, int cmdId, int flip);
 /* The third argument is unused: unitCmdMoveChaJump and unitCmdMovePosJump (tu014) pass the move flag as the sibling run and hover calls do. */
 int unitCmdMoveJump(Ov01Object *object, int phase, int unusedFlag);

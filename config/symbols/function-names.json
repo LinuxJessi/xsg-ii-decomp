@@ -3333,6 +3333,7 @@
    "0x00a92e30": "attackQueue",
    "0x00a93168": "unitCmdRequestQueue",
    "0x00a93710": "eventUnitCommand",
+   "0x00a938a0": "eventAttackRun",
    "0x00a93b70": "unitsMarkUninvolved",
    "0x00a946c0": "attackSpecialStep",
    "0x00a94d28": "unitDataBoxDrop",

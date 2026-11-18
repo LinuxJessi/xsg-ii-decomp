@@ -24,6 +24,7 @@
 #include "ov01/tu012.h"
 #include "ov01/tu016.h"
 #include "ov01/tu019.h"
+#include "ov01/tu016.h"
 #include "ov01/tu017.h"
 #include "ov01/tu018.h"
 #include "ov01/tu020.h"
@@ -44,6 +45,7 @@
 #include "ov01/tu067.h"
 #include "ov01/tu068.h"
 #include "ov01/tu070.h"
+#include "ov01/tu071.h"
 
 extern char cmdList[];   /* cmdList: 0x20-byte entries, unit then command body */
 extern struct FifoRing cmdFifo;   /* the fifo over the cmdList entries */
@@ -86,7 +88,7 @@ typedef struct EventQueueEntry {
 /* Record kinds by their handler in eventQueueHandlers (the kinds the code here queues). */
 enum {
     EVENT_KIND_WAIT_UNIT_QUEUE = 2,     /* eventWaitUnitQueue */
-    EVENT_KIND_ATTACK = 3,              /* func_00A938A0: shows the attack (unitsMarkUninvolved) */
+    EVENT_KIND_ATTACK = 3,              /* eventAttackRun: shows the attack (unitsMarkUninvolved) */
     EVENT_KIND_LOADS_IDLE = 7,          /* ov01LoadsIdle */
     EVENT_KIND_STREAM_OPEN = 14,        /* ov01StreamOpen */
     EVENT_KIND_STREAM_BIND = 15,        /* ov01StreamBind */
@@ -699,7 +701,120 @@ void eventWaitUnitQueue(struct EventWaitRecord *record) {
     unitQueueIsEmpty(record->object);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A938A0);
+/* HitRecord.hitMode.kind: no hit (no damage, nothing inflicted), and the hits whose effect carries the technique's
+ * actionBits (hit-point damage). */
+#define HIT_KIND_NONE 0
+#define HIT_KIND_PLAIN 1
+/* The flags byte of HitRecord.hitMode (bits 8 to 15): bit 8 taken, bit 9 blocked. */
+#define HIT_FLAG_TAKEN 0x1
+#define HIT_FLAG_BLOCKED 0x2
+/* The script message of a hit (func_00A9BC20, words[1]): the hit's flags byte, and this bit for a hit of kind
+ * HIT_KIND_NONE. */
+#define SCRIPT_HIT_NONE 0x40
+/* TecRecord.gateFlag of the techniques that show the attacker's child TEC_GATE_CHILD for the attack
+ * (unitSlotResume) and hide it again at the end (unitSlotPause). */
+#define TEC_GATE_SHOW_CHILD 4
+#define TEC_GATE_CHILD 2
+
+extern int attackStep;
+/* The action and hit counts of the last attack event that finished. */
+extern int attackLastActions;
+extern int attackLastHits;
+void func_00A95268(EventQueueEntry *event);
+void func_00A95810(struct AttackCommand *command);
+int func_00A93D50(struct AttackCommand *command, struct HitRecord *hit);
+void unitsMarkUninvolved(int actions, int hits);
+void func_00A93CF0(void);
+void unitSlotResume(Ov01Object *object, int index);
+void unitSlotPause(Ov01Object *object, int index);
+int func_00A94260(EventQueueEntry *entry, struct AttackCommand *command);
+int func_00A94500(EventQueueEntry *entry, struct AttackCommand *command);
+int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command);
+
+/*
+ * The EVENT_KIND_ATTACK handler (eventQueueHandlers). The first call (D_00AC3AFC clear; attackQueue sets it for a
+ * transform) starts the effects, the units' stats and the action stream and marks the uninvolved units, and returns
+ * 0. The later calls run each action: actions with hitFlags bit 0 through func_00A94500 once and attackSpecialStep
+ * until done, the others show their hits (func_00A94260) and free their effect key. Once all are done the hit
+ * targets get their flags cleared and their script message, and 1 is returned.
+ */
+int eventAttackRun(EventQueueEntry *entry)
+{
+    UnitScriptPairEvent message;
+    struct AttackCommand *command;
+    struct HitRecord *hit;
+    int actions;
+    int hits;
+    int done;
+    int i;
+    int mode;
+    int flag;
+
+    done = 0;
+    actions = entry->data.args.actions;
+    hits = entry->data.args.hits;
+    if (D_00AC3AFC == 0) {
+        func_00A95268(entry);
+        for (i = 0; i < actions; i++) {
+            func_00A95608(eventQueueFindKind4(i)->data.attack.attacker);
+        }
+        command = &eventQueueFindKind4(0)->data.attack;
+        func_00AA91B8(command->attacker, command->actionIdx);
+        unitsMarkUninvolved(actions, hits);
+        if (tecRecordGet(command->actionIdx)->gateFlag == TEC_GATE_SHOW_CHILD) {
+            unitSlotResume(command->attacker, TEC_GATE_CHILD);
+        }
+        D_00AC3AFC = 1;
+        return 0;
+    }
+    for (i = 0; i < actions; i++) {
+        command = &eventQueueFindKind4(i)->data.attack;
+        func_00A95810(command);
+        if (tecRecordGet(command->actionIdx)->hitFlags & 1) {
+            if (eventStepStarted == 0) {
+                if (func_00A94500(entry, command) != 0) {
+                    eventStepStarted = 1;
+                    attackStep = 0;
+                }
+            } else {
+                done += attackSpecialStep(entry, command);
+            }
+        } else {
+            func_00A94260(entry, command);
+            done += func_00A93288(command);
+        }
+    }
+    if (done < actions) {
+        return 0;
+    }
+    for (i = 0; i < actions; i++) {
+        command = &eventQueueFindKind4(i)->data.attack;
+        unitSlotsClear(command->attacker, command->actionIdx);
+    }
+    command = &eventQueueFindKind4(0)->data.attack;
+    for (i = 0; i < hits; i++) {
+        hit = &eventQueueFindKind5(i)->data.kind5;
+        func_00A86F20(hit->target);
+        if (hit->target->flags & UNIT_FLAG_SCRIPT_EVENTS) {
+            message.unit = hit->target;
+            command = &eventQueueFindKind4(0)->data.attack;
+            message.other = command->attacker;
+            message.words[0] = command->actionIdx;
+            mode = hit->hitMode.word;
+            flag = (mode & 0xFF) != HIT_KIND_NONE ? 0 : SCRIPT_HIT_NONE;
+            message.words[1] = ((mode >> 8) & 0xFF) | flag;
+            func_00A9BC20(UNIT_SCRIPT_KIND_PAIR, &message);
+        }
+        if (tecRecordGet(command->actionIdx)->gateFlag == TEC_GATE_SHOW_CHILD) {
+            unitSlotPause(command->attacker, TEC_GATE_CHILD);
+        }
+        func_00A93D50(command, hit);
+    }
+    attackLastActions = actions;
+    attackLastHits = hits;
+    func_00A93CF0();
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", unitsMarkUninvolved);
 
@@ -883,13 +998,6 @@ int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit) {
     return 1;
 }
 
-/* HitRecord.hitMode.kind: no hit (no damage, nothing inflicted), and the hits whose effect carries the technique's
- * actionBits (hit-point damage). */
-#define HIT_KIND_NONE 0
-#define HIT_KIND_PLAIN 1
-/* The flags byte of HitRecord.hitMode (bits 8 to 15): bit 8 taken, bit 9 blocked. */
-#define HIT_FLAG_TAKEN 0x1
-#define HIT_FLAG_BLOCKED 0x2
 /* Bit of the actor's sef entry flags (sefGetEntryFlags) that lets func_00A94260 show the hit panels. */
 #define SEF_ENTRY_SHOW_HIT 0x4
 /* The hit effects func_00A94260 starts on a target: group 0x136, the low key per step state and for a taken hit. */
@@ -1067,8 +1175,8 @@ enum {
 };
 #define ATTACK_FILL_FRAMES 3
 
-/* The percent chance of the target's first drop for the two stealing actions (unitDataBoxDrop): 0x2C9 takes it
- * half the time, 0x2F6 always (else the second drop). */
+/* The percent chance of the target's first drop for the two stealing actions (unitDataBoxDrop): the steal takes it
+ * half the time, the status steal always (else the second drop). */
 #define STEAL_CHANCE_HALF 50
 #define STEAL_CHANCE_SURE 100
 
