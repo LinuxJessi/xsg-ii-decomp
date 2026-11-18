@@ -615,7 +615,6 @@ int unitCmdPlayVoice(Ov01Object *object, Ov01Command *step) {
     return 0;
 }
 
-int func_00A95540(void *object, int a, int b);
 int unitRemove(Ov01Object *object);
 void sefReleaseWaitSlot(int key);
 int handleFree(s16 handle);

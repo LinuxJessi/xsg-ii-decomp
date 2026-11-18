@@ -1269,7 +1269,24 @@ void unitEffectStart(Ov01Object *object, int keyHigh, int keyLow)
     sefStartEffectDefault(&request);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95540);
+/* Party slot keys 11..15 (the slots with linkedSlots) start their effects in mode 3, the others in mode 2. */
+#define EFFECT_KEY_MODE3_FIRST 11
+#define EFFECT_KEY_MODE3_COUNT 5
+
+/* Starts effect (keyHigh, keyLow) on the unit's actor, in mode 3 for unit keys 11..15, else 2. */
+void func_00A95540(Ov01Object *object, int keyHigh, int keyLow)
+{
+    struct EffectRequest request;
+    int mode;
+
+    memset(&request, 0, sizeof(request));
+    mode = ((unsigned int)(object->stats->keyUnsigned - EFFECT_KEY_MODE3_FIRST) < EFFECT_KEY_MODE3_COUNT) ? 3 : 2;
+    request.key = (keyHigh << 0xC) | keyLow;
+    request.head = object->unit;
+    request.mode = mode;
+    request.target = object->unit;
+    sefStartEffectDefault(&request);
+}
 
 void func_00A955C8(Ov01Object *object) {
     sefApplyRecordMode(object->unit, (object->stats->sequenceIndex << 0xc) | 8, 3);
