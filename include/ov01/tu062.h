@@ -14,7 +14,6 @@ enum {
     MENU_STAT_PANEL_TAKEN_BONUS = 4,    /* hitMode bit 8 after calcCritDamage's bonus roll */
     MENU_STAT_PANEL_BACK_ATTACK = 6     /* HitRecord.backAttack */
 };
-void menuStatPanelNew(int kind);
 /* Opens the stat panel of a step state (1 to 3, ActStepCounter.stepState). */
 void func_00AA76F8(int stepState);
 

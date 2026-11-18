@@ -303,7 +303,6 @@ void func_00A92DF0(struct AttackCommand *owner, struct Ov01Object *value) {
     attackQueue(owner, value, tecRecordGet(owner->actionIdx));
 }
 
-void *memset(void *destination, int value, unsigned int count);
 struct Ov01Object *tgtFindNext(void);
 signed char unitRecordStateGet(struct Ov01Object *unit, int index);
 int actionTransformSlotGet(int id);
@@ -1114,7 +1113,6 @@ enum {
 
 void unitStatusTextShow(Ov01Object *unit);
 void unitTransformBegin(Ov01Object *unit, int action);
-int actionTransformSlotGet(int id);
 
 /*
  * Resolves the special action of command (an attack event, entry) on the first hit's target. A command that is no
