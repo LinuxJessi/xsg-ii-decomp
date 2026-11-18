@@ -4,6 +4,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/sef.h"
+#include "main/tu124.h"
 #include "ov01/tu001.h"
 #include "ov01/tu017.h"
 #include "ov01/tu033.h"
@@ -426,7 +427,7 @@ struct MsgObject {
     void (*draw)(struct MsgObject *object);     /* +0x08: none */
     int ref_count;                              /* +0x0C: frames the message stays (0: until its voice is done) */
     int mode;                                   /* +0x10: MSG_MODE_VOICE when ref_count was 0 */
-    int handle;                                 /* +0x14: the text entry (textEntryAlloc) */
+    TextEntry *handle;                          /* +0x14: the text entry (textEntryAlloc) */
 };
 
 /* MsgObject.mode of a message that stays until its voice is done. */
@@ -448,7 +449,7 @@ char *tableStringGet(int index, int mode)
 
 /* Message globals: msgPages is the text page list {text, 0} that msgPutObject passes to textEntryAlloc; msgBusy
  * is the busy flag (1 while a message is outstanding). */
-extern char *msgPages[2];
+extern unsigned char *msgPages[2];
 extern int msgBusy;
 
 /* Clears the message request block and the busy flag. */
@@ -755,15 +756,35 @@ int tecParaFieldGet(int index, int field)
 
 /* msgPutObject (core of native msgPut): makes a MsgObject from ov01TaskClaim, installs msgObjRelease as its
  * release callback, submits the request block through textEntryAlloc and sets the busy flag. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", msgPutObject);
+void msgObjRelease(struct MsgObject *object);
 
-u8 textEntryPlayVoice(void *entry);
-void objRemove(int handle);
+struct MsgObject *msgPutObject(int x, int y, char *text, int frames, int width, int height)
+{
+    struct MsgObject *object;
+
+    object = ov01TaskClaim();
+    if (object == 0) {
+        return 0;
+    }
+    object->update = msgObjRelease;
+    object->ref_count = frames;
+    object->draw = 0;
+    if (frames == 0) {
+        object->mode = MSG_MODE_VOICE;
+    } else {
+        object->mode = 0;
+    }
+    msgPages[0] = (unsigned char *)text; /* text entry pages are unsigned char (tu124) */
+    msgPages[1] = 0;
+    object->handle = textEntryAlloc(x, y, width, height, 0, msgPages);
+    msgBusy = 1;
+    return object;
+}
 
 /* Release callback of a MsgObject (stored at +0x4 by msgPutObject). A mode-1 object is freed when
  * textEntryPlayVoice reports its handle done; otherwise the reference count is dropped. The busy flag follows. */
 void msgObjRelease(struct MsgObject *object) {
-    int handle;
+    TextEntry *handle;
     int remaining;
     int remove;
 

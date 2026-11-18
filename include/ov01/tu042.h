@@ -3,6 +3,12 @@
 
 /* Functions of src/ov01/tu042.c that other files call. */
 
+/* The message task record msgPutObject returns (defined in tu042.c). */
+struct MsgObject;
+
+/* Shows text at (x, y) in a width x height box for frames frames (0: until its voice is done). */
+struct MsgObject *msgPutObject(int x, int y, char *text, int frames, int width, int height);
+
 /* Effect request block sent to the main-side effect queue (sefStartEffectDefault /
  * sefStartEffectWithValue); the senders clear it first. */
 struct EffectRequest {

@@ -50,13 +50,11 @@ int VPadSet(SbThread *call)
 
 #include "shared.h"
 
-int msgPutObject(int, int, int, int, int, int);
-
 int msgPut(SbThread *call)
 {
     int index;
     int slot;
-    int key;
+    char *text;
     int posX;
     int posY;
     int size;
@@ -81,10 +79,10 @@ int msgPut(SbThread *call)
     if (sizeIsGiven) {
         size = vmArgGet(call, 6);
     }
-    key = vmKeyedEntryGet(call, vmArgGet(call, 3));
+    text = (char *)vmKeyedEntryGet(call, vmArgGet(call, 3));
     index = vmArgGet(call, 1);
     slot = vmArgGet(call, 2);
-    msgPutObject(index, slot, key, posX, posY, size);
+    msgPutObject(index, slot, text, posX, posY, size);
     return 1;
 }
 

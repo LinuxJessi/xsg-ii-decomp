@@ -965,7 +965,6 @@ extern char itemPickTextEnd[];
 void dataBoxIncCategory1(int item);
 char *strcpy(char *destination, const char *source);
 char *strcat(char *destination, const char *source);
-void msgPutObject(int index, int x, char *text, int y, int width, int size);
 
 /* itemRandomPick: rnd() picks one item from four weighted groups of itemPickGroups;
  * the item is added to the data box and its name is shown. */
