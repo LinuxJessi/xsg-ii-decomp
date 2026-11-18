@@ -41,7 +41,7 @@ void *memset(void *s, int c, unsigned int n);
 void unitScriptEventSend(int selector, void *object);
 void tgtSelectActivate(void);
 void tgtSelectBegin(void);
-void tgtSelectCursor(int inputHandled);
+int tgtSelectCursor(int inputHandled);
 void tgtSelectExecute(void);
 int tgtSelectStatusUpdate(void);
 int tgtSelectPadInput(void);
@@ -242,7 +242,34 @@ void tgtSelectActivate(void)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu035", tgtSelectCursor);
+int tgtSelectAuto(Ov01Object *object);
+int tgtSelectManual(Ov01Object *object);
+
+/* Candidate flag that lets the cursor stage confirm on its own (tgtSelectAuto). */
+#define TGT_OBJECT_AUTO 0x20
+/* Pad bits that flip the side toggle (L2 and L1). */
+#define TGT_SIDE_TOGGLE_PAD 0x5
+
+/* Stage 4: an automatic candidate confirms once tgtSelectAuto agrees; otherwise, unless the input was already
+ * handled, L1/L2 flip the side toggle and tgtSelectManual decides. Declared int although it returns no value:
+ * the original does not tail-call tgtSelectConfirm, which gcc only does for a void function here. */
+int tgtSelectCursor(int inputHandled)
+{
+    BattleState *state = &tgtSelectState;
+
+    if (state->current->flags & TGT_OBJECT_AUTO) {
+        if (tgtSelectAuto(state->current) != 0) {
+            tgtSelectConfirm(state->current);
+        }
+    } else if (inputHandled != 1) {
+        if (dataPadRead(1) & TGT_SIDE_TOGGLE_PAD) {
+            state->sideToggle = (state->sideToggle + 1) & 1;
+        }
+        if (tgtSelectManual(state->current) != 0) {
+            tgtSelectConfirm(state->current);
+        }
+    }
+}
 
 /*
  * Confirms object: it becomes last_object and the execute stage (flag 8) is armed. If the current
