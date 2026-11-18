@@ -538,8 +538,8 @@ typedef struct SdvSpecialKey {
     short z;                  /* +0x0C */
     short width;              /* +0x0E */
     short height;             /* +0x10 */
-    short param12;            /* +0x12 */
-    short param14;            /* +0x14 */
+    short subWindow2;         /* +0x12 sub-window 2 value (kind 11: x0.005 into sub-window 3) */
+    short subWindow3;         /* +0x14 sub-window 3 value (kind 11: x0.005 into sub-window 1) */
     short intensity;          /* +0x16 */
     unsigned short decrease;  /* +0x18 */
 } SdvSpecialKey;
@@ -1457,7 +1457,7 @@ void sdvDrawSpecial(SdvSpecial *special)
             offset[2] = key->z;
             Vu0SetOrigin(vector);
             scale.f[0] = key->height * 0.005f;
-            scale.f[1] = key->param12 * 0.005f;
+            scale.f[1] = key->subWindow2 * 0.005f;
             modeSet = (record->flags >> SDV_FLAG_MODE_SET_SHIFT) & 1;
             if (record->decreaseWait > 0 && (modeSet == 0 || key->decrease != 0)) {
                 gifStateSetDecrease(key->decrease * (1.0f / 256.0f));
@@ -1479,13 +1479,13 @@ void sdvDrawSpecial(SdvSpecial *special)
             if (kind == 11 && record->table->part != 8) {
                 nmlModelUseSubWindow(2, scale.f[0]);
                 nmlModelUseSubWindow(3, scale.f[1]);
-                scale.f[0] = key->param14 * 0.005f;
+                scale.f[0] = key->subWindow3 * 0.005f;
                 sdvTransOffset(screen, offset, record->table->part, key->depth, vector, argument, 0);
                 nmlModelUseSubWindow(1, scale.f[0]);
             } else {
                 nmlModelUseSubWindow(1, key->height);
-                nmlModelUseSubWindow(2, key->param12);
-                nmlModelUseSubWindow(3, key->param14);
+                nmlModelUseSubWindow(2, key->subWindow2);
+                nmlModelUseSubWindow(3, key->subWindow3);
             }
             if (kind == 12) {
                 signed char *direction = (signed char *)key->color;

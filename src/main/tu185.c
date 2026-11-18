@@ -1013,17 +1013,12 @@ void sefSpawnKinds5To7(ResourceSlot *slot, int index) {
     }
 }
 
-/* velocity = target - position (xyz): Vu0SefSubVectorXYZ with the position vector also named as the memory the
-   asm reads (an extra "m" operand; the instructions read it through the register operand). Plain forms compiled
-   in all three spawners that use it (sefSpawnKinds8To10, 22Up, 14To16): Vu0SefSubVectorXYZ with
-   &entry->drift.position and no position local, as sefSpawnKinds11To13 and 17To19 write it; the same with the
-   local kept; the local also used for the position.y/w stores; params computed before frame; row inlined. Also
-   tried in sefSpawnKinds8To10: a static inline function for the asm, a const params row, the position local
-   declared before params or in the loop body, position set after the ring store or after the first
-   sefGetRandomScaledDirection call, a SefDriftParticle pointer instead of the union entry, a velocity pointer local,
-   params set only before the loop. Each swaps two callee-saved registers (the parameter row takes $17/$18 that
-   the original gives the position pointer, and the other way round, fd 191/212, 193/214, 193/214) or does
-   worse; only the extra operand gives the original allocation. */
+/* velocity = target - position (xyz). The "m" operand is an input the instructions never read (they go through
+   the register operands); it is there only so that ee-gcc gives the position pointer the registers the original
+   uses ($17/$18; without it the parameter row takes them). The three spawners that use it keep the position in a
+   local; the plain Vu0SefSubVectorXYZ forms, a const or reordered local, the local also used for the position
+   stores, and several other lifetimes compiled to the swapped allocation in sefSpawnKinds8To10, 22Up and
+   14To16. */
 #define SefVelocityTowards(velocity, target, position) \
     __asm__ __volatile__( \
         "lqc2 vf1, 0(%1)\n" \
