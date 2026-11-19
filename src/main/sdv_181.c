@@ -1801,11 +1801,11 @@ void sdvDrawSpecial(SdvSpecial *special)
 /* The seven words of an sef request: sdvExecAlter copies them into the sef request buffer and hands them to
    sefLoadRequestBuffer. */
 typedef struct SdvSefRequest {
-    /* +0x00 the actor of the request (SdvRequestActor, sef.c's SefActor view); the one-member union (alias set 0)
+    /* +0x00 the actor of the request (struct XenoActor); the one-member union (alias set 0)
        keeps sdvExecAlter's seven word copies
        in load/store order */
     union {
-        struct SdvRequestActor *actor;
+        struct XenoActor *actor;
     } target;
     int params[6];                      /* +0x04 */
 } SdvSefRequest;
@@ -1873,21 +1873,6 @@ typedef struct SdvAlterEvent {
     short minDelta;               /* +0x34 in 1/1000 */
 } SdvAlterEvent;
 
-/* One image list item (as sef.c declares it). */
-typedef struct SefImageItem {
-    void *data;                                      /* +0x00 */
-    unsigned char unmodeled_004[0x0c - 0x04];
-    unsigned short resourceKind;                     /* +0x0c */
-    unsigned char unmodeled_00e[0x12 - 0x0e];
-    unsigned short basePointer;                      /* +0x12 */
-    unsigned short bitsPerPixel;                     /* +0x14 */
-    unsigned short bufferWidthPixels;                /* +0x16 */
-    unsigned short width;                            /* +0x18 */
-    unsigned short height;                           /* +0x1a */
-    unsigned short textureWidthExponent;             /* +0x1c */
-    unsigned short textureHeightExponent;            /* +0x1e */
-} SefImageItem;
-
 /* An alter record keeps its points in rings of 64 (32 while it trails a part); the mode of an event is its low four
    bits. */
 #define SDV_ALTER_POINT_COUNT 64
@@ -1911,8 +1896,8 @@ void sdvScheduleAlter(SdvSequence *sequence, SdvSefRequest *sefRequest, int laye
 {
     SdvAlterRequest request;
     SdvAlterEvent *event;
-    SefImageItem *image;
-    SefImageItem *palette;
+    SvTypeListEntry *image;
+    SvTypeListEntry *palette;
     unsigned short *parts;
     int step;
     int i;
@@ -2249,15 +2234,6 @@ void sdvSlerpVector(AlignedVector4 *out, AlignedVector4 *target, AlignedVector4 
     sdvBlendVectors(out, source, targetWeight, current, currentWeight);
 }
 
-/* The actor of an sef request as sdvExecAlter reads it: its local matrix at 0x100.
-   sef.c has its own private view of the same actor (SefActor, the matrix as a byte array: its callees take it
-   untyped). */
-typedef struct SdvRequestActor {
-    unsigned char unmodeled_000[0x100];
-    Matrix4 localMatrix;                       /* +0x100 */
-    unsigned char unmodeled_140[0x640 - 0x140];
-} SdvRequestActor;
-
 #define SEF_RECORD_HIDDEN 0x80          /* SefEffectRecord flags (+0x44, beside sef.h's SEF_RECORD_* bits): not shown */
 #define SDV_ALTER_LIFETIME_FOREVER 2048.0f
 
@@ -2333,7 +2309,7 @@ void sdvExecAlter(SdvAlter *alter)
             sefGetPosition(position, 0, request->parts[0]);
             Vu0SefSubVectorXYZ(&delta, previousPosition, position);
             if (sefRequest->target.actor != 0) {
-                sefMergeMatrixPos(&alter->matrix, &sefRequest->target.actor->localMatrix, position);
+                sefMergeMatrixPos(&alter->matrix, &sefRequest->target.actor->matrix, position);
             }
             QuadwordCopyMatrixT0(localMatrix, alter->matrix);
             Vu0SetOrigin(localMatrix[3]);
