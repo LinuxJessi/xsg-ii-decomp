@@ -6,7 +6,7 @@ void menuPanelCreate(void);
 /* Opens a stat panel of kind. */
 void menuStatPanelNew(int kind);
 
-/* menuStatPanelNew kinds func_00A94260 opens for a hit (rows of menuStatRects). */
+/* menuStatPanelNew kinds attackHitsShow opens for a hit (rows of menuStatRects). */
 enum {
     MENU_STAT_PANEL_NO_HIT = 1,         /* hit kind 0 */
     MENU_STAT_PANEL_BLOCKED = 2,        /* hitMode bit 9 */

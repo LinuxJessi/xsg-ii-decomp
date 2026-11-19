@@ -625,7 +625,7 @@ int dataSlotReset(s16 key);
 int unitCmdRelease(Ov01Object *object, Ov01Command *command) {
     switch (command->state) {
     case 0:
-        func_00A95540(object, 320, 8);
+        unitEffectStartMode(object, 320, 8);
         unitFadeOut(object);
         command->state++;
         break;

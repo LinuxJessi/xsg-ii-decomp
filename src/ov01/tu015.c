@@ -201,7 +201,7 @@ int unitCmdMoveRamp(Ov01Object *object, Ov01Command *step)
         if ((object->flags & UNIT_FLAG_SCRIPT_EVENTS) != 0) {
             memset(&message, 0, sizeof(message));
             message.unit = object;
-            func_00A9BC20(UNIT_SCRIPT_KIND_PAIR, &message);
+            unitScriptPairEventSend(UNIT_SCRIPT_KIND_PAIR, &message);
         }
         object->flags &= ~1;
         return 1;

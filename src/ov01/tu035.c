@@ -528,7 +528,7 @@ int tgtSelectAuto(Ov01Object *object)
         }
         request.unit = object;
         request.other = 0;
-        func_00A9BC20(1, &request);
+        unitScriptPairEventSend(1, &request);
         tgtSelectState.mode = 1;
         break;
     case 1:

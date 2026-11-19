@@ -725,7 +725,7 @@ void eventWaitUnitQueue(struct EventWaitRecord *record) {
     unitQueueIsEmpty(record->object);
 }
 
-/* The script message of a hit (func_00A9BC20, words[1]): the hit's flags byte, and this bit for a hit of kind
+/* The script message of a hit (unitScriptPairEventSend, words[1]): the hit's flags byte, and this bit for a hit of kind
  * HIT_KIND_NONE. */
 #define SCRIPT_HIT_NONE 0x40
 /* The child of the attacker that a TEC_GATE_SHOW_CHILD technique shows for the attack (unitSlotResume) and hides
@@ -736,23 +736,23 @@ extern int attackStep;
 /* The action and hit counts of the last attack event that finished. */
 extern int attackLastActions;
 extern int attackLastHits;
-void func_00A95268(EventQueueEntry *event);
+void attackEffectsStart(EventQueueEntry *event);
 void func_00A95810(struct AttackCommand *command);
-int func_00A93D50(struct AttackCommand *command, struct HitRecord *hit);
+int attackHitApply(struct AttackCommand *command, struct HitRecord *hit);
 void unitsMarkUninvolved(int actions, int hits);
 void func_00A93CF0(void);
 void unitSlotResume(Ov01Object *object, int index);
 void unitSlotPause(Ov01Object *object, int index);
-int func_00A94260(EventQueueEntry *entry, struct AttackCommand *command);
-int func_00A94500(EventQueueEntry *entry, struct AttackCommand *command);
+int attackHitsShow(EventQueueEntry *entry, struct AttackCommand *command);
+int attackSpecialResolve(EventQueueEntry *entry, struct AttackCommand *command);
 int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command);
 
 /*
  * The EVENT_KIND_ATTACK handler (eventQueueHandlers). The first call (D_00AC3AFC clear; attackQueue sets it for a
  * transform) starts the effects, the units' stats and the action stream and marks the uninvolved units, and returns
- * 0. The later calls run each action: actions with hitFlags bit 0 through func_00A94500 once and attackSpecialStep
- * until done, the others show their hits (func_00A94260) and free their effect key. Once all are done the hit
- * targets get their flags cleared and their script message, and 1 is returned.
+ * 0. The later calls run each action: actions with hitFlags bit 0 through attackSpecialResolve once and
+ * attackSpecialStep until done, the others show their hits (attackHitsShow) and free their effect key. Once all are
+ * done the hit targets get their flags cleared and their script message, and 1 is returned.
  */
 int eventAttackRun(EventQueueEntry *entry)
 {
@@ -770,7 +770,7 @@ int eventAttackRun(EventQueueEntry *entry)
     actions = entry->data.args.actions;
     hits = entry->data.args.hits;
     if (D_00AC3AFC == 0) {
-        func_00A95268(entry);
+        attackEffectsStart(entry);
         for (i = 0; i < actions; i++) {
             func_00A95608(eventQueueFindKind4(i)->data.attack.attacker);
         }
@@ -788,7 +788,7 @@ int eventAttackRun(EventQueueEntry *entry)
         func_00A95810(command);
         if (tecRecordGet(command->actionIdx)->hitFlags & 1) {
             if (eventStepStarted == 0) {
-                if (func_00A94500(entry, command) != 0) {
+                if (attackSpecialResolve(entry, command) != 0) {
                     eventStepStarted = 1;
                     attackStep = 0;
                 }
@@ -796,7 +796,7 @@ int eventAttackRun(EventQueueEntry *entry)
                 done += attackSpecialStep(entry, command);
             }
         } else {
-            func_00A94260(entry, command);
+            attackHitsShow(entry, command);
             done += func_00A93288(command);
         }
     }
@@ -819,12 +819,12 @@ int eventAttackRun(EventQueueEntry *entry)
             mode = hit->hitMode.word;
             flag = (mode & HIT_MODE_KIND_MASK) != HIT_KIND_NONE ? 0 : SCRIPT_HIT_NONE;
             message.words[1] = ((mode >> HIT_MODE_FLAGS_SHIFT) & HIT_MODE_FLAGS_MASK) | flag;
-            func_00A9BC20(UNIT_SCRIPT_KIND_PAIR, &message);
+            unitScriptPairEventSend(UNIT_SCRIPT_KIND_PAIR, &message);
         }
         if (tecRecordGet(command->actionIdx)->gateFlag == TEC_GATE_SHOW_CHILD) {
             unitSlotPause(command->attacker, TEC_GATE_CHILD);
         }
-        func_00A93D50(command, hit);
+        attackHitApply(command, hit);
     }
     attackLastActions = actions;
     attackLastHits = hits;
@@ -944,7 +944,7 @@ void unitValueRefresh(Ov01Object *object);
  * and the target's stock and boost on the counter steps, the act stock roll, and UNIT_CMD_FINISH_REFRESH when the
  * hit changes whether the target is low on HP.
  */
-int func_00A93D50(struct AttackCommand *command, struct HitRecord *hit)
+int attackHitApply(struct AttackCommand *command, struct HitRecord *hit)
 {
     Ov01Command refresh;
     int stockIndex;
@@ -1079,9 +1079,9 @@ int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit) {
     return 1;
 }
 
-/* Bit of the actor's sef entry flags (sefGetEntryFlags) that lets func_00A94260 show the hit panels. */
+/* Bit of the actor's sef entry flags (sefGetEntryFlags) that lets attackHitsShow show the hit panels. */
 #define SEF_ENTRY_SHOW_HIT 0x4
-/* The hit effects func_00A94260 starts on a target: group 0x136, the low key per step state and for a taken hit. */
+/* The hit effects attackHitsShow starts on a target: group 0x136, the low key per step state and for a taken hit. */
 #define HIT_EFFECT_GROUP 0x136
 #define HIT_EFFECT_TAKEN 0x11
 #define HIT_EFFECT_STEP1 0x12
@@ -1094,7 +1094,7 @@ int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit) {
  * target's reaction command, its unit panel (the target cursor's unit) and the hit effects. A jump-effect reaction
  * is queued only once per target. Returns 1.
  */
-int func_00A94260(EventQueueEntry *entry, struct AttackCommand *command)
+int attackHitsShow(EventQueueEntry *entry, struct AttackCommand *command)
 {
     struct HitRecord *hit;
     int hits;
@@ -1177,7 +1177,7 @@ int func_00A94260(EventQueueEntry *entry, struct AttackCommand *command)
     return 1;
 }
 
-/* Special actions (AttackCommand.actionIdx) that func_00A94500 resolves and attackSpecialStep steps through. */
+/* Special actions (AttackCommand.actionIdx) that attackSpecialResolve resolves and attackSpecialStep steps through. */
 enum {
     SPECIAL_ACTION_CURE_ALL = 0x38,             /* clears every status row of the target (calcStatResetCha) */
     SPECIAL_ACTION_HALVE_HP = 0x2A4,            /* clears the attacker's status rows 1 and 2 and halves its HP */
@@ -1202,7 +1202,7 @@ void unitTransformBegin(Ov01Object *unit, int action);
  * transform and that func_00A93128 refuses returns 0; otherwise 1 (the item pick and the steal resolve in
  * attackSpecialStep).
  */
-int func_00A94500(EventQueueEntry *entry, struct AttackCommand *command)
+int attackSpecialResolve(EventQueueEntry *entry, struct AttackCommand *command)
 {
     struct HitRecord *hit;
 
@@ -1219,7 +1219,7 @@ int func_00A94500(EventQueueEntry *entry, struct AttackCommand *command)
     case SPECIAL_ACTION_CURE_ALL:
     case SPECIAL_ACTION_CURE_ALL_2:
         calcStatResetCha(hit->target);
-        func_00A94260(entry, command);
+        attackHitsShow(entry, command);
         break;
     case SPECIAL_ACTION_LEVEL_UP:
         unitLevelAdd(hit->target, 1);
@@ -1621,7 +1621,7 @@ void unitTransformBegin(Ov01Object *unit, int action)
 }
 
 int func_00A95018(EventQueueEntry *entry, struct AttackCommand *owner) {
-    func_00A94260(entry, owner);
+    attackHitsShow(entry, owner);
     return func_00A93288(owner);
 }
 
@@ -1752,7 +1752,7 @@ int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec)
 /* Starts the effects of a kind-3 attack event: per kind-4 record the technique's effect on the attacker (and its
  * pair partner, gateFlag 1), once per kind-5 record (hit) with that hit's target. A pair technique runs only its
  * first record. */
-void func_00A95268(EventQueueEntry *event)
+void attackEffectsStart(EventQueueEntry *event)
 {
     struct EffectRequest request;
     struct AttackCommand *attack;
@@ -1840,7 +1840,7 @@ void unitEffectStart(Ov01Object *object, int keyHigh, int keyLow)
 /* Large units (UNIT_KEY_LARGE_*, the slots with linkedSlots) start their effects in mode 3, the others in mode 2. */
 
 /* Starts effect (keyHigh, keyLow) on the unit's actor, in mode 3 for unit keys 11..15, else 2. */
-void func_00A95540(Ov01Object *object, int keyHigh, int keyLow)
+void unitEffectStartMode(Ov01Object *object, int keyHigh, int keyLow)
 {
     struct EffectRequest request;
     int mode;
@@ -1854,7 +1854,7 @@ void func_00A95540(Ov01Object *object, int keyHigh, int keyLow)
     sefStartEffectDefault(&request);
 }
 
-/* The effect of the unit's own sequence group that func_00A955C8, func_00A95608 and func_00A96050 switch
+/* The effect of the unit's own sequence group that func_00A955C8, func_00A95608 and unitsRemoveDefeated switch
  * (sefApplyRecordMode): record 8 of the group. */
 #define SEQUENCE_EFFECT_RECORD 8
 #define SEQUENCE_EFFECT_KEY(sequence) (((sequence) << EFFECT_KEY_GROUP_SHIFT) | SEQUENCE_EFFECT_RECORD)
@@ -2014,7 +2014,7 @@ int sefLoadEffect(int effectKey, int group);
  * the partner's first when the unit is not the pair's first slot), the model of a gateFlag-5 technique's target
  * record (joint in pairSecond[2]) and its effect group. Returns 1.
  */
-int func_00A95CF0(Ov01Tu033Request *request)
+int actionResourcesLoad(Ov01Tu033Request *request)
 {
     Ov01Object *unit;
     int value;
@@ -2145,10 +2145,10 @@ int unitBindRequest(Ov01Tu033Request *request)
 /* Battle unit keys from this one on are monsters (pool B); below are the party slots. */
 #define UNIT_KEY_POOL_B_FIRST 16
 
-/* menuStatPanelNew kind func_00A96050 opens for a defeated monster in action step 2. */
+/* menuStatPanelNew kind unitsRemoveDefeated opens for a defeated monster in action step 2. */
 #define STAT_PANEL_DEFEAT 7
 
-/* unitScriptEventSend kind func_00A96050 sends for a unit that is taken out, with the index of its source. */
+/* unitScriptEventSend kind unitsRemoveDefeated sends for a unit that is taken out, with the index of its source. */
 #define DEFEAT_SCRIPT_EVENT 8
 
 /*
@@ -2158,7 +2158,7 @@ int unitBindRequest(Ov01Tu033Request *request)
  * rate), a party unit releases its effects through func_00A95608; both report to the unit's script (event 8) with
  * the index of the unit's source. Returns 1.
  */
-int func_00A96050(void)
+int unitsRemoveDefeated(void)
 {
     UnitScriptEvent event;
     struct UnitTableRef table;
@@ -2211,7 +2211,7 @@ int func_00A96050(void)
     return 1;
 }
 
-int func_00A96510(Ov01Object *unit, int commandKind, int hitDamage, int hitMode);
+int unitStepStatusApply(Ov01Object *unit, int commandKind, int hitDamage, int hitMode);
 
 /*
  * battleResolveStatus (proposed battleResolveStatus): the kind-12 event handler. While the
@@ -2239,7 +2239,7 @@ int battleResolveStatus(void) {
         if (result == 0) {
             return 0;
         }
-        func_00A96510(object, commandKind, hitDamage, hitMode);
+        unitStepStatusApply(object, commandKind, hitDamage, hitMode);
     }
     count = unitTblGet(2, &units);
     for (i = 0; i < count; i++) {
@@ -2265,7 +2265,7 @@ int battleResolveStatus(void) {
     return 1;
 }
 
-/* The statuses func_00A96510 applies at the end of a step (calcStatGet rows 1 to 3). */
+/* The statuses unitStepStatusApply applies at the end of a step (calcStatGet rows 1 to 3). */
 #define STAT1_HP_DRAIN 0x2          /* row 1: loses a tenth of maxHp */
 #define STAT2_HP_DRAIN 0x2          /* row 2: loses a quarter of maxHp */
 #define STAT2_HIT_REPEAT 0x1000     /* row 2: takes the step's plain hit damage again */
@@ -2290,7 +2290,7 @@ int battleResolveStatus(void) {
  * queued as the unit's reaction, applied and shown (func_00AA4DB8). Returns 1 and clears the unit's source when
  * anything changed. commandKind is not used.
  */
-int func_00A96510(Ov01Object *unit, int commandKind, int hitDamage, int hitMode)
+int unitStepStatusApply(Ov01Object *unit, int commandKind, int hitDamage, int hitMode)
 {
     struct HitRecord hit;
     int hp;

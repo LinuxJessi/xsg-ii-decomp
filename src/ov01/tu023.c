@@ -822,7 +822,7 @@ int boostGaugeAddStock(struct BoostGauge *gauge, int amount)
 }
 
 /* Adds amount to the progress of the unit's boost gauge. Same unit note as
- * boostAddStock. Callers: func_00A92C18 and func_00A93D50 (tu033). */
+ * boostAddStock. Callers: func_00A92C18 and attackHitApply (tu033). */
 void boostAddProgress(StatOwner *unit, int amount) {
     boostGaugeAddProgress(boostGaugeGet(unit), amount);
 }

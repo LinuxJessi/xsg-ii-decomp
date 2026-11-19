@@ -171,9 +171,9 @@ typedef struct Ov01Command {
 #define UNIT_FLAG_DOWN 0x4
 #define UNIT_FLAG_STOCKED 0x8
 /* One of the enemy-side bits (unitEnCreate sets 0x60): the unit reports its hits and poses to the script
- * (func_00A9BC20). */
+ * (unitScriptPairEventSend). */
 #define UNIT_FLAG_SCRIPT_EVENTS 0x20
-/* Set by func_00A94260 per attack: the unit's reaction to the hit is queued, and its hit panels are shown;
+/* Set by attackHitsShow per attack: the unit's reaction to the hit is queued, and its hit panels are shown;
  * func_00A86F20 clears both. */
 #define UNIT_FLAG_HIT_REACTED 0x100
 #define UNIT_FLAG_HIT_PANELS 0x40000

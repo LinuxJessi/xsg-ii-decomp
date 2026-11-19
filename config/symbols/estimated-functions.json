@@ -3150,7 +3150,7 @@
      1
     ],
     [
-     "func_00A93D50",
+     "attackHitApply",
      11091280,
      948,
      1
@@ -3162,13 +3162,13 @@
      1
     ],
     [
-     "func_00A94260",
+     "attackHitsShow",
      11092576,
      672,
      1
     ],
     [
-     "func_00A94500",
+     "attackSpecialResolve",
      11093248,
      448,
      1
@@ -3234,7 +3234,7 @@
      1
     ],
     [
-     "func_00A95268",
+     "attackEffectsStart",
      11096680,
      620,
      1
@@ -3246,7 +3246,7 @@
      1
     ],
     [
-     "func_00A95540",
+     "unitEffectStartMode",
      11097408,
      136,
      1
@@ -3336,7 +3336,7 @@
      1
     ],
     [
-     "func_00A95CF0",
+     "actionResourcesLoad",
      11099376,
      332,
      1
@@ -3366,7 +3366,7 @@
      1
     ],
     [
-     "func_00A96050",
+     "unitsRemoveDefeated",
      11100240,
      644,
      1
@@ -3378,7 +3378,7 @@
      1
     ],
     [
-     "func_00A96510",
+     "unitStepStatusApply",
      11101456,
      764,
      1
@@ -4242,7 +4242,7 @@
      1
     ],
     [
-     "func_00A9BC20",
+     "unitScriptPairEventSend",
      11123744,
      168,
      1

@@ -530,7 +530,7 @@ void msgReset(void) {
  * Sends event as a kind message to the unit's script (the battle block's spawnArgC): the unit index, and for
  * UNIT_SCRIPT_KIND_PAIR the second unit's index in the high half and words[0] | words[1] << 16.
  */
-void func_00A9BC20(int kind, UnitScriptPairEvent *event)
+void unitScriptPairEventSend(int kind, UnitScriptPairEvent *event)
 {
     SbMessage message;
 

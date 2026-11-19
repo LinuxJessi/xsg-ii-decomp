@@ -30,7 +30,7 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu060", menuIconListStep);
 INCLUDE_ASM("asm/nonmatchings/ov01/tu060", menuIconListDraw);
 
 /*
- * menuIconListAppend (proposed menuIconListAppend, called by func_00A94260): appends
+ * menuIconListAppend (proposed menuIconListAppend, called by attackHitsShow): appends
  * one entry to the list for the unit (up to 8 entries; the unit body's entry
  * table at +0xDA and +0xE2 gives the kind and mark). When the unit has no
  * entries, or its kind is 2 or 3, it requests the close instead. An unowned
