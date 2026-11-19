@@ -278,7 +278,66 @@ int cmdFindFirstTarget(int target, struct Tu033CallSource *source)
     return tgtFindFirst(&record, source->from_0c);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92C18);
+int func_00A92D98(struct AttackCommand *owner, struct Ov01Object *value);
+void func_00A92DF0(struct AttackCommand *owner, struct Ov01Object *value);
+
+/* Boost progress a technique command of gateFlag TEC_GATE_NONE, 6, 7 or 8 gives its unit: CMD_BOOST_PROGRESS, on
+ * act step CMD_BOOST_ACT_STEP CMD_BOOST_PROGRESS_STEP, or CMD_BOOST_PROGRESS_ROLLED when the CMD_BOOST_ROLL_PERCENT
+ * roll fails. */
+#define CMD_BOOST_PROGRESS 10
+#define CMD_BOOST_ACT_STEP 1
+#define CMD_BOOST_PROGRESS_STEP 50
+#define CMD_BOOST_PROGRESS_ROLLED 30
+#define CMD_BOOST_ROLL_PERCENT 10
+/* The current value a large unit (UNIT_KEY_LARGE_*) gets back for a technique command of gateFlag 6..8. */
+#define CMD_LARGE_CURRENT_BONUS 25
+
+/* Runs a command of unit against its target (commandTarget): an item through func_00A92DF0, anything else through
+ * func_00A92D98. Then the boost progress of a technique, the EP cost, the level record's cost for TEC_GATE_SHOW_CHILD,
+ * and the large unit's current bonus. */
+void func_00A92C18(Ov01Object *unit, CmdListBody *command)
+{
+    struct AttackCommand owner;
+    TecRecord *tec;
+    int boost;
+    int target;
+
+    target = unit->commandTarget;
+    owner.attacker = unit;
+    owner.actionIdx = command->code;
+    owner.id = command->pairIndex;
+    if (command->command == CMD_KIND_ITEM) {
+        owner.kind = command->command;
+        func_00A92DF0(&owner, (Ov01Object *)target);
+    } else {
+        owner.kind = command->command;
+        func_00A92D98(&owner, (Ov01Object *)target);
+    }
+    tec = tecRecordGet(owner.actionIdx);
+    if (command->command == CMD_KIND_TECHNIQUE) {
+        if (tec->gateFlag == TEC_GATE_NONE || tec->gateFlag == 6 || tec->gateFlag == 7 || tec->gateFlag == 8) {
+            boost = CMD_BOOST_PROGRESS;
+            if (actStepCounterValue() == CMD_BOOST_ACT_STEP) {
+                boost = CMD_BOOST_PROGRESS_STEP;
+                if (ov01RollPercent(CMD_BOOST_ROLL_PERCENT) == 0) {
+                    boost = CMD_BOOST_PROGRESS_ROLLED;
+                }
+            }
+            boostAddProgress(unit, boost);
+        }
+    }
+    calcEpAdjust(unit, -calcEpCost(unit, owner.actionIdx));
+    if (tec->gateFlag == TEC_GATE_SHOW_CHILD) {
+        unitCurrentAdd(unit, -calcLevelRecordGet(owner.id)->requiredLevel);
+    }
+    if (unit->stats->key >= UNIT_KEY_LARGE_FIRST && unit->stats->key < UNIT_KEY_LARGE_FIRST + UNIT_KEY_LARGE_COUNT) {
+        if (command->command == CMD_KIND_TECHNIQUE) {
+            if (tec->gateFlag >= 6 && tec->gateFlag <= 8) {
+                unitCurrentAdd(unit, CMD_LARGE_CURRENT_BONUS);
+            }
+        }
+    }
+}
 
 
 int attackQueue(struct AttackCommand *command, struct Ov01Object *target, TecRecord *tec);
