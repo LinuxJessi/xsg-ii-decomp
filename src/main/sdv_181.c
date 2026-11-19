@@ -5547,8 +5547,6 @@ void sefSetupEmitterPacket(u64 tex0, ResourceSlot *slot, short kind, int emitter
     }
 }
 
-/* Added to a reserved packet address to write it through the uncached segment. */
-
 /* sefDrawEmitter builds each particle in vf1..vf5: matrix rows 0 to 3, then the colour. */
 
 /* vf15 = the slot's tint, kept for SefTintColour. */
