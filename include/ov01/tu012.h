@@ -59,6 +59,16 @@ typedef struct Ov01Pose {
     f32 headingDelta; /* +0x74: the signed turn to the heading, in (-pi, pi] */
 } Ov01Pose;
 
+/* Unit keys (StatBlock.key): 1..10 party members, 11..15 the large units (tu008 gives them DATA_UNIT_HEAP_LARGE),
+ * 16..140 the other data ids; keys from UNIT_KEY_COUNT up are gattai codes. A range test subtracts the first key
+ * and compares the unsigned difference with the count. */
+#define UNIT_KEY_PARTY_FIRST 1
+#define UNIT_KEY_PARTY_COUNT 10
+#define UNIT_KEY_LARGE_FIRST 11
+#define UNIT_KEY_LARGE_COUNT 5
+#define UNIT_KEY_OTHER_FIRST 16
+#define UNIT_KEY_COUNT 141
+
 /*
  * The 0x108-byte battle block of a unit (its StatOwner points at it through +0x144). The same
  * record fills the entry pools battleEntryPoolA and battleEntryPoolB and the slot table

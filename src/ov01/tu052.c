@@ -84,7 +84,9 @@ typedef struct MenuIconRow {
 #define MENU_ICON_KEY_HIDDEN 2
 #define MENU_ICON_WIDTH 18
 #define MENU_ICON_ROW_HEIGHT 20
-/* Rows of kinds 8..10 put their status icons right after the icons, the others at this offset. */
+/* Rows of kinds 8..10 put their status icons right after the icons, the others at MENU_ICON_STATUS_X. */
+#define MENU_ICON_ROW_INLINE_FIRST 8
+#define MENU_ICON_ROW_INLINE_COUNT 3
 #define MENU_ICON_STATUS_X 36.0f
 
 /* The icon tables per selection kind: for units with key 1..10, and for the others. */
@@ -120,7 +122,7 @@ void menuIconTableDraw(MenuObject *list)
     target = tgtUnitGet();
     page = battleStateGet()->selectionKind;
     grGpInit(&packet);
-    if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10) {
+    if ((unsigned int)(unit->stats->keyUnsigned - UNIT_KEY_PARTY_FIRST) < UNIT_KEY_PARTY_COUNT) {
         rows = menuIconTablesKeyed[page];
     } else {
         rows = menuIconTablesOther[page];
@@ -153,7 +155,7 @@ void menuIconTableDraw(MenuObject *list)
                     }
                 }
             }
-            if ((unsigned int)(rows[r].kind - 8) < 3) {
+            if ((unsigned int)(rows[r].kind - MENU_ICON_ROW_INLINE_FIRST) < MENU_ICON_ROW_INLINE_COUNT) {
                 x += MENU_ICON_WIDTH;
             } else {
                 x = list->slide.pos.x + MENU_ICON_STATUS_X;

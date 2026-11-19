@@ -3,6 +3,7 @@
  */
 #include "common.h"
 #include "main/tu110.h"
+#include "ov01/tu012.h"
 #include "ov01/tu023.h"
 #include "ov01/tu036.h"
 #include "ov01/tu041.h"
@@ -48,17 +49,11 @@ int effectPosGetCount(void) {
     return effectPosCount;
 }
 
-/* Unit keys: 1..10 party members, 11..15 the large units (tu008 gives them DATA_UNIT_HEAP_LARGE), 16..140 the
- * other data ids; keys from UNIT_KEY_COUNT up are gattai codes. */
-#define UNIT_KEY_LARGE_FIRST 11
-#define UNIT_KEY_OTHER_FIRST 16
-#define UNIT_KEY_COUNT 141
-
 /* Unit effect code that switches a party member to the file of unitEffectFileIds. */
 #define UNIT_EFFECT_FILE_SWAP 0x3F
 
-/* Model file ids by unit key: party members with UNIT_EFFECT_FILE_SWAP (key - 1, 0 for none), the large units
- * (key - UNIT_KEY_LARGE_FIRST) and the other data ids (key - UNIT_KEY_OTHER_FIRST). */
+/* Model file ids by unit key: party members with UNIT_EFFECT_FILE_SWAP (key - UNIT_KEY_PARTY_FIRST, 0 for none),
+ * the large units (key - UNIT_KEY_LARGE_FIRST) and the other data ids (key - UNIT_KEY_OTHER_FIRST). */
 extern int unitEffectFileIds[];
 extern int largeUnitFileIds[];
 extern int otherUnitFileIds[];
@@ -72,9 +67,9 @@ int unitFileIdGet(int key)
     int effectFileId;
 
     if (key < UNIT_KEY_LARGE_FIRST) {
-        fileId = ptGetStatusBlock()->clothIds[key - 1];
+        fileId = ptGetStatusBlock()->clothIds[key - UNIT_KEY_PARTY_FIRST];
         if (battleUnitHasEffectCode(key, UNIT_EFFECT_FILE_SWAP)) {
-            effectFileId = unitEffectFileIds[key - 1];
+            effectFileId = unitEffectFileIds[key - UNIT_KEY_PARTY_FIRST];
             if (effectFileId != 0) {
                 fileId = effectFileId;
             }

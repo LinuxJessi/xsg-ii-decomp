@@ -180,6 +180,12 @@ void menuStatRecordsCreate(void)
  * the unit's stat fields (at +0x94 -> +0x144), snapping within 0.5 and clamped. */
 /* Shown values closer than this to their unit value snap to it. */
 #define MENU_STAT_SNAP 0.5f
+/* Fraction of the remaining distance a shown value moves per step: the HP, EP and current gauges, and the faster
+ * level pips. */
+#define MENU_STAT_EASE_RATE 0.125f
+#define MENU_STAT_LEVEL_EASE_RATE 0.25f
+/* Highest level a gauge shows: the cap unitLevelAdd clamps StatBlock.level to (UNIT_LEVEL_MAX, tu023.c). */
+#define MENU_STAT_LEVEL_MAX 3.0f
 
 /* The negation of the distance as its own inline call (codegen: a plain -delta_ in the ternary does not give
  * the original's compare chain). */
@@ -203,7 +209,7 @@ static inline float menuStatNeg(float v)
     }
 
 /* Update of a stat record: unless it is sliding, eases the shown HP, EP and third gauge towards the unit's values
- * and caps them at their maxima (the third gauge at 3 for keys 1..10, which show the level). */
+ * and caps them at their maxima (the third gauge at MENU_STAT_LEVEL_MAX for party keys, which show the level). */
 void menuStatGaugeStep(MenuObject *record)
 {
     StatBlock *stats;
@@ -218,21 +224,21 @@ void menuStatGaugeStep(MenuObject *record)
     thirdShown = &record->kind.stat.shown[2];
     epShown = &record->kind.stat.shown[1];
     stats = record->kind.stat.unit->stats;
-    MENU_STAT_EASE(*hpShown, stats->hp, 0.125f);
+    MENU_STAT_EASE(*hpShown, stats->hp, MENU_STAT_EASE_RATE);
     if (stats->maxHp < *hpShown) {
         *hpShown = stats->maxHp;
     }
-    MENU_STAT_EASE(*epShown, stats->ep, 0.125f);
+    MENU_STAT_EASE(*epShown, stats->ep, MENU_STAT_EASE_RATE);
     if (stats->maxEp < *epShown) {
         *epShown = stats->maxEp;
     }
-    if ((unsigned int)(stats->keyUnsigned - 1) < 10) {
-        MENU_STAT_EASE(*thirdShown, stats->level, 0.25f);
-        if (*thirdShown > 3.0f) {
-            *thirdShown = 3.0f;
+    if ((unsigned int)(stats->keyUnsigned - UNIT_KEY_PARTY_FIRST) < UNIT_KEY_PARTY_COUNT) {
+        MENU_STAT_EASE(*thirdShown, stats->level, MENU_STAT_LEVEL_EASE_RATE);
+        if (*thirdShown > MENU_STAT_LEVEL_MAX) {
+            *thirdShown = MENU_STAT_LEVEL_MAX;
         }
     } else {
-        MENU_STAT_EASE(*thirdShown, stats->current, 0.125f);
+        MENU_STAT_EASE(*thirdShown, stats->current, MENU_STAT_EASE_RATE);
         if (*thirdShown > stats->currentMax) {
             *thirdShown = stats->currentMax;
         }
@@ -251,11 +257,24 @@ void menuStatRecordSubmit(MenuObject *record)
     grPacketSend(&packet);
 }
 
+/* Pulse of the frame: the doubled frame counter as an 8-bit phase, mirrored in its upper half (a triangle wave),
+ * added to the lowest fixed alpha. */
+#define MENU_STAT_PULSE_PHASE_MASK 0xFF
+#define MENU_STAT_PULSE_HALF 0x80
+#define MENU_STAT_PULSE_ALPHA_MIN 10
+/* ALPHA_1 blends of the two pulse passes, the fixed alpha (FIX) in the high word: (Cs - 0) * FIX + Cs, then
+ * (Cs - 0) * FIX + Cd. */
+#define MENU_STAT_PULSE_BLEND_ADD_SRC GS_SET_ALPHA(0, 2, 2, 0, 0)
+#define MENU_STAT_PULSE_BLEND_ADD_DST GS_SET_ALPHA(0, 2, 2, 1, 0)
+/* Full widths of the HP and EP bars and of the current gauge: the fills are scaled from shown / max to them. */
+#define MENU_STAT_BAR_WIDTH 0x58
+#define MENU_STAT_CURRENT_BAR_WIDTH 0x4A
+
 /*
  * Draws one stat record at its origin (slide position): a pulsing frame while its unit is the one under the battle
  * cursor, the unit's face (func_00AA7750), the HP and EP gauges (shown[0], shown[1] against maxHp and maxEp), then
- * for a party key the level pips (shown[2], up to 3) or else the current gauge and number (shown[2] against
- * currentMax), and the HP and EP numbers.
+ * for a party key the level pips (shown[2], up to MENU_STAT_LEVEL_MAX) or else the current gauge and number (shown[2]
+ * against currentMax), and the HP and EP numbers.
  */
 void menuStatRecordDraw(MenuObject *record, GrPacket *packet)
 {
@@ -271,38 +290,42 @@ void menuStatRecordDraw(MenuObject *record, GrPacket *packet)
     unit = record->kind.stat.unit;
     if (unit == battleStateGet()->current) {
         func_00AA84F0(packet);
-        phase = (ov01SceneFrameCount() * 2) & 0xFF;
-        if (phase >= 0x80) {
-            phase = 0xFF - phase;
+        phase = (ov01SceneFrameCount() * 2) & MENU_STAT_PULSE_PHASE_MASK;
+        if (phase >= MENU_STAT_PULSE_HALF) {
+            phase = MENU_STAT_PULSE_PHASE_MASK - phase;
         }
         /* GS ALPHA_1 with a fixed alpha (high word) that rises and falls with the frame counter, as in
-         * menuPulseAlphaSet (tu056) but from 10 */
-        alpha = (unsigned long long)(phase + 10) << 32;
-        grGsRegSet(packet, GS_ALPHA_1, alpha | 0x28);
+         * menuPulseAlphaSet (tu056) but from MENU_STAT_PULSE_ALPHA_MIN: a 0x91 x 0xA sprite at y + 0x38, then the
+         * frame around the record */
+        alpha = (unsigned long long)(phase + MENU_STAT_PULSE_ALPHA_MIN) << 32;
+        grGsRegSet(packet, GS_ALPHA_1, alpha | MENU_STAT_PULSE_BLEND_ADD_SRC);
         grPutSprOpen(packet);
         menuStatSprite(packet, x, y + 0x38, 0x91, 0xA, 0, 0x41);
         grPutSprClose();
-        grGsRegSet(packet, GS_ALPHA_1, alpha | 0x68);
+        grGsRegSet(packet, GS_ALPHA_1, alpha | MENU_STAT_PULSE_BLEND_ADD_DST);
         grPutSprOpen(packet);
         menuStatSprite2(packet, x - 4, y - 4, 0x9E, 0x3B, 0xC8, 0x78, 0xFF, 0xBA);
         grPutSprClose();
     }
     func_00AA7750(packet, x, y, unit->stats->key, 0);
     func_00AA8490(packet);
+    /* HP and EP gauges: each a bar track (MENU_STAT_BAR_WIDTH wide) and its fill scaled to the shown value. */
     grPutSprOpen(packet);
-    menuStatSprite(packet, x + 0x3A, y + 0xA, 0x58, 8, 0x48, 0x8A);
+    menuStatSprite(packet, x + 0x3A, y + 0xA, MENU_STAT_BAR_WIDTH, 8, 0x48, 0x8A);
     value = record->kind.stat.shown[0];
-    menuStatSprite2(packet, x + 0x3A, y + 8, value * 0x58 / unit->stats->maxHp, 9, 0x48, 0x78, 0xA0, 0x80);
-    menuStatSprite(packet, x + 0x3A, y + 0x20, 0x58, 8, 0x48, 0x8A);
+    menuStatSprite2(packet, x + 0x3A, y + 8, value * MENU_STAT_BAR_WIDTH / unit->stats->maxHp, 9, 0x48, 0x78, 0xA0,
+                    0x80);
+    menuStatSprite(packet, x + 0x3A, y + 0x20, MENU_STAT_BAR_WIDTH, 8, 0x48, 0x8A);
     value = record->kind.stat.shown[1];
     if (unit->stats->maxEp <= 0) {
         value = 0;
     } else {
-        value = value * 0x58 / unit->stats->maxEp;
+        value = value * MENU_STAT_BAR_WIDTH / unit->stats->maxEp;
     }
     menuStatSprite2(packet, x + 0x3A, y + 0x1E, value, 9, 0x48, 0x81, 0xA0, 0x89);
     grPutSprClose();
-    if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10) {
+    if ((unsigned int)(unit->stats->keyUnsigned - UNIT_KEY_PARTY_FIRST) < UNIT_KEY_PARTY_COUNT) {
+        /* Level pips: one pip per shown level (texture row 0x81), then the three pip cells (row 0x78). */
         grPutSprOpen(packet);
         value = record->kind.stat.shown[2];
         if (value > 0) {
@@ -319,30 +342,33 @@ void menuStatRecordDraw(MenuObject *record, GrPacket *packet)
         menuStatSprite(packet, x + 0x78, y + 0x2A, 0x1A, 9, 0xAE, 0x78);
         grPutSprClose();
     } else {
+        /* Current gauge: its track (MENU_STAT_CURRENT_BAR_WIDTH wide) and fill, then the shown value. */
         grPutSprOpen(packet);
         value = record->kind.stat.shown[2];
         if (unit->stats->currentMax <= 0) {
             value = 0;
         } else {
-            value = value * 0x4A / unit->stats->currentMax;
+            value = value * MENU_STAT_CURRENT_BAR_WIDTH / unit->stats->currentMax;
         }
-        menuStatSprite(packet, x + 0x48, y + 0x30, 0x4A, 5, 0x48, 0x98);
+        menuStatSprite(packet, x + 0x48, y + 0x30, MENU_STAT_CURRENT_BAR_WIDTH, 5, 0x48, 0x98);
         menuStatSprite(packet, x + 0x48, y + 0x2F, value, 5, 0x48, 0x93);
         grPutSprClose();
         menuNumDraw(packet, x + 0x74, y + 0x26, record->kind.stat.shown[2], 3, 2);
     }
     func_00AA8430(packet);
+    /* Icons at the HP and EP rows and at the third gauge (a different one for party keys), then the HP number (4
+     * digits for party keys, 5 otherwise) and the EP number. */
     grPutSprOpen(packet);
     menuStatSprite(packet, x + 0x3C, y - 6, 0x12, 0x10, 0x6B, 0);
     menuStatSprite(packet, x + 0x3C, y + 0x10, 0x12, 0x10, 0x7D, 0);
-    if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10) {
+    if ((unsigned int)(unit->stats->keyUnsigned - UNIT_KEY_PARTY_FIRST) < UNIT_KEY_PARTY_COUNT) {
         menuStatSprite(packet, x + 0x38, y + 0x28, 0x10, 0xE, 0x64, 0x32);
     } else {
         menuStatSprite(packet, x + 0x38, y + 0x28, 0x10, 0xE, 0x54, 0x32);
     }
     grPutSprClose();
     value = record->kind.stat.shown[0];
-    if ((unsigned int)(unit->stats->keyUnsigned - 1) < 10) {
+    if ((unsigned int)(unit->stats->keyUnsigned - UNIT_KEY_PARTY_FIRST) < UNIT_KEY_PARTY_COUNT) {
         menuNumDrawTarget(packet, x + 0x64, y - 8, value, 4, 0, unit);
     } else {
         menuNumDrawTarget(packet, x + 0x58, y - 8, value, 5, 0, unit);
