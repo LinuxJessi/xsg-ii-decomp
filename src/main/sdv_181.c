@@ -1140,14 +1140,11 @@ typedef union SdvScale {
 #define SdvMulVectorXYZ(destination, first, second) \
     __asm__ __volatile__("lqc2 vf1, 0(%1)\nlqc2 vf2, 0(%2)\nvmul.xyz vf1, vf1, vf2\nsqc2 vf1, 0(%0)\n" \
                          : : "r" (destination), "r" (first), "r" (second), "m" (*(second)) : "memory")
-/* The translation row (row 3, +48) of a matrix as a point with w = 1 from vf0, */
+/* The translation row (row 3, +48) of a matrix as a point with w = 1 from vf0 (Vu0MMathSetTranslation of vu0_macro.h
+   stores one back). */
 #define SdvGetTranslation(destination, matrix) \
     __asm__ __volatile__("lqc2 vf1, 48(%1)\nvmove.w vf1, vf0\nsqc2 vf1, 0(%0)\n" \
                          : : "r" (destination), "r" (matrix), "m" ((*(matrix))[3][0]) : "memory")
-/* and a point stored as the translation row of a matrix, w = 1 (no memory operand). */
-#define SdvSetTranslation(matrix, point) \
-    __asm__ __volatile__("lqc2 vf1, 0(%1)\nvmove.w vf1, vf0\nsqc2 vf1, 48(%0)\n" \
-                         : : "r" (matrix), "r" (point) : "memory")
 
 /* Part kinds with this bit take their position from the matrix the caller passes (when it passes one) instead of from
    sefGetPosition. */
@@ -1203,7 +1200,7 @@ int sdvTransOffset(int *screen, int *offset, int part, int depth, SdvScale *scal
                              request->kind5Key);
         if (useMatrix) {
             SdvGetTranslation(&sefGlobalTransform.position, matrix);
-            SdvSetTranslation(&sefGlobalTransform.matrix, &sefGlobalTransform.position);
+            Vu0MMathSetTranslation(&sefGlobalTransform.matrix, &sefGlobalTransform.position);
         }
         if (sefGlobalTransform.scaled != 0) {
             MMathMulMatrix(&cameraMatrix, view, &sefGlobalTransform.matrix);
@@ -2265,20 +2262,6 @@ typedef struct SdvRequestActor {
 void sefLoadRequestBuffer(int p0, int p1, int p2, int p3, int p4, int p5, int p6, int p7);
 void sefMergeMatrixPos(Matrix4 *dest, Matrix4 *matrix, Vector4 *position);
 float MMathCalcLength(const Vector4 *vector);
-
-/* sin(angle) on the VU0 sine micro subroutine: Vu0Sin with the non-interlocking qmtc2.ni of this function (hand-written
-   VU0 code of the class Opok accepted as vu0_macro.h macros, one block of the original instruction sequence; it
-   belongs next to Vu0Sin there). */
-#define Vu0SinNI(result, angle) \
-    __asm__ __volatile__( \
-        "mfc1 $8, %1\n" \
-        "qmtc2.ni $8, vf4\n" \
-        "vcallms 0x20\n" \
-        "qmfc2.i $8, vf1\n" \
-        "mtc1 $8, %0\n" \
-        : "=f" (result) \
-        : "f" (angle) \
-        : "$8", "memory")
 
 /*
  * Advances one alter record by a frame: the lifetime and frame counters, the sef request, then either the
