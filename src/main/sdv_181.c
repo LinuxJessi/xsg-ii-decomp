@@ -1,13 +1,17 @@
 #include "common.h"
 #include "shared.h"
+#include "gs.h"
 #include "main/sef.h"
 #include "main/tu051.h"
 #include "vu0_macro.h"
 #include "main/TiWindBase.h"
 #include "main/gifState.h"
+#include "main/m_math_188.h"
 #include "main/sdv_181.h"
 #include "main/tu152.h"
 #include "main/sdv_033.h"
+#include "main/tu192.h"
+#include "main/xgl_2.h"
 #include "quadword.h"
 
 /* A key sequence: keys holds rows of stride halfwords, the first of each row being the frame
@@ -1101,9 +1105,132 @@ int sdvScheduleCamera(SdvCameraSchedule *schedule, int frame)
     return started;
 }
 
-int sdvTransOffset(int *screen, int *offset, int part, int depth, float *scale, int argument, Matrix4 *matrix);
+Matrix4 *MMathMulMatrix(Matrix4 *out, const Matrix4 *rhs, const Matrix4 *lhs);
+Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
+Matrix4 *MMathScaleMatrixRotS(Matrix4 *out, Matrix4 *matrix, float scale);
+int MMathRotTransPersClip(Vector4 *destination, const XglCamera *camera, Matrix4 *matrix, const Vector4 *point);
+void sefGetCameraPos(Matrix4 *dest);
+/* (0, 0, 0, 1): the point sdvTransOffset projects and the offset sdvExecSpecial asks sefGetPoint for. */
+extern AlignedVector4 sdvOriginPoint;
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvTransOffset);
+/* A float vector that the VU0 code also stores as a whole quadword. sdvDrawSpecial indexes it as f[] and passes
+   vector to the helpers; as a plain Vector4 gcc schedules the scale stores after the part loads before the two
+   sdvTransOffset calls (fndiff 674/684 in place), and sdvTransOffset reloads the screen position after
+   its extent stores. */
+typedef union SdvScale {
+    float f[4];
+    Vector4 vector;
+} SdvScale;
+
+/*
+ * Forms of the quadword.h / vu0_macro.h macros that also name the memory they read as an "m" operand, as
+ * sef.c's sefAddVectorXYZ does ("m"(*second)). The instructions are the plain macros'; the operand gives the
+ * source pointer the weight the original register allocation shows (allocator weight device; each function says
+ * what it changes). Users: sdvTransOffset, sdvCreateAlter, sdvSlerpVector and sdvExecAlter.
+ */
+/* *destination = *source through the 128-bit $8 (QuadwordCopyT0). */
+#define SdvCopyQuadword(destination, source) \
+    __asm__ __volatile__("lq $8, 0(%1)\nsq $8, 0(%0)\n" \
+                         : : "r" (destination), "r" (source), "m" (*(source)) : "$8", "memory")
+/* destination = (float) source, all four lanes (Vu0SefIntToFloatVector). */
+#define SdvIntToFloatVector(destination, source) \
+    __asm__ __volatile__("lqc2 vf1, 0(%1)\nvitof0.xyzw vf1, vf1\nsqc2 vf1, 0(%0)\n" \
+                         : : "r" (destination), "r" (source), "m" (*(source)) : "memory")
+/* destination.xyz = first.xyz * second.xyz, w keeps first's (Vu0SefMulVectorXYZ). */
+#define SdvMulVectorXYZ(destination, first, second) \
+    __asm__ __volatile__("lqc2 vf1, 0(%1)\nlqc2 vf2, 0(%2)\nvmul.xyz vf1, vf1, vf2\nsqc2 vf1, 0(%0)\n" \
+                         : : "r" (destination), "r" (first), "r" (second), "m" (*(second)) : "memory")
+/* The translation row (row 3, +48) of a matrix as a point with w = 1 from vf0, */
+#define SdvGetTranslation(destination, matrix) \
+    __asm__ __volatile__("lqc2 vf1, 48(%1)\nvmove.w vf1, vf0\nsqc2 vf1, 0(%0)\n" \
+                         : : "r" (destination), "r" (matrix), "m" ((*(matrix))[3][0]) : "memory")
+/* and a point stored as the translation row of a matrix, w = 1 (no memory operand). */
+#define SdvSetTranslation(matrix, point) \
+    __asm__ __volatile__("lqc2 vf1, 0(%1)\nvmove.w vf1, vf0\nsqc2 vf1, 48(%0)\n" \
+                         : : "r" (matrix), "r" (point) : "memory")
+
+/* Part kinds with this bit take their position from the matrix the caller passes (when it passes one) instead of from
+   sefGetPosition. */
+#define SDV_PART_USES_MATRIX 0x40
+
+/*
+ * Projects offset (hundredths, relative to the part, or to matrix when the part has bit 0x40) to the screen:
+ * screen gets the fixed-point position minus the screen origin and the depth in z, scale (a point on input)
+ * its projected extent from the position. Part 8 is already a screen position. Returns 0 when clipped.
+ * Memory operands: SdvCopyQuadword and SdvIntToFloatVector put offset in $16 ahead of &local, SdvGetTranslation
+ * puts matrix in $19 ahead of request (the plain macros: fndiff 36/187 in place).
+ */
+int sdvTransOffset(int *screen, int *offset, int part, int depth, SdvScale *scale, int argument, Matrix4 *matrix)
+{
+    Vector4 point;
+    Vector4 local;
+    Matrix4 cameraMatrix;
+    Matrix4 projection;
+    int edge[4];
+    XglCamera *camera;
+    SefLinkedContext *request;
+    Matrix4 *view;
+    int useMatrix;
+    int deltaX;
+    int deltaY;
+
+    if (part == 8) {
+        SdvCopyQuadword(screen, offset);
+        screen[2] = depth << 8;
+        screen[0] += 0x100;
+        screen[1] += 0xE0;
+        return 1;
+    }
+    camera = xglStudioGetActiveCamera();
+    request = sefGetRequestBuffer();
+    view = &camera->volume[0].viewMatrix;
+    useMatrix = 0;
+    if (matrix != 0 && (part & SDV_PART_USES_MATRIX)) {
+        useMatrix = 1;
+    }
+    SdvIntToFloatVector(&local, offset);
+    Vu0SefScaleVectorXYZNI(&local, &local, 0.01f);
+    local.w = 1.0f;
+    sefGetCameraPos(&cameraMatrix);
+    MMathMulMatrix(&projection, view, &cameraMatrix);
+    if (useMatrix) {
+        MMathApplyMatrix(&point, matrix, &local);
+    } else {
+        sefGetPosition(&point, &local, part);
+    }
+    if (argument != 0) {
+        sefInitPartTransform((SefPartTransform *)&sefGlobalTransform, part, request->kind1Key, request->kind0Key,
+                             request->kind5Key);
+        if (useMatrix) {
+            SdvGetTranslation(&sefGlobalTransform.position, matrix);
+            SdvSetTranslation(&sefGlobalTransform.matrix, &sefGlobalTransform.position);
+        }
+        if (sefGlobalTransform.scaled != 0) {
+            MMathMulMatrix(&cameraMatrix, view, &sefGlobalTransform.matrix);
+            MMathScaleMatrixRotS(&projection, &projection, sefGlobalTransform.scale);
+            Vu0SefSubVectorXYZ(&point, &point, &sefGlobalTransform.position);
+            view = &cameraMatrix;
+        }
+    }
+    MMathApplyMatrix((Vector4 *)projection[3], view, &point);
+    if (MMathRotTransPersClip((Vector4 *)screen, camera, &projection, &sdvOriginPoint) != 0) {
+        return 0;
+    }
+    MMathRotTransPersClip((Vector4 *)edge, camera, &projection, &scale->vector);
+    deltaX = screen[0] - edge[0];
+    scale->f[0] = (deltaX < 0 ? -deltaX : deltaX) >> 4;
+    deltaY = screen[1] - edge[1];
+    scale->f[1] = (deltaY < 0 ? -deltaY : deltaY) >> 4;
+    screen[0] = (screen[0] >> 4) - 0x700;
+    screen[1] = (screen[1] >> 4) - 0x720;
+    if (depth != 0) {
+        screen[2] += depth << 8;
+        if (screen[2] > 0xF00000) {
+            screen[2] = 0xF00000;
+        }
+    }
+    return 1;
+}
 
 /* Reset: zeroes the slot flags and every special record, then gifStateClearModeValue. */
 void sdvResetSpecialWork(void)
@@ -1181,17 +1308,57 @@ typedef struct SdvSpecial {
     signed char slotIds[6];   /* +0x08 */
 } SdvSpecial;
 
-/* Frees the special slots an owner lists; a screen-effect record (kinds 10-15) with no key decrease, or of
-   kind 13, also clears the gifState mode value. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvFreeSpecialSlots);
-
 /* The number of slots a special lists. */
 #define SDV_SPECIAL_SLOT_COUNT 6
-/* Kinds from this one on are screen effects: they interpolate all four size halfwords of a key. */
-#define SDV_SPECIAL_KIND_SCREEN 10
 
-/* (0, 0, 0, 1): the offset sdvExecSpecial asks sefGetPoint for. */
-extern AlignedVector4 sdvOriginPoint;
+/* Kinds from this one on are screen effects (kinds 10-15); they interpolate all four size halfwords of a key. */
+#define SDV_SPECIAL_KIND_SCREEN 10
+#define SDV_SPECIAL_SCREEN_KINDS 6
+
+/* Frees the special slots an owner lists; a screen-effect record (kinds 10-15) with no key decrease, or of
+   kind 13, also clears the gifState mode value. */
+void sdvFreeSpecialSlots(SdvSpecial *special)
+{
+    int i;
+    int slot;
+    SdvSpecialWork *record;
+    unsigned int kind;
+    signed char *position;
+
+    if (special == 0 || special->sequence.keys == 0) {
+        return;
+    }
+    /* The first row test reads the position through its address: read as special->sequence.position, the compiler
+       shares this load with the one that ends each pass of the loop, which the original reloads every time. */
+    position = &special->sequence.position;
+    i = 0;
+    if (*position <= 0) {
+        return;
+    }
+    do {
+        slot = special->slotIds[i];
+        if (slot > 0) {
+            record = &sdvSpecialTable[slot];
+            special->slotIds[i] = 0;
+            if (record->table != 0) {
+                kind = record->table->kind & 0xFF;
+                if (kind - SDV_SPECIAL_KIND_SCREEN < SDV_SPECIAL_SCREEN_KINDS) {
+                    if (record->key.decrease == 0 || kind == 13) {
+                        gifStateClearModeValue();
+                    }
+                }
+                record->table = 0;
+                record->flags &= ~SDV_FLAG_MODE_SET;
+                sdvClearSpecialRecord(slot);
+            }
+        }
+        i++;
+        if (i >= special->sequence.position) {
+            break;
+        }
+    } while (i < SDV_SPECIAL_SLOT_COUNT);
+}
+
 extern const Matrix4 MMathUnitMatrix;
 Matrix4 *sefGetPoint(Vector4 *destination, Vector4 *offset, int kind);
 
@@ -1346,13 +1513,6 @@ void sefApplyPartTransform(float *destination, float *source, int part);
      (rgba).channel.blue = (source)->color[2], \
      (rgba).channel.alpha = (source)->color[3], (rgba).word)
 
-/* A float vector that the VU0 code also stores as a whole quadword. sdvDrawSpecial indexes it as f[] and passes
-   vector to the helpers; as a plain Vector4 gcc schedules the scale stores after the part loads before the two
-   sdvTransOffset calls (fndiff 674/684 in place). */
-typedef union SdvScale {
-    float f[4];
-    Vector4 vector;
-} SdvScale;
 
 /* Normalizes a vector in place. */
 static inline void *sdvNormalize(Vector4 *vector)
@@ -1418,7 +1578,7 @@ void sdvDrawSpecial(SdvSpecial *special)
             __asm__ __volatile__("sqc2 vf0, 0(%1)" : "=m"(*sizeVector) : "r"(sizeVector));
             scale.f[0] = key->width * 0.01;
             scale.f[1] = key->height * 0.01;
-            if (sdvTransOffset(screen, offset, table->part, key->depth, sizeVector->f, argument, matrix) == 0) {
+            if (sdvTransOffset(screen, offset, table->part, key->depth, sizeVector, argument, matrix) == 0) {
                 break;
             }
             if (screen[0] < 0 || screen[1] < 0 || screen[0] >= SDV_SCREEN_WIDTH || screen[1] >= SDV_SCREEN_HEIGHT) {
@@ -1585,7 +1745,7 @@ void sdvDrawSpecial(SdvSpecial *special)
         case SDV_SPECIAL_KIND_SCREEN + 3:
         case SDV_SPECIAL_KIND_SCREEN + 4: {
             unsigned char modeSet;
-            float *vector = scale.f;
+            SdvScale *vector = &scale;
 
             offset[0] = key->x;
             offset[1] = key->y;
@@ -1630,7 +1790,7 @@ void sdvDrawSpecial(SdvSpecial *special)
                 scale.f[2] = direction[2];
                 scale.f[3] = 1.0f;
                 sdvNormalize(&scale.vector);
-                sefApplyPartTransform(vector, vector, record->table->part);
+                sefApplyPartTransform(vector->f, vector->f, record->table->part);
                 nmlModelSetMulColor(&scale.vector);
             }
             break;
@@ -1642,7 +1802,12 @@ void sdvDrawSpecial(SdvSpecial *special)
 /* The seven words of an sef request: sdvExecAlter copies them into the sef request buffer and hands them to
    sefLoadRequestBuffer. */
 typedef struct SdvSefRequest {
-    struct SefActor *actor;             /* +0x00 the SefActor of sef_164.c */
+    /* +0x00 the actor of the request (SdvRequestActor, sef.c's SefActor view); the one-member union (alias set 0)
+       keeps sdvExecAlter's seven word copies
+       in load/store order */
+    union {
+        struct SdvRequestActor *actor;
+    } target;
     int params[6];                      /* +0x04 */
 } SdvSefRequest;
 
@@ -1651,13 +1816,15 @@ typedef struct SdvSefRequest {
  * copies it into the record at +0xAD0 and sdvExecAlter/sdvDrawAlter read it there.
  */
 typedef struct SdvAlterRequest {
-    unsigned long long tex0[2];   /* +0x00 GS TEX0 of the two images */
+    /* +0x00 GS TEX0 of the two images, low word first. Kept as words: the record is 4-aligned (sdvCreateAlter's
+       copy tests both pointers' alignment at run time); sdvScheduleAlter stores them through SdvAlterTex0View */
+    unsigned int tex0[2][2];
     SdvSefRequest *sefRequest;    /* +0x10 the seven words sdvExecAlter copies into the sef request buffer */
     unsigned char rgba[4];        /* +0x14 */
     unsigned char unmodeled_18[4];
     float length;                 /* +0x1C progress added over maxSamples points (each frame length / maxSamples) */
-    unsigned char unmodeled_20[4];
-    float imageFrames;            /* +0x24 */
+    float imageTime;              /* +0x20 frames the current image has been shown */
+    float imageFrames;            /* +0x24 frames each image is shown */
     float life;                   /* +0x28 frames left; 2048 never runs out */
     float width;                  /* +0x2C */
     float height;                 /* +0x30 */
@@ -1666,10 +1833,10 @@ typedef struct SdvAlterRequest {
                                      rate in 1/100 */
     short maxSamples;             /* +0x3C points the record grows to: at most 64, 32 with follow set */
     unsigned short shrink;        /* +0x3E frames taken per frame once the life is spent */
-    unsigned short blend;         /* +0x40 */
+    short blend;                  /* +0x40 */
     short imageCount;             /* +0x42 */
-    unsigned short mode;          /* +0x44 */
-    unsigned char unmodeled_46[2];
+    short mode;                   /* +0x44 */
+    short image;                  /* +0x46 the image drawn, 0..imageCount-1 */
     short layer;                  /* +0x48 sdvDrawAlters draws the records of one layer */
     short owner;                  /* +0x4A index of the owning effect record; negative for none */
     short follow;                 /* +0x4C nonzero: the record trails the part of parts[0] */
@@ -1680,8 +1847,150 @@ typedef struct SdvAlterRequest {
     unsigned char unmodeled_56[2];
 } SdvAlterRequest;
 
+/* The two TEX0 words of a request as the 64-bit values the GS takes (the record itself is 4-aligned). */
+typedef struct SdvAlterTex0View {
+    unsigned long long tex0[2];
+} SdvAlterTex0View;
+
+/* One alter event row of a sequence (the keys of an SdvSequence read as a record). */
+typedef struct SdvAlterEvent {
+    unsigned short frame;         /* +0x00 the frame the row starts at (SDV_KEY_ rules) */
+    short life;                   /* +0x02 */
+    unsigned short mode;          /* +0x04 low nibble the mode, the high 12 bits (signed) the follow flag */
+    unsigned short blend;         /* +0x06 */
+    unsigned short rgba[4];       /* +0x08 the low byte of each */
+    short parts[2];               /* +0x10 */
+    short maxSamples;             /* +0x14 */
+    unsigned short shrink;        /* +0x16 */
+    short imageFrames;            /* +0x18 */
+    short length;                 /* +0x1A */
+    short images[2][2];           /* +0x1C the image and the palette index of each pair */
+    float width;                  /* +0x24 */
+    float height;                 /* +0x28 */
+    unsigned short spread;        /* +0x2C */
+    unsigned short spin;          /* +0x2E */
+    unsigned short timeBase;      /* +0x30 */
+    unsigned short timeStep;      /* +0x32 */
+    short minDelta;               /* +0x34 in 1/1000 */
+} SdvAlterEvent;
+
+/* One image list item (as sef.c declares it). */
+typedef struct SefImageItem {
+    void *data;                                      /* +0x00 */
+    unsigned char unmodeled_004[0x0c - 0x04];
+    unsigned short resourceKind;                     /* +0x0c */
+    unsigned char unmodeled_00e[0x12 - 0x0e];
+    unsigned short basePointer;                      /* +0x12 */
+    unsigned short bitsPerPixel;                     /* +0x14 */
+    unsigned short bufferWidthPixels;                /* +0x16 */
+    unsigned short width;                            /* +0x18 */
+    unsigned short height;                           /* +0x1a */
+    unsigned short textureWidthExponent;             /* +0x1c */
+    unsigned short textureHeightExponent;            /* +0x1e */
+} SefImageItem;
+
+/* An alter record keeps its points in rings of 64 (32 while it trails a part); the mode of an event is its low four
+   bits. */
+#define SDV_ALTER_POINT_COUNT 64
+#define SDV_ALTER_RING_COUNT 32
+#define SDV_ALTER_MODE_MASK 0xF
+
+/* The parts kinds whose alters fan out over a table of linked members. */
+#define SDV_PART_LINKED_A 0x61
+#define SDV_PART_LINKED_B 0x62
+
+void *svGetImageListItem(int type, unsigned int flags);
+/* sef.c declares it without a prototype; sdvScheduleAlter passes a member index (part kind - 0x41). */
+int sefGetLinkedFlag(int linkIndex);
+int sdvCreateAlter(SdvAlterRequest *request);
+/* Zero-terminated lists of the part kinds that parts kinds SDV_PART_LINKED_A and SDV_PART_LINKED_B fan out to. */
+extern unsigned short sdvLinkedPartsA[];
+extern unsigned short sdvLinkedPartsB[];
+
 /* Builds an alter request from each event the sequence steps onto, then creates it through sdvCreateAlter. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvScheduleAlter);
+void sdvScheduleAlter(SdvSequence *sequence, SdvSefRequest *sefRequest, int layer, int recordIndex)
+{
+    SdvAlterRequest request;
+    SdvAlterEvent *event;
+    SefImageItem *image;
+    SefImageItem *palette;
+    unsigned short *parts;
+    int step;
+    int i;
+    int partIndex;
+    short imageIndex;
+    short paletteIndex;
+    int psm;
+    unsigned short part;
+
+    if (sequence == 0) {
+        return;
+    }
+    if (sequence->keys == 0) {
+        return;
+    }
+    for (step = sdvExecSeqTbl(sequence); (unsigned int)step < SDV_KEY_END; step = sdvCheckSeqKey(sequence)) {
+        event = (SdvAlterEvent *)&sequence->keys[step * sequence->stride];
+        memset(&request, 0, sizeof(request));
+        request.life = event->life;
+        request.parts[0] = event->parts[0];
+        request.sefRequest = sefRequest;
+        request.parts[1] = event->parts[1];
+        request.maxSamples = event->maxSamples > SDV_ALTER_POINT_COUNT ? SDV_ALTER_POINT_COUNT : event->maxSamples;
+        request.shrink = event->shrink;
+        request.mode = event->mode & SDV_ALTER_MODE_MASK;
+        request.follow = (short)event->mode >> 4;
+        request.blend = event->blend;
+        request.rgba[0] = event->rgba[0];
+        request.rgba[1] = event->rgba[1];
+        request.rgba[2] = event->rgba[2];
+        request.rgba[3] = event->rgba[3];
+        request.imageFrames = event->imageFrames;
+        request.length = event->length;
+        request.layer = layer;
+        request.owner = recordIndex;
+        request.spread = event->spread;
+        request.width = event->width;
+        request.spin = event->spin;
+        request.height = event->height;
+        request.timeBase = event->timeBase;
+        request.timeStep = event->timeStep;
+        request.minDelta = event->minDelta * 0.001f;
+        if (request.follow != 0 && request.maxSamples > SDV_ALTER_RING_COUNT) {
+            request.maxSamples = SDV_ALTER_RING_COUNT;
+        }
+        for (i = 0; i < 2; i++) {
+            imageIndex = event->images[i][0];
+            paletteIndex = event->images[i][1];
+            if (imageIndex >= 0 && paletteIndex >= 0) {
+                image = svGetImageListItem(layer, imageIndex);
+                palette = svGetImageListItem(layer, paletteIndex);
+                if (image != 0 && palette != 0) {
+                    psm = image->bitsPerPixel == 8 ? GS_PSMT8 : GS_PSMT4;
+                    ((SdvAlterTex0View *)&request)->tex0[request.imageCount] = GS_SET_TEX0(image->basePointer,
+                        image->bufferWidthPixels >> 6, psm, image->textureWidthExponent,
+                        image->textureHeightExponent, 1, 0, palette->basePointer, 0, 0, 0, 1);
+                    request.imageCount++;
+                    /* Stored again here although the layer is set above: without this store the image loop is scheduled
+                       differently (fd.sh, sdvScheduleAlter). */
+                    request.layer = layer;
+                }
+            }
+        }
+        part = event->parts[0];
+        if ((unsigned int)(part - SDV_PART_LINKED_A) <= SDV_PART_LINKED_B - SDV_PART_LINKED_A) {
+            parts = (short)part == SDV_PART_LINKED_A ? sdvLinkedPartsA : sdvLinkedPartsB;
+            for (partIndex = 0; parts[partIndex] != 0; partIndex++) {
+                if (sefGetLinkedFlag(parts[partIndex] - 0x41) != 0) {
+                    request.parts[0] = parts[partIndex];
+                    sdvCreateAlter(&request);
+                }
+            }
+        } else {
+            sdvCreateAlter(&request);
+        }
+    }
+}
 
 
 /*
@@ -1693,7 +2002,7 @@ typedef struct SdvAlter {
     Matrix4 matrix;                     /* +0x040 */
     /* +0x080 two 64-point rings, one per sef part; when the record trails a part (follow), [0] holds the
        sampled anchors and [1] the ring swung around them */
-    AlignedVector4 points[2][64];
+    SdvVectorView points[2][64];
     AlignedVector4 quats[33];           /* +0x880 heading quaternions, newest first */
     AlignedVector4 heading;             /* +0xA90 */
     AlignedVector4 lastDelta;           /* +0xAA0 */
@@ -1722,8 +2031,91 @@ void sdvInitAlter(SdvAlter *alter)
     sefMemZero(alter, sizeof(*alter));
 }
 
-/* Takes the first free alter record, stamps a serial and copies the request in. */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvCreateAlter);
+#define SDV_ALTER_COUNT 49
+#define SDV_DEG_TO_RAD 0.017453292f
+#define SDV_PI 3.1415927f
+/* The noise vector sefNoiseNextVector returns is in [-0.5, 0.5): scaled to +-5 degrees around each axis. */
+#define SDV_ALTER_NOISE_ANGLE 0.17453292f
+/* The random radius offset of the trailing ring, in units; its timeBase/timeStep radii are in 1/1000. */
+#define SDV_ALTER_RADIUS_RANDOM 0.1f
+#define SDV_ALTER_RADIUS_UNIT 0.001f
+
+extern int sdvAlterSerial;
+f32 sefRandf(void);
+void sefNoiseNextVector(Vector4 *pos);
+Matrix4 *MMathRotateMatrixXYZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
+int MMathQuatBetweenVectors(Vector4 *destination, const Vector4 *from, const Vector4 *to);
+
+extern AlignedVector4 sdvAlterForward;    /* (0, 0, -1, 1): the start heading and the quaternions' target axis */
+extern AlignedVector4 sdvAlterStartDelta; /* (0, 0, -1, 1): the start lastDelta */
+extern AlignedVector4 sdvAlterMirrorXY;   /* (-1, -1, 1, 1): negates x and y */
+
+/*
+ * Takes the first free alter record, stamps a serial and copies the request in; returns index | serial << 16,
+ * -1 when every record is taken. A trailing record (follow) also gets its start position, a slightly
+ * noisy world matrix, its heading quaternions and the angle and radius of each ring point.
+ * Memory operands: SdvMulVectorXYZ puts &sdvAlterMirrorXY in $17 ahead of alter, SdvCopyQuadword puts
+ * &sdvAlterStartDelta ahead of &noise (the plain macros: fndiff 181/220 in place). The ring loop stores z through
+ * SdvVectorView.
+ */
+int sdvCreateAlter(SdvAlterRequest *request)
+{
+    AlignedVector4 position;
+    AlignedVector4 noise;
+    SdvAlter *alter;
+    int i;
+    int k;
+    int maxSamples;
+    float radius;
+    float angle;
+
+    for (i = 0; i < SDV_ALTER_COUNT; i++) {
+        if (sdvAlterTable[i].active == 0) {
+            alter = &sdvAlterTable[i];
+            sdvAlterSerial++;
+            sdvAlterSerial &= 0xFF;
+            alter->request = *request;
+            alter->active = 1;
+            alter->serial = sdvAlterSerial;
+            alter->frame = 0;
+            alter->index = 0;
+            alter->progress = 0.0f;
+            if (request->follow != 0) {
+                maxSamples = request->maxSamples;
+                radius = sefRandf() * SDV_ALTER_RADIUS_RANDOM;
+                sefGetPosition(&position, 0, request->parts[0]);
+                QuadwordCopyT0(&alter->position, &position);
+                QuadwordCopyT0(&alter->previousPosition, &position);
+                sefNoiseNextVector(&noise);
+                noise.x *= SDV_ALTER_NOISE_ANGLE;
+                noise.y *= SDV_ALTER_NOISE_ANGLE;
+                noise.z *= SDV_ALTER_NOISE_ANGLE;
+                MMathRotateMatrixXYZ(&alter->worldMatrix, 0, &noise);
+                QuadwordCopyT0(&alter->heading, &sdvAlterForward);
+                SdvCopyQuadword(&alter->lastDelta, &sdvAlterStartDelta);
+                for (k = 0; k < SDV_ALTER_RING_COUNT; k++) {
+                    SdvMulVectorXYZ(&alter->quats[k], &alter->quats[k], &sdvAlterMirrorXY);
+                    MMathQuatBetweenVectors(&alter->quats[k], &alter->quats[k], &sdvAlterForward);
+                }
+                angle = sefRandf() * SDV_PI;
+                /* maxSamples + 1 passes, as in the original: with maxSamples 64 the last one is one element past the
+                   ring. */
+                for (k = 0; k <= maxSamples; k++) {
+                    SdvVectorView *anchor = &alter->points[0][k];
+
+                    Vu0SetOrigin(anchor);
+                    Vu0SetOrigin(&alter->points[1][k]);
+                    anchor->vector.z = (float) -k * alter->request.width;
+                    alter->angles[k] = (float) (alter->request.spread / maxSamples * k) * SDV_DEG_TO_RAD + angle;
+                    alter->radii[k] = radius + (float) (alter->request.timeBase + k * alter->request.timeStep)
+                                               * SDV_ALTER_RADIUS_UNIT;
+                }
+            }
+            return (sdvAlterSerial << 16) | i;
+        }
+    }
+    return -1;
+}
 
 /* Zeroes one alter record (same code as sdvInitAlter; the callers tell them apart). */
 void sdvDestroyAlter(SdvAlter *alter)
@@ -1766,13 +2158,268 @@ void sdvDestroyOwnerAlters(int owner)
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_181", func_0026A7A0);
+/* A vector read as a quadword or as a float array indexed by axis. */
+typedef union SdvVector {
+    AlignedVector4 vector;
+    float component[4];
+} SdvVector;
+
+short MMathIsVectorEqual(const Vector4 *first, const Vector4 *second);
+float acosf(float value);
+float xglSin(float angle);
+
+extern AlignedVector4 sdvAxisPositiveX; /* (1, 0, 0, 1) */
+extern AlignedVector4 sdvAxisNegativeX; /* (-1, 0, 0, 1) */
+extern int sdvSlerpNudgeCount;         /* counts the opposite-vector nudges; bit 0 picks the direction */
+
+/* destination.xyz = first.xyz + second.xyz, w keeps first's (Vu0SefAddVectorXYZ); the outputs are the four
+   components of the destination, as sef.c's SefSubVectorXYZ4 (allocator weight device of sdvSlerpVector, through
+   sdvBlendVectors). */
+#define SdvAddVectorXYZ4(destination, first, second) \
+    __asm__ __volatile__("lqc2 vf1, 0(%4)\nlqc2 vf2, 0(%5)\nvadd.xyz vf1, vf1, vf2\nsqc2 vf1, 0(%6)\n" \
+        : "=m"((destination)->x), "=m"((destination)->y), "=m"((destination)->z), "=m"((destination)->w) \
+        : "r"(first), "r"(second), "r"(destination) : "memory")
+
+/* out = normalize(first * firstWeight + second * secondWeight) on xyz. */
+static inline void sdvBlendVectors(AlignedVector4 *out, AlignedVector4 *first, float firstWeight,
+                                   AlignedVector4 *second, float secondWeight)
+{
+    AlignedVector4 firstPart;
+    AlignedVector4 secondPart;
+
+    Vu0SefScaleVectorXYZNI(&firstPart, first, firstWeight);
+    Vu0SefScaleVectorXYZNI(&secondPart, second, secondWeight);
+    SdvAddVectorXYZ4(out, &firstPart, &secondPart);
+    MMathNormalizeVector2(out, out);
+}
+
+/* Spherical interpolation from current (t = 0) towards target (t = 1), normalized into out. Nearly parallel
+ * vectors give current; nearly opposite ones first nudge a component of target by 0.002 (z for the x axes,
+ * else x).
+ * Memory operands: SdvAddVectorXYZ4 and SdvCopyQuadword put out, target and current in $17..$19 ahead of the
+ * axis (the plain macros: fndiff 126/153 in place). */
+void sdvSlerpVector(AlignedVector4 *out, AlignedVector4 *target, AlignedVector4 *current, float t)
+{
+    SdvVector nudged;
+    AlignedVector4 *source = target;
+    float cosine;
+    float angle;
+    float sine;
+    float targetWeight;
+    float currentWeight;
+    double absCosine;
+    int axis;
+
+    cosine = MMathVectorDotProduct(source, current);
+    absCosine = cosine;
+    if (absCosine < 0.0) {
+        absCosine = -absCosine;
+    }
+    if (absCosine >= 0.9999f) {
+        if (cosine < 0.0f) {
+            short onXAxis;
+
+            axis = 0;
+            onXAxis = MMathIsVectorEqual(source, &sdvAxisPositiveX) | MMathIsVectorEqual(source, &sdvAxisNegativeX);
+            QuadwordCopyT0(&nudged.vector, source);
+            if (onXAxis) {
+                axis = 2;
+            }
+            source = &nudged.vector;
+            if (sdvSlerpNudgeCount & 1) {
+                nudged.component[axis] += 0.002f;
+            } else {
+                nudged.component[axis] -= 0.002f;
+            }
+            cosine = MMathVectorDotProduct(source, current);
+            sdvSlerpNudgeCount++;
+        } else {
+            SdvCopyQuadword(out, current);
+            return;
+        }
+    }
+    angle = acosf(cosine);
+    sine = xglSin(angle);
+    if (sine != 0.0f) {
+        targetWeight = xglSin(t * angle) / sine;
+        currentWeight = xglSin((1.0f - t) * angle) / sine;
+    } else {
+        targetWeight = t;
+        currentWeight = 1.0f - targetWeight;
+    }
+    sdvBlendVectors(out, source, targetWeight, current, currentWeight);
+}
+
+/* The actor of an sef request as sdvExecAlter reads it: its local matrix at 0x100.
+   sef.c has its own private view of the same actor (SefActor, the matrix as a byte array: its callees take it
+   untyped). */
+typedef struct SdvRequestActor {
+    unsigned char unmodeled_000[0x100];
+    Matrix4 localMatrix;                       /* +0x100 */
+    unsigned char unmodeled_140[0x640 - 0x140];
+} SdvRequestActor;
+
+#define SEF_RECORD_HIDDEN 0x80          /* SefEffectRecord flags (+0x44, beside sef.h's SEF_RECORD_* bits): not shown */
+#define SDV_ALTER_LIFETIME_FOREVER 2048.0f
+
+void sefLoadRequestBuffer(int p0, int p1, int p2, int p3, int p4, int p5, int p6, int p7);
+void sefMergeMatrixPos(Matrix4 *dest, Matrix4 *matrix, Vector4 *position);
+float MMathCalcLength(const Vector4 *vector);
+
+/* sin(angle) on the VU0 sine micro subroutine: Vu0Sin with the non-interlocking qmtc2.ni of this function (hand-written
+   VU0 code of the class Opok accepted as vu0_macro.h macros, one block of the original instruction sequence; it
+   belongs next to Vu0Sin there). */
+#define Vu0SinNI(result, angle) \
+    __asm__ __volatile__( \
+        "mfc1 $8, %1\n" \
+        "qmtc2.ni $8, vf4\n" \
+        "vcallms 0x20\n" \
+        "qmfc2.i $8, vf1\n" \
+        "mtc1 $8, %0\n" \
+        : "=f" (result) \
+        : "f" (angle) \
+        : "$8", "memory")
 
 /*
  * Advances one alter record by a frame: the lifetime and frame counters, the sef request, then either the
  * trailing ring (follow) or the next point of each part; a spent record is destroyed.
+ * Memory operand: SdvCopyQuadword puts &alter->position in $17 ahead of the sef request (QuadwordCopyT0:
+ * fndiff 311/344 in place).
  */
-INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvExecAlter);
+void sdvExecAlter(SdvAlter *alter)
+{
+    AlignedVector4 delta;
+    Matrix4 localMatrix;
+    Matrix4 inverse;
+    SdvScale sinFirst;
+    SdvScale sinValue;
+    SdvAlterRequest *request = &alter->request;
+    AlignedVector4 *position;
+    AlignedVector4 *previousPosition;
+    SdvSefRequest *sefRequest;
+    SdvSefRequest *buffer;
+    float *height;
+    float *radius;
+    float *angle;
+    SefEffectRecord *record;
+    int hidden = 0;
+    int follow = request->follow;
+    int partCount;
+    float length;
+    int i;
+
+    if (request->owner >= 0) {
+        record = sefGetEffectRecords() + request->owner;
+        if (record->flags & SEF_RECORD_HIDDEN) {
+            hidden = 1;
+        }
+    }
+    if (request->life != SDV_ALTER_LIFETIME_FOREVER) {
+        request->life -= 1.0f;
+    }
+    if (hidden) {
+        if (alter->frame > 0) {
+            alter->frame--;
+        }
+    } else if (request->life > 0.0f) {
+        if (alter->frame < SDV_ALTER_POINT_COUNT && alter->frame < alter->request.maxSamples) {
+            alter->frame++;
+        }
+    } else {
+        alter->frame -= alter->request.shrink;
+    }
+    if (alter->frame > 0) {
+        sefRequest = request->sefRequest;
+        buffer = (SdvSefRequest *) sefGetRequestBuffer();
+        buffer->target.actor = sefRequest->target.actor;
+        buffer->params[0] = sefRequest->params[0];
+        buffer->params[1] = sefRequest->params[1];
+        buffer->params[2] = sefRequest->params[2];
+        buffer->params[3] = sefRequest->params[3];
+        buffer->params[4] = sefRequest->params[4];
+        buffer->params[5] = sefRequest->params[5];
+        sefLoadRequestBuffer((int) sefRequest->target.actor, sefRequest->params[0], sefRequest->params[1],
+                             sefRequest->params[2], sefRequest->params[3], sefRequest->params[4],
+                             sefRequest->params[5], 0);
+        if (follow) {
+            previousPosition = &alter->previousPosition;
+            position = &alter->position;
+            SdvCopyQuadword(previousPosition, position);
+            sefGetPosition(position, 0, request->parts[0]);
+            Vu0SefSubVectorXYZ(&delta, previousPosition, position);
+            if (sefRequest->target.actor != 0) {
+                sefMergeMatrixPos(&alter->matrix, &sefRequest->target.actor->localMatrix, position);
+            }
+            QuadwordCopyMatrixT0(localMatrix, alter->matrix);
+            Vu0SetOrigin(localMatrix[3]);
+            xglMatrixInverse((Matrix *)&inverse, (Matrix *)&localMatrix);
+            MMathMulMatrix(&alter->matrix, &alter->matrix, &alter->worldMatrix);
+            MMathApplyMatrix(&delta, &inverse, &delta);
+            length = MMathCalcLength(&delta);
+            MMathNormalizeVector2(&delta, &delta);
+            if (length < alter->request.minDelta) {
+                QuadwordCopyT0(&delta, &alter->lastDelta);
+            } else {
+                QuadwordCopyT0(&alter->lastDelta, &delta);
+            }
+            sdvSlerpVector(&alter->heading, &delta, &alter->heading, (float) request->parts[1] * 0.01f);
+            for (i = SDV_ALTER_RING_COUNT; i > 0; i--) {
+                QuadwordCopyT0(&alter->quats[i], &alter->quats[i - 1]);
+            }
+            Vu0SefMulVectorXYZ(&delta, &alter->heading, &sdvAlterMirrorXY);
+            MMathQuatBetweenVectors(&alter->quats[0], &delta, &sdvAlterForward);
+            Vu0SinNI(sinFirst.f[0], alter->angles[0]);
+            length = sinFirst.f[0] * alter->radii[0];
+            radius = alter->radii;
+            height = &alter->points[1][0].vector.y;
+            angle = alter->angles;
+            for (i = 0; i < SDV_ALTER_RING_COUNT; i++, height += 4) {
+                *angle += (float) -alter->request.spin * SDV_DEG_TO_RAD;
+                height[-1] = 0.0f;
+                height[1] = 0.0f;
+                Vu0SinNI(sinValue.f[0], *angle);
+                height[0] = sinValue.f[0] * *radius;
+                Vu0SefAddVectorXYZ(&alter->points[1][i], &alter->points[1][i], &alter->points[0][i]);
+                height[0] -= length;
+                radius++;
+                angle++;
+            }
+        } else {
+            partCount = 2;
+            if (request->mode == 8) {
+                partCount = 1;
+            }
+            for (i = 0; i < partCount; i++) {
+                sefGetPosition(&alter->points[i][alter->index].vector, 0, request->parts[i]);
+            }
+        }
+        if (request->mode >= 3 && request->mode <= 7) {
+            float progress = alter->progress;
+
+            alter->progress = progress + alter->request.length / (float) alter->request.maxSamples;
+            if (request->mode == 3) {
+                if (alter->wrapped == 0) {
+                    alter->widths[alter->index] = progress;
+                } else {
+                    alter->widths[alter->index] = 4.0f;
+                }
+            }
+            if (request->mode == 4) {
+                alter->widths[alter->index] = progress;
+                if (alter->progress > 10.0f) {
+                    alter->progress -= 10.0f;
+                }
+            }
+        }
+        alter->index++;
+        if (alter->index >= SDV_ALTER_POINT_COUNT) {
+            alter->wrapped = 1;
+            alter->index &= SDV_ALTER_POINT_COUNT - 1;
+        }
+    } else if (request->life < 0.0f) {
+        sdvDestroyAlter(alter);
+    }
+}
 
 extern void sceVif1PkAddCode(XglPacket *packet, unsigned int tag);
 extern void sceVif1PkCnt(XglPacket *packet, int count);
@@ -1834,10 +2481,334 @@ void sdvSetStripHeader(SdvStripHeader *header, int unused, int qwc, int primitiv
     sceVif1PkRef(packet, physical, qwc, 0, 0, 0);
 }
 
-/* Draws one alter's key frames into the packet from xglPacketGetCurrent. */
-void sdvDrawAlter(SdvAlter *alter);
+/* One A+D pair of the GS environment sdvDrawAlter sends in front of an alter. */
+typedef struct SdvGsRegister {
+    u64 registerValue;
+    u64 registerAddress;
+} SdvGsRegister;
 
-INCLUDE_ASM("asm/main/nonmatchings/sdv_181", sdvDrawAlter);
+/* The TEX0 pair of the same packet. Its value is a different 64-bit type than the others (long is 64 bits in
+   ee-gcc): with one type for all six registers, gcc keeps the TEX0 store ahead of the blend table load in
+   sdvDrawAlter. */
+typedef struct SdvGsTextureRegister {
+    unsigned long registerValue;
+    unsigned long registerAddress;
+} SdvGsTextureRegister;
+
+/* The environment itself: a six-register A+D packet (TEX0, TEST, TEX1, CLAMP, ZBUF, ALPHA). */
+typedef struct SdvAlterEnvironment {
+    u64 giftag[2];
+    SdvGsTextureRegister tex0;
+    SdvGsRegister test;
+    SdvGsRegister tex1;
+    SdvGsRegister clamp;
+    SdvGsRegister zbuf;
+    SdvGsRegister alpha;
+} SdvAlterEnvironment;
+
+/* One quadword of an alter strip: a texture coordinate, a colour or a position. */
+typedef union SdvAlterQuad {
+    XglQuadword quad;
+    float f[4];
+    Vector4 vector;
+    unsigned int rgba[4];
+    u64 words[2];
+} SdvAlterQuad;
+
+/* A GIF tag with PRE set, EOP set and a loop count that sdvSetStripHeader fills in. */
+#define SDV_GIF_TAG(prim, registerCount) \
+    (((u64)(registerCount) << 60) | ((u64)(prim) << 47) | ((u64)1 << 46) | GIF_TAG_EOP)
+#define SDV_PRIM_LINE_STRIP 0x4A          /* line strip, gouraud, alpha blend */
+#define SDV_PRIM_TRIANGLE_STRIP 0x4C      /* triangle strip, gouraud, alpha blend */
+#define SDV_PRIM_TEXTURED 0x10            /* TME */
+
+#define SDV_ALTER_MODE_SCROLL 2
+#define SDV_ALTER_MODE_REPEAT 3
+#define SDV_ALTER_MODE_SINGLE 8
+#define SDV_ALTER_FOLLOW_LINE 2
+#define SDV_ALTER_STEPS 4                 /* each segment is drawn as four steps (five points) */
+#define SDV_ALTER_SEGMENT_QUADWORDS 45     /* packet quadwords reserved and counted per segment */
+#define SDV_UNCACHED 0x20000000           /* added to a packet address to write it through the uncached mirror */
+
+extern SdvAlterEnvironment sdvAlterEnvironment;
+extern unsigned char D_1B70[];
+extern const u64 sefAlphaBlendValues[];
+void *xglPacketReserve(int size);
+void func_0012B6E0(XglPacket *packet, int vuAddress, int unpackCommand, int cycleLength, int writeLength);
+void func_0012BCE8(XglPacket *packet, const void *data, int count);
+void func_0012B770(XglPacket *packet);
+Vector4 *MMathQuatToMatrix(Vector4 *destination, const Vector4 *source);
+void sefPacketFlush(void);
+
+/* Copies one float vector as a quadword through t0: the inline form of svCopyVector (sv_get_image_item.c),
+   whose four outputs let gcc walk both edges with one pointer in sdvDrawAlter. */
+static inline void sdvCopyVector(float *destination, float *source)
+{
+    __asm__ __volatile__(
+        "lq $8, 0(%5)\n"
+        "sq $8, 0(%4)\n"
+        : "=m" (destination[0]), "=m" (destination[1]), "=m" (destination[2]), "=m" (destination[3])
+        : "r" (destination), "r" (source)
+        : "$8");
+}
+
+/* Whether the request draws a single line along the followed part instead of a ribbon. */
+static inline int sdvAlterIsFlat(const SdvAlterRequest *request)
+{
+    return request->follow == SDV_ALTER_FOLLOW_LINE;
+}
+
+/* The same test on a follow value that is already loaded. */
+static inline int sdvFollowIsFlat(int follow)
+{
+    return follow == SDV_ALTER_FOLLOW_LINE;
+}
+
+/*
+ * Draws one alter into the packet from xglPacketGetCurrent: each pair of neighbouring points becomes one strip
+ * of four Hermite steps (five samples), a ribbon between the two point rings (or, when the record trails a part,
+ * between the turned anchors moved up and down by the height) or a single line; texture coordinate and alpha run
+ * along it.
+ */
+void sdvDrawAlter(SdvAlter *alter)
+{
+    HermiteVector tangents[2];
+    float edges[2][10][4];
+    AlignedVector4 positions[32];
+    SdvAlterQuad color;
+    SdvAlterQuad giftag;
+    SdvAlterQuad texcoords[2];
+    Matrix4 heading;
+    int previous;
+    int last;
+    int vertexCount;
+    int newest;
+    SdvAlterRequest *request;
+    SdvStripHeader *header;
+    int total;
+    int follow;
+    int line;
+    int current;
+    XglPacket *packet;
+    SdvAlterQuad *vertex;
+    HermiteVector *turned;
+    HermiteVector *points;
+    void *buffer;
+    float progress;
+    float progressStep;
+    float alpha;
+    float alphaStep;
+    float parameter;
+    int next;
+    int ring;
+    int flat;
+    int kind;
+    int i;
+    int sides;
+    int side;
+    int step;
+    int count;
+
+    alphaStep = 0.0f;
+    request = &alter->request;
+    progressStep = 0.0f;
+    count = alter->frame;
+    newest = alter->index - 1;
+    progress = alter->progress;
+    packet = xglPacketGetCurrent();
+    /* one scratch holds the follow value and then the mode, as the original reuses it */
+    kind = request->follow;
+    flat = sdvFollowIsFlat(kind);
+    total = 0;
+    line = 0;
+    follow = kind;
+    if (flat || (kind = request->mode) == SDV_ALTER_MODE_SINGLE) {
+        line = 1;
+    }
+    texcoords[0].f[0] = 0.0f;
+    texcoords[0].f[1] = 0.0f;
+    texcoords[0].f[2] = 1.0f;
+    texcoords[0].f[3] = 0.0f;
+    texcoords[1].quad = texcoords[0].quad;
+    texcoords[1].f[1] = 1.0f;
+    if (count < 2) {
+        return;
+    }
+    buffer = xglPacketReserve(count * SDV_ALTER_SEGMENT_QUADWORDS);
+    header = (SdvStripHeader *)((unsigned int)buffer + SDV_UNCACHED);
+    if (request->mode == SDV_ALTER_MODE_SCROLL) {
+        alter->progress -= alter->request.length / ((float)alter->request.maxSamples * 2.0f);
+        if (alter->progress < -20.0f) {
+            alter->progress += 20.0f;
+        }
+    }
+    if (buffer == 0) {
+        return;
+    }
+    color.rgba[0] = alter->request.rgba[0];
+    color.rgba[1] = alter->request.rgba[1];
+    color.rgba[2] = alter->request.rgba[2];
+    alpha = alter->request.rgba[3];
+    /* True after the return above, but the original tests it again (without the test the branch layout differs). */
+    if (count >= 2) {
+        progressStep = alpha / (float)(count - 1);
+        alphaStep = progressStep * 0.25f;
+        progressStep = alter->request.length / (float)alter->request.maxSamples;
+        progressStep *= 0.25f;
+    }
+    if (request->imageCount != 0) {
+        request->imageTime += 1.0f;
+        if (request->imageTime >= request->imageFrames) {
+            request->imageTime = 0.0f;
+            request->image++;
+            if (request->image >= request->imageCount) {
+                request->image = 0;
+            }
+        }
+        giftag.words[1] = GS_ST | (GS_RGBAQ << 4) | (GS_XYZ2 << 8);
+        giftag.words[0] = SDV_GIF_TAG(SDV_PRIM_TRIANGLE_STRIP | SDV_PRIM_TEXTURED, 3);
+    } else {
+        giftag.words[1] = GS_ST | (GS_RGBAQ << 4) | (GS_XYZ2 << 8);
+        giftag.words[0] = SDV_GIF_TAG(SDV_PRIM_TRIANGLE_STRIP, 3);
+    }
+    if (line) {
+        giftag.words[1] = GS_RGBAQ | (GS_XYZ2 << 4);
+        giftag.words[0] = SDV_GIF_TAG(SDV_PRIM_LINE_STRIP, 2);
+    }
+    /* A plain cast of the 4-aligned tex0 array: through SdvAlterTex0View the entry is addressed from the request, not
+       from the alter as in the original (fd.sh: 592 instead of 594 instructions). */
+    sdvAlterEnvironment.tex0.registerValue =
+        request->imageCount != 0 ? ((unsigned long long *) alter->request.tex0)[request->image] : 0;
+    sdvAlterEnvironment.clamp.registerValue = request->mode == SDV_ALTER_MODE_REPEAT ? 5 : 4;
+    sdvAlterEnvironment.alpha.registerValue = sefAlphaBlendValues[request->blend];
+    vertexCount = 0;
+    vertex = (SdvAlterQuad *)(header + 1);
+    sceVif1PkCnt(packet, 0);
+    func_0012B6E0(packet, 0, 0x6C, 4, 4);
+    func_0012BCE8(packet, &sdvAlterEnvironment, 7);
+    func_0012B770(packet);
+    sceVif1PkCnt(packet, 0);
+    sceVif1PkAddCode(packet, 0x11000000);
+    sceVif1PkAddCode(packet, ((unsigned int)D_1B70 >> 3) | 0x14000000);
+    if (follow != 0) {
+        for (i = 0; i < count; i++) {
+            MMathQuatToMatrix((Vector4 *)heading, &alter->quats[i]);
+            MMathApplyMatrix(&positions[i], &heading, (Vector4 *) &alter->points[1][i]);
+        }
+    }
+    for (i = 0; i < count - 1; i++) {
+        if (follow != 0) {
+            if (i == 0) {
+                previous = 0;
+                current = 0;
+            } else {
+                previous = i - 1;
+                current = i;
+            }
+            if (i >= count - 2) {
+                next = i + 1;
+                last = next;
+            } else {
+                last = i + 2;
+                next = i + 1;
+            }
+        } else {
+            ring = (newest - i) & (SDV_ALTER_POINT_COUNT - 1);
+            if (i == 0) {
+                previous = ring;
+                current = ring;
+            } else {
+                previous = (ring + 1) & (SDV_ALTER_POINT_COUNT - 1);
+                current = ring;
+            }
+            if (i >= count - 2) {
+                next = (ring - 1) & (SDV_ALTER_POINT_COUNT - 1);
+                last = next;
+            } else {
+                next = (ring - 1) & (SDV_ALTER_POINT_COUNT - 1);
+                last = (ring - 2) & (SDV_ALTER_POINT_COUNT - 1);
+            }
+        }
+        if (follow != 0) {
+            flat = sdvAlterIsFlat(request);
+            turned = (HermiteVector *) positions;
+            MMathCalcHermitePrm(&tangents[0], &tangents[1], &turned[previous], &turned[current], &turned[next],
+                                &turned[last]);
+            parameter = 0.0f;
+            for (step = 0; step < SDV_ALTER_STEPS + 1; step++) {
+                MMathCalcHermite(edges[0][step], &tangents[0], &tangents[1], &turned[current], &turned[next],
+                                 parameter);
+                sdvCopyVector(edges[1][step], edges[0][step]);
+                if (!flat) {
+                    edges[0][step][1] += alter->request.height;
+                    edges[1][step][1] -= alter->request.height;
+                }
+                parameter += 0.25f;
+            }
+        } else {
+            sides = request->mode != SDV_ALTER_MODE_SINGLE ? 2 : 1;
+            for (side = 0; side < sides; side++) {
+                points = (HermiteVector *) alter->points[side];
+                MMathCalcHermitePrm(&tangents[0], &tangents[1], &points[previous], &points[current], &points[next],
+                                    &points[last]);
+                parameter = 0.0f;
+                for (step = 0; step < SDV_ALTER_STEPS + 1; step++) {
+                    MMathCalcHermite(edges[side][step], &tangents[0], &tangents[1], &points[current],
+                                     &points[next], parameter);
+                    parameter += 0.25f;
+                }
+            }
+        }
+        if (request->mode >= 3 && request->mode <= 7) {
+            progress = alter->widths[current];
+            progressStep = (alter->widths[next] - progress) * 0.25f;
+        }
+        for (step = 0; step < SDV_ALTER_STEPS + 1; step++) {
+            color.rgba[3] = (unsigned int)alpha;
+            if (line) {
+                vertex[0].quad = color.quad;
+                if (sdvAlterIsFlat(request)) {
+                    MMathApplyMatrix(&vertex[1].vector, &alter->matrix, (Vector4 *)edges[0][step]);
+                } else {
+                    vertex[1].quad = *(XglQuadword *)edges[0][step];
+                }
+                vertex += 2;
+                vertexCount += 2;
+            } else {
+                for (side = 0; side < 2; side++) {
+                    vertex[0].quad = side != 0 ? texcoords[1].quad : texcoords[0].quad;
+                    vertex[0].f[0] = progress;
+                    vertex[1].quad = color.quad;
+                    if (follow != 0) {
+                        MMathApplyMatrix(&vertex[2].vector, &alter->matrix, (Vector4 *)edges[side][step]);
+                    } else {
+                        vertex[2].quad = *(XglQuadword *)edges[side][step];
+                    }
+                    vertex += 3;
+                    vertexCount += 3;
+                }
+            }
+            if (step < SDV_ALTER_STEPS) {
+                progress += progressStep;
+                alpha -= alphaStep;
+            }
+        }
+        total += SDV_ALTER_SEGMENT_QUADWORDS;
+        header->quad[2] = giftag.quad;
+        if (line) {
+            sdvSetStripHeader(header, 0, vertexCount + 3, vertexCount / 2, 1);
+        } else {
+            sdvSetStripHeader(header, 0, vertexCount + 3, vertexCount / 3, 0);
+        }
+        header = (SdvStripHeader *)vertex;
+        vertex += 3;
+        vertexCount = 0;
+    }
+    if (total > 0) {
+        sdvPacketFlushMscnt();
+        sefPacketFlush();
+    }
+}
 
 /* Zeroes all 49 alter records (sdvInitAlters). */
 void sdvInitAlters(void)

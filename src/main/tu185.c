@@ -26,8 +26,8 @@ typedef union SefRotationRow {
  * name in all three. sefPoolAlloc returns a particle's pool index, 0 when its search finds no free entry.
  */
 
-/* Kinds 0 to 7: spawned by func_0026CF90 (0 to 2), func_0026D2B8 (3 and 4) and sefSpawnKinds5To7 (5 to 7); kinds 0 to 2
- * drift in sefUpdateBurstParticles, kinds 5 to 7 grow and fade in sefUpdateFadeOutParticles. */
+/* Kinds 0 to 7: spawned by sefSpawnKinds0To2 (0 to 2), sefSpawnKinds3To4 (3 and 4) and sefSpawnKinds5To7 (5 to 7);
+ * kinds 0 to 2 drift in sefUpdateBurstParticles, kinds 5 to 7 grow and fade in sefUpdateFadeOutParticles. */
 typedef struct SefFadeParticle {
     SefRotationRow rotation[3]; /* +0x00: built by sefRotationZRows */
     AlignedVector4 position;    /* +0x30 */
@@ -338,6 +338,9 @@ void sefBuildCameraPacket(void) {
 
 /* GS ALPHA_1 values: [0] 0x44 normal blend, [1] 0x48 additive (rodata, also read by sdvDrawAlter). */
 extern const u64 sefAlphaBlendValues[];
+/* The additive entry, sefAlphaBlendValues[1]: the original reads it through its own label (the table starts in the
+ * previous file's read-only data). */
+extern const u64 sefAlphaBlendAdditive[];
 
 /*
  * Fills the packet's model-view and camera matrices and its TEX0_1/ALPHA_1 A+D pairs for emitter emitterIndex.
@@ -351,21 +354,21 @@ void sefBuildModelPacket(u64 tex0, const Matrix4 *matrix, int blendKind, int emi
     sefVuPacket.tex0 = tex0;
     sefVuPacket.tex0Register = GS_TEX0_1;
     if (blendKind >= 3 && blendKind <= 4) {
-        sefVuPacket.alpha = sefAlphaBlendValues[1];
+        sefVuPacket.alpha = sefAlphaBlendAdditive[0];
     } else if (blendKind >= 5 && blendKind <= 7) {
         if (emitterIndex & 1) {
             sefVuPacket.alpha = sefAlphaBlendValues[0];
         } else {
-            sefVuPacket.alpha = sefAlphaBlendValues[1];
+            sefVuPacket.alpha = sefAlphaBlendAdditive[0];
         }
     } else if (blendKind >= 11 && blendKind <= 13 && (emitterIndex == 0 || emitterIndex == 3)) {
-        sefVuPacket.alpha = sefAlphaBlendValues[1];
+        sefVuPacket.alpha = sefAlphaBlendAdditive[0];
     } else if (blendKind >= 14 && blendKind <= 16 && emitterIndex < 2) {
-        sefVuPacket.alpha = sefAlphaBlendValues[1];
+        sefVuPacket.alpha = sefAlphaBlendAdditive[0];
     } else if (blendKind >= 17 && blendKind <= 19 && emitterIndex == 2) {
-        sefVuPacket.alpha = sefAlphaBlendValues[1];
+        sefVuPacket.alpha = sefAlphaBlendAdditive[0];
     } else if (blendKind == 20 && emitterIndex == 1) {
-        sefVuPacket.alpha = sefAlphaBlendValues[1];
+        sefVuPacket.alpha = sefAlphaBlendAdditive[0];
     } else {
         sefVuPacket.alpha = sefAlphaBlendValues[0];
     }
@@ -861,8 +864,9 @@ void sefGetRandomScaledDirection(AlignedVector4 *vector, f32 scale) {
 /* Writes a rotation about Z by angle into the first three rows of rows: (c, s, 0, 0), (-s, c, 0, 0), (0, 0, 1, 0).
  * VU0 macro mode: the cosine (0xE8) and sine (0x20) micro subroutines take the angle in vf4 and leave the result
  * in the x lane of vf1. Each result lands in the x member of a stack vector, as in the original; the two asm blocks
- * have no "memory" clobber, so the matrix stores reuse the FPR copies. */
-void sefRotationZRows(SefRotationRow *rows, f32 angle) {
+ * have no "memory" clobber, so the matrix stores reuse the FPR copies. An inline function: sefSpawnKinds0To2 and
+ * sefSpawnKinds3To4 hold a copy of these instructions each, the other spawners call sefRotationZRows. */
+static inline void sefWriteRotationZ(SefRotationRow *rows, f32 angle) {
     Vector4 cosine;
     Vector4 sine;
 
@@ -888,6 +892,11 @@ void sefRotationZRows(SefRotationRow *rows, f32 angle) {
     rows[1].halves[1] = 0;
     rows[2].quad = 0;
     rows[2].element[2] = 1.0f;
+}
+
+/* The out-of-line copy of sefWriteRotationZ (0x26CEA8). */
+void sefRotationZRows(SefRotationRow *rows, f32 angle) {
+    sefWriteRotationZ(rows, angle);
 }
 
 Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
@@ -917,11 +926,261 @@ void sefRandomRotateMatrix(SefRotationRow *rows)
     rows[2].halves[1] = matrix.words[5];
 }
 
-/* Fires burst emitter index of slot once per frame: spawns up to count particles that fly from D_005E6EE0
- * towards a random point around D_005E6EF0. */
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026CF90);
+f32 sefNoiseNext(void);
+void *MMathNormalizeVector2(void *destination, const Vector4 *source);
+Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026D2B8);
+/*
+ * The vector operations of the particle spawners and updates of effect kinds 0 to 19 and of sefSetSlotTransform and
+ * sefCullResourceSlots as inline functions: the instructions of QuadwordCopyT0, Vu0SetOrigin, Vu0SefScaleVectorXYZNI,
+ * Vu0SefSubVectorXYZ and Vu0SefAddVectorXYZ with the four floats the store writes declared as "=m" outputs, the form of
+ * sef.c's SefCopyVector4, SefSetOrigin4 and SefSubVectorXYZ4 and of sv_get_image_item.c's svCopyVector (TU-local
+ * there too).
+ * The four outputs make each address or scale operand weigh four times in the register allocator, which the original's
+ * choice of callee-saved registers needs; being functions, both Vu0SetOrigin sites of sefSpawnKinds3To4 are one
+ * source line.
+ */
+static inline void sefCopyVector(AlignedVector4 *destination, AlignedVector4 *source) {
+    __asm__ __volatile__(
+        "lq $8, 0(%5)\n"
+        "sq $8, 0(%4)\n"
+        : "=m" (destination->x), "=m" (destination->y), "=m" (destination->z), "=m" (destination->w)
+        : "r" (destination), "r" (source)
+        : "$8", "memory");
+}
+
+static inline void sefSetOrigin(AlignedVector4 *vector) {
+    Vu0SetOrigin(vector);
+}
+
+static inline void sefScaleVector(AlignedVector4 *destination, AlignedVector4 *vector, f32 scale) {
+    __asm__ __volatile__(
+        "lqc2 vf1, 0(%5)\n"
+        "mfc1 $8, %6\n"
+        "qmtc2.ni $8, vf2\n"
+        "vmulx.xyz vf1, vf1, vf2x\n"
+        "sqc2 vf1, 0(%4)\n"
+        : "=m" (destination->x), "=m" (destination->y), "=m" (destination->z), "=m" (destination->w)
+        : "r" (destination), "r" (vector), "f" (scale)
+        : "$8", "memory");
+}
+
+static inline void sefSubVector(AlignedVector4 *destination, AlignedVector4 *minuend, AlignedVector4 *subtrahend) {
+    __asm__ __volatile__(
+        "lqc2 vf1, 0(%5)\n"
+        "lqc2 vf2, 0(%6)\n"
+        "vsub.xyz vf1, vf1, vf2\n"
+        "sqc2 vf1, 0(%4)\n"
+        : "=m" (destination->x), "=m" (destination->y), "=m" (destination->z), "=m" (destination->w)
+        : "r" (destination), "r" (minuend), "r" (subtrahend)
+        : "memory");
+}
+
+static inline void sefAddVector(AlignedVector4 *destination, AlignedVector4 *first, AlignedVector4 *second) {
+    __asm__ __volatile__(
+        "lqc2 vf1, 0(%5)\n"
+        "lqc2 vf2, 0(%6)\n"
+        "vadd.xyz vf1, vf1, vf2\n"
+        "sqc2 vf1, 0(%4)\n"
+        : "=m" (destination->x), "=m" (destination->y), "=m" (destination->z), "=m" (destination->w)
+        : "r" (destination), "r" (first), "r" (second)
+        : "memory");
+}
+
+/* The burst emitter parameters of effect kinds 0 to 2 (12 bytes, sefKinds0To2Params indexed by kind). */
+typedef struct SefBurstParams {
+    int interval;  /* +0x00: frames between spawns; 0 spawns every frame */
+    int count;     /* +0x04: particles per spawn */
+    int endFrame;  /* +0x08: the first frame without spawning; 0 never stops */
+} SefBurstParams;
+
+extern SefBurstParams sefKinds0To2Params[];
+extern AlignedVector4 sefKinds0To2Origin;
+extern AlignedVector4 sefKinds0To2AimCenter;
+extern Matrix4 sefKinds0To2AimMatrix;
+extern int sefKinds0To2Shades[];
+
+/* Emitters of effect kinds 0 to 2: fires once per frame until params->endFrame, on the frames params->interval
+ * divides: spawns up to count particles that start at sefKinds0To2Origin and fly towards a random point 3.0 around
+ * sefKinds0To2AimCenter; target is that direction turned by sefKinds0To2AimMatrix; sefKinds0To2Shades holds the
+ * shade per kind. */
+void sefSpawnKinds0To2(ResourceSlot *slot, int index) {
+    SefEmitter *emitter = &slot->body.emitters[index];
+    SefBurstParams *params;
+    SefFadeParticle *particle;
+    AlignedVector4 aim;
+    int frame;
+    int due;
+    int mask;
+    int cursor;
+    int last;
+    int id;
+    int shade;
+    int spawned;
+
+    params = &sefKinds0To2Params[slot->body.kind];
+    frame = emitter->elapsed;
+    due = 0;
+    if (params->interval == 0 || frame % params->interval == 0) {
+        due = 1;
+    }
+    if (emitter->frame == frame) {
+        return;
+    }
+    if (params->endFrame != 0 && frame >= params->endFrame) {
+        return;
+    }
+    emitter->frame = frame;
+    if (!due) {
+        return;
+    }
+    mask = slot->body.particleCount - 1;
+    last = (emitter->cursor - 1) & mask;
+    shade = sefKinds0To2Shades[slot->body.kind];
+    spawned = 0;
+    for (cursor = emitter->cursor; cursor != last; cursor++) {
+        cursor &= mask;
+        if (emitter->particles[cursor] != 0) {
+            continue;
+        }
+        id = sefPoolAlloc();
+        if (id == 0) {
+            break;
+        }
+        particle = &sefEntryPool.entries[id].fade;
+        emitter->particles[cursor] = id;
+        sefCopyVector(&particle->position, &sefKinds0To2Origin);
+        sefSetOnes(&particle->growth);
+        particle->position.w = 1.0f;
+        sefGetUnitDirection(&aim);
+        sefScaleVector(&aim, &aim, 3.0f);
+        sefAddVector(&aim, &aim, &sefKinds0To2AimCenter);
+        sefSubVector(&particle->velocity, &aim, &particle->position);
+        MMathNormalizeVector2(&particle->velocity, &particle->velocity);
+        MMathApplyMatrix(&particle->target, &sefKinds0To2AimMatrix, &particle->velocity);
+        sefWriteRotationZ(particle->rotation, sefRandAngle());
+        spawned++;
+        particle->scale.x = particle->scale.y = particle->scale.z = 1.0f;
+        particle->scale.w = (sefNoiseNext() * 0.5f + 1.0f) * 0.5f * 0.64f;
+        particle->life = 120.0f;
+        particle->red = shade;
+        particle->green = shade;
+        particle->blue = shade;
+        particle->alpha = 0;
+        particle->age = 0;
+        particle->verticalSpeed = 0;
+        particle->axisOffset = 0;
+        if (spawned >= params->count) {
+            break;
+        }
+    }
+}
+
+extern AlignedVector4 sefKinds3To4GrowthOffset;
+extern f32 sefKinds3To4Speeds[];
+extern f32 sefKinds3To4Counts[];
+extern f32 sefKind3StartRadii[2];
+
+/* Emitters of effect kinds 3 and 4 (sefKinds3To4Speeds and sefKinds3To4Counts hold a speed and a count per kind
+ * and emitter): on the frames that are a multiple of emitter->spawned + 1 (redrawn from 0 to 3 at each spawn),
+ * spawns up to count particles that fly from a random start point towards a random target; emitter 1's are
+ * smaller and offset along their first axis. */
+void sefSpawnKinds3To4(ResourceSlot *slot, int index) {
+    SefEmitter *emitter = &slot->body.emitters[index];
+    SefFadeParticle *particle;
+    AlignedVector4 aim;
+    int frame;
+    int row;
+    int mask;
+    int cursor;
+    int last;
+    int id;
+    int spawned;
+    int count;
+    short phase;
+    f32 speed;
+
+    frame = emitter->elapsed;
+    if (emitter->frame == frame) {
+        return;
+    }
+    phase = frame % (emitter->spawned + 1);
+    emitter->frame = frame;
+    if (phase != 0) {
+        return;
+    }
+    row = index;
+    if (slot->body.kind != 3) {
+        row = index + 2;
+    }
+    mask = slot->body.particleCount - 1;
+    last = (emitter->cursor - 1) & mask;
+    count = sefKinds3To4Counts[row];
+    speed = sefKinds3To4Speeds[row];
+    spawned = 0;
+    emitter->spawned = xglSRand() & 3;
+    for (cursor = emitter->cursor; cursor != last; cursor++) {
+        cursor &= mask;
+        if (emitter->particles[cursor] != 0) {
+            continue;
+        }
+        id = sefPoolAlloc();
+        if (id == 0) {
+            break;
+        }
+        emitter->particles[cursor] = id;
+        particle = &sefEntryPool.entries[id].fade;
+        if (slot->body.kind == 3) {
+            sefGetUnitDirection(&aim);
+            sefScaleVector(&particle->position, &aim, sefKind3StartRadii[index]);
+            if (index != 0) {
+                sefGetRandomScaledDirection(&aim, 0.2f);
+            } else {
+                sefSetOrigin(&aim);
+            }
+        } else if (index != 0) {
+            sefGetCylinderPos(&particle->position, 0.3f, 0.1f);
+            sefGetCylinderPos(&aim, 0.2f, 0.0f);
+            aim.y += 0.4f;
+            speed = (sefRandf() + 0.25f) * 0.015f;
+        } else {
+            sefGetCylinderPos(&particle->position, 0.4f, 0.0f);
+            sefSetOrigin(&aim);
+        }
+        sefSubVector(&particle->velocity, &aim, &particle->position);
+        MMathNormalizeVector2(&particle->velocity, &particle->velocity);
+        sefScaleVector(&particle->velocity, &particle->velocity, speed);
+        particle->velocity.w = 1.0f;
+        particle->position.w = 1.0f;
+        sefWriteRotationZ(particle->rotation, sefRandAngle());
+        particle->growth.x = sefNoiseNext();
+        particle->growth.y = sefNoiseNext();
+        particle->growth.z = sefNoiseNext();
+        particle->growth.w = 1.0f;
+        if (index != 0) {
+            sefSetOnes(&particle->scale);
+            particle->scale.w = 0.02f;
+            particle->axisOffset = -4.0f;
+            sefScaleVector(&particle->growth, &particle->growth, 0.5f);
+        } else {
+            particle->scale.x = particle->scale.y = particle->scale.z = 0.2f;
+            particle->scale.w = 0.2048f;
+            particle->axisOffset = 0;
+        }
+        sefAddVector(&particle->growth, &particle->growth, &sefKinds3To4GrowthOffset);
+        spawned++;
+        particle->life = 20.0f;
+        particle->red = 0x80;
+        particle->green = 0x80;
+        particle->blue = 0x80;
+        particle->alpha = 0;
+        particle->age = 0;
+        particle->verticalSpeed = 0;
+        if (spawned >= count) {
+            break;
+        }
+    }
+}
 
 /* What one emitter of an effect kind spawns (0x20 bytes). */
 typedef struct SefEmitterParams {
@@ -943,8 +1202,6 @@ typedef struct SefEmitterParams {
  * (+0x630). The same access as (sefEmitterParamsKinds5To7 - 5)[kind] or [kind - 5] costs two instructions (fd
    137/135). */
 extern SefEmitterParams D_005E6D00[][4];
-f32 sefNoiseNext(void);
-void *MMathNormalizeVector2(void *destination, const Vector4 *source);
 
 /* Emitters of effect kinds 0 to 7 (parameter rows of four per kind): once per frame, spawns up to count particles into
    free
@@ -1718,7 +1975,80 @@ void sefUpdateBurstParticles(ResourceSlot *slot, int index) {
     emitter->elapsed += 1.0f;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026F010);
+/* The lift of effect kinds 3 and 4 per frame, added to verticalSpeed: kind 3's two emitters, then kind 4's. */
+extern f32 sefKinds3To4Lift[];
+
+/* Group update of effect kinds 3 and 4 (sefUpdateHandlers): ages the live particles, moves each along velocity and
+ * up by its growing verticalSpeed; emitter 0's grow, the others slide out along their first axis; green and blue
+ * drop (the particle reddens) while alpha fades in until frame 5 and out after it. The motion goes through the pool
+ * entry's union; the look is changed through the kind's member (one more pointer copy inside the loop, which the
+ * loop pass needs to leave the axis step's load behind the 15.0f one). */
+void sefUpdateKinds3To4Particles(ResourceSlot *slot, int index) {
+    SefEmitter *emitter;
+    SefPoolEntry *entry;
+    SefFadeParticle *particle;
+    unsigned short id;
+    f32 gravity;
+    int row;
+    int i;
+
+    emitter = &slot->body.emitters[index];
+    row = index;
+    if (slot->body.kind != 3) {
+        row = index + 2;
+    }
+    gravity = sefKinds3To4Lift[row];
+    emitter->liveCount = 0;
+    for (i = 0; i < slot->body.particleCount; i++) {
+        id = emitter->particles[i];
+        if (id != 0) {
+            entry = &sefEntryPool.entries[id];
+            if (entry->fade.age < entry->fade.life) {
+                entry->fade.age = entry->fade.age + 1.0f;
+                emitter->liveCount++;
+                entry->fade.verticalSpeed += gravity;
+                sefAddVector(&entry->fade.position, &entry->fade.position, &entry->fade.velocity);
+                entry->fade.position.y += entry->fade.verticalSpeed;
+                particle = &entry->fade;
+                if (index == 0) {
+                    particle->scale.x += 0.04f;
+                    particle->scale.z = particle->scale.y = particle->scale.x;
+                } else {
+                    particle->axisOffset += 0.39999998f; /* 0x3ECCCCCC, one step under 0.4f */
+                }
+                if (index != 0) {
+                    if (particle->age <= 10.0f) {
+                        particle->green -= 3;
+                        particle->blue -= 5;
+                    } else {
+                        particle->green -= 8;
+                        particle->blue -= 4;
+                    }
+                } else if (particle->age < 15.0f) {
+                    particle->green -= 2;
+                    particle->blue -= 3;
+                } else {
+                    particle->green -= 12;
+                    particle->blue -= 7;
+                }
+                if (particle->age <= 5.0f) {
+                    particle->alpha += 26;
+                } else if (particle->age <= 15.0f) {
+                    particle->alpha -= 5;
+                } else {
+                    particle->alpha -= 16;
+                    if (particle->alpha < 0) {
+                        particle->alpha = 0;
+                    }
+                }
+            } else {
+                entry->fade.life = 0.0f;
+                emitter->particles[i] = 0;
+            }
+        }
+    }
+    emitter->elapsed += 1.0f;
+}
 
 /* Group update of effect kinds 5-7 (sefUpdateHandlers): ages the live particles,
  * grows them and fades them out; odd emitters also brighten. */
@@ -1790,13 +2120,422 @@ void sefUpdateFadeOutParticles(ResourceSlot *slot, int index) {
     emitter->elapsed += 1.0f;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026F4C8);
+/* The height of the floor under the effects, set by sefRunEmitters. A one-member record (alias set device): the
+ * member read has the float alias set, so the scheduler does not tie the load to the liveCount store that follows
+ * it; sefUpdateKinds8To10Particles, sefUpdateKinds11To13Particles, sefUpdateKinds14To16Particles and
+ * sefUpdateKinds17To19Particles depend on it. */
+typedef struct SefFloor {
+    f32 height;
+} SefFloor;
+extern SefFloor sefFloorHeight;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026F7D8);
+/* Group update of effect kinds 8 to 10 and 22 to 24 (sefUpdateHandlers): ages the live particles. Emitters 0 and 3
+ * grow, brighten on odd frames and fade from frame 15. The others fly along velocity at a falling speed and drop
+ * under gravity (twice as strong for kinds 22 to 24) until they reach sefFloorHeight, where they keep half of
+ * their step as velocity and bounce; they fade from frame 20. */
+void sefUpdateKinds8To10Particles(ResourceSlot *slot, int index) {
+    SefEmitter *emitter;
+    SefPoolEntry *entry;
+    AlignedVector4 step;
+    unsigned short id;
+    f32 gravity;
+    f32 floorY;
+    int i;
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026FB88);
+    emitter = &slot->body.emitters[index];
+    floorY = sefFloorHeight.height;
+    emitter->liveCount = 0;
+    gravity = (slot->body.kind >= 22 && slot->body.kind <= 24) ? 0.004f : 0.002f;
+    for (i = 0; i < slot->body.particleCount; i++) {
+        id = emitter->particles[i];
+        if (id != 0) {
+            entry = &sefEntryPool.entries[id];
+            if (entry->drift.age < entry->drift.life) {
+                entry->drift.age = entry->drift.age + 1.0f;
+                emitter->liveCount++;
+                if (index == 0 || index == 3) {
+                    if (entry->drift.age <= 3.0f) {
+                        entry->drift.scale.x += 0.125f;
+                    } else {
+                        entry->drift.scale.x += 0.037f;
+                    }
+                    entry->drift.scale.z = entry->drift.scale.y = entry->drift.scale.x;
+                    if ((int) entry->drift.age & 1) {
+                        entry->drift.green = entry->drift.blue = entry->drift.red = entry->drift.red + 1;
+                    }
+                    if (entry->drift.age > 15.0f) {
+                        entry->drift.alpha -= 10;
+                        if (entry->drift.alpha < 0) {
+                            entry->drift.alpha = 0;
+                        }
+                    }
+                } else {
+                    if (entry->drift.landed != 0) {
+                        entry->drift.velocity.y -= gravity;
+                        sefAddVector(&entry->drift.position, &entry->drift.position, &entry->drift.velocity);
+                    } else {
+                        if (entry->drift.age < 10.0f) {
+                            entry->drift.speed -= 0.012f;
+                        } else {
+                            entry->drift.speed -= 0.002f;
+                        }
+                        sefScaleVector(&step, &entry->drift.velocity, entry->drift.speed);
+                        entry->drift.verticalSpeed -= gravity;
+                        sefAddVector(&entry->drift.position, &entry->drift.position, &step);
+                        entry->drift.position.y += entry->drift.verticalSpeed;
+                    }
+                    if (entry->drift.position.y <= floorY) {
+                        if (entry->drift.landed == 0) {
+                            sefCopyVector(&entry->drift.velocity, &step);
+                            entry->drift.velocity.y += entry->drift.verticalSpeed;
+                            sefScaleVector(&entry->drift.velocity, &entry->drift.velocity, 0.5f);
+                        }
+                        entry->drift.landed = 1;
+                        if (entry->drift.velocity.y < 0.0f) {
+                            entry->drift.velocity.y = -entry->drift.velocity.y;
+                        }
+                    }
+                    if (entry->drift.age > 20.0f) {
+                        entry->drift.alpha -= 13;
+                        if (entry->drift.alpha < 0) {
+                            entry->drift.alpha = 0;
+                        }
+                    }
+                }
+            } else {
+                entry->drift.life = 0.0f;
+                emitter->particles[i] = 0;
+            }
+        }
+    }
+    emitter->elapsed += 1.0f;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_0026FFE0);
+/* Group update of effect kinds 11 to 13 (sefUpdateHandlers): ages the live particles. Emitters 0 and 3 grow and
+ * redden as they fade, emitters 1 and 4 grow, brighten and fade from frame 15. The others shrink while they fly
+ * along velocity at a falling speed and drop under gravity until they reach sefFloorHeight, where they keep half
+ * of their step as velocity and bounce; they fade from frame 20. */
+void sefUpdateKinds11To13Particles(ResourceSlot *slot, int index) {
+    SefEmitter *emitter;
+    SefPoolEntry *entry;
+    AlignedVector4 step;
+    unsigned short id;
+    f32 floorY;
+    f32 speed;
+    int i;
+
+    emitter = &slot->body.emitters[index];
+    floorY = sefFloorHeight.height;
+    emitter->liveCount = 0;
+    for (i = 0; i < slot->body.particleCount; i++) {
+        id = emitter->particles[i];
+        if (id != 0) {
+            entry = &sefEntryPool.entries[id];
+            if (entry->drift.age < entry->drift.life) {
+                entry->drift.age = entry->drift.age + 1.0f;
+                emitter->liveCount++;
+                if (index == 0 || index == 3) {
+                    if (entry->drift.age <= 5.0f) {
+                        entry->drift.scale.x += 0.32f;
+                    } else {
+                        entry->drift.scale.x += 0.1f;
+                    }
+                    entry->drift.scale.z = entry->drift.scale.y = entry->drift.scale.x;
+                    if (entry->drift.age > 2.0f) {
+                        entry->drift.green -= 6;
+                        entry->drift.blue -= 11;
+                    }
+                    if (entry->drift.age < 2.0f) {
+                        entry->drift.alpha -= 128;
+                    } else {
+                        entry->drift.alpha -= 12;
+                        if (entry->drift.alpha < 0) {
+                            entry->drift.alpha = 0;
+                        }
+                    }
+                } else if (index == 1 || index == 4) {
+                    if (entry->drift.age <= 3.0f) {
+                        entry->drift.scale.x += 0.25f;
+                    } else {
+                        entry->drift.scale.x += 0.037f;
+                    }
+                    entry->drift.scale.z = entry->drift.scale.y = entry->drift.scale.x;
+                    entry->drift.red++;
+                    entry->drift.green++;
+                    entry->drift.blue++;
+                    if (entry->drift.age >= 15.0f) {
+                        entry->drift.alpha -= 17;
+                        if (entry->drift.alpha < 0) {
+                            entry->drift.alpha = 0;
+                        }
+                    }
+                } else {
+                    if (entry->drift.age < 4.0f) {
+                        entry->drift.scale.y -= 1.0f;
+                    } else {
+                        entry->drift.scale.z = entry->drift.scale.y = entry->drift.scale.x =
+                            entry->drift.scale.x - 0.058f;
+                    }
+                    if (entry->drift.landed != 0) {
+                        entry->drift.velocity.y -= 0.002f;
+                        sefAddVector(&entry->drift.position, &entry->drift.position, &entry->drift.velocity);
+                    } else {
+                        speed = entry->drift.speed - 0.006f;
+                        entry->drift.speed = speed;
+                        sefScaleVector(&step, &entry->drift.velocity, speed);
+                        entry->drift.verticalSpeed -= 0.002f;
+                        sefAddVector(&entry->drift.position, &entry->drift.position, &step);
+                        entry->drift.position.y += entry->drift.verticalSpeed;
+                    }
+                    if (entry->drift.position.y <= floorY) {
+                        if (entry->drift.landed == 0) {
+                            sefCopyVector(&entry->drift.velocity, &step);
+                            entry->drift.velocity.y += entry->drift.verticalSpeed;
+                            sefScaleVector(&entry->drift.velocity, &entry->drift.velocity, 0.5f);
+                        }
+                        entry->drift.landed = 1;
+                        if (entry->drift.velocity.y < 0.0f) {
+                            entry->drift.velocity.y = -entry->drift.velocity.y;
+                        }
+                    }
+                    if (entry->drift.age > 20.0f) {
+                        entry->drift.alpha -= 13;
+                        if (entry->drift.alpha < 0) {
+                            entry->drift.alpha = 0;
+                        }
+                    }
+                }
+            } else {
+                entry->drift.life = 0.0f;
+                emitter->particles[i] = 0;
+            }
+        }
+    }
+    emitter->elapsed += 1.0f;
+}
+
+/* Group update of effect kinds 14 to 16 (sefUpdateHandlers): ages the live particles. Emitters 0 and 1 drift along
+ * velocity and sink while they brighten and fade (emitter 1 also pulses its x and y scales in a 10-frame cycle),
+ * emitter 2 grows, brightens and fades in place. The others (emitter 4 shrinking) fly along velocity at a falling
+ * speed and drop under gravity until they reach sefFloorHeight, where they keep a tenth of their step as velocity
+ * and bounce; they fade from frame 20. */
+void sefUpdateKinds14To16Particles(ResourceSlot *slot, int index) {
+    SefEmitter *emitter;
+    SefPoolEntry *entry;
+    AlignedVector4 step;
+    unsigned short id;
+    f32 floorY;
+    int phase;
+    int i;
+
+    emitter = &slot->body.emitters[index];
+    floorY = sefFloorHeight.height;
+    emitter->liveCount = 0;
+    for (i = 0; i < slot->body.particleCount; i++) {
+        id = emitter->particles[i];
+        if (id != 0) {
+            entry = &sefEntryPool.entries[id];
+            if (entry->drift.age < entry->drift.life) {
+                entry->drift.age = entry->drift.age + 1.0f;
+                emitter->liveCount++;
+                if (index < 2) {
+                    entry->drift.verticalSpeed -= 0.001f;
+                    sefAddVector(&entry->drift.position, &entry->drift.position, &entry->drift.velocity);
+                    entry->drift.position.y += entry->drift.verticalSpeed;
+                    if (index != 0) {
+                        phase = (int) entry->drift.age % 10;
+                        if (phase < 2) {
+                            entry->drift.scale.x -= 0.5f;
+                        } else if (phase < 4) {
+                            entry->drift.scale.x += 0.5f;
+                            entry->drift.scale.y -= 0.5f;
+                        } else if (phase < 6) {
+                            entry->drift.scale.y += 0.5f;
+                        } else if (phase < 8) {
+                            entry->drift.scale.x -= 0.5f;
+                        } else {
+                            entry->drift.scale.x += 0.5f;
+                        }
+                        entry->drift.red = 100;
+                        entry->drift.green = 100;
+                        entry->drift.blue = 110;
+                        entry->drift.alpha -= 7;
+                    } else {
+                        if (entry->drift.age <= 3.0f) {
+                            entry->drift.scale.y = entry->drift.scale.z = entry->drift.scale.x =
+                                entry->drift.scale.x + 0.125f;
+                        } else {
+                            entry->drift.scale.y = entry->drift.scale.z = entry->drift.scale.x =
+                                entry->drift.scale.x + 0.055f;
+                        }
+                        entry->drift.alpha -= 4;
+                    }
+                    entry->drift.red++;
+                    entry->drift.green++;
+                    entry->drift.blue++;
+                    if (entry->drift.alpha < 0) {
+                        entry->drift.alpha = 0;
+                    }
+                } else if (index == 2) {
+                    if (entry->drift.age <= 3.0f) {
+                        entry->drift.scale.x += 0.125f;
+                    } else {
+                        entry->drift.scale.x += 0.037f;
+                    }
+                    entry->drift.scale.z = entry->drift.scale.y = entry->drift.scale.x;
+                    entry->drift.red++;
+                    entry->drift.green++;
+                    entry->drift.blue++;
+                    entry->drift.alpha -= 4;
+                    if (entry->drift.alpha < 0) {
+                        entry->drift.alpha = 0;
+                    }
+                } else {
+                    if (index == 4) {
+                        entry->drift.scale.z = entry->drift.scale.y = entry->drift.scale.x =
+                            entry->drift.scale.x - 0.0033f;
+                    }
+                    if (entry->drift.landed != 0) {
+                        entry->drift.velocity.y -= 0.002f;
+                        sefAddVector(&entry->drift.position, &entry->drift.position, &entry->drift.velocity);
+                    } else {
+                        entry->drift.speed -= 0.00016f;
+                        sefScaleVector(&step, &entry->drift.velocity, entry->drift.speed * 3.0f);
+                        entry->drift.verticalSpeed -= 0.002f;
+                        sefAddVector(&entry->drift.position, &entry->drift.position, &step);
+                        entry->drift.position.y += entry->drift.verticalSpeed;
+                    }
+                    if (entry->drift.position.y <= floorY) {
+                        if (entry->drift.landed == 0) {
+                            sefCopyVector(&entry->drift.velocity, &step);
+                            entry->drift.velocity.y += entry->drift.verticalSpeed;
+                            sefScaleVector(&entry->drift.velocity, &entry->drift.velocity, 0.1f);
+                        }
+                        entry->drift.landed = 1;
+                        if (entry->drift.velocity.y < 0.0f) {
+                            entry->drift.velocity.y = -entry->drift.velocity.y;
+                        }
+                    }
+                    if (entry->drift.age > 20.0f) {
+                        entry->drift.alpha -= 13;
+                        if (entry->drift.alpha < 0) {
+                            entry->drift.alpha = 0;
+                        }
+                    }
+                }
+            } else {
+                entry->drift.life = 0.0f;
+                emitter->particles[i] = 0;
+            }
+        }
+    }
+    emitter->elapsed += 1.0f;
+}
+
+/* Group update of effect kinds 17 to 19 (sefUpdateHandlers): ages the live particles. Emitter 1's slow down along
+ * velocity, grow, brighten and fade out after frame 15; emitter 0's brighten, fade in until frame 10 and out after
+ * frame 20; emitter 2's stay as spawned. The other emitters' particles squash and stretch over the first 30 frames,
+ * fall with a slowing step until they reach sefFloorHeight: the first landing halves their velocity, a later one only
+ * reverses a downward y velocity; they fade out after frame 20. */
+void sefUpdateKinds17To19Particles(ResourceSlot *slot, int index) {
+    AlignedVector4 move;
+    AlignedVector4 step;
+    SefEmitter *emitter;
+    SefPoolEntry *entry;
+    unsigned short id;
+    f32 floorY;
+    f32 speed;
+    int phase;
+    int i;
+
+    emitter = &slot->body.emitters[index];
+    floorY = sefFloorHeight.height;
+    emitter->liveCount = 0;
+    for (i = 0; i < slot->body.particleCount; i++) {
+        id = emitter->particles[i];
+        if (id != 0) {
+            entry = &sefEntryPool.entries[id];
+            if (entry->drift.age < entry->drift.life) {
+                entry->drift.age = entry->drift.age + 1.0f;
+                emitter->liveCount++;
+                if (index != 2) {
+                    if (index == 1) {
+                        entry->drift.speed -= 0.00125;
+                        Vu0SefScaleVectorXYZNI(&move, &entry->drift.velocity, entry->drift.speed);
+                        Vu0SefAddVectorXYZ(&entry->drift.position, &entry->drift.position, &move);
+                        if (entry->drift.age <= 5.0f) {
+                            entry->drift.scale.x += 0.1f;
+                        } else {
+                            entry->drift.scale.x += 0.0428f;
+                        }
+                        entry->drift.scale.z = entry->drift.scale.y = entry->drift.scale.x;
+                        entry->drift.green = entry->drift.blue = entry->drift.red = entry->drift.red + 1;
+                        if (entry->drift.age > 15.0f) {
+                            entry->drift.alpha -= 10;
+                            if (entry->drift.alpha < 0) {
+                                entry->drift.alpha = 0;
+                            }
+                        }
+                    } else if (index == 0) {
+                        entry->drift.red++;
+                        entry->drift.green++;
+                        entry->drift.blue++;
+                        if (entry->drift.age < 10.0f) {
+                            entry->drift.alpha += 25;
+                        } else if (entry->drift.age > 20.0f) {
+                            entry->drift.alpha -= 25;
+                            if (entry->drift.alpha < 0) {
+                                entry->drift.alpha = 0;
+                            }
+                        }
+                    } else {
+                        phase = entry->drift.age;
+                        if (phase < 10) {
+                            entry->drift.scale.x -= 0.1f;
+                        } else if (phase < 20) {
+                            entry->drift.scale.x += 0.1f;
+                            entry->drift.scale.y -= 0.1f;
+                        } else if (phase < 30) {
+                            entry->drift.scale.y += 0.1f;
+                        }
+                        if (entry->drift.landed != 0) {
+                            entry->drift.velocity.y -= 0.001f;
+                            Vu0SefAddVectorXYZ(&entry->drift.position, &entry->drift.position, &entry->drift.velocity);
+                        } else {
+                            speed = entry->drift.speed - 0.006f;
+                            entry->drift.speed = speed;
+                            sefScaleVector(&step, &entry->drift.velocity, speed);
+                            entry->drift.verticalSpeed -= 0.001f;
+                            sefAddVector(&entry->drift.position, &entry->drift.position, &step);
+                            entry->drift.position.y += entry->drift.verticalSpeed;
+                        }
+                        if (entry->drift.position.y <= floorY) {
+                            if (entry->drift.landed == 0) {
+                                sefCopyVector(&entry->drift.velocity, &step);
+                                entry->drift.velocity.y += entry->drift.verticalSpeed;
+                                Vu0SefScaleVectorXYZNI(&entry->drift.velocity, &entry->drift.velocity, 0.5f);
+                            }
+                            entry->drift.landed = 1;
+                            if (entry->drift.velocity.y < 0.0f) {
+                                entry->drift.velocity.y = -entry->drift.velocity.y;
+                            }
+                        }
+                        if (entry->drift.age > 20.0f) {
+                            entry->drift.alpha -= 13;
+                            if (entry->drift.alpha < 0) {
+                                entry->drift.alpha = 0;
+                            }
+                        }
+                    }
+                }
+            } else {
+                entry->drift.life = 0.0f;
+                emitter->particles[i] = 0;
+            }
+        }
+    }
+    emitter->elapsed += 1.0f;
+}
 
 /* Group update of effect kind 20 (sefUpdateHandlers): emitter 1 shifts the colour and
  * grows at ages 0 to 30 while alive, emitter 2 turns 6 degrees a frame and pulses its size. */
@@ -1899,7 +2638,6 @@ typedef struct SefOwner SefOwner;
 
 void uwamonoReleaseOwnedRecords(SefOwner *owner);
 extern s16 sefClipTestDisabled;
-extern f32 sefFloorHeight;
 extern SefEmitterFunc sefSpawnHandlers[];
 extern SefEmitterFunc sefUpdateHandlers[];
 
@@ -1928,7 +2666,7 @@ void sefRunEmitters(ResourceSlot *target) {
         if (slot->body.flags & RESOURCE_FLAG_SUSPENDED) {
             continue;
         }
-        sefFloorHeight = (0.0f < slot->position.y) ? -slot->position.y : 0.0f;
+        sefFloorHeight.height = (0.0f < slot->position.y) ? -slot->position.y : 0.0f;
         slot->body.liveCount = 0;
         for (emitterIndex = 0; emitterIndex < slot->body.emitterCount; emitterIndex++) {
             emitter = &slot->body.emitters[emitterIndex];
@@ -2183,9 +2921,93 @@ void sefDrawEmitter(ResourceSlot *slot, int emitterIndex) {
     }
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_00271078);
+/* Sets the slot's position, rotation and scale (each only when given) and rebuilds its model matrix from them:
+ * the unit matrix, rotated, scaled, then translated to the position. Nothing for a null slot. */
+void sefSetSlotTransform(ResourceSlot *slot, Vector4 *position, Vector4 *rotation, Vector4 *scale) {
+    if (slot != 0) {
+        if (position != 0) {
+            sefCopyVector(&slot->position, position);
+        }
+        if (rotation != 0) {
+            sefCopyVector(&slot->rotation, rotation);
+        }
+        if (scale != 0) {
+            sefCopyVector(&slot->scale, scale);
+        }
+        sefLoadUnitMatrix(&slot->body.matrix);
+        if (rotation != 0) {
+            MMathRotateMatrixXYZ(&slot->body.matrix, (const Matrix4 *) &slot->body.matrix, rotation);
+        }
+        if (scale != 0) {
+            MMathScaleMatrix(&slot->body.matrix, &slot->body.matrix, scale);
+        }
+        if (position != 0) {
+            sefCopyVector((AlignedVector4 *) slot->body.matrix[3], position);
+        }
+    }
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/tu185", func_00271150);
+/* One entry of the visible list D_0046E120 (sv_get_image_item.c): disabled is set for a resource slot, whose
+ * recordIndex is then a sefResourceTable index, so svDrawEntriesByKind skips it. */
+typedef struct SvDrawSlot {
+    short recordIndex;
+    short disabled;
+    float depth;       /* +0x4: the sort key, the clip depth */
+} SvDrawSlot;
+
+extern SvDrawSlot D_0046E120[];
+extern int svVisibleEntryCount;
+void sefTransformClipPoint(Vector4 *out, const Vector4 *in);
+int sefClipViewVolumeA(const Vector4 *model, float limit);
+
+/* The slot culling's scratchpad points: sefTransformClipPoint's output and input. */
+typedef struct SefClipScratch {
+    Vector4 clipPoint;  /* +0x00: the point in clip space */
+    Vector4 worldPoint; /* +0x10: the slot origin in world space */
+} SefClipScratch;
+
+/* The scratchpad as sefCullResourceSlots sees it: a union (alias set device), so its accesses may alias the
+ * visible list stores. */
+typedef union SefScratchpad {
+    SefClipScratch clip;
+} SefScratchpad;
+
+#define SEF_SCRATCHPAD ((SefScratchpad *) SCRATCHPAD_BASE)
+
+/* Appends every active slot with live particles whose bounding sphere (radius 6, times scale.x when that is
+ * above 1) is not clipped by the view volume to the visible list, with its clip-space depth. */
+void sefCullResourceSlots(void) {
+    ResourceSlot *slot;
+    SvDrawSlot *visibleSlot;
+    SefScratchpad *scratch;
+    int count;
+    int index;
+    f32 radius;
+
+    count = svVisibleEntryCount;
+    visibleSlot = &D_0046E120[count];
+    slot = sefResourceTable;
+    scratch = SEF_SCRATCHPAD;
+    for (index = 0; index < SEF_RESOURCE_SLOT_COUNT; index++, slot++) {
+        if (slot->body.activePairs != 0 && slot->body.liveCount > 0) {
+            radius = 6.0f;
+            sefAddVector(&scratch->clip.worldPoint, (AlignedVector4 *) slot->body.matrix[3], &slot->position);
+            scratch->clip.worldPoint.w = 1.0f;
+            sefTransformClipPoint(&scratch->clip.clipPoint, &scratch->clip.worldPoint);
+            if (1.0f < slot->scale.x) {
+                radius = slot->scale.x * radius;
+            }
+            if (sefClipViewVolumeA(&scratch->clip.worldPoint, radius) == 0) {
+                visibleSlot->recordIndex = index;
+                visibleSlot->disabled = 1;
+                visibleSlot->depth = scratch->clip.clipPoint.z;
+                count++;
+                visibleSlot++;
+            }
+        }
+    }
+    svVisibleEntryCount = count;
+}
 
 ResourceSlot *sefGetResourceSlot(int index) {
     return &sefResourceTable[index];

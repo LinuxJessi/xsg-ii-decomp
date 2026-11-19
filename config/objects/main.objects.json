@@ -82403,9 +82403,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026A7A0",
+     "name": "sdvSlerpVector",
      "size": 612,
-     "splat_name": "func_0026A7A0",
+     "splat_name": "sdvSlerpVector",
      "va": "0x0026a7a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82949,18 +82949,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026CF90",
+     "name": "sefSpawnKinds0To2",
      "size": 804,
-     "splat_name": "func_0026CF90",
+     "splat_name": "sefSpawnKinds0To2",
      "va": "0x0026cf90",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026D2B8",
+     "name": "sefSpawnKinds3To4",
      "size": 1008,
-     "splat_name": "func_0026D2B8",
+     "splat_name": "sefSpawnKinds3To4",
      "va": "0x0026d2b8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83048,9 +83048,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026F010",
+     "name": "sefUpdateKinds3To4Particles",
      "size": 576,
-     "splat_name": "func_0026F010",
+     "splat_name": "sefUpdateKinds3To4Particles",
      "va": "0x0026f010",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83066,36 +83066,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026F4C8",
+     "name": "sefUpdateKinds8To10Particles",
      "size": 780,
-     "splat_name": "func_0026F4C8",
+     "splat_name": "sefUpdateKinds8To10Particles",
      "va": "0x0026f4c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026F7D8",
+     "name": "sefUpdateKinds11To13Particles",
      "size": 940,
-     "splat_name": "func_0026F7D8",
+     "splat_name": "sefUpdateKinds11To13Particles",
      "va": "0x0026f7d8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026FB88",
+     "name": "sefUpdateKinds14To16Particles",
      "size": 1108,
-     "splat_name": "func_0026FB88",
+     "splat_name": "sefUpdateKinds14To16Particles",
      "va": "0x0026fb88",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026FFE0",
+     "name": "sefUpdateKinds17To19Particles",
      "size": 1092,
-     "splat_name": "func_0026FFE0",
+     "splat_name": "sefUpdateKinds17To19Particles",
      "va": "0x0026ffe0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83147,18 +83147,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271078",
+     "name": "sefSetSlotTransform",
      "size": 212,
-     "splat_name": "func_00271078",
+     "splat_name": "sefSetSlotTransform",
      "va": "0x00271078",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271150",
+     "name": "sefCullResourceSlots",
      "size": 304,
-     "splat_name": "func_00271150",
+     "splat_name": "sefCullResourceSlots",
      "va": "0x00271150",
      "name_basis": "address",
      "provenance": "estimated"
@@ -102201,9 +102201,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1DC8",
+     "name": "acosf",
      "size": 20,
-     "splat_name": "func_002A1DC8",
+     "splat_name": "acosf",
      "va": "0x002a1dc8",
      "name_basis": "address",
      "provenance": "estimated"
