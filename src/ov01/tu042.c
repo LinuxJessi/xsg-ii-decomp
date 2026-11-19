@@ -495,6 +495,8 @@ struct MsgObject {
 
 /* MsgObject.mode of a message that stays until its voice is done. */
 #define MSG_MODE_VOICE 1
+/* MsgObject.mode of a message that stays ref_count frames. */
+#define MSG_MODE_TIMED 0
 
 /* The string table: record 1 of the table at stringTableOffset is its offset list; each offset counts from the list. */
 char *tableStringGet(int index, int mode)
@@ -521,6 +523,9 @@ void msgReset(void) {
     msgBusy = 0;
 }
 
+/* A script message word (SbMessage.args) carries two values: the second one above this shift. */
+#define SCRIPT_ARG_HIGH_SHIFT 16
+
 /*
  * Sends event as a kind message to the unit's script (the battle block's spawnArgC): the unit index, and for
  * UNIT_SCRIPT_KIND_PAIR the second unit's index in the high half and words[0] | words[1] << 16.
@@ -532,10 +537,10 @@ void func_00A9BC20(int kind, UnitScriptPairEvent *event)
     message.kind = kind;
     message.args[0] = unitTblIndexOf(event->unit);
     if (kind == UNIT_SCRIPT_KIND_PAIR) {
-        message.args[0] |= unitTblIndexOf(event->other) << 16;
+        message.args[0] |= unitTblIndexOf(event->other) << SCRIPT_ARG_HIGH_SHIFT;
         /* In two steps: the one-expression form loads the words and allocates the registers differently. */
         message.args[1] = event->words[0];
-        message.args[1] |= event->words[1] << 16;
+        message.args[1] |= event->words[1] << SCRIPT_ARG_HIGH_SHIFT;
     }
     if (event->unit->stats->spawnArgC != 0) {
         sbThreadEnqueue(ov01ScriptKeyGet(), event->unit->stats->spawnArgC, &message, 0);
@@ -835,7 +840,7 @@ struct MsgObject *msgPutObject(int x, int y, char *text, int frames, int width, 
     if (frames == 0) {
         object->mode = MSG_MODE_VOICE;
     } else {
-        object->mode = 0;
+        object->mode = MSG_MODE_TIMED;
     }
     msgPages[0] = (unsigned char *)text; /* text entry pages are unsigned char (tu124) */
     msgPages[1] = 0;
