@@ -1837,9 +1837,7 @@ void unitEffectStart(Ov01Object *object, int keyHigh, int keyLow)
     sefStartEffectDefault(&request);
 }
 
-/* Party slot keys 11..15 (the slots with linkedSlots) start their effects in mode 3, the others in mode 2. */
-#define EFFECT_KEY_MODE3_FIRST 11
-#define EFFECT_KEY_MODE3_COUNT 5
+/* Large units (UNIT_KEY_LARGE_*, the slots with linkedSlots) start their effects in mode 3, the others in mode 2. */
 
 /* Starts effect (keyHigh, keyLow) on the unit's actor, in mode 3 for unit keys 11..15, else 2. */
 void func_00A95540(Ov01Object *object, int keyHigh, int keyLow)
@@ -1848,7 +1846,7 @@ void func_00A95540(Ov01Object *object, int keyHigh, int keyLow)
     int mode;
 
     memset(&request, 0, sizeof(request));
-    mode = ((unsigned int)(object->stats->keyUnsigned - EFFECT_KEY_MODE3_FIRST) < EFFECT_KEY_MODE3_COUNT) ? 3 : 2;
+    mode = ((unsigned int)(object->stats->keyUnsigned - UNIT_KEY_LARGE_FIRST) < UNIT_KEY_LARGE_COUNT) ? 3 : 2;
     request.key = (keyHigh << EFFECT_KEY_GROUP_SHIFT) | keyLow;
     request.head = object->unit;
     request.mode = mode;
