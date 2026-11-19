@@ -763,7 +763,66 @@ int func_00A93708(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", eventUnitCommand);
+/* unitScriptEventSend kinds of eventUnitCommand: a technique of gateFlag TEC_GATE_NONE or 6..8 (the flagged kind
+ * for a technique with TEC_FLAG_SCRIPT_FLAGGED), and the unit commands it reports. */
+#define TECHNIQUE_SCRIPT_EVENT 1
+#define TECHNIQUE_FLAGGED_SCRIPT_EVENT 2
+#define MOVE_CHA_SCRIPT_EVENT 3
+#define PHASE_0E_WAIT_SCRIPT_EVENT 11
+#define POSE_ARRIVE_WAIT_SCRIPT_EVENT 13
+/* TecRecord.flags bit 0x20 (also tested with calcStatGet(unit, 4, 0x2000)). */
+#define TEC_FLAG_SCRIPT_FLAGGED 0x20
+
+/*
+ * Kind-1 event handler: appends the queued command to the unit's command queue, keeps the unit and command kind in
+ * BattleState for the kinds CMD_KIND_TECHNIQUE..CMD_KIND_ITEM and CMD_KIND_SNAPSHOT, and reports a technique of
+ * gateFlag TEC_GATE_NONE or 6..8 and the unit commands UNIT_CMD_MOVE_CHA, UNIT_CMD_PHASE_0E_WAIT and
+ * UNIT_CMD_POSE_ARRIVE_WAIT to the unit's script with the index of the command's target. Returns 1.
+ */
+int eventUnitCommand(EventQueueEntry *entry)
+{
+    UnitScriptEvent event;
+    Ov01Object *unit;
+    Ov01Object *target;
+    CmdListBody *command;
+    TecRecord *tec;
+    int kind;
+
+    command = &entry->data.kind1.args;
+    unit = entry->data.kind1.object;
+    unitQueueAppend(unit, (Ov01Command *)command);
+    if (command->command > CMD_KIND_NONE
+        && (command->command <= CMD_KIND_ITEM || command->command == CMD_KIND_SNAPSHOT)) {
+        battleStateGet()->object = unit;
+        battleStateGet()->commandKind = command->command;
+    }
+    event.unit = unit;
+    target = (Ov01Object *)unit->commandTarget;
+    switch (command->command) {
+    case CMD_KIND_TECHNIQUE:
+        tec = tecRecordGet(command->code);
+        if (tec->gateFlag == TEC_GATE_NONE || tec->gateFlag == 6 || tec->gateFlag == 7 || tec->gateFlag == 8) {
+            kind = (tec->flags & TEC_FLAG_SCRIPT_FLAGGED) ? TECHNIQUE_FLAGGED_SCRIPT_EVENT : TECHNIQUE_SCRIPT_EVENT;
+            event.words[0] = unitTblIndexOf(target);
+            event.words[1] = command->code;
+            unitScriptEventSend(kind, &event);
+        }
+        break;
+    case UNIT_CMD_MOVE_CHA:
+        event.words[0] = unitTblIndexOf(target);
+        unitScriptEventSend(MOVE_CHA_SCRIPT_EVENT, &event);
+        break;
+    case UNIT_CMD_PHASE_0E_WAIT:
+        event.words[0] = unitTblIndexOf(target);
+        unitScriptEventSend(PHASE_0E_WAIT_SCRIPT_EVENT, &event);
+        break;
+    case UNIT_CMD_POSE_ARRIVE_WAIT:
+        event.words[0] = unitTblIndexOf(target);
+        unitScriptEventSend(POSE_ARRIVE_WAIT_SCRIPT_EVENT, &event);
+        break;
+    }
+    return 1;
+}
 
 
 /* Event record of kind 2: the object whose command queue the event waits on (+4). */

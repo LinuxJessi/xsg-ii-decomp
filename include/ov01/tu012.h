@@ -16,6 +16,9 @@ enum {
     UNIT_CMD_MODE_DISPATCH = 0x0A,
     UNIT_CMD_JUMP_EFFECT = 0x0B,    /* func_00A85EA0: issues UNIT_CMD_MOVE_CHA_JUMP and effect 0xB */
     UNIT_CMD_HOVER_EFFECT = 0x0C,   /* func_00A85F30: issues UNIT_CMD_MOVE_CHA_HOVER and effect 0xC */
+    UNIT_CMD_MOVE_CHA = 0x10,       /* unitCmdMoveCha */
+    UNIT_CMD_PHASE_0E_WAIT = 0x12,  /* unitCmdPhase0EWait */
+    UNIT_CMD_POSE_ARRIVE_WAIT = 0x15, /* unitCmdPoseArriveWait */
     UNIT_CMD_MOVE_CHA_RUN = 0x16,
     UNIT_CMD_MOVE_POS_JUMP = 0x17,
     UNIT_CMD_MOVE_CHA_JUMP = 0x18,
