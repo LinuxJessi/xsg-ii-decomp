@@ -1272,7 +1272,6 @@
    "0x0068c560": "sdvAlterMirrorXY",
    "0x0068c590": "sdvOriginPoint",
    "0x0068c5e8": "sefAlphaBlendValues",
-   "0x0068c5f0": "sefAlphaBlendAdditive",
    "0x0068c610": "sefQuadCorners",
    "0x0068D348": "textSlotStylePrefix",
    "0x0068d5e8": "oLibSourceFile",

@@ -8107,7 +8107,6 @@ sdvAlterStartDelta = 0x0068C540;
 sdvAlterMirrorXY = 0x0068C560;
 sdvOriginPoint = 0x0068C590;
 sefAlphaBlendValues = 0x0068C5E8;
-sefAlphaBlendAdditive = 0x0068C5F0;
 sefQuadCorners = 0x0068C610;
 MMathUnitVector = 0x0068C660;
 MMathUnitMatrix = 0x0068C670;
