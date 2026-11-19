@@ -2,6 +2,10 @@
  * OV01 original TU 41: 0x00a9b120..0x00a9b280 (4 functions)
  */
 #include "common.h"
+#include "main/tu110.h"
+#include "ov01/tu012.h"
+#include "ov01/tu023.h"
+#include "ov01/tu036.h"
 #include "ov01/tu041.h"
 
 /* One 16-byte record of the effect position table: x, y, z in 1/100 units (createEffectPos), then a word that is
@@ -45,9 +49,37 @@ int effectPosGetCount(void) {
     return effectPosCount;
 }
 
-/*
- * Resolves an index to a value over four ranges: below 0xB, 0xB..0xF,
- * 0x10..0x8C (tables ov01PartyList and D_00AB5CF0) and 0x8D and up
- * (gattaiCodeGet). The meaning of the index is not known yet.
- */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu041", func_00A9B1B8);
+/* Unit effect code that switches a party member to the file of unitEffectFileIds. */
+#define UNIT_EFFECT_FILE_SWAP 0x3F
+
+/* Model file ids by unit key: party members with UNIT_EFFECT_FILE_SWAP (key - UNIT_KEY_PARTY_FIRST, 0 for none),
+ * the large units (key - UNIT_KEY_LARGE_FIRST) and the other data ids (key - UNIT_KEY_OTHER_FIRST). */
+extern int unitEffectFileIds[];
+extern int largeUnitFileIds[];
+extern int otherUnitFileIds[];
+
+/* Model file id of unit `key` (tu008 builds the file name from it): a party member's cloth id from ptStatusBlock
+ * (or its unitEffectFileIds entry under UNIT_EFFECT_FILE_SWAP), a table entry for the others, the gattai code past
+ * the data ids. */
+int unitFileIdGet(int key)
+{
+    int fileId;
+    int effectFileId;
+
+    if (key < UNIT_KEY_LARGE_FIRST) {
+        fileId = ptGetStatusBlock()->clothIds[key - UNIT_KEY_PARTY_FIRST];
+        if (battleUnitHasEffectCode(key, UNIT_EFFECT_FILE_SWAP)) {
+            effectFileId = unitEffectFileIds[key - UNIT_KEY_PARTY_FIRST];
+            if (effectFileId != 0) {
+                fileId = effectFileId;
+            }
+        }
+    } else if (key < UNIT_KEY_OTHER_FIRST) {
+        fileId = largeUnitFileIds[key - UNIT_KEY_LARGE_FIRST];
+    } else if (key >= UNIT_KEY_COUNT) {
+        fileId = gattaiCodeGet();
+    } else {
+        fileId = otherUnitFileIds[key - UNIT_KEY_OTHER_FIRST];
+    }
+    return fileId;
+}

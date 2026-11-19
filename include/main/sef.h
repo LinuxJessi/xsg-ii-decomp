@@ -226,6 +226,7 @@ typedef struct SefSlotTable {
 int loadWaitPending(void);
 void sefReleaseWaitSlot(int key);
 void sefSetGateForId(int owner, int id);
+void sefSetGateDefault(int owner, int id);
 void xglCdWaitUntilIdle(void);
 
 int sefFlagTest(int mask);
@@ -237,6 +238,9 @@ int sefCountOwnerValue(int owner, unsigned short value);
 void sefClearOwnerValueFlags(int owner, unsigned short value, int mask);
 void sefReleaseOwnedRecords(int owner);
 int sefOwnerPairInUse(int owner, int ownerKey);
+int sefGetEntryFlags(int key);
+int sefEntryHasFlag1(int key);
+int sefEntryHasFlag2(int key);
 void sefPruneHandleSlots(void);
 void sefRegisterHandle(int handle, int value);
 

@@ -7,6 +7,7 @@
 #include "ov01/tu016.h"
 #include "ov01/tu033.h"
 #include "ov01/tu041.h"
+#include "ov01/tu042.h"
 #include "ov01/tu071.h"
 
 /* Values of Ov01Motion.moveMode: unitCmdMoveRatio sets RATIO, the pose ramp (unitCmdMoveRamp) sets RAMP. */
@@ -146,7 +147,6 @@ int unitCmdMoveRatio(Ov01Object *object, Ov01Command *step)
     return 0;
 }
 
-void func_00A9BC20(int code, void *message);
 void sefApplyRecordMode(void *source, int id, int flag);
 void *memset(void *dst, int value, unsigned int size);
 
@@ -159,7 +159,7 @@ void *memset(void *dst, int value, unsigned int size);
 int unitCmdMoveRamp(Ov01Object *object, Ov01Command *step)
 {
     Ov01Pose *pose;
-    void *message[4];
+    UnitScriptPairEvent message;
     int facing;
     int code;
     f32 zero;
@@ -198,10 +198,10 @@ int unitCmdMoveRamp(Ov01Object *object, Ov01Command *step)
         unitSetPhase(object, (unitCurrentPhase(object) ^ 0x22) == 0 ? 0x24 : 0x27);
         unitEffectStart(object, 310, 20);
         seObjectVoiceStartDefault(object, 14);
-        if ((object->flags & 0x20) != 0) {
-            memset(message, 0, sizeof(message));
-            message[0] = object;
-            func_00A9BC20(2, message);
+        if ((object->flags & UNIT_FLAG_SCRIPT_EVENTS) != 0) {
+            memset(&message, 0, sizeof(message));
+            message.unit = object;
+            unitScriptPairEventSend(UNIT_SCRIPT_KIND_PAIR, &message);
         }
         object->flags &= ~1;
         return 1;

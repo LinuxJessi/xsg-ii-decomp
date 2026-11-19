@@ -6,6 +6,7 @@
 #include "main/tu051.h"
 #include "quadword.h"
 #include "main/tu152.h"
+#include "main/tu190.h"
 
 /* A key of a Hermite track: the point, and the key time in the low half of w. A time of
  * MMATH_HERMITE_END ends the track. */
@@ -100,7 +101,6 @@ int MMathPointInTriangle(const Vector4 *first, const Vector4 *second, const Vect
     return inside;
 }
 
-float MMathCalcDistXZ(Vector4 *first, Vector4 *second);
 
 /* Returns 1 when the XZ distance between the positions of the two actors is within limit, 0 otherwise. */
 int MMathIsWithinDistXZ(struct XenoActor *firstActor, struct XenoActor *secondActor, float limit)

@@ -666,27 +666,11 @@
     },
     {
      "c_split": false,
-     "end": "0x0063F878",
+     "end": "0x006449A0",
      "ordinal": 12,
      "piece": "tu012",
      "start": "0x0063F7C0",
      "tu": "tu012"
-    },
-    {
-     "c_split": false,
-     "end": "0x00640000",
-     "ordinal": 18,
-     "piece": "xgl_flags",
-     "start": "0x0063F878",
-     "tu": "xgl_flags"
-    },
-    {
-     "c_split": false,
-     "end": "0x006449A0",
-     "ordinal": 0,
-     "piece": "sce_sdk_low",
-     "start": "0x00640000",
-     "tu": "sce_sdk_low"
     },
     {
      "c_split": false,
@@ -850,11 +834,19 @@
     },
     {
      "c_split": false,
-     "end": "0x00648688",
+     "end": "0x00646F20",
      "ordinal": 273,
      "piece": "tu273",
      "start": "0x00646E80",
      "tu": "tu273"
+    },
+    {
+     "c_split": false,
+     "end": "0x00648688",
+     "ordinal": 0,
+     "piece": "sce_sdk_low",
+     "start": "0x00646F20",
+     "tu": "sce_sdk_low"
     },
     {
      "c_split": false,
@@ -1721,7 +1713,7 @@
     },
     {
      "c_split": false,
-     "end": "0x00690004",
+     "end": "0x00690360",
      "ordinal": 0,
      "piece": "sce_sdk_low",
      "start": "0x0068F990",
@@ -1732,7 +1724,7 @@
      "end": "0x00699520",
      "ordinal": 2,
      "piece": "cri_sofdec",
-     "start": "0x00690004",
+     "start": "0x00690360",
      "tu": "cri_sofdec"
     },
     {
@@ -3613,11 +3605,19 @@
     },
     {
      "c_split": false,
-     "end": "0x009968C0",
+     "end": "0x00991000",
      "ordinal": 273,
      "piece": "tu273",
      "start": "0x00989FD0",
      "tu": "tu273"
+    },
+    {
+     "c_split": false,
+     "end": "0x009968C0",
+     "ordinal": 0,
+     "piece": "sce_sdk_low_bss2",
+     "start": "0x00991000",
+     "tu": "sce_sdk_low"
     },
     {
      "c_split": false,
@@ -3629,7 +3629,7 @@
     },
     {
      "c_split": false,
-     "end": "0x009B4C00",
+     "end": "0x009ACC00",
      "ordinal": 274,
      "piece": "sce_sdk_high",
      "start": "0x009AC3C0",
@@ -3640,7 +3640,7 @@
      "end": "0x009D5948",
      "ordinal": 1,
      "piece": "korg_evag",
-     "start": "0x009B4C00",
+     "start": "0x009ACC00",
      "tu": "korg_evag"
     },
     {
@@ -10055,27 +10055,27 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x00640000",
+      "0x00646f20",
       "0x00671629"
      ],
      "bounds": [
-      "0x0063f9b5",
-      "0x006449a0"
+      "0x00646e81",
+      "0x00648688"
      ],
-     "end": "0x006449A0",
+     "end": "0x00648688",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x006449A0",
+       "end": "0x00648688",
        "name": "sce_sdk_low",
-       "start": "0x00640000"
+       "start": "0x00646F20"
       }
      ],
-     "size": 18848,
+     "size": 5992,
      "splat_type": "data",
-     "start": "0x00640000"
+     "start": "0x00646F20"
     },
     ".rodata": {
      "anchored": [
@@ -10084,20 +10084,20 @@
      ],
      "bounds": [
       "0x0068f961",
-      "0x00690004"
+      "0x00690360"
      ],
-     "end": "0x00690004",
+     "end": "0x00690360",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x00690004",
+       "end": "0x00690360",
        "name": "sce_sdk_low",
        "start": "0x0068F990"
       }
      ],
-     "size": 1652,
+     "size": 2512,
      "splat_type": "rodata",
      "start": "0x0068F990"
     },
@@ -10119,6 +10119,12 @@
        "end": "0x0069E550",
        "name": "sce_sdk_low",
        "start": "0x0069E400"
+      },
+      {
+       "c_split": false,
+       "end": "0x009968C0",
+       "name": "sce_sdk_low_bss2",
+       "start": "0x00991000"
       }
      ],
      "size": 336,
@@ -10154,7 +10160,7 @@
    "in_scope": false,
    "boundary_kind": "coarse_zone",
    "boundary_evidence": [
-    "coarse zone: KORG EE client: [KORGEVAG] string, RPC stubs over one client block at 0x69e148"
+    "coarse zone: KORG EE client: [KORGEVAG] string, RPC stubs over one client block at 0x69e148, $gp-relative data"
    ],
    "boundary_confidence": "zone",
    "provisional": true,
@@ -10180,7 +10186,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 98,
+    "of": 101,
     "migration_hints": [],
     "records": []
    },
@@ -11066,6 +11072,33 @@
      "va": "0x0013b708",
      "name_basis": "address",
      "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "func_0013B7A0",
+     "size": 72,
+     "splat_name": "func_0013B7A0",
+     "va": "0x0013b7a0",
+     "name_basis": "address",
+     "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "func_0013B7E8",
+     "size": 100,
+     "splat_name": "func_0013B7E8",
+     "va": "0x0013b7e8",
+     "name_basis": "address",
+     "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "func_0013B850",
+     "size": 64,
+     "splat_name": "func_0013B850",
+     "va": "0x0013b850",
+     "name_basis": "address",
+     "provenance": "estimated"
     }
    ],
    "owners": {
@@ -11150,7 +11183,7 @@
     },
     ".bss": {
      "anchored": [
-      "0x009b4c00",
+      "0x009acc00",
       "0x009d5881"
      ],
      "bounds": [
@@ -11165,23 +11198,23 @@
        "c_split": false,
        "end": "0x009D5948",
        "name": "korg_evag",
-       "start": "0x009B4C00"
+       "start": "0x009ACC00"
       }
      ],
-     "size": 134472,
+     "size": 167240,
      "splat_type": "bss",
-     "start": "0x009B4C00"
+     "start": "0x009ACC00"
     }
    },
    "text": {
     "start": "0x00138298",
-    "end": "0x0013b7a0",
-    "code_end": "0x0013b79c",
-    "size": 13576,
+    "end": "0x0013b890",
+    "code_end": "0x0013b890",
+    "size": 13816,
     "splat": "hasm",
     "splat_range": [
      "0x00138298",
-     "0x0013b7a0"
+     "0x0013b890"
     ],
     "note": null
    }
@@ -11227,38 +11260,11 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 2781,
+    "of": 2778,
     "migration_hints": [],
     "records": []
    },
    "functions": [
-    {
-     "binding": "GLOBAL",
-     "name": "func_0013B7A0",
-     "size": 72,
-     "splat_name": "func_0013B7A0",
-     "va": "0x0013b7a0",
-     "name_basis": "address",
-     "provenance": "estimated"
-    },
-    {
-     "binding": "GLOBAL",
-     "name": "func_0013B7E8",
-     "size": 100,
-     "splat_name": "func_0013B7E8",
-     "va": "0x0013b7e8",
-     "name_basis": "address",
-     "provenance": "estimated"
-    },
-    {
-     "binding": "GLOBAL",
-     "name": "func_0013B850",
-     "size": 64,
-     "splat_name": "func_0013B850",
-     "va": "0x0013b850",
-     "name_basis": "address",
-     "provenance": "estimated"
-    },
     {
      "binding": "GLOBAL",
      "name": "func_0013B890",
@@ -36275,7 +36281,7 @@
       "0x0066f6a9"
      ],
      "bounds": [
-      "0x00646e81",
+      "0x00671629",
       "0x00671678"
      ],
      "end": "0x00671678",
@@ -36295,7 +36301,7 @@
     },
     ".rodata": {
      "anchored": [
-      "0x00690004",
+      "0x00690360",
       "0x00698c21"
      ],
      "bounds": [
@@ -36310,17 +36316,17 @@
        "c_split": false,
        "end": "0x00699520",
        "name": "cri_sofdec",
-       "start": "0x00690004"
+       "start": "0x00690360"
       }
      ],
-     "size": 38172,
+     "size": 37312,
      "splat_type": "rodata",
-     "start": "0x00690004"
+     "start": "0x00690360"
     },
     ".bss": {
      "anchored": [
       "0x009968c0",
-      "0x009acc01"
+      "0x009aa8f9"
      ],
      "bounds": [
       "0x0098abf1",
@@ -36343,13 +36349,13 @@
     }
    },
    "text": {
-    "start": "0x0013b7a0",
+    "start": "0x0013b890",
     "end": "0x00194638",
     "code_end": "0x00194638",
-    "size": 364184,
+    "size": 363944,
     "splat": "hasm",
     "splat_range": [
-     "0x0013b7a0",
+     "0x0013b890",
      "0x00194638"
     ],
     "note": null
@@ -39124,24 +39130,24 @@
     ".data": {
      "anchored": [
       "0x0063f7c0",
-      "0x0063f81d"
+      "0x006446c1"
      ],
      "bounds": [
       "0x0063f721",
-      "0x0063f878"
+      "0x006449a0"
      ],
-     "end": "0x0063F878",
+     "end": "0x006449A0",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x0063F878",
+       "end": "0x006449A0",
        "name": "tu012",
        "start": "0x0063F7C0"
       }
      ],
-     "size": 184,
+     "size": 20960,
      "splat_type": "data",
      "start": "0x0063F7C0"
     },
@@ -40134,35 +40140,9 @@
     }
    ],
    "owners": {
-    ".text": "c",
-    ".data": "asm"
+    ".text": "c"
    },
-   "sections": {
-    ".data": {
-     "anchored": [
-      "0x0063f878",
-      "0x0063f9b5"
-     ],
-     "bounds": [
-      "0x0063f81d",
-      "0x00640000"
-     ],
-     "end": "0x00640000",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00640000",
-       "name": "xgl_flags",
-       "start": "0x0063F878"
-      }
-     ],
-     "size": 1928,
-     "splat_type": "data",
-     "start": "0x0063F878"
-    }
-   },
+   "sections": {},
    "text": {
     "start": "0x001a09b8",
     "end": "0x001a0d10",
@@ -40457,7 +40437,7 @@
       "0x00644e71"
      ],
      "bounds": [
-      "0x00671629",
+      "0x006446c1",
       "0x00644ed0"
      ],
      "end": "0x00644ED0",
@@ -66766,7 +66746,7 @@
     ".data": {
      "anchored": [
       "0x003ec458",
-      "0x006446c1"
+      "0x0061d001"
      ],
      "bounds": [
       "0x0061c4c1",
@@ -67497,7 +67477,7 @@
       "0x003ec919"
      ],
      "bounds": [
-      "0x006446c1",
+      "0x0061d001",
       "0x003ec930"
      ],
      "end": "0x003EC930",
@@ -78363,7 +78343,7 @@
     ".data": {
      "anchored": [
       "0x003ed490",
-      "0x005e67cd"
+      "0x0046e95d"
      ],
      "bounds": [
       "0x003ed461",
@@ -80938,7 +80918,7 @@
       "0x005e6381"
      ],
      "bounds": [
-      "0x005e67cd",
+      "0x0046e95d",
       "0x005e65c0"
      ],
      "end": "0x005E65C0",
@@ -81460,7 +81440,7 @@
     ".data": {
      "anchored": [
       "0x005e65c0",
-      "0x005e6d28"
+      "0x005e6d21"
      ],
      "bounds": [
       "0x005e6381",
@@ -81592,7 +81572,7 @@
    },
    "import": {
     "mode": "c",
-    "note": "X1 C under express order (user 2026-11-05); joined srs, tu178 into srs.c (Opok, PR review 2026-11-17: the callee compiled earlier in the file)",
+    "note": "X1 C under express order (user 2026-11-05)",
     "source": {
      "kind": "file",
      "path": "src/main/srs.c",
@@ -81910,11 +81890,11 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x005e6d40",
+      "0x005e6d28",
       "0x005e6d51"
      ],
      "bounds": [
-      "0x005e6d28",
+      "0x005e6d21",
       "0x005e6d60"
      ],
      "end": "0x005E6D60",
@@ -82025,8 +82005,8 @@
    ],
    "boundary_confidence": "low",
    "provisional": true,
-   "name_basis": "no name evidence",
-   "name_confidence": "none",
+   "name_basis": "X1 file of 2 homolog function(s)",
+   "name_confidence": "medium",
    "contract": {
     "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
     "assembler_path": "tool:ee-as-la29-vsqrt-swap",
@@ -82050,7 +82030,7 @@
     "assembler_class": "LA29",
     "assembler_confidence": "medium",
     "g_flag": "-G8",
-    "g_basis": "5 gp-relative instructions in the code",
+    "g_basis": "47 gp-relative instructions in the code",
     "g_confidence": "high",
     "optimization": "-O2",
     "source": "reports/x2-compiler-calibration.md"
@@ -82362,9 +82342,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "sdvSlerpVector",
+     "name": "func_0026A7A0",
      "size": 612,
-     "splat_name": "sdvSlerpVector",
+     "splat_name": "func_0026A7A0",
      "va": "0x0026a7a0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82695,18 +82675,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "sefSpawnKinds0To2",
+     "name": "func_0026CF90",
      "size": 804,
-     "splat_name": "sefSpawnKinds0To2",
+     "splat_name": "func_0026CF90",
      "va": "0x0026cf90",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "sefSpawnKinds3To4",
+     "name": "func_0026D2B8",
      "size": 1008,
-     "splat_name": "sefSpawnKinds3To4",
+     "splat_name": "func_0026D2B8",
      "va": "0x0026d2b8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82794,9 +82774,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "sefUpdateKinds3To4Particles",
+     "name": "func_0026F010",
      "size": 576,
-     "splat_name": "sefUpdateKinds3To4Particles",
+     "splat_name": "func_0026F010",
      "va": "0x0026f010",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82812,36 +82792,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "sefUpdateKinds8To10Particles",
+     "name": "func_0026F4C8",
      "size": 780,
-     "splat_name": "sefUpdateKinds8To10Particles",
+     "splat_name": "func_0026F4C8",
      "va": "0x0026f4c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "sefUpdateKinds11To13Particles",
+     "name": "func_0026F7D8",
      "size": 940,
-     "splat_name": "sefUpdateKinds11To13Particles",
+     "splat_name": "func_0026F7D8",
      "va": "0x0026f7d8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "sefUpdateKinds14To16Particles",
+     "name": "func_0026FB88",
      "size": 1108,
-     "splat_name": "sefUpdateKinds14To16Particles",
+     "splat_name": "func_0026FB88",
      "va": "0x0026fb88",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "sefUpdateKinds17To19Particles",
+     "name": "func_0026FFE0",
      "size": 1092,
-     "splat_name": "sefUpdateKinds17To19Particles",
+     "splat_name": "func_0026FFE0",
      "va": "0x0026ffe0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82893,18 +82873,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "sefSetSlotTransform",
+     "name": "func_00271078",
      "size": 212,
-     "splat_name": "sefSetSlotTransform",
+     "splat_name": "func_00271078",
      "va": "0x00271078",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "sefCullResourceSlots",
+     "name": "func_00271150",
      "size": 304,
-     "splat_name": "sefCullResourceSlots",
+     "splat_name": "func_00271150",
      "va": "0x00271150",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82956,54 +82936,6 @@
     ".bss": "asm"
    },
    "sections": {
-    ".lit4": {
-     "anchored": [
-      "0x0069b324",
-      "0x0069b4e1"
-     ],
-     "bounds": [
-      "0x0069b321",
-      "0x0069b4e4"
-     ],
-     "end": "0x0069B4E4",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069B4E4",
-       "name": "sdv_181",
-       "start": "0x0069B324"
-      }
-     ],
-     "size": 448,
-     "splat_type": "lit4",
-     "start": "0x0069B324"
-    },
-    ".bss": {
-     "anchored": [
-      "0x00807ea0",
-      "0x00881801"
-     ],
-     "bounds": [
-      "0x00807da1",
-      "0x00881810"
-     ],
-     "end": "0x00881810",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00881810",
-       "name": "sdv_181",
-       "start": "0x00807EA0"
-      }
-     ],
-     "size": 498032,
-     "splat_type": "bss",
-     "start": "0x00807EA0"
-    },
     ".data": {
      "anchored": [
       "0x005e6d60",
@@ -83052,6 +82984,30 @@
      "splat_type": "rodata",
      "start": "0x0068C530"
     },
+    ".lit4": {
+     "anchored": [
+      "0x0069b324",
+      "0x0069b4e1"
+     ],
+     "bounds": [
+      "0x0069b321",
+      "0x0069b4e4"
+     ],
+     "end": "0x0069B4E4",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x0069B4E4",
+       "name": "sdv_181",
+       "start": "0x0069B324"
+      }
+     ],
+     "size": 448,
+     "splat_type": "lit4",
+     "start": "0x0069B324"
+    },
     ".sdata": {
      "anchored": [
       "0x0069dc38",
@@ -83075,6 +83031,30 @@
      "size": 32,
      "splat_type": "sdata",
      "start": "0x0069DC38"
+    },
+    ".bss": {
+     "anchored": [
+      "0x00807ea0",
+      "0x00881801"
+     ],
+     "bounds": [
+      "0x00807da1",
+      "0x00881810"
+     ],
+     "end": "0x00881810",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x00881810",
+       "name": "sdv_181",
+       "start": "0x00807EA0"
+      }
+     ],
+     "size": 498032,
+     "splat_type": "bss",
+     "start": "0x00807EA0"
     },
     ".sbss": {
      "anchored": [
@@ -83115,7 +83095,7 @@
    },
    "import": {
     "mode": "c",
-    "note": "Source file created for the functions of this TU.; joined tu181, tu182, sdv_183 into sdv_181.c (Opok, PR review 2026-11-17: the callee compiled earlier in the file); joined sdv_181, tu185 into sdv_181.c (the .rodata cut fell inside sefAlphaBlendValues, which both read)",
+    "note": "origin 57073757 (PRs #24-#29): TUs upstream turned to C; joined sdv_181, tu185 into sdv_181.c (Opok, PR review 2026-11-17: the callee compiled earlier in the file)",
     "source": {
      "kind": "file",
      "path": "src/main/sdv_181.c",
@@ -84061,7 +84041,7 @@
    },
    "import": {
     "mode": "c",
-    "note": "Source file created for the functions of this TU.",
+    "note": "origin 57073757 (PRs #24-#29): TUs upstream turned to C",
     "source": {
      "kind": "file",
      "path": "src/main/tu190.c",
@@ -84538,7 +84518,7 @@
    },
    "import": {
     "mode": "c",
-    "note": "Source file created for the functions of this TU.",
+    "note": "origin 57073757 (PRs #24-#29): TUs upstream turned to C",
     "source": {
      "kind": "file",
      "path": "src/main/m_math_193.c",
@@ -85908,18 +85888,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00274100",
+     "name": "xglRoundCoord",
      "size": 44,
-     "splat_name": "func_00274100",
+     "splat_name": "xglRoundCoord",
      "va": "0x00274100",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00274130",
+     "name": "xglPointDistanceInt",
      "size": 104,
-     "splat_name": "func_00274130",
+     "splat_name": "xglPointDistanceInt",
      "va": "0x00274130",
      "name_basis": "address",
      "provenance": "estimated"
@@ -86308,7 +86288,7 @@
    },
    "import": {
     "mode": "c",
-    "note": "Source file created for the functions of this TU.",
+    "note": "origin 57073757 (PRs #24-#29): TUs upstream turned to C",
     "source": {
      "kind": "file",
      "path": "src/main/tu205.c",
@@ -86500,10 +86480,9 @@
    "in_scope": true,
    "boundary_kind": "inferred",
    "boundary_evidence": [
-    "model log-odds -1.02",
-    "precision of this score band on X1, held out: 0.19 (19/100)"
+    "compiler: wrapIntRange (0x274808) ends tu206, the xglClampInt object (upstream 4cb7d47b): recordStepAngle of tu207 keeps bnel on its call without a block-scope declaration only when the callee is not compiled earlier in its file"
    ],
-   "boundary_confidence": "low",
+   "boundary_confidence": "medium",
    "provisional": true,
    "name_basis": "no name evidence",
    "name_confidence": "none",
@@ -100907,20 +100886,20 @@
      ],
      "bounds": [
       "0x00646e51",
-      "0x00648688"
+      "0x00646f20"
      ],
-     "end": "0x00648688",
+     "end": "0x00646F20",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x00648688",
+       "end": "0x00646F20",
        "name": "tu273",
        "start": "0x00646E80"
       }
      ],
-     "size": 6152,
+     "size": 160,
      "splat_type": "data",
      "start": "0x00646E80"
     },
@@ -100981,18 +100960,18 @@
       "0x00989f01",
       "0x009968c0"
      ],
-     "end": "0x009968C0",
+     "end": "0x00991000",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x009968C0",
+       "end": "0x00991000",
        "name": "tu273",
        "start": "0x00989FD0"
       }
      ],
-     "size": 51440,
+     "size": 28720,
      "splat_type": "bss",
      "start": "0x00989FD0"
     }
@@ -101777,21 +101756,21 @@
       "0x009d5931"
      ],
      "bounds": [
-      "0x009acc01",
-      "0x009b4c00"
+      "0x009aa8f9",
+      "0x009acc00"
      ],
-     "end": "0x009B4C00",
+     "end": "0x009ACC00",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x009B4C00",
+       "end": "0x009ACC00",
        "name": "sce_sdk_high",
        "start": "0x009AC3C0"
       }
      ],
-     "size": 34880,
+     "size": 2112,
      "splat_type": "bss",
      "start": "0x009AC3C0"
     }
@@ -101947,9 +101926,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "acosf",
+     "name": "func_002A1DC8",
      "size": 20,
-     "splat_name": "acosf",
+     "splat_name": "func_002A1DC8",
      "va": "0x002a1dc8",
      "name_basis": "address",
      "provenance": "estimated"

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "main/sdv_033.h"
+#include "main/tu196.h"
 
 /*
  * Transforms point by matrix, projects it with the camera's screen scale and offset, and stores
@@ -8,7 +9,7 @@
  * flags are set, else 0. Returns that mark. The ori/cfc2/nop/movn lines are the library's clip-flag
  * read-out. The original keeps an untouched 16-byte frame: the unused scratch quadword.
  */
-int MMathRotTransPersClip(Vector4 *destination, const XglCamera *camera, const Matrix4 *matrix, const Vector4 *point)
+int MMathRotTransPersClip(Vector4 *destination, const XglCamera *camera, Matrix4 *matrix, const Vector4 *point)
 {
     Vector4 scratch;
     int clipped;

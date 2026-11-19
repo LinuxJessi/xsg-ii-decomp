@@ -35,7 +35,11 @@ struct MenuObject {
     void (*draw)(MenuObject *object);     /* +0x08 */
     unsigned char unmodeled_0c[0x04];
     MenuCursorSlide slide;                /* +0x10 */
-    int moving;                           /* +0x90: 1 while the slide runs to the target */
+    /* A one-member union: its stores are alias set 0, as in the original, where menuStatRecordsCreate stores
+     * moving only after the unit pointer load; as a plain int, sched moves the store ahead of that load. */
+    union {
+        int moving;                       /* +0x90: 1 while the slide runs to the target */
+    };
     union {
         struct {
             int visible;                  /* +0x94: menuCursorDraw draws the unit list when 1 */

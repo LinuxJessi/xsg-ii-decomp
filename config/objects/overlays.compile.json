@@ -1935,13 +1935,13 @@
       "asm/nonmatchings/ov01/tu033/func_00A93708.s",
       "asm/nonmatchings/ov01/tu033/eventUnitCommand.s",
       "asm/nonmatchings/ov01/tu033/eventWaitUnitQueue.s",
-      "asm/nonmatchings/ov01/tu033/func_00A938A0.s",
+      "asm/nonmatchings/ov01/tu033/eventAttackRun.s",
       "asm/nonmatchings/ov01/tu033/unitsMarkUninvolved.s",
       "asm/nonmatchings/ov01/tu033/func_00A93CF0.s",
-      "asm/nonmatchings/ov01/tu033/func_00A93D50.s",
+      "asm/nonmatchings/ov01/tu033/attackHitApply.s",
       "asm/nonmatchings/ov01/tu033/unitTryActStock.s",
-      "asm/nonmatchings/ov01/tu033/func_00A94260.s",
-      "asm/nonmatchings/ov01/tu033/func_00A94500.s",
+      "asm/nonmatchings/ov01/tu033/attackHitsShow.s",
+      "asm/nonmatchings/ov01/tu033/attackSpecialResolve.s",
       "asm/nonmatchings/ov01/tu033/attackSpecialStep.s",
       "asm/nonmatchings/ov01/tu033/itemRandomPick.s",
       "asm/nonmatchings/ov01/tu033/unitStatusTextShow.s",
@@ -1952,9 +1952,9 @@
       "asm/nonmatchings/ov01/tu033/battleUnitsReset.s",
       "asm/nonmatchings/ov01/tu033/actionTransformSlotGet.s",
       "asm/nonmatchings/ov01/tu033/tecEffectGroupGet.s",
-      "asm/nonmatchings/ov01/tu033/func_00A95268.s",
+      "asm/nonmatchings/ov01/tu033/attackEffectsStart.s",
       "asm/nonmatchings/ov01/tu033/unitEffectStart.s",
-      "asm/nonmatchings/ov01/tu033/func_00A95540.s",
+      "asm/nonmatchings/ov01/tu033/unitEffectStartMode.s",
       "asm/nonmatchings/ov01/tu033/func_00A955C8.s",
       "asm/nonmatchings/ov01/tu033/func_00A95608.s",
       "asm/nonmatchings/ov01/tu033/unitStatusAuraUpdate.s",
@@ -1969,20 +1969,20 @@
       "asm/nonmatchings/ov01/tu033/func_00A95CC8.s",
       "asm/nonmatchings/ov01/tu033/func_00A95CE0.s",
       "asm/nonmatchings/ov01/tu033/func_00A95CE8.s",
-      "asm/nonmatchings/ov01/tu033/func_00A95CF0.s",
+      "asm/nonmatchings/ov01/tu033/actionResourcesLoad.s",
       "asm/nonmatchings/ov01/tu033/ov01LoadsIdle.s",
       "asm/nonmatchings/ov01/tu033/unitAttachRequest.s",
       "asm/nonmatchings/ov01/tu033/unitSpawnFromRequest.s",
       "asm/nonmatchings/ov01/tu033/unitBindRequest.s",
-      "asm/nonmatchings/ov01/tu033/func_00A96050.s",
+      "asm/nonmatchings/ov01/tu033/unitsRemoveDefeated.s",
       "asm/nonmatchings/ov01/tu033/battleResolveStatus.s",
-      "asm/nonmatchings/ov01/tu033/func_00A96510.s",
+      "asm/nonmatchings/ov01/tu033/unitStepStatusApply.s",
       "asm/nonmatchings/ov01/tu033/battleStatusQueueWait.s",
       "asm/nonmatchings/ov01/tu033/unitsReviveDown.s",
       "asm/nonmatchings/ov01/tu033/ov01StreamOpen.s",
       "asm/nonmatchings/ov01/tu033/ov01StreamBind.s",
-      "asm/nonmatchings/ov01/tu033/func_00A96AA8.s",
-      "asm/nonmatchings/ov01/tu033/func_00A96E38.s"
+      "asm/nonmatchings/ov01/tu033/eventPairBegin.s",
+      "asm/nonmatchings/ov01/tu033/eventPairEnd.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -2534,7 +2534,7 @@
       "asm/nonmatchings/ov01/tu041/effectPosTableSet.s",
       "asm/nonmatchings/ov01/tu041/effectPosGet.s",
       "asm/nonmatchings/ov01/tu041/effectPosGetCount.s",
-      "asm/nonmatchings/ov01/tu041/func_00A9B1B8.s"
+      "asm/nonmatchings/ov01/tu041/unitFileIdGet.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -2594,8 +2594,8 @@
       "asm/nonmatchings/ov01/tu042/dataModelKeyGet.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B298.s",
       "asm/nonmatchings/ov01/tu042/func_00A9B2A0.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B2A8.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9B338.s",
+      "asm/nonmatchings/ov01/tu042/batUnitRecordGet.s",
+      "asm/nonmatchings/ov01/tu042/batUnitNameGet.s",
       "asm/nonmatchings/ov01/tu042/tecRecordGet.s",
       "asm/nonmatchings/ov01/tu042/tableKeyRowGet.s",
       "asm/nonmatchings/ov01/tu042/effectIdListGet.s",
@@ -2624,7 +2624,7 @@
       "asm/nonmatchings/ov01/tu042/tgtIdTextGet.s",
       "asm/nonmatchings/ov01/tu042/tableStringGet.s",
       "asm/nonmatchings/ov01/tu042/msgReset.s",
-      "asm/nonmatchings/ov01/tu042/func_00A9BC20.s",
+      "asm/nonmatchings/ov01/tu042/unitScriptPairEventSend.s",
       "asm/nonmatchings/ov01/tu042/unitScriptEventSend.s",
       "asm/nonmatchings/ov01/tu042/thinkDispatch.s",
       "asm/nonmatchings/ov01/tu042/thinkSendEnd.s",
@@ -3573,10 +3573,10 @@
       "asm/nonmatchings/ov01/tu054/arrowCycleUpdate.s",
       "asm/nonmatchings/ov01/tu054/arrowDraw.s",
       "asm/nonmatchings/ov01/tu054/arrowRemove.s",
-      "asm/nonmatchings/ov01/tu054/func_00AA4DB8.s",
-      "asm/nonmatchings/ov01/tu054/func_00AA4F20.s",
-      "asm/nonmatchings/ov01/tu054/func_00AA4FD0.s",
-      "asm/nonmatchings/ov01/tu054/func_00AA5050.s"
+      "asm/nonmatchings/ov01/tu054/menuPopNumCreate.s",
+      "asm/nonmatchings/ov01/tu054/menuPopNumUpdate.s",
+      "asm/nonmatchings/ov01/tu054/menuPopNumDraw.s",
+      "asm/nonmatchings/ov01/tu054/menuPopNumDrawDigits.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -3633,9 +3633,9 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu055/func_00AA5248.s",
+      "asm/nonmatchings/ov01/tu055/actStepIconCreate.s",
       "asm/nonmatchings/ov01/tu055/func_00AA52D0.s",
-      "asm/nonmatchings/ov01/tu055/func_00AA52D8.s"
+      "asm/nonmatchings/ov01/tu055/actStepIconDraw.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -3650,9 +3650,9 @@
      "name": "tu056",
      "text": [
       "0x00aa5390",
-      "0x00aa5b60"
+      "0x00aa6148"
      ],
-     "functions": 14,
+     "functions": 19,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -3705,68 +3705,12 @@
       "asm/nonmatchings/ov01/tu056/menuTargetListShow.s",
       "asm/nonmatchings/ov01/tu056/menuTargetListHide.s",
       "asm/nonmatchings/ov01/tu056/menuTgtStatusNew.s",
-      "asm/nonmatchings/ov01/tu056/func_00AA5B58.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 57,
-     "id": "ov01/tu057_00aa5b60",
-     "name": "tu057",
-     "text": [
-      "0x00aa5b60",
-      "0x00aa6148"
-     ],
-     "functions": 5,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#57"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu057.c",
-     "object": "build/src/ov01/tu057.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu057/menuTgtStatusDraw.s",
-      "asm/nonmatchings/ov01/tu057/menuUnitStatusIconsDraw.s",
-      "asm/nonmatchings/ov01/tu057/menuTgtStatusShow.s",
-      "asm/nonmatchings/ov01/tu057/menuTgtStatusHide.s",
-      "asm/nonmatchings/ov01/tu057/func_00AA60B8.s"
+      "asm/nonmatchings/ov01/tu056/func_00AA5B58.s",
+      "asm/nonmatchings/ov01/tu056/menuTgtStatusDraw.s",
+      "asm/nonmatchings/ov01/tu056/menuUnitStatusIconsDraw.s",
+      "asm/nonmatchings/ov01/tu056/menuTgtStatusShow.s",
+      "asm/nonmatchings/ov01/tu056/menuTgtStatusHide.s",
+      "asm/nonmatchings/ov01/tu056/menuRollPercentDraw.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -4009,7 +3953,7 @@
       "asm/nonmatchings/ov01/tu061/menuTimedPanelDraw.s",
       "asm/nonmatchings/ov01/tu061/menuTimedSeqStart.s",
       "asm/nonmatchings/ov01/tu061/menuTimedSeqArmTick.s",
-      "asm/nonmatchings/ov01/tu061/func_00AA6FE0.s"
+      "asm/nonmatchings/ov01/tu061/menuTimedSeqShow.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -4076,9 +4020,9 @@
       "asm/nonmatchings/ov01/tu062/menuStatPanelNew.s",
       "asm/nonmatchings/ov01/tu062/menuStatPanelStep.s",
       "asm/nonmatchings/ov01/tu062/menuStatPanelDraw.s",
-      "asm/nonmatchings/ov01/tu062/func_00AA76F8.s",
-      "asm/nonmatchings/ov01/tu062/func_00AA7750.s",
-      "asm/nonmatchings/ov01/tu062/func_00AA7770.s",
+      "asm/nonmatchings/ov01/tu062/menuStatPanelOpen.s",
+      "asm/nonmatchings/ov01/tu062/menuKeyDraw.s",
+      "asm/nonmatchings/ov01/tu062/menuKeyCellDraw.s",
       "asm/nonmatchings/ov01/tu062/func_00AA7900.s",
       "asm/nonmatchings/ov01/tu062/menuNumDraw.s",
       "asm/nonmatchings/ov01/tu062/menuNumDrawTarget.s",
@@ -4148,14 +4092,14 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu063/func_00AA8200.s",
+      "asm/nonmatchings/ov01/tu063/menuTexCellIndex.s",
       "asm/nonmatchings/ov01/tu063/menuTexFlush.s",
       "asm/nonmatchings/ov01/tu063/grPacketTexState.s",
       "asm/nonmatchings/ov01/tu063/menuTexStateByKey.s",
-      "asm/nonmatchings/ov01/tu063/func_00AA83D0.s",
-      "asm/nonmatchings/ov01/tu063/func_00AA8410.s",
-      "asm/nonmatchings/ov01/tu063/func_00AA8430.s",
-      "asm/nonmatchings/ov01/tu063/func_00AA8450.s",
+      "asm/nonmatchings/ov01/tu063/menuTexStateAltByKey.s",
+      "asm/nonmatchings/ov01/tu063/menuSmallCellTexState.s",
+      "asm/nonmatchings/ov01/tu063/menuNumTexState.s",
+      "asm/nonmatchings/ov01/tu063/menuNumStyle1TexState.s",
       "asm/nonmatchings/ov01/tu063/menuIconTexState.s",
       "asm/nonmatchings/ov01/tu063/func_00AA8490.s",
       "asm/nonmatchings/ov01/tu063/func_00AA84B0.s",
@@ -4179,9 +4123,9 @@
      "name": "tu064",
      "text": [
       "0x00aa8590",
-      "0x00aa8678"
+      "0x00aa8930"
      ],
-     "functions": 3,
+     "functions": 6,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -4223,66 +4167,10 @@
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu064/screenFadeInStart.s",
       "asm/nonmatchings/ov01/tu064/screenFadeOutStart.s",
-      "asm/nonmatchings/ov01/tu064/screenFadeIdle.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 65,
-     "id": "ov01/tu065_00aa8678",
-     "name": "tu065",
-     "text": [
-      "0x00aa8678",
-      "0x00aa8930"
-     ],
-     "functions": 3,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#65"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu065.c",
-     "object": "build/src/ov01/tu065.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu065/screenFadeInStep.s",
-      "asm/nonmatchings/ov01/tu065/screenFadeOutStep.s",
-      "asm/nonmatchings/ov01/tu065/screenFadeDraw.s"
+      "asm/nonmatchings/ov01/tu064/screenFadeIdle.s",
+      "asm/nonmatchings/ov01/tu064/screenFadeInStep.s",
+      "asm/nonmatchings/ov01/tu064/screenFadeOutStep.s",
+      "asm/nonmatchings/ov01/tu064/screenFadeDraw.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -4641,7 +4529,7 @@
       "asm/nonmatchings/ov01/tu071/streamSlotSetFile.s",
       "asm/nonmatchings/ov01/tu071/streamSlotStop.s",
       "asm/nonmatchings/ov01/tu071/bgmPlayTrack.s",
-      "asm/nonmatchings/ov01/tu071/func_00AA91B8.s",
+      "asm/nonmatchings/ov01/tu071/unitPlayActionSound.s",
       "asm/nonmatchings/ov01/tu071/streamPlayByKey.s"
      ],
      "accepted_asm_files": [],
@@ -4735,7 +4623,7 @@
       "asm/nonmatchings/ov01/tu072/configPlIchigeki.s",
       "asm/nonmatchings/ov01/tu072/configStockMugen.s",
       "asm/nonmatchings/ov01/tu072/configLearnAll.s",
-      "asm/nonmatchings/ov01/tu072/func_00AAA288.s",
+      "asm/nonmatchings/ov01/tu072/configBattleSlotsRefresh.s",
       "asm/nonmatchings/ov01/tu072/configCFFlag.s",
       "asm/nonmatchings/ov01/tu072/configCpUDisp.s",
       "asm/nonmatchings/ov01/tu072/configGattai.s",
@@ -4805,7 +4693,7 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu073/func_00AAAA50.s",
+      "asm/nonmatchings/ov01/tu073/configCancelPressed.s",
       "asm/nonmatchings/ov01/tu073/debugValUD.s",
       "asm/nonmatchings/ov01/tu073/debugValLR.s"
      ],
@@ -4930,7 +4818,7 @@
       "asm/nonmatchings/ov01/tu075/ov01TickCountGet.s",
       "asm/nonmatchings/ov01/tu075/MGsGPInit.s",
       "asm/nonmatchings/ov01/tu075/MGsGPTerm.s",
-      "asm/nonmatchings/ov01/tu075/func_00AAAEC8.s",
+      "asm/nonmatchings/ov01/tu075/MSeFireEntryClear.s",
       "asm/nonmatchings/ov01/tu075/MSeFire.s"
      ],
      "accepted_asm_files": [],
@@ -4991,9 +4879,9 @@
       "asm/nonmatchings/ov01/tu076/ov01RecordInit.s",
       "asm/nonmatchings/ov01/tu076/MMathCalcHermiteKeyPrm.s",
       "asm/nonmatchings/ov01/tu076/MMathCalcHermiteKey.s",
-      "asm/nonmatchings/ov01/tu076/func_00AAB0E0.s",
-      "asm/nonmatchings/ov01/tu076/func_00AAB368.s",
-      "asm/nonmatchings/ov01/tu076/func_00AAB5C8.s"
+      "asm/nonmatchings/ov01/tu076/MEfDrawFrameAxes.s",
+      "asm/nonmatchings/ov01/tu076/MEfDrawPointCross.s",
+      "asm/nonmatchings/ov01/tu076/MEfDrawPathEndMarker.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5008,9 +4896,9 @@
      "name": "tu077",
      "text": [
       "0x00aab888",
-      "0x00aadb58"
+      "0x00aadbe0"
      ],
-     "functions": 22,
+     "functions": 23,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5058,20 +4946,21 @@
       "asm/nonmatchings/ov01/tu077/MEfMake4Vertex2.s",
       "asm/nonmatchings/ov01/tu077/MEfCreateWait.s",
       "asm/nonmatchings/ov01/tu077/func_00AABDF0.s",
-      "asm/nonmatchings/ov01/tu077/func_00AABDF8.s",
-      "asm/nonmatchings/ov01/tu077/func_00AABE50.s",
+      "asm/nonmatchings/ov01/tu077/MEfMakeCornerMatrix.s",
+      "asm/nonmatchings/ov01/tu077/MEfWaitUpdate.s",
       "asm/nonmatchings/ov01/tu077/MEfWaitStep.s",
-      "asm/nonmatchings/ov01/tu077/func_00AABEF0.s",
+      "asm/nonmatchings/ov01/tu077/MEfCreateHermitePath.s",
       "asm/nonmatchings/ov01/tu077/MEfStartFromActor.s",
       "asm/nonmatchings/ov01/tu077/MEfSampleHermitePath.s",
       "asm/nonmatchings/ov01/tu077/MEfSetPhaseFlags.s",
-      "asm/nonmatchings/ov01/tu077/func_00AAC510.s",
+      "asm/nonmatchings/ov01/tu077/MEfDrawStepTrail.s",
       "asm/nonmatchings/ov01/tu077/MEfAdvanceStep.s",
-      "asm/nonmatchings/ov01/tu077/func_00AACDA0.s",
-      "asm/nonmatchings/ov01/tu077/func_00AACE60.s",
-      "asm/nonmatchings/ov01/tu077/func_00AAD030.s",
-      "asm/nonmatchings/ov01/tu077/func_00AAD2E8.s",
-      "asm/nonmatchings/ov01/tu077/func_00AAD350.s"
+      "asm/nonmatchings/ov01/tu077/MEfCreatePathStep.s",
+      "asm/nonmatchings/ov01/tu077/MEfStartPathFromActor.s",
+      "asm/nonmatchings/ov01/tu077/MEfSamplePathTrack.s",
+      "asm/nonmatchings/ov01/tu077/MEfSetPathPhaseFlags.s",
+      "asm/nonmatchings/ov01/tu077/MEfDrawPathStepTrail.s",
+      "asm/nonmatchings/ov01/tu077/MEfAdvanceStepShort.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5082,13 +4971,13 @@
     },
     {
      "ordinal": 78,
-     "id": "ov01/tu078_00aadb58",
+     "id": "ov01/tu078_00aadbe0",
      "name": "tu078",
      "text": [
-      "0x00aadb58",
-      "0x00aae0a8"
+      "0x00aadbe0",
+      "0x00aae748"
      ],
-     "functions": 3,
+     "functions": 5,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5128,9 +5017,11 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu078/MEfAdvanceStepShort.s",
       "asm/nonmatchings/ov01/tu078/MEfCreateSway.s",
-      "asm/nonmatchings/ov01/tu078/MEfUpdateSway.s"
+      "asm/nonmatchings/ov01/tu078/MEfUpdateSway.s",
+      "asm/nonmatchings/ov01/tu078/MEfDrawStencilA.s",
+      "asm/nonmatchings/ov01/tu078/MEfDrawSwayStrands.s",
+      "asm/nonmatchings/ov01/tu078/MEfAdvanceSway.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5141,13 +5032,13 @@
     },
     {
      "ordinal": 79,
-     "id": "ov01/tu079_00aae0a8",
+     "id": "ov01/tu079_00aae748",
      "name": "tu079",
      "text": [
-      "0x00aae0a8",
-      "0x00aaee00"
+      "0x00aae748",
+      "0x00aaeee8"
      ],
-     "functions": 7,
+     "functions": 5,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5187,13 +5078,11 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu079/MEfDrawStencilA.s",
-      "asm/nonmatchings/ov01/tu079/func_00AAE148.s",
-      "asm/nonmatchings/ov01/tu079/func_00AAE478.s",
-      "asm/nonmatchings/ov01/tu079/func_00AAE748.s",
-      "asm/nonmatchings/ov01/tu079/func_00AAE938.s",
+      "asm/nonmatchings/ov01/tu079/MEfCreateStencilB.s",
+      "asm/nonmatchings/ov01/tu079/MEfUpdateStencilB.s",
       "asm/nonmatchings/ov01/tu079/MEfDrawStencilB.s",
-      "asm/nonmatchings/ov01/tu079/func_00AAEAE8.s"
+      "asm/nonmatchings/ov01/tu079/MEfDrawTrailStrips.s",
+      "asm/nonmatchings/ov01/tu079/MEfAdvanceStencilB.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5204,13 +5093,13 @@
     },
     {
      "ordinal": 80,
-     "id": "ov01/tu080_00aaee00",
+     "id": "ov01/tu080_00aaeee8",
      "name": "tu080",
      "text": [
-      "0x00aaee00",
+      "0x00aaeee8",
       "0x00aaf718"
      ],
-     "functions": 7,
+     "functions": 6,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5250,12 +5139,11 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu080/func_00AAEE00.s",
-      "asm/nonmatchings/ov01/tu080/func_00AAEEE8.s",
-      "asm/nonmatchings/ov01/tu080/func_00AAEFC0.s",
-      "asm/nonmatchings/ov01/tu080/func_00AAF0F8.s",
+      "asm/nonmatchings/ov01/tu080/MEfCreateCounter.s",
+      "asm/nonmatchings/ov01/tu080/MEfBuildCounterCurve.s",
+      "asm/nonmatchings/ov01/tu080/MEfFillCounterKeys.s",
       "asm/nonmatchings/ov01/tu080/MEfSetCounterPhaseFlags.s",
-      "asm/nonmatchings/ov01/tu080/func_00AAF2D0.s",
+      "asm/nonmatchings/ov01/tu080/MEfDrawCounterStrips.s",
       "asm/nonmatchings/ov01/tu080/MEfAdvanceCounter.s"
      ],
      "accepted_asm_files": [],
@@ -5271,9 +5159,9 @@
      "name": "tu081",
      "text": [
       "0x00aaf718",
-      "0x00aafa50"
+      "0x00ab0088"
      ],
-     "functions": 3,
+     "functions": 7,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5315,7 +5203,11 @@
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu081/MEfCreatePathEffect25.s",
       "asm/nonmatchings/ov01/tu081/MEfBuildPathRecord.s",
-      "asm/nonmatchings/ov01/tu081/MEfFillHermiteSamples25.s"
+      "asm/nonmatchings/ov01/tu081/MEfFillHermiteSamples25.s",
+      "asm/nonmatchings/ov01/tu081/MEfAppendTexturedQuad25.s",
+      "asm/nonmatchings/ov01/tu081/MEfDrawSparkModels25.s",
+      "asm/nonmatchings/ov01/tu081/MEfDrawQuadPacket25.s",
+      "asm/nonmatchings/ov01/tu081/MEfTickLifetime28.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5326,13 +5218,13 @@
     },
     {
      "ordinal": 82,
-     "id": "ov01/tu082_00aafa50",
+     "id": "ov01/tu082_00ab0088",
      "name": "tu082",
      "text": [
-      "0x00aafa50",
-      "0x00ab1050"
+      "0x00ab0088",
+      "0x00ab0a38"
      ],
-     "functions": 15,
+     "functions": 7,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5372,21 +5264,13 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu082/func_00AAFA50.s",
-      "asm/nonmatchings/ov01/tu082/func_00AAFBF8.s",
-      "asm/nonmatchings/ov01/tu082/MEfDrawQuadPacket.s",
-      "asm/nonmatchings/ov01/tu082/MEfTickLifetime28.s",
       "asm/nonmatchings/ov01/tu082/MEfCreatePathEffect31.s",
       "asm/nonmatchings/ov01/tu082/MEfMakeRotatedPath.s",
       "asm/nonmatchings/ov01/tu082/MEfFillHermiteSamples31.s",
-      "asm/nonmatchings/ov01/tu082/func_00AB04D0.s",
-      "asm/nonmatchings/ov01/tu082/func_00AB0678.s",
-      "asm/nonmatchings/ov01/tu082/func_00AB0780.s",
-      "asm/nonmatchings/ov01/tu082/MEfTickLifetime34.s",
-      "asm/nonmatchings/ov01/tu082/MEfCreatePathEffect29.s",
-      "asm/nonmatchings/ov01/tu082/MEfStepTrailPoints.s",
-      "asm/nonmatchings/ov01/tu082/MEfFillHermiteSamples29.s",
-      "asm/nonmatchings/ov01/tu082/func_00AB0E70.s"
+      "asm/nonmatchings/ov01/tu082/MEfAppendTexturedQuad31.s",
+      "asm/nonmatchings/ov01/tu082/MEfDrawSparkModels31.s",
+      "asm/nonmatchings/ov01/tu082/MEfDrawQuadPacket31.s",
+      "asm/nonmatchings/ov01/tu082/MEfTickLifetime34.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5397,13 +5281,13 @@
     },
     {
      "ordinal": 83,
-     "id": "ov01/tu083_00ab1050",
+     "id": "ov01/tu083_00ab0a38",
      "name": "tu083",
      "text": [
-      "0x00ab1050",
-      "0x00ab1890"
+      "0x00ab0a38",
+      "0x00ab14e0"
      ],
-     "functions": 6,
+     "functions": 7,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5443,12 +5327,13 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu083/func_00AB1050.s",
+      "asm/nonmatchings/ov01/tu083/MEfCreatePathEffect29.s",
+      "asm/nonmatchings/ov01/tu083/MEfStepTrailPoints.s",
+      "asm/nonmatchings/ov01/tu083/MEfFillHermiteSamples29.s",
+      "asm/nonmatchings/ov01/tu083/MEfStepSmokeTrails.s",
+      "asm/nonmatchings/ov01/tu083/MEfDrawTrailModel.s",
       "asm/nonmatchings/ov01/tu083/MEfDrawRotatedQuads.s",
-      "asm/nonmatchings/ov01/tu083/MEfTickTrailSample.s",
-      "asm/nonmatchings/ov01/tu083/func_00AB14E0.s",
-      "asm/nonmatchings/ov01/tu083/func_00AB15B8.s",
-      "asm/nonmatchings/ov01/tu083/func_00AB1720.s"
+      "asm/nonmatchings/ov01/tu083/MEfTickTrailSample.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5459,13 +5344,13 @@
     },
     {
      "ordinal": 84,
-     "id": "ov01/tu084_00ab1890",
+     "id": "ov01/tu084_00ab14e0",
      "name": "tu084",
      "text": [
-      "0x00ab1890",
+      "0x00ab14e0",
       "0x00ab1ce0"
      ],
-     "functions": 3,
+     "functions": 6,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5505,6 +5390,9 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
+      "asm/nonmatchings/ov01/tu084/MEfCreateFlagWindowEffect30.s",
+      "asm/nonmatchings/ov01/tu084/MEfMakeFlagWindowPath.s",
+      "asm/nonmatchings/ov01/tu084/MEfFillFlagWindowSamples.s",
       "asm/nonmatchings/ov01/tu084/MEfSetStepFlags30.s",
       "asm/nonmatchings/ov01/tu084/MEfDrawFlagWindow.s",
       "asm/nonmatchings/ov01/tu084/MEfAdvanceFlagWindow.s"
@@ -5522,9 +5410,9 @@
      "name": "tu085",
      "text": [
       "0x00ab1ce0",
-      "0x00ab2040"
+      "0x00ab2750"
      ],
-     "functions": 4,
+     "functions": 6,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5567,7 +5455,9 @@
       "asm/nonmatchings/ov01/tu085/MEfCreateWaveEffect.s",
       "asm/nonmatchings/ov01/tu085/MEfBlendSineSamples.s",
       "asm/nonmatchings/ov01/tu085/MEfBuildSineSamples.s",
-      "asm/nonmatchings/ov01/tu085/MEfSetWaveMode.s"
+      "asm/nonmatchings/ov01/tu085/MEfSetWaveMode.s",
+      "asm/nonmatchings/ov01/tu085/MEfDrawWaveEffect.s",
+      "asm/nonmatchings/ov01/tu085/MEfAdvanceHistoryTrail.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5578,13 +5468,13 @@
     },
     {
      "ordinal": 86,
-     "id": "ov01/tu086_00ab2040",
+     "id": "ov01/tu086_00ab2750",
      "name": "tu086",
      "text": [
-      "0x00ab2040",
-      "0x00ab2940"
+      "0x00ab2750",
+      "0x00ab3210"
      ],
-     "functions": 3,
+     "functions": 4,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5624,68 +5514,10 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu086/MEfDrawWaveEffect.s",
-      "asm/nonmatchings/ov01/tu086/MEfAdvanceHistoryTrail.s",
-      "asm/nonmatchings/ov01/tu086/MEfCreateSpray.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 87,
-     "id": "ov01/tu087_00ab2940",
-     "name": "tu087",
-     "text": [
-      "0x00ab2940",
-      "0x00ab3210"
-     ],
-     "functions": 3,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#87"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu087.c",
-     "object": "build/src/ov01/tu087.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu087/MEfStepSprayPoints.s",
-      "asm/nonmatchings/ov01/tu087/MEfDrawSpray.s",
-      "asm/nonmatchings/ov01/tu087/MEfTickLifetime121.s"
+      "asm/nonmatchings/ov01/tu086/MEfCreateSpray.s",
+      "asm/nonmatchings/ov01/tu086/MEfStepSprayPoints.s",
+      "asm/nonmatchings/ov01/tu086/MEfDrawSpray.s",
+      "asm/nonmatchings/ov01/tu086/MEfTickLifetime121.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5700,9 +5532,9 @@
      "name": "tu088",
      "text": [
       "0x00ab3210",
-      "0x00ab3668"
+      "0x00ab3cc8"
      ],
-     "functions": 4,
+     "functions": 6,
      "category": "game",
      "in_scope": true,
      "toolchain_classification": {
@@ -5743,9 +5575,11 @@
      },
      "include_asm_files": [
       "asm/nonmatchings/ov01/tu088/MEfCreateActorPath.s",
-      "asm/nonmatchings/ov01/tu088/func_00AB3318.s",
+      "asm/nonmatchings/ov01/tu088/MEfBuildPathCurve.s",
       "asm/nonmatchings/ov01/tu088/MEfBuildPathKeyframes.s",
-      "asm/nonmatchings/ov01/tu088/MEfUpdatePathTrail.s"
+      "asm/nonmatchings/ov01/tu088/MEfUpdatePathTrail.s",
+      "asm/nonmatchings/ov01/tu088/MEfDrawPathTrail.s",
+      "asm/nonmatchings/ov01/tu088/MEfAdvancePathStep.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5756,11 +5590,11 @@
     },
     {
      "ordinal": 89,
-     "id": "ov01/tu089_00ab3668",
+     "id": "ov01/tu089_00ab3cc8",
      "name": "tu089",
      "text": [
-      "0x00ab3668",
-      "0x00ab40d8"
+      "0x00ab3cc8",
+      "0x00ab44fc"
      ],
      "functions": 6,
      "category": "game",
@@ -5802,70 +5636,12 @@
       "g_basis": "no gp-relative instruction in the whole overlay"
      },
      "include_asm_files": [
-      "asm/nonmatchings/ov01/tu089/MEfDrawPathTrail.s",
-      "asm/nonmatchings/ov01/tu089/MEfAdvancePathStep.s",
-      "asm/nonmatchings/ov01/tu089/func_00AB3CC8.s",
-      "asm/nonmatchings/ov01/tu089/func_00AB3DC0.s",
+      "asm/nonmatchings/ov01/tu089/MEfCreateActorHistory.s",
+      "asm/nonmatchings/ov01/tu089/MEfBuildHistoryCurve.s",
       "asm/nonmatchings/ov01/tu089/MEfBuildPathSamples.s",
-      "asm/nonmatchings/ov01/tu089/MEfUpdatePathStatus.s"
-     ],
-     "accepted_asm_files": [],
-     "c_functions": [],
-     "accepted_asm_functions": [],
-     "local_renames": {},
-     "adaptations": [],
-     "header_divergence": []
-    },
-    {
-     "ordinal": 90,
-     "id": "ov01/tu090_00ab40d8",
-     "name": "tu090",
-     "text": [
-      "0x00ab40d8",
-      "0x00ab44fc"
-     ],
-     "functions": 2,
-     "category": "game",
-     "in_scope": true,
-     "toolchain_classification": {
-      "compiler": "2.96",
-      "assembler": "legacy-buggy",
-      "g_flag": "-G0",
-      "id": "ov01#90"
-     },
-     "accepted_records": [],
-     "accepted_functions": [],
-     "kind": "c",
-     "source": "src/ov01/tu090.c",
-     "object": "build/src/ov01/tu090.o",
-     "compiler": {
-      "id": "ee-gcc2_96-realconv-lp7",
-      "version": "2.96-ee-001003-1",
-      "dir": "tool:ee-gcc2.96-realconv-lp7",
-      "sha256": {
-       "cc1": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17"
-      },
-      "source": "pinned release"
-     },
-     "flags": [
-      "-O2",
-      "-G0"
-     ],
-     "assembler": {
-      "id": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-      "path": "tool:ee-as-la29-vsqrt-swap",
-      "sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-      "argv": "-EL -m5900 -mabi=eabi <G> -g -I .",
-      "basis": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md"
-     },
-     "contract_basis": {
-      "decision": "X1's last patched cc1 and corrected assembler with -g; see reports/x2-compiler-calibration.md",
-      "g_flag_classification": "-G0",
-      "g_basis": "no gp-relative instruction in the whole overlay"
-     },
-     "include_asm_files": [
-      "asm/nonmatchings/ov01/tu090/func_00AB40D8.s",
-      "asm/nonmatchings/ov01/tu090/MEfAdvanceHistoryStep.s"
+      "asm/nonmatchings/ov01/tu089/MEfUpdatePathStatus.s",
+      "asm/nonmatchings/ov01/tu089/MEfDrawHistoryRings.s",
+      "asm/nonmatchings/ov01/tu089/MEfAdvanceHistoryStep.s"
      ],
      "accepted_asm_files": [],
      "c_functions": [],
@@ -5930,7 +5706,7 @@
       "asm/nonmatchings/ov02/tu000/func_00A80040.s",
       "asm/nonmatchings/ov02/tu000/logoMcCheck.s",
       "asm/nonmatchings/ov02/tu000/LogoFirst.s",
-      "asm/nonmatchings/ov02/tu000/func_00A80410.s",
+      "asm/nonmatchings/ov02/tu000/logoDrawCreditBand.s",
       "asm/nonmatchings/ov02/tu000/logoShowCredits.s",
       "asm/nonmatchings/ov02/tu000/func_00A80790.s"
      ],
@@ -5992,9 +5768,9 @@
       "asm/nonmatchings/ov02/tu001/func_00A80798.s",
       "asm/nonmatchings/ov02/tu001/copyframe.s",
       "asm/nonmatchings/ov02/tu001/func_00A808C8.s",
-      "asm/nonmatchings/ov02/tu001/func_00A808D0.s",
-      "asm/nonmatchings/ov02/tu001/func_00A80930.s",
-      "asm/nonmatchings/ov02/tu001/func_00A80A28.s",
+      "asm/nonmatchings/ov02/tu001/titleStartBgm.s",
+      "asm/nonmatchings/ov02/tu001/titleTableReadNotify.s",
+      "asm/nonmatchings/ov02/tu001/titleRunScene.s",
       "asm/nonmatchings/ov02/tu001/titleDrawFrame.s",
       "asm/nonmatchings/ov02/tu001/titleFadeTransition.s",
       "asm/nonmatchings/ov02/tu001/Title.s",

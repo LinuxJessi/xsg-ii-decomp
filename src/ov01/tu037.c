@@ -135,7 +135,23 @@ void ov01SceneLoop(void)
     xglRenderClearSkipOff();
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu037", ov01SoftResetPressed);
+extern PadRecord PadData[];
+
+/* 1 when START is pressed on pad 0 while L1, L2, R1, R2 and SELECT are held (the soft reset). */
+int ov01SoftResetPressed(void)
+{
+    PadRecord *pad = &PadData[0];
+    /* 64-bit (codegen): keeps the mask in one register for the and and the compare; an int gives andi. */
+    u64 held;
+
+    if (pad->pressed & PAD_START) {
+        held = pad->directionHeld;
+        if ((held & PAD_SOFT_RESET_HELD) == PAD_SOFT_RESET_HELD) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 /* Wait hook polled by the frame loop; it never reports a wait. */
 int func_00A9A138(void) {

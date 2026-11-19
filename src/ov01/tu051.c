@@ -78,7 +78,7 @@ typedef struct ColourPair {
 extern ColourPair D_00ABACC8;
 
 extern void func_00AA84D0(GrPacket *packet);
-extern void func_00AA7750(GrPacket *packet, int x, int y, short value, int);
+extern void menuKeyDraw(GrPacket *packet, int x, int y, short value, int);
 extern void menuStatSpriteRGB(GrPacket *packet, int x, int y, int width, int height,
                               int srcX, int srcY, const void *colour);
 
@@ -127,7 +127,7 @@ void menuUnitListDraw(MenuCursor *cursor)
             continue;
         }
         if (calcBoostOk(unit, 1) != 0) {
-            func_00AA7750(&packet, x + menuUnitSlotOffsets[i].x, y + menuUnitSlotOffsets[i].y,
+            menuKeyDraw(&packet, x + menuUnitSlotOffsets[i].x, y + menuUnitSlotOffsets[i].y,
                           table[i]->stats->key, 1);
         }
     }
@@ -160,7 +160,7 @@ void menuCursorTargetDraw(MenuCursor *cursor) {
     grPutSprOpen(&packet);
     menuStatSpriteRGB(&packet, x - 42, y + 26, 110, 24, 146, 14, &palette[0].bytes[index * 4]);
     grPutSprClose();
-    func_00AA7750(&packet, x,
+    menuKeyDraw(&packet, x,
                   ((void *) actor != tgtUnitGet()) ? y : y - 4,
                   actor->stats->key, 1);
     grPacketSend(&packet);

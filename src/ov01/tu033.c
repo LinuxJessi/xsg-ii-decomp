@@ -13,6 +13,8 @@
  */
 #include "common.h"
 #include "main/sef.h"
+#include "main/xenoActor.h"
+#include "ov01/tu002.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
 #include "main/tu051.h"
@@ -20,22 +22,31 @@
 #include "ov01/tu010.h"
 #include "ov01/tu011.h"
 #include "ov01/tu012.h"
+#include "ov01/tu016.h"
 #include "ov01/tu019.h"
 #include "ov01/tu017.h"
+#include "ov01/tu018.h"
 #include "ov01/tu020.h"
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
 #include "ov01/tu042.h"
 #include "ov01/tu043.h"
+#include "ov01/tu050.h"
 #include "ov01/tu036.h"
 #include "ov01/tu038.h"
 #include "ov01/tu054.h"
+#include "ov01/tu059.h"
+#include "ov01/tu060.h"
+#include "ov01/tu061.h"
+#include "ov01/tu062.h"
 #include "ov01/tu066.h"
+#include "ov01/tu067.h"
 #include "ov01/tu068.h"
 #include "ov01/tu070.h"
+#include "ov01/tu071.h"
 
 extern char cmdList[];   /* cmdList: 0x20-byte entries, unit then command body */
-extern char cmdFifo[];   /* cmdFifo: fifo control block */
+extern struct FifoRing cmdFifo;   /* the fifo over the cmdList entries */
 
 /* Command list entries (0x20 bytes each); the fifo ring runs over them. */
 #define CMD_LIST_COUNT 0x20
@@ -45,12 +56,15 @@ extern char cmdFifo[];   /* cmdFifo: fifo control block */
 
 /* The four-word payload of eventQueueAdd. */
 typedef struct EventQueueArgs {
-    int actions;                        /* +0x00: kind 3: the kind-4 records of the attack */
+    union {
+        int actions;                    /* kind 3: the kind-4 records of the attack */
+        Ov01Object *unit;               /* the commanding unit (cmdExecute) */
+    };                                  /* +0x00 */
     union {
         int tecIndex;                   /* the tec whose EP cost cmdStockRun charges */
         int hits;                       /* kind 3: the kind-5 records (targets) of the attack */
     };                                  /* +0x04 */
-    unsigned char unmodeled_08[0x4];
+    int pairIndex;                      /* +0x08: the command's pair record (CmdListBody.pairIndex, pairLinkGet) */
     Ov01Object *target;                 /* +0x0C: the partner / stocked unit of events 0x10 and 0x12 */
 } EventQueueArgs;
 
@@ -72,12 +86,12 @@ typedef struct EventQueueEntry {
 /* Record kinds by their handler in eventQueueHandlers (the kinds the code here queues). */
 enum {
     EVENT_KIND_WAIT_UNIT_QUEUE = 2,     /* eventWaitUnitQueue */
-    EVENT_KIND_ATTACK = 3,              /* func_00A938A0: shows the attack (unitsMarkUninvolved) */
+    EVENT_KIND_ATTACK = 3,              /* eventAttackRun: shows the attack (unitsMarkUninvolved) */
     EVENT_KIND_LOADS_IDLE = 7,          /* ov01LoadsIdle */
     EVENT_KIND_STREAM_OPEN = 14,        /* ov01StreamOpen */
     EVENT_KIND_STREAM_BIND = 15,        /* ov01StreamBind */
-    EVENT_KIND_PAIR_BEGIN = 16,         /* func_00A96AA8: unbinds the pair and hides its monster slots */
-    EVENT_KIND_PAIR_END = 17,           /* func_00A96E38: shows and releases the monster slots again */
+    EVENT_KIND_PAIR_BEGIN = 16,         /* eventPairBegin: unbinds the pair and hides its monster slots */
+    EVENT_KIND_PAIR_END = 17,           /* eventPairEnd: shows and releases the monster slots again */
     EVENT_KIND_STOCK_BEGIN = 18,        /* func_00A97110 */
     EVENT_KIND_STOCK_BOOST_CLEAR = 19   /* eventActStockBoostClear */
 };
@@ -94,12 +108,21 @@ extern int eventQueueCursor;
 extern int eventRetryCount;
 extern int eventStepStarted;
 
-/* cmdSystemInit: clears the command list and fifo, the event table and its counters. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdSystemInit);
+void *memset(void *destination, int value, unsigned int count);
+
+/* cmdSystemInit: clears the command list and fifo, the event table and its counters. The four counters are
+ * cleared in one chained assignment: as four statements gcc loads their addresses in the other order. */
+void cmdSystemInit(void)
+{
+    memset(cmdList, 0, CMD_LIST_COUNT * CMD_LIST_ENTRY_SIZE);
+    ov01FifoInit(&cmdFifo, CMD_LIST_COUNT);
+    memset(eventQueueTable, 0, sizeof(eventQueueTable));
+    eventStepStarted = eventRetryCount = eventQueueCursor = eventQueueCount = 0;
+}
 
 /* cmdListPtrGet: the command fifo and the command list, through two out pointers. */
 void cmdListPtrGet(void **fifo_out, void **list_out) {
-    *fifo_out = cmdFifo;
+    *fifo_out = &cmdFifo;
     *list_out = cmdList;
 }
 
@@ -130,8 +153,34 @@ void cmdListSet(void *unit, CmdListBody *command)
     ov01FifoPush(fifo);
 }
 
-/* cmdListRunHead: runs the head command of the list unless its unit is held; pops it on success. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdListRunHead);
+int cmdExecute(Ov01Object *unit, CmdListBody *command);
+
+/* cmdListRunHead: clears the event queue counters, then runs the head command of the list unless its unit is
+ * down and pops it; returns 0 when the list is empty, else 1. */
+int cmdListRunHead(void)
+{
+    void *fifo;
+    void *list;
+    CmdListEntry *entry;
+    Ov01Object *unit;
+    CmdListBody *body;
+
+    /* One chained assignment: four separate stores give the same stores with the lui order reversed. */
+    eventStepStarted = eventRetryCount = eventQueueCursor = eventQueueCount = 0;
+    cmdListPtrGet(&fifo, &list);
+    if (ov01FifoGetUsed(fifo) == 0) {
+        return 0;
+    }
+    /* cmdListSet's integer form; indexing the list gives list + offset instead of offset + list. */
+    entry = (CmdListEntry *)((char *)(ov01FifoGetHead(fifo) * sizeof(CmdListEntry)) + (int)list);
+    unit = (Ov01Object *)entry->unit;
+    body = &entry->body;
+    if (!(unit->flags & UNIT_FLAG_DOWN)) {
+        cmdExecute(unit, body);
+    }
+    ov01FifoPop(fifo);
+    return 1;
+}
 
 /* cmdExecute: runs one command body, a switch on its kind, queueing events on the way. */
 INCLUDE_ASM("asm/nonmatchings/ov01/tu033", cmdExecute);
@@ -229,7 +278,66 @@ int cmdFindFirstTarget(int target, struct Tu033CallSource *source)
     return tgtFindFirst(&record, source->from_0c);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A92C18);
+int func_00A92D98(struct AttackCommand *owner, struct Ov01Object *value);
+void func_00A92DF0(struct AttackCommand *owner, struct Ov01Object *value);
+
+/* Boost progress a technique command of gateFlag TEC_GATE_NONE, 6, 7 or 8 gives its unit: CMD_BOOST_PROGRESS, on
+ * act step CMD_BOOST_ACT_STEP CMD_BOOST_PROGRESS_STEP, or CMD_BOOST_PROGRESS_ROLLED when the CMD_BOOST_ROLL_PERCENT
+ * roll fails. */
+#define CMD_BOOST_PROGRESS 10
+#define CMD_BOOST_ACT_STEP 1
+#define CMD_BOOST_PROGRESS_STEP 50
+#define CMD_BOOST_PROGRESS_ROLLED 30
+#define CMD_BOOST_ROLL_PERCENT 10
+/* The current value a large unit (UNIT_KEY_LARGE_*) gets back for a technique command of gateFlag 6..8. */
+#define CMD_LARGE_CURRENT_BONUS 25
+
+/* Runs a command of unit against its target (commandTarget): an item through func_00A92DF0, anything else through
+ * func_00A92D98. Then the boost progress of a technique, the EP cost, the level record's cost for TEC_GATE_SHOW_CHILD,
+ * and the large unit's current bonus. */
+void func_00A92C18(Ov01Object *unit, CmdListBody *command)
+{
+    struct AttackCommand owner;
+    TecRecord *tec;
+    int boost;
+    int target;
+
+    target = unit->commandTarget;
+    owner.attacker = unit;
+    owner.actionIdx = command->code;
+    owner.id = command->pairIndex;
+    if (command->command == CMD_KIND_ITEM) {
+        owner.kind = command->command;
+        func_00A92DF0(&owner, (Ov01Object *)target);
+    } else {
+        owner.kind = command->command;
+        func_00A92D98(&owner, (Ov01Object *)target);
+    }
+    tec = tecRecordGet(owner.actionIdx);
+    if (command->command == CMD_KIND_TECHNIQUE) {
+        if (tec->gateFlag == TEC_GATE_NONE || tec->gateFlag == 6 || tec->gateFlag == 7 || tec->gateFlag == 8) {
+            boost = CMD_BOOST_PROGRESS;
+            if (actStepCounterValue() == CMD_BOOST_ACT_STEP) {
+                boost = CMD_BOOST_PROGRESS_STEP;
+                if (ov01RollPercent(CMD_BOOST_ROLL_PERCENT) == 0) {
+                    boost = CMD_BOOST_PROGRESS_ROLLED;
+                }
+            }
+            boostAddProgress(unit, boost);
+        }
+    }
+    calcEpAdjust(unit, -calcEpCost(unit, owner.actionIdx));
+    if (tec->gateFlag == TEC_GATE_SHOW_CHILD) {
+        unitCurrentAdd(unit, -calcLevelRecordGet(owner.id)->requiredLevel);
+    }
+    if (unit->stats->key >= UNIT_KEY_LARGE_FIRST && unit->stats->key < UNIT_KEY_LARGE_FIRST + UNIT_KEY_LARGE_COUNT) {
+        if (command->command == CMD_KIND_TECHNIQUE) {
+            if (tec->gateFlag >= 6 && tec->gateFlag <= 8) {
+                unitCurrentAdd(unit, CMD_LARGE_CURRENT_BONUS);
+            }
+        }
+    }
+}
 
 
 int attackQueue(struct AttackCommand *command, struct Ov01Object *target, TecRecord *tec);
@@ -252,7 +360,30 @@ void func_00A92DF0(struct AttackCommand *owner, struct Ov01Object *value) {
     attackQueue(owner, value, tecRecordGet(owner->actionIdx));
 }
 
-void *memset(void *destination, int value, unsigned int count);
+/* HitRecord.hitMode: the hit kind in the low byte, the flags byte above it. */
+#define HIT_MODE_KIND_MASK 0xFF
+#define HIT_MODE_FLAGS_SHIFT 8
+#define HIT_MODE_FLAGS_MASK 0xFF
+/* The hit kinds, as calcHpDmg applies them: no hit (no damage, nothing inflicted), HP and EP loss and gain, two
+ * kinds that change neither (calcHitInflict skips HIT_KIND_NO_INFLICT), HP and EP taken over by the attacker
+ * (calcAttackDamage: a share of the target's maximum up to its current value, or its maximum but 1), and the kind
+ * attackQueue gives the hit of a technique without a hit kind. */
+#define HIT_KIND_NONE 0
+#define HIT_KIND_PLAIN 1
+#define HIT_KIND_HP_GAIN 2
+#define HIT_KIND_EP_LOSS 3
+#define HIT_KIND_EP_GAIN 4
+#define HIT_KIND_STATUS 5
+#define HIT_KIND_NO_INFLICT 6
+#define HIT_KIND_HP_DRAIN_SHARE 7
+#define HIT_KIND_HP_DRAIN_MAX 8
+#define HIT_KIND_EP_DRAIN_SHARE 9
+#define HIT_KIND_EP_DRAIN_MAX 10
+#define HIT_KIND_TEC_NONE 0xB
+/* The flags byte of HitRecord.hitMode (bits 8 to 15): bit 8 taken, bit 9 blocked. */
+#define HIT_FLAG_TAKEN 0x1
+#define HIT_FLAG_BLOCKED 0x2
+
 struct Ov01Object *tgtFindNext(void);
 signed char unitRecordStateGet(struct Ov01Object *unit, int index);
 int actionTransformSlotGet(int id);
@@ -372,28 +503,30 @@ Ov01Object *unitPairPartnerFind(Ov01Object *unit, int value)
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93128);
+/* For the command kinds CMD_KIND_TECHNIQUE, CMD_KIND_LOOKUP and CMD_KIND_ITEM: whether the sef entry of the
+ * attacker's actor has flag 1; 0 otherwise. */
+int func_00A93128(Ov01Object *attacker, int kind)
+{
+    if (kind != CMD_KIND_TECHNIQUE && kind != CMD_KIND_LOOKUP && kind != CMD_KIND_ITEM) {
+        return 0;
+    }
+    return sefEntryHasFlag1((int)attacker->unit) != 0;
+}
 
-/* A unit command request (func_00A96510, func_00A94260): the unit, the command and its words. */
-typedef struct UnitCmdRequest {
-    Ov01Object *unit;
-    int command;
-    int words[3];
-} UnitCmdRequest;
-
-/* Queues the unit command of request (the mode, effect and activity commands; others are ignored). The mode
- * dispatch takes words 1 and 2 of the request and the face target. When the running command and the new one
- * are both mode or effect commands, the running one is dropped first. */
-void unitCmdRequestQueue(Ov01Object **faceTarget, UnitCmdRequest *request)
+/* Queues the reaction command of hit for its target (the mode, effect and activity commands; others are
+ * ignored). The mode dispatch takes the hit's words at +0x0C and +0x10 as its code and wait, and the face
+ * target. When the running command and the new one are both mode or effect commands, the running one is dropped
+ * first. */
+void unitCmdRequestQueue(Ov01Object **faceTarget, struct HitRecord *hit)
 {
     Ov01Command command;
     Ov01Command *current;
 
-    switch (request->command) {
+    switch (hit->reaction) {
     case UNIT_CMD_MODE_DISPATCH:
         command.command = UNIT_CMD_MODE_DISPATCH;
-        command.code = request->words[1];
-        command.arg.wait = request->words[2];
+        command.code = hit->followResult;
+        command.arg.wait = hit->backAttack;
         if (faceTarget != 0) {
             command.faceTarget = *faceTarget;
         } else {
@@ -418,16 +551,16 @@ void unitCmdRequestQueue(Ov01Object **faceTarget, UnitCmdRequest *request)
     default:
         return;
     }
-    current = dataLookupCurrent(&request->unit->commandQueue);
+    current = dataLookupCurrent(&hit->target->commandQueue);
     if (current != 0
         && (current->command == UNIT_CMD_MODE_DISPATCH || current->command == UNIT_CMD_MODE_START
             || current->command == UNIT_CMD_HOVER_EFFECT || current->command == UNIT_CMD_MOVE_RATIO)) {
-        if (request->command == UNIT_CMD_MODE_DISPATCH || request->command == UNIT_CMD_MODE_START
-            || request->command == UNIT_CMD_HOVER_EFFECT) {
-            dataLookupNext(&request->unit->commandQueue);
+        if (hit->reaction == UNIT_CMD_MODE_DISPATCH || hit->reaction == UNIT_CMD_MODE_START
+            || hit->reaction == UNIT_CMD_HOVER_EFFECT) {
+            dataLookupNext(&hit->target->commandQueue);
         }
     }
-    unitQueueAppend(request->unit, &command);
+    unitQueueAppend(hit->target, &command);
 }
 
 int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec);
@@ -441,18 +574,9 @@ int func_00A93288(struct AttackCommand *owner) {
     return unitEffectKeyFree(owner->attacker, status, entry->extent) != 0;
 }
 
-struct Tu033Request {
-    Ov01Object *object;
-    unsigned char unmodeled_04[4];
-    int second;
-    unsigned char unmodeled_0c[0xC];
-    int flags;
-};
-
-
-/* func_00A932E0: forwards a request's object, second word and flags to func_00AA4DB8 (fourth argument 0). */
-void func_00A932E0(int unused_arg0, struct Tu033Request *request) {
-    func_00AA4DB8(request->object, request->second, request->flags, 0);
+/* func_00A932E0: forwards a hit's target, damage and hit mode to menuPopNumCreate (fourth argument 0). */
+void func_00A932E0(struct AttackCommand *command, struct HitRecord *hit) {
+    menuPopNumCreate(hit->target, hit->damage, hit->hitMode.word, 0);
 }
 
 /* eventQueueNext: the record at the read cursor, or 0 when the queue is drained. */
@@ -639,7 +763,66 @@ int func_00A93708(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", eventUnitCommand);
+/* unitScriptEventSend kinds of eventUnitCommand: a technique of gateFlag TEC_GATE_NONE or 6..8 (the flagged kind
+ * for a technique with TEC_FLAG_SCRIPT_FLAGGED), and the unit commands it reports. */
+#define TECHNIQUE_SCRIPT_EVENT 1
+#define TECHNIQUE_FLAGGED_SCRIPT_EVENT 2
+#define MOVE_CHA_SCRIPT_EVENT 3
+#define PHASE_0E_WAIT_SCRIPT_EVENT 11
+#define POSE_ARRIVE_WAIT_SCRIPT_EVENT 13
+/* TecRecord.flags bit 0x20 (also tested with calcStatGet(unit, 4, 0x2000)). */
+#define TEC_FLAG_SCRIPT_FLAGGED 0x20
+
+/*
+ * Kind-1 event handler: appends the queued command to the unit's command queue, keeps the unit and command kind in
+ * BattleState for the kinds CMD_KIND_TECHNIQUE..CMD_KIND_ITEM and CMD_KIND_SNAPSHOT, and reports a technique of
+ * gateFlag TEC_GATE_NONE or 6..8 and the unit commands UNIT_CMD_MOVE_CHA, UNIT_CMD_PHASE_0E_WAIT and
+ * UNIT_CMD_POSE_ARRIVE_WAIT to the unit's script with the index of the command's target. Returns 1.
+ */
+int eventUnitCommand(EventQueueEntry *entry)
+{
+    UnitScriptEvent event;
+    Ov01Object *unit;
+    Ov01Object *target;
+    CmdListBody *command;
+    TecRecord *tec;
+    int kind;
+
+    command = &entry->data.kind1.args;
+    unit = entry->data.kind1.object;
+    unitQueueAppend(unit, (Ov01Command *)command);
+    if (command->command > CMD_KIND_NONE
+        && (command->command <= CMD_KIND_ITEM || command->command == CMD_KIND_SNAPSHOT)) {
+        battleStateGet()->object = unit;
+        battleStateGet()->commandKind = command->command;
+    }
+    event.unit = unit;
+    target = (Ov01Object *)unit->commandTarget;
+    switch (command->command) {
+    case CMD_KIND_TECHNIQUE:
+        tec = tecRecordGet(command->code);
+        if (tec->gateFlag == TEC_GATE_NONE || tec->gateFlag == 6 || tec->gateFlag == 7 || tec->gateFlag == 8) {
+            kind = (tec->flags & TEC_FLAG_SCRIPT_FLAGGED) ? TECHNIQUE_FLAGGED_SCRIPT_EVENT : TECHNIQUE_SCRIPT_EVENT;
+            event.words[0] = unitTblIndexOf(target);
+            event.words[1] = command->code;
+            unitScriptEventSend(kind, &event);
+        }
+        break;
+    case UNIT_CMD_MOVE_CHA:
+        event.words[0] = unitTblIndexOf(target);
+        unitScriptEventSend(MOVE_CHA_SCRIPT_EVENT, &event);
+        break;
+    case UNIT_CMD_PHASE_0E_WAIT:
+        event.words[0] = unitTblIndexOf(target);
+        unitScriptEventSend(PHASE_0E_WAIT_SCRIPT_EVENT, &event);
+        break;
+    case UNIT_CMD_POSE_ARRIVE_WAIT:
+        event.words[0] = unitTblIndexOf(target);
+        unitScriptEventSend(POSE_ARRIVE_WAIT_SCRIPT_EVENT, &event);
+        break;
+    }
+    return 1;
+}
 
 
 /* Event record of kind 2: the object whose command queue the event waits on (+4). */
@@ -658,9 +841,171 @@ void eventWaitUnitQueue(struct EventWaitRecord *record) {
     unitQueueIsEmpty(record->object);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A938A0);
+/* The script message of a hit (unitScriptPairEventSend, words[1]): the hit's flags byte, and this bit for a hit of kind
+ * HIT_KIND_NONE. */
+#define SCRIPT_HIT_NONE 0x40
+/* The child of the attacker that a TEC_GATE_SHOW_CHILD technique shows for the attack (unitSlotResume) and hides
+ * again at the end (unitSlotPause). */
+#define TEC_GATE_CHILD 2
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", unitsMarkUninvolved);
+extern int attackStep;
+/* The action and hit counts of the last attack event that finished. */
+extern int attackLastActions;
+extern int attackLastHits;
+void attackEffectsStart(EventQueueEntry *event);
+void func_00A95810(struct AttackCommand *command);
+int attackHitApply(struct AttackCommand *command, struct HitRecord *hit);
+void unitsMarkUninvolved(int actions, int hits);
+void func_00A93CF0(void);
+void unitSlotResume(Ov01Object *object, int index);
+void unitSlotPause(Ov01Object *object, int index);
+int attackHitsShow(EventQueueEntry *entry, struct AttackCommand *command);
+int attackSpecialResolve(EventQueueEntry *entry, struct AttackCommand *command);
+int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command);
+
+/*
+ * The EVENT_KIND_ATTACK handler (eventQueueHandlers). The first call (D_00AC3AFC clear; attackQueue sets it for a
+ * transform) starts the effects, the units' stats and the action stream and marks the uninvolved units, and returns
+ * 0. The later calls run each action: actions with hitFlags bit 0 through attackSpecialResolve once and
+ * attackSpecialStep until done, the others show their hits (attackHitsShow) and free their effect key. Once all are
+ * done the hit targets get their flags cleared and their script message, and 1 is returned.
+ */
+int eventAttackRun(EventQueueEntry *entry)
+{
+    UnitScriptPairEvent message;
+    struct AttackCommand *command;
+    struct HitRecord *hit;
+    int actions;
+    int hits;
+    int done;
+    int i;
+    int mode;
+    int flag;
+
+    done = 0;
+    actions = entry->data.args.actions;
+    hits = entry->data.args.hits;
+    if (D_00AC3AFC == 0) {
+        attackEffectsStart(entry);
+        for (i = 0; i < actions; i++) {
+            func_00A95608(eventQueueFindKind4(i)->data.attack.attacker);
+        }
+        command = &eventQueueFindKind4(0)->data.attack;
+        unitPlayActionSound(command->attacker, command->actionIdx);
+        unitsMarkUninvolved(actions, hits);
+        if (tecRecordGet(command->actionIdx)->gateFlag == TEC_GATE_SHOW_CHILD) {
+            unitSlotResume(command->attacker, TEC_GATE_CHILD);
+        }
+        D_00AC3AFC = 1;
+        return 0;
+    }
+    for (i = 0; i < actions; i++) {
+        command = &eventQueueFindKind4(i)->data.attack;
+        func_00A95810(command);
+        if (tecRecordGet(command->actionIdx)->hitFlags & 1) {
+            if (eventStepStarted == 0) {
+                if (attackSpecialResolve(entry, command) != 0) {
+                    eventStepStarted = 1;
+                    attackStep = 0;
+                }
+            } else {
+                done += attackSpecialStep(entry, command);
+            }
+        } else {
+            attackHitsShow(entry, command);
+            done += func_00A93288(command);
+        }
+    }
+    if (done < actions) {
+        return 0;
+    }
+    for (i = 0; i < actions; i++) {
+        command = &eventQueueFindKind4(i)->data.attack;
+        unitSlotsClear(command->attacker, command->actionIdx);
+    }
+    command = &eventQueueFindKind4(0)->data.attack;
+    for (i = 0; i < hits; i++) {
+        hit = &eventQueueFindKind5(i)->data.kind5;
+        func_00A86F20(hit->target);
+        if (hit->target->flags & UNIT_FLAG_SCRIPT_EVENTS) {
+            message.unit = hit->target;
+            command = &eventQueueFindKind4(0)->data.attack;
+            message.other = command->attacker;
+            message.words[0] = command->actionIdx;
+            mode = hit->hitMode.word;
+            flag = (mode & HIT_MODE_KIND_MASK) != HIT_KIND_NONE ? 0 : SCRIPT_HIT_NONE;
+            message.words[1] = ((mode >> HIT_MODE_FLAGS_SHIFT) & HIT_MODE_FLAGS_MASK) | flag;
+            unitScriptPairEventSend(UNIT_SCRIPT_KIND_PAIR, &message);
+        }
+        if (tecRecordGet(command->actionIdx)->gateFlag == TEC_GATE_SHOW_CHILD) {
+            unitSlotPause(command->attacker, TEC_GATE_CHILD);
+        }
+        attackHitApply(command, hit);
+    }
+    attackLastActions = actions;
+    attackLastHits = hits;
+    func_00A93CF0();
+    return 1;
+}
+
+/*
+ * Holder of the table pointer unitTblGet returns. Codegen: a plain `Ov01Object **` local whose address is passed
+ * gets a stack slot of alias set 0, so the unit and actor flag stores in the unit loops kill its load for gcse load
+ * PRE (one more reload per loop than the original); the slot of a struct member keeps the original's register.
+ */
+struct UnitTableRef {
+    Ov01Object **units;
+};
+
+/* XenoActor.drawFlags bit unitsMarkUninvolved sets on the actors that take no part in the queued action and clears
+ * on the others (func_00A93CF0 clears it on all). */
+#define ACTOR_DRAW_UNINVOLVED 0x4000000
+
+/* Unit keys that always count as involved. */
+#define UNIT_KEY_ALWAYS_INVOLVED_A 0x7D
+#define UNIT_KEY_ALWAYS_INVOLVED_B 0x1F
+#define UNIT_KEY_ALWAYS_INVOLVED_C 0x7C
+
+/* Marks every unit that is neither the attacker of one of the last `actions` kind-4 records nor the target of one
+ * of the last `hits` kind-5 records; units with keys 0x7D, 0x1F and 0x7C always count as involved. */
+void unitsMarkUninvolved(int actions, int hits)
+{
+    struct UnitTableRef table;
+    int count;
+    int i;
+    int j;
+    int involved;
+
+    count = unitTblGet(UNIT_SIDE_ALL, &table.units);
+    for (i = 0; i < count; i++) {
+        if (table.units[i] == 0) {
+            continue;
+        }
+        involved = 0;
+        for (j = 0; j < actions; j++) {
+            if (eventQueueFindKind4(j)->data.attack.attacker == table.units[i]) {
+                involved = 1;
+                break;
+            }
+        }
+        for (j = 0; j < hits; j++) {
+            if (eventQueueFindKind5(j)->data.kind5.target == table.units[i]) {
+                involved = 1;
+                break;
+            }
+        }
+        if (table.units[i]->stats->key == UNIT_KEY_ALWAYS_INVOLVED_A
+            || table.units[i]->stats->key == UNIT_KEY_ALWAYS_INVOLVED_B
+            || table.units[i]->stats->key == UNIT_KEY_ALWAYS_INVOLVED_C) {
+            involved = 1;
+        }
+        if (involved == 0) {
+            table.units[i]->unit->drawFlags |= ACTOR_DRAW_UNINVOLVED;
+        } else {
+            table.units[i]->unit->drawFlags &= ~ACTOR_DRAW_UNINVOLVED;
+        }
+    }
+}
 
 void func_00A93CF0(void) {
     Ov01Object **actors;
@@ -686,7 +1031,122 @@ void func_00A93CF0(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A93D50);
+int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit);
+/* Defined in tu023 (no header prototype yet: tu034 declares it with a void * argument). */
+void unitValueRefresh(Ov01Object *object);
+
+/* Row 3 status that brings back a unit the hit takes down with 1 HP (and is used up); the row 1 and row 2
+ * status that a HIT_KIND_PLAIN hit clears, with its chance in percent per row. */
+#define STAT3_ENDURE 0x400
+#define STAT_HIT_CLEARS 0x20
+#define HIT_CLEAR_CHANCE_ROW1 50
+#define HIT_CLEAR_CHANCE_ROW2 10
+/* The current value a TEC_GATE_CURRENT_DRAIN technique takes from the target. */
+#define TEC_CURRENT_DRAIN_AMOUNT 100
+/* What the hit of a technique with gateFlag TEC_GATE_NONE, 6, 7 or 8 gives: percent to the attacker (more for a
+ * taken hit) and boost progress to the target on ACT_STEP_ADD_BOOST. */
+#define HIT_PERCENT_TAKEN 20
+#define HIT_PERCENT_PLAIN 10
+#define HIT_BOOST_PROGRESS 10
+/* The actStepCounterValue values at which a technique hit takes the target's act stock and adds boost progress. */
+#define ACT_STEP_TAKE_STOCK 5
+#define ACT_STEP_ADD_BOOST 7
+/* menuStatPanelNew kind shown when a hit takes act stock. */
+#define STAT_PANEL_STOCK_LOST 5
+
+/*
+ * Applies one hit of an attack to its target and returns 1: the HP damage (calcHitApply for a lookup attack),
+ * the endure status, the wake rolls, the inflicted and cured statuses, the technique's drain, the attacker's percent
+ * and the target's stock and boost on the counter steps, the act stock roll, and UNIT_CMD_FINISH_REFRESH when the
+ * hit changes whether the target is low on HP.
+ */
+int attackHitApply(struct AttackCommand *command, struct HitRecord *hit)
+{
+    Ov01Command refresh;
+    int stockIndex;
+    TecRecord *tec;
+    int wasLow;
+    int isLow;
+    int result;
+    int removed;
+    int bit;
+    int i;
+
+    wasLow = partyUnitHpLow(hit->target);
+    if (command->kind == CMD_KIND_ITEM) {
+        result = calcHitApply(command->attacker, hit->target, command->id);
+    } else {
+        result = calcHpDmg(command->attacker, hit->target, hit->hitMode.word, hit->damage);
+    }
+    if (result == 0 && calcStatGet(hit->target, STAT_ROW_3, STAT3_ENDURE) != 0) {
+        calcHpAdjust(hit->target, 1);
+        result = 1;
+        calcStatReset(hit->target, STAT_ROW_3, STAT3_ENDURE);
+    }
+    if (hit->hitMode.kind == HIT_KIND_PLAIN) {
+        if (calcStatGet(hit->target, STAT_ROW_1, STAT_HIT_CLEARS) != 0 && ov01RollPercent(HIT_CLEAR_CHANCE_ROW1) != 0) {
+            calcStatReset(hit->target, STAT_ROW_1, STAT_HIT_CLEARS);
+        }
+        if (calcStatGet(hit->target, STAT_ROW_2, STAT_HIT_CLEARS) != 0 && ov01RollPercent(HIT_CLEAR_CHANCE_ROW2) != 0) {
+            calcStatReset(hit->target, STAT_ROW_2, STAT_HIT_CLEARS);
+        }
+    }
+    if (hit->inflictRow != 0) {
+        for (bit = 1, i = 15; i >= 0; i--, bit <<= 1) {
+            if (hit->inflictMask & bit) {
+                calcStatSet(hit->target, hit->inflictRow, bit);
+            }
+        }
+    }
+    if (hit->cureRow != 0) {
+        for (bit = 1, i = 15; i >= 0; i--, bit <<= 1) {
+            if (hit->cureMask & bit) {
+                calcStatReset(hit->target, hit->cureRow, bit);
+            }
+        }
+    }
+    tec = tecRecordGet(command->actionIdx);
+    if (tec->gateFlag == TEC_GATE_CURRENT_DRAIN) {
+        unitCurrentAdd(hit->target, -TEC_CURRENT_DRAIN_AMOUNT);
+    }
+    if (command->kind == CMD_KIND_TECHNIQUE
+        && (tec->gateFlag == TEC_GATE_NONE || tec->gateFlag == 6 || tec->gateFlag == 7 || tec->gateFlag == 8)) {
+        unitPercentAdd(command->attacker, ((hit->hitMode.word >> HIT_MODE_FLAGS_SHIFT) & HIT_FLAG_TAKEN)
+                                              ? HIT_PERCENT_TAKEN : HIT_PERCENT_PLAIN);
+        if (actStepCounterValue() == ACT_STEP_TAKE_STOCK && (hit->hitMode.word & HIT_MODE_KIND_MASK) == HIT_KIND_PLAIN
+            && command->attacker != hit->target) {
+            removed = 0;
+            while (actStockRemoveStock(hit->target, &stockIndex) != 0) {
+                if (stockIndex > 0) {
+                    objPathShift(stockIndex);
+                }
+                removed = 1;
+            }
+            if (removed) {
+                unitValueRefresh(hit->target);
+                menuStatPanelNew(STAT_PANEL_STOCK_LOST);
+            }
+        }
+    }
+    if ((hit->hitMode.word >> HIT_MODE_FLAGS_SHIFT) & HIT_FLAG_TAKEN) {
+        unitPercentAdd(hit->target, -(hit->target->stats->rollPercent / 2));
+    }
+    if (command->kind == CMD_KIND_TECHNIQUE
+        && (tec->gateFlag == TEC_GATE_NONE || tec->gateFlag == 6 || tec->gateFlag == 7 || tec->gateFlag == 8)) {
+        if (actStepCounterValue() == ACT_STEP_ADD_BOOST) {
+            boostAddProgress(hit->target, HIT_BOOST_PROGRESS);
+        }
+    }
+    if (result != 0 && command->kind == CMD_KIND_TECHNIQUE) {
+        unitTryActStock(command, hit);
+    }
+    isLow = partyUnitHpLow(hit->target);
+    if (result != 0 && ((wasLow == 0 && isLow != 0) || (wasLow != 0 && isLow == 0))) {
+        refresh.command = UNIT_CMD_FINISH_REFRESH;
+        unitQueueAppend(hit->target, &refresh);
+    }
+    return 1;
+}
 
 int unitHasEffectCode(void *, int);
 
@@ -696,20 +1156,20 @@ int unitHasEffectCode(void *, int);
  * of an entry, with two effect-code rolls for the low keys, and grants act stock
  * when a roll hits and calcBoostOk accepts the unit.
  */
-int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request) {
+int unitTryActStock(struct AttackCommand *command, struct HitRecord *hit) {
     Ov01Object *object;
     int chanceHit;
     int flags;
     int requestFlags;
 
-    object = request->object;
-    if (tecRecordGet(source->tec_id)->flags & 8) {
+    object = hit->target;
+    if (tecRecordGet(command->actionIdx)->flags & TEC_TARGET_ALL) {
         return 0;
     }
     if (object->stats->key < 0x10) {
-        chanceHit = actLevelChanceRoll(object, source->tec_id) != 0;
+        chanceHit = actLevelChanceRoll(object, command->actionIdx) != 0;
         if (unitHasEffectCode(object, 0x2B) != 0) {
-            flags = request->flags;
+            flags = hit->hitMode.word;
             if ((flags >> 8) & 1) {
                 if (ov01RollPercent(0x19) != 0) {
                     chanceHit = 1;
@@ -717,7 +1177,7 @@ int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request
             }
         }
         if (unitHasEffectCode(object, 0x33) != 0 && (object->flags & 0x4000)) {
-            requestFlags = request->flags;
+            requestFlags = hit->hitMode.word;
             if (((requestFlags >> 8) & 2) != 0 || !(requestFlags & 0xFF)) {
                 if (ov01RollPercent(0x32) != 0) {
                     chanceHit = 1;
@@ -725,7 +1185,7 @@ int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request
             }
         }
     } else {
-        chanceHit = actLevelChanceRoll(object, source->tec_id) != 0;
+        chanceHit = actLevelChanceRoll(object, command->actionIdx) != 0;
     }
     if (chanceHit == 1 && calcBoostOk(object, 0) != 0) {
         calcActStockSet(object, 0);
@@ -735,9 +1195,170 @@ int unitTryActStock(struct Tu033CallSource *source, struct Tu033Request *request
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94260);
+/* Bit of the actor's sef entry flags (sefGetEntryFlags) that lets attackHitsShow show the hit panels. */
+#define SEF_ENTRY_SHOW_HIT 0x4
+/* The hit effects attackHitsShow starts on a target: group 0x136, the low key per step state and for a taken hit. */
+#define HIT_EFFECT_GROUP 0x136
+#define HIT_EFFECT_TAKEN 0x11
+#define HIT_EFFECT_STEP1 0x12
+#define HIT_EFFECT_STEP2 0x14
+#define HIT_EFFECT_STEP3 0x13
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A94500);
+/*
+ * Shows the hits of a kind-3 attack event (entry) of command: per kind-5 record, once per attack and target, the
+ * stat panels of the hit while the target's sef entry allows it; then, for the attack kinds of func_00A93128, the
+ * target's reaction command, its unit panel (the target cursor's unit) and the hit effects. A jump-effect reaction
+ * is queued only once per target. Returns 1.
+ */
+int attackHitsShow(EventQueueEntry *entry, struct AttackCommand *command)
+{
+    struct HitRecord *hit;
+    int hits;
+    int i;
+    int mode;
+    int kind;
+    int flags;
+    int effect;
+
+    hits = entry->data.args.hits;
+    for (i = 0; i < hits; i++) {
+        hit = &eventQueueFindKind5(i)->data.kind5;
+        mode = hit->hitMode.word;
+        kind = mode & HIT_MODE_KIND_MASK;
+        flags = (mode >> HIT_MODE_FLAGS_SHIFT) & HIT_MODE_FLAGS_MASK;
+        if (sefGetEntryFlags((int)hit->target->unit) & SEF_ENTRY_SHOW_HIT) {
+            func_00A932E0(command, hit);
+            menuTimedSeqStart(hit->target);
+            if (!(hit->target->flags & UNIT_FLAG_HIT_PANELS)) {
+                if (kind == HIT_KIND_NONE) {
+                    menuStatPanelNew(MENU_STAT_PANEL_NO_HIT);
+                } else if (flags & HIT_FLAG_BLOCKED) {
+                    menuStatPanelNew(MENU_STAT_PANEL_BLOCKED);
+                }
+                if (flags & HIT_FLAG_TAKEN) {
+                    if (actStepCounterGet()->bonusFlag == 1) {
+                        menuStatPanelNew(MENU_STAT_PANEL_TAKEN_BONUS);
+                    } else {
+                        menuStatPanelNew(MENU_STAT_PANEL_TAKEN);
+                    }
+                }
+                if (hit->backAttack == 1) {
+                    menuStatPanelNew(MENU_STAT_PANEL_BACK_ATTACK);
+                }
+                hit->target->flags |= UNIT_FLAG_HIT_PANELS;
+            }
+        }
+        if (func_00A93128(command->attacker, command->kind) != 0) {
+            if (hit->reaction == UNIT_CMD_JUMP_EFFECT && (hit->target->flags & UNIT_FLAG_HIT_REACTED)) {
+                continue;
+            }
+            unitCmdRequestQueue(&command->attacker, hit);
+            /* HIT_KIND_STATUS and HIT_KIND_NO_INFLICT change neither HP nor EP (calcHpDmg): no unit panel or
+             * effects. */
+            if (kind != HIT_KIND_NONE && kind != HIT_KIND_STATUS && kind != HIT_KIND_NO_INFLICT) {
+                if (tgtUnitGet() == hit->target) {
+                    menuIconListAppend(hit->target);
+                }
+                if (!(hit->target->flags & UNIT_FLAG_HIT_REACTED)) {
+                    if (tgtUnitGet() == hit->target) {
+                        menuUnitPanelOpen(hit->target, hit->stepState);
+                        menuTimedSeqStart(hit->target);
+                        menuStatPanelOpen(actStepCounterGet()->stepState);
+                    }
+                    switch (hit->stepState) {
+                    case 1:
+                        effect = HIT_EFFECT_STEP1;
+                        break;
+                    case 2:
+                        effect = HIT_EFFECT_STEP2;
+                        break;
+                    case 3:
+                        effect = HIT_EFFECT_STEP3;
+                        break;
+                    default:
+                        effect = 0;
+                        break;
+                    }
+                    if (effect != 0 && kind == HIT_KIND_PLAIN) {
+                        unitEffectStart(hit->target, HIT_EFFECT_GROUP, effect);
+                    }
+                    if (flags & HIT_FLAG_TAKEN) {
+                        unitEffectStart(hit->target, HIT_EFFECT_GROUP, HIT_EFFECT_TAKEN);
+                    }
+                }
+            }
+            hit->target->flags |= UNIT_FLAG_HIT_REACTED;
+        }
+    }
+    return 1;
+}
+
+/* Special actions (AttackCommand.actionIdx) that attackSpecialResolve resolves and attackSpecialStep steps through. */
+enum {
+    SPECIAL_ACTION_CURE_ALL = 0x38,             /* clears every status row of the target (calcStatResetCha) */
+    SPECIAL_ACTION_HALVE_HP = 0x2A4,            /* clears the attacker's status rows 1 and 2 and halves its HP */
+    SPECIAL_ACTION_CURE_ALL_2 = 0x2C3,          /* as SPECIAL_ACTION_CURE_ALL */
+    SPECIAL_ACTION_ITEM_PICK = 0x2C4,           /* picks a random item (itemRandomPick) */
+    SPECIAL_ACTION_LEVEL_UP = 0x2C5,            /* the target gains a level */
+    SPECIAL_ACTION_BOOST = 0x2C6,               /* the attacker gains a boost stock */
+    SPECIAL_ACTION_STATUS_TEXT = 0x2C8,         /* shows the target's status text */
+    SPECIAL_ACTION_STEAL = 0x2C9,               /* drops the target's first item half the time */
+    SPECIAL_ACTION_TRANSFORM_FIRST = 0x2D5,     /* 0x2D5..0x2D7: the attacker transforms */
+    SPECIAL_ACTION_TRANSFORM_LAST = 0x2D7,
+    SPECIAL_ACTION_STATUS_STEAL = 0x2F6         /* shows the status text, then drops the target's first item */
+};
+/* calcStatReset mask of every status of a row. */
+#define STAT_ROW_ALL 0xFFFF
+
+void unitStatusTextShow(Ov01Object *unit);
+void unitTransformBegin(Ov01Object *unit, int action);
+
+/*
+ * Resolves the special action of command (an attack event, entry) on the first hit's target. A command that is no
+ * transform and that func_00A93128 refuses returns 0; otherwise 1 (the item pick and the steal resolve in
+ * attackSpecialStep).
+ */
+int attackSpecialResolve(EventQueueEntry *entry, struct AttackCommand *command)
+{
+    struct HitRecord *hit;
+
+    if (actionTransformSlotGet(command->actionIdx) == 0 && func_00A93128(command->attacker, command->kind) == 0) {
+        return 0;
+    }
+    hit = &eventQueueFindKind5(0)->data.kind5;
+    switch (command->actionIdx) {
+    case SPECIAL_ACTION_HALVE_HP:
+        calcStatReset(command->attacker, STAT_ROW_1, STAT_ROW_ALL);
+        calcStatReset(command->attacker, STAT_ROW_2, STAT_ROW_ALL);
+        calcHpAdjust(command->attacker, -(command->attacker->stats->hp / 2));
+        break;
+    case SPECIAL_ACTION_CURE_ALL:
+    case SPECIAL_ACTION_CURE_ALL_2:
+        calcStatResetCha(hit->target);
+        attackHitsShow(entry, command);
+        break;
+    case SPECIAL_ACTION_LEVEL_UP:
+        unitLevelAdd(hit->target, 1);
+        break;
+    case SPECIAL_ACTION_BOOST:
+        boostAddStock(command->attacker, 1);
+        break;
+    case SPECIAL_ACTION_STATUS_TEXT:
+        unitStatusTextShow(hit->target);
+        break;
+    case SPECIAL_ACTION_TRANSFORM_FIRST ... SPECIAL_ACTION_TRANSFORM_LAST:
+        unitTransformBegin(command->attacker, command->actionIdx);
+        screenFillStart();
+        break;
+    case SPECIAL_ACTION_STATUS_STEAL:
+        unitStatusTextShow(hit->target);
+        break;
+    case SPECIAL_ACTION_ITEM_PICK:
+    case SPECIAL_ACTION_STEAL:
+        break;
+    }
+    return 1;
+}
 
 /* The steps of a transforming action (actionTransformSlotGet gives its model): attackStep runs through them. */
 enum {
@@ -751,8 +1372,8 @@ enum {
 };
 #define ATTACK_FILL_FRAMES 3
 
-/* The percent chance of the target's first drop for the two stealing actions (unitDataBoxDrop): 0x2C9 takes it
- * half the time, 0x2F6 always (else the second drop). */
+/* The percent chance of the target's first drop for the two stealing actions (unitDataBoxDrop): the steal takes it
+ * half the time, the status steal always (else the second drop). */
 #define STEAL_CHANCE_HALF 50
 #define STEAL_CHANCE_SURE 100
 
@@ -768,8 +1389,8 @@ void itemRandomPick(void);
 
 /*
  * One step of the special actions of a queued attack (attackStep counts their steps); returns 1 when the action
- * is done. Plain actions resolve at once (func_00A93288); 0x2C4 and 0x2C9 free their effect key first,
- * 0x2D5..0x2D7 transform the attacker, 0x2F6 waits for the text block. Unknown actions return 0.
+ * is done. Plain actions resolve at once (func_00A93288); the item pick and the steal free their effect key
+ * first, the transforms swap the attacker, the status steal waits for the text block. Unknown actions return 0.
  */
 int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
 {
@@ -783,14 +1404,14 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
     hit = &eventQueueFindKind5(0)->data.kind5;
     tec = tecRecordGet(command->actionIdx);
     switch (command->actionIdx) {
-    case 0x38:
-    case 0x2A4:
-    case 0x2C3:
-    case 0x2C5:
-    case 0x2C6:
+    case SPECIAL_ACTION_CURE_ALL:
+    case SPECIAL_ACTION_HALVE_HP:
+    case SPECIAL_ACTION_CURE_ALL_2:
+    case SPECIAL_ACTION_LEVEL_UP:
+    case SPECIAL_ACTION_BOOST:
         done = func_00A93288(command);
         break;
-    case 0x2C4:
+    case SPECIAL_ACTION_ITEM_PICK:
         if (attackStep == 0) {
             if (unitEffectKeyFree(command->attacker, tecEffectGroupGet(command->attacker, tec), tec->extent) != 0) {
                 itemRandomPick();
@@ -800,12 +1421,12 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
             done = 1;
         }
         break;
-    case 0x2C8:
+    case SPECIAL_ACTION_STATUS_TEXT:
         if (textBlockIsActive() == 0) {
             done = 1;
         }
         break;
-    case 0x2C9:
+    case SPECIAL_ACTION_STEAL:
         if (attackStep == 0) {
             if (unitEffectKeyFree(command->attacker, tecEffectGroupGet(command->attacker, tec), tec->extent) != 0) {
                 unitDataBoxDrop(hit->target, STEAL_CHANCE_HALF);
@@ -815,9 +1436,7 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
             done = 1;
         }
         break;
-    case 0x2D5:
-    case 0x2D6:
-    case 0x2D7:
+    case SPECIAL_ACTION_TRANSFORM_FIRST ... SPECIAL_ACTION_TRANSFORM_LAST:
         switch (attackStep) {
         case ATTACK_STEP_TRANSFORM:
             if (ov01CdPendingReads() != 0) {
@@ -889,7 +1508,7 @@ int attackSpecialStep(EventQueueEntry *entry, struct AttackCommand *command)
             break;
         }
         break;
-    case 0x2F6:
+    case SPECIAL_ACTION_STATUS_STEAL:
         switch (attackStep) {
         case 0:
             if (textBlockIsActive() == 0) {
@@ -926,7 +1545,6 @@ extern char itemPickTextEnd[];
 void dataBoxIncCategory1(int item);
 char *strcpy(char *destination, const char *source);
 char *strcat(char *destination, const char *source);
-void msgPutObject(int index, int x, char *text, int y, int width, int size);
 
 /* itemRandomPick: rnd() picks one item from four weighted groups of itemPickGroups;
  * the item is added to the data box and its name is shown. */
@@ -1072,6 +1690,8 @@ void unitDataBoxDrop(Ov01Object *unit, int percent)
 
 /* The sef gate the transform closes (owner 0). */
 #define TRANSFORM_SEF_GATE 0x37
+/* Half a turn in radians (pi): the facing of the transformed unit and of the pair units in eventPairBegin. */
+#define ANGLE_HALF_TURN 3.1415927f
 
 /*
  * Starts the transform of unit by action: keeps its key as the battle slot index and its facing as the battle
@@ -1116,10 +1736,8 @@ void unitTransformBegin(Ov01Object *unit, int action)
     decoFlagsSetAll();
 }
 
-int func_00A94260();
-
 int func_00A95018(EventQueueEntry *entry, struct AttackCommand *owner) {
-    func_00A94260();
+    attackHitsShow(entry, owner);
     return func_00A93288(owner);
 }
 
@@ -1240,7 +1858,86 @@ int tecEffectGroupGet(Ov01Object *unit, TecRecord *tec)
     return group;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95268);
+/* EffectRequest.hitCode: the low twelve bits carry the low byte of the technique's actionBits (hits of kind
+ * HIT_KIND_PLAIN), the top four bits the target's flags & 3 (EFFECT_HIT_ROW_OTHER for the other hits). */
+#define EFFECT_HIT_CODE 0x0FFF
+#define EFFECT_HIT_ROW 0xF000
+#define EFFECT_HIT_ROW_SHIFT 12
+#define EFFECT_HIT_ROW_OTHER 3
+
+/* Starts the effects of a kind-3 attack event: per kind-4 record the technique's effect on the attacker (and its
+ * pair partner, gateFlag 1), once per kind-5 record (hit) with that hit's target. A pair technique runs only its
+ * first record. */
+void attackEffectsStart(EventQueueEntry *event)
+{
+    struct EffectRequest request;
+    struct AttackCommand *attack;
+    struct HitRecord *hit;
+    TecRecord *tec;
+    Ov01Object *partner;
+    StatBlock *stats;
+    int actions;
+    int hits;
+    int i;
+    int j;
+    unsigned short hitMode;
+
+    actions = event->data.args.actions;
+    hits = event->data.args.hits;
+    for (i = 0; i < actions; i++) {
+        memset(&request, 0, sizeof(request));
+        attack = &eventQueueFindKind4(i)->data.attack;
+        tec = tecRecordGet(attack->actionIdx);
+        request.key = (tecEffectGroupGet(attack->attacker, tec) << EFFECT_KEY_GROUP_SHIFT) | tec->extent;
+        request.mode = attack->attacker->stats->state;
+        if (tec->gateFlag == TEC_GATE_PAIR) {
+            partner = unitPairPartnerFind(attack->attacker, attack->id);
+            stats = attack->attacker->stats;
+            if (stats->key == pairLinkGet(attack->id)->slotFirst) {
+                request.head = attack->attacker->unit;
+                request.partner = partner->unit;
+                request.parts[0] = attack->attacker->children[0];
+                request.parts[1] = attack->attacker->children[1];
+                request.parts[2] = partner->children[0];
+                request.parts[3] = partner->children[1];
+            } else {
+                request.head = partner->unit;
+                request.partner = attack->attacker->unit;
+                request.parts[0] = partner->children[0];
+                request.parts[1] = partner->children[1];
+                request.parts[2] = attack->attacker->children[0];
+                request.parts[3] = attack->attacker->children[1];
+            }
+        } else {
+            request.head = attack->attacker->unit;
+            request.parts[0] = attack->attacker->children[0];
+            request.parts[1] = attack->attacker->children[1];
+            request.parts[2] = attack->attacker->children[2];
+        }
+        for (j = 0; j < hits;) {
+            hit = &eventQueueFindKind5(j++)->data.kind5;
+            /* hitMode is read before the target stores and stored after the state; other orders schedule
+             * the loads and stores differently. */
+            hitMode = hit->hitMode.word;
+            request.target = hit->target->unit;
+            request.targetState = hit->target->stats->state;
+            request.hitMode = hitMode;
+            if ((unsigned char)hitMode == HIT_KIND_PLAIN) {
+                /* Three separate updates of the halfword, as the original stores it three times. */
+                request.hitCode &= EFFECT_HIT_ROW;
+                request.hitCode = (request.hitCode | (unsigned char)tecRecordGet(attack->actionIdx)->actionBits)
+                    & EFFECT_HIT_CODE;
+                request.hitCode |= (hit->target->stats->flags & 3) << EFFECT_HIT_ROW_SHIFT;
+            } else {
+                request.hitCode = (request.hitCode & EFFECT_HIT_CODE) | (EFFECT_HIT_ROW_OTHER << EFFECT_HIT_ROW_SHIFT);
+            }
+            sefStartEffectDefault(&request);
+        }
+        if (tec->gateFlag == TEC_GATE_PAIR) {
+            break;
+        }
+    }
+}
 
 void sefStartEffectDefault(void *object);
 
@@ -1256,7 +1953,27 @@ void unitEffectStart(Ov01Object *object, int keyHigh, int keyLow)
     sefStartEffectDefault(&request);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95540);
+/* Large units (UNIT_KEY_LARGE_*, the slots with linkedSlots) start their effects in mode 3, the others in mode 2. */
+
+/* Starts effect (keyHigh, keyLow) on the unit's actor, in mode 3 for unit keys 11..15, else 2. */
+void unitEffectStartMode(Ov01Object *object, int keyHigh, int keyLow)
+{
+    struct EffectRequest request;
+    int mode;
+
+    memset(&request, 0, sizeof(request));
+    mode = ((unsigned int)(object->stats->keyUnsigned - UNIT_KEY_LARGE_FIRST) < UNIT_KEY_LARGE_COUNT) ? 3 : 2;
+    request.key = (keyHigh << EFFECT_KEY_GROUP_SHIFT) | keyLow;
+    request.head = object->unit;
+    request.mode = mode;
+    request.target = object->unit;
+    sefStartEffectDefault(&request);
+}
+
+/* The effect of the unit's own sequence group that func_00A955C8, func_00A95608 and unitsRemoveDefeated switch
+ * (sefApplyRecordMode): record 8 of the group. */
+#define SEQUENCE_EFFECT_RECORD 8
+#define SEQUENCE_EFFECT_KEY(sequence) (((sequence) << EFFECT_KEY_GROUP_SHIFT) | SEQUENCE_EFFECT_RECORD)
 
 void func_00A955C8(Ov01Object *object) {
     sefApplyRecordMode(object->unit, (object->stats->sequenceIndex << 0xc) | 8, 3);
@@ -1336,8 +2053,7 @@ void unitSlotPause(Ov01Object *object, int index) {
     }
 }
 
-int XenoActorShowPart(struct XenoActor *, int);
-extern int ov01Slot1Part;
+extern const char *ov01Slot1Part;
 
 /* unitSlotShowPart (proposed unitSlotShowPart): shows part ov01Slot1Part of slot 1 when the slot exists. */
 void unitSlotShowPart(Ov01Object *object) {
@@ -1349,7 +2065,6 @@ void unitSlotShowPart(Ov01Object *object) {
     }
 }
 
-int XenoActorHidePart(struct XenoActor *, int);
 
 /* unitSlotHidePart (proposed unitSlotHidePart): hides part ov01Slot1Part of slot 1 when the slot exists. */
 void unitSlotHidePart(Ov01Object *object) {
@@ -1363,7 +2078,7 @@ void unitSlotHidePart(Ov01Object *object) {
 
 /* The part of the unit's own actor that stands in for a slot actor (unitSlotShowHidePart hides it while the slot
  * is shown, unitSlotHideShowPart shows it while the slot is paused). */
-extern int ov01UnitSlotPart;
+extern const char *ov01UnitSlotPart;
 
 /* Shows slot index of the unit (clears the pause bit, alpha 1) and hides part ov01UnitSlotPart of its actor. */
 void unitSlotShowHidePart(Ov01Object *object, int index) {
@@ -1389,16 +2104,14 @@ void unitSlotHideShowPart(Ov01Object *object, int index) {
     }
 }
 
-int unitSlotFadeIn(void);
-
-int func_00A95CB0(void) {
-    return unitSlotFadeIn();
+/* Fades slot index of the unit in (unitSlotFadeIn). */
+struct FadeTask *func_00A95CB0(Ov01Object *object, int index) {
+    return unitSlotFadeIn(object, index);
 }
 
-int unitSlotFadeOut(void);
-
-int func_00A95CC8(void) {
-    return unitSlotFadeOut();
+/* Fades slot index of the unit out (unitSlotFadeOut). */
+struct FadeTask *func_00A95CC8(Ov01Object *object, int index) {
+    return unitSlotFadeOut(object, index);
 }
 
 int func_00A95CE0(void) {
@@ -1409,7 +2122,54 @@ int func_00A95CE8(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A95CF0);
+/* sefLoadEffect (main) as ov01 calls it: the effect key and its group (tu046 loadEffect passes both too). */
+int sefLoadEffect(int effectKey, int group);
+
+/*
+ * Loads what the action of request needs: the motion entries of its technique (one, or two for a pair technique,
+ * the partner's first when the unit is not the pair's first slot), the model of a gateFlag-5 technique's target
+ * record (joint in pairSecond[2]) and its effect group. Returns 1.
+ */
+int actionResourcesLoad(Ov01Tu033Request *request)
+{
+    Ov01Object *unit;
+    int value;
+    TecRecord *tec;
+    TgtIdRecord *record;
+    int first;
+    int second;
+    int group;
+
+    unit = (Ov01Object *) request->id;
+    tec = tecRecordGet(request->index);
+    value = request->value;
+    ov01ModelEntry = 0;
+    if (tec->timer != 0) {
+        if (tec->gateFlag == TEC_GATE_PAIR) {
+            if (pairLinkGet(value)->slotFirst == unit->stats->key) {
+                first = 0;
+                second = 1;
+            } else {
+                first = 1;
+                second = 0;
+            }
+            ov01ModelEntry = dataMotEntryLoad(tec->timer, first, 0);
+            ov01ModelEntry = dataMotEntryLoad(tec->timer, second, 1);
+        } else {
+            ov01ModelEntry = dataMotEntryLoad(tec->timer, 0, 0);
+        }
+    }
+    if (tec->gateFlag == TEC_GATE_TARGET_MODEL) {
+        record = tgtIdRecordGet(value);
+        if (record->modelIndex != 0) {
+            unit->stats->pairSecond[2] = record->modelJoint;
+            ov01ModelEntry = dataModelEntryLoad(record->modelIndex);
+        }
+    }
+    group = tecEffectGroupGet(unit, tec);
+    sefLoadEffect((group << EFFECT_KEY_GROUP_SHIFT) | tec->extent, group);
+    return 1;
+}
 
 int ov01CdPendingReads(void);
 
@@ -1495,9 +2255,79 @@ int unitBindRequest(Ov01Tu033Request *request)
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96050);
+/* Object flags a unit loses when it leaves the action stock here (UNIT_FLAG_STOCKED and two more). */
+#define UNIT_FLAGS_STOCK_CLEAR 0x4208
 
-void func_00A96510(void *, int, int, int);
+/* Battle unit keys from this one on are monsters (pool B); below are the party slots. */
+#define UNIT_KEY_POOL_B_FIRST 16
+
+/* menuStatPanelNew kind unitsRemoveDefeated opens for a defeated monster in action step 2. */
+#define STAT_PANEL_DEFEAT 7
+
+/* unitScriptEventSend kind unitsRemoveDefeated sends for a unit that is taken out, with the index of its source. */
+#define DEFEAT_SCRIPT_EVENT 8
+
+/*
+ * For every unit: a unit that cannot act or has no HP left (and is not the battle state's last object) is taken out
+ * of the action stock; then, once its move commands are queued, a monster adds its battle result, arms the menus,
+ * releases its sequence and aura effects (and opens stat panel 7 in action step 2 when its key record has a step
+ * rate), a party unit releases its effects through func_00A95608; both report to the unit's script (event 8) with
+ * the index of the unit's source. Returns 1.
+ */
+int unitsRemoveDefeated(void)
+{
+    UnitScriptEvent event;
+    struct UnitTableRef table;
+    int stockIndex;
+    int count;
+    int i;
+
+    count = unitTblGet(UNIT_SIDE_ALL, &table.units);
+    for (i = 0; i < count; i++) {
+        if (table.units[i] == 0) {
+            continue;
+        }
+        if (unitCanAct(table.units[i]) == 0 || table.units[i]->stats->hp == 0) {
+            if (table.units[i] != battleStateGet()->lastObject) {
+                while (actStockRemove(table.units[i], &stockIndex) != 0) {
+                    if (stockIndex > 0) {
+                        objPathShift(stockIndex);
+                    }
+                }
+                table.units[i]->flags &= ~UNIT_FLAGS_STOCK_CLEAR;
+            }
+        }
+        if (unitQueueMoveCommands(table.units[i]) == 0) {
+            continue;
+        }
+        if (table.units[i]->stats->key >= UNIT_KEY_POOL_B_FIRST) {
+            battleResultAdd(table.units[i]);
+            menuUnitPanelArmTimer();
+            menuIconListClose();
+            menuTimedSeqArmTick();
+            sefApplyRecordMode(table.units[i]->unit, SEQUENCE_EFFECT_KEY(table.units[i]->stats->sequenceIndex),
+                               SEF_RECORD_MODE_RELEASE);
+            sefApplyRecordMode(table.units[i]->unit, AURA_KEY(1), SEF_RECORD_MODE_RELEASE);
+            sefApplyRecordMode(table.units[i]->unit, AURA_KEY(2), SEF_RECORD_MODE_RELEASE);
+            sefApplyRecordMode(table.units[i]->unit, AURA_KEY(3), SEF_RECORD_MODE_RELEASE);
+            if (actStepCounterValue() == 2 && tableKeyRecordGet(table.units[i]->stats->key)->stepRate != 0) {
+                menuStatPanelNew(STAT_PANEL_DEFEAT);
+            }
+        } else {
+            func_00A95608(table.units[i]);
+        }
+        event.unit = table.units[i];
+        if (table.units[i]->stats->source != 0) {
+            event.words[0] = unitTblIndexOf(table.units[i]->stats->source);
+        } else {
+            event.words[0] = 0;
+        }
+        unitScriptEventSend(DEFEAT_SCRIPT_EVENT, &event);
+    }
+    return 1;
+}
+
+int unitStepStatusApply(Ov01Object *unit, int commandKind, int hitDamage, int hitMode);
 
 /*
  * battleResolveStatus (proposed battleResolveStatus): the kind-12 event handler. While the
@@ -1525,7 +2355,7 @@ int battleResolveStatus(void) {
         if (result == 0) {
             return 0;
         }
-        func_00A96510(object, commandKind, hitDamage, hitMode);
+        unitStepStatusApply(object, commandKind, hitDamage, hitMode);
     }
     count = unitTblGet(2, &units);
     for (i = 0; i < count; i++) {
@@ -1551,7 +2381,124 @@ int battleResolveStatus(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96510);
+/* The statuses unitStepStatusApply applies at the end of a step (calcStatGet rows 1 to 3). */
+#define STAT1_HP_DRAIN 0x2          /* row 1: loses a tenth of maxHp */
+#define STAT2_HP_DRAIN 0x2          /* row 2: loses a quarter of maxHp */
+#define STAT2_HIT_REPEAT 0x1000     /* row 2: takes the step's plain hit damage again */
+#define STAT1_EP_DRAIN 0x100        /* row 1: loses STATUS_EP_DRAIN EP */
+#define STAT3_EP_REGEN 0x1000       /* row 3: gains STATUS_EP_REGEN EP */
+#define STAT1_CURRENT_DRAIN 0x4000  /* row 1: loses a quarter of currentMax */
+#define STAT2_CURRENT_DRAIN 0x4000  /* row 2: loses half of currentMax */
+#define STATUS_EP_DRAIN 5
+#define STATUS_EP_REGEN 2
+/* menuPopNumCreate kinds (as calcHpDmg numbers the hit kinds) and the flag of an amount from a status; the amounts
+ * of one step are shown STATUS_AMOUNT_DELAY frames apart. */
+#define AMOUNT_HP_LOSS 1
+#define AMOUNT_HP_GAIN 2
+#define AMOUNT_EP_LOSS 3
+#define AMOUNT_EP_GAIN 4
+#define AMOUNT_STATUS 0x400
+#define STATUS_AMOUNT_DELAY 50
+
+/*
+ * Applies the end-of-step statuses of unit: HP from the hit damage (a HIT_KIND_PLAIN hit with STAT2_HIT_REPEAT) and
+ * the HP drains, EP from STAT1_EP_DRAIN and STAT3_EP_REGEN, current from the current drains. Each nonzero change is
+ * queued as the unit's reaction, applied and shown (menuPopNumCreate). Returns 1 and clears the unit's source when
+ * anything changed. commandKind is not used.
+ */
+int unitStepStatusApply(Ov01Object *unit, int commandKind, int hitDamage, int hitMode)
+{
+    struct HitRecord hit;
+    int hp;
+    int ep;
+    int current;
+    int delay;
+    int delta;
+    int kind;
+
+    hp = 0;
+    current = 0;
+    delay = 0;
+    if ((hitMode & HIT_MODE_KIND_MASK) == HIT_KIND_PLAIN && calcStatGet(unit, STAT_ROW_2, STAT2_HIT_REPEAT)) {
+        hp = hitDamage;
+    }
+    if (calcStatGet(unit, STAT_ROW_1, STAT1_HP_DRAIN)) {
+        hp += unit->stats->maxHp / 10;
+    }
+    if (calcStatGet(unit, STAT_ROW_2, STAT2_HP_DRAIN)) {
+        hp += unit->stats->maxHp / 4;
+    }
+    ep = 0;
+    if (calcStatGet(unit, STAT_ROW_1, STAT1_EP_DRAIN)) {
+        ep = STATUS_EP_DRAIN;
+    }
+    if (calcStatGet(unit, STAT_ROW_3, STAT3_EP_REGEN)) {
+        ep -= STATUS_EP_REGEN;
+    }
+    if (calcStatGet(unit, STAT_ROW_1, STAT1_CURRENT_DRAIN)) {
+        current = unit->stats->currentMax / 4;
+    }
+    if (calcStatGet(unit, STAT_ROW_2, STAT2_CURRENT_DRAIN)) {
+        current += unit->stats->currentMax / 2;
+    }
+    if (hp != 0) {
+        if (hp > 0) {
+            hit.reaction = UNIT_CMD_MODE_DISPATCH;
+        } else {
+            hit.reaction = UNIT_CMD_CLEAR_ACTIVE;
+        }
+        hit.target = unit;
+        hit.damage = hp;
+        hit.followResult = 0;
+        hit.backAttack = 0;
+        unitCmdRequestQueue(0, &hit);
+        /* The negation is written after the queue call (sched1 hoists it above the call, after the
+         * argument setup); written before the call it lands between the two argument moves. */
+        delta = -hp;
+        calcHpAdjust(unit, delta);
+        kind = hp > 0 ? AMOUNT_HP_LOSS : AMOUNT_HP_GAIN;
+        menuPopNumCreate(unit, hp < 0 ? delta : hp, kind | AMOUNT_STATUS, delay);
+        delay += STATUS_AMOUNT_DELAY;
+    }
+    if (ep != 0) {
+        if (ep > 0) {
+            hit.reaction = UNIT_CMD_MODE_DISPATCH;
+        } else {
+            hit.reaction = UNIT_CMD_CLEAR_ACTIVE;
+        }
+        hit.target = unit;
+        hit.damage = ep;
+        hit.followResult = 0;
+        hit.backAttack = 0;
+        unitCmdRequestQueue(0, &hit);
+        delta = -ep;
+        calcEpAdjust(unit, delta);
+        kind = ep > 0 ? AMOUNT_EP_LOSS : AMOUNT_EP_GAIN;
+        menuPopNumCreate(unit, ep < 0 ? delta : ep, kind | AMOUNT_STATUS, delay);
+        delay += STATUS_AMOUNT_DELAY;
+    }
+    if (current != 0) {
+        if (current > 0) {
+            hit.reaction = UNIT_CMD_MODE_DISPATCH;
+        } else {
+            hit.reaction = UNIT_CMD_CLEAR_ACTIVE;
+        }
+        hit.target = unit;
+        hit.damage = current;
+        hit.followResult = 0;
+        hit.backAttack = 0;
+        unitCmdRequestQueue(0, &hit);
+        delta = -current;
+        unitCurrentAdd(unit, delta);
+        kind = current > 0 ? AMOUNT_EP_LOSS : AMOUNT_EP_GAIN;
+        menuPopNumCreate(unit, current < 0 ? delta : current, kind | AMOUNT_STATUS, delay);
+    }
+    if (hp != 0 || ep != 0 || current != 0) {
+        unit->stats->source = 0;
+        return 1;
+    }
+    return 0;
+}
 
 /* Row-3 statuses that bring a down unit back when the battle step ends (unitsReviveDown): with its full
  * maxHp, or with half of it. */
@@ -1586,7 +2533,7 @@ int battleStatusQueueWait(void)
 
 /* Brings back every down side-2 unit with a revive status: clears the status, queues
  * UNIT_CMD_PHASE_2B_WAIT, restores maxHp (or half of it), clears UNIT_FLAG_DOWN and shows the amount
- * (func_00AA4DB8 with flags 0x802). Returns 1. */
+ * (menuPopNumCreate with flags 0x802). Returns 1. */
 int unitsReviveDown(void)
 {
     Ov01Command command;
@@ -1624,7 +2571,7 @@ int unitsReviveDown(void)
             if (amount >= 0) {
                 shown = amount;
             }
-            func_00AA4DB8(unit, shown, 0x802, 0);
+            menuPopNumCreate(unit, shown, 0x802, 0);
         }
     }
     return 1;
@@ -1658,6 +2605,212 @@ int ov01StreamBind(void)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96AA8);
+/*
+ * The pair technique events place three units: the commanding unit (args unit), its partner (args target) and the
+ * unit's partner object. Index 0 is the unit, 1 the partner, 2 the partner object: pairEventPos holds the spots
+ * eventPairBegin moves them to, pairSavedPos and pairSavedAngle the positions and facing angles it replaced, which
+ * eventPairEnd puts back.
+ */
+extern DoublewordAlignedVector4 pairEventPos[3];
+extern DoublewordAlignedVector4 pairSavedPos[3];
+extern float pairSavedAngle[3];
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu033", func_00A96E38);
+/* The unit key whose slot 0 is resumed for the pair techniques PAIR_SLOT_PAIR_A and PAIR_SLOT_PAIR_B (and paused
+ * again at the end). */
+#define PAIR_SLOT_UNIT_KEY 3
+#define PAIR_SLOT_PAIR_A 10
+#define PAIR_SLOT_PAIR_B 16
+/* The partner object key that stands at a fixed depth instead of -unitDefArea. */
+#define PAIR_FIXED_DEPTH_KEY 0x8C
+#define PAIR_FIXED_DEPTH -10.0f
+
+/*
+ * EVENT_KIND_PAIR_BEGIN handler. Step 0 takes the pair's required level off both units, binds every unit again,
+ * hides the first monster slot, sets the default sef gate for the technique and starts the screen flash (returns
+ * 0). Step 1 counts ATTACK_FILL_FRAMES calls and, as the original does, falls through into step 2 on every call.
+ * Step 2 moves the partner, the unit and (unless the technique has TEC_TARGET_ALL) the unit's partner object to their
+ * pairEventPos spots, saving positions and angles, unbinds them, hides the first monster slot, shows the stream slot
+ * and returns 1.
+ * The positions are copied with __builtin_memcpy: a struct assignment from an array element moves the vector with
+ * ldl/ldr, and its stores keep the partner object's stats load from staying after them.
+ */
+int eventPairBegin(EventQueueEntry *entry)
+{
+    struct MonsSlot **slots;
+    Ov01Object **units;
+    Ov01Object *object;
+    Ov01Object *other;
+    struct XenoActor *actor;
+    int tecIndex;
+    int pairIndex;
+    int count;
+    int i;
+
+    tecIndex = entry->data.args.tecIndex;
+    pairIndex = entry->data.args.pairIndex;
+    switch (eventStepStarted) {
+    case 0:
+        object = entry->data.args.unit;
+        unitLevelAdd(object, -pairLinkGet(pairIndex)->requiredLevel);
+        object = entry->data.args.target;
+        unitLevelAdd(object, -pairLinkGet(pairIndex)->requiredLevel);
+        count = unitTblGet(UNIT_SIDE_ALL, &units);
+        for (i = 0; i < count; i++) {
+            other = units[i];
+            if (other != 0) {
+                other->unit->drawFlags &= ~ACTOR_STATE_UNBOUND;
+                unitBindSetup(other);
+            }
+        }
+        monsActiveSlotsGet(&slots);
+        monsSlotHide(slots[0]);
+        sefSetGateDefault(0, tecRecordGet(tecIndex)->extent);
+        decoFlagsSetAll();
+        screenFlashStart();
+        attackFillWait = 0;
+        eventStepStarted++;
+        break;
+    case 1:
+        if (attackFillWait >= ATTACK_FILL_FRAMES) {
+            eventStepStarted = 2;
+        } else {
+            attackFillWait++;
+        }
+        /* fall through */
+    case 2:
+        object = entry->data.args.target;
+        actor = object->unit;
+        __builtin_memcpy(&pairSavedPos[1], &actor->position, sizeof(Vector4));
+        __builtin_memcpy(&actor->position, &pairEventPos[1], sizeof(Vector4));
+        pairSavedAngle[1] = actor->rotation.y;
+        actor->rotation.y = ANGLE_HALF_TURN;
+        unitUnbind(object);
+        if (object->stats->key == PAIR_SLOT_UNIT_KEY
+            && (pairIndex == PAIR_SLOT_PAIR_A || pairIndex == PAIR_SLOT_PAIR_B)) {
+            unitSlotResume(object, 0);
+        }
+        object = entry->data.args.unit;
+        actor = object->unit;
+        __builtin_memcpy(&pairSavedPos[0], &actor->position, sizeof(Vector4));
+        __builtin_memcpy(&actor->position, &pairEventPos[0], sizeof(Vector4));
+        pairSavedAngle[0] = actor->rotation.y;
+        actor->rotation.y = ANGLE_HALF_TURN;
+        unitUnbind(object);
+        if (object->stats->key == PAIR_SLOT_UNIT_KEY
+            && (pairIndex == PAIR_SLOT_PAIR_A || pairIndex == PAIR_SLOT_PAIR_B)) {
+            unitSlotResume(object, 0);
+        }
+        if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
+            object = (Ov01Object *) object->commandTarget;
+            actor = object->unit;
+            __builtin_memcpy(&pairSavedPos[2], &actor->position, sizeof(Vector4));
+            __builtin_memcpy(&actor->position, &pairEventPos[2], sizeof(Vector4));
+            if (object->stats->key == PAIR_FIXED_DEPTH_KEY) {
+                actor->position.z = PAIR_FIXED_DEPTH;
+            } else {
+                actor->position.z = -unitDefArea(object);
+            }
+            pairSavedAngle[2] = actor->rotation.y;
+            actor->rotation.y = 0.0f;
+            unitUnbind(object);
+        }
+        monsActiveSlotsGet(&slots);
+        monsSlotHide(slots[0]);
+        monsSlotShow(ov01StreamSlot);
+        return 1;
+    }
+    return 0;
+}
+
+/* unitScriptEventSend kind of the pair end, with the commanding unit. */
+#define PAIR_END_SCRIPT_EVENT 12
+
+/*
+ * EVENT_KIND_PAIR_END handler. Step 0 binds the partner and the unit again (pausing slot 0 of the PAIR_SLOT_UNIT_KEY
+ * unit for the pair techniques PAIR_SLOT_PAIR_A and PAIR_SLOT_PAIR_B) and the unit's partner object unless the
+ * technique has TEC_TARGET_ALL, hides the stream slot and starts the screen flash (returns 0). Step 1 counts
+ * ATTACK_FILL_FRAMES calls and falls through into step 2 on every call, as in eventPairBegin. Step 2 puts the saved
+ * positions and angles back, unbinds every unit, releases the stream slot, shows the first monster slot, refreshes
+ * the partner's value, clears the second stock boost, sets the default sef gate, clears the deco flags, sends the
+ * pair end script event for the unit and returns 1.
+ */
+int eventPairEnd(EventQueueEntry *entry)
+{
+    UnitScriptEvent event;
+    Ov01Object **units;
+    struct MonsSlot **slots;
+    Ov01Object *object;
+    Ov01Object *other;
+    struct XenoActor *actor;
+    int tecIndex;
+    int pairIndex;
+    int count;
+    int i;
+
+    tecIndex = entry->data.args.tecIndex;
+    pairIndex = entry->data.args.pairIndex;
+    switch (eventStepStarted) {
+    case 0:
+        object = entry->data.args.target;
+        unitBindSetup(object);
+        if (object->stats->key == PAIR_SLOT_UNIT_KEY
+            && (pairIndex == PAIR_SLOT_PAIR_A || pairIndex == PAIR_SLOT_PAIR_B)) {
+            unitSlotPause(object, 0);
+        }
+        object = entry->data.args.unit;
+        unitBindSetup(object);
+        if (object->stats->key == PAIR_SLOT_UNIT_KEY
+            && (pairIndex == PAIR_SLOT_PAIR_A || pairIndex == PAIR_SLOT_PAIR_B)) {
+            unitSlotPause(object, 0);
+        }
+        if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
+            unitBindSetup((Ov01Object *) object->commandTarget);
+        }
+        monsSlotHide(ov01StreamSlot);
+        screenFlashStart();
+        attackFillWait = 0;
+        eventStepStarted++;
+        break;
+    case 1:
+        if (attackFillWait >= ATTACK_FILL_FRAMES) {
+            eventStepStarted = 2;
+        } else {
+            attackFillWait++;
+        }
+        /* fall through */
+    case 2:
+        object = entry->data.args.target;
+        actor = object->unit;
+        __builtin_memcpy(&actor->position, &pairSavedPos[1], sizeof(Vector4));
+        actor->rotation.y = pairSavedAngle[1];
+        object = entry->data.args.unit;
+        actor = object->unit;
+        __builtin_memcpy(&actor->position, &pairSavedPos[0], sizeof(Vector4));
+        actor->rotation.y = pairSavedAngle[0];
+        if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
+            object = (Ov01Object *) object->commandTarget;
+            actor = object->unit;
+            __builtin_memcpy(&actor->position, &pairSavedPos[2], sizeof(Vector4));
+            actor->rotation.y = pairSavedAngle[2];
+        }
+        count = unitTblGet(UNIT_SIDE_ALL, &units);
+        for (i = 0; i < count; i++) {
+            other = units[i];
+            if (other != 0) {
+                other->unit->drawFlags |= ACTOR_STATE_UNBOUND;
+                unitUnbind(other);
+            }
+        }
+        monsSlotRelease(ov01StreamSlot);
+        monsActiveSlotsGet(&slots);
+        monsSlotShow(slots[0]);
+        unitValueRefresh(entry->data.args.target);
+        actStockClearBoost1();
+        sefSetGateDefault(1, tecRecordGet(tecIndex)->extent);
+        decoFlagsClearAll();
+        event.unit = entry->data.args.unit;
+        unitScriptEventSend(PAIR_END_SCRIPT_EVENT, &event);
+        return 1;
+    }
+    return 0;
+}

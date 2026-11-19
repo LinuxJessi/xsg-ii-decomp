@@ -249,7 +249,7 @@ void grGpInit(void *packet);
 void grPutSprOpen(void *packet);
 void grPutSprClose(void);
 void grPacketSend(void *packet);
-void func_00AA7750(void *packet, int x, int y, short value, int flag);
+void menuKeyDraw(void *packet, int x, int y, short value, int flag);
 void menuIconPut(void *packet, int x, int y, int col, int row);
 void menuStatSprite(void *packet, int x, int y, int width, int height, int u, int v);
 void func_00AA8530(void *packet);
@@ -299,21 +299,21 @@ int textDrawControlCode(int x, int y, int code)
         break;
     case 6:
         advance = 26;
-        func_00AA7750(packet, x + 1, y - 2, 52, 1);
+        menuKeyDraw(packet, x + 1, y - 2, 52, 1);
         if (textLineHeight < TEXT_LINE_HEIGHT_ICON) {
             textLineHeight = TEXT_LINE_HEIGHT_ICON;
         }
         break;
     case 7:
         advance = 26;
-        func_00AA7750(packet, x + 1, y - 2, 53, 1);
+        menuKeyDraw(packet, x + 1, y - 2, 53, 1);
         if (textLineHeight < TEXT_LINE_HEIGHT_ICON) {
             textLineHeight = TEXT_LINE_HEIGHT_ICON;
         }
         break;
     case 8:
         advance = 26;
-        func_00AA7750(packet, x + 1, y - 2, 16, 1);
+        menuKeyDraw(packet, x + 1, y - 2, 16, 1);
         if (textLineHeight < TEXT_LINE_HEIGHT_ICON) {
             textLineHeight = TEXT_LINE_HEIGHT_ICON;
         }

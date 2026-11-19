@@ -970,7 +970,8 @@ char D_0063F7F0[16] = "/copy.ico";
 char D_0063F800[16] = "/delete.ico";
 char D_0063F810[12] = "/dummy.bin";
 const char *xglMcFileNames[9] = { 0, D_0063F7D0, D_0063F7E0, D_0063F7F0, D_0063F800, D_0063F810, 0, 0, 0 };
-unsigned char SaveData[41] = { 0 };
-unsigned char D_0063F869[15] = { 0 };
+/* The save image (0x5160 bytes, the size saveChecksum sums): the settings, the flag window at +0x74 that
+ * xgl_flags.c packs, the thumbnail at +0x174 and the game blocks tu110.c copies in and out. */
+unsigned char SaveData[SAVE_DATA_SIZE] = { 0 };
 
 char xglMcWildcardName[8] = "*";

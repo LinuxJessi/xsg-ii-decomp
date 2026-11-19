@@ -9,6 +9,7 @@
 #include "ov01/tu009.h"
 #include "ov01/tu023.h"
 #include "ov01/tu040.h"
+#include "ov01/tu069.h"
 #include "ov01/tu070.h"
 
 /*
@@ -642,7 +643,6 @@ int dataFileSlotLoad(struct DataFileRecord *file_record, char *path, char **next
 }
 
 extern char *dataBatDatPath;
-extern int batDat;
 
 void dataBatDatLoad(void) {
     ov01CdReadFileSync(dataBatDatPath, &batDat);
@@ -781,7 +781,6 @@ int dataVoiceFilesLoad(struct DataSlot *slot, char *name, int pass)
     return prj_loaded + dataFileSlotLoad(&slot->voice_files.vsf, dataPathBuf, &voice_buffer, pass);
 }
 
-int handleAddressGet(int);
 
 void dataSlotUnload(struct DataSlot *slot) {
     int handle_address;
@@ -962,7 +961,7 @@ struct DataSlot *dataUnitLoad(int id)
     if (slot->head.next_buffer == 0) {
         if ((unsigned int)(id - DATA_BATTLE_ID_COUNT) >= DATA_OTHER_ID_COUNT) {
             heap_size = ((unsigned int)(id - 11) < 5) ? DATA_UNIT_HEAP_LARGE : DATA_UNIT_HEAP_SIZE;
-            file_id = func_00A9B1B8(id);
+            file_id = unitFileIdGet(id);
             if (ov01LookupNonHeap(file_id) != 0) {
                 heap_size -= DATA_UNIT_HEAP_CACHED_PART;
             }
@@ -1002,7 +1001,6 @@ struct DataSlot *dataUnitLoad(int id)
     return slot;
 }
 
-int func_00A9B1B8(int value);
 char *xglCdBuildFileName(char *buffer, unsigned int file_id);
 extern char dataEntryPathBuf[];
 
@@ -1025,7 +1023,7 @@ int dataUnitFileIdLoad(struct DataSlot *slot, int key, int index)
 
     table = (char *)slot;
 
-    file_id = func_00A9B1B8(key);
+    file_id = unitFileIdGet(key);
     stride_offset = index * 0x30;
     pxy_offset = stride_offset + 0x10;
     record = (struct DataFileRecord *)(table + pxy_offset);
@@ -1093,7 +1091,6 @@ int dataMotSetLoad(struct DataSlot *slot, int id, int index)
 }
 
 int func_00A9B2A0(int index);
-int handleAlloc(int flag, int value);
 char *dataVoiceNameGet(int index);
 
 int dataVoiceSetLoad(struct DataSlot *slot, int index) {
@@ -1203,7 +1200,6 @@ struct SlotKeySource {
     short key;
 };
 
-struct SlotKeySource *func_00A9B2A8(int);
 void sefAcquireSlot(int key);
 void sefAcquireHighSlot(int key);
 
@@ -1214,11 +1210,11 @@ int unitEffectSlotAcquire(int key) {
         return 1;
     }
     if (key < DATA_BATTLE_ID_COUNT) {
-        source = func_00A9B2A8(key);
+        source = batUnitRecordGet(key);
         sefAcquireSlot(source->key);
         return 1;
     }
-    source = func_00A9B2A8(key);
+    source = batUnitRecordGet(key);
     sefAcquireHighSlot(source->key);
     return 1;
 }

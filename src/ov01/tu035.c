@@ -7,6 +7,7 @@
 #include "ov01/tu005.h"
 #include "ov01/tu012.h"
 #include "ov01/tu017.h"
+#include "ov01/tu022.h"
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
 #include "ov01/tu035.h"
@@ -99,7 +100,6 @@ enum {
     TGT_STATUS_TIME_UP = 5              /* time limit reached */
 };
 
-unsigned short dataPadRead(int port);
 
 /* bgmPlayTrack track of the victory. */
 #define TGT_VICTORY_BGM 6
@@ -395,7 +395,6 @@ int tgtSelectStatusGet(void)
 int unitSidesDiffer(StatOwner *unitA, StatOwner *unitB);
 void battleEntryClearReset(StatOwner *owner);
 void battleStateClearWords(StatOwner *owner);
-void menuUnitPanelOpen(Ov01Object *unit, int mode);
 int unitStateAdvance(StatOwner *owner);
 int unitEntriesAllMarked(StatOwner *owner);
 
@@ -514,20 +513,12 @@ void tgtSelectUnhighlight(Ov01Object *unit)
 
 void tgtSelectUnhighlight(Ov01Object *unit);
 
-/* The script request func_00A9BC20 queues for a candidate: the unit and a zero word. */
-typedef struct TgtThinkRequest {
-    Ov01Object *unit;
-    int value;
-} TgtThinkRequest;
-
-void func_00A9BC20(int code, TgtThinkRequest *request);
-
 /* Automatic candidate: in mode 0 a unit with the skip status may give up its turn (20 %);
  * otherwise its think request is queued and mode 1 waits; in a later mode the candidate
  * is confirmed (highlight dropped) once no party unit is busy. */
 int tgtSelectAuto(Ov01Object *object)
 {
-    TgtThinkRequest request;
+    UnitScriptPairEvent request;
 
     switch (tgtSelectState.mode) {
     case 0:
@@ -536,8 +527,8 @@ int tgtSelectAuto(Ov01Object *object)
             return 1;
         }
         request.unit = object;
-        request.value = 0;
-        func_00A9BC20(1, &request);
+        request.other = 0;
+        unitScriptPairEventSend(1, &request);
         tgtSelectState.mode = 1;
         break;
     case 1:
@@ -560,11 +551,8 @@ void tgtSelectModeEnd(void)
 /* BattleState.selection value that leaves the menu without a command. */
 #define TGT_SELECTION_BACK 0x15
 
-void dataStateSetMode(u32 value, int flags);
 int dataUnitListInit(void **selected, int side);
 int dataUnitCursorStep(void **out);
-void dataTargetShow(void *unit, unsigned char *targetFlags);
-void battleSelectStep(Ov01Object *object);
 
 /* Manual candidate: opens the target menu on the first call (the unit list of the
  * candidate's side), runs the battle menu and, once a command was chosen, queues it;

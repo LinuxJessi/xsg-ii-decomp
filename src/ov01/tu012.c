@@ -483,7 +483,7 @@ void calcStatResetCha(Ov01Object *object);
 int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
     int effect;
     int amount;
-    int hpKind; /* -50 or -100: the kind argument of func_00AA4DB8 for the hit-point effect */
+    int hpKind; /* -50 or -100: the kind argument of menuPopNumCreate for the hit-point effect */
     int level;
     int magnitude;
     unsigned int value;
@@ -512,7 +512,7 @@ int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
             if (epDelta < 0) {
                 magnitude = -epDelta;
             }
-            func_00AA4DB8(object, magnitude, 4, -50);
+            menuPopNumCreate(object, magnitude, 4, -50);
         }
         effect = calcStatEffectSum(object, 0x200, 0x800);
         if (effect > 0) {
@@ -526,7 +526,7 @@ int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
             if (hpDelta < 0) {
                 magnitude = -hpDelta;
             }
-            func_00AA4DB8(object, magnitude, 2, hpKind);
+            menuPopNumCreate(object, magnitude, 2, hpKind);
         }
         value = object->stats->keyUnsigned;
         if (value - 1 < 10) {
@@ -615,7 +615,6 @@ int unitCmdPlayVoice(Ov01Object *object, Ov01Command *step) {
     return 0;
 }
 
-int func_00A95540(void *object, int a, int b);
 int unitRemove(Ov01Object *object);
 void sefReleaseWaitSlot(int key);
 int handleFree(s16 handle);
@@ -626,7 +625,7 @@ int dataSlotReset(s16 key);
 int unitCmdRelease(Ov01Object *object, Ov01Command *command) {
     switch (command->state) {
     case 0:
-        func_00A95540(object, 320, 8);
+        unitEffectStartMode(object, 320, 8);
         unitFadeOut(object);
         command->state++;
         break;

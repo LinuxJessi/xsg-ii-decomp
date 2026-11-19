@@ -3,6 +3,9 @@
 
 /* Functions of src/ov01/tu008.c that other files call. */
 
+/* The bat.dat buffer (main 0x0061D040) dataBatDatLoad reads the file to; tu042 reads its unit tables. */
+extern int batDat;
+
 struct DataFileRecord {
     int loaded_index;
     char *buffer;

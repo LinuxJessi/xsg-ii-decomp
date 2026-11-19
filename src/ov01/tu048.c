@@ -165,9 +165,6 @@ typedef struct GrVramCopyParams {
 } GrVramCopyParams;
 
 extern void grVramCopy(GrVramCopyParams *params);
-extern void grGpInit(GrPacket *packet);
-void grPacketSend(GrPacket *packet);
-
 typedef struct GrRenderState {
     unsigned char unmodeled_00[0x20];
     unsigned short current_buffer;
@@ -184,8 +181,6 @@ extern int fb[4];
 extern void sceVif1PkAddDirectDataN(XglPacket *packet, const void *data,
                                     int count);
 extern void sceVif1PkTerminate(XglPacket *packet);
-void grPacketSend(GrPacket *packet);
-
 /* One GS register write of grGsRegListSet's list; register_id -1 ends it. */
 typedef struct GrGsRegListEntry {
     int register_id;          /* +0x00 */

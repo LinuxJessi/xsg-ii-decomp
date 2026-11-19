@@ -4,11 +4,16 @@
 #include "common.h"
 #include "ov01/tu005.h"
 #include "ov01/tu055.h"
+#include "ov01/tu062.h"
+
+/* The step icon sprite: 24 by 42 pixels. */
+#define ACT_STEP_ICON_WIDTH 24
+#define ACT_STEP_ICON_HEIGHT 42
 
 typedef struct Ov01Object {
     unsigned char unmodeled_00[0x04];
-    void (*callback_04)(void);
-    void (*callback_08)(void);
+    void (*update)(struct Ov01Object *object);
+    void (*draw)(struct Ov01Object *object);
     unsigned char unmodeled_0c[0x04];
     float x;
     float y;
@@ -19,19 +24,20 @@ typedef struct Ov01Object {
 } Ov01Object;
 
 void *objSlotAlloc(void);
-void func_00AA52D0(void);
-void func_00AA52D8(void);
-extern void *D_00AE0EC0;
+void func_00AA52D0(struct Ov01Object *object);
+/* Draw callback of the object (its +0x08 slot): draws a 24 by 42 stat sprite at the object's position, with the texture entry chosen by actStepCounterValue. */
+void actStepIconDraw(Ov01Object *object);
+extern void *actStepIconObj;
 
-void func_00AA5248(void)
+void actStepIconCreate(void)
 {
     Ov01Object *object;
 
     object = objSlotAlloc();
     if (object != 0) {
-        object->callback_04 = func_00AA52D0;
-        object->callback_08 = func_00AA52D8;
-        D_00AE0EC0 = object;
+        object->update = func_00AA52D0;
+        object->draw = actStepIconDraw;
+        actStepIconObj = object;
         ov01MatrixBlockInit(&object->x);
         object->x = 348.0f;
         object->y = 386.0f;
@@ -42,8 +48,35 @@ void func_00AA5248(void)
     }
 }
 
-void func_00AA52D0(void) {
+void func_00AA52D0(struct Ov01Object *object) {
 
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu055", func_00AA52D8);
+/* Texture table at 0x00ab6548: two words per entry, the u and v of a sprite. */
+extern int actStepIconTexTable[];
+int actStepCounterValue(void);
+void func_00AA8530(GrPacket *packet);
+
+/* Draw callback of the object (its +0x08 slot): draws a 24 by 42 stat sprite at
+ * the object's position, with the texture entry chosen by actStepCounterValue. */
+void actStepIconDraw(Ov01Object *object)
+{
+    GrPacket packet;
+    unsigned int entry;
+    int y;
+    int x;
+    int texU;
+    int texV;
+
+    entry = actStepCounterValue();
+    x = object->x;
+    y = object->y;
+    texU = actStepIconTexTable[entry * 2];
+    texV = *(entry * 2 + 1 + actStepIconTexTable);
+    grGpInit(&packet);
+    func_00AA8530(&packet);
+    grPutSprOpen(&packet);
+    menuStatSprite(&packet, x, y, ACT_STEP_ICON_WIDTH, ACT_STEP_ICON_HEIGHT, texU, texV);
+    grPutSprClose();
+    grPacketSend(&packet);
+}

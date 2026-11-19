@@ -1,16 +1,20 @@
 #include "common.h"
 #include "shared.h"
+#include "main/pad.h"
 #include "main/tu048.h"
+#include "main/tu021.h"
 #include "main/tu124.h"
 #include "ov01/tu005.h"
 #include "ov01/tu008.h"
 #include "main/tu051.h"
 #include "ov01/tu010.h"
+#include "ov01/tu022.h"
 #include "ov01/tu023.h"
 #include "ov01/tu033.h"
 #include "ov01/tu036.h"
 #include "ov01/tu042.h"
 #include "ov01/tu043.h"
+#include "ov01/tu056.h"
 
 
 
@@ -232,8 +236,9 @@ void func_00A98408(void) {
 extern int levelMenuChoice;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in levelMenuChoice, 0 when choiceMenuEntryFlags
- * flags it. */
-int levelMenuPick(void) {
+ * flags it.
+ * battleSelectStep passes unit; it is not used. */
+int levelMenuPick(Ov01Object *unit) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -296,8 +301,9 @@ void func_00A98690(void) {
 extern int pairMenuChoice;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in pairMenuChoice, 0 when choiceMenuEntryFlags
- * flags it. */
-int pairMenuPick(void) {
+ * flags it.
+ * battleSelectStep passes unit; it is not used. */
+int pairMenuPick(Ov01Object *unit) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -361,8 +367,9 @@ void enemyCursorClose(void) {
 extern int pairedMenuChoice;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in pairedMenuChoice, 0 when choiceMenuEntryFlags
- * flags it; the text goes to enemyCursorPages instead of choiceMenuPages, the list the other pickers use. */
-int pairedMenuPick(void) {
+ * flags it; the text goes to enemyCursorPages instead of choiceMenuPages, the list the other pickers use.
+ * battleSelectStep passes unit; it is not used. */
+int pairedMenuPick(Ov01Object *unit) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -425,8 +432,9 @@ void func_00A98BB0(void) {
 extern int tgtIdMenuChoice;
 
 /* Cursor entry of choice slot 0 (choiceMenuGetResult): caches its id in tgtIdMenuChoice, 0 when choiceMenuEntryFlags
- * flags it. */
-int tgtIdMenuPick(void) {
+ * flags it.
+ * battleSelectStep passes unit; it is not used. */
+int tgtIdMenuPick(Ov01Object *unit) {
     int cursor_index;
     s16 entry_id;
     char *result;
@@ -567,8 +575,6 @@ void objCurRemove(void)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu036", battleSelectStep);
-
 /* Menu selections of the battle menu (BattleState.selection) and the commands (CmdListBody.command) they give. */
 enum {
     SELECT_TARGET_LAST = 10,                /* 1..10: key-row entries (tableKeyEntryGet) */
@@ -583,6 +589,397 @@ enum {
     SELECT_TGT_ID,
     SELECT_END = 20
 };
+
+/* unitScriptEventSend kinds of the command panel opening and closing. */
+#define BATTLE_PANEL_OPEN_EVENT 9
+#define BATTLE_PANEL_CLOSE_EVENT 10
+
+/*
+ * One frame of the battle menu of unit: steps the menu mode (key input, command panel, the record menus and their
+ * target cursors) on the pressed pad bits and stores the selection it ends with (0 while the menu runs).
+ */
+void battleSelectStep(Ov01Object *unit)
+{
+    UnitScriptEvent event;
+    Ov01Object *target;
+    TecRecord *tec;
+    int selection;
+    int pad;
+    int index;
+    int choice;
+
+    selection = 0;
+    pad = dataPadRead(1);
+    if (tgtSelectState.selection != 0 && tgtSelectState.selection != DATA_KEY_NONE) {
+        tgtSelectState.selectionKind = tgtSelectState.selection;
+    }
+    switch (tgtSelectState.menuMode) {
+    case BATTLE_MENU_KEYS:
+        if (pad & PAD_CROSS) {
+            tgtSelectState.menuMode = BATTLE_MENU_PANEL_OPEN;
+            tgtSelectState.active = 2;
+            menuWepSpPanelReset();
+            dataTargetHide();
+        } else {
+            selection = dataKeyInputStep(unit);
+            if (selection != DATA_KEY_NONE && selection != 0) {
+                tgtSelectState.menuMode = BATTLE_MENU_KEY_HELD;
+                dataTargetHide();
+            }
+        }
+        break;
+    case BATTLE_MENU_KEY_HELD:
+        selection = dataKeyInputStep(unit);
+        if (selection == DATA_KEY_CANCEL) {
+            tgtSelectState.menuMode = BATTLE_MENU_KEYS;
+            func_00A88E98(unit);
+        }
+        break;
+    case BATTLE_MENU_PANEL_OPEN:
+        menuWepSpPanelShow();
+        dataTargetHide();
+        seVoiceStartDefault(SE_MENU_OPEN);
+        event.unit = unit;
+        unitScriptEventSend(BATTLE_PANEL_OPEN_EVENT, &event);
+        enemyCursorOpen(unit);
+        tgtSelectState.menuMode = BATTLE_MENU_PANEL;
+        /* fall through */
+    case BATTLE_MENU_PANEL:
+        if (pad & PAD_CROSS) {
+            tgtSelectState.active = 1;
+            tgtSelectState.menuMode = BATTLE_MENU_KEYS;
+            tgtSelectState.selectionKind = 0;
+            tgtSelectState.selection = 0;           /* stored again at the end; the original has both stores */
+            menuWepSpPanelHide();
+            seVoiceStartDefault(SE_MENU_CLOSE);
+            event.unit = unit;
+            unitScriptEventSend(BATTLE_PANEL_CLOSE_EVENT, &event);
+            objCurRemove();
+            break;
+        }
+        choice = menuWepSpPanelUpdate(unit);
+        if (choice != DATA_KEY_NONE && choice != 0) {
+            menuWepSpPanelHide();
+            event.unit = unit;
+            unitScriptEventSend(BATTLE_PANEL_CLOSE_EVENT, &event);
+            objCurRemove();
+            switch (choice) {
+            case SELECT_WAIT:
+                tgtSelectState.menuMode = BATTLE_MENU_WAIT;
+                break;
+            case SELECT_LOOKUP:
+                choiceMenuOpenTecs(unit);
+                tgtSelectState.menuMode = BATTLE_MENU_TECS;
+                break;
+            case SELECT_HIT_ACTION:
+                choiceMenuOpenItems(unit);
+                tgtSelectState.menuMode = BATTLE_MENU_ITEMS;
+                break;
+            case SELECT_SNAPSHOT:
+                tgtSelectState.menuMode = BATTLE_MENU_SNAPSHOT;
+                break;
+            case SELECT_LEVEL:
+                choiceMenuOpenLevels(unit);
+                tgtSelectState.menuMode = BATTLE_MENU_LEVELS;
+                break;
+            case SELECT_TGT_ID:
+                choiceMenuOpenTgtIds(unit);
+                tgtSelectState.menuMode = BATTLE_MENU_TGT_IDS;
+                break;
+            case SELECT_PAIR:
+                choiceMenuOpenPairs(unit);
+                tgtSelectState.menuMode = BATTLE_MENU_PAIRS;
+                break;
+            case SELECT_SWAP:
+                menuTargetListCursorReset();
+                menuTargetListShow();
+                tgtSelectState.menuMode = BATTLE_MENU_SWAP;
+                break;
+            case SELECT_LEAVE:
+                tgtSelectState.menuMode = BATTLE_MENU_LEAVE;
+                break;
+            default:
+                tgtSelectState.menuMode = BATTLE_MENU_END;
+                break;
+            }
+        } else {
+            selection = choice;
+            enemyCursorStep(unit);
+        }
+        break;
+    case BATTLE_MENU_END:
+        tgtSelectState.menuMode = BATTLE_MENU_KEYS;
+        selection = SELECT_END;
+        menuWepSpPanelReset();
+        dataObjHide();
+        break;
+    case BATTLE_MENU_WAIT:
+        tgtSelectState.menuMode = BATTLE_MENU_END;
+        selection = SELECT_WAIT;
+        break;
+    case BATTLE_MENU_TECS:
+        /* The pick stays in a local here (it is also calcPairedRecords' code); the other menus test the stored
+         * field, which gives the original register choice. */
+        index = tecMenuPick();
+        tgtSelectState.selectionIndex = index;
+        if (pad & PAD_CIRCLE) {
+            if (index != 0) {
+                seVoiceStartDefault(SE_CONFIRM);
+                func_00A98180();
+                tec = tecRecordGet(battleLookupGet(tgtSelectState.selectionIndex)->tecIndex);
+                dataStateSetMode(-1, tec->flags);
+                tgtSelectState.menuMode = BATTLE_MENU_TEC_TARGET;
+            } else {
+                seVoiceStartDefault(SE_REFUSE);
+            }
+        } else if (pad & PAD_TRIANGLE) {
+            if (index == 0 || calcPairedRecords(unit, index, pairedMenuIds) <= 0) {
+                seVoiceStartDefault(SE_REFUSE);
+                break;
+            }
+            seVoiceStartDefault(SE_CONFIRM);
+            func_00A98180();
+            choiceMenuOpenPaired(unit);
+            tgtSelectState.menuMode = BATTLE_MENU_PAIRED;
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            func_00A98180();
+            tgtSelectState.menuMode = BATTLE_MENU_PANEL_OPEN;
+        }
+        break;
+    case BATTLE_MENU_TEC_TARGET:
+        tec = tecRecordGet(battleLookupGet(tgtSelectState.selectionIndex)->tecIndex);
+        tgtSelectState.targetFlags = &tec->flags;
+        target = tgtUnitGet();
+        dataTargetListInit(&target, unit, tec->flags);
+        dataUnitCursorCycle(&target, tec->flags);
+        tgtUnitSet(target);
+        dataTargetShow(target, &tec->flags);
+        if (pad & PAD_CIRCLE) {
+            selection = SELECT_LOOKUP;
+            seVoiceStartDefault(SE_CONFIRM);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_END;
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            choiceMenuOpenTecs(unit);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_TECS;
+        }
+        break;
+    case BATTLE_MENU_PAIRED:
+        tgtSelectState.selectionIndex = pairedMenuPick(unit);
+        if (pad & PAD_CIRCLE) {
+            if (tgtSelectState.selectionIndex != 0) {
+                seVoiceStartDefault(SE_CONFIRM);
+                enemyCursorClose();
+                tec = tecRecordGet(battleLookupGet(tgtSelectState.selectionIndex)->tecIndex);
+                dataStateSetMode(-1, tec->flags);
+                tgtSelectState.menuMode = BATTLE_MENU_TEC_TARGET;
+            } else {
+                seVoiceStartDefault(SE_REFUSE);
+            }
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            enemyCursorClose();
+            choiceMenuOpenTecs(unit);
+            tgtSelectState.menuMode = BATTLE_MENU_TECS;
+        }
+        break;
+    case BATTLE_MENU_ITEMS:
+        tgtSelectState.selectionIndex = itemMenuPick();
+        if (pad & PAD_CIRCLE) {
+            if (tgtSelectState.selectionIndex != 0) {
+                seVoiceStartDefault(SE_CONFIRM);
+                choiceMenuTextClose();
+                tec = tecRecordGet(hitActionGet(tgtSelectState.selectionIndex)->entry);
+                dataStateSetMode(-1, tec->flags);
+                tgtSelectState.menuMode = BATTLE_MENU_ITEM_TARGET;
+            } else {
+                seVoiceStartDefault(SE_REFUSE);
+            }
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            choiceMenuTextClose();
+            tgtSelectState.menuMode = BATTLE_MENU_PANEL_OPEN;
+        }
+        break;
+    case BATTLE_MENU_ITEM_TARGET:
+        tec = tecRecordGet(hitActionGet(tgtSelectState.selectionIndex)->entry);
+        tgtSelectState.targetFlags = &tec->flags;
+        target = tgtUnitGet();
+        dataTargetListInit(&target, unit, tec->flags);
+        dataUnitCursorCycle(&target, tec->flags);
+        tgtUnitSet(target);
+        dataTargetShow(target, &tec->flags);
+        if (pad & PAD_CIRCLE) {
+            selection = SELECT_HIT_ACTION;
+            seVoiceStartDefault(SE_CONFIRM);
+            dataBoxDecCategory1(tgtSelectState.selectionIndex);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_END;
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            choiceMenuOpenItems(unit);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_ITEMS;
+        }
+        break;
+    case BATTLE_MENU_LEVELS:
+        tgtSelectState.selectionIndex = levelMenuPick(unit);
+        if (pad & PAD_CIRCLE) {
+            if (tgtSelectState.selectionIndex != 0) {
+                seVoiceStartDefault(SE_CONFIRM);
+                func_00A98408();
+                tec = tecRecordGet(calcLevelRecordGet(tgtSelectState.selectionIndex)->tecIndex);
+                dataStateSetMode(-1, tec->flags);
+                tgtSelectState.menuMode = BATTLE_MENU_LEVEL_TARGET;
+            } else {
+                seVoiceStartDefault(SE_REFUSE);
+            }
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            func_00A98408();
+            tgtSelectState.menuMode = BATTLE_MENU_PANEL_OPEN;
+        }
+        break;
+    case BATTLE_MENU_LEVEL_TARGET:
+        tec = tecRecordGet(calcLevelRecordGet(tgtSelectState.selectionIndex)->tecIndex);
+        tgtSelectState.targetFlags = &tec->flags;
+        target = tgtUnitGet();
+        dataTargetListInit(&target, unit, tec->flags);
+        dataUnitCursorCycle(&target, tec->flags);
+        tgtUnitSet(target);
+        dataTargetShow(target, &tec->flags);
+        if (pad & PAD_CIRCLE) {
+            if (battleEffectApplies(unit, calcLevelRecordGet(tgtSelectState.selectionIndex)->tecIndex, target) != 0) {
+                selection = SELECT_LEVEL;
+                seVoiceStartDefault(SE_CONFIRM);
+                dataTargetHide();
+                tgtSelectState.menuMode = BATTLE_MENU_END;
+            } else {
+                seVoiceStartDefault(SE_REFUSE);
+            }
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            choiceMenuOpenLevels(unit);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_LEVELS;
+        }
+        break;
+    case BATTLE_MENU_TGT_IDS:
+        tgtSelectState.selectionIndex = tgtIdMenuPick(unit);
+        if (pad & PAD_CIRCLE) {
+            if (tgtSelectState.selectionIndex != 0) {
+                seVoiceStartDefault(SE_CONFIRM);
+                func_00A98BB0();
+                tec = tecRecordGet(tgtIdRecordGet(tgtSelectState.selectionIndex)->actionIndex);
+                dataStateSetMode(-1, tec->flags);
+                tgtSelectState.menuMode = BATTLE_MENU_TGT_ID_TARGET;
+            } else {
+                seVoiceStartDefault(SE_REFUSE);
+            }
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            func_00A98BB0();
+            tgtSelectState.menuMode = BATTLE_MENU_PANEL_OPEN;
+        }
+        break;
+    case BATTLE_MENU_TGT_ID_TARGET:
+        tec = tecRecordGet(tgtIdRecordGet(tgtSelectState.selectionIndex)->actionIndex);
+        tgtSelectState.targetFlags = &tec->flags;
+        target = tgtUnitGet();
+        dataTargetListInit(&target, unit, tec->flags);
+        dataUnitCursorCycle(&target, tec->flags);
+        tgtUnitSet(target);
+        dataTargetShow(target, &tec->flags);
+        if (pad & PAD_CIRCLE) {
+            selection = SELECT_TGT_ID;
+            seVoiceStartDefault(SE_CONFIRM);
+            unitLevelAdd(unit, -tgtIdRecordGet(tgtSelectState.selectionIndex)->minLevel);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_END;
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            choiceMenuOpenTgtIds(unit);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_TGT_IDS;
+        }
+        break;
+    case BATTLE_MENU_PAIRS:
+        tgtSelectState.selectionIndex = pairMenuPick(unit);
+        if (pad & PAD_CIRCLE) {
+            if (tgtSelectState.selectionIndex != 0) {
+                seVoiceStartDefault(SE_CONFIRM);
+                func_00A98690();
+                tec = tecRecordGet(pairLinkGet(tgtSelectState.selectionIndex)->tecIndex);
+                dataStateSetMode(-1, tec->flags);
+                tgtSelectState.menuMode = BATTLE_MENU_PAIR_TARGET;
+            } else {
+                seVoiceStartDefault(SE_REFUSE);
+            }
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            func_00A98690();
+            tgtSelectState.menuMode = BATTLE_MENU_PANEL_OPEN;
+        }
+        break;
+    case BATTLE_MENU_PAIR_TARGET:
+        tec = tecRecordGet(pairLinkGet(tgtSelectState.selectionIndex)->tecIndex);
+        tgtSelectState.targetFlags = &tec->flags;
+        target = tgtUnitGet();
+        dataTargetListInit(&target, unit, tec->flags);
+        dataUnitCursorCycle(&target, tec->flags);
+        tgtUnitSet(target);
+        dataTargetShow(target, &tec->flags);
+        if (pad & PAD_CIRCLE) {
+            selection = SELECT_PAIR;
+            seVoiceStartDefault(SE_CONFIRM);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_END;
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            choiceMenuOpenPairs(unit);
+            dataTargetHide();
+            tgtSelectState.menuMode = BATTLE_MENU_PAIRS;
+        }
+        break;
+    case BATTLE_MENU_IDLE:
+        break;
+    case BATTLE_MENU_SNAPSHOT:
+        dataStateSetMode(0, 0);
+        dataEntryListInit(unit);
+        dataEntryCursorStep(unit, &tgtSelectState.selectionIndex);
+        dataObjShow();
+        if (pad & PAD_CIRCLE) {
+            selection = SELECT_SNAPSHOT;
+            seVoiceStartDefault(SE_CONFIRM);
+            tgtSelectState.menuMode = BATTLE_MENU_END;
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            tgtSelectState.menuMode = BATTLE_MENU_PANEL_OPEN;
+        }
+        break;
+    case BATTLE_MENU_SWAP:
+        tgtSelectState.selectionIndex = menuTargetListUpdate(unit);
+        if (pad & PAD_CIRCLE) {
+            selection = SELECT_SWAP;
+            seVoiceStartDefault(SE_CONFIRM);
+            menuTargetListHide();
+            tgtSelectState.menuMode = BATTLE_MENU_END;
+        } else if (pad & PAD_CROSS) {
+            seVoiceStartDefault(SE_CANCEL);
+            menuTargetListHide();
+            tgtSelectState.menuMode = BATTLE_MENU_PANEL_OPEN;
+        }
+        break;
+    case BATTLE_MENU_LEAVE:
+        tgtSelectState.menuMode = BATTLE_MENU_END;
+        selection = SELECT_LEAVE;
+        break;
+    }
+    tgtSelectState.selection = selection;
+}
 
 /* The command of the battle menu's selection for the unit: key-row entries 1..10 (entries 1 and 2 are no command
  * for party keys 1..10), the record-based selections with their technique and record index, and the end of the
@@ -690,11 +1087,11 @@ s16 tableKeyEntryGet(StatOwner *owner, int index, void *target) {
 Ov01Object **tgtUnitAdrGet(void)
 {
     switch (tgtSelectState.menuMode) {
-    case 7:
-    case 10:
-    case 12:
-    case 14:
-    case 16:
+    case BATTLE_MENU_TEC_TARGET:
+    case BATTLE_MENU_ITEM_TARGET:
+    case BATTLE_MENU_LEVEL_TARGET:
+    case BATTLE_MENU_TGT_ID_TARGET:
+    case BATTLE_MENU_PAIR_TARGET:
         if (tgtSelectState.targetFlags != 0 && (tgtSelectState.targetFlags[0] & 1)) {
             return &tgtSelectState.targets[1];
         }
@@ -732,7 +1129,7 @@ void thinkNoSet(int value) {
  * monsSetNoGet of tu046 reads it), encounterFlags the cf event bits (XS1 keeps cfEvent in its game loop state;
  * tu039 tests bit 0x20 for the time limit).
  */
-short cfMonsSetNoGet(void) {
+int cfMonsSetNoGet(void) {
     return gameWork.encounterTarget;
 }
 

@@ -6,6 +6,7 @@
 #include "ov01/tu010.h"
 #include "main/tu051.h"
 #include "ov01/tu012.h"
+#include "ov01/tu018.h"
 #include "ov01/tu033.h"
 
 /* A unit has three slot actors (+0x1DC) and a part flag word per slot (+0x7A). */

@@ -88,7 +88,17 @@ EXTRA_PROVIDES = (
 # carries no relocation, so no scaffold table offers the name). Same names as main's C.
 OVERLAY_MAIN_DATA = {
     "ov01": (("D_0069DC7C", 0x0069DC7C, "main .sdata byte (tu110 SaveData.word2E6C source); read by ov01 tu023 battleWorkTablesReset"),
-        ("dataPadRawWords", 0x0063EDB0, "main .data pad state halfwords (xgl_dma.c / tu100.c); read by ov01 tu022 dataPadRead"),),
+        ("dataPadRawWords", 0x0063EDB0, "main .data pad state halfwords (xgl_dma.c / tu100.c); read by ov01 tu022 dataPadRead"),
+        ("textOptionFlags", 0x0063EDAA, "main .data text option halfword; read by ov01 tu072/tu073 debug value pages"),
+        ("D_0063EDAC", 0x0063EDAC, "main .data halfword after textOptionFlags; read by ov01 tu073 debugValLR"),
+        ("ClearEnv", 0x006457C0, "main .data clear environment colour; read by ov01 tu074 ov01SceneRun"),
+        ("gameWork", 0x002B5D90, "main .bss game work record (tu048.h GameWork); read by ov01 code"),
+        ("PadData", 0x0063ED80, "main .data pad record; read by ov01 code"),
+        ("MMathUnitVector", 0x0068C660, "main .rodata unit vector (m_math_191.c); read by ov01 MEf path/Hermite code"),
+        ("MMathUnitMatrix", 0x0068C670, "main .rodata unit matrix (m_math_191.c); read by ov01 tu077 MSeGetActorMatrix"),
+        ("seDefaultVolume", 0x00644F1E, "main .data default SE volume byte (tu071.c seVol); read by ov01 tu071 seObjectVoiceStart"),
+        ("D_0061B2D0", 0x0061B2D0, "main .data matrix at +0x10 of scaffold D_0061B2C0 (no C owner yet); read by ov01 tu084/tu089/tu090"),),
+    "ov02": (("D_0069E094", 0x0069E094, "main signed char (src/main/xgl_render.c); written by ov02 tu001 Title"),),
 }
 CONTRACT_BASIS = ("X1's last patched cc1 and corrected assembler with -g; "
                   "see reports/x2-compiler-calibration.md")
@@ -272,6 +282,17 @@ def data_symbol_lines(unit):
                            for va, name in sorted(wanted.items(), key=lambda item: int(item[0], 16)))
 
 
+def overlay_main_data_lines(unit, taken):
+    """Every reviewed MAIN data name as an absolute symbol of one overlay's link, so overlay C can
+    name main data the way main's C does. Names the overlay already defines or lists win."""
+    if not REVIEWED_DATA.is_file():
+        return ""
+    units = json.loads(REVIEWED_DATA.read_bytes()).get("units", {})
+    taken = set(taken) | set((units.get(unit) or {}).values())
+    rows = sorted((int(va, 16), name) for va, name in (units.get("main") or {}).items() if name not in taken)
+    return "".join(f"{name} = 0x{va:08X}; /* main data (config/symbols/data-names.json) */\n" for va, name in rows)
+
+
 def symbol_line(name, va, size=None):
     tail = "type:func" + (f" size:0x{size:X}" if size else "")
     return f"{name} = 0x{va:08X}; // {tail}\n"
@@ -355,10 +376,12 @@ def build_overlay(unit, image, record, main_names, out):
                  for va, name in main_names.items()}
     table += "".join(symbol_line(name, va) for va, name in sorted(externals.items()))
     out[f"config/symbols/{unit}.txt"] = table + data_symbol_lines(unit)
+    hand_data = OVERLAY_MAIN_DATA.get(unit, ())
     out[f"config/symbols/{unit}.main-symbols.ld"] = (
         "/* MAIN function symbols for overlay links (estimated, tools/tu/x2_scaffold.py) */\n"
         + "".join(f"{name} = 0x{va:08X};\n" for va, name in sorted(externals.items()))
-        + "".join(f"{name} = 0x{va:08X}; /* {note} */\n" for name, va, note in OVERLAY_MAIN_DATA.get(unit, ())))
+        + "".join(f"{name} = 0x{va:08X}; /* {note} */\n" for name, va, note in hand_data)
+        + overlay_main_data_lines(unit, own | set(externals.values()) | {name for name, _, _ in hand_data}))
     families = {".data": [[data_name, h8(text_end), h8(data_end)]], ".rodata": rodata_rows}
     families[".bss"] = [[data_name, h8(bss_start), h8(section_end)]] if bss_start < section_end else []
     out[f"config/objects/{unit}.layout.json"] = json_text(dict(
@@ -371,9 +394,19 @@ def build_overlay(unit, image, record, main_names, out):
 
 # ---------------------------------------------------------------- main
 
+# A second piece of an out-of-scope zone in one data section: (section, first byte, zone stem, piece name, why).
+# A zone is one record with one piece per section, and Sony's libraries need two in .bss (zone audit 2026-11-19).
+ZONE_EXTRA_PIECES = (
+    (".bss", 0x00991000, "sce_sdk_low", "sce_sdk_low_bss2",
+     "crt0's argument block (0x150 bytes) opens .bss at 0x69E400, and the libraries' own .bss follows the game's: "
+     "from 0x991000 (first read by sceSifInitRpc; the scan pool of tu273 ends at 0x990FF0) to the CRI .bss at 0x9968C0"),
+)
+
+
 def data_cuts(tus, sections):
-    """{section: [(start, end, tu record)]}: each TU's piece runs to the next TU's."""
+    """{section: [(start, end, tu record, entry, piece name or None)]}: each TU's piece runs to the next TU's."""
     out = {}
+    extra_names = {}
     for sec in DATA_SECTIONS:
         section = sections[sec]
         lo, hi = section.addr, section.addr + section.size
@@ -385,14 +418,22 @@ def data_cuts(tus, sections):
             # A data object's section is 4-aligned, so an unaligned cut would move every
             # label of the piece. The bytes it gives up go to this TU, the later one.
             rows.append((hx(entry["anchored_start"]) & ~3, tu, entry))
+        by_stem = {re.sub(r"\.s$", "", tu["suggested_name"]["name"]): tu for tu in tus if not tu["in_scope"]}
+        extras = {}
+        for section_name, start, stem, piece_name, _ in ZONE_EXTRA_PIECES:
+            if section_name == sec:
+                extras[start] = piece_name
+                rows.append((start, by_stem[stem], dict(anchored_start=f"0x{start:08x}", anchored_end=None)))
         rows.sort(key=lambda row: (row[0], row[1]["ordinal"]))
         cuts, seen = [], set()
         for start, tu, entry in rows:
             # One piece per TU and per address: a later TU sharing a start owns nothing here.
-            if start in seen or tu["ordinal"] in {c[1]["ordinal"] for c in cuts}:
+            if start in seen or (start not in extras and tu["ordinal"] in {c[1]["ordinal"] for c in cuts
+                                                                             if c[0] not in extras}):
                 continue
             seen.add(start)
             cuts.append((max(start, lo), tu, entry))
+        extra_names[sec] = extras
         if not cuts:
             out[sec] = []
             continue
@@ -400,7 +441,7 @@ def data_cuts(tus, sections):
         pieces = []
         for k, (start, tu, entry) in enumerate(cuts):
             end = cuts[k + 1][0] if k + 1 < len(cuts) else hi
-            pieces.append((start, end, tu, entry))
+            pieces.append((start, end, tu, entry, extras.get(start)))
         out[sec] = pieces
     return out
 
@@ -478,14 +519,21 @@ def build_main(image, record, ov02_tus, ov02_stems, ov02_names, ov02_sizes, out)
     def emit_section(sec):
         section = S[sec]
         order = []
-        for start, end, tu, entry in cuts[sec]:
+        for start, end, tu, entry, extra_piece in cuts[sec]:
             rec = by_ordinal[tu["ordinal"]]
-            stem = rec["name"]
+            stem = extra_piece or rec["name"]
             if sec in (".sbss", ".bss"):
                 lines.append(f"      - {{ type: {SPLAT_TYPE[sec]}, vram: 0x{start:08X}, name: {stem} }}")
             else:
                 lines.append(f"      - [{up(start - section.addr + section.offset)}, {SPLAT_TYPE[sec]}, {stem}]")
             rec["owners"][sec] = "asm"
+            if extra_piece:
+                # The zone's second piece: listed in the section order and on the record, whose own span stays.
+                rec["sections"][sec]["pieces"].append(
+                    dict(c_split=False, end=f"0x{end:08X}", name=stem, start=f"0x{start:08X}"))
+                order.append(dict(c_split=False, end=f"0x{end:08X}", ordinal=tu["ordinal"], piece=stem,
+                                  start=f"0x{start:08X}", tu=rec["name"]))
+                continue
             rec["sections"][sec] = dict(
                 anchored=[entry.get("anchored_start"), entry.get("anchored_end")],
                 bounds=[entry.get("lower_bound_start"), entry.get("upper_bound_end")],

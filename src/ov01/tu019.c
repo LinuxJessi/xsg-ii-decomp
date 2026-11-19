@@ -99,7 +99,7 @@ struct MonsSlot *monsSlotNew(void) {
 /*
  * monsSlotRelease: releases the actor (XenoActorRelease),
  * removes the record from the table (monsSlotRemove) and calls monsSlotReleaseRecord
- * first. Called by func_00A96E38.
+ * first. Called by eventPairEnd.
  */
 void monsSlotRelease(struct MonsSlot *slot) {
     monsSlotReleaseRecord();
@@ -138,8 +138,8 @@ void monsSlotEmptyUpdate(void) {
 
 /*
  * monsActiveSlotsGet: hands back the two-entry table
- * and returns its length, 2. Callers: func_00A946C0, unitTransformBegin,
- * func_00A95810, func_00A96AA8, func_00A96E38, unitBodySetPosDir.
+ * and returns its length, 2. Callers: attackSpecialStep, unitTransformBegin,
+ * func_00A95810, eventPairBegin, eventPairEnd, unitBodySetPosDir.
  */
 int monsActiveSlotsGet(struct MonsSlot ***table) {
     *table = monsActiveSlots;

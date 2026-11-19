@@ -3,18 +3,37 @@
 
 /* Functions of src/ov01/tu042.c that other files call. */
 
+/* The message task record msgPutObject returns (defined in tu042.c). */
+struct MsgObject;
+
+/* Unit record of bat.dat for a unit index, and the unit's name (tu042.c has the numbering). */
+void *batUnitRecordGet(int index);
+char *batUnitNameGet(int index);
+
+/* Shows text at (x, y) in a width x height box for frames frames (0: until its voice is done). */
+struct MsgObject *msgPutObject(int x, int y, char *text, int frames, int width, int height);
+
 /* Effect request block sent to the main-side effect queue (sefStartEffectDefault /
  * sefStartEffectWithValue); the senders clear it first. */
 struct EffectRequest {
     struct XenoActor *head;            /* +0x00: the actor of the owner unit (Ov01Object.unit) */
-    unsigned char unmodeled_04[0x04];
-    struct XenoActor *target;          /* +0x08: the same actor again (tu033 senders) */
-    unsigned char unmodeled_0c[0x1C - 0x0C];
+    struct XenoActor *partner;         /* +0x04: the other unit's actor of a pair technique (attackEffectsStart) */
+    struct XenoActor *target;          /* +0x08: the same actor again (tu033 senders); the hit target's actor */
+    struct XenoActor *parts[4];        /* +0x0C: the child actors of the unit (two each for a pair technique) */
     int key;                           /* +0x1C: (high << 12) | low, see createEffect */
-    unsigned char unmodeled_20[0x2C - 0x20];
-    short mode;                        /* +0x2C: 2 or 3 (func_00A95540) */
-    unsigned char unmodeled_2e[0x38 - 0x2E];
+    unsigned char unmodeled_20[0x24 - 0x20];
+    short hitMode;                     /* +0x24: the hit record's hitMode (attackEffectsStart) */
+    unsigned short hitCode;            /* +0x26: the actionBits byte and the target's row bits (attackEffectsStart) */
+    unsigned char unmodeled_28[0x2C - 0x28];
+    short mode;                        /* +0x2C: 2 or 3 (unitEffectStartMode); the attacker's state
+                                        * (attackEffectsStart) */
+    short targetState;                 /* +0x2E: the target's state (attackEffectsStart) */
+    unsigned char unmodeled_30[0x38 - 0x30];
 };
+
+/* EffectRequest.key (and the keys sefApplyRecordMode and sefLoadEffect take): the effect group above this shift, the
+ * record of the group below it. */
+#define EFFECT_KEY_GROUP_SHIFT 12
 
 /* Unaligned signed word: the record's word sits at a 2-byte offset. */
 typedef signed int UnalignedS32 __attribute__((aligned(1)));
@@ -81,6 +100,19 @@ typedef struct UnitScriptEvent {
 } UnitScriptEvent;
 
 void unitScriptEventSend(int kind, UnitScriptEvent *event);
+
+/* The 16-byte record unitScriptPairEventSend takes: the unit and, for UNIT_SCRIPT_KIND_PAIR, a second unit and two
+ * words that it passes on, with the kind, as a script message (sbThreadEnqueue). */
+typedef struct UnitScriptPairEvent {
+    struct Ov01Object *unit;
+    struct Ov01Object *other;
+    int words[2];
+} UnitScriptPairEvent;
+
+/* The unitScriptPairEventSend kind whose message also carries the second unit's index and the two words. */
+#define UNIT_SCRIPT_KIND_PAIR 2
+
+void unitScriptPairEventSend(int kind, UnitScriptPairEvent *event);
 
 int atkTblFieldGet(int field, AtkTbl *table, int index);
 int atkTblBuild(struct Ov01Object *unit, AtkTbl *table, int rows);
@@ -151,6 +183,17 @@ struct TecRecord {
     short timer;                            /* +0x1E: nonzero selects unitSetTimedPhase */
 };
 
+/* TecRecord.flags target bit 8 (all targets): such a technique leaves the partner object where it is
+ * (eventPairBegin, eventPairEnd) and gives no act stock (unitTryActStock). */
+#define TEC_TARGET_ALL 8
+
+/* TecRecord.gateFlag values with an evidenced role (tu033). */
+#define TEC_GATE_NONE 0             /* calcHitRowGate walks the row gates; the hit adds percent and boost progress */
+#define TEC_GATE_PAIR 1             /* pair technique: the partner (unitPairPartnerFind) acts with the unit */
+#define TEC_GATE_SHOW_CHILD 4       /* shows one of the attacker's children during the attack (eventAttackRun) */
+#define TEC_GATE_TARGET_MODEL 5     /* loads the model of the target record (tgtIdRecordGet) */
+#define TEC_GATE_CURRENT_DRAIN 10   /* takes 100 of the target's current value (attackHitApply) */
+
 /* The record statusRecordGet returns for a status or effect index. */
 typedef struct StatusRecord StatusRecord;
 
@@ -218,7 +261,7 @@ struct TgtIdRecord {
     RecordTexts texts;                      /* +0x00 */
     unsigned char unmodeled_04[0x4];
     short actionIndex;                      /* +0x08: the index tecRecordGet takes */
-    short modelIndex;                       /* +0x0A: the model entry func_00A95CF0 loads (0: none) */
+    short modelIndex;                       /* +0x0A: the model entry actionResourcesLoad loads (0: none) */
     unsigned short modelJoint;              /* +0x0C: the joint that model is attached at (StatBlock.pairSecond[2]) */
     short minLevel;                         /* +0x0E: obj->stats->level below this gives 0 */
 };

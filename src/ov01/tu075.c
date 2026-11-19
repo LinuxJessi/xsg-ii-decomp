@@ -3,41 +3,13 @@
 #include "main/sef.h"
 #include "main/tu197.h"
 #include "ov01/tu075.h"
-/* EE scratchpad RAM. */
-#define SCRATCHPAD_BASE 0x70000000
 /* Default packet capacity used when no custom buffer is supplied. */
 #define MGS_PACKET_DEFAULT_CAPACITY 0x400
 
-/*
- * The GS direct-transfer packet MGsGPInit prepares and MGsGPTerm flushes.
- * By default it targets the scratchpad with a fixed capacity; a caller that
- * supplies its own buffer address also supplies that buffer's capacity
- * (MGsGPInit: movn on both the address and the size against the same
- * condition register).
- *
- *   data      the transfer base address: MGsGPInit's default/custom value,
- *             and the address MGsGPTerm passes to sceVif1PkAddDirectDataN.
- *   capacity  the buffer's byte capacity, set by MGsGPInit; no function in
- *             this TU reads it back.
- *   current   reset to data by both MGsGPInit and MGsGPTerm; the code that
- *             advances it while queuing packet contents is outside this TU.
- *   count     the queued transfer size, passed to sceVif1PkAddDirectDataN
- *             and reset to zero after each flush.
- *   auxCount  reset to zero alongside count by both functions; no further
- *             access is evidenced in this TU.
- */
-typedef struct MGsPacket {
-    void *data;      /* +0x00 */
-    int capacity;    /* +0x04 */
-    void *current;   /* +0x08 */
-    int count;       /* +0x0C */
-    int auxCount;    /* +0x10 */
-} MGsPacket;
+void MMathRandomSeed(int seed);
+int sefResetWorkTables(void);
 
-void MMathRandomSeed();
-int sefResetWorkTables();
-
-/* Scene state reset (proposed ov01SceneStateReset), called by ov01SceneInit:
+/* Scene state reset, called by ov01SceneInit:
  * zeroes ov01LastValue and ov01TickCount, then runs the two init calls. */
 void ov01SceneStateReset(void) {
     extern s16 ov01LastValue;
@@ -58,7 +30,7 @@ void ov01SceneSystemsShutdown(void) {
     sefResetWorkTables();
 }
 
-/* Records value as the last value and counts one tick (proposed ov01LastValueSet). */
+/* Records value as the last value and counts one tick. */
 void ov01LastValueSet(s16 value) {
     extern s16 ov01LastValue;
     extern int ov01TickCount;
@@ -67,14 +39,14 @@ void ov01LastValueSet(s16 value) {
     ov01TickCount += 1;
 }
 
-/* Last value recorded by ov01LastValueSet (proposed ov01LastValueGet). */
+/* Last value recorded by ov01LastValueSet. */
 s16 ov01LastValueGet(void) {
     extern s16 ov01LastValue;
 
     return ov01LastValue;
 }
 
-/* Ticks since the last reset (proposed ov01TickCountGet). */
+/* Ticks since the last reset. */
 int ov01TickCountGet(void) {
     extern int ov01TickCount;
 
@@ -89,23 +61,23 @@ void MGsGPInit(MGsPacket *packet, void *address, int size)
     packet->capacity = (address != 0) ? size : MGS_PACKET_DEFAULT_CAPACITY;
     packet->current = base;
     packet->count = 0;
-    packet->auxCount = 0;
+    packet->regCount = 0;
 }
 
-void sceVif1PkAddCode();
-void sceVif1PkAddDirectDataN();
-void sceVif1PkCloseDirectHLCode();
-void sceVif1PkCnt();
-void sceVif1PkOpenDirectHLCode();
+void sceVif1PkAddCode(void *packet, int code);
+void sceVif1PkAddDirectDataN(void *packet, void *data, int qwc);
+void sceVif1PkCloseDirectHLCode(void *packet);
+void sceVif1PkCnt(void *packet, int count);
+void sceVif1PkOpenDirectHLCode(void *packet, int count);
 void *xglPacketGetCurrent(void);
 
-/* Flushes the packet that MGsGPInit prepares (proposed MGsGPTerm; X1 twin in src/ov01/m_gs.c). */
+/* Flushes the packet that MGsGPInit prepares: sends the queued direct data to VIF1 and resets the packet. */
 void MGsGPTerm(MGsPacket *packet) {
     void *vifPacket;
 
     if (packet->count == 0) {
         packet->current = packet->data;
-        packet->auxCount = 0;
+        packet->regCount = 0;
         return;
     }
     vifPacket = xglPacketGetCurrent();
@@ -116,13 +88,58 @@ void MGsGPTerm(MGsPacket *packet) {
     sceVif1PkCloseDirectHLCode(vifPacket);
     packet->current = packet->data;
     packet->count = 0;
-    packet->auxCount = 0;
+    packet->regCount = 0;
 }
 
 void *memset(void *dest, int value, unsigned int size);
 
-void func_00AAAEC8(void *buffer) {
-    memset(buffer, 0, 0x40);
+void MSeFireEntryClear(void *entry) {
+    memset(entry, 0, 0x40);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu075", MSeFire);
+/* Entry copied into an MSe object by MSeFire (64 bytes, copied as doublewords). */
+typedef struct MSeFireEntry {
+    int type;                       /* +0x00 */
+    long long unmodeled_08[6];      /* +0x08 */
+    int param;                      /* +0x38 */
+    int unmodeled_3C;               /* +0x3C */
+} MSeFireEntry;
+
+/* One object of the MSe pool; slots are 0x800 bytes. */
+typedef struct MSeObject {
+    unsigned short flags;           /* +0x00 */
+    unsigned short unmodeled_02;    /* +0x02 */
+    int param;                      /* +0x04 */
+    unsigned char unmodeled_08[0x18]; /* +0x08 */
+    MSeFireEntry entry;             /* +0x20 */
+} MSeObject;
+
+typedef int (*MSeFireCallback)(MSeObject *object);
+
+extern int MSeFireSpawnCount[];
+extern MSeFireCallback MSeFireCallbacks[];
+extern char MSeFireBufferFullText[];
+extern char MSeFireCreateFailText[];
+MSeObject *MSeObjAlloc(void);
+
+void MSeFire(MSeFireEntry *entry) {
+    MSeObject *object;
+    MSeFireEntry *objectEntry;
+    int remaining;
+
+    remaining = MSeFireSpawnCount[entry->type];
+    while (--remaining != -1) {
+        object = MSeObjAlloc();
+        if (object == 0) {
+            MOutputDebugStringWarn(MSeFireBufferFullText);
+            break;
+        }
+        object->param = entry->param;
+        objectEntry = &object->entry;
+        *objectEntry = *entry;
+        if (MSeFireCallbacks[entry->type](object) == 0) {
+            MSeObjRequestFree(&object->flags);
+            MOutputDebugStringWarn(MSeFireCreateFailText, entry->type);
+        }
+    }
+}

@@ -13,7 +13,7 @@ int cfEventGet(void);
 #define CF_EVENT_SKIP_VICTORY 0x200             /* the battle ends without the victory sequence */
 
 void cfEventSet(int cfEvent);
-short cfMonsSetNoGet(void);
+int cfMonsSetNoGet(void);
 void cfMonsSetNoSet(int monsSetNo);
 int gattaiCodeGet(void);
 struct Ov01Object;
@@ -32,12 +32,13 @@ struct BattleState {
     struct Ov01Object *lastObject;          /* +0x08: the object tgtSelectConfirm picked */
     struct Ov01Object *targets[2];          /* +0x0C: the target slots tgtUnitAdrGet hands out */
     struct Ov01Object *lastPartyUnit;       /* +0x14: the last party unit whose turn ended */
-    int menuMode;                           /* +0x18: 0 until tgtSelectManual opens the target menu, then its mode;
-                                             * 7, 10, 12, 14 and 16 can use targets[1] */
+    int menuMode;                           /* +0x18: BATTLE_MENU_*; BATTLE_MENU_KEYS until tgtSelectManual opens the
+                                             * target menu; the *_TARGET modes can use targets[1] */
     int phase;                              /* +0x1C */
     int selection;                          /* +0x20: battleSelectStep's choice (0 none, TGT_SELECTION_BACK) */
     int selectionKind;                      /* +0x24: set by battleSelectStep; battleSelectionGet takes 1 and 2 */
-    int active;                             /* +0x28 */
+    int active;                             /* +0x28: battleSelectStep sets 2 when the command panel opens, 1 when
+                                             * it is closed */
     int selectionIndex;                     /* +0x2C: the record the menu selection picked (battleSelectionGet) */
     int status;                             /* +0x30: TGT_STATUS_* (tu035) */
     int victoryStarted;                     /* +0x34: set once battleEndCheck has started the victory */
@@ -56,7 +57,35 @@ struct BattleState {
     unsigned char *targetFlags;             /* +0x60: bit 0 of its first byte selects targets[1] */
 };
 
+/* Modes of the battle menu (BattleState.menuMode) that battleSelectStep steps; the *_TARGET modes pick the target of
+ * the chosen record (tgtUnitAdrGet). */
+enum BattleMenuMode {
+    BATTLE_MENU_KEYS,                       /* key input (dataKeyInputStep), PAD_CROSS opens the command panel */
+    BATTLE_MENU_KEY_HELD,                   /* a key was entered: waits for DATA_KEY_CANCEL */
+    BATTLE_MENU_PANEL_OPEN,
+    BATTLE_MENU_PANEL,
+    BATTLE_MENU_END,                        /* a choice was made: back to BATTLE_MENU_KEYS with SELECT_END */
+    BATTLE_MENU_WAIT,
+    BATTLE_MENU_TECS,
+    BATTLE_MENU_TEC_TARGET,
+    BATTLE_MENU_PAIRED,
+    BATTLE_MENU_ITEMS,
+    BATTLE_MENU_ITEM_TARGET,
+    BATTLE_MENU_LEVELS,
+    BATTLE_MENU_LEVEL_TARGET,
+    BATTLE_MENU_TGT_IDS,
+    BATTLE_MENU_TGT_ID_TARGET,
+    BATTLE_MENU_PAIRS,
+    BATTLE_MENU_PAIR_TARGET,
+    BATTLE_MENU_IDLE,                       /* battleSelectStep does nothing in this mode */
+    BATTLE_MENU_SNAPSHOT,
+    BATTLE_MENU_SWAP,
+    BATTLE_MENU_LEAVE
+};
+
 extern BattleState tgtSelectState;
+
+void battleSelectStep(struct Ov01Object *unit);
 
 struct BattleState *battleStateGet(void);
 struct CmdListBody;

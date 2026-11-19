@@ -199,6 +199,8 @@ int vu0SetRotationFromDirection(Vector4 *matrix, Vector4 *to, Vector4 *from)
     return result;
 }
 
+/* Local view: this caller forwards its own aux and value arguments and drops the result, so the
+ * prototype of main/tu190.h (two vectors, float result) does not describe the call. */
 void MMathCalcDist(void *aux, int value);
 
 /* Copies a matrix: rows 0-2 from src, row 3 from the translation vector in aux. */

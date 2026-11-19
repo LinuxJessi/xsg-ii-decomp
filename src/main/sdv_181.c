@@ -7,6 +7,7 @@
 #include "main/TiWindBase.h"
 #include "main/gifState.h"
 #include "main/m_math_188.h"
+#include "main/m_math_193.h"
 #include "main/sdv_181.h"
 #include "main/tu152.h"
 #include "main/sdv_033.h"
@@ -15,6 +16,7 @@
 #include "main/tu192.h"
 #include "main/xgl_2.h"
 #include "quadword.h"
+#include "main/tu190.h"
 
 /* A key sequence: keys holds rows of stride halfwords, the first of each row being the frame
  * the row starts at (see the SDV_KEY_ values below). */
@@ -135,7 +137,7 @@ typedef struct MSeRequest {
 
 /* Clears a 0x40-byte request block: memset(buffer, 0, 0x40) (ov01 tu075.c). Every MSeRequest
  * field the select path below leaves unassigned is therefore 0. */
-void func_00AAAEC8(void *buffer);
+void MSeFireEntryClear(void *buffer);
 void MSeFire(MSeRequest *request);
 
 /* Steps an effect key sequence and fires the MSe effect of the row it reaches, attached to
@@ -172,7 +174,7 @@ void sdvExecEffectSeq(SdvSequence *sequence, int effectId)
     offset.vector.y = keys[row + SDV_EFFECT_OFFSET_Y];
     offset.vector.z = keys[row + SDV_EFFECT_OFFSET_Z];
     offset.vector.w = 1.0f;
-    func_00AAAEC8(&fire);
+    MSeFireEntryClear(&fire);
     Vu0SefScaleVectorXYZNI(&fire.offset, &offset.vector, 0.001f);
     fire.kind = kind;
     fire.effectId = effectId;
@@ -856,7 +858,6 @@ extern float sdvCameraDistance;
 XglCamera *xglStudioGetActiveCamera(void);
 void cameraInit(void);
 /* Distance between two points (tu190.c). */
-float MMathCalcDist(const Vector4 *from, const Vector4 *to);
 void cameraAnglesBetween(Vector4 *angles, const Vector4 *from, const Vector4 *to);
 
 /* Advances one track to frame: applies the key frame reaches (look-at, position, perspective and roll, or the
@@ -2027,7 +2028,6 @@ void sdvInitAlter(SdvAlter *alter)
 extern int sdvAlterSerial;
 f32 sefRandf(void);
 void sefNoiseNextVector(Vector4 *pos);
-Matrix4 *MMathRotateMatrixXYZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 int MMathQuatBetweenVectors(Vector4 *destination, const Vector4 *from, const Vector4 *to);
 
 extern AlignedVector4 sdvAlterForward;    /* (0, 0, -1, 1): the start heading and the quaternions' target axis */
@@ -3713,7 +3713,6 @@ void sefRotationZRows(SefRotationRow *rows, f32 angle) {
     sefWriteRotationZ(rows, angle);
 }
 
-Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 f32 sefRandAngle(void);
 
 /* Writes a random rotation into the first three rows of rows: angle x 0, y and z random, composed by
@@ -5531,7 +5530,7 @@ void sefSetupEmitterPacket(u64 tex0, ResourceSlot *slot, short kind, int emitter
             QuadwordCopyT0(matrix[3], &slot->position);
         }
         if (hasRotation) {
-            MMathRotateMatrixXYZ(&matrix, (const Matrix4 *) &matrix, &slot->rotation);
+            MMathRotateMatrixXYZ(&matrix, &matrix, &slot->rotation);
         }
         if (hasScale) {
             MMathScaleMatrix(&matrix, &matrix, &slot->scale);
@@ -5697,7 +5696,7 @@ void sefDrawEmitter(ResourceSlot *slot, int emitterIndex) {
             angles.x = angles.z = (entry->drift.age + entry->drift.age) * 0.017453292f;
             angles.y = entry->drift.age * 1.5f * 0.017453292f;
             /* Also leaves the turned rows in vf1..vf4 (its last sqc2 store them, m_math_193.c). */
-            MMathRotateMatrixYXZ(&matrix, (const Matrix4 *) &entry->matrix, &angles);
+            MMathRotateMatrixYXZ(&matrix, &entry->matrix, &angles);
         } else {
             SefLoadMatrixRows(&entry->matrix);
         }

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/tu190.h"
 
 /* Distance from first to second (MMathCalcDist in X1). The original reserves a 16-byte frame
  * that no instruction touches: without the unused `difference` local (the vector VU0 keeps in

@@ -29,6 +29,7 @@ int choiceMenuOpen(unsigned int index, int x, int y, int width, int height, int 
 void choiceMenuSetActive(int index, int enable);
 TextEntry *textEntryAlloc(int x, int y, int width, int height, signed char style_index, unsigned char **pages);
 void objRemove(TextEntry *entry);
+unsigned char textEntryPlayVoice(TextEntry *entry);
 void choiceMenuClose(int index);
 void choiceMenuResetAll(void);
 void textEntryPoolReset(void);

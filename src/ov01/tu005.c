@@ -46,8 +46,6 @@ struct FifoRing {
     int count;
 };
 
-void ov01SlotRelease(void *slot);
-
 /* Releases the data object (dataObjRelease): its only caller is dataObjRemove (tu022), which clears dataObject
  * after the call. Byte-identical to objSlotRelease (same body, same callee); the caller tells them apart. */
 void dataObjRelease(void *object) {
@@ -366,12 +364,15 @@ void *memset(void *s, int c, unsigned int n);
 
 /* ov01MatrixBlockInit: zeroes the 0x80-byte matrix block, then sets its last row and (0,3) to 1.0; the reason
  * for that pattern is not shown in this TU. */
-void ov01MatrixBlockInit(struct MatrixBlock *mat)
+void ov01MatrixBlockInit(void *mat)
 {
-    memset(mat, 0, sizeof(*mat));
-    mat->m[0][3] = 1.0f;
-    mat->m[3][3] = 1.0f;
-    mat->m[3][2] = 1.0f;
-    mat->m[3][1] = 1.0f;
-    mat->m[3][0] = 1.0f;
+    struct MatrixBlock *block;
+
+    block = mat;
+    memset(block, 0, sizeof(*block));
+    block->m[0][3] = 1.0f;
+    block->m[3][3] = 1.0f;
+    block->m[3][2] = 1.0f;
+    block->m[3][1] = 1.0f;
+    block->m[3][0] = 1.0f;
 }

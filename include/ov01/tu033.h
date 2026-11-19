@@ -36,10 +36,12 @@ enum {
     CMD_KIND_THINK_END = 9              /* unitCmdUnbind: the end of a unit's think step (thinkSendEnd) */
 };
 
+void cmdListPtrGet(void **fifo_out, void **list_out);
 void cmdListSet(void *unit, CmdListBody *command);
 
 /* The unit effects the object starts or stops by effect key (keyHigh, keyLow); the object is the unit of ov01/tu012.h. */
 void unitEffectStart(struct Ov01Object *object, int keyHigh, int keyLow);
+void unitEffectStartMode(struct Ov01Object *object, int keyHigh, int keyLow);
 void func_00A955C8(struct Ov01Object *object);
 void func_00A95608(struct Ov01Object *object);
 void unitStatusAuraUpdate(struct Ov01Object *object);

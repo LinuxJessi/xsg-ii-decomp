@@ -1,5 +1,6 @@
 #include "common.h"
 #include "shared.h"
+#include "main/m_math_193.h"
 
 /* Read by the null-default lines at the top of every rotation block below. Those lines stay in
  * the asm (match.py's admitted null-default idiom): `if (matrix == 0) matrix = &MMathUnitMatrix;`
@@ -9,7 +10,7 @@ extern const Matrix4 MMathUnitMatrix;
 /* The rotation helpers rotate matrix (MMathUnitMatrix when null) about the axes in their name,
  * applied in name order, and store the result in out. vcallms 0xE8 and 0x20 leave the cosine and
  * sine of vf4x in vf1x; the vector forms take the x, y and z angles from angles. */
-Matrix4 *MMathRotateMatrixX(Matrix4 *out, const Matrix4 *matrix, float angle)
+Matrix4 *MMathRotateMatrixX(Matrix4 *out, Matrix4 *matrix, float angle)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"
@@ -38,7 +39,7 @@ Matrix4 *MMathRotateMatrixX(Matrix4 *out, const Matrix4 *matrix, float angle)
     return out;
 }
 
-Matrix4 *MMathRotateMatrixY(Matrix4 *out, const Matrix4 *matrix, float angle)
+Matrix4 *MMathRotateMatrixY(Matrix4 *out, Matrix4 *matrix, float angle)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"
@@ -67,7 +68,7 @@ Matrix4 *MMathRotateMatrixY(Matrix4 *out, const Matrix4 *matrix, float angle)
     return out;
 }
 
-Matrix4 *MMathRotateMatrixZ(Matrix4 *out, const Matrix4 *matrix, float angle)
+Matrix4 *MMathRotateMatrixZ(Matrix4 *out, Matrix4 *matrix, float angle)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"
@@ -96,7 +97,7 @@ Matrix4 *MMathRotateMatrixZ(Matrix4 *out, const Matrix4 *matrix, float angle)
     return out;
 }
 
-Matrix4 *MMathRotateMatrixXY(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles)
+Matrix4 *MMathRotateMatrixXY(Matrix4 *out, Matrix4 *matrix, const Vector4 *angles)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"
@@ -135,7 +136,7 @@ Matrix4 *MMathRotateMatrixXY(Matrix4 *out, const Matrix4 *matrix, const Vector4 
     return out;
 }
 
-Matrix4 *MMathRotateMatrixYX(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles)
+Matrix4 *MMathRotateMatrixYX(Matrix4 *out, Matrix4 *matrix, const Vector4 *angles)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"
@@ -174,7 +175,7 @@ Matrix4 *MMathRotateMatrixYX(Matrix4 *out, const Matrix4 *matrix, const Vector4 
     return out;
 }
 
-Matrix4 *MMathRotateMatrixXYZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles)
+Matrix4 *MMathRotateMatrixXYZ(Matrix4 *out, Matrix4 *matrix, const Vector4 *angles)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"
@@ -223,7 +224,7 @@ Matrix4 *MMathRotateMatrixXYZ(Matrix4 *out, const Matrix4 *matrix, const Vector4
     return out;
 }
 
-Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles)
+Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, Matrix4 *matrix, const Vector4 *angles)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"
@@ -272,7 +273,7 @@ Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4
     return out;
 }
 
-Matrix4 *MMathRotateMatrixZXY(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles)
+Matrix4 *MMathRotateMatrixZXY(Matrix4 *out, Matrix4 *matrix, const Vector4 *angles)
 {
     __asm__ __volatile__(
         "lui $8, %%hi(MMathUnitMatrix)\n\t"
