@@ -658,7 +658,8 @@ void battleSlotFlagClear(int key, int flag)
     slotFlagClear(unit, flag);
 }
 
-/* battleUnitHasEffectCode: true when the unit in slot `key` has effect code `code` (unitHasEffectCode). unitFileIdGet calls it with code 0x3F. */
+/* battleUnitHasEffectCode: true when the unit in slot `key` has effect code `code` (unitHasEffectCode).
+ * unitFileIdGet calls it with code 0x3F. */
 int battleUnitHasEffectCode(int key, int code)
 {
     StatOwner *unit = battleContextBind(key, 0);
