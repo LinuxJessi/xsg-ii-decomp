@@ -8,6 +8,9 @@
 #include "main/gifState.h"
 #include "main/m_math_188.h"
 #include "main/m_math_193.h"
+#include "main/m_math_195.h"
+#include "main/tu194.h"
+#include "main/tu196.h"
 #include "main/sdv_181.h"
 #include "main/tu152.h"
 #include "main/sdv_033.h"
@@ -1109,9 +1112,6 @@ int sdvScheduleCamera(SdvCameraSchedule *schedule, int frame)
 }
 
 Matrix4 *MMathMulMatrix(Matrix4 *out, const Matrix4 *rhs, const Matrix4 *lhs);
-Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
-Matrix4 *MMathScaleMatrixRotS(Matrix4 *out, Matrix4 *matrix, float scale);
-int MMathRotTransPersClip(Vector4 *destination, const XglCamera *camera, Matrix4 *matrix, const Vector4 *point);
 void sefGetCameraPos(Matrix4 *dest);
 /* (0, 0, 0, 1): the point sdvTransOffset projects and the offset sdvExecSpecial asks sefGetPoint for. */
 extern AlignedVector4 sdvOriginPoint;
@@ -2028,7 +2028,6 @@ void sdvInitAlter(SdvAlter *alter)
 extern int sdvAlterSerial;
 f32 sefRandf(void);
 void sefNoiseNextVector(Vector4 *pos);
-int MMathQuatBetweenVectors(Vector4 *destination, const Vector4 *from, const Vector4 *to);
 
 extern AlignedVector4 sdvAlterForward;    /* (0, 0, -1, 1): the start heading and the quaternions' target axis */
 extern AlignedVector4 sdvAlterStartDelta; /* (0, 0, -1, 1): the start lastDelta */
@@ -2505,7 +2504,6 @@ void *xglPacketReserve(int size);
 void func_0012B6E0(XglPacket *packet, int vuAddress, int unpackCommand, int cycleLength, int writeLength);
 void func_0012BCE8(XglPacket *packet, const void *data, int count);
 void func_0012B770(XglPacket *packet);
-Vector4 *MMathQuatToMatrix(Vector4 *destination, const Vector4 *source);
 void sefPacketFlush(void);
 
 /* Copies one float vector as a quadword through t0: the inline form of svCopyVector (sv_get_image_item.c),
@@ -5501,7 +5499,6 @@ void sefRunEmitters(ResourceSlot *target) {
     }
 }
 
-Matrix4 *MMathScaleMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *scale);
 /* Nonzero when x, y or z has any bit set: the original tests the raw words (x and y as one doubleword, z as a
  * word), so -0.0f counts as set. */
 static inline short sefVectorXYZSet(const Vector4 *vector) {
