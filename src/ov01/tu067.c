@@ -4,37 +4,29 @@
 #include "common.h"
 #include "ov01/tu001.h"
 #include "ov01/tu067.h"
+#include "ov01/tu068.h"
 
-typedef struct ScreenFlashTask ScreenFlashTask;
+/* Frames the flash stays on screen, and the grey level (R = G = B) of the screen fill. */
+#define SCREEN_FLASH_FRAMES 0xA
+#define SCREEN_GREY 0xC0
 
-/* Task returned by ov01TaskClaim. Only the fields these three functions touch are named.
- * +0x04 is called with the task on each update pass (update); +0x08 is the draw callback.
- * The first and second handler slots of the tu001 record have the same offsets. */
-struct ScreenFlashTask {
-    unsigned char unmodeled_00[4];
-    void (*update)(ScreenFlashTask *task);
-    void (*draw)(void);
-    int framesLeft;                             /* +0x0C, set to 10 when started */
-};
-
-void screenFlashTick(ScreenFlashTask *task);
-void grPacketScreenFill(int, int, int);
+void screenFlashTick(ScreenTask *task);
 
 /* Starts a 10-frame grey screen flash. */
 void screenFlashStart(void)
 {
-    ScreenFlashTask *task;
+    ScreenTask *task;
 
     task = ov01TaskClaim();
     if (task != 0) {
         task->update = screenFlashTick;
         task->draw = screenFillGray;
-        task->framesLeft = 0xA;
+        task->framesLeft = SCREEN_FLASH_FRAMES;
     }
 }
 
 /* Per-frame tick: counts framesLeft down to zero, then removes the task. */
-void screenFlashTick(ScreenFlashTask *task)
+void screenFlashTick(ScreenTask *task)
 {
     if (task->framesLeft > 0) {
         task->framesLeft = task->framesLeft - 1;
@@ -43,8 +35,8 @@ void screenFlashTick(ScreenFlashTask *task)
     ov01TaskRelease(task);
 }
 
-/* Draw callback of the flash: a grey (0xC0) screen fill. */
+/* Draw callback of the flash: a grey (SCREEN_GREY) screen fill. */
 void screenFillGray(void)
 {
-    grPacketScreenFill(0xC0, 0xC0, 0xC0);
+    grPacketScreenFill(SCREEN_GREY, SCREEN_GREY, SCREEN_GREY);
 }

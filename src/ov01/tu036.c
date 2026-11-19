@@ -1129,7 +1129,7 @@ void thinkNoSet(int value) {
  * monsSetNoGet of tu046 reads it), encounterFlags the cf event bits (XS1 keeps cfEvent in its game loop state;
  * tu039 tests bit 0x20 for the time limit).
  */
-short cfMonsSetNoGet(void) {
+int cfMonsSetNoGet(void) {
     return gameWork.encounterTarget;
 }
 

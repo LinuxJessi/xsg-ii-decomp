@@ -3,33 +3,78 @@
  */
 #include "common.h"
 #include "ov01/tu059.h"
+#include "ov01/tu012.h"
+#include "ov01/tu058.h"
 
-/*
- * menuUnitPanelOpen (proposed menuUnitPanelOpen, arguments unit and kind): opens the
- * unit status panel menuUnitPanel (ov01/tu058) for the unit. For kind 1 the first
- * call creates a stat panel with menuStatPanelNew(0) and marks the word at +0xC
- * as 2. When the panel's kind at +0x98 differs, the panel takes the unit as owner,
- * state 1 (slide in) and origin (-64, 80), and disarms its timer.
- */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu059", menuUnitPanelOpen);
+/* Kinds and statPanelState values of the unit status panel; its states are in ov01/tu058.h. */
+#define UNIT_PANEL_KIND_STAT 1
+#define STAT_PANEL_PENDING 1
+#define STAT_PANEL_SHOWN 2
 
-/* The unit status panel record of ov01/tu058 (UnitPanel); only the timer halfword is named here. */
-typedef struct UnitPanel {
-    unsigned char unmodeled_00[0x9C];
-    short timerArmed;   /* +0x9C: 1 while the auto-close timer runs (step of ov01/tu058) */
-} UnitPanel;
+/* The step counter record of ov01/tu023 (ActStepCounter); only the word at +0xC is named here. */
+struct ActStepCounter {
+    unsigned char unmodeled_00[0x0C];
+    int statPanelState;               /* +0x0C: for kind 1 the stat panel is created while this equals 1, then it holds 2 */
+};
+
+struct ActStepCounter *actStepCounterGet(void);
+void menuStatPanelNew(int kind);
 
 extern UnitPanel *menuUnitPanel;
 
-/* Proposed menuUnitPanelArmTimer: starts the auto-close count of the unit status panel. */
+/*
+ * menuUnitPanelOpen: opens the unit status panel menuUnitPanel (ov01/tu058) for the
+ * unit, arguments unit and kind. For kind 1 the first call creates a stat panel
+ * with menuStatPanelNew(0) and marks the word at +0xC as 2. When the panel's kind
+ * at +0x98 differs, the panel takes the unit as owner, state 1 (slide in), origin
+ * (-64, 80) and target (16, 80), and disarms its timer.
+ */
+void menuUnitPanelOpen(Ov01Object *unit, int kind)
+{
+    UnitPanel *panel;
+
+    panel = menuUnitPanel;
+    if (kind == UNIT_PANEL_KIND_STAT) {
+        if (actStepCounterGet()->statPanelState == STAT_PANEL_PENDING) {
+            menuStatPanelNew(0);
+            actStepCounterGet()->statPanelState = STAT_PANEL_SHOWN;
+        }
+    }
+    if (panel->kind != kind) {
+        panel->owner = unit;
+        panel->state = UNIT_PANEL_SLIDING_IN;
+        panel->kind = kind;
+        panel->origin[0] = -64.0f;
+        panel->target[0] = 16.0f;
+        panel->timers = 0;
+        panel->origin[1] = 80.0f;
+        panel->target[1] = 80.0f;
+    }
+}
+
+/* menuUnitPanelArmTimer: starts the auto-close count of the unit status panel. */
 void menuUnitPanelArmTimer(void) {
     menuUnitPanel->timerArmed = 1;
 }
 
 /*
- * menuUnitPanelBind (proposed menuUnitPanelBind, argument unit): sets the panel's
- * owner to the unit, its state to 0 and its kind to the unit body's kind byte
- * at +0x70, sets the timer at +0x9E to 16 with timerArmed 0 (the count is not
- * running), and places the origin at (16, 80).
+ * menuUnitPanelBind: binds the panel to the unit, argument unit. It sets the owner
+ * to the unit, the state to 0 and the kind to the unit body's kind byte at +0x70,
+ * sets the timer at +0x9E to 16 with timerArmed 0 (the count is not running), and
+ * places the origin at (16, 80).
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu059", menuUnitPanelBind);
+void menuUnitPanelBind(Ov01Object *unit)
+{
+    UnitPanel *panel;
+    float originX = 16.0f;
+    float originY = 80.0f;
+
+    panel = menuUnitPanel;
+    panel->owner = unit;
+    panel->state = UNIT_PANEL_IDLE;
+    panel->kind = unit->stats->state70;
+    panel->origin[1] = originY;
+    panel->timer = UNIT_PANEL_CLOSE_TIME;
+    panel->origin[0] = originX;
+    panel->timerArmed = 0;
+}

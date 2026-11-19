@@ -8,6 +8,6 @@ void arrowRemove(void);
 struct Ov01Object;
 
 /* Makes the object that shows amount at the unit (tu012 passes HP and EP magnitudes with their kind). */
-void func_00AA4DB8(struct Ov01Object *object, int amount, int kind, int sign);
+void menuPopNumCreate(struct Ov01Object *object, int amount, int kind, int sign);
 
 #endif /* INCLUDE_OV01_TU054_H */

@@ -70,7 +70,7 @@
    },
    "evidence": "tools/tu/x2_scaffold.py",
    "all_functions_accepted": false,
-   "accepted_functions": "0/98"
+   "accepted_functions": "0/101"
   },
   "cri_sofdec": {
    "id": "main/tu002",
@@ -94,7 +94,7 @@
    },
    "evidence": "tools/tu/x2_scaffold.py",
    "all_functions_accepted": false,
-   "accepted_functions": "0/2781"
+   "accepted_functions": "0/2778"
   },
   "control_entry": {
    "id": "main/tu003",
@@ -491,8 +491,7 @@
    ],
    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
    "owners": {
-    ".text": "asm",
-    ".data": "asm"
+    ".text": "asm"
    },
    "evidence": "reports/x2-compiler-calibration.md",
    "all_functions_accepted": false,

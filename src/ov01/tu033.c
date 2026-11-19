@@ -574,9 +574,9 @@ int func_00A93288(struct AttackCommand *owner) {
     return unitEffectKeyFree(owner->attacker, status, entry->extent) != 0;
 }
 
-/* func_00A932E0: forwards a hit's target, damage and hit mode to func_00AA4DB8 (fourth argument 0). */
+/* func_00A932E0: forwards a hit's target, damage and hit mode to menuPopNumCreate (fourth argument 0). */
 void func_00A932E0(struct AttackCommand *command, struct HitRecord *hit) {
-    func_00AA4DB8(hit->target, hit->damage, hit->hitMode.word, 0);
+    menuPopNumCreate(hit->target, hit->damage, hit->hitMode.word, 0);
 }
 
 /* eventQueueNext: the record at the read cursor, or 0 when the queue is drained. */
@@ -891,7 +891,7 @@ int eventAttackRun(EventQueueEntry *entry)
             func_00A95608(eventQueueFindKind4(i)->data.attack.attacker);
         }
         command = &eventQueueFindKind4(0)->data.attack;
-        func_00AA91B8(command->attacker, command->actionIdx);
+        unitPlayActionSound(command->attacker, command->actionIdx);
         unitsMarkUninvolved(actions, hits);
         if (tecRecordGet(command->actionIdx)->gateFlag == TEC_GATE_SHOW_CHILD) {
             unitSlotResume(command->attacker, TEC_GATE_CHILD);
@@ -1263,7 +1263,7 @@ int attackHitsShow(EventQueueEntry *entry, struct AttackCommand *command)
                     if (tgtUnitGet() == hit->target) {
                         menuUnitPanelOpen(hit->target, hit->stepState);
                         menuTimedSeqStart(hit->target);
-                        func_00AA76F8(actStepCounterGet()->stepState);
+                        menuStatPanelOpen(actStepCounterGet()->stepState);
                     }
                     switch (hit->stepState) {
                     case 1:
@@ -2391,7 +2391,7 @@ int battleResolveStatus(void) {
 #define STAT2_CURRENT_DRAIN 0x4000  /* row 2: loses half of currentMax */
 #define STATUS_EP_DRAIN 5
 #define STATUS_EP_REGEN 2
-/* func_00AA4DB8 kinds (as calcHpDmg numbers the hit kinds) and the flag of an amount from a status; the amounts
+/* menuPopNumCreate kinds (as calcHpDmg numbers the hit kinds) and the flag of an amount from a status; the amounts
  * of one step are shown STATUS_AMOUNT_DELAY frames apart. */
 #define AMOUNT_HP_LOSS 1
 #define AMOUNT_HP_GAIN 2
@@ -2403,7 +2403,7 @@ int battleResolveStatus(void) {
 /*
  * Applies the end-of-step statuses of unit: HP from the hit damage (a HIT_KIND_PLAIN hit with STAT2_HIT_REPEAT) and
  * the HP drains, EP from STAT1_EP_DRAIN and STAT3_EP_REGEN, current from the current drains. Each nonzero change is
- * queued as the unit's reaction, applied and shown (func_00AA4DB8). Returns 1 and clears the unit's source when
+ * queued as the unit's reaction, applied and shown (menuPopNumCreate). Returns 1 and clears the unit's source when
  * anything changed. commandKind is not used.
  */
 int unitStepStatusApply(Ov01Object *unit, int commandKind, int hitDamage, int hitMode)
@@ -2457,7 +2457,7 @@ int unitStepStatusApply(Ov01Object *unit, int commandKind, int hitDamage, int hi
         delta = -hp;
         calcHpAdjust(unit, delta);
         kind = hp > 0 ? AMOUNT_HP_LOSS : AMOUNT_HP_GAIN;
-        func_00AA4DB8(unit, hp < 0 ? delta : hp, kind | AMOUNT_STATUS, delay);
+        menuPopNumCreate(unit, hp < 0 ? delta : hp, kind | AMOUNT_STATUS, delay);
         delay += STATUS_AMOUNT_DELAY;
     }
     if (ep != 0) {
@@ -2474,7 +2474,7 @@ int unitStepStatusApply(Ov01Object *unit, int commandKind, int hitDamage, int hi
         delta = -ep;
         calcEpAdjust(unit, delta);
         kind = ep > 0 ? AMOUNT_EP_LOSS : AMOUNT_EP_GAIN;
-        func_00AA4DB8(unit, ep < 0 ? delta : ep, kind | AMOUNT_STATUS, delay);
+        menuPopNumCreate(unit, ep < 0 ? delta : ep, kind | AMOUNT_STATUS, delay);
         delay += STATUS_AMOUNT_DELAY;
     }
     if (current != 0) {
@@ -2491,7 +2491,7 @@ int unitStepStatusApply(Ov01Object *unit, int commandKind, int hitDamage, int hi
         delta = -current;
         unitCurrentAdd(unit, delta);
         kind = current > 0 ? AMOUNT_EP_LOSS : AMOUNT_EP_GAIN;
-        func_00AA4DB8(unit, current < 0 ? delta : current, kind | AMOUNT_STATUS, delay);
+        menuPopNumCreate(unit, current < 0 ? delta : current, kind | AMOUNT_STATUS, delay);
     }
     if (hp != 0 || ep != 0 || current != 0) {
         unit->stats->source = 0;
@@ -2533,7 +2533,7 @@ int battleStatusQueueWait(void)
 
 /* Brings back every down side-2 unit with a revive status: clears the status, queues
  * UNIT_CMD_PHASE_2B_WAIT, restores maxHp (or half of it), clears UNIT_FLAG_DOWN and shows the amount
- * (func_00AA4DB8 with flags 0x802). Returns 1. */
+ * (menuPopNumCreate with flags 0x802). Returns 1. */
 int unitsReviveDown(void)
 {
     Ov01Command command;
@@ -2571,7 +2571,7 @@ int unitsReviveDown(void)
             if (amount >= 0) {
                 shown = amount;
             }
-            func_00AA4DB8(unit, shown, 0x802, 0);
+            menuPopNumCreate(unit, shown, 0x802, 0);
         }
     }
     return 1;

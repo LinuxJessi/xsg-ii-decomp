@@ -5,6 +5,8 @@
 
 struct Ov01Object;
 
+/* Binds the unit to the timed sequence (or arms its tick, below MENU_TIMED_SEQ_MIN_HITS hits); called by dataTargetShow (tu022). */
+void menuTimedSeqShow(struct Ov01Object *unit);
 void menuTimedSeqArmTick(void);
 void menuTimedSeqNew(void);
 void menuTimedSeqStart(struct Ov01Object *unit);

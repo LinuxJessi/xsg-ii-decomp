@@ -5904,31 +5904,31 @@
      1
     ],
     [
-     "func_00AA4DB8",
+     "menuPopNumCreate",
      11161016,
      360,
      1
     ],
     [
-     "func_00AA4F20",
+     "menuPopNumUpdate",
      11161376,
      172,
      1
     ],
     [
-     "func_00AA4FD0",
+     "menuPopNumDraw",
      11161552,
      124,
      1
     ],
     [
-     "func_00AA5050",
+     "menuPopNumDrawDigits",
      11161680,
      504,
      1
     ],
     [
-     "func_00AA5248",
+     "actStepIconCreate",
      11162184,
      136,
      1
@@ -5940,7 +5940,7 @@
      1
     ],
     [
-     "func_00AA52D8",
+     "actStepIconDraw",
      11162328,
      184,
      1
@@ -6054,7 +6054,7 @@
      1
     ],
     [
-     "func_00AA60B8",
+     "menuRollPercentDraw",
      11165880,
      140,
      1
@@ -6168,7 +6168,7 @@
      1
     ],
     [
-     "func_00AA6FE0",
+     "menuTimedSeqShow",
      11169760,
      264,
      1
@@ -6234,19 +6234,19 @@
      1
     ],
     [
-     "func_00AA76F8",
+     "menuStatPanelOpen",
      11171576,
      88,
      1
     ],
     [
-     "func_00AA7750",
+     "menuKeyDraw",
      11171664,
      32,
      1
     ],
     [
-     "func_00AA7770",
+     "menuKeyCellDraw",
      11171696,
      400,
      1
@@ -6330,7 +6330,7 @@
      1
     ],
     [
-     "func_00AA8200",
+     "menuTexCellIndex",
      11174400,
      140,
      1
@@ -6354,25 +6354,25 @@
      1
     ],
     [
-     "func_00AA83D0",
+     "menuTexStateAltByKey",
      11174864,
      60,
      1
     ],
     [
-     "func_00AA8410",
+     "menuSmallCellTexState",
      11174928,
      28,
      1
     ],
     [
-     "func_00AA8430",
+     "menuNumTexState",
      11174960,
      28,
      1
     ],
     [
-     "func_00AA8450",
+     "menuNumStyle1TexState",
      11174992,
      28,
      1
@@ -6600,7 +6600,7 @@
      1
     ],
     [
-     "func_00AA91B8",
+     "unitPlayActionSound",
      11178424,
      296,
      1
@@ -6828,7 +6828,7 @@
      1
     ],
     [
-     "func_00AAA288",
+     "configBattleSlotsRefresh",
      11182728,
      48,
      1
@@ -6912,7 +6912,7 @@
      1
     ],
     [
-     "func_00AAAA50",
+     "configCancelPressed",
      11184720,
      16,
      1
@@ -6990,7 +6990,7 @@
      1
     ],
     [
-     "func_00AAAEC8",
+     "MSeFireEntryClear",
      11185864,
      28,
      1
@@ -7020,19 +7020,19 @@
      1
     ],
     [
-     "func_00AAB0E0",
+     "MEfDrawFrameAxes",
      11186400,
      648,
      1
     ],
     [
-     "func_00AAB368",
+     "MEfDrawPointCross",
      11187048,
      604,
      1
     ],
     [
-     "func_00AAB5C8",
+     "MEfDrawPathEndMarker",
      11187656,
      704,
      1
@@ -7086,13 +7086,13 @@
      1
     ],
     [
-     "func_00AABDF8",
+     "MEfMakeCornerMatrix",
      11189752,
      84,
      1
     ],
     [
-     "func_00AABE50",
+     "MEfWaitUpdate",
      11189840,
      96,
      1
@@ -7104,7 +7104,7 @@
      1
     ],
     [
-     "func_00AABEF0",
+     "MEfCreateHermitePath",
      11190000,
      188,
      1
@@ -7128,7 +7128,7 @@
      1
     ],
     [
-     "func_00AAC510",
+     "MEfDrawStepTrail",
      11191568,
      2052,
      1
@@ -7140,31 +7140,31 @@
      1
     ],
     [
-     "func_00AACDA0",
+     "MEfCreatePathStep",
      11193760,
      188,
      1
     ],
     [
-     "func_00AACE60",
+     "MEfStartPathFromActor",
      11193952,
      460,
      1
     ],
     [
-     "func_00AAD030",
+     "MEfSamplePathTrack",
      11194416,
      696,
      1
     ],
     [
-     "func_00AAD2E8",
+     "MEfSetPathPhaseFlags",
      11195112,
      104,
      1
     ],
     [
-     "func_00AAD350",
+     "MEfDrawPathStepTrail",
      11195216,
      2052,
      1
@@ -7194,25 +7194,25 @@
      1
     ],
     [
-     "func_00AAE148",
+     "MEfDrawSwayStrands",
      11198792,
      816,
      1
     ],
     [
-     "func_00AAE478",
+     "MEfAdvanceSway",
      11199608,
      720,
      1
     ],
     [
-     "func_00AAE748",
+     "MEfCreateStencilB",
      11200328,
      496,
      1
     ],
     [
-     "func_00AAE938",
+     "MEfUpdateStencilB",
      11200824,
      272,
      1
@@ -7224,31 +7224,31 @@
      1
     ],
     [
-     "func_00AAEAE8",
+     "MEfDrawTrailStrips",
      11201256,
      792,
      1
     ],
     [
-     "func_00AAEE00",
+     "MEfAdvanceStencilB",
      11202048,
      228,
      1
     ],
     [
-     "func_00AAEEE8",
+     "MEfCreateCounter",
      11202280,
      216,
      1
     ],
     [
-     "func_00AAEFC0",
+     "MEfBuildCounterCurve",
      11202496,
      312,
      1
     ],
     [
-     "func_00AAF0F8",
+     "MEfFillCounterKeys",
      11202808,
      368,
      1
@@ -7260,7 +7260,7 @@
      1
     ],
     [
-     "func_00AAF2D0",
+     "MEfDrawCounterStrips",
      11203280,
      956,
      1
@@ -7290,19 +7290,19 @@
      1
     ],
     [
-     "func_00AAFA50",
+     "MEfAppendTexturedQuad25",
      11205200,
      424,
      1
     ],
     [
-     "func_00AAFBF8",
+     "MEfDrawSparkModels25",
      11205624,
      492,
      1
     ],
     [
-     "MEfDrawQuadPacket",
+     "MEfDrawQuadPacket25",
      11206120,
      572,
      1
@@ -7332,19 +7332,19 @@
      1
     ],
     [
-     "func_00AB04D0",
+     "MEfAppendTexturedQuad31",
      11207888,
      424,
      1
     ],
     [
-     "func_00AB0678",
+     "MEfDrawSparkModels31",
      11208312,
      260,
      1
     ],
     [
-     "func_00AB0780",
+     "MEfDrawQuadPacket31",
      11208576,
      596,
      1
@@ -7374,13 +7374,13 @@
      1
     ],
     [
-     "func_00AB0E70",
+     "MEfStepSmokeTrails",
      11210352,
      476,
      1
     ],
     [
-     "func_00AB1050",
+     "MEfDrawTrailModel",
      11210832,
      160,
      1
@@ -7398,19 +7398,19 @@
      1
     ],
     [
-     "func_00AB14E0",
+     "MEfCreateFlagWindowEffect30",
      11212000,
      216,
      1
     ],
     [
-     "func_00AB15B8",
+     "MEfMakeFlagWindowPath",
      11212216,
      356,
      1
     ],
     [
-     "func_00AB1720",
+     "MEfFillFlagWindowSamples",
      11212576,
      368,
      1
@@ -7500,7 +7500,7 @@
      1
     ],
     [
-     "func_00AB3318",
+     "MEfBuildPathCurve",
      11219736,
      312,
      1
@@ -7530,13 +7530,13 @@
      1
     ],
     [
-     "func_00AB3CC8",
+     "MEfCreateActorHistory",
      11222216,
      244,
      1
     ],
     [
-     "func_00AB3DC0",
+     "MEfBuildHistoryCurve",
      11222464,
      312,
      1
@@ -7554,7 +7554,7 @@
      1
     ],
     [
-     "func_00AB40D8",
+     "MEfDrawHistoryRings",
      11223256,
      924,
      1
@@ -7596,7 +7596,7 @@
      1
     ],
     [
-     "func_00A80410",
+     "logoDrawCreditBand",
      11011088,
      384,
      1
@@ -7632,19 +7632,19 @@
      1
     ],
     [
-     "func_00A808D0",
+     "titleStartBgm",
      11012304,
      92,
      1
     ],
     [
-     "func_00A80930",
+     "titleTableReadNotify",
      11012400,
      248,
      1
     ],
     [
-     "func_00A80A28",
+     "titleRunScene",
      11012648,
      1660,
      1
@@ -53382,7 +53382,7 @@
      1
     ],
     [
-     "func_00A80410",
+     "logoDrawCreditBand",
      11011088,
      384,
      1
@@ -53418,19 +53418,19 @@
      1
     ],
     [
-     "func_00A808D0",
+     "titleStartBgm",
      11012304,
      92,
      1
     ],
     [
-     "func_00A80930",
+     "titleTableReadNotify",
      11012400,
      248,
      1
     ],
     [
-     "func_00A80A28",
+     "titleRunScene",
      11012648,
      1660,
      1

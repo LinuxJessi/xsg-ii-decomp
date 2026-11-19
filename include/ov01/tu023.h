@@ -8,6 +8,8 @@
 #include "ov01/tu042.h"
 
 int battleUnitHasEffectCode(int key, int code);
+/* Learn flags of a unit (LEARN ALL in the config debug menu, tu072). */
+#define UNIT_LEARN_FLAG_COUNT 0x20
 
 /* StatOwner (the battle unit) and StatBlock (its +0x144 block) are defined with the unit object in tu012.h. */
 

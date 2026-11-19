@@ -71,15 +71,17 @@ typedef struct XglLanguageCodes {
 } XglLanguageCodes;
 
 extern const XglLanguageCodes xglLanguageCodeTable;
-/* Unsized: the original addresses it absolutely, not through the gp. */
-extern unsigned char D_0063F878[];
+/* The save image of tu012.c; the byte at +0x3A selects the language (`caption_all` in the settings view
+ * of include/main/tu101.h). Unsized: the original addresses it absolutely, not through the gp. */
+extern unsigned char SaveData[];
+#define SAVE_DATA_LANGUAGE_INDEX 0x3A
 
 /* Copies the nine two-letter language codes in xglLanguageCodeTable to the stack and
  * returns the one selected by xglLanguageIndex; a non-null buffer receives its two bytes. */
 unsigned short xglGetLanguageCode(char *buffer)
 {
     XglLanguageCodes codes = xglLanguageCodeTable;
-    unsigned short code = codes.code[D_0063F878[2]];
+    unsigned short code = codes.code[SaveData[SAVE_DATA_LANGUAGE_INDEX]];
 
     if (buffer != 0) {
         buffer[0] = code;

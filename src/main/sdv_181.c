@@ -9,6 +9,7 @@
 #include "main/tu152.h"
 #include "main/sdv_033.h"
 #include "quadword.h"
+#include "main/tu190.h"
 
 /* A key sequence: keys holds rows of stride halfwords, the first of each row being the frame
  * the row starts at (see the SDV_KEY_ values below). */
@@ -129,7 +130,7 @@ typedef struct MSeRequest {
 
 /* Clears a 0x40-byte request block: memset(buffer, 0, 0x40) (ov01 tu075.c). Every MSeRequest
  * field the select path below leaves unassigned is therefore 0. */
-void func_00AAAEC8(void *buffer);
+void MSeFireEntryClear(void *buffer);
 void MSeFire(MSeRequest *request);
 
 /* Steps an effect key sequence and fires the MSe effect of the row it reaches, attached to
@@ -166,7 +167,7 @@ void sdvExecEffectSeq(SdvSequence *sequence, int effectId)
     offset.vector.y = keys[row + SDV_EFFECT_OFFSET_Y];
     offset.vector.z = keys[row + SDV_EFFECT_OFFSET_Z];
     offset.vector.w = 1.0f;
-    func_00AAAEC8(&fire);
+    MSeFireEntryClear(&fire);
     Vu0SefScaleVectorXYZNI(&fire.offset, &offset.vector, 0.001f);
     fire.kind = kind;
     fire.effectId = effectId;
@@ -850,7 +851,6 @@ extern float sdvCameraDistance;
 XglCamera *xglStudioGetActiveCamera(void);
 void cameraInit(void);
 /* Distance between two points (tu190.c). */
-float MMathCalcDist(const Vector4 *from, const Vector4 *to);
 void cameraAnglesBetween(Vector4 *angles, const Vector4 *from, const Vector4 *to);
 
 /* Advances one track to frame: applies the key frame reaches (look-at, position, perspective and roll, or the

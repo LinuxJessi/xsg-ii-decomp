@@ -1117,7 +1117,6 @@ typedef struct McThumbnail {
 
 /* The save image is the memory from SaveData on: card file 0 holds its
  * 0x50-byte header, the other files the rest from D_0063F890. */
-#define SAVE_DATA_SIZE 0x5160
 #define SAVE_HEADER_SIZE 0x50
 
 /* The two save-image settings this TU reads: the Dolby Digital flag that

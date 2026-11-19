@@ -13,7 +13,7 @@ int cfEventGet(void);
 #define CF_EVENT_SKIP_VICTORY 0x200             /* the battle ends without the victory sequence */
 
 void cfEventSet(int cfEvent);
-short cfMonsSetNoGet(void);
+int cfMonsSetNoGet(void);
 void cfMonsSetNoSet(int monsSetNo);
 int gattaiCodeGet(void);
 struct Ov01Object;

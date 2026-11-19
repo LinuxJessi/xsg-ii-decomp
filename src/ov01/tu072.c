@@ -8,11 +8,46 @@
 #include "common.h"
 #include "shared.h"
 #include "ov01/tu023.h"
+#include "ov01/tu072.h"
+#include "ov01/tu073.h"
 #include "ov01/tu036.h"
+
+/* Debug menu layout: the menu starts at (CONFIG_MENU_X, CONFIG_MENU_Y), rows are CONFIG_ROW_HEIGHT lines apart,
+ * and one value column is CONFIG_GLYPH_WIDTH pixels wide. */
+#define CONFIG_MENU_X 12
+#define CONFIG_MENU_Y 12
+#define CONFIG_ROW_HEIGHT 10
+#define CONFIG_GLYPH_WIDTH 8
+#define CONFIG_PARTY_COUNT 3
+#define CONFIG_PARTY_RECORD_SIZE 0x14
+#define CONFIG_NO_MAX 999
+#define CONFIG_GATTAI_BASE 0x16000
+#define SKILL_CYCLE_LEN 5
+#define TEXT_OPTION_SELECT 0x20
+#define CONFIG_PARTY_CHARA_MAX 0xF
+#define CONFIG_PARTY_POS_MAX 0x1F
+#define CONFIG_CF_FLAG_MAX 0xFFFF
+#define CONFIG_GATTAI_MAX 0x51
+#define CONFIG_MEMBER_MAX 0x3FF
+#define CONFIG_UNIT_INDEX_MAX 15
+#define CONFIG_SKILL_BYTE_MAX 64
+#define CONFIG_ACC_MAX 40
+#define CONFIG_LEARN_BYTE_MAX 255
+#define CONFIG_CLOTH_MIN 0x10001
+#define CONFIG_CLOTH_MAX 0x10028
+#define CONFIG_SUBPILOT_MAX 0xA
+#define CONFIG_LEVEL_MAX 99
+#define CONFIG_SCRIPT_NO_MAX 9999
+
+/* Pages of the debug menu, the values of configPageState. */
+enum ConfigPage {
+    CONFIG_PAGE_MAIN = 0,
+    CONFIG_PAGE_EQUIP = 1
+};
 
 /* Callees defined outside this allocation. Results are declared only where a caller reads them. */
 void cfEventSet(int);
-void debugValLR(int *, int, int, int);
+int debugValLR(int *, int, int, int);
 int configPlayer(int slot);
 int configPlPos(int slot);
 extern int configMonsSetNo;
@@ -57,39 +92,319 @@ void func_00AA9378(void) {
 
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configInit);
+extern int configThinkNo;
+extern enum ConfigPage configPageState;
+extern int configScriptNumber;
+extern int configMainColumn;
+extern int configMainRow;
+extern int configEquipColumn;
+extern int configEquipRow;
+int thinkNoGet(void);
+int cfEventGet(void);
+void ptReset(void);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configMenuRun);
+/* Clears the page state and the words after it, then sets the debug defaults of the main page. */
+void configInit(void)
+{
+    configMainRow = 0;
+    configEquipRow = 0;
+    configPageState = CONFIG_PAGE_MAIN;
+    configMainColumn = 0;
+    configEquipColumn = 0;
+    configThinkNo = thinkNoGet();
+    configMonsSetNo = cfMonsSetNoGet();
+    configCFFlagValue = cfEventGet();
+    configCpUDispFlag = 0;
+    configScriptNumber = 0;
+    ptReset();
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configMenuUpdate);
+/* Callees of the debug menu, prototypes from their definitions (src/main/tu110.c, src/ov01/tu036.c, src/ov01/tu037.c). */
+void xglRenderClearFrame(void);
+void xglSleep(void);
+void func_001B2724(void);
+void func_001B274C(void);
+int ov01SoftResetPressed(void);
+void *ov01PartyListGet(void);
+int *ptGetStatusBlock(void);
+int configMenuFrame(int param);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configMenuFrame);
+/* The clear colour words of ClearEnv (the GS clear packet owned by src/main/xgl_render.c). */
+struct ClearEnvColor {
+    unsigned char unmodeled_00[0x20];
+    unsigned int color_r;
+    unsigned int color_g;
+    unsigned int color_b;
+    unsigned int color_a;
+};
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configMainPageDraw);
+extern struct ClearEnvColor ClearEnv;
+
+/* One party slot of the BATTLE CONFIG records (ov01PartyListGet returns the table, 0x14 bytes each). */
+typedef struct ConfigPartyRecord {
+    int charaId;  /* PLAYERn name row, resolved through batUnitNameGet */
+    int position; /* PLAYERn POS row */
+    unsigned char unmodeled_08[0x14 - 0x08];
+} ConfigPartyRecord;
+
+/* The block ptGetStatusBlock returns; its halfword at +6 is the MEMBER row. */
+typedef struct ConfigGlobalBlock {
+    unsigned char unmodeled_00[6];
+    unsigned short member; /* MEMBER row, 0..0x3FF */
+} ConfigGlobalBlock;
+
+/* Runs the debug menu frame until it reports done. Mode 1 copies the three party status bytes first. */
+int configMenuRun(int mode)
+{
+    int slot;
+    ConfigPartyRecord *party;
+    int clearGreen;
+
+    xglRenderClearFrame();
+    clearGreen = 64;
+    ClearEnv.color_a = 128;
+    ClearEnv.color_g = clearGreen;
+    ClearEnv.color_b = 0;
+    ClearEnv.color_r = 0;
+    func_001B2724();
+    if (mode == 1) {
+        party = ov01PartyListGet();
+        slot = 0;
+        do {
+            party[slot].charaId = ((unsigned char *) ptGetStatusBlock())[slot];
+            slot++;
+        } while (slot < CONFIG_PARTY_COUNT);
+    }
+    while (configMenuFrame(mode) != 1) {
+        if (ov01SoftResetPressed() != 0) {
+            return 0;
+        }
+        xglSleep();
+    }
+    func_001B274C();
+    xglSleep();
+    return 1;
+}
+
+extern char configCursorGlyph[];
+void xglFontDebugPrintf(int x, int y, const char *format, ...);
+void debugValUD(int *value, int min, int max, int step);
+
+/* Row cursor of a debug menu: counts the handlers, moves the cursor, clears the marker column when the
+ * cursor row changes, draws the marker and runs the handler of the current row. */
+int configMenuUpdate(int (**rowHandlers)(void), int baseX, int baseY, int *markerColumn, int *cursorRow)
+{
+    int handlerCount;
+    int oldRow;
+
+    handlerCount = 0;
+    while (rowHandlers[handlerCount] != 0) {
+        handlerCount++;
+    }
+    oldRow = *cursorRow;
+    debugValUD(cursorRow, 0, handlerCount - 1, 1);
+    if (oldRow != *cursorRow) {
+        *markerColumn = 0;
+    }
+    xglFontDebugPrintf(baseX + *markerColumn * CONFIG_GLYPH_WIDTH, baseY + *cursorRow * CONFIG_ROW_HEIGHT + CONFIG_ROW_HEIGHT, configCursorGlyph);
+    rowHandlers[*cursorRow]();
+}
+
+void configMainPageDraw(int x, int y);
+void configStockMugenApply(void);
+void configLearnAllApply(void);
+void xglRenderCpUDispOn(void);
+void xglRenderCpUDispOff(void);
+void dataThinkScriptLoad(int script);
+extern int (*configMainRows[])(void);
+extern int (*configEquipRows[])(void);
+void configEquipPageDraw(int x, int y);
+
+/* Frame of the debug menu: runs the handler of the current page. Cancel on the equip page returns to the main
+ * page, cancel on the main page ends the menu. When it ends, applies LEARN ALL and STOCK MUGEN, copies the three
+ * party ids to the status blocks and, for param 0, loads the think script. Returns 1 when the menu is done. */
+int configMenuFrame(int param)
+{
+    int menuDone;
+    unsigned char *party;
+
+    menuDone = 0;
+    switch (configPageState) {
+    case CONFIG_PAGE_MAIN:
+        menuDone = configMenuUpdate(configMainRows, CONFIG_MENU_X, CONFIG_MENU_Y, &configMainColumn, &configMainRow);
+        configMainPageDraw(CONFIG_MENU_X, CONFIG_MENU_Y);
+        break;
+    case CONFIG_PAGE_EQUIP:
+        menuDone = configMenuUpdate(configEquipRows, CONFIG_MENU_X, CONFIG_MENU_Y, &configEquipColumn, &configEquipRow);
+        configEquipPageDraw(CONFIG_MENU_X, CONFIG_MENU_Y);
+        break;
+    }
+    if (configCancelPressed()) {
+        switch (configPageState) {
+        case CONFIG_PAGE_MAIN:
+            menuDone = 1;
+            break;
+        case CONFIG_PAGE_EQUIP:
+            configPageState = CONFIG_PAGE_MAIN;
+            break;
+        }
+    }
+    if (menuDone != 0) {
+        int slot;
+
+        if (configLearnAllFlag == 1) {
+            configLearnAllApply();
+        }
+        if (configStockMugenGet()) {
+            configStockMugenApply();
+        }
+        {
+            party = ov01PartyListGet();
+            for (slot = 0; slot < CONFIG_PARTY_COUNT; slot++) {
+                ((unsigned char *) ptGetStatusBlock())[slot] = party[slot * CONFIG_PARTY_RECORD_SIZE];
+            }
+        }
+        if (configCpUDispFlag == 0) {
+            xglRenderCpUDispOff();
+        } else {
+            xglRenderCpUDispOn();
+        }
+        if (param == 0) {
+            dataThinkScriptLoad(configThinkNo);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+extern const char configTextMainTitle[];
+extern const char configTextRuleHead[];
+extern const char configTextThink[];
+extern const char configTextMonsterSet[];
+extern const char configTextPlayer1[];
+extern const char configTextPlayer2[];
+extern const char configTextPlayer3[];
+extern const char configTextPlayer1Pos[];
+extern const char configTextPlayer2Pos[];
+extern const char configTextPlayer3Pos[];
+extern const char configTextPlMuteki[];
+extern const char configTextEnMuteki[];
+extern const char configTextPlIchigeki[];
+extern const char configTextStockMugen[];
+extern const char configTextLearnAll[];
+extern const char configTextRuleGroup[];
+extern const char configTextCfFlag[];
+extern const char configTextCpuDisp[];
+extern const char configTextGattai[];
+extern const char configTextMember[];
+extern const char configTextUnitEquip[];
+extern int configUnitIndex;
+int gattaiCodeGet(void);
+
+/* Main page of the debug menu: the rows of the page, one every 10 lines below y. */
+void configMainPageDraw(int x, int y)
+{
+    ConfigPartyRecord *partyRecords;
+
+    partyRecords = ov01PartyListGet();
+    xglFontDebugPrintf(x, y, configTextMainTitle);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextRuleHead);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextThink, configThinkNo);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextMonsterSet, configMonsSetNo);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextPlayer1, batUnitNameGet(partyRecords[0].charaId));
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextPlayer2, batUnitNameGet(partyRecords[1].charaId));
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextPlayer3, batUnitNameGet(partyRecords[2].charaId));
+    xglFontDebugPrintf(x, y += CONFIG_ROW_HEIGHT, configTextPlayer1Pos, partyRecords[0].position);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextPlayer2Pos, partyRecords[1].position);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextPlayer3Pos, partyRecords[2].position);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextPlMuteki, configPlMutekiGet());
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextEnMuteki, configEnMutekiGet());
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextPlIchigeki, configPlIchigekiGet());
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextStockMugen, configStockMugenGet());
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextLearnAll, configLearnAllFlag);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextRuleGroup);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextCfFlag, configCFFlagValue);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextCpuDisp, configCpUDispFlag);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextGattai, gattaiCodeGet() - CONFIG_GATTAI_BASE);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextMember, ((ConfigGlobalBlock *) ptGetStatusBlock())->member);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextUnitEquip, batUnitNameGet(configUnitIndex));
+}
 
 char *xglCdFindFileName(unsigned int file_id);
-int *ptGetStatusBlock(void);
-extern char D_00ABAF10[];
+extern char configNullName[];
 
 /* Cloth name of a unit: table entry unit + 1 resolved to a name, "NULL" when missing. */
 void *unitClothNameGet(int unit)
 {
-    int *table;
-    void *entry;
+    int *clothIds;
+    void *clothName;
 
     if (unit < 0xB) {
-        table = ptGetStatusBlock();
-        entry = xglCdFindFileName(table[unit + 1]);
-        if (entry != 0) {
-            return entry;
+        clothIds = ptGetStatusBlock();
+        clothName = xglCdFindFileName(clothIds[unit + 1]);
+        if (clothName != 0) {
+            return clothName;
         }
     }
-    return &D_00ABAF10;
+    return &configNullName;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configEquipPageDraw);
+int unitLearnMaskGet(int unit);
+extern char configTextEquipTitle[];
+extern char configTextEquipSkill[];
+extern char configTextLearnSkill[];
+extern char configTextAcc[];
+extern char configTextCloth[];
+extern char configTextSubPilot[];
+extern char configTextLvUp[];
 
-/* STOCK MUGEN apply (proposed configStockMugenApply): run by configMenuFrame only when the
+/* Equip page: one text row per field of the selected unit, ten pixels apart. */
+void configEquipPageDraw(int x, int y)
+{
+    StatBlock *unit;
+    unsigned int learnMask;
+    int subPilotId;
+
+    unit = battleSlotGet(configUnitIndex);
+    subPilotId = unit->linkedSlots[1];
+    learnMask = unitLearnMaskGet(configUnitIndex);
+    xglFontDebugPrintf(x, y, configTextEquipTitle);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextEquipSkill, unit->effectCode[0], unit->effectCode[1], unit->effectCode[2], unit->effectCode[3]);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextLearnSkill, learnMask >> 24, (learnMask >> 16) & 0xff, (learnMask & 0xff00) >> 8, learnMask & 0xff);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextAcc, unit->equipId[0], unit->equipId[1], unit->equipId[2], unit->equipId[3]);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextCloth, unitClothNameGet(configUnitIndex));
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextSubPilot, batUnitNameGet(subPilotId));
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextLvUp, unit->expLevel);
+    y += CONFIG_ROW_HEIGHT;
+    xglFontDebugPrintf(x, y, configTextUnitEquip, batUnitNameGet(configUnitIndex));
+}
+
+/* STOCK MUGEN apply: run by configMenuFrame only when the
  * STOCK MUGEN row value is nonzero. Copies byte 0 of the stock record to byte 1. */
 void configStockMugenApply(void) {
     struct BoostGauge *stockRecord;
@@ -98,49 +413,142 @@ void configStockMugenApply(void) {
     stockRecord->stock = boostGaugeSelect(0)->maxStockCount;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configLearnAllApply);
+int battleSlotCodeSet(int key, int code);
+int slotPairSet(int value);
+void dataBoxIncCategory1(int id);
+void dataBoxIncCategory2(int id);
+void battleSlotMarkSet(int key, int mark);
 
+/* LEARN ALL apply (run by configMenuFrame when the LEARN ALL flag is set). */
+void configLearnAllApply(void)
+{
+    int slot;
+    int code;
+    int repeat;
+
+    for (slot = 1; slot < 11; slot++) {
+        for (code = 1; code < 60; code++) {
+            battleSlotCodeSet(slot, code);
+        }
+    }
+    for (slot = 1; slot < 17; slot++) {
+        slotPairSet(slot);
+    }
+    for (slot = 1; slot < 41; slot++) {
+        for (repeat = 98; repeat >= 0; repeat--) {
+            dataBoxIncCategory1(slot);
+        }
+    }
+    for (slot = 1; slot < 41; slot++) {
+        for (repeat = 98; repeat >= 0; repeat--) {
+            dataBoxIncCategory2(slot);
+        }
+    }
+    battleSlotMarkSet(2, 4);
+}
 
 /* Bitmask of unit flags 1..32 (the LEARN SKILL row). */
 int unitLearnMaskGet(int unit)
 {
     int mask;
-    int bit;
-    int index;
+    int flagBit;
+    int flagId;
 
     if (unit == 0) {
         return 0;
     }
     mask = 0;
-    bit = 1;
-    for (index = 1; index <= 0x20; index++) {
-        if (battleSlotFlagTest(unit, index) != 0) {
-            mask |= bit;
+    flagBit = 1;
+    for (flagId = 1; flagId <= UNIT_LEARN_FLAG_COUNT; flagId++) {
+        if (battleSlotFlagTest(unit, flagId) != 0) {
+            mask |= flagBit;
         }
-        bit *= 2;
+        flagBit *= 2;
     }
     return mask;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", unitLearnMaskSet);
+void battleSlotFlagSet(int key, int flag);
+void battleSlotFlagClear(int key, int flag);
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configScriptPage);
+/* Sets flags 1..32 of the unit for the bits of mask and clears the others (the LEARN SKILL row). */
+void unitLearnMaskSet(int unit, int mask)
+{
+    int flagBit;
+    int flagId;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configSelectPressed);
+    if (unit == 0) {
+        return;
+    }
+    flagBit = 1;
+    for (flagId = 1; flagId <= UNIT_LEARN_FLAG_COUNT; flagId++) {
+        if ((mask & flagBit) != 0) {
+            battleSlotFlagSet(unit, flagId);
+        } else {
+            battleSlotFlagClear(unit, flagId);
+        }
+        flagBit *= 2;
+    }
+}
 
-extern int configThinkNo;
+extern int (*configScriptRows[])(void);
+extern int configScriptPrefix;
+extern char configScriptPath[];
+extern int configScriptImage;
+extern char configTextScriptTitle[];
+extern char configTextScript[];
+extern char D_00ABB000[];
+extern char D_00ABB008[];
+int sprintf(char *, const char *, ...);
+char *strcat(char *, const char *);
+int xglCdReadFile(const char *, void *, int, int);
+int sbLinkImage(void *image);
+void sbStartImage(void *image);
+
+/* Script page: the first two rows of text, then the script file path is built, read into the script image, linked and started. */
+int configScriptPage(void)
+{
+    int result;
+
+    result = configMenuUpdate(configScriptRows, CONFIG_MENU_X, CONFIG_MENU_Y, &configMainColumn, &configMainRow);
+    xglFontDebugPrintf(CONFIG_MENU_X, CONFIG_MENU_Y, configTextScriptTitle);
+    xglFontDebugPrintf(CONFIG_MENU_X, CONFIG_MENU_Y + CONFIG_ROW_HEIGHT, configTextScript, configScriptNumber);
+    if (configCancelPressed() == 0 && result == 0) {
+        return 0;
+    }
+    sprintf(configScriptPath, D_00ABB000, configScriptPrefix, configScriptNumber);
+    strcat(configScriptPath, D_00ABB008);
+    xglCdReadFile(configScriptPath, &configScriptImage, 0, 0);
+    if (sbLinkImage(&configScriptImage) == 0) {
+        while (1) {
+        }
+    }
+    sbStartImage(&configScriptImage);
+    return 1;
+}
+
+extern unsigned short textOptionFlags[];
+
+/* Nonzero while the TEXT_OPTION_SELECT bit of textOptionFlags[0] is set. */
+int configSelectPressed(void)
+{
+    int selectBit;
+
+    selectBit = textOptionFlags[0] & TEXT_OPTION_SELECT;
+    return selectBit != 0;
+}
 
 /* THINK row: edits the AI script number (0..999) and passes it on. */
 int configThink(void)
 {
-    debugValLR(&configThinkNo, 0, 999, 1);
+    debugValLR(&configThinkNo, 0, CONFIG_NO_MAX, 1);
     thinkNoSet(configThinkNo);
     return 0;
 }
 
 /* MONSTER SET row: edits the enemy group number (0..999) and passes it on. */
 int configMonsSet(void) {
-    debugValLR(&configMonsSetNo, 0, 999, 1);
+    debugValLR(&configMonsSetNo, 0, CONFIG_NO_MAX, 1);
     cfMonsSetNoSet(configMonsSetNo);
     return 0;
 }
@@ -157,15 +565,6 @@ void configPlayer3(void) {
     configPlayer(2);
 }
 
-/* One party slot of the BATTLE CONFIG records (ov01PartyListGet returns the table, 0x14 bytes each). */
-typedef struct ConfigPartyRecord {
-    int charaId;  /* PLAYERn name row, resolved through batUnitNameGet */
-    int position; /* PLAYERn POS row */
-    unsigned char unmodeled_08[0x14 - 0x08];
-} ConfigPartyRecord;
-
-void *ov01PartyListGet(void);
-
 /* PLAYERn row: cycles the character of party slot `slot` (0..0xF). */
 int configPlayer(int slot)
 {
@@ -174,7 +573,7 @@ int configPlayer(int slot)
 
     records = ov01PartyListGet();
     charaId = records[slot].charaId;
-    debugValLR(&charaId, 0, 0xF, 1);
+    debugValLR(&charaId, 0, CONFIG_PARTY_CHARA_MAX, 1);
     records[slot].charaId = charaId;
     return 0;
 }
@@ -199,12 +598,12 @@ int configPlPos(int slot)
 
     records = ov01PartyListGet();
     position = records[slot].position;
-    debugValLR(&position, 0, 0x1F, 1);
+    debugValLR(&position, 0, CONFIG_PARTY_POS_MAX, 1);
     records[slot].position = position;
     return 0;
 }
 
-/* Handler of the PL MUTEKI row (proposed configPlMuteki): slot 10 of the main-page table D_00AB6B00.
+/* Handler of the PL MUTEKI row: slot 10 of the main-page table configMainRows.
  * The flag it edits is never read in ov01; the row prints the constant from configPlMutekiGet. */
 int configPlMuteki(void) {
     debugValLR(&configPlMutekiFlag, 0, 1, 1);
@@ -232,11 +631,20 @@ int configLearnAll(void) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", func_00AAA288);
+void battleSlotsRefresh(void);
+
+/* Row 14 of the main page: when the select flag is set, refreshes the battle slots. Returns 0. */
+int configBattleSlotsRefresh(void)
+{
+    if ((textOptionFlags[0] & TEXT_OPTION_SELECT) != 0) {
+        battleSlotsRefresh();
+    }
+    return 0;
+}
 
 /* CF FLAG row: a 16-bit value written through cfEventSet. */
 int configCFFlag(void) {
-    debugValLR(&configCFFlagValue, 0, 0xFFFF, 1);
+    debugValLR(&configCFFlagValue, 0, CONFIG_CF_FLAG_MAX, 1);
     cfEventSet(configCFFlagValue);
     return 0;
 }
@@ -249,61 +657,147 @@ int configCpUDisp(void) {
 
 int gattaiCodeGet();
 
-/* GATTAI row: an id offset by 0x16000 in 1..0x51. */
+/* GATTAI row: an id offset by CONFIG_GATTAI_BASE in 1..CONFIG_GATTAI_MAX. */
 int configGattai(void)
 {
     int gattaiId;
 
-    gattaiId = gattaiCodeGet() - 0x16000;
-    debugValLR(&gattaiId, 1, 0x51, 1);
-    gattaiCodeSet(gattaiId + 0x16000);
+    gattaiId = gattaiCodeGet() - CONFIG_GATTAI_BASE;
+    debugValLR(&gattaiId, 1, CONFIG_GATTAI_MAX, 1);
+    gattaiCodeSet(gattaiId + CONFIG_GATTAI_BASE);
     return 0;
 }
-
-/* The block ptGetStatusBlock returns; its halfword at +6 is the MEMBER row. */
-typedef struct ConfigGlobalBlock {
-    unsigned char unmodeled_00[6];
-    unsigned short member; /* MEMBER row, 0..0x3FF */
-} ConfigGlobalBlock;
 
 int configMember(void)
 {
     int member;
 
     member = ((ConfigGlobalBlock *) ptGetStatusBlock())->member;
-    debugValLR(&member, 0, 0x3FF, 1);
+    debugValLR(&member, 0, CONFIG_MEMBER_MAX, 1);
     ((ConfigGlobalBlock *) ptGetStatusBlock())->member = member;
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configUnitSelect);
+/* UNIT row of the config page: edits the selected unit index (1..CONFIG_UNIT_INDEX_MAX). While the select flag is
+ * set and a unit is selected, switches the page state to the equip page and clears configEquipColumn. Returns 0. */
+int configUnitSelect(void)
+{
+    debugValLR(&configUnitIndex, 1, CONFIG_UNIT_INDEX_MAX, 1);
+    if ((textOptionFlags[0] & TEXT_OPTION_SELECT) != 0 && configUnitIndex != 0) {
+        configPageState = CONFIG_PAGE_EQUIP;
+        configEquipColumn = 0;
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configEquipSkill);
+extern int configLearnSkillColumns[SKILL_CYCLE_LEN];
+extern int configEquipSkillColumns[SKILL_CYCLE_LEN];
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configLearnSkill);
+/* EQUIP SKILL row: the skill table entry (configEquipSkillColumns) selects one byte of the unit's StatBlock, edited through the debug value page. */
+int configEquipSkill(void)
+{
+    int skillIndex;
+    StatBlock *unit;
+    int byteValue;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configAcc);
+    unit = battleSlotGet(configUnitIndex);
+    skillIndex = 0;
+    while (skillIndex < SKILL_CYCLE_LEN && configEquipColumn != configEquipSkillColumns[skillIndex]) {
+        skillIndex++;
+    }
+    if (textOptionFlags[0] & TEXT_OPTION_SELECT) {
+        if (skillIndex < SKILL_CYCLE_LEN - 1) {
+            skillIndex = skillIndex + 1;
+        } else {
+            skillIndex = 1;
+        }
+        configEquipColumn = configEquipSkillColumns[skillIndex];
+    }
+    if (skillIndex) {
+        byteValue = unit->effectCode[skillIndex - 1];
+        debugValLR(&byteValue, 0, CONFIG_SKILL_BYTE_MAX, 1);
+        unit->effectCode[skillIndex - 1] = byteValue;
+    }
+    return 0;
+}
 
-extern int configUnitIndex;
+/* LEARN SKILL row: edits one byte of the unit's learn mask, the byte chosen by the skill table entry. */
+int configLearnSkill(void)
+{
+    int skillIndex;
 
-/* CLOTH row (proposed configCloth): edits the cloth id in the unit table entry unit + 1,
+    battleSlotGet(configUnitIndex);
+    skillIndex = 0;
+    while (skillIndex < SKILL_CYCLE_LEN && configEquipColumn != configLearnSkillColumns[skillIndex]) {
+        skillIndex++;
+    }
+    if (textOptionFlags[0] & TEXT_OPTION_SELECT) {
+        int nextEntry;
+
+        if (skillIndex < SKILL_CYCLE_LEN - 1) {
+            skillIndex = skillIndex + 1;
+        } else {
+            skillIndex = 1;
+        }
+        nextEntry = configLearnSkillColumns[skillIndex];
+        configEquipColumn = nextEntry;
+    }
+    if (skillIndex) {
+        unsigned int learnMask;
+        int byteValue;
+
+        learnMask = unitLearnMaskGet(configUnitIndex);
+        byteValue = (learnMask >> ((4 - skillIndex) << 3)) & 0xff;
+        debugValLR(&byteValue, 0, CONFIG_LEARN_BYTE_MAX, 1);
+        learnMask = (learnMask & ~(0xffu << ((4 - skillIndex) << 3))) | (byteValue << ((4 - skillIndex) << 3));
+        unitLearnMaskSet(configUnitIndex, learnMask);
+    }
+    return 0;
+}
+
+extern int configAccColumns[SKILL_CYCLE_LEN];
+
+/* ACC row: the skill table entry (configAccColumns) selects one halfword of the unit's StatBlock, edited through the debug value page. */
+int configAcc(void)
+{
+    int skillIndex;
+    StatBlock *unit;
+    int accValue;
+
+    unit = battleSlotGet(configUnitIndex);
+    skillIndex = 0;
+    while (skillIndex < SKILL_CYCLE_LEN && configEquipColumn != configAccColumns[skillIndex]) {
+        skillIndex++;
+    }
+    if (textOptionFlags[0] & TEXT_OPTION_SELECT) {
+        if (skillIndex < SKILL_CYCLE_LEN - 1) {
+            skillIndex = skillIndex + 1;
+        } else {
+            skillIndex = 1;
+        }
+        configEquipColumn = configAccColumns[skillIndex];
+    }
+    if (skillIndex) {
+        accValue = unit->equipId[skillIndex - 1];
+        debugValLR(&accValue, 0, CONFIG_ACC_MAX, 1);
+        unit->equipId[skillIndex - 1] = accValue;
+    }
+    return 0;
+}
+
+/* CLOTH row: edits the cloth id in the unit table entry unit + 1,
  * the entry unitClothNameGet resolves to the name printed on the equip page. */
 int configCloth(void)
 {
     int clothId;
 
     clothId = ptGetStatusBlock()[configUnitIndex + 1];
-    debugValLR(&clothId, 0x10001, 0x10028, 1);
+    debugValLR(&clothId, CONFIG_CLOTH_MIN, CONFIG_CLOTH_MAX, 1);
     ptGetStatusBlock()[configUnitIndex + 1] = clothId;
     return 0;
 }
 
-/* The base unit batUnitRecordGet returns (the LV UP row reads its level, at +0x13 like StatBlock.expLevel). */
-typedef struct ConfigUnit {
-    unsigned char unmodeled_00[0x13];
-    signed char level;         /* +0x13 */
-} ConfigUnit;
-
+/* The base unit of a slot: batUnitRecordGet returns its StatBlock (the LV UP row reads its expLevel). */
 
 /* SUB PILOT row: edits the sub-pilot id (0..0xA) of the selected unit. */
 int configSubPilot(void)
@@ -313,30 +807,93 @@ int configSubPilot(void)
 
     unit = battleSlotGet(configUnitIndex);
     subPilotId = unit->linkedSlots[1];
-    debugValLR(&subPilotId, 0, 0xA, 1);
+    debugValLR(&subPilotId, 0, CONFIG_SUBPILOT_MAX, 1);
     unit->linkedSlots[1] = subPilotId;
     return 0;
 }
 
-void unitSetLevel(int, int);
+void unitSetLevel(int slotIndex, int level);
 
 /* LV UP row: the minimum comes from the base unit; a change goes through unitSetLevel. */
 int configLvUp(void)
 {
     StatBlock *unit;
-    ConfigUnit *baseUnit;
+    StatBlock *baseUnit;
     int level;
 
     unit = battleSlotGet(configUnitIndex);
     baseUnit = batUnitRecordGet(configUnitIndex);
     level = unit->expLevel;
-    debugValLR(&level, baseUnit->level, 0x63, 1);
+    debugValLR(&level, baseUnit->expLevel, CONFIG_LEVEL_MAX, 1);
     if (level != unit->expLevel) {
         unitSetLevel(configUnitIndex, level);
     }
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", unitSetLevel);
+/* Slot record of the battle slot table, as unitSetLevel and slotRecordByIndex use it (tu023.c owns the full type). */
+typedef struct SlotRecord SlotRecord;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu072", configScriptNo);
+struct SlotRecord {
+    int gainFirst;
+    int expCounter;
+    int gainSecond;
+    int gainThird;
+    unsigned short growth[8];
+};
+
+SlotRecord *slotRecordByIndex(int index);
+void unitGrowthStep(int index);
+
+void unitSetLevel(int slotIndex, int level)
+{
+    StatBlock *unit;
+    StatBlock *baseUnit;
+    GrowthRecord *growthRecord;
+    SlotRecord *slotRecord;
+    UnitExpEntry *expTable;
+    int counter;
+
+    unit = battleSlotGet(slotIndex);
+    baseUnit = batUnitRecordGet(slotIndex);
+    growthRecord = growthRecordGet(slotIndex);
+    slotRecord = slotRecordByIndex(slotIndex);
+    for (counter = 0; counter < 8; counter++) {
+        slotRecord->growth[counter] = growthRecord->start[counter];
+    }
+    unit->expLevel = baseUnit->expLevel;
+    unit->physAttack = baseUnit->physAttack;
+    unit->physDefence = baseUnit->physDefence;
+    unit->magAttack = baseUnit->magAttack;
+    unit->magDefence = baseUnit->magDefence;
+    unit->hitRate = baseUnit->hitRate;
+    unit->evadeRate = baseUnit->evadeRate;
+    unit->maxHp = baseUnit->maxHp;
+    unit->maxEp = baseUnit->maxEp;
+    counter = baseUnit->expLevel;
+    if (counter < level) {
+        counter = level - counter;
+        do {
+            counter--;
+            unit->expLevel++;
+            unitGrowthStep(slotIndex);
+        } while (counter != 0);
+    }
+    unit->expLevel = level;
+    unit->hp = unit->maxHp;
+    unit->ep = unit->maxEp;
+    expTable = unitExpTblGet();
+    slotRecord->expCounter = expTable[unit->expLevel].exp;
+}
+
+UnitExpEntry *unitExpTblGet(void);
+
+/* SCRIPT NO row: edits the script number (0..9999) and reports bit 0x20 of the option flags. */
+int configScriptNo(void)
+{
+    int flags;
+
+    debugValLR(&configScriptNumber, 0, CONFIG_SCRIPT_NO_MAX, 1);
+    flags = textOptionFlags[0] & TEXT_OPTION_SELECT;
+    return flags != 0;
+}

@@ -9,7 +9,7 @@
 #include "ov01/tu023.h"
 #include "ov01/tu036.h"
 #include "ov01/tu042.h"
-#include "ov01/tu057.h"
+#include "ov01/tu056.h"
 #include "ov01/tu059.h"
 #include "ov01/tu060.h"
 #include "ov01/tu061.h"
@@ -680,7 +680,6 @@ void dataObjDrawSprite(struct DataObject *obj, u32 *packet)
 
 void menuTgtStatusShow(void);
 void menuUnitPanelBind(void *unit);
-void func_00AA6FE0(void *unit);
 void menuIconListShow(void *unit);
 
 /* Shows the target status (clearing the hidden flag first), then binds the unit panel and icon list
@@ -696,7 +695,7 @@ void dataTargetShow(StatOwner *unit, unsigned char *targetFlags)
         return;
     }
     menuUnitPanelBind(unit);
-    func_00AA6FE0(unit);
+    menuTimedSeqShow(unit);
     menuIconListShow(unit);
 }
 

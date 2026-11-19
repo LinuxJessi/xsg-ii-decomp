@@ -135,7 +135,7 @@ struct StatBlock {
     short current;                          /* +0x82: current value, capped at currentMax (unitCurrentAdd) */
     short currentMax;                       /* +0x84 */
     short equipId[4];                       /* +0x86: four equipment ids, zero when empty (battleSlotSetShort writes them) */
-    short linkedSlots[2];                   /* +0x8E: slots 11 to 15 only (battleSlotSetShortLate); [0] is the slot battleSlotExport reads */
+    short linkedSlots[2];                   /* +0x8E: slots 11 to 15 only (battleSlotSetShortLate); [0] is the slot battleSlotExport reads, [1] the sub pilot id (0..0xA, configSubPilot) */
     unsigned short activeMask[4];           /* +0x92: one value per row; set bits are active statuses */
     unsigned char turnCount[4][16];         /* +0x9a: per row and status bit, turns left */
     signed char entryKind[8];               /* +0xDA: unitEntryKindAdd's entry table, ANDed with liveRows by calcHitRowGate */
@@ -184,7 +184,7 @@ typedef struct Ov01Command {
 struct Ov01Object {
     union {
         unsigned char unmodeled_00[4];  /* tu017 reads +0x8 as a doubleword through this name */
-        u32 slotFlags;                  /* the slot word (OV01_OBJECT_IN_USE); func_00AA3AA0 draws only units in use */
+        u32 slotFlags;                  /* the slot word (OV01_OBJECT_IN_USE); objPathDraw draws only units in use */
     };                                  /* +0x0 */
     void (*update)(Ov01Object *object); /* +0x4: unitUpdate (unitCreateSide) */
     void (*draw)(Ov01Object *object); /* +0x8: func_00A84880 */

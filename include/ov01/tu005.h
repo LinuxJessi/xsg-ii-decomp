@@ -5,14 +5,6 @@
 
 #define DATA_LOOKUP_CAPACITY 12 /* items in a DataLookup block */
 
-/* A 4x4 float matrix followed by 0x40 bytes; ov01MatrixBlockInit clears the 0x80 bytes. */
-struct MatrixBlock {
-    float m[4][4];
-    unsigned char unmodeled_40[0x40];
-};
-
-struct DataLookup;
-struct DataLookupItem;
 struct FifoRing;
 struct SaveStack;
 
@@ -36,13 +28,20 @@ struct DataLookup {
     int flag;
 };
 
+/* A 4x4 float matrix followed by 0x40 bytes; ov01MatrixBlockInit clears the 0x80 bytes. */
+struct MatrixBlock {
+    float m[4][4];
+    unsigned char unmodeled_40[0x40];
+};
+
 /* Stores the 0x18-byte record at the next item and returns the item, or 0 when the block is full. */
 struct DataLookupItem *dataLookupAppend(struct DataLookup *lookup, void *record);
 void dataLookupReset(struct DataLookup *lookup);
 void *dataLookupCurrent(struct DataLookup *lookup);
 void *dataLookupNext(struct DataLookup *lookup);
 void dataObjRelease(void *object);
-void ov01MatrixBlockInit(struct MatrixBlock *mat);
+/* Clears the 0x80-byte matrix block at mat (the address of a float field of a panel or unit: the callers pass it as void *). */
+void ov01MatrixBlockInit(void *mat);
 void ov01ClearTables(void);
 void ov01FifoInit(struct FifoRing *ring, int capacity);
 int ov01FifoGetTail(struct FifoRing *ring);

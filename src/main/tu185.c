@@ -8,6 +8,7 @@
 #include "main/sv_get_image_item.h"
 #include "main/tu185.h"
 #include "main/xgl_2.h"
+#include "main/m_math_193.h"
 
 extern void *memset(void *destination, int value, unsigned int size);
 
@@ -890,7 +891,6 @@ void sefRotationZRows(SefRotationRow *rows, f32 angle) {
     rows[2].element[2] = 1.0f;
 }
 
-Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 f32 sefRandAngle(void);
 
 /* Writes a random rotation into the first three rows of rows: angle x 0, y and z random, composed by
@@ -1953,7 +1953,6 @@ void sefRunEmitters(ResourceSlot *target) {
     }
 }
 
-Matrix4 *MMathRotateMatrixXYZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 Matrix4 *MMathScaleMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *scale);
 /* Nonzero when x, y or z has any bit set: the original tests the raw words (x and y as one doubleword, z as a
  * word), so -0.0f counts as set. */
@@ -1983,7 +1982,7 @@ void sefSetupEmitterPacket(u64 tex0, ResourceSlot *slot, short kind, int emitter
             QuadwordCopyT0(matrix[3], &slot->position);
         }
         if (hasRotation) {
-            MMathRotateMatrixXYZ(&matrix, (const Matrix4 *) &matrix, &slot->rotation);
+            MMathRotateMatrixXYZ(&matrix, &matrix, &slot->rotation);
         }
         if (hasScale) {
             MMathScaleMatrix(&matrix, &matrix, &slot->scale);
@@ -2152,7 +2151,7 @@ void sefDrawEmitter(ResourceSlot *slot, int emitterIndex) {
             angles.x = angles.z = (entry->drift.age + entry->drift.age) * 0.017453292f;
             angles.y = entry->drift.age * 1.5f * 0.017453292f;
             /* Also leaves the turned rows in vf1..vf4 (its last sqc2 store them, m_math_193.c). */
-            MMathRotateMatrixYXZ(&matrix, (const Matrix4 *) &entry->matrix, &angles);
+            MMathRotateMatrixYXZ(&matrix, &entry->matrix, &angles);
         } else {
             SefLoadMatrixRows(&entry->matrix);
         }

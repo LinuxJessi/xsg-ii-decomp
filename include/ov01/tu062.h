@@ -1,6 +1,26 @@
 #ifndef INCLUDE_OV01_TU062_H
 #define INCLUDE_OV01_TU062_H
 
+#include "ov01/tu048.h"
+
+struct Ov01Object;
+
+/* One RGBA colour of a menu sprite. */
+typedef struct MenuRGBA {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+} MenuRGBA;
+
+/* The sprite colour: menuStatSpriteRGB copies a caller's MenuRGBA into it
+ * byte-wise (lwl/lwr, swl/swr), while menuStatSprite/menuStatSprite2 copy the
+ * whole word from an aligned local (lw/sw), so the field is word-aligned. */
+typedef union MenuColor {
+    unsigned int word;
+    MenuRGBA rgba;
+} MenuColor;
+
 /* Functions of src/ov01/tu062.c that other files call. */
 void menuPanelCreate(void);
 /* Opens a stat panel of kind. */
@@ -15,27 +35,25 @@ enum {
     MENU_STAT_PANEL_BACK_ATTACK = 6     /* HitRecord.backAttack */
 };
 /* Opens the stat panel of a step state (1 to 3, ActStepCounter.stepState). */
-void func_00AA76F8(int stepState);
+void menuStatPanelOpen(int stepState);
 
-struct GrPacket;
-struct Ov01Object;
-
-/* Draws the face of the unit with key `key`; small picks the smaller of the two frames. */
-void func_00AA7750(struct GrPacket *packet, int x, int y, short key, int small);
+/* Draws the face of the unit with key `key`; style picks the smaller of the two frames. */
+void menuKeyDraw(GrPacket *packet, int x, int y, int key, int style);
 /* A sprite of width x height at (x, y) from the texel rectangle at (srcX, srcY) of the same size. */
-int menuStatSprite(struct GrPacket *packet, int x, int y, int width, int height, int srcX, int srcY);
-/* A sprite of width x height at (x, y) from the texel rectangle (srcX, srcY)-(srcRight, srcBottom), which the
+void menuStatSprite(GrPacket *packet, int x, int y, int width, int height, int srcX, int srcY);
+/* A sprite of width x height at (x, y) from the texel rectangle (u0, v0)-(u1, v1), which the
  * gauges keep at full size while the width shrinks. */
-void menuStatSprite2(struct GrPacket *packet, int x, int y, int width, int height, int srcX, int srcY, int srcRight,
-                     int srcBottom);
-void menuNumDraw(struct GrPacket *packet, int x, int y, int value, int digits, int style);
-void menuNumDrawTarget(struct GrPacket *packet, int x, int y, int value, int digits, int style,
-                       struct Ov01Object *target);
-void func_00AA7A48(struct GrPacket *packet, int x, int y, int value, int digits, int style, struct Ov01Object *target);
+void menuStatSprite2(GrPacket *packet, int x, int y, int width, int height, int u0, int v0, int u1, int v1);
+void menuStatSpriteRGB(GrPacket *packet, int x, int y, int width, int height, int srcX, int srcY, const MenuRGBA *rgba);
+void menuStatSprite2RGB(GrPacket *packet, int x, int y, int width, int height, int u0, int v0, int u1, int v1, const MenuColor *color);
+void menuNumDraw(GrPacket *packet, int x, int y, int value, int digits, int style);
+void menuNumDrawTarget(GrPacket *packet, int x, int y, int value, int digits, int style, struct Ov01Object *target);
+void menuNumDrawMode(GrPacket *packet, int x, int y, int value, int digits, int style, int colorMode);
+void func_00AA7A48(GrPacket *packet, int x, int y, int value, int digits, int style, struct Ov01Object *target);
 /* One 18 x 18 icon from the icon atlas, cell (col, row). */
-void menuIconPut(struct GrPacket *packet, int x, int y, int col, int row);
-void menuStatusIconPut(struct GrPacket *packet, int x, int y);
+void menuIconPut(GrPacket *packet, int x, int y, unsigned int col, unsigned int row);
+void menuStatusIconPut(GrPacket *packet, int x, int y);
 /* The status icons of a tec record (tecRecordGet). */
-void menuStatusIconsDraw(struct GrPacket *packet, int x, int y, int record);
+void menuStatusIconsDraw(GrPacket *packet, int x, int y, int record);
 
 #endif /* INCLUDE_OV01_TU062_H */

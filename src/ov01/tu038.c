@@ -426,7 +426,7 @@ void ov01StepNextEnemy(int context)
     menuCursorCreate();
     menuIconListCreate();
     menuValuePanelCreate();
-    func_00AA5248();
+    actStepIconCreate();
     menuWepSpPanelNew();
     menuTargetListNew();
     menuUnitPanelNew();

@@ -1,7 +1,6 @@
 #include "common.h"
 #include "shared.h"
-
-Matrix4 *MMathScaleMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *scale);
+#include "main/tu194.h"
 
 Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector)
 {

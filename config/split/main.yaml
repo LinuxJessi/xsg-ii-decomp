@@ -62,7 +62,7 @@ segments:
     subsegments:
       - [0x1000, hasm, sce_sdk_low]
       - [0x19298, hasm, korg_evag]
-      - [0x1C7A0, hasm, cri_sofdec]
+      - [0x1C890, hasm, cri_sofdec]
       - [0x75638, c, control_entry]
       - [0x758D8, c, xgl_timer0]
       - [0x75D08, c, tu005]
@@ -374,8 +374,6 @@ segments:
       - [0x51FE80, data, xgl_menu]
       - [0x520694, data, xgl_cd]
       - [0x5207C0, data, tu012]
-      - [0x520878, data, xgl_flags]
-      - [0x521000, data, sce_sdk_low]
       - [0x5259A0, data, xgl_jpeg]
       - [0x525ED0, data, tu020]
       - [0x525F18, data, tu022]
@@ -397,6 +395,7 @@ segments:
       - [0x527E40, data, tu270]
       - [0x527E50, data, TiGlobalColl]
       - [0x527E80, data, tu273]
+      - [0x527F20, data, sce_sdk_low]
       - [0x529688, data, cri_sofdec]
       - [0x552678, data, sce_sdk_high]
       - [0x5526C8, data, runtime]
@@ -513,7 +512,7 @@ segments:
       - [0x570940, rodata, TiGlobalColl]
       - [0x570960, rodata, tu272]
       - [0x570990, rodata, sce_sdk_low]
-      - [0x571004, rodata, cri_sofdec]
+      - [0x571360, rodata, cri_sofdec]
       - [0x57A520, rodata, sce_sdk_high]
       - [0x57A620, rodata, korg_evag]
       - [0x57A6C8, rodata, runtime]
@@ -753,9 +752,10 @@ segments:
       - { type: bss, vram: 0x00989A50, name: TiDrawJoint }
       - { type: bss, vram: 0x00989D50, name: TiWindBase }
       - { type: bss, vram: 0x00989FD0, name: tu273 }
+      - { type: bss, vram: 0x00991000, name: sce_sdk_low_bss2 }
       - { type: bss, vram: 0x009968C0, name: cri_sofdec }
       - { type: bss, vram: 0x009AC3C0, name: sce_sdk_high }
-      - { type: bss, vram: 0x009B4C00, name: korg_evag }
+      - { type: bss, vram: 0x009ACC00, name: korg_evag }
       - { type: bss, vram: 0x009D5948, name: runtime }
   - [0x57F17C, bin, blobs/pad_before_ov02]
   - name: ov02

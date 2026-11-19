@@ -483,7 +483,7 @@ void calcStatResetCha(Ov01Object *object);
 int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
     int effect;
     int amount;
-    int hpKind; /* -50 or -100: the kind argument of func_00AA4DB8 for the hit-point effect */
+    int hpKind; /* -50 or -100: the kind argument of menuPopNumCreate for the hit-point effect */
     int level;
     int magnitude;
     unsigned int value;
@@ -512,7 +512,7 @@ int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
             if (epDelta < 0) {
                 magnitude = -epDelta;
             }
-            func_00AA4DB8(object, magnitude, 4, -50);
+            menuPopNumCreate(object, magnitude, 4, -50);
         }
         effect = calcStatEffectSum(object, 0x200, 0x800);
         if (effect > 0) {
@@ -526,7 +526,7 @@ int unitCmdStatEffect(Ov01Object *object, Ov01Command *step) {
             if (hpDelta < 0) {
                 magnitude = -hpDelta;
             }
-            func_00AA4DB8(object, magnitude, 2, hpKind);
+            menuPopNumCreate(object, magnitude, 2, hpKind);
         }
         value = object->stats->keyUnsigned;
         if (value - 1 < 10) {

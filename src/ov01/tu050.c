@@ -27,7 +27,7 @@ extern PathObject *objPathTable[OBJ_PATH_COUNT];
 /* ActStock.pickSource value that shows the moving path object instead of point 0. */
 #define PATH_STOCK_SOURCE_MOVING 2
 
-void func_00AA7770(GrPacket *packet, int x, int y, int key, int mode, int fade);
+void menuKeyCellDraw(GrPacket *packet, int x, int y, int key, int mode, int fade);
 
 int objStdMove(void *target);
 void slideSetStep(void *target, int value);
@@ -146,7 +146,7 @@ void objPathDraw(PathObject *object)
         y -= 4;
     }
     grGpInit(&packet);
-    func_00AA7770(&packet, x, y, unit->stats->key, 1, object->kind.path.fade);
+    menuKeyCellDraw(&packet, x, y, unit->stats->key, 1, object->kind.path.fade);
     grPacketSend(&packet);
 }
 

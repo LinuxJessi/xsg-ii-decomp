@@ -2206,6 +2206,7 @@ f32 sefRandf(void);
 struct SefLaneObject;
 void sefGetLaneStartPos(Vector4 *pos, struct SefLaneObject *object);
 void sefGetLaneTargetPos(Vector4 *pos, struct SefLaneObject *object);
+/* Local views of the rotation helpers (main/m_math_193.h): the particle keeps its matrix as three Vector4 rows. */
 Vector4 *MMathRotateMatrixYXZ(Vector4 *matrix, int mode, Vector4 *angles);
 
 /* Copies a key vector with w = 1. */

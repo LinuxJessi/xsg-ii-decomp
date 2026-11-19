@@ -56,9 +56,12 @@ OVERLAYS = (('ov01', 'OV01.OVL', 'annotations/overlays/ov01_annotations.csv'),
 MAIN_ZONES = (
     dict(start=0x120000, end=0x138298, cls='sce_sdk', stem='sce_sdk_low',
          evidence='crt0 and Sony libraries: sce* and libpad strings, no calls into game code, except crt0 to main'),
-    dict(start=0x138298, end=0x13b7a0, cls='middleware', stem='korg_evag', families={'korg': 1},
-         evidence='KORG EE client: [KORGEVAG] string, RPC stubs over one client block at 0x69e148'),
-    dict(start=0x13b7a0, end=0x194638, cls='middleware', stem='cri_sofdec', families={'cri': 1},
+    # The KORG client ends at 0x13b890, not 0x13b7a0 (zone audit 2026-11-19): func_0013B7A0 indexes a $gp table,
+    # func_0013B7E8 is taken by address in func_0013B708 and takes func_0013B7A0, and func_0013B850 uses the
+    # client's $gp block and is the pointer stored at 0x69e178. KORG is the only library here built with $gp data.
+    dict(start=0x138298, end=0x13b890, cls='middleware', stem='korg_evag', families={'korg': 1},
+         evidence='KORG EE client: [KORGEVAG] string, RPC stubs over one client block at 0x69e148, $gp-relative data'),
+    dict(start=0x13b890, end=0x194638, cls='middleware', stem='cri_sofdec', families={'cri': 1},
          evidence='CRI ADX and Sofdec: mwPly, SFH and ADXRT strings, no calls into game code'),
     dict(start=0x194638, end=0x29f000, cls='game', stem='game', evidence='from InitializeSystem to the last caller of game code'),
     dict(start=0x29f000, end=0x2a1578, cls='sce_sdk', stem='sce_sdk_high', evidence='Sony libraries by earlier study; no calls into game code'),
@@ -1362,6 +1365,19 @@ def boundary_record(cuts, gap, log_odds, model_file):
     return evidence, confidence
 
 
+# First byte of an out-of-scope zone's piece in a data section, where the single-user rule cannot find it: a
+# library references its own data at inner addresses, and a bare `lui` in library code can look like a
+# reference to a round address inside game data. (zone stem, section, first byte, evidence), zone audit 2026-11-19.
+ZONE_DATA_STARTS = [
+    ('sce_sdk_low', '.data', 0x00646F20,
+     'the libkernel banner "PsIIlibkernl2710" opens the Sony library .data right after elvKeepOffFlags[32] of '
+     'tu273 (0x646EA0-0x646F20); everything from here to the CRI .data at 0x648688 is read by library code only'),
+    ('cri_sofdec', '.rodata', 0x00690360,
+     'the libpad texts run to "COMPLETE" at 0x690348 (scePadPortOpen reads 0x6902C8); the first CRI read is '
+     '0x690360 (func_0014EAC0), before the E206011 texts'),
+]
+
+
 def attribute_data(unit, tus):
     """Per TU and section: span of the data only that TU references, and neighbours in address order."""
     image = unit.image
@@ -1415,6 +1431,13 @@ def attribute_data(unit, tus):
             claims[section][next(iter(gp_owners[target]))].append(target)
     for target, ordinal in defined.items():
         claims[image.section_of(target)][ordinal].append(target)
+    zone_ordinal = {tu['_zone']['stem']: tu['ordinal'] for tu in tus
+                    if tu.get('_zone') and tu['_zone']['cls'] != 'game' and 'stem' in tu['_zone']}
+    for stem, section, start, _ in ZONE_DATA_STARTS:
+        if stem not in zone_ordinal:
+            continue
+        ordinal = zone_ordinal[stem]
+        claims[section][ordinal] = [start] + [t for t in claims[section].get(ordinal, []) if t > start]
     section_order = {}
     for section, per_tu in claims.items():
         order = sorted(per_tu, key=lambda ordinal: min(per_tu[ordinal]))
@@ -1476,8 +1499,8 @@ DATA_RANGE_OWNERS = [
      'and .lit4'),
     (0x003E7270, 0x003E7400, 0x001FD348, 'tu083.c: D_003E7270, read by tu083 and tu068; tu083 is the reader inside '
      'the link-order interval tu082..tu088'),
-    (0x005E6D00, 0x005E6D40, 0x00266B50, 'sdv_180: D_005E6D00/D_005E6D20 lie between tu178 and sdv_180 in .data; '
-     'tu185 (their reader) comes after sdv_183 in every other section'),
+    (0x005E6D28, 0x005E6D40, 0x00266B50, 'sdv_180: its .data starts where srsRecordTable of srs.c ends (0x5E6D28, '
+     'upstream b84ca21e); D_005E6D00, which tu185 reads, is the tail of that table (+0x630), not an object of sdv_180'),
     (0x00631140, 0x00631440, 0x0023E978, 'test_129.c: tiWaterTwoPi opens its .data (alignment 8 rules out a start '
      'at 0x631144); TiWater comes after test_129 in .rodata and .bss'),
     (0x0069DCA0, 0x0069DCAC, 0x0027C7D0, 'tu214.c: sellLabelTextOff lies between tu198 and tu214 in .sdata; tu234 '
@@ -1487,8 +1510,6 @@ DATA_RANGE_OWNERS = [
     (0x0068D2B0, 0x0068D348, 0x0027BFD0, 'tu214.c: jump table of effectRequestToCommand (see MOVED_CUTS 0x27C7D0)'),
     (0x0063EDE0, 0x0063EE80, 0x00199428, 'xgl_pad.c: pad state bytes read by the sdv_033 camera code; between '
      'xgl_dma and xgl_menu in .data, while sdv_033 comes after xgl_2 everywhere else'),
-    (0x0063F878, 0x00640000, 0x001A09B8, 'xgl_flags.c: the system block (language index, memcard state, flags) '
-     'after tu012 in .data; xgl_timer0 opens the xgl group in .rodata'),
     (0x006459A0, 0x00645F10, 0x001B8B18, 'tu042.c: the pxy glyph tables'),
     (0x00645F10, 0x00645FB0, 0x001B95F0, 'nml_model_set.c: after tu042 in .data as in .sdata and .text'),
     (0x0069D750, 0x0069D768, 0x0021A520, 'tu101.c: the record "\\031\\003", the 8-byte style record D_0069D758 and '
@@ -1535,6 +1556,16 @@ DATA_RANGE_OWNERS = [
 # Found while moving the data of the code-complete TUs to C (2026-11-15/16): a C object must start at its first
 # byte and cannot be split between two objects.
 DATA_OBJECT_OWNERS = [
+    (0x005E66D0, 0x005E6D28, 0x00265820,
+     'srsRecordTable: the 58-record SrsTable of srs.c (0x658 bytes, zero .data), one C object upstream (b84ca21e). '
+     'sdv.c reads inside it, so the single-user rule had started the .data of sdv_180 at 0x5E6D00'),
+    (0x0063F840, 0x006449A0, 0x0019DB58,
+     'SaveData: the 0x5160-byte save image (zero .data), defined once in tu012.c, the memory card file, as in X1 '
+     '(xgl_mc.c: `unsigned char SaveData[MC_SAVE_DATA_SIZE] = { 0 };`). It follows xglMcFileNames and ends where the '
+     '.data of xgl_jpeg starts. Its readers use inner addresses (xgl_flags the flag window at +0x74, tu110 the '
+     'blocks from +0x1274 on), so the single-user rule had cut it into tu012 (41 bytes), xgl_flags (0x63F878-'
+     '0x640000) and, from the round address 0x640000 that an SDK `lui` seemed to reference, a piece of the Sony '
+     'library zone that stayed scaffolding (zone audit 2026-11-19)'),
     (0x002B5D90, 0x002B78C0, 0x001D5440,
      'gameWork: the 0x1B28-byte game work block of tu048 (GameWorkPlayer, zero .data; 8 bytes of fill before tu049). '
      'Other modules read its fields through their own labels (gameLoopFlags = +8, elvSlopeTable, cameraBankAngle, '
@@ -1591,6 +1622,12 @@ JOINED_KEEPS_LATER_ORDINAL = {
 }
 
 JOINED_CUTS = [
+    (0x002661B0, 'srs.c: old tu178 joins (upstream 999a5bd1, review of #24): srs.c and tu178.c are one file, SrsTable is '
+     'the one table layout and srsRecordTable one C object'),
+    (0x002674A0, 'sdv_181.c: old tu182 joins (upstream 725299e3). tu181, tu182 and sdv_183 are one file in X1 (sdv.c), '
+     'and sdvExecSpecial and sdvScheduleAlter match only when func_00267048 is compiled earlier in the same file '
+     '(no EH region on the call, so reorg keeps beq)'),
+    (0x00267BB8, 'sdv_181.c: old sdv_183 joins (upstream 725299e3, same evidence as 0x2674A0)'),
     (0x00274070, 'oLib: tu202 joins (it lies between oLib and the old tu203, see 0x274100)'),
     (0x00274100, 'oLib: tu203 joins. Its .sdata flags xglCosDegTableReady/xglSinDegTableReady (read only by '
      'xglCosDeg/xglSinDeg) precede oLibHandle (read only by oLibInit/oLibExit) at 0x69DDC4-0x69DDD0, so the '
@@ -1700,10 +1737,21 @@ JOINED_CUTS = [
     (0x00264670, 'sef: old tu174 joins (see 0x263E68)'),
     (0x002647E0, 'sef: old tu175 joins (see 0x263E68)'),
     (0x00265300, 'sef: old tu176 joins (see 0x263E68)'),
+    (0x00AA5B60, 'ov01 tu057 joins tu056 (2026-11-18): menuTgtStatusNew takes the address of menuTgtStatusDraw, and '
+     'func_00AA60B8 (tail of old tu057) is called only by menuWepSpPanelDraw (tu056): one file'),
+    (0x00AA8678, 'ov01 tu065 joins tu064 (2026-11-18): screenFadeInStart/OutStart take the addresses of '
+     'screenFadeInStep/OutStep/Draw, referenced nowhere else: static callbacks of one file'),
+    (0x00AB2940, 'ov01 tu087 joins tu086 (2026-11-18, after the move to MEfCreateSpray): StepSprayPoints, DrawSpray and '
+     'TickLifetime121 are callbacks whose address only MEfCreateSpray takes'),
+    (0x00AB40D8, 'ov01 tu090 joins tu089 (2026-11-18, after the move to func_00AB3CC8): func_00AB40D8 and '
+     'MEfAdvanceHistoryStep are callbacks whose address only func_00AB3CC8 takes'),
 ]
 
 # Cuts moved on compiler evidence: (inferred start of a TU, its corrected start, why).
 MOVED_CUTS = [
+    (0x00274808, 0x00274830,
+     'wrapIntRange (0x274808) ends tu206, the xglClampInt object (upstream 4cb7d47b): recordStepAngle of tu207 keeps '
+     'bnel on its call without a block-scope declaration only when the callee is not compiled earlier in its file'),
     (0x0027C7D0, 0x0027BFD0,
      'effectRequestToCommand reads its jump table at 0x68D2B0, between tu199 and tu225 in .rodata where the '
      'tu214 file sits, while the gsQueue functions before it keep tu213 .sdata/.sbss/.lit4 after tu211; the '
@@ -1721,6 +1769,18 @@ MOVED_CUTS = [
      '.rodata (0x68CD10, below) with cfeListSetKeyMode; the functions between use no .rodata, so they stay '
      'with cfeEvaluate. Found matching func_00249ED0; a string-free extension of rodata_order_breaks '
      'held on X1 (13/13) but gave false cuts on X2 at file-scope tables (0x68F0D0), user 2026-11-08'),
+    # ov01 MEf effect files (2026-11-18, user "fusionar todas las TUs que puedas"): every effect Create is referenced
+    # only from the .data effect table (global) and is the only function that takes the address of the callbacks and
+    # helpers after it (static), as X1's m_ef_create_*.c (global MEfCreate_XXX, then static fnXXX_PR/DM/DP/PO). The
+    # inferred cuts fell one Create late: each file starts at its Create.
+    (0x00AADB58, 0x00AADBE0, 'ov01 MEf: MEfAdvanceStepShort is func_00AACDA0\'s callback; the Sway file opens at MEfCreateSway'),
+    (0x00AAE0A8, 0x00AAE748, 'ov01 MEf: MEfDrawStencilA, func_00AAE148, func_00AAE478 are MEfCreateSway\'s; next file opens at func_00AAE748'),
+    (0x00AAEE00, 0x00AAEEE8, 'ov01 MEf: func_00AAEE00 is func_00AAE748\'s callback (its object layout differs from func_00AAEEE8\'s)'),
+    (0x00AAFA50, 0x00AB0088, 'ov01 MEf: func_00AAFA50..MEfTickLifetime28 are MEfCreatePathEffect25\'s; next file opens at MEfCreatePathEffect31'),
+    (0x00AB1050, 0x00AB0A38, 'ov01 MEf: func_00AB1050, MEfDrawRotatedQuads, MEfTickTrailSample are MEfCreatePathEffect29\'s; its file opens at it'),
+    (0x00AB1890, 0x00AB14E0, 'ov01 MEf: MEfSetStepFlags30, MEfDrawFlagWindow, MEfAdvanceFlagWindow are func_00AB14E0\'s'),
+    (0x00AB2040, 0x00AB2750, 'ov01 MEf: MEfDrawWaveEffect, MEfAdvanceHistoryTrail are MEfCreateWaveEffect\'s; the spray file opens at MEfCreateSpray'),
+    (0x00AB3668, 0x00AB3CC8, 'ov01 MEf: MEfDrawPathTrail, MEfAdvancePathStep are MEfCreateActorPath\'s; next file opens at func_00AB3CC8'),
     (0x0020CE30, 0x0020CE40,
      'func_0020CE30 as C earlier in the file turns bnel into bne in func_0020DDC8; defined after the caller '
      'it matches, so the original did not see that definition first (docs/bulk-match.md, user 2026-11-05)'),
@@ -1907,6 +1967,41 @@ OVERLAY_RODATA = {
              '(0xAB4500..) names and its jump table 0xABA210, and increase again through the 24 switch jump tables '
              '0xABA210-0xABA8F0 and the literals of tu047-tu090 up to 0xABB870, where .bss restarts at tu000; '
              'found banking unitCmdCodeGet (ov01/tu013), whose C jump table had no piece to land in, 2026-11-17'),
+    'ov02': (0x00A83178,
+             'the code references of the data half increase by TU from tu000 (0xA82850) to tu002 (0xA83150-0xA83160, '
+             'literals; the pointer table 0xA83168-0xA83174 is tu002 .data), then restart at tu000 with the string '
+             'pool 0xA83178.. and increase through tu001 and tu002 (jump tables 0xA83750, 0xA837B0, 0xA83C30) up to '
+             '0xA83C48, where .bss restarts; found banking HddInstallCB and TitleHddInstall (ov02/tu002), whose C jump '
+             'tables had no piece to land in, 2026-11-18'),
+}
+
+
+# Code references to an overlay's `.rodata` that scan_refs does not pair: (target, function VA, why). They take
+# part in the piece cuts like the scanned ones.
+OVERLAY_RODATA_REFERENCES = {
+    'ov01': (
+        (0x00ABB7D0, 0x00AB3668,
+         'MEfDrawPathTrail: `lui $3, %hi(0xABB7D0)` sits in the delay slot of the parity `bnez` at 0xAB37FC and its '
+         '`addiu $3, $3, %lo` at 0xAB3814 follows the branch target label, so the pair spans two blocks; the two '
+         'colour quadwords 0xABB7D0-0xABB7F0 are read by no other function (2026-11-20)'),
+        (0x00ABB7F0, 0x00AB3668,
+         'MEfDrawPathTrail: `lui $2, %hi(0xABB7F0)` is in the delay slot of the `b` at 0xAB39C8 and again at '
+         '0xAB39D8, the `addiu $30, $2, %lo` at 0xAB39E4 follows the join label (2026-11-20)'),
+        # A function-scope `static const` 128-bit colour is emitted at its declaration and loaded as an
+        # immediate (li/dsll32/ori/pcpyld), so no instruction references the datum and it would fall to the
+        # previous file's piece. Each quadword below equals the immediate its function builds (2026-11-20).
+        (0x00ABB510, 0x00AAF2D0,
+         'func_00AAF2D0: the outer colour {0,0x40,0x80,0xC0} at 0xABB510 and the inner colour {0,0,0x80,0x30} '
+         'at 0xABB520 are the two immediates of its strips'),
+        (0x00ABB530, 0x00AAFA50,
+         'func_00AAFA50: the half-alpha grey {0x80,0x80,0x80,0x40} is the immediate of its quad; it precedes the '
+         'texture names of the functions that follow it in the file'),
+        (0x00ABB570, 0x00AB04D0,
+         'func_00AB04D0: the same half-alpha grey, the twin quad function of the next file'),
+        (0x00ABB690, 0x00AB18F8,
+         'MEfDrawFlagWindow: the strip colour {0x40,0,0,0xFF} is its immediate; the file before it '
+         '(MEfDrawRotatedQuads) never reads it'),
+    ),
 }
 
 
@@ -1918,6 +2013,10 @@ def overlay_rodata_pieces(unit, tus, low, high):
         for target, who in table.items():
             if low <= target < high:
                 users[target] |= who
+    index_of = {va: i for i, va in enumerate(unit.vas)}
+    for target, function, _ in OVERLAY_RODATA_REFERENCES.get(unit.image.unit, ()):
+        if low <= target < high:
+            users[target].add(index_of[function])
     claims = collections.defaultdict(list)
     for target, who in users.items():
         ordinals = {owner[i] for i in who if i in owner}
@@ -2403,7 +2502,7 @@ def write_report(root=ROOT):
               'boundary can cost a match as well as readability.', '',
               '## Not done here', '',
               '- Compiler evidence from matching is not recorded yet, so nothing corrects the map as functions match.',
-              '- Overlay data: ov01 has a per-TU `.rodata` family (0xAB8CA0-0xABB870, OVERLAY_RODATA); its `.data` and `.bss`, and all of ov02\'s data, are still one unsplit family each.',
+              '- Overlay data: ov01 (0xAB8CA0-0xABB870) and ov02 (0xA83178-0xA83C48) have a per-TU `.rodata` family (OVERLAY_RODATA); their `.data` and `.bss` are still one unsplit family each.',
               '- VU programs are listed, not split, and the VU tools have not been tried on X2.',
               '- `section_order` covers code-referenced data only. `binding` is `unknown` for every function.', '']
     (root / 'reports/x2-tu-map.md').write_text('\n'.join(lines))

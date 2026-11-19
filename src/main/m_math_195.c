@@ -1,14 +1,15 @@
 #include "common.h"
 #include "main/sdv_033.h"
 #include "shared.h"
+#include "main/m_math_191.h"
+#include "main/m_math_195.h"
+#include "main/m_math_193.h"
 
 
 Vector4 *MMathApplyMatrix(Vector4 *out, Matrix4 *matrix, const Vector4 *vector);
-Matrix4 *MMathRotateMatrixYX(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
-Vector4 *MMathCalcAngle(Vector4 *out, const Vector4 *source, const Vector4 *target);
 
 /* out = matrix with rows 0..2 scaled by scale; row 3, the translation row, is copied unchanged. */
-Matrix4 *MMathScaleMatrixRotS(Matrix4 *out, const Matrix4 *matrix, float scale)
+Matrix4 *MMathScaleMatrixRotS(Matrix4 *out, Matrix4 *matrix, float scale)
 {
     __asm__ __volatile__(
         "mfc1 $8, %2\n\t"
@@ -70,7 +71,6 @@ Matrix4 *MMathTranslateMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *tran
     return out;
 }
 
-Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 
 /* Pitch and yaw from source to target, roll as z of the angles, YXZ rotation over the identity;
  * a non-null position goes to row 3 with w = 1. */

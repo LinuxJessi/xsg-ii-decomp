@@ -9,6 +9,7 @@
 #include "ov01/tu009.h"
 #include "ov01/tu023.h"
 #include "ov01/tu040.h"
+#include "ov01/tu069.h"
 #include "ov01/tu070.h"
 
 /*
@@ -780,7 +781,6 @@ int dataVoiceFilesLoad(struct DataSlot *slot, char *name, int pass)
     return prj_loaded + dataFileSlotLoad(&slot->voice_files.vsf, dataPathBuf, &voice_buffer, pass);
 }
 
-int handleAddressGet(int);
 
 void dataSlotUnload(struct DataSlot *slot) {
     int handle_address;
@@ -1091,7 +1091,6 @@ int dataMotSetLoad(struct DataSlot *slot, int id, int index)
 }
 
 int func_00A9B2A0(int index);
-int handleAlloc(int flag, int value);
 char *dataVoiceNameGet(int index);
 
 int dataVoiceSetLoad(struct DataSlot *slot, int index) {

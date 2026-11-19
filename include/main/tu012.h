@@ -15,6 +15,10 @@ typedef struct McRequestParam {
     int (*callback)();
 } McRequestParam;
 
+/* The save image SaveData (src/main/tu012.c) is the memory card file contents: card file 0 holds its
+ * 0x50-byte header, the other files the rest. */
+#define SAVE_DATA_SIZE 0x5160
+
 void xglMcReset(void);
 char * xglMcSetFullPath(int card, int selector);
 int xglMcMain(void);

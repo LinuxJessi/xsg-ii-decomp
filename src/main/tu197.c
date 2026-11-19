@@ -2,6 +2,7 @@
 #include "main/tu197.h"
 #include "main/sdv_033.h"
 #include "main/tu187.h"
+#include "main/m_math_193.h"
 #include "quadword.h"
 
 /* Builds in destination the rotation that turns the unit vector from onto
@@ -133,20 +134,8 @@ void MSeObjShutdown(void) {
     MSeObjPool = 0;
 }
 
-/* The camera snapshot MSeObjProc mode 0 takes before the object callbacks run. */
-typedef struct MEfCameraParams {
-    XglCamera *camera;              /* +0x0: xglStudioGetCamera2(0) */
-    unsigned char unmodeled_04[0xC];
-    Matrix4 viewMatrix;             /* +0x10: camera->volume[0].viewMatrix */
-    Vector4 rotation;               /* +0x50: camera->travel.rotation */
-    Matrix4 rotationMatrix;         /* +0x60: MMathRotateMatrixYXZ of rotation */
-} MEfCameraParams;
-
-/* MEfCamParams in the ov01 link (config/symbols/ov01.txt); main still links it as D_0061B2C0. */
-extern MEfCameraParams D_0061B2C0;
 extern char D_0068C6D8[];
 XglCamera *xglStudioGetCamera2(int camera_index);
-Matrix4 *MMathRotateMatrixYXZ(Matrix4 *out, const Matrix4 *matrix, const Vector4 *angles);
 void svForceImageMapper(unsigned int index);
 
 /* Runs one pass over the busy slots of the pool: mode 0 takes the camera snapshot first, mode 2 forces each
@@ -164,10 +153,10 @@ void MSeObjProc(unsigned int mode) {
     switch (mode) {
     case 0:
         camera = xglStudioGetCamera2(0);
-        D_0061B2C0.camera = camera;
-        QuadwordCopyMatrixT0(D_0061B2C0.viewMatrix, camera->volume[0].viewMatrix);
-        QuadwordCopyT0(&D_0061B2C0.rotation, &camera->travel.rotation);
-        MMathRotateMatrixYXZ(&D_0061B2C0.rotationMatrix, 0, &D_0061B2C0.rotation);
+        MEfCamParams.camera = camera;
+        QuadwordCopyMatrixT0(MEfCamParams.viewMatrix, camera->volume[0].viewMatrix);
+        QuadwordCopyT0(&MEfCamParams.rotation, &camera->travel.rotation);
+        MMathRotateMatrixYXZ(&MEfCamParams.rotationMatrix, 0, &MEfCamParams.rotation);
         while (slot-- != 0) {
             if (object->flags & MSE_OBJ_BUSY) {
                 if (object->modeProc[0] != 0) {
@@ -268,9 +257,11 @@ MSeObj *MSeObjAlloc(void) {
     return 0;
 }
 
-/* Marks the slot whose flags word is *flags for release: MSeObjProc mode 3 clears slots carrying
+/* Marks the object (its flags word is the first field) for release: MSeObjProc mode 3 clears slots carrying
  * MSE_OBJ_FREE_REQUESTED. */
-void MSeObjRequestFree(unsigned short *flags) {
+void MSeObjRequestFree(void *object) {
+    unsigned short *flags = object;
+
     *flags |= MSE_OBJ_FREE_REQUESTED;
 }
 

@@ -3588,11 +3588,11 @@
     {
      "range": [
       "0x0063f840",
-      "0x0063f869"
+      "0x006449a0"
      ],
      "generated": [
       "0x0063f840",
-      "0x0063f869"
+      "0x006449a0"
      ],
      "generated_by": [],
      "c_owned_symbols": [
@@ -3603,49 +3603,14 @@
        "section": ".data",
        "range": [
         "0x0063f840",
-        "0x0063f869"
+        "0x006449a0"
        ],
        "object_range": [
         136,
-        177
+        20968
        ],
        "symbols": [
         "SaveData"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu012.o"
-     }
-    },
-    {
-     "range": [
-      "0x0063f869",
-      "0x0063f878"
-     ],
-     "generated": [
-      "0x0063f869",
-      "0x0063f878"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_0063F869"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x0063f869",
-        "0x0063f878"
-       ],
-       "object_range": [
-        184,
-        199
-       ],
-       "symbols": [
-        "D_0063F869"
        ]
       }
      ],
@@ -4103,32 +4068,6 @@
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/main/build/c/tu017.o"
-     }
-    }
-   ]
-  },
-  "main/tu018": {
-   ".data": [
-    {
-     "range": [
-      "0x0063f878",
-      "0x00640000"
-     ],
-     "generated": [
-      "0x0063f878",
-      "0x00640000"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_0063F878",
-      "D_0063F890",
-      "D_0063F8A8"
-     ],
-     "also_referenced_by_c": [],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/xgl_flags.o"
      }
     }
    ]
@@ -116693,39 +116632,18 @@
     {
      "range": [
       "0x00989fd0",
-      "0x009968c0"
+      "0x00990ff0"
      ],
      "generated": [
       "0x00989fd0",
-      "0x009968c0"
+      "0x00990ff0"
      ],
      "generated_by": [],
      "c_owned_symbols": [
       "mapBoundsMin",
       "mapBoundsMax",
       "mapRecordStates",
-      "D_0098ABF0",
-      "D_00991000",
-      "D_00991800",
-      "D_00992000",
-      "D_00992800",
-      "D_00992880",
-      "D_009934C0",
-      "D_00993D80",
-      "D_00993F80",
-      "D_00993FC0",
-      "D_00994400",
-      "D_009948B0",
-      "D_00994CC0",
-      "D_00994DD0",
-      "D_00994E00",
-      "D_00995080",
-      "D_00995180",
-      "D_009951C0",
-      "D_00995200",
-      "D_00995300",
-      "D_00996380",
-      "D_00996580"
+      "mapScanPool"
      ],
      "also_referenced_by_c": [],
      "c_input_spans": [
@@ -116733,38 +116651,17 @@
        "section": ".bss",
        "range": [
         "0x00989fd0",
-        "0x009968c0"
+        "0x00990ff0"
        ],
        "object_range": [
         0,
-        51440
+        28704
        ],
        "symbols": [
         "mapBoundsMin",
         "mapBoundsMax",
         "mapRecordStates",
-        "D_0098ABF0",
-        "D_00991000",
-        "D_00991800",
-        "D_00992000",
-        "D_00992800",
-        "D_00992880",
-        "D_009934C0",
-        "D_00993D80",
-        "D_00993F80",
-        "D_00993FC0",
-        "D_00994400",
-        "D_009948B0",
-        "D_00994CC0",
-        "D_00994DD0",
-        "D_00994E00",
-        "D_00995080",
-        "D_00995180",
-        "D_009951C0",
-        "D_00995200",
-        "D_00995300",
-        "D_00996380",
-        "D_00996580"
+        "mapScanPool"
        ]
       }
      ],
@@ -116814,11 +116711,11 @@
     {
      "range": [
       "0x00646ea0",
-      "0x00646f30"
+      "0x00646f20"
      ],
      "generated": [
       "0x00646ea0",
-      "0x00646f30"
+      "0x00646f20"
      ],
      "generated_by": [],
      "c_owned_symbols": [
@@ -116829,927 +116726,14 @@
        "section": ".data",
        "range": [
         "0x00646ea0",
-        "0x00646f30"
+        "0x00646f20"
        ],
        "object_range": [
         32,
-        176
+        160
        ],
        "symbols": [
         "elvKeepOffFlags"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00646f30",
-      "0x00646f38"
-     ],
-     "generated": [
-      "0x00646f30",
-      "0x00646f38"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00646F30"
-     ],
-     "c_input_spans": [
-      {
-       "zero_padding_tail": 4,
-       "section": ".data",
-       "range": [
-        "0x00646f30",
-        "0x00646f38"
-       ],
-       "object_range": [
-        176,
-        184
-       ],
-       "symbols": [
-        "D_00646F30"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00646f38",
-      "0x00646fb8"
-     ],
-     "generated": [
-      "0x00646f38",
-      "0x00646fb8"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00646F38"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00646f38",
-        "0x00646fb8"
-       ],
-       "object_range": [
-        184,
-        312
-       ],
-       "symbols": [
-        "D_00646F38"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00646fb8",
-      "0x00646fe0"
-     ],
-     "generated": [
-      "0x00646fb8",
-      "0x00646fe0"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00646FB8"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00646fb8",
-        "0x00646fe0"
-       ],
-       "object_range": [
-        312,
-        352
-       ],
-       "symbols": [
-        "D_00646FB8"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00646fe0",
-      "0x00647000"
-     ],
-     "generated": [
-      "0x00646fe0",
-      "0x00647000"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00646FE0"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00646fe0",
-        "0x00647000"
-       ],
-       "object_range": [
-        352,
-        384
-       ],
-       "symbols": [
-        "D_00646FE0"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00647000",
-      "0x006477a8"
-     ],
-     "generated": [
-      "0x00647000",
-      "0x006477a8"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00647000"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00647000",
-        "0x006477a8"
-       ],
-       "object_range": [
-        384,
-        2344
-       ],
-       "symbols": [
-        "D_00647000"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x006477a8",
-      "0x006477c0"
-     ],
-     "generated": [
-      "0x006477a8",
-      "0x006477c0"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_006477A8"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x006477a8",
-        "0x006477c0"
-       ],
-       "object_range": [
-        2344,
-        2368
-       ],
-       "symbols": [
-        "D_006477A8"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x006477c0",
-      "0x006477c8"
-     ],
-     "generated": [
-      "0x006477c0",
-      "0x006477c8"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_006477C0"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x006477c0",
-        "0x006477c8"
-       ],
-       "object_range": [
-        2368,
-        2376
-       ],
-       "symbols": [
-        "D_006477C0"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x006477c8",
-      "0x00647f08"
-     ],
-     "generated": [
-      "0x006477c8",
-      "0x00647f08"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_006477C8"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x006477c8",
-        "0x00647f08"
-       ],
-       "object_range": [
-        2376,
-        4232
-       ],
-       "symbols": [
-        "D_006477C8"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00647f08",
-      "0x00647f30"
-     ],
-     "generated": [
-      "0x00647f08",
-      "0x00647f30"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00647F08"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00647f08",
-        "0x00647f30"
-       ],
-       "object_range": [
-        4232,
-        4272
-       ],
-       "symbols": [
-        "D_00647F08"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00647f30",
-      "0x00647f70"
-     ],
-     "generated": [
-      "0x00647f30",
-      "0x00647f70"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00647F30"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00647f30",
-        "0x00647f70"
-       ],
-       "object_range": [
-        4272,
-        4336
-       ],
-       "symbols": [
-        "D_00647F30"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00647f70",
-      "0x00647f88"
-     ],
-     "generated": [
-      "0x00647f70",
-      "0x00647f88"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00647F70"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00647f70",
-        "0x00647f88"
-       ],
-       "object_range": [
-        4336,
-        4360
-       ],
-       "symbols": [
-        "D_00647F70"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00647f88",
-      "0x006482b8"
-     ],
-     "generated": [
-      "0x00647f88",
-      "0x006482b8"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00647F88"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00647f88",
-        "0x006482b8"
-       ],
-       "object_range": [
-        4360,
-        5176
-       ],
-       "symbols": [
-        "D_00647F88"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x006482b8",
-      "0x006482c0"
-     ],
-     "generated": [
-      "0x006482b8",
-      "0x006482c0"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_006482B8"
-     ],
-     "c_input_spans": [
-      {
-       "zero_padding_tail": 4,
-       "section": ".data",
-       "range": [
-        "0x006482b8",
-        "0x006482c0"
-       ],
-       "object_range": [
-        5176,
-        5184
-       ],
-       "symbols": [
-        "D_006482B8"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x006482c0",
-      "0x00648300"
-     ],
-     "generated": [
-      "0x006482c0",
-      "0x00648300"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_006482C0"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x006482c0",
-        "0x00648300"
-       ],
-       "object_range": [
-        5184,
-        5248
-       ],
-       "symbols": [
-        "D_006482C0"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648300",
-      "0x00648308"
-     ],
-     "generated": [
-      "0x00648300",
-      "0x00648308"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648300"
-     ],
-     "c_input_spans": [
-      {
-       "zero_padding_tail": 4,
-       "section": ".data",
-       "range": [
-        "0x00648300",
-        "0x00648308"
-       ],
-       "object_range": [
-        5248,
-        5256
-       ],
-       "symbols": [
-        "D_00648300"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648308",
-      "0x00648348"
-     ],
-     "generated": [
-      "0x00648308",
-      "0x00648348"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648308"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648308",
-        "0x00648348"
-       ],
-       "object_range": [
-        5256,
-        5320
-       ],
-       "symbols": [
-        "D_00648308"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648348",
-      "0x00648418"
-     ],
-     "generated": [
-      "0x00648348",
-      "0x00648418"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648348"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648348",
-        "0x00648418"
-       ],
-       "object_range": [
-        5320,
-        5528
-       ],
-       "symbols": [
-        "D_00648348"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648418",
-      "0x00648538"
-     ],
-     "generated": [
-      "0x00648418",
-      "0x00648538"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648418"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648418",
-        "0x00648538"
-       ],
-       "object_range": [
-        5528,
-        5816
-       ],
-       "symbols": [
-        "D_00648418"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648538",
-      "0x006485b8"
-     ],
-     "generated": [
-      "0x00648538",
-      "0x006485b8"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648538"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648538",
-        "0x006485b8"
-       ],
-       "object_range": [
-        5816,
-        5944
-       ],
-       "symbols": [
-        "D_00648538"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x006485b8",
-      "0x006485f0"
-     ],
-     "generated": [
-      "0x006485b8",
-      "0x006485f0"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_006485B8"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x006485b8",
-        "0x006485f0"
-       ],
-       "object_range": [
-        5944,
-        6000
-       ],
-       "symbols": [
-        "D_006485B8"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x006485f0",
-      "0x00648600"
-     ],
-     "generated": [
-      "0x006485f0",
-      "0x00648600"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_006485F0"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x006485f0",
-        "0x00648600"
-       ],
-       "object_range": [
-        6000,
-        6016
-       ],
-       "symbols": [
-        "D_006485F0"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648600",
-      "0x00648620"
-     ],
-     "generated": [
-      "0x00648600",
-      "0x00648620"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648600"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648600",
-        "0x00648620"
-       ],
-       "object_range": [
-        6016,
-        6048
-       ],
-       "symbols": [
-        "D_00648600"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648620",
-      "0x00648650"
-     ],
-     "generated": [
-      "0x00648620",
-      "0x00648650"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648620"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648620",
-        "0x00648650"
-       ],
-       "object_range": [
-        6048,
-        6096
-       ],
-       "symbols": [
-        "D_00648620"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648650",
-      "0x00648658"
-     ],
-     "generated": [
-      "0x00648650",
-      "0x00648658"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648650"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648650",
-        "0x00648658"
-       ],
-       "object_range": [
-        6096,
-        6104
-       ],
-       "symbols": [
-        "D_00648650"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648658",
-      "0x00648678"
-     ],
-     "generated": [
-      "0x00648658",
-      "0x00648678"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648658"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648658",
-        "0x00648678"
-       ],
-       "object_range": [
-        6104,
-        6136
-       ],
-       "symbols": [
-        "D_00648658"
-       ]
-      }
-     ],
-     "basis": {
-      "kind": "derived",
-      "tool": "tools/tu/data_carve.py derive",
-      "object": "build/main/build/c/tu273.o"
-     }
-    },
-    {
-     "range": [
-      "0x00648678",
-      "0x00648688"
-     ],
-     "generated": [
-      "0x00648678",
-      "0x00648688"
-     ],
-     "generated_by": [],
-     "c_owned_symbols": [
-      "D_00648678"
-     ],
-     "c_input_spans": [
-      {
-       "section": ".data",
-       "range": [
-        "0x00648678",
-        "0x00648688"
-       ],
-       "object_range": [
-        6136,
-        6152
-       ],
-       "symbols": [
-        "D_00648678"
        ]
       }
      ],
@@ -118678,7 +117662,7 @@
      "basis": {
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
-      "object": "build/ov01/build/scaffold/src/ov01/tu022.o"
+      "object": "/home/pc/xenosaga2-port/xenosga-ii-decomp/build/ov01/build/scaffold/src/ov01/tu022.o"
      }
     }
    ]
@@ -118970,6 +117954,431 @@
       "kind": "derived",
       "tool": "tools/tu/data_carve.py derive",
       "object": "build/ov01/build/scaffold/src/ov01/tu044.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu077": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb108",
+      "0x00abb158"
+     ],
+     "generated": [
+      "0x00abb108",
+      "0x00abb156"
+     ],
+     "generated_by": [
+      "MSeGetActorMatrix"
+     ],
+     "c_owned_symbols": [
+      "D_00ABB108",
+      "D_00ABB130"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "candidate",
+      "task": "tu-slus-20892-1f978e64c837-ov01-tu077-tu077-00aab888-9b498eac74f0-fn-00aab888",
+      "attempt": "/home/pc/xenosaga2-port/xenosga-ii-decomp/.work/module-workers/tu-slus-20892-1f978e64c837-ov01-tu077-tu077-00aab888-9b498eac74f0-fn-00aab888/attempt-5a3c471dc108",
+      "tool": "tools/tu/data_carve.py derive",
+      "note": "derived from the compiled candidate in a worker sandbox; a proposal the whole-file gate and tools/tu_audit.py judge, published only by tools/tu_publish.py after review"
+     }
+    }
+   ]
+  },
+  "ov01/tu078": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb4a0",
+      "0x00abb4b0"
+     ],
+     "generated": [
+      "0x00abb4a0",
+      "0x00abb4a8"
+     ],
+     "generated_by": [
+      "MEfAdvanceSway"
+     ],
+     "c_owned_symbols": [
+      "D_00ABB4A0"
+     ],
+     "also_referenced_by_c": [
+      "mefStencilModelNameA",
+      "mefSwayArmAngles"
+     ],
+     "basis": {
+      "kind": "candidate",
+      "task": "tu-slus-20892-1f978e64c837-ov01-tu078-tu078-00aae148-fedeb3b6b91f-fn-00aae478",
+      "attempt": "/home/pc/xenosaga2-port/xenosga-ii-decomp/.work/module-workers/tu-slus-20892-1f978e64c837-ov01-tu078-tu078-00aae148-fedeb3b6b91f-fn-00aae478/attempt-20c15524e8c8",
+      "tool": "tools/tu/data_carve.py derive",
+      "note": "derived from the compiled candidate in a worker sandbox; a proposal the whole-file gate and tools/tu_audit.py judge, published only by tools/tu_publish.py after review"
+     }
+    }
+   ]
+  },
+  "ov01/tu079": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb500",
+      "0x00abb510"
+     ],
+     "generated": [
+      "0x00abb500",
+      "0x00abb508"
+     ],
+     "generated_by": [
+      "MEfAdvanceStencilB"
+     ],
+     "c_owned_symbols": [
+      "D_00ABB500"
+     ],
+     "also_referenced_by_c": [
+      "mefStencilEdgeOffsets",
+      "mefStencilModelNameB",
+      "mefStencilDrift"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "/home/pc/xenosaga2-port/xenosga-ii-decomp/build/ov01/build/scaffold/src/ov01/tu079.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu080": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb510",
+      "0x00abb530"
+     ],
+     "generated": [
+      "0x00abb510",
+      "0x00abb530"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "innerColor.1",
+      "outerColor.0"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00abb510",
+        "0x00abb520"
+       ],
+       "object_range": [
+        0,
+        16
+       ],
+       "symbols": [
+        "outerColor.0"
+       ]
+      },
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00abb520",
+        "0x00abb530"
+       ],
+       "object_range": [
+        16,
+        32
+       ],
+       "symbols": [
+        "innerColor.1"
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu080.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu082": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb570",
+      "0x00abb5a0"
+     ],
+     "generated": [
+      "0x00abb570",
+      "0x00abb59e"
+     ],
+     "generated_by": [
+      "MEfAppendTexturedQuad31",
+      "MEfDrawSparkModels31",
+      "MEfDrawQuadPacket31"
+     ],
+     "c_owned_symbols": [
+      "D_00ABB570",
+      "D_00ABB580",
+      "D_00ABB590"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu082.o",
+      "note": "written by hand 2026-11-20: the run starts with the unreferenced static const quadColor of MEfAppendTexturedQuad31, which derive cannot anchor in front of the two texture names; the whole-file gate proves it"
+     }
+    }
+   ]
+  },
+  "ov01/tu083": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb5a0",
+      "0x00abb690"
+     ],
+     "generated": [
+      "0x00abb5a0",
+      "0x00abb686"
+     ],
+     "generated_by": [
+      "MEfDrawRotatedQuads",
+      "MEfDrawTrailModel"
+     ],
+     "c_owned_symbols": [
+      "D_00ABB5A0",
+      "D_00ABB5B0",
+      "D_00ABB5C0",
+      "D_00ABB650",
+      "D_00ABB678"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu083.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu084": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb690",
+      "0x00abb6a0"
+     ],
+     "generated": [
+      "0x00abb690",
+      "0x00abb6a0"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "stripColor.0"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00abb690",
+        "0x00abb6a0"
+       ],
+       "object_range": [
+        0,
+        16
+       ],
+       "symbols": [
+        "stripColor.0"
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu084.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu088": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb7d0",
+      "0x00abb850"
+     ],
+     "generated": [
+      "0x00abb7d0",
+      "0x00abb850"
+     ],
+     "generated_by": [
+      "MEfDrawPathTrail"
+     ],
+     "c_owned_symbols": [
+      "D_00ABB7D0",
+      "D_00ABB7F0",
+      "D_00ABB810"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu088.o"
+     }
+    }
+   ]
+  },
+  "ov02/tu001": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00a834d0",
+      "0x00a83530"
+     ],
+     "generated": [
+      "0x00a834d0",
+      "0x00a83528"
+     ],
+     "generated_by": [
+      "Title"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00A834D0",
+      "jtbl_00A834F0",
+      "jtbl_00A83510"
+     ],
+     "also_referenced_by_c": [
+      "titleMusicPath",
+      "titleMusicKeyFormat",
+      "D_00A83488",
+      "D_00A834A0",
+      "titleBg2Path"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov02/build/scaffold/src/ov02/tu001.o"
+     }
+    }
+   ]
+  },
+  "ov02/tu002": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00a83750",
+      "0x00a837c8"
+     ],
+     "generated": [
+      "0x00a83750",
+      "0x00a837c8"
+     ],
+     "generated_by": [
+      "HddInstallCB"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00A83750",
+      "jtbl_00A837B0"
+     ],
+     "also_referenced_by_c": [
+      "installScreenFontText",
+      "hddInstallingText",
+      "hddStepInstallStartText",
+      "hddStepCreatePartitionText",
+      "hddStepWriteResourceText",
+      "hddStepCreateSubPartitionText",
+      "hddStepFormatPartitionText",
+      "hddStepMountPartitionText",
+      "hddStepStartInstallText",
+      "hddAbortHintText",
+      "hddAbortConfirmText",
+      "D_00A836B0",
+      "D_00A836C8",
+      "D_00A836D8",
+      "D_00A836E8",
+      "D_00A83700",
+      "D_00A83710",
+      "D_00A83728",
+      "D_00A83738",
+      "hddInstallStartPromptText",
+      "hddInstallDoneText",
+      "hddInstallFailedPromptText",
+      "hddUninstallStartPromptText",
+      "hddUninstallDoneText",
+      "hddUninstallFailedPromptText",
+      "D_00A83A30",
+      "hddNotAccessibleText",
+      "hddInstallAbortedText",
+      "hddUninstallAbortedText"
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "/home/pc/xenosaga2-port/xenosga-ii-decomp/build/ov02/build/scaffold/src/ov02/tu002.o"
+     }
+    },
+    {
+     "range": [
+      "0x00a83c30",
+      "0x00a83c48"
+     ],
+     "generated": [
+      "0x00a83c30",
+      "0x00a83c48"
+     ],
+     "generated_by": [
+      "TitleHddInstall"
+     ],
+     "c_owned_symbols": [
+      "jtbl_00A83C30"
+     ],
+     "also_referenced_by_c": [],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "/home/pc/xenosaga2-port/xenosga-ii-decomp/build/ov02/build/scaffold/src/ov02/tu002.o"
+     }
+    }
+   ]
+  },
+  "ov01/tu081": {
+   ".rodata": [
+    {
+     "range": [
+      "0x00abb530",
+      "0x00abb540"
+     ],
+     "generated": [
+      "0x00abb530",
+      "0x00abb540"
+     ],
+     "generated_by": [],
+     "c_owned_symbols": [
+      "quadColor.0"
+     ],
+     "c_input_spans": [
+      {
+       "section": ".rodata",
+       "range": [
+        "0x00abb530",
+        "0x00abb540"
+       ],
+       "object_range": [
+        0,
+        16
+       ],
+       "symbols": [
+        "quadColor.0"
+       ]
+      }
+     ],
+     "basis": {
+      "kind": "derived",
+      "tool": "tools/tu/data_carve.py derive",
+      "object": "build/ov01/build/scaffold/src/ov01/tu081.o"
      }
     }
    ]

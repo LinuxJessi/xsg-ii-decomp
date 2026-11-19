@@ -10,6 +10,7 @@
 #include "ov01/tu051.h"
 #include "ov01/tu062.h"
 #include "ov01/tu063.h"
+#include "ov01/tu048.h"
 
 /* GIF packet words are written as doubleword descriptors by the openers and
  * as 32-bit lanes by the vertex writers. Both are the same packet storage. */
@@ -272,7 +273,7 @@ void menuStatRecordSubmit(MenuObject *record)
 
 /*
  * Draws one stat record at its origin (slide position): a pulsing frame while its unit is the one under the battle
- * cursor, the unit's face (func_00AA7750), the HP and EP gauges (shown[0], shown[1] against maxHp and maxEp), then
+ * cursor, the unit's face (menuKeyDraw), the HP and EP gauges (shown[0], shown[1] against maxHp and maxEp), then
  * for a party key the level pips (shown[2], up to MENU_STAT_LEVEL_MAX) or else the current gauge and number (shown[2]
  * against currentMax), and the HP and EP numbers.
  */
@@ -307,7 +308,7 @@ void menuStatRecordDraw(MenuObject *record, GrPacket *packet)
         menuStatSprite2(packet, x - 4, y - 4, 0x9E, 0x3B, 0xC8, 0x78, 0xFF, 0xBA);
         grPutSprClose();
     }
-    func_00AA7750(packet, x, y, unit->stats->key, 0);
+    menuKeyDraw(packet, x, y, unit->stats->key, 0);
     func_00AA8490(packet);
     /* HP and EP gauges: each a bar track (MENU_STAT_BAR_WIDTH wide) and its fill scaled to the shown value. */
     grPutSprOpen(packet);
@@ -355,7 +356,7 @@ void menuStatRecordDraw(MenuObject *record, GrPacket *packet)
         grPutSprClose();
         menuNumDraw(packet, x + 0x74, y + 0x26, record->kind.stat.shown[2], 3, 2);
     }
-    func_00AA8430(packet);
+    menuNumTexState(packet);
     /* Icons at the HP and EP rows and at the third gauge (a different one for party keys), then the HP number (4
      * digits for party keys, 5 otherwise) and the EP number. */
     grPutSprOpen(packet);

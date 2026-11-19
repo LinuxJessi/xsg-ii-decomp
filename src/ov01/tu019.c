@@ -138,7 +138,7 @@ void monsSlotEmptyUpdate(void) {
 
 /*
  * monsActiveSlotsGet: hands back the two-entry table
- * and returns its length, 2. Callers: func_00A946C0, unitTransformBegin,
+ * and returns its length, 2. Callers: attackSpecialStep, unitTransformBegin,
  * func_00A95810, eventPairBegin, eventPairEnd, unitBodySetPosDir.
  */
 int monsActiveSlotsGet(struct MonsSlot ***table) {

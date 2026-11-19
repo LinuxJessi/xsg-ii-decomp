@@ -4,123 +4,168 @@
 #include "common.h"
 #include "ov01/tu008.h"
 #include "ov01/tu063.h"
-
-INCLUDE_ASM("asm/nonmatchings/ov01/tu063", func_00AA8200);
+#include "ov01/tu012.h"
+#include "gs.h"
 
 typedef int s32;
 
+
+int menuTexCellIndex(int key)
+{
+    StatBlock *unit = batUnitRecordGet(key);
+    unsigned short flags = unit->flags;
+
+    if (key >= 1 && key <= 10) {
+        return key - 1;
+    }
+    if (key >= 11 && key <= 15) {
+        return key - 4;
+    }
+    if (key >= 16) {
+        switch (flags & 3) {
+        case 0:
+            return 11;
+        case 1:
+            return 10;
+        case 2:
+            return 12;
+        }
+    }
+    return 0;
+}
+
 s32 xglPacketTextureTrans(s32 value);
-void grGpInit(void *packet);
-void grGsRegSet(void *packet, unsigned long long reg, unsigned long long value);
-void grPacketSend(void *packet);
 
 /*
  * Texture flush for the menu: waits on the value of dataStatBufGet, then sends
- * one GS write to register 0x3F (TEXFLUSH in the GS register map) with 1.
+ * one GS write to register GS_TEXFLUSH with 1.
  */
 void menuTexFlush(void) {
-    s32 packet[4];
+    GrPacket packet;
     s32 result;
 
     result = dataStatBufGet();
     xglPacketTextureTrans(result);
-    grGpInit(packet);
-    grGsRegSet(packet, 0x3F, 1);
-    grPacketSend(packet);
+    grGpInit(&packet);
+    grGsRegSet(&packet, GS_TEXFLUSH, 1);
+    grPacketSend(&packet);
 }
+
+void GS_REG_SET(void *packet, int register_id, u64 control);
+
+/* GIF tag of the record: NLOOP 5, EOP set, NREG 1 (the five A+D pairs that follow). */
+#define GIF_TAG_FIVE_AD_EOP 0x1000000000008005ULL
+
+/* One 16-byte texture state record: TEX0 bits 0..15 at +0, TEX0 bits 37..52 at +2, ALPHA_1 at +8. */
+typedef struct TexStateRecord {
+    unsigned short tex0Low;
+    unsigned short tex0Clut;
+    unsigned char unmodeled_04[0x8 - 0x4];
+    u64 alpha;
+} TexStateRecord;
 
 /*
  * Emits one 16-byte texture state record into the packet: GS TEX0 from the
  * halfwords at +0 and +2, ALPHA from the word at +8, then TEST, CLAMP and TEX1.
  */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu063", grPacketTexState);
+void grPacketTexState(GrPacket *packet, void *record)
+{
+    TexStateRecord *texState = record;
 
-/* Maps key to a record index: 1..10 gives key-1, 11..15 gives key-4, 16 and up gives 11, 10, 12 or 0 from the low two bits of the halfword at object+0x1C. */
-s32 func_00AA8200(s32 key);
-s32 grPacketTexState(void *packet, void *record);
-extern unsigned char menuTexStateTable[];
+    GS_REG_SET(packet, GIF_AD, GIF_TAG_FIVE_AD_EOP);
+    GS_REG_SET(packet, GS_TEX0_1, texState->tex0Low | ((u64)texState->tex0Clut << 37) | 0x2000000629340000ULL);
+    GS_REG_SET(packet, GS_ALPHA_1, texState->alpha);
+    GS_REG_SET(packet, GS_TEST_1, 0x3000dULL);
+    GS_REG_SET(packet, GS_CLAMP_1, 0);
+    GS_REG_SET(packet, GS_TEX1_1, 0);
+}
+
+int menuTexCellIndex(int key);
+extern TexStateRecord menuTexStateTable[];
 
 /* Emits the record of table menuTexStateTable chosen by key. */
-void menuTexStateByKey(void *packet, s32 key) {
-    s32 index = func_00AA8200(key);
-    grPacketTexState(packet, menuTexStateTable + index * 0x10);
+void menuTexStateByKey(GrPacket *packet, s32 key) {
+    s32 cellIndex = menuTexCellIndex(key);
+    grPacketTexState(packet, menuTexStateTable + cellIndex);
 }
 
-extern unsigned char D_00AB6958[];
+extern TexStateRecord menuTexStateAltTable[];
 
-void func_00AA83D0(void *packet, s32 key) {
-    s32 index = func_00AA8200(key);
-    grPacketTexState(packet, D_00AB6958 + index * 0x10);
+/* The same record chosen by key from the sibling table menuTexStateAltTable (0xA0 further on). */
+void menuTexStateAltByKey(void *packet, s32 key) {
+    s32 cellIndex = menuTexCellIndex(key);
+    grPacketTexState(packet, menuTexStateAltTable + cellIndex);
 }
 
-extern unsigned char D_00AB69F8[];
+extern TexStateRecord menuSmallCellTexRecord[];
 
-void func_00AA8410(void *packet) {
-    grPacketTexState(packet, D_00AB69F8);
+/* Texture state of the small cell sprites (the 24 x 28 grid), one fixed record. */
+void menuSmallCellTexState(GrPacket *packet) {
+    grPacketTexState(packet, menuSmallCellTexRecord);
 }
 
-extern unsigned char D_00AB6A08[];
+extern TexStateRecord menuNumTexRecord[];
 
-void func_00AA8430(void *packet) {
-    grPacketTexState(packet, D_00AB6A08);
+void menuNumTexState(GrPacket *packet) {
+    grPacketTexState(packet, menuNumTexRecord);
 }
 
-extern unsigned char D_00AB6A18[];
+extern TexStateRecord menuNumStyle1TexRecord[];
 
-void func_00AA8450(void *packet) {
-    grPacketTexState(packet, D_00AB6A18);
+void menuNumStyle1TexState(GrPacket *packet) {
+    grPacketTexState(packet, menuNumStyle1TexRecord);
 }
 
-extern unsigned char menuIconTexRecord[];
+extern TexStateRecord menuIconTexRecord[];
 
 void menuIconTexState(void *packet) {
     grPacketTexState(packet, menuIconTexRecord);
 }
 
-extern unsigned char D_00AB6A38[];
+extern TexStateRecord D_00AB6A38[];
 
 void func_00AA8490(void *packet) {
     grPacketTexState(packet, D_00AB6A38);
 }
 
-extern unsigned char D_00AB6A48[];
+extern TexStateRecord D_00AB6A48[];
 
 void func_00AA84B0(void *packet) {
     grPacketTexState(packet, D_00AB6A48);
 }
 
-extern unsigned char D_00AB6A58[];
+extern TexStateRecord D_00AB6A58[];
 
 void func_00AA84D0(void *packet) {
     grPacketTexState(packet, D_00AB6A58);
 }
 
-extern unsigned char D_00AB6A68[];
+extern TexStateRecord D_00AB6A68[];
 
 void func_00AA84F0(void *packet) {
     grPacketTexState(packet, D_00AB6A68);
 }
 
-extern unsigned char menuPanelTexRecord[];
+extern TexStateRecord menuPanelTexRecord[];
 
-void menuPanelTexState(void *packet) {
+void menuPanelTexState(GrPacket *packet) {
     grPacketTexState(packet, menuPanelTexRecord);
 }
 
-extern unsigned char D_00AB6A88[];
+extern TexStateRecord D_00AB6A88[];
 
-void func_00AA8530(void *packet) {
+void func_00AA8530(GrPacket *packet) {
     grPacketTexState(packet, D_00AB6A88);
 }
 
-extern unsigned char D_00AB6A98[];
+extern TexStateRecord D_00AB6A98[];
 
 void func_00AA8550(void *packet) {
     grPacketTexState(packet, D_00AB6A98);
 }
 
-extern unsigned char menuStatusIconsTexRecord[];
+extern TexStateRecord menuStatusIconsTexRecord[];
 
-void menuStatusIconsTexState(void *packet) {
+void menuStatusIconsTexState(GrPacket *packet) {
     grPacketTexState(packet, menuStatusIconsTexRecord);
 }
