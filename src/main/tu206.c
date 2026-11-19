@@ -61,3 +61,17 @@ int xglClampInt(int value, int lower, int upper)
     }
     return (clamped < lower) ? lower : clamped;
 }
+
+/* Wraps value once into lower..upper: one period (upper - lower + 1) down when above upper, one up when below lower. */
+int wrapIntRange(int value, int lower, int upper)
+{
+    int period = upper - lower + 1;
+
+    if (upper < value) {
+        value -= period;
+    }
+    if (value < lower) {
+        value += period;
+    }
+    return value;
+}

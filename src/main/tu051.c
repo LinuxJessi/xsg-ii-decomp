@@ -401,7 +401,6 @@ int cameraSlotSetup(struct CameraSlot *slot, int blend_mode, int ease_mode, int 
 /* Stores the blend and ease modes when they are >= 0, zeroes the slot's progress, then the frames as a float and the fraction (0, or 1.0 when the frames are 0). */ int cameraSlotSetup(struct CameraSlot *slot, int blend_mode, int ease_mode, int frames);
 
 #define CAMERA_SLOT_MASK(slot) (1 << (slot))
-#define CAMERA_FLAG_SLOTS_APPLIED 0x10
 
 /* Applies the slots in slot_mask (zero: every slot whose duration flag is set) and copies each slot's staged
    vectors to its applied fields; sets flag 0x10 when frames is nonzero. */

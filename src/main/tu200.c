@@ -1,13 +1,50 @@
 #include "common.h"
+#include "main/tu005.h"
 
-INCLUDE_ASM("asm/main/nonmatchings/tu200", scriptLoadByNumber);
+int scriptReadFile(int *slot, char *fileName);
 
-INCLUDE_ASM("asm/main/nonmatchings/tu200", scriptReadFile);
+/* Builds "scNNNN.sb" from number (N = thousands, hundreds, tens, units digit) and loads it. */
+int scriptLoadByNumber(int *slot, int number) {
+    char fileName[] = "sc0000.sb";
 
-void func_002A93A8(int value);
+    fileName[2] = ((number / 1000) % 10) + '0';
+    fileName[3] = ((number / 100) % 10) + '0';
+    fileName[4] = ((number / 10) % 10) + '0';
+    fileName[5] = (number % 10) + '0';
+    return scriptReadFile(slot, fileName);
+}
+
+int malloc(int size);
+char *strcat(char *destination, const char *source);
+int sbLinkImage(int buffer);
+extern const char D_0068D5C8[];
+char *strcpy(char *, const char *);
+
+/* Allocates a buffer in *slot, waits for it, then loads fileName from host0:.../cf/. */
+int scriptReadFile(int *slot, char *fileName) {
+    char path[0x100];
+    const char *hostPath;
+    int status;
+
+    hostPath = D_0068D5C8;
+    *slot = malloc(100);
+    while (*slot == 0) {
+    }
+    strcpy(path, hostPath);
+    strcat(path, fileName);
+    xglDebFileRead(path, (void *) *slot);
+    status = sbLinkImage(*slot);
+    if (status != 0) {
+        return status;
+    }
+    for (;;) {
+    }
+}
+
+void free(int value);
 
 /* Frees the buffer in *slot (allocated by scriptReadFile) and clears the slot. */
 void scriptFreeBuffer(int *slot) {
-    func_002A93A8(*slot);
+    free(*slot);
     *slot = 0;
 }

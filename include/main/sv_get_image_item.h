@@ -100,6 +100,7 @@ int svImageListAlloc(SvTypeList *typeList);
 
 void svAddImageMapper(int typeListId, int entryCount, void *chunk, int tag);
 void svDeleteImageMapper(int typeListId);
+SvTypeListEntry *svGetScriptEntry(int effectId);
 
 /* Effect slot functions of sv_get_image_item.c, the record table of srs.h (srsRecordTable). */
 int srsLoadEffectSlot(void *buffer, int effectId, int arg);

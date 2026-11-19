@@ -2,6 +2,7 @@
 #include "shared.h"
 #include "main/sv_get_image_item.h"
 #include "main/srs.h"
+#include "main/sm_initilize.h"
 #include "vu0_macro.h"
 #include "gs.h"
 
@@ -1174,8 +1175,6 @@ void svDeleteImageMapperByTag(int tag) {
 #define SV_ZTEST_ON 0x5000D
 #define SV_ZTEST_OFF 0x2000D
 
-extern SrsTable srsRecordTable;
-
 /* Returns the first free effect slot, or -1 when all are in use. */
 int srsFindFreeEffectSlot(void)
 {
@@ -1320,7 +1319,6 @@ void srsReleaseOtherOwnerEffectSlots(void)
     }
 }
 
-void *smAlloc(int size);
 void *GameResBufferAlloc(int size);
 void loadWaitAdd(int id, int slot);
 int sefCanonicalEffectId(int effectId);
@@ -2071,7 +2069,7 @@ typedef struct SefPartTransform {
 } SefPartTransform;
 
 f32 sefGetEntryScale(int);
-void sefGetPosition(Vector4 *position, int index, int kind);
+void sefGetPosition(Vector4 *position, Vector4 *source, int kind);
 
 /* Screen vertex written by svProjectVertex: x and y in 12.4 fixed point, then z and the clip flags. */
 typedef struct SvScreenVertex {
@@ -3407,7 +3405,7 @@ int sefFlagTest(int mask);
 unsigned char *sefGetSlotData(int slotIndex);
 Matrix4 *MMathMulMatrix(Matrix4 *out, Matrix4 *rhs, Matrix4 *lhs);
 Matrix4 *MMathScaleMatrix(Matrix4 *out, Matrix4 *matrix, const Vector4 *scale);
-int MMathIsVectorEqual(const Vector4 *a, const Vector4 *b);
+short MMathIsVectorEqual(const Vector4 *a, const Vector4 *b);
 Matrix4 *MMathScaleMatrixRotS(Matrix4 *out, Matrix4 *matrix, float scale);
 
 /* Unused in this file; the original compiled it here (it takes one label number ahead of svDrawImageItem). */
@@ -4407,7 +4405,7 @@ typedef struct DrawKindEntry {
 } DrawKindEntry;
 
 void sefDrawResources(int index);
-void func_0026BB78(int index);
+void sdvDrawOwnerAlters(int index);
 int sefGetActiveCount(void);
 
 /* Draws the scene. Mapper 0 is loaded first (also when effects are active), with its kind-0 entries pending when the
@@ -4469,7 +4467,7 @@ void svDrawScene(void)
                 }
                 if (record->gate != 0) {
                     svDrawEntry(recordIndex);
-                    func_0026BB78(recordIndex);
+                    sdvDrawOwnerAlters(recordIndex);
                 }
             } else {
                 sefDrawResources(recordIndex);

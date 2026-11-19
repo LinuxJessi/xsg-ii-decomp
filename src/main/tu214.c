@@ -17,10 +17,10 @@ extern void *memset(void *destination, int value, unsigned int count);
 #define EFFECT_ALPHA_WHITE(alpha) (((alpha) << 24) | 0xFFFFFF)
 
 int recordGridCellCount(void);
-void func_002748C8(int bank, int code, int arg, int *params);
+void recordSetPreset(int bank, int code, int arg, int *params);
 
 /* effectRequestToCommand: translates an effect request (kind, with a strength value) into the six-word parameter block and
-   command code that func_002748C8 takes. Kinds not listed send command 0 with an unset block. */
+   command code that recordSetPreset takes. Kinds not listed send command 0 with an unset block. */
 void effectRequestToCommand(int bank, unsigned int kind, int arg, unsigned int value)
 {
     int params[12];
@@ -292,13 +292,13 @@ void effectRequestToCommand(int bank, unsigned int kind, int arg, unsigned int v
         command = 23;
         break;
     }
-    func_002748C8(bank, command, arg, params);
+    recordSetPreset(bank, command, arg, params);
 }
 
-int func_002757F0(void);
+int recordClearBanks(void);
 
 void func_0027C7B8(void) {
-    func_002757F0();
+    recordClearBanks();
 }
 
 /* Thin forwarder to recordPauseUpdates (tu207); no caller is recovered, so only the forwarding is evidenced. */

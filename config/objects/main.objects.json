@@ -402,7 +402,7 @@
     },
     {
      "c_split": false,
-     "end": "0x005E66E0",
+     "end": "0x005E6D28",
      "ordinal": 177,
      "piece": "srs",
      "start": "0x005E65C0",
@@ -410,27 +410,19 @@
     },
     {
      "c_split": false,
-     "end": "0x005E6D00",
-     "ordinal": 178,
-     "piece": "tu178",
-     "start": "0x005E66E0",
-     "tu": "tu178"
-    },
-    {
-     "c_split": false,
      "end": "0x005E6D60",
      "ordinal": 180,
      "piece": "sdv_180",
-     "start": "0x005E6D00",
+     "start": "0x005E6D28",
      "tu": "sdv_180"
     },
     {
      "c_split": false,
      "end": "0x005E6E70",
-     "ordinal": 183,
-     "piece": "sdv_183",
+     "ordinal": 181,
+     "piece": "sdv_181",
      "start": "0x005E6D60",
-     "tu": "sdv_183"
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -1241,7 +1233,7 @@
     },
     {
      "c_split": false,
-     "end": "0x0068C510",
+     "end": "0x0068C530",
      "ordinal": 177,
      "piece": "srs",
      "start": "0x0068C480",
@@ -1249,19 +1241,11 @@
     },
     {
      "c_split": false,
-     "end": "0x0068C530",
-     "ordinal": 178,
-     "piece": "tu178",
-     "start": "0x0068C510",
-     "tu": "tu178"
-    },
-    {
-     "c_split": false,
      "end": "0x0068C5F0",
-     "ordinal": 183,
-     "piece": "sdv_183",
+     "ordinal": 181,
+     "piece": "sdv_181",
      "start": "0x0068C530",
-     "tu": "sdv_183"
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -2048,27 +2032,11 @@
     },
     {
      "c_split": false,
-     "end": "0x0069B330",
-     "ordinal": 181,
-     "piece": "tu181",
-     "start": "0x0069B324",
-     "tu": "tu181"
-    },
-    {
-     "c_split": false,
-     "end": "0x0069B334",
-     "ordinal": 182,
-     "piece": "tu182",
-     "start": "0x0069B330",
-     "tu": "tu182"
-    },
-    {
-     "c_split": false,
      "end": "0x0069B3A8",
-     "ordinal": 183,
-     "piece": "sdv_183",
-     "start": "0x0069B334",
-     "tu": "sdv_183"
+     "ordinal": 181,
+     "piece": "sdv_181",
+     "start": "0x0069B324",
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -2640,10 +2608,10 @@
     {
      "c_split": false,
      "end": "0x0069DC48",
-     "ordinal": 183,
-     "piece": "sdv_183",
+     "ordinal": 181,
+     "piece": "sdv_181",
      "start": "0x0069DC38",
-     "tu": "sdv_183"
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -3445,19 +3413,11 @@
     },
     {
      "c_split": false,
-     "end": "0x00807EC0",
-     "ordinal": 182,
-     "piece": "tu182",
-     "start": "0x00807EA0",
-     "tu": "tu182"
-    },
-    {
-     "c_split": false,
      "end": "0x00831610",
-     "ordinal": 183,
-     "piece": "sdv_183",
-     "start": "0x00807EC0",
-     "tu": "sdv_183"
+     "ordinal": 181,
+     "piece": "sdv_181",
+     "start": "0x00807EA0",
+     "tu": "sdv_181"
     },
     {
      "c_split": false,
@@ -3885,12 +3845,9 @@
   "tu163",
   "sef",
   "srs",
-  "tu178",
   "tu179",
   "sdv_180",
-  "tu181",
-  "tu182",
-  "sdv_183",
+  "sdv_181",
   "tu185",
   "sm_initilize",
   "tu187",
@@ -81238,7 +81195,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 21,
+    "of": 32,
     "migration_hints": [],
     "records": []
    },
@@ -81431,220 +81388,7 @@
      "va": "0x00266188",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c",
-    ".data": "asm",
-    ".rodata": "asm",
-    ".sdata": "asm",
-    ".sbss": "asm",
-    ".bss": "asm"
-   },
-   "sections": {
-    ".data": {
-     "anchored": [
-      "0x005e65c0",
-      "0x005e66c1"
-     ],
-     "bounds": [
-      "0x005e6381",
-      "0x005e66e0"
-     ],
-     "end": "0x005E66E0",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x005E66E0",
-       "name": "srs",
-       "start": "0x005E65C0"
-      }
-     ],
-     "size": 288,
-     "splat_type": "data",
-     "start": "0x005E65C0"
     },
-    ".rodata": {
-     "anchored": [
-      "0x0068c480",
-      "0x0068c4f1"
-     ],
-     "bounds": [
-      "0x0068c451",
-      "0x0068c510"
-     ],
-     "end": "0x0068C510",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0068C510",
-       "name": "srs",
-       "start": "0x0068C480"
-      }
-     ],
-     "size": 144,
-     "splat_type": "rodata",
-     "start": "0x0068C480"
-    },
-    ".sdata": {
-     "anchored": [
-      "0x0069dbe0",
-      "0x0069dc19"
-     ],
-     "bounds": [
-      "0x0069dbd9",
-      "0x0069dc30"
-     ],
-     "end": "0x0069DC30",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069DC30",
-       "name": "srs",
-       "start": "0x0069DBE0"
-      }
-     ],
-     "size": 80,
-     "splat_type": "sdata",
-     "start": "0x0069DBE0"
-    },
-    ".sbss": {
-     "anchored": [
-      "0x0069e320",
-      "0x0069e321"
-     ],
-     "bounds": [
-      "0x0069e31d",
-      "0x0069e324"
-     ],
-     "end": "0x0069E324",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069E324",
-       "name": "srs",
-       "start": "0x0069E320"
-      }
-     ],
-     "size": 4,
-     "splat_type": "sbss",
-     "start": "0x0069E320"
-    },
-    ".bss": {
-     "anchored": [
-      "0x00807b90",
-      "0x00807da1"
-     ],
-     "bounds": [
-      "0x00807391",
-      "0x00807ea0"
-     ],
-     "end": "0x00807EA0",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00807EA0",
-       "name": "srs",
-       "start": "0x00807B90"
-      }
-     ],
-     "size": 784,
-     "splat_type": "bss",
-     "start": "0x00807B90"
-    }
-   },
-   "text": {
-    "start": "0x00265820",
-    "end": "0x002661b0",
-    "code_end": "0x002661b0",
-    "size": 2448,
-    "splat": "c",
-    "splat_range": [
-     "0x00265820",
-     "0x002661b0"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "X1 C under express order (user 2026-11-05)",
-    "source": {
-     "kind": "file",
-     "path": "src/main/srs.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu178",
-   "unit": "main",
-   "ordinal": 178,
-   "name": "tu178",
-   "path": "src/main/tu178.c",
-   "scaffold_path": "scaffold/src/main/tu178.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -1.69",
-    "precision of this score band on X1, held out: 0.227 (17/75)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "no name evidence",
-   "name_confidence": "none",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G0"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G0",
-    "g_basis": "no gp-relative instruction in the code; -G0 cannot add one",
-    "g_confidence": "medium",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 11,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
     {
      "binding": "GLOBAL",
      "name": "srsLoadEspFile",
@@ -81748,40 +81492,43 @@
    "owners": {
     ".text": "c",
     ".data": "asm",
-    ".rodata": "asm"
+    ".rodata": "asm",
+    ".sdata": "asm",
+    ".sbss": "asm",
+    ".bss": "asm"
    },
    "sections": {
     ".data": {
      "anchored": [
-      "0x005e66e0",
-      "0x005e66e1"
+      "0x005e65c0",
+      "0x005e6d28"
      ],
      "bounds": [
-      "0x005e66c1",
-      "0x005e6d00"
+      "0x005e6381",
+      "0x005e6d28"
      ],
-     "end": "0x005E6D00",
+     "end": "0x005E6D28",
      "evidence_source": "map",
      "rule": "anchored start",
      "pieces": [
       {
        "c_split": false,
-       "end": "0x005E6D00",
-       "name": "tu178",
-       "start": "0x005E66E0"
+       "end": "0x005E6D28",
+       "name": "srs",
+       "start": "0x005E65C0"
       }
      ],
-     "size": 1568,
+     "size": 1896,
      "splat_type": "data",
-     "start": "0x005E66E0"
+     "start": "0x005E65C0"
     },
     ".rodata": {
      "anchored": [
-      "0x0068c510",
+      "0x0068c480",
       "0x0068c521"
      ],
      "bounds": [
-      "0x0068c4f1",
+      "0x0068c451",
       "0x0068c530"
      ],
      "end": "0x0068C530",
@@ -81791,33 +81538,105 @@
       {
        "c_split": false,
        "end": "0x0068C530",
-       "name": "tu178",
-       "start": "0x0068C510"
+       "name": "srs",
+       "start": "0x0068C480"
       }
      ],
-     "size": 32,
+     "size": 176,
      "splat_type": "rodata",
-     "start": "0x0068C510"
+     "start": "0x0068C480"
+    },
+    ".sdata": {
+     "anchored": [
+      "0x0069dbe0",
+      "0x0069dc19"
+     ],
+     "bounds": [
+      "0x0069dbd9",
+      "0x0069dc30"
+     ],
+     "end": "0x0069DC30",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x0069DC30",
+       "name": "srs",
+       "start": "0x0069DBE0"
+      }
+     ],
+     "size": 80,
+     "splat_type": "sdata",
+     "start": "0x0069DBE0"
+    },
+    ".sbss": {
+     "anchored": [
+      "0x0069e320",
+      "0x0069e321"
+     ],
+     "bounds": [
+      "0x0069e31d",
+      "0x0069e324"
+     ],
+     "end": "0x0069E324",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x0069E324",
+       "name": "srs",
+       "start": "0x0069E320"
+      }
+     ],
+     "size": 4,
+     "splat_type": "sbss",
+     "start": "0x0069E320"
+    },
+    ".bss": {
+     "anchored": [
+      "0x00807b90",
+      "0x00807da1"
+     ],
+     "bounds": [
+      "0x00807391",
+      "0x00807ea0"
+     ],
+     "end": "0x00807EA0",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x00807EA0",
+       "name": "srs",
+       "start": "0x00807B90"
+      }
+     ],
+     "size": 784,
+     "splat_type": "bss",
+     "start": "0x00807B90"
     }
    },
    "text": {
-    "start": "0x002661b0",
+    "start": "0x00265820",
     "end": "0x002669f0",
     "code_end": "0x002669ec",
-    "size": 2112,
+    "size": 4560,
     "splat": "c",
     "splat_range": [
-     "0x002661b0",
+     "0x00265820",
      "0x002669f0"
     ],
     "note": null
    },
    "import": {
     "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
+    "note": "X1 C under express order (user 2026-11-05); joined srs, tu178 into srs.c (Opok, PR review 2026-11-17: the callee compiled earlier in the file)",
     "source": {
      "kind": "file",
-     "path": "src/main/tu178.c",
+     "path": "src/main/srs.c",
      "include_dirs": [
       "include"
      ]
@@ -82025,18 +81844,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266BC8",
+     "name": "scGetKeyRecord",
      "size": 372,
-     "splat_name": "func_00266BC8",
+     "splat_name": "scGetKeyRecord",
      "va": "0x00266bc8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00266D40",
+     "name": "scGetKeyRecordFirst",
      "size": 24,
-     "splat_name": "func_00266D40",
+     "splat_name": "scGetKeyRecordFirst",
      "va": "0x00266d40",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82132,11 +81951,11 @@
    "sections": {
     ".data": {
      "anchored": [
-      "0x005e6d00",
+      "0x005e6d40",
       "0x005e6d51"
      ],
      "bounds": [
-      "0x005e66e1",
+      "0x005e6d28",
       "0x005e6d60"
      ],
      "end": "0x005E6D60",
@@ -82147,12 +81966,12 @@
        "c_split": false,
        "end": "0x005E6D60",
        "name": "sdv_180",
-       "start": "0x005E6D00"
+       "start": "0x005E6D28"
       }
      ],
-     "size": 96,
+     "size": 56,
      "splat_type": "data",
-     "start": "0x005E6D00"
+     "start": "0x005E6D28"
     },
     ".sdata": {
      "anchored": [
@@ -82231,11 +82050,11 @@
    "id": "main/tu181",
    "unit": "main",
    "ordinal": 181,
-   "name": "tu181",
-   "path": "src/main/tu181.c",
-   "scaffold_path": "scaffold/src/main/tu181.c",
+   "name": "sdv_181",
+   "path": "src/main/sdv_181.c",
+   "scaffold_path": "scaffold/src/main/sdv_181.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -82280,158 +82099,56 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 5,
+    "of": 43,
     "migration_hints": [],
     "records": []
    },
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00266F68",
+     "name": "sdvCheckSeqKey",
      "size": 224,
-     "splat_name": "func_00266F68",
+     "splat_name": "sdvCheckSeqKey",
      "va": "0x00266f68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00267048",
+     "name": "sdvExecSeqTbl",
      "size": 116,
-     "splat_name": "func_00267048",
+     "splat_name": "sdvExecSeqTbl",
      "va": "0x00267048",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002670C0",
+     "name": "sdvProgressKey",
      "size": 224,
-     "splat_name": "func_002670C0",
+     "splat_name": "sdvProgressKey",
      "va": "0x002670c0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002671A0",
+     "name": "sdvExecEffectSeq",
      "size": 484,
-     "splat_name": "func_002671A0",
+     "splat_name": "sdvExecEffectSeq",
      "va": "0x002671a0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00267388",
+     "name": "sdvExecShadowSeq",
      "size": 276,
-     "splat_name": "func_00267388",
+     "splat_name": "sdvExecShadowSeq",
      "va": "0x00267388",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "asm",
-    ".lit4": "asm"
-   },
-   "sections": {
-    ".lit4": {
-     "anchored": [
-      "0x0069b324",
-      "0x0069b32d"
-     ],
-     "bounds": [
-      "0x0069b321",
-      "0x0069b330"
-     ],
-     "end": "0x0069B330",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069B330",
-       "name": "tu181",
-       "start": "0x0069B324"
-      }
-     ],
-     "size": 12,
-     "splat_type": "lit4",
-     "start": "0x0069B324"
-    }
-   },
-   "text": {
-    "start": "0x00266f68",
-    "end": "0x002674a0",
-    "code_end": "0x0026749c",
-    "size": 1336,
-    "splat": "c",
-    "splat_range": [
-     "0x00266f68",
-     "0x002674a0"
-    ],
-    "note": null
-   }
-  },
-  {
-   "id": "main/tu182",
-   "unit": "main",
-   "ordinal": 182,
-   "name": "tu182",
-   "path": "src/main/tu182.c",
-   "scaffold_path": "scaffold/src/main/tu182.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -2.04",
-    "precision of this score band on X1, held out: 0.231 (3/13)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "no name evidence",
-   "name_confidence": "none",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G8"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G8",
-    "g_basis": "1 gp-relative instructions in the code",
-    "g_confidence": "high",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 6,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
+    },
     {
      "binding": "GLOBAL",
      "name": "tiWindAcquireSlot",
@@ -82485,145 +82202,7 @@
      "va": "0x00267618",
      "name_basis": "address",
      "provenance": "estimated"
-    }
-   ],
-   "owners": {
-    ".text": "c",
-    ".lit4": "asm",
-    ".bss": "asm"
-   },
-   "sections": {
-    ".lit4": {
-     "anchored": [
-      "0x0069b330",
-      "0x0069b331"
-     ],
-     "bounds": [
-      "0x0069b32d",
-      "0x0069b334"
-     ],
-     "end": "0x0069B334",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069B334",
-       "name": "tu182",
-       "start": "0x0069B330"
-      }
-     ],
-     "size": 4,
-     "splat_type": "lit4",
-     "start": "0x0069B330"
     },
-    ".bss": {
-     "anchored": [
-      "0x00807ea0",
-      "0x00807ea1"
-     ],
-     "bounds": [
-      "0x00807da1",
-      "0x00807ec0"
-     ],
-     "end": "0x00807EC0",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00807EC0",
-       "name": "tu182",
-       "start": "0x00807EA0"
-      }
-     ],
-     "size": 32,
-     "splat_type": "bss",
-     "start": "0x00807EA0"
-    }
-   },
-   "text": {
-    "start": "0x002674a0",
-    "end": "0x00267bb8",
-    "code_end": "0x00267bb8",
-    "size": 1816,
-    "splat": "c",
-    "splat_range": [
-     "0x002674a0",
-     "0x00267bb8"
-    ],
-    "note": null
-   },
-   "import": {
-    "mode": "c",
-    "note": "Express publication, order \"Haz 1\" (user 2026-11-05)",
-    "source": {
-     "kind": "file",
-     "path": "src/main/tu182.c",
-     "include_dirs": [
-      "include"
-     ]
-    }
-   }
-  },
-  {
-   "id": "main/tu183",
-   "unit": "main",
-   "ordinal": 183,
-   "name": "sdv_183",
-   "path": "src/main/sdv_183.c",
-   "scaffold_path": "scaffold/src/main/sdv_183.c",
-   "kind": "gcc",
-   "mode": "c",
-   "category": "game",
-   "map_class": "game",
-   "domain": null,
-   "in_scope": true,
-   "boundary_kind": "inferred",
-   "boundary_evidence": [
-    "model log-odds -1.22",
-    "precision of this score band on X1, held out: 0.19 (19/100)"
-   ],
-   "boundary_confidence": "low",
-   "provisional": true,
-   "name_basis": "X1 file of 2 homolog function(s)",
-   "name_confidence": "medium",
-   "contract": {
-    "assembler": "LA29-vsqrt-swap-g (corrected ee-as with the per-object flag -g)",
-    "assembler_path": "tool:ee-as-la29-vsqrt-swap",
-    "assembler_sha256": "448143a3f1f7ecd4fffb79ea3e641afa36863895366873f93462028535f95494",
-    "cc1_sha256": "25944d5c023a48316d719ff10b13a366afc31c3209662f28e440a90eb43d3b17",
-    "cc_dir": "tool:ee-gcc2.96-realconv-lp7",
-    "compiler_profile": "ee-gcc2_96-realconv-lp7",
-    "flags": [
-     "-O2",
-     "-G8"
-    ],
-    "language": "c",
-    "source_class": "c",
-    "assembler_options": [
-     "-g"
-    ]
-   },
-   "contract_evidence": {
-    "compiler": "2.96",
-    "compiler_confidence": "medium",
-    "assembler_class": "LA29",
-    "assembler_confidence": "medium",
-    "g_flag": "-G8",
-    "g_basis": "41 gp-relative instructions in the code",
-    "g_confidence": "high",
-    "optimization": "-O2",
-    "source": "reports/x2-compiler-calibration.md"
-   },
-   "accepted": {
-    "all_functions_accepted": false,
-    "functions": 0,
-    "of": 32,
-    "migration_hints": [],
-    "records": []
-   },
-   "functions": [
     {
      "binding": "GLOBAL",
      "name": "sdvSelectCamera",
@@ -82644,9 +82223,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00268010",
+     "name": "sdvApplyCameraSlots",
      "size": 52,
-     "splat_name": "func_00268010",
+     "splat_name": "sdvApplyCameraSlots",
      "va": "0x00268010",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82662,9 +82241,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002680A8",
+     "name": "sdvNearestAngle",
      "size": 316,
-     "splat_name": "func_002680A8",
+     "splat_name": "sdvNearestAngle",
      "va": "0x002680a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82815,9 +82394,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026A718",
+     "name": "sdvDestroyOwnerAlters",
      "size": 136,
-     "splat_name": "func_0026A718",
+     "splat_name": "sdvDestroyOwnerAlters",
      "va": "0x0026a718",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82851,9 +82430,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026AFB0",
+     "name": "sdvSetStripHeader",
      "size": 192,
-     "splat_name": "func_0026AFB0",
+     "splat_name": "sdvSetStripHeader",
      "va": "0x0026afb0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82905,9 +82484,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026BB78",
+     "name": "sdvDrawOwnerAlters",
      "size": 172,
-     "splat_name": "func_0026BB78",
+     "splat_name": "sdvDrawOwnerAlters",
      "va": "0x0026bb78",
      "name_basis": "address",
      "provenance": "estimated"
@@ -82922,6 +82501,54 @@
     ".bss": "asm"
    },
    "sections": {
+    ".lit4": {
+     "anchored": [
+      "0x0069b324",
+      "0x0069b3a5"
+     ],
+     "bounds": [
+      "0x0069b321",
+      "0x0069b3a8"
+     ],
+     "end": "0x0069B3A8",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x0069B3A8",
+       "name": "sdv_181",
+       "start": "0x0069B324"
+      }
+     ],
+     "size": 132,
+     "splat_type": "lit4",
+     "start": "0x0069B324"
+    },
+    ".bss": {
+     "anchored": [
+      "0x00807ea0",
+      "0x00808cd1"
+     ],
+     "bounds": [
+      "0x00807da1",
+      "0x00831610"
+     ],
+     "end": "0x00831610",
+     "evidence_source": "map",
+     "rule": "anchored start",
+     "pieces": [
+      {
+       "c_split": false,
+       "end": "0x00831610",
+       "name": "sdv_181",
+       "start": "0x00807EA0"
+      }
+     ],
+     "size": 169840,
+     "splat_type": "bss",
+     "start": "0x00807EA0"
+    },
     ".data": {
      "anchored": [
       "0x005e6d60",
@@ -82938,7 +82565,7 @@
       {
        "c_split": false,
        "end": "0x005E6E70",
-       "name": "sdv_183",
+       "name": "sdv_181",
        "start": "0x005E6D60"
       }
      ],
@@ -82962,37 +82589,13 @@
       {
        "c_split": false,
        "end": "0x0068C5F0",
-       "name": "sdv_183",
+       "name": "sdv_181",
        "start": "0x0068C530"
       }
      ],
      "size": 192,
      "splat_type": "rodata",
      "start": "0x0068C530"
-    },
-    ".lit4": {
-     "anchored": [
-      "0x0069b334",
-      "0x0069b3a5"
-     ],
-     "bounds": [
-      "0x0069b331",
-      "0x0069b3a8"
-     ],
-     "end": "0x0069B3A8",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x0069B3A8",
-       "name": "sdv_183",
-       "start": "0x0069B334"
-      }
-     ],
-     "size": 116,
-     "splat_type": "lit4",
-     "start": "0x0069B334"
     },
     ".sdata": {
      "anchored": [
@@ -83010,57 +82613,33 @@
       {
        "c_split": false,
        "end": "0x0069DC48",
-       "name": "sdv_183",
+       "name": "sdv_181",
        "start": "0x0069DC38"
       }
      ],
      "size": 16,
      "splat_type": "sdata",
      "start": "0x0069DC38"
-    },
-    ".bss": {
-     "anchored": [
-      "0x00807ec0",
-      "0x00808cd1"
-     ],
-     "bounds": [
-      "0x00807ea1",
-      "0x00831610"
-     ],
-     "end": "0x00831610",
-     "evidence_source": "map",
-     "rule": "anchored start",
-     "pieces": [
-      {
-       "c_split": false,
-       "end": "0x00831610",
-       "name": "sdv_183",
-       "start": "0x00807EC0"
-      }
-     ],
-     "size": 169808,
-     "splat_type": "bss",
-     "start": "0x00807EC0"
     }
    },
    "text": {
-    "start": "0x00267bb8",
+    "start": "0x00266f68",
     "end": "0x0026bc28",
     "code_end": "0x0026bc24",
-    "size": 16496,
+    "size": 19648,
     "splat": "c",
     "splat_range": [
-     "0x00267bb8",
+     "0x00266f68",
      "0x0026bc28"
     ],
     "note": null
    },
    "import": {
     "mode": "c",
-    "note": "X1 C under express order (user 2026-11-05)",
+    "note": "Source file created for the functions of this TU.; joined tu181, tu182, sdv_183 into sdv_181.c (Opok, PR review 2026-11-17: the callee compiled earlier in the file)",
     "source": {
      "kind": "file",
-     "path": "src/main/sdv_183.c",
+     "path": "src/main/sdv_181.c",
      "include_dirs": [
       "include"
      ]
@@ -83154,9 +82733,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026BD10",
+     "name": "sefUnpackBlockInit",
      "size": 40,
-     "splat_name": "func_0026BD10",
+     "splat_name": "sefUnpackBlockInit",
      "va": "0x0026bd10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83208,9 +82787,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026C0A8",
+     "name": "sefBuildModelPacket",
      "size": 408,
-     "splat_name": "func_0026C0A8",
+     "splat_name": "sefBuildModelPacket",
      "va": "0x0026c0a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83280,9 +82859,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026C488",
+     "name": "sefCreateResourceSlot",
      "size": 1008,
-     "splat_name": "func_0026C488",
+     "splat_name": "sefCreateResourceSlot",
      "va": "0x0026c488",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83325,9 +82904,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026C9C8",
+     "name": "sefCreateKindResourceSlot",
      "size": 1036,
-     "splat_name": "func_0026C9C8",
+     "splat_name": "sefCreateKindResourceSlot",
      "va": "0x0026c9c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83343,18 +82922,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "sefScaleVectorRandom",
+     "name": "sefGetRandomScaledDirection",
      "size": 116,
-     "splat_name": "sefScaleVectorRandom",
+     "splat_name": "sefGetRandomScaledDirection",
      "va": "0x0026ce30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026CEA8",
+     "name": "sefRotationZRows",
      "size": 112,
-     "splat_name": "func_0026CEA8",
+     "splat_name": "sefRotationZRows",
      "va": "0x0026cea8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83388,81 +82967,81 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026D6A8",
+     "name": "sefSpawnKinds5To7",
      "size": 540,
-     "splat_name": "func_0026D6A8",
+     "splat_name": "sefSpawnKinds5To7",
      "va": "0x0026d6a8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026D8C8",
+     "name": "sefSpawnKinds8To10",
      "size": 848,
-     "splat_name": "func_0026D8C8",
+     "splat_name": "sefSpawnKinds8To10",
      "va": "0x0026d8c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026DC18",
+     "name": "sefSpawnKinds11To13",
      "size": 792,
-     "splat_name": "func_0026DC18",
+     "splat_name": "sefSpawnKinds11To13",
      "va": "0x0026dc18",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026DF30",
+     "name": "sefSpawnKinds22Up",
      "size": 856,
-     "splat_name": "func_0026DF30",
+     "splat_name": "sefSpawnKinds22Up",
      "va": "0x0026df30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026E288",
+     "name": "sefSpawnKinds14To16",
      "size": 856,
-     "splat_name": "func_0026E288",
+     "splat_name": "sefSpawnKinds14To16",
      "va": "0x0026e288",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026E5E0",
+     "name": "sefSpawnKinds17To19",
      "size": 1160,
-     "splat_name": "func_0026E5E0",
+     "splat_name": "sefSpawnKinds17To19",
      "va": "0x0026e5e0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026EA68",
+     "name": "sefSpawnKind20",
      "size": 480,
-     "splat_name": "func_0026EA68",
+     "splat_name": "sefSpawnKind20",
      "va": "0x0026ea68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026EC48",
+     "name": "sefSpawnKind21",
      "size": 412,
-     "splat_name": "func_0026EC48",
+     "splat_name": "sefSpawnKind21",
      "va": "0x0026ec48",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026EDE8",
+     "name": "sefUpdateBurstParticles",
      "size": 548,
-     "splat_name": "func_0026EDE8",
+     "splat_name": "sefUpdateBurstParticles",
      "va": "0x0026ede8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83478,9 +83057,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_0026F250",
+     "name": "sefUpdateFadeOutParticles",
      "size": 632,
-     "splat_name": "func_0026F250",
+     "splat_name": "sefUpdateFadeOutParticles",
      "va": "0x0026f250",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83523,45 +83102,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00270428",
+     "name": "sefUpdateKind20Particles",
      "size": 916,
-     "splat_name": "func_00270428",
+     "splat_name": "sefUpdateKind20Particles",
      "va": "0x00270428",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002707C0",
+     "name": "sefUpdateSpinParticles",
      "size": 288,
-     "splat_name": "func_002707C0",
+     "splat_name": "sefUpdateSpinParticles",
      "va": "0x002707c0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002708E0",
+     "name": "sefRunEmitters",
      "size": 508,
-     "splat_name": "func_002708E0",
+     "splat_name": "sefRunEmitters",
      "va": "0x002708e0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00270AE0",
+     "name": "sefSetupEmitterPacket",
      "size": 444,
-     "splat_name": "func_00270AE0",
+     "splat_name": "sefSetupEmitterPacket",
      "va": "0x00270ae0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00270CA0",
+     "name": "sefDrawEmitter",
      "size": 984,
-     "splat_name": "func_00270CA0",
+     "splat_name": "sefDrawEmitter",
      "va": "0x00270ca0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -83604,18 +83183,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271390",
+     "name": "sefNoOp",
      "size": 8,
-     "splat_name": "func_00271390",
+     "splat_name": "sefNoOp",
      "va": "0x00271390",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00271398",
+     "name": "sefCollectPersistentSlots",
      "size": 192,
-     "splat_name": "func_00271398",
+     "splat_name": "sefCollectPersistentSlots",
      "va": "0x00271398",
      "name_basis": "address",
      "provenance": "estimated"
@@ -84640,7 +84219,7 @@
    "path": "src/main/tu190.c",
    "scaffold_path": "scaffold/src/main/tu190.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -84719,7 +84298,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -84733,6 +84312,17 @@
      "0x00272088"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Source file created for the functions of this TU.",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu190.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -85052,7 +84642,7 @@
    "path": "src/main/m_math_193.c",
    "scaffold_path": "scaffold/src/main/m_math_193.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -85185,7 +84775,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -85199,6 +84789,17 @@
      "0x00272928"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Source file created for the functions of this TU.",
+    "source": {
+     "kind": "file",
+     "path": "src/main/m_math_193.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -86865,7 +86466,7 @@
    "path": "src/main/tu205.c",
    "scaffold_path": "scaffold/src/main/tu205.c",
    "kind": "gcc",
-   "mode": "asm",
+   "mode": "c",
    "category": "game",
    "map_class": "game",
    "domain": null,
@@ -86926,9 +86527,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002746B8",
+     "name": "xglVectorNormalInPlace",
      "size": 60,
-     "splat_name": "func_002746B8",
+     "splat_name": "xglVectorNormalInPlace",
      "va": "0x002746b8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -86944,7 +86545,7 @@
     }
    ],
    "owners": {
-    ".text": "asm"
+    ".text": "c"
    },
    "sections": {},
    "text": {
@@ -86958,6 +86559,17 @@
      "0x00274738"
     ],
     "note": null
+   },
+   "import": {
+    "mode": "c",
+    "note": "Source file created for the functions of this TU.",
+    "source": {
+     "kind": "file",
+     "path": "src/main/tu205.c",
+     "include_dirs": [
+      "include"
+     ]
+    }
    }
   },
   {
@@ -87013,7 +86625,7 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 5,
+    "of": 6,
     "migration_hints": [],
     "records": []
    },
@@ -87062,6 +86674,15 @@
      "va": "0x002747f0",
      "name_basis": "address",
      "provenance": "estimated"
+    },
+    {
+     "binding": "GLOBAL",
+     "name": "wrapIntRange",
+     "size": 40,
+     "splat_name": "wrapIntRange",
+     "va": "0x00274808",
+     "name_basis": "address",
+     "provenance": "estimated"
     }
    ],
    "owners": {
@@ -87096,13 +86717,13 @@
    },
    "text": {
     "start": "0x00274738",
-    "end": "0x00274808",
-    "code_end": "0x00274808",
-    "size": 208,
+    "end": "0x00274830",
+    "code_end": "0x00274830",
+    "size": 248,
     "splat": "c",
     "splat_range": [
      "0x00274738",
-     "0x00274808"
+     "0x00274830"
     ],
     "note": null
    },
@@ -87171,20 +86792,11 @@
    "accepted": {
     "all_functions_accepted": false,
     "functions": 0,
-    "of": 32,
+    "of": 31,
     "migration_hints": [],
     "records": []
    },
    "functions": [
-    {
-     "binding": "GLOBAL",
-     "name": "wrapIntRange",
-     "size": 40,
-     "splat_name": "wrapIntRange",
-     "va": "0x00274808",
-     "name_basis": "address",
-     "provenance": "estimated"
-    },
     {
      "binding": "GLOBAL",
      "name": "xglIsInRange",
@@ -87196,27 +86808,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00274850",
+     "name": "recordUpdateRenderHook",
      "size": 120,
-     "splat_name": "func_00274850",
+     "splat_name": "recordUpdateRenderHook",
      "va": "0x00274850",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002748C8",
+     "name": "recordSetPreset",
      "size": 3652,
-     "splat_name": "func_002748C8",
+     "splat_name": "recordSetPreset",
      "va": "0x002748c8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275710",
+     "name": "recordSetSlot",
      "size": 128,
-     "splat_name": "func_00275710",
+     "splat_name": "recordSetSlot",
      "va": "0x00275710",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87232,27 +86844,27 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002757F0",
+     "name": "recordClearBanks",
      "size": 60,
-     "splat_name": "func_002757F0",
+     "splat_name": "recordClearBanks",
      "va": "0x002757f0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275830",
+     "name": "recordRenderAll",
      "size": 312,
-     "splat_name": "func_00275830",
+     "splat_name": "recordRenderAll",
      "va": "0x00275830",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275968",
+     "name": "recordAnyUsed",
      "size": 96,
-     "splat_name": "func_00275968",
+     "splat_name": "recordAnyUsed",
      "va": "0x00275968",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87277,36 +86889,36 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002759F8",
+     "name": "recordDrawType1",
      "size": 756,
-     "splat_name": "func_002759F8",
+     "splat_name": "recordDrawType1",
      "va": "0x002759f8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275CF0",
+     "name": "recordStageSize",
      "size": 64,
-     "splat_name": "func_00275CF0",
+     "splat_name": "recordStageSize",
      "va": "0x00275cf0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275D30",
+     "name": "recordStageColor",
      "size": 212,
-     "splat_name": "func_00275D30",
+     "splat_name": "recordStageColor",
      "va": "0x00275d30",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275E08",
+     "name": "recordPulseColor",
      "size": 152,
-     "splat_name": "func_00275E08",
+     "splat_name": "recordPulseColor",
      "va": "0x00275e08",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87322,45 +86934,45 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275EE8",
+     "name": "recordDrawType2",
      "size": 132,
-     "splat_name": "func_00275EE8",
+     "splat_name": "recordDrawType2",
      "va": "0x00275ee8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00275F70",
+     "name": "recordDrawType3",
      "size": 992,
-     "splat_name": "func_00275F70",
+     "splat_name": "recordDrawType3",
      "va": "0x00275f70",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276350",
+     "name": "recordRingPoint",
      "size": 172,
-     "splat_name": "func_00276350",
+     "splat_name": "recordRingPoint",
      "va": "0x00276350",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276400",
+     "name": "recordAdvanceRingRadius",
      "size": 84,
-     "splat_name": "func_00276400",
+     "splat_name": "recordAdvanceRingRadius",
      "va": "0x00276400",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276458",
+     "name": "recordDrawType4",
      "size": 900,
-     "splat_name": "func_00276458",
+     "splat_name": "recordDrawType4",
      "va": "0x00276458",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87385,63 +86997,63 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276838",
+     "name": "recordDrawType5",
      "size": 1324,
-     "splat_name": "func_00276838",
+     "splat_name": "recordDrawType5",
      "va": "0x00276838",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00276D68",
+     "name": "recordDrawType6",
      "size": 916,
-     "splat_name": "func_00276D68",
+     "splat_name": "recordDrawType6",
      "va": "0x00276d68",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277100",
+     "name": "recordStepWarp",
      "size": 100,
-     "splat_name": "func_00277100",
+     "splat_name": "recordStepWarp",
      "va": "0x00277100",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277168",
+     "name": "recordWarpCorner",
      "size": 316,
-     "splat_name": "func_00277168",
+     "splat_name": "recordWarpCorner",
      "va": "0x00277168",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002772A8",
+     "name": "recordDrawType7",
      "size": 832,
-     "splat_name": "func_002772A8",
+     "splat_name": "recordDrawType7",
      "va": "0x002772a8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002775E8",
+     "name": "recordStepRing",
      "size": 8,
-     "splat_name": "func_002775E8",
+     "splat_name": "recordStepRing",
      "va": "0x002775e8",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002775F0",
+     "name": "recordRingInnerColor",
      "size": 12,
-     "splat_name": "func_002775F0",
+     "splat_name": "recordRingInnerColor",
      "va": "0x002775f0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87457,9 +87069,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277610",
+     "name": "recordRingStep",
      "size": 268,
-     "splat_name": "func_00277610",
+     "splat_name": "recordRingStep",
      "va": "0x00277610",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87571,13 +87183,13 @@
     }
    },
    "text": {
-    "start": "0x00274808",
+    "start": "0x00274830",
     "end": "0x00277720",
     "code_end": "0x0027771c",
-    "size": 12056,
+    "size": 12016,
     "splat": "c",
     "splat_range": [
-     "0x00274808",
+     "0x00274830",
      "0x00277720"
     ],
     "note": null
@@ -87654,18 +87266,18 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "func_00277720",
+     "name": "recordDrawStrip",
      "size": 428,
-     "splat_name": "func_00277720",
+     "splat_name": "recordDrawStrip",
      "va": "0x00277720",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002778D0",
+     "name": "recordDrawTurnColumns",
      "size": 648,
-     "splat_name": "func_002778D0",
+     "splat_name": "recordDrawTurnColumns",
      "va": "0x002778d0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87681,9 +87293,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277C28",
+     "name": "recordRotateCorner",
      "size": 412,
-     "splat_name": "func_00277C28",
+     "splat_name": "recordRotateCorner",
      "va": "0x00277c28",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87699,9 +87311,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00277EA0",
+     "name": "recordDrawFlatColumn",
      "size": 216,
-     "splat_name": "func_00277EA0",
+     "splat_name": "recordDrawFlatColumn",
      "va": "0x00277ea0",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87821,27 +87433,27 @@
    "functions": [
     {
      "binding": "GLOBAL",
-     "name": "animSampleSegment",
+     "name": "recordTurnAngleAt",
      "size": 244,
-     "splat_name": "animSampleSegment",
+     "splat_name": "recordTurnAngleAt",
      "va": "0x00277f78",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "animLerp",
+     "name": "recordLerp",
      "size": 16,
-     "splat_name": "animLerp",
+     "splat_name": "recordLerp",
      "va": "0x00278070",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "animOffsetPoints",
+     "name": "recordOffsetCorners",
      "size": 100,
-     "splat_name": "animOffsetPoints",
+     "splat_name": "recordOffsetCorners",
      "va": "0x00278080",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87953,18 +87565,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002783D0",
+     "name": "quadDrawPreset",
      "size": 388,
-     "splat_name": "func_002783D0",
+     "splat_name": "quadDrawPreset",
      "va": "0x002783d0",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_00278558",
+     "name": "quadDrawPresetUv",
      "size": 388,
-     "splat_name": "func_00278558",
+     "splat_name": "quadDrawPresetUv",
      "va": "0x00278558",
      "name_basis": "address",
      "provenance": "estimated"
@@ -87980,9 +87592,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002789C8",
+     "name": "circleSpriteCorners",
      "size": 124,
-     "splat_name": "func_002789C8",
+     "splat_name": "circleSpriteCorners",
      "va": "0x002789c8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -102616,9 +102228,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A1E10",
+     "name": "fmodf",
      "size": 20,
-     "splat_name": "func_002A1E10",
+     "splat_name": "fmodf",
      "va": "0x002a1e10",
      "name_basis": "address",
      "provenance": "estimated"
@@ -102841,9 +102453,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A6818",
+     "name": "__floatdisf",
      "size": 232,
-     "splat_name": "func_002A6818",
+     "splat_name": "__floatdisf",
      "va": "0x002a6818",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103300,18 +102912,18 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A9350",
+     "name": "malloc",
      "size": 84,
-     "splat_name": "func_002A9350",
+     "splat_name": "malloc",
      "va": "0x002a9350",
      "name_basis": "address",
      "provenance": "estimated"
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002A93A8",
+     "name": "free",
      "size": 72,
-     "splat_name": "func_002A93A8",
+     "splat_name": "free",
      "va": "0x002a93a8",
      "name_basis": "address",
      "provenance": "estimated"
@@ -103408,9 +103020,9 @@
     },
     {
      "binding": "GLOBAL",
-     "name": "func_002AA130",
+     "name": "rand",
      "size": 100,
-     "splat_name": "func_002AA130",
+     "splat_name": "rand",
      "va": "0x002aa130",
      "name_basis": "address",
      "provenance": "estimated"

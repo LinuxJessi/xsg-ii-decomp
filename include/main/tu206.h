@@ -4,6 +4,7 @@
 /* Functions of src/main/tu206.c that other files call. */
 
 int xglClampInt(int value, int lower, int upper);
+int wrapIntRange(int value, int lower, int upper);
 void xglPacketScratchAddQuad(long long high, long long low);
 
 #endif /* INCLUDE_MAIN_TU206_H */

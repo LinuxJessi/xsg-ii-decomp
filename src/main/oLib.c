@@ -1,9 +1,12 @@
 #include "common.h"
 #include "main/res_get_path.h"
 #include "main/test_128.h"
+#include "main/tu026.h"
+#include "main/tu051.h"
+#include "main/xenoActor.h"
 
 /* Source file name passed with the allocation and free calls. */
-extern char D_0068D5E8[];
+extern char oLibSourceFile[];
 extern int oLibHandle;
 int InstanceOfRgHeapById(int count);
 int RgHeapAllocById(int count, int flags, char *file, int line);
@@ -18,7 +21,7 @@ void oLibInit(void)
 
     setup_handle = InstanceOfRgHeapById(4);
     InitRgHeap(setup_handle, 0x01000000, 0x01200000);
-    handle = RgHeapAllocById(4, 0x800010, D_0068D5E8, 118);
+    handle = RgHeapAllocById(4, 0x800010, oLibSourceFile, 118);
     oLibHandle = handle;
     resInitPathHeader(handle, 0x800000);
 }
@@ -27,17 +30,76 @@ void oLibInit(void)
 void oLibExit(void)
 {
     resResetSlotTable();
-    RgHeapFree(oLibHandle, D_0068D5E8, 134);
+    RgHeapFree(oLibHandle, oLibSourceFile, 134);
 }
 
-/* Loads a game resource by Id (asserted at line 157) and initialises a new object from its header. */
-INCLUDE_ASM("asm/main/nonmatchings/oLib", oLibLoadObject);
+/* XenoActor.kind (+0x798) as oLibLoadObject writes it: a pointer-typed store through a view that only has this
+ * member, so the loads after it move above it as in the original (cfeLoadResourceObject does the same; through
+ * actor->kind, a one-member union read with alias set 0, the stores of the resource words are scheduled before it). */
+typedef struct OLibActorKindView {
+    unsigned char unmodeled_000[0x798];
+    void *kind;
+} OLibActorKindView;
+
+/* The assert expression of oLibLoadObject: "GameResLoadID(Id, &SrcData, NULL, NULL) ". */
+extern char oLibLoadObjectAssertExpression[];
+int GameResLoadID(int id, void **buffer, unsigned int *size,
+                  void (*callback)(int index, void *buffer, unsigned int size, int value));
+void XenoActorAllocMatrices(struct XenoActor *actor);
+
+/* Loads the object resource Id (asserted at line 157) and creates the actor from its
+ * resource table (model, texture, hierarchy, motion table, lookLink) as uwamonoLoadPlayer does. */
+void oLibLoadObject(struct XenoActor **object, int Id)
+{
+    void *SrcData;
+    int *values;
+    struct XenoActor *actor;
+
+    SrcData = 0;
+    if (GameResLoadID(Id, &SrcData, 0, 0) == -1) {
+        assertFailed(oLibLoadObjectAssertExpression, oLibSourceFile, 157);
+    }
+    values = SrcData;
+    actor = XenoActorAlloc();
+    ((OLibActorKindView *) actor)->kind = (void *) Id;
+    actor->rsrc[XAct_Rsrc_MDL] = values[0];
+    actor->drawMode = 1;
+    *object = actor;
+    actor->rsrc[XAct_Rsrc_TEX] = values[1];
+    actor->rsrc[XAct_Rsrc_XHR] = values[2];
+    actor->rsrc[XAct_Rsrc_XAP] = values[4];
+    actor->lookLink = values[3];
+    XenoActorAllocMatrices(actor);
+    XenoActorSetChannelValue(*object, 0.0f);
+    XenoActorSetModeInSlot(*object, 0, 0);
+    XenoActorSetChannelValueB(*object, 0.0f);
+    XenoActorSetSelector(*object, 0);
+}
 
 /* The old tu202 and tu203 are the tail of this object: their .sdata flags xglCosDegTableReady and
    xglSinDegTableReady precede oLibHandle (data map review 2026-11-17). */
-INCLUDE_ASM("asm/main/nonmatchings/oLib", gsVertexX);
 
-INCLUDE_ASM("asm/main/nonmatchings/oLib", gsVertexY);
+/* Converts an x coordinate to 12.4 fixed point, offset into the GS display area. */
+int gsVertexX(int x)
+{
+    int magnitude = (x >= 0) ? x : -x;
+
+    if (x > 0) {
+        return (x << 4) + 0x7008;
+    }
+    return -(magnitude << 4) - 0x7008;
+}
+
+/* Converts a y coordinate to 12.4 fixed point, offset into the GS display area. */
+int gsVertexY(int y)
+{
+    int magnitude = (y >= 0) ? y : -y;
+
+    if (y > 0) {
+        return (y << 4) + 0x7208;
+    }
+    return -(magnitude << 4) - 0x7208;
+}
 
 /* Converts a coordinate to 12.4 fixed point with half-unit rounding by sign (gsRoundCoord). */
 int gsRoundCoord(int coordinate)
@@ -57,14 +119,89 @@ int gsRoundCoord(int coordinate)
   return (-(magnitude * 0x10)) - 8;
 }
 
-INCLUDE_ASM("asm/main/nonmatchings/oLib", func_00274100);
+/* Converts a coordinate to 12.4 fixed point with half-unit rounding by sign: (value << 4) + 8 above zero, else
+   -(|value| << 4) - 8, so 0 gives -8; the same conversion as gsRoundCoord. The absolute value is taken
+   at entry as the original does: written as (value << 4) - 8 in the branch, fd.sh gives 6 insns for the 11. */
+int xglRoundCoord(int value)
+{
+    int magnitude = (value >= 0) ? value : -value;
 
-INCLUDE_ASM("asm/main/nonmatchings/oLib", func_00274130);
+    if (value > 0) {
+        return (value << 4) + 8;
+    }
+    return -(magnitude << 4) - 8;
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/oLib", xglCosDeg);
+double sqrt(double value);
 
-INCLUDE_ASM("asm/main/nonmatchings/oLib", xglCosDegTableInit);
+/* Distance between two points, truncated to an integer: the float sum of squares goes through the
+ * soft-float double conversions (fptodp, the double sqrt, dptoli). */
+int xglPointDistanceInt(Vector4 *from, Vector4 *to)
+{
+    float dx = to->x - from->x;
+    float dy = to->y - from->y;
+    float dz = to->z - from->z;
 
-INCLUDE_ASM("asm/main/nonmatchings/oLib", xglSinDeg);
+    return sqrt(dx * dx + dy * dy + dz * dz);
+}
 
-INCLUDE_ASM("asm/main/nonmatchings/oLib", xglSinDegTableInit);
+extern int xglCosDegTableReady;
+extern float xglCosDegTable[];
+void xglCosDegTableInit(void);
+
+/* Cosine of an angle in degrees from the 10-degree table (built on first use); the table is
+ * indexed by |degrees| % 360 rounded down to a 10-degree step. */
+float xglCosDeg(int degrees)
+{
+    if (!xglCosDegTableReady) {
+        xglCosDegTableInit();
+        xglCosDegTableReady = 1;
+    }
+    /* |degrees| taken in place: with a separate local gcc moves the abs after the init call
+     * (bgez/negu there instead of bltzl/negu at entry). */
+    degrees = (degrees >= 0) ? degrees : -degrees;
+    return xglCosDegTable[(degrees % 360) / 10];
+}
+
+extern float xglCosDegToRad;
+extern float cosf(float angle);
+
+void xglCosDegTableInit(void)
+{
+    float degToRad = xglCosDegToRad;
+    int i;
+
+    for (i = 0; i < 37; i++) {
+        xglCosDegTable[i] = cosf((float) (i * 10) * degToRad);
+    }
+}
+
+extern int xglSinDegTableReady;
+extern float xglSinDegTable[];
+void xglSinDegTableInit(void);
+
+/* Sine of |degrees| from the 10-degree table (built on first use): a negative angle returns the
+ * table entry of the positive angle, not its negated sine. */
+float xglSinDeg(int degrees)
+{
+    if (!xglSinDegTableReady) {
+        xglSinDegTableInit();
+        xglSinDegTableReady = 1;
+    }
+    /* |degrees| taken in place, as in xglCosDeg. */
+    degrees = (degrees >= 0) ? degrees : -degrees;
+    return xglSinDegTable[(degrees % 360) / 10];
+}
+
+extern float xglSinDegToRad;
+extern float sinf(float angle);
+
+void xglSinDegTableInit(void)
+{
+    float degToRad = xglSinDegToRad;
+    int i;
+
+    for (i = 0; i < 37; i++) {
+        xglSinDegTable[i] = sinf((float) (i * 10) * degToRad);
+    }
+}

@@ -2090,7 +2090,7 @@ typedef struct PxyTrackEntry {
 
 extern int D_0097A580[];
 
-float func_002A1E10(float, float);
+float fmodf(float, float);
 float pxyInterpolateKeys(int, PxyRow *, float, float);
 void tiWaterObjectUpdate(PxyHeader *, int);
 
@@ -2132,7 +2132,7 @@ void pxyEvaluateTracks(PxyHeader *header)
                     value = (float)(trackPart->time / 256)
                         + (float)(trackPart->time % 256) / 256.0f;
                 }
-                value = func_002A1E10(value, (float)(trackPart->maxValue - trackPart->minValue)) + (float)trackPart->minValue;
+                value = fmodf(value, (float)(trackPart->maxValue - trackPart->minValue)) + (float)trackPart->minValue;
                 result = pxyInterpolateKeys(trackPart->count, &trackPart->keys, value, track->weight);
                 if (trackPart->mode == 2) {
                     float fraction;
