@@ -106,6 +106,10 @@ int calcEntryUsable(struct Ov01Object *entity, int index);
 /* Unit HP and status rows: calcHpAdjust returns 1 while HP stays above 0, calcStatGet the set bits of mask in
  * row, calcStatReset/calcStatAltReset clear them (both return 1). */
 int calcHpAdjust(struct Ov01Object *unit, int delta);
+/* The status rows (the row argument of calcStatGet, calcStatReset, calcStatAltReset and calcStatSet). */
+#define STAT_ROW_1 1
+#define STAT_ROW_2 2
+#define STAT_ROW_3 3
 int calcStatGet(struct Ov01Object *owner, int row, int mask);
 int calcStatReset(struct Ov01Object *owner, int row, int mask);
 int calcStatAltReset(struct Ov01Object *owner, int statIdx, int mask);

@@ -30,6 +30,10 @@ struct EffectRequest {
     unsigned char unmodeled_30[0x38 - 0x30];
 };
 
+/* EffectRequest.key (and the keys sefApplyRecordMode and sefLoadEffect take): the effect group above this shift, the
+ * record of the group below it. */
+#define EFFECT_KEY_GROUP_SHIFT 12
+
 /* Unaligned signed word: the record's word sits at a 2-byte offset. */
 typedef signed int UnalignedS32 __attribute__((aligned(1)));
 
@@ -177,6 +181,17 @@ struct TecRecord {
     signed char phase;                      /* +0x1D: the phase unitCmdSetPhase (tu012) sets */
     short timer;                            /* +0x1E: nonzero selects unitSetTimedPhase */
 };
+
+/* TecRecord.flags target bit 8 (all targets): such a technique leaves the partner object where it is
+ * (eventPairBegin, eventPairEnd) and gives no act stock (unitTryActStock). */
+#define TEC_TARGET_ALL 8
+
+/* TecRecord.gateFlag values with an evidenced role (tu033). */
+#define TEC_GATE_NONE 0             /* calcHitRowGate walks the row gates; the hit adds percent and boost progress */
+#define TEC_GATE_PAIR 1             /* pair technique: the partner (unitPairPartnerFind) acts with the unit */
+#define TEC_GATE_SHOW_CHILD 4       /* shows one of the attacker's children during the attack (eventAttackRun) */
+#define TEC_GATE_TARGET_MODEL 5     /* loads the model of the target record (tgtIdRecordGet) */
+#define TEC_GATE_CURRENT_DRAIN 10   /* takes 100 of the target's current value (func_00A93D50) */
 
 /* The record statusRecordGet returns for a status or effect index. */
 typedef struct StatusRecord StatusRecord;
