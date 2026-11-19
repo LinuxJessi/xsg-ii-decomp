@@ -110,9 +110,19 @@ void sbRun(SbThread *thread)
 int sbIsSbImage(int *header);
 int sbThreadStart(struct SbImageHeader *key, int entry);
 
-/* sbStartImage starts a thread at the image's entry and stops for good on an image without the SB
- * magic; it stays asm: the original calls sbThreadStart with jal, every plain C form gives a tail call. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbStartImage);
+/* Starts a thread at the image's entry; stops for good on an image without the SB magic. The call sits in a
+ * do/while(0) (as from a macro): the original calls sbThreadStart with jal, and gcc only builds a sibcall for a
+ * call outside every loop statement, so each plain form gives a tail call. */
+void sbStartImage(struct SbImageHeader *image)
+{
+    if (sbIsSbImage((int *)image) == 0) {
+        for (;;) {
+        }
+    }
+    do {
+        sbThreadStart(image, image->entry);
+    } while (0);
+}
 
 SbSlot *sbSlotTableGet(int index) {
     return sbSlotTables[index];
