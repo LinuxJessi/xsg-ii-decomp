@@ -252,8 +252,8 @@ void unitCmdDstSet(Ov01Object *object, int cmdId, int mode) {
     goal = &object->pose.point.x;
     lookup = dataLookupCurrent(&object->commandQueue);
     if (mode == 0) {
-        partner = object->partner;
-        partnerKey = object->partnerKey;
+        partner = (Ov01Object *) object->commandTarget;
+        partnerKey = object->commandCode;
         posIndex = partner->stats->posIndex;
         posRow = effectPosGet(posIndex);
         goal[0] = (float) posRow[0] / 100;

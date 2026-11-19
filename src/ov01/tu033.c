@@ -2583,7 +2583,7 @@ int eventPairBegin(EventQueueEntry *entry)
             unitSlotResume(object, 0);
         }
         if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
-            object = object->partner;
+            object = (Ov01Object *) object->commandTarget;
             actor = object->unit;
             __builtin_memcpy(&pairSavedPos[2], &actor->position, sizeof(Vector4));
             __builtin_memcpy(&actor->position, &pairEventPos[2], sizeof(Vector4));
@@ -2646,7 +2646,7 @@ int eventPairEnd(EventQueueEntry *entry)
             unitSlotPause(object, 0);
         }
         if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
-            unitBindSetup(object->partner);
+            unitBindSetup((Ov01Object *) object->commandTarget);
         }
         monsSlotHide(ov01StreamSlot);
         screenFlashStart();
@@ -2670,7 +2670,7 @@ int eventPairEnd(EventQueueEntry *entry)
         __builtin_memcpy(&actor->position, &pairSavedPos[0], sizeof(Vector4));
         actor->rotation.y = pairSavedAngle[0];
         if (!(tecRecordGet(tecIndex)->flags & TEC_TARGET_ALL)) {
-            object = object->partner;
+            object = (Ov01Object *) object->commandTarget;
             actor = object->unit;
             __builtin_memcpy(&actor->position, &pairSavedPos[2], sizeof(Vector4));
             actor->rotation.y = pairSavedAngle[2];

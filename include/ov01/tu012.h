@@ -187,8 +187,8 @@ struct Ov01Object {
     void (*draw)(Ov01Object *object); /* +0x8: func_00A84880 */
     u32 flags; /* +0xC: unitEnCreate ORs in 0x60 for an enemy-side unit, unitCreateSide clears it */
     struct DataLookup commandQueue; /* +0x10: the command queue unitRunCommands walks; its flag word at +0x138 is the wait counter */
-    Ov01Object *partner; /* +0x13C: the object the goal is read from */
-    int partnerKey; /* +0x140 */
+    int commandTarget; /* +0x13C: the command's target unit, kept as a word like CmdListEntry.unit */
+    int commandCode; /* +0x140: the command's code */
     StatBlock *stats; /* +0x144: the battle block (the unit command handlers' motion record is the same block) */
     unsigned char unmodeled_148[0x8];
     Ov01Pose pose; /* +0x150 */
