@@ -110,9 +110,19 @@ void sbRun(SbThread *thread)
 int sbIsSbImage(int *header);
 int sbThreadStart(struct SbImageHeader *key, int entry);
 
-/* sbStartImage starts a thread at the image's entry and stops for good on an image without the SB
- * magic; it stays asm: the original calls sbThreadStart with jal, every plain C form gives a tail call. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbStartImage);
+/* Starts a thread at the image's entry; stops for good on an image without the SB magic. The call sits in a
+ * do/while(0) (as from a macro): the original calls sbThreadStart with jal, and gcc only builds a sibcall for a
+ * call outside every loop statement, so each plain form gives a tail call. */
+void sbStartImage(struct SbImageHeader *image)
+{
+    if (sbIsSbImage((int *)image) == 0) {
+        for (;;) {
+        }
+    }
+    do {
+        sbThreadStart(image, image->entry);
+    } while (0);
+}
 
 SbSlot *sbSlotTableGet(int index) {
     return sbSlotTables[index];
@@ -233,7 +243,30 @@ void sbFatal(SbThread *thread)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNativeOwnerAdd);
+/* Registers the null-terminated method table methods under name: appends the methods to
+ * sbNativeMethods and an owner record pointing at them. 0 when either table is full, else 1.
+ * The counts are compared unsigned (sltiu); index carries the owner count into the last store. */
+int sbNativeOwnerAdd(const char *name, SbNativeMethod *methods)
+{
+    int count;
+    int index;
+
+    if (!((unsigned int) sbNativeOwnerCount < SB_NATIVE_OWNER_MAX)) {
+        return 0;
+    }
+    sbNativeOwners[sbNativeOwnerCount].name = name;
+    sbNativeOwners[sbNativeOwnerCount].methods = &sbNativeMethods[sbNativeMethodCount];
+    for (count = 0; methods[count].name != 0; count++) {
+        if (!((unsigned int) sbNativeMethodCount < SB_NATIVE_METHOD_MAX)) {
+            return 0;
+        }
+        sbNativeMethods[sbNativeMethodCount++] = methods[count];
+    }
+    index = sbNativeOwnerCount;
+    sbNativeOwnerCount = index + 1;
+    sbNativeOwners[index].count = count;
+    return 1;
+}
 
 int sbIsSbImage(int *header) {
     if (header == 0) {
@@ -416,11 +449,46 @@ SbMessage *sbThreadDequeue(struct SbImageHeader *key, int value)
     return sbChainEntryGet(thread, index);
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNameTableFind);
+/* The value of the image's name-table entry called name, or -1. */
+int sbNameTableFind(struct SbImageHeader *image, const char *name)
+{
+    SbNameEntry *entries;
+    char *base;
+    int count;
+    int index;
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbNameTableNameOf);
+    index = 0;
+    count = image->name_count;
+    base = (char *)image + image->name_offset;
+    entries = (SbNameEntry *)base;
+    for (; index < count; index++) {
+        if (strcmp(name, base + entries[index].name_offset) == 0) {
+            return entries[index].value;
+        }
+    }
+    return -1;
+}
 
-int sbNameTableFind(struct SbImageHeader *image, const char *name);
+/* The name of the image's name-table entry with this value, or 0. */
+char *sbNameTableNameOf(struct SbImageHeader *image, int value)
+{
+    SbNameEntry *entries;
+    char *base;
+    int count;
+    int index;
+
+    index = 0;
+    count = image->name_count;
+    base = (char *)image + image->name_offset;
+    entries = (SbNameEntry *)base;
+    for (; index < count; index++) {
+        if (value == entries[index].value) {
+            return base + entries[index].name_offset;
+        }
+    }
+    return 0;
+}
+
 int sbThreadEnqueue(struct SbImageHeader *key, int value, SbMessage *message, SbThread *sender);
 
 /* Enqueues a thread at the entry the image's name table gives for name; 0 when
@@ -664,7 +732,120 @@ int sbOpNop(SbThread *thread, int opcode)
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu044", sbOpBinary);
+/* Operators of the sbOpBinary operand word. */
+#define SB_BIN_ADD 1
+#define SB_BIN_SUB 2
+#define SB_BIN_MUL 3
+#define SB_BIN_DIV 4
+#define SB_BIN_MOD 5
+#define SB_BIN_OR 6
+#define SB_BIN_AND 7
+#define SB_BIN_SHIFT_RIGHT 8
+#define SB_BIN_SHIFT_LEFT 9
+#define SB_BIN_NEG 10
+#define SB_BIN_EQ 11
+#define SB_BIN_GT 12
+#define SB_BIN_LT 13
+#define SB_BIN_GE 14
+#define SB_BIN_LE 15
+#define SB_BIN_NE 16
+#define SB_BIN_LOGICAL_OR 17
+#define SB_BIN_LOGICAL_AND 18
+
+/* Opcode 0x01: pops the right and the left operand (only the right one for SB_BIN_NEG), applies the operator of
+ * the operand word and pushes the result. A division or remainder by zero requests the SB_JUMP_ZERO_DIVIDE jump and
+ * pushes 0; an unknown operator is fatal. */
+int sbOpBinary(SbThread *thread, int opcode)
+{
+    unsigned short opcode16;
+    int right;
+    int left;
+    int result;
+    int operation;
+
+    opcode16 = opcode;
+    operation = sbCodeS32(thread, thread->pc + 1);
+    if (operation == SB_BIN_NEG) {
+        right = sbStackPop(thread);
+        left = 0;
+    } else {
+        right = sbStackPop(thread);
+        left = sbStackPop(thread);
+    }
+    switch (operation) {
+    case SB_BIN_ADD:
+        result = left + right;
+        break;
+    case SB_BIN_SUB:
+        result = left - right;
+        break;
+    case SB_BIN_MUL:
+        result = left * right;
+        break;
+    case SB_BIN_DIV:
+        if (right == 0) {
+            result = 0;
+            sbSlotJumpRequest(thread, SB_JUMP_ZERO_DIVIDE);
+            break;
+        }
+        result = left / right;
+        break;
+    case SB_BIN_MOD:
+        if (right == 0) {
+            result = 0;
+            sbSlotJumpRequest(thread, SB_JUMP_ZERO_DIVIDE);
+            break;
+        }
+        result = left % right;
+        break;
+    case SB_BIN_OR:
+        result = left | right;
+        break;
+    case SB_BIN_AND:
+        result = left & right;
+        break;
+    case SB_BIN_SHIFT_RIGHT:
+        result = left >> right;
+        break;
+    case SB_BIN_SHIFT_LEFT:
+        result = left << right;
+        break;
+    case SB_BIN_NEG:
+        result = -right;
+        break;
+    case SB_BIN_EQ:
+        result = left == right;
+        break;
+    case SB_BIN_GT:
+        result = left > right;
+        break;
+    case SB_BIN_LT:
+        result = left < right;
+        break;
+    case SB_BIN_GE:
+        result = left >= right;
+        break;
+    case SB_BIN_LE:
+        result = left <= right;
+        break;
+    case SB_BIN_NE:
+        result = left != right;
+        break;
+    case SB_BIN_LOGICAL_OR:
+        result = left || right;
+        break;
+    case SB_BIN_LOGICAL_AND:
+        result = left && right;
+        break;
+    default:
+        sbFatal(thread);
+        result = 0;
+        break;
+    }
+    sbStackPush(thread, result);
+    thread->pc += sbOpLength(opcode16, 0);
+    return 0;
+}
 
 /* Opcode 0x02: no effect; skips the opcode and its operand word. */
 int func_00A9DDE0(SbThread *thread, int opcode)

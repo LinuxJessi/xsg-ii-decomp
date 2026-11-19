@@ -9,6 +9,7 @@ int dataBoxChk(int category, int id);
 int dataBoxInc(int category, int id);
 int dataBoxDec(int category, int id);
 int dataBoxChkCategory1(int id);
+void dataBoxDecCategory1(int id);
 void dataBoxClearAll(void);
 
 #endif /* INCLUDE_OV01_TU043_H */

@@ -14,6 +14,7 @@ typedef struct GrPacket {
 void grGpInit(GrPacket *packet);
 void grPacketSend(GrPacket *packet);
 void grPutSprOpen(GrPacket *packet);
+void grGsRegSet(GrPacket *packet, unsigned long long register_id, unsigned long long value);
 void grPutSprClose(void);
 
 #endif /* INCLUDE_OV01_TU048_H */

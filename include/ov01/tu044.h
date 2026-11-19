@@ -94,7 +94,9 @@ typedef struct SbThread {
     int wait[4];                        /* +0x30: wait[0] counts sbOpWaitFrames down; sbThreadStart clears it */
 } SbThread;
 
-/* Slot key of the jump natives request when they get too few arguments (func_00A9CD30 handles keys 1 and 2). */
+/* Slot keys of a jump request (func_00A9CD30 handles keys 1 and 2): sbOpBinary requests SB_JUMP_ZERO_DIVIDE for a
+ * division or remainder by zero, natives request SB_JUMP_ARGUMENTS when they get too few arguments. */
+#define SB_JUMP_ZERO_DIVIDE 1
 #define SB_JUMP_ARGUMENTS 2
 
 void sbSlotJumpRequest(SbThread *thread, int key);

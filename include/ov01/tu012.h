@@ -16,6 +16,9 @@ enum {
     UNIT_CMD_MODE_DISPATCH = 0x0A,
     UNIT_CMD_JUMP_EFFECT = 0x0B,    /* func_00A85EA0: issues UNIT_CMD_MOVE_CHA_JUMP and effect 0xB */
     UNIT_CMD_HOVER_EFFECT = 0x0C,   /* func_00A85F30: issues UNIT_CMD_MOVE_CHA_HOVER and effect 0xC */
+    UNIT_CMD_MOVE_CHA = 0x10,       /* unitCmdMoveCha */
+    UNIT_CMD_PHASE_0E_WAIT = 0x12,  /* unitCmdPhase0EWait */
+    UNIT_CMD_POSE_ARRIVE_WAIT = 0x15, /* unitCmdPoseArriveWait */
     UNIT_CMD_MOVE_CHA_RUN = 0x16,
     UNIT_CMD_MOVE_POS_JUMP = 0x17,
     UNIT_CMD_MOVE_CHA_JUMP = 0x18,
@@ -29,6 +32,7 @@ enum {
     UNIT_CMD_CLEAR_ACTIVE = 0x20,
     UNIT_CMD_PHASE_2B_WAIT = 0x21,
     UNIT_CMD_DEACTIVATE = 0x22,     /* func_00A86CB0: clears UNIT_FLAG_ACTIVE */
+    UNIT_CMD_FINISH_REFRESH = 0x26, /* unitCmdFinishRefresh */
     UNIT_CMD_MODE_START = 0x27
 };
 
@@ -57,6 +61,16 @@ typedef struct Ov01Pose {
     f32 heading; /* +0x70: the heading toward the goal, [0, 2pi) */
     f32 headingDelta; /* +0x74: the signed turn to the heading, in (-pi, pi] */
 } Ov01Pose;
+
+/* Unit keys (StatBlock.key): 1..10 party members, 11..15 the large units (tu008 gives them DATA_UNIT_HEAP_LARGE),
+ * 16..140 the other data ids; keys from UNIT_KEY_COUNT up are gattai codes. A range test subtracts the first key
+ * and compares the unsigned difference with the count. */
+#define UNIT_KEY_PARTY_FIRST 1
+#define UNIT_KEY_PARTY_COUNT 10
+#define UNIT_KEY_LARGE_FIRST 11
+#define UNIT_KEY_LARGE_COUNT 5
+#define UNIT_KEY_OTHER_FIRST 16
+#define UNIT_KEY_COUNT 141
 
 /*
  * The 0x108-byte battle block of a unit (its StatOwner points at it through +0x144). The same
@@ -159,6 +173,13 @@ typedef struct Ov01Command {
 #define UNIT_FLAG_HIDDEN 0x2      /* set by unitSetBindFlags with ACTOR_STATE_HIDDEN on the unit's actors */
 #define UNIT_FLAG_DOWN 0x4
 #define UNIT_FLAG_STOCKED 0x8
+/* One of the enemy-side bits (unitEnCreate sets 0x60): the unit reports its hits and poses to the script
+ * (unitScriptPairEventSend). */
+#define UNIT_FLAG_SCRIPT_EVENTS 0x20
+/* Set by attackHitsShow per attack: the unit's reaction to the hit is queued, and its hit panels are shown;
+ * func_00A86F20 clears both. */
+#define UNIT_FLAG_HIT_REACTED 0x100
+#define UNIT_FLAG_HIT_PANELS 0x40000
 
 struct Ov01Object {
     union {
@@ -169,8 +190,8 @@ struct Ov01Object {
     void (*draw)(Ov01Object *object); /* +0x8: func_00A84880 */
     u32 flags; /* +0xC: unitEnCreate ORs in 0x60 for an enemy-side unit, unitCreateSide clears it */
     struct DataLookup commandQueue; /* +0x10: the command queue unitRunCommands walks; its flag word at +0x138 is the wait counter */
-    Ov01Object *partner; /* +0x13C: the object the goal is read from */
-    int partnerKey; /* +0x140 */
+    int commandTarget; /* +0x13C: the command's target unit, kept as a word like CmdListEntry.unit */
+    int commandCode; /* +0x140: the command's code */
     StatBlock *stats; /* +0x144: the battle block (the unit command handlers' motion record is the same block) */
     unsigned char unmodeled_148[0x8];
     Ov01Pose pose; /* +0x150 */

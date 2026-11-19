@@ -13,5 +13,6 @@ struct MonsParams;
 /* Copies the two words of params into the slot actor. */
 int monsSlotCopyParams(struct MonsSlot *slot, struct MonsParams *params);
 void monsSlotReset(void);
+void monsSlotRelease(struct MonsSlot *slot);
 
 #endif /* INCLUDE_OV01_TU019_H */

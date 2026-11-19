@@ -3,6 +3,7 @@
  * file, TU merge 2026-11-17; see JOINED_CUTS in tools/tu/map_infer.py).
  */
 #include "common.h"
+#include "main/tu110.h"
 #include "shared.h"
 #include "ov01/tu023.h"
 #include "ov01/tu042.h"
@@ -33,18 +34,6 @@
 #define STAT_FLAG_PERCENT_GATE 0x800
 #define ACT_STEP_COUNT 4
 #define ACT_STEP_HOLD 3
-
-/* The block ptGetStatusBlock returns; the halfwords at +4 and +6 are the battle mask sources. */
-typedef struct PtStatusBlock PtStatusBlock;
-
-struct PtStatusBlock {
-    unsigned char unmodeled_00[4];
-    unsigned short stat4;                   /* +0x04 */
-    unsigned short stat6;                   /* +0x06 */
-};
-
-
-
 
 
 /*
@@ -82,22 +71,6 @@ struct SlotRecord {
     };                                      /* +0x3E */
 };
 
-
-/*
- * The step counter actStepCounter: step runs 0..3; at step 3 `hold` is a random value of 4 or
- * more. actStepCounterSet draws the multiplier and clears the words from +0xC.
- */
-struct ActStepCounter {
-    int step;                               /* +0x00 */
-    int hold;                               /* +0x04 */
-    int multiplier;                         /* +0x08: 2, 4 or 10; battleResultAdd's rate at phase 2 */
-    union {
-        int cleared0C;                      /* +0x0C: cleared by actStepCounterSet */
-        int levelGranted;                   /* the same word: set once calcAttackDamage has granted the attacker a level */
-    };
-    int bonusFlag;                          /* +0x10: set by calcCritDamage's bonus roll */
-    int stepState;                          /* +0x14: 1 to 3, set by calcHitStateStep and calcHitRowGate */
-};
 
 extern StatBlock battleSlotTable[];
 extern StatBlock battleEntryPoolA[BATTLE_ENTRY_POOL_A_COUNT];
@@ -186,20 +159,15 @@ void battleFlushActiveEntries(void);
 int unitCanAct(StatOwner *unit);
 int unitValueCalc(StatOwner *obj);
 void unitValueReset(StatOwner *obj);
-int battleEffectResolve(StatOwner *command, int index, StatOwner *entity);
 int tgtCmdAccepts(struct AttackCommand *record, StatOwner *value);
 struct BoostGauge *boostGaugeGet(StatOwner *unit);
 int boostGaugeAddProgress(struct BoostGauge *gauge, int amount);
-struct ActStepCounter *actStepCounterGet(void);
 void sdvSpecialBitSet(int index);
 signed char actEntryFlagGet(int index);
 signed char func_00A91B90(int index);
 /* Refreshes the hp and ep of the slots 1 to 15 from their battle blocks, then commits each. */
 void battleSlotsRefresh(void);
 /* Defined in other files. */
-PtStatusBlock *ptGetStatusBlock(void);
-void *func_00A9B2A8(int key);
-int dataBoxDecCategory1(int lookup_key);
 int unitTblGet(int side, StatOwner ***table);
 
 /* ---- old ov01/tu023 ---- */
@@ -256,7 +224,7 @@ int battleMaskWordsStat4(int *words)
     int bit;
     int count;
 
-    mask = ptGetStatusBlock()->stat4;
+    mask = ptGetStatusBlock()->memberMask;
     count = 0;
     for (bit = 0; bit < 16; bit++) {
         if ((mask >> bit) & 1) {
@@ -275,7 +243,7 @@ int battleMaskWordsStat6(int *words)
     int bit;
     int count;
 
-    mask = ptGetStatusBlock()->stat6;
+    mask = ptGetStatusBlock()->presentMask;
     count = 0;
     for (bit = 0; bit < 16; bit++) {
         if ((mask >> bit) & 1) {
@@ -370,7 +338,7 @@ void battleSlotExport(StatBlock *entry, StatBlock *out)
     int markIndex;
 
     *out = *entry;
-    out->inflictBase = ((unsigned char *) func_00A9B2A8(entry->key))[0x17];
+    out->inflictBase = ((unsigned char *) batUnitRecordGet(entry->key))[0x17];
     if ((unsigned short) entry->key - 0xB < 5U) {
         specialSlotKey = 0xC;
         slotRecord = slotRecordByIndex(entry->key);
@@ -497,7 +465,7 @@ void battleSlotsInit(void)
 void battleEntryLoad(StatBlock *entry, int key)
 {
     memset(entry, 0, sizeof(StatBlock));
-    *(StatBlockHead *)entry = *(StatBlockHead *)func_00A9B2A8(key);
+    *(StatBlockHead *)entry = *(StatBlockHead *)batUnitRecordGet(key);
     entry->hp = entry->maxHp;
     entry->ep = entry->maxEp;
     entry->key = key;
@@ -690,7 +658,8 @@ void battleSlotFlagClear(int key, int flag)
     slotFlagClear(unit, flag);
 }
 
-/* battleUnitHasEffectCode: true when the unit in slot `key` has effect code `code` (unitHasEffectCode). func_00A9B1B8 calls it with code 0x3F. */
+/* battleUnitHasEffectCode: true when the unit in slot `key` has effect code `code` (unitHasEffectCode).
+ * unitFileIdGet calls it with code 0x3F. */
 int battleUnitHasEffectCode(int key, int code)
 {
     StatOwner *unit = battleContextBind(key, 0);
@@ -853,7 +822,7 @@ int boostGaugeAddStock(struct BoostGauge *gauge, int amount)
 }
 
 /* Adds amount to the progress of the unit's boost gauge. Same unit note as
- * boostAddStock. Callers: func_00A92C18 and func_00A93D50 (tu033). */
+ * boostAddStock. Callers: func_00A92C18 and attackHitApply (tu033). */
 void boostAddProgress(StatOwner *unit, int amount) {
     boostGaugeAddProgress(boostGaugeGet(unit), amount);
 }
@@ -3649,7 +3618,7 @@ int battleMaskWordsUnmatched(StatOwner *entity, int *out)
 {
     int words[0x14];
     StatOwner **units;
-    PtStatusBlock *block;
+    PartyStatusBlock *block;
     int count;
     int unitCount;
     int i;
@@ -3665,7 +3634,7 @@ int battleMaskWordsUnmatched(StatOwner *entity, int *out)
     count = 0;
     for (i = 0; i < 16; i++) {
         bit = 1 << i;
-        if ((block->stat6 & bit) != 0) {
+        if ((block->presentMask & bit) != 0) {
             words[count] = battleMaskWordTable[i];
             count++;
         }

@@ -4,10 +4,13 @@
 #include "common.h"
 #include "shared.h"
 #include "main/sef.h"
+#include "main/tu124.h"
 #include "ov01/tu001.h"
+#include "ov01/tu008.h"
 #include "ov01/tu017.h"
 #include "ov01/tu033.h"
 #include "ov01/tu035.h"
+#include "ov01/tu036.h"
 #include "ov01/tu023.h"
 #include "ov01/tu040.h"
 #include "ov01/tu042.h"
@@ -29,9 +32,70 @@ int func_00A9B2A0(int value) {
     return value;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B2A8);
+/* bat.dat as dataBatDatLoad (tu008) reads it. The header word at byte BAT_DAT_PARTY_UNITS holds the offset of the
+ * party unit table (units 1..15), the one at BAT_DAT_ENEMY_UNITS that of the enemy unit table (units 16..0x8C);
+ * both have BAT_DAT_UNIT_SIZE-byte records whose first halfword is the offset of the unit's name from the table. */
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9B338);
+#define BAT_DAT_PARTY_UNITS 0x8
+#define BAT_DAT_ENEMY_UNITS 0xC
+#define BAT_DAT_ENEMY_FIRST 16
+#define BAT_DAT_UNIT_LIMIT 0x8D
+#define BAT_DAT_UNIT_SIZE 0x5C
+
+/* The name batUnitNameGet gives unit 0 ("NULL"). */
+extern char *batUnitNullName;
+
+/* Unit record `index` of bat.dat: party units 1..15, enemy units 16..0x8C; for any other index the party record
+ * of the battle state's slotIndex (0 when that is not above 1). `word` first holds the byte offset of the header
+ * word, then the table offset read from it: with a second local the original's single register is lost. */
+void *batUnitRecordGet(int index)
+{
+    unsigned char *table;
+    int word;
+    int record;
+
+    if (index < BAT_DAT_ENEMY_FIRST) {
+        record = index - 1;
+        word = BAT_DAT_PARTY_UNITS;
+    } else if (index >= BAT_DAT_UNIT_LIMIT) {
+        word = BAT_DAT_PARTY_UNITS;
+        record = battleStateGet()->slotIndex - 1;
+        if (record <= 0) {
+            return 0;
+        }
+    } else {
+        record = index - BAT_DAT_ENEMY_FIRST;
+        word = BAT_DAT_ENEMY_UNITS;
+    }
+    word = *(int *)((unsigned char *)&batDat + word);
+    table = (unsigned char *)&batDat + word;
+    return table + record * BAT_DAT_UNIT_SIZE;
+}
+
+/* Name of unit `index` (numbered as for batUnitRecordGet): batUnitNullName for 0, 0 past the tables. `word` is
+ * reused as in batUnitRecordGet. */
+char *batUnitNameGet(int index)
+{
+    unsigned char *table;
+    int word;
+    int record;
+
+    if (index == 0) {
+        return batUnitNullName;
+    }
+    if (index < BAT_DAT_ENEMY_FIRST) {
+        record = index - 1;
+        word = BAT_DAT_PARTY_UNITS;
+    } else if (index >= BAT_DAT_UNIT_LIMIT) {
+        return 0;
+    } else {
+        record = index - BAT_DAT_ENEMY_FIRST;
+        word = BAT_DAT_ENEMY_UNITS;
+    }
+    word = *(int *)((unsigned char *)&batDat + word);
+    table = (unsigned char *)&batDat + word;
+    return (char *)table + *(short *)(table + record * BAT_DAT_UNIT_SIZE);
+}
 
 /*
  * The tables of bat.dat: dataBatDatLoad (tu008) reads the file to batDat (0x0061D040). Its header holds, from
@@ -426,11 +490,13 @@ struct MsgObject {
     void (*draw)(struct MsgObject *object);     /* +0x08: none */
     int ref_count;                              /* +0x0C: frames the message stays (0: until its voice is done) */
     int mode;                                   /* +0x10: MSG_MODE_VOICE when ref_count was 0 */
-    int handle;                                 /* +0x14: the text entry (textEntryAlloc) */
+    TextEntry *handle;                          /* +0x14: the text entry (textEntryAlloc) */
 };
 
 /* MsgObject.mode of a message that stays until its voice is done. */
 #define MSG_MODE_VOICE 1
+/* MsgObject.mode of a message that stays ref_count frames. */
+#define MSG_MODE_TIMED 0
 
 /* The string table: record 1 of the table at stringTableOffset is its offset list; each offset counts from the list. */
 char *tableStringGet(int index, int mode)
@@ -448,7 +514,7 @@ char *tableStringGet(int index, int mode)
 
 /* Message globals: msgPages is the text page list {text, 0} that msgPutObject passes to textEntryAlloc; msgBusy
  * is the busy flag (1 while a message is outstanding). */
-extern char *msgPages[2];
+extern unsigned char *msgPages[2];
 extern int msgBusy;
 
 /* Clears the message request block and the busy flag. */
@@ -457,7 +523,29 @@ void msgReset(void) {
     msgBusy = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", func_00A9BC20);
+/* A script message word (SbMessage.args) carries two values: the second one above this shift. */
+#define SCRIPT_ARG_HIGH_SHIFT 16
+
+/*
+ * Sends event as a kind message to the unit's script (the battle block's spawnArgC): the unit index, and for
+ * UNIT_SCRIPT_KIND_PAIR the second unit's index in the high half and words[0] | words[1] << 16.
+ */
+void unitScriptPairEventSend(int kind, UnitScriptPairEvent *event)
+{
+    SbMessage message;
+
+    message.kind = kind;
+    message.args[0] = unitTblIndexOf(event->unit);
+    if (kind == UNIT_SCRIPT_KIND_PAIR) {
+        message.args[0] |= unitTblIndexOf(event->other) << SCRIPT_ARG_HIGH_SHIFT;
+        /* In two steps: the one-expression form loads the words and allocates the registers differently. */
+        message.args[1] = event->words[0];
+        message.args[1] |= event->words[1] << SCRIPT_ARG_HIGH_SHIFT;
+    }
+    if (event->unit->stats->spawnArgC != 0) {
+        sbThreadEnqueue(ov01ScriptKeyGet(), event->unit->stats->spawnArgC, &message, 0);
+    }
+}
 
 /*
  * Sends event (the unit and three words) as a kind message to the unit's script (the battle block's spawnArgD),
@@ -736,15 +824,35 @@ int tecParaFieldGet(int index, int field)
 
 /* msgPutObject (core of native msgPut): makes a MsgObject from ov01TaskClaim, installs msgObjRelease as its
  * release callback, submits the request block through textEntryAlloc and sets the busy flag. */
-INCLUDE_ASM("asm/nonmatchings/ov01/tu042", msgPutObject);
+void msgObjRelease(struct MsgObject *object);
 
-u8 textEntryPlayVoice(void *entry);
-void objRemove(int handle);
+struct MsgObject *msgPutObject(int x, int y, char *text, int frames, int width, int height)
+{
+    struct MsgObject *object;
+
+    object = ov01TaskClaim();
+    if (object == 0) {
+        return 0;
+    }
+    object->update = msgObjRelease;
+    object->ref_count = frames;
+    object->draw = 0;
+    if (frames == 0) {
+        object->mode = MSG_MODE_VOICE;
+    } else {
+        object->mode = MSG_MODE_TIMED;
+    }
+    msgPages[0] = (unsigned char *)text; /* text entry pages are unsigned char (tu124) */
+    msgPages[1] = 0;
+    object->handle = textEntryAlloc(x, y, width, height, 0, msgPages);
+    msgBusy = 1;
+    return object;
+}
 
 /* Release callback of a MsgObject (stored at +0x4 by msgPutObject). A mode-1 object is freed when
  * textEntryPlayVoice reports its handle done; otherwise the reference count is dropped. The busy flag follows. */
 void msgObjRelease(struct MsgObject *object) {
-    int handle;
+    TextEntry *handle;
     int remaining;
     int remove;
 

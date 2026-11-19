@@ -3,7 +3,10 @@
 
 /* Functions of src/ov01/tu063.c that other files call. */
 
+void func_00AA8430(void *packet);
 void func_00AA8450(void *packet);
+void func_00AA8490(void *packet);
+void func_00AA84F0(void *packet);
 void menuPanelTexState(void *packet);
 void menuStatusIconsTexState(void *packet);
 

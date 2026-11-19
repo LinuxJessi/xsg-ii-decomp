@@ -1,6 +1,7 @@
 #include "common.h"
 #include "shared.h"
 #include "ov01/tu005.h"
+#include "ov01/tu012.h"
 #include "ov01/tu048.h"
 #include "ov01/tu062.h"
 #include "ov01/tu063.h"
@@ -63,11 +64,6 @@ typedef signed char s8;
 
 typedef int s32;
 
-/* Partial layout: only the flags menuNumDrawTarget tests. */
-typedef struct MenuTarget {
-    unsigned char unmodeled_00[0xC];
-    s32 flags;
-} MenuTarget;
 
 s32 objSlotRelease(void *);
 s32 objStdMove(void *);
@@ -143,14 +139,13 @@ void menuPanelStep(MenuState *menu)
   }
 }
 
-s32 menuStatSprite();
 void menuTexFlush(void);
 
 /* Draws the panel while flag is set (proposed menuPanelDraw): a bar from the left
  * edge at y + 10 and a 128 x 20 box at the origin, both inside one grGpInit packet. */
 void menuPanelDraw(MenuState *menu)
 {
-  int packet[4];
+  GrPacket packet;
   int x;
   int y;
 
@@ -158,13 +153,13 @@ void menuPanelDraw(MenuState *menu)
     x = (int) menu->origin[0];
     y = (int) menu->origin[1];
     menuTexFlush();
-    grGpInit(packet);
-    menuPanelTexState(packet);
-    grPutSprOpen(packet);
-    menuStatSprite(packet, 0, y + 0xA, x + 0x8A, 0xA, 0x12F - x, 0x4A);
-    menuStatSprite(packet, x, y, 0x80, 0x14, 0x180, 0x36);
+    grGpInit(&packet);
+    menuPanelTexState(&packet);
+    grPutSprOpen(&packet);
+    menuStatSprite(&packet, 0, y + 0xA, x + 0x8A, 0xA, 0x12F - x, 0x4A);
+    menuStatSprite(&packet, x, y, 0x80, 0x14, 0x180, 0x36);
     grPutSprClose();
-    grPacketSend(packet);
+    grPacketSend(&packet);
   }
 }
 
@@ -240,14 +235,14 @@ INCLUDE_ASM("asm/nonmatchings/ov01/tu062", func_00AA7900);
 s32 menuNumDrawMode();
 
 /* Prints `value` in `digits` decimal digits at style `style`, mode 0 (proposed menuNumDraw). */
-void menuNumDraw(int *packet, s32 x, s32 y, s32 value, s32 digits, s32 style) {
+void menuNumDraw(GrPacket *packet, s32 x, s32 y, s32 value, s32 digits, s32 style) {
     menuNumDrawMode(packet, x, y, value, digits, style, 0);
 }
 
 s32 partyUnitHpLow();
 
 /* Same printer with the glyph mode taken from the target (proposed menuNumDrawTarget). */
-void menuNumDrawTarget(s32 packet, s32 x, s32 y, s32 value, s32 digits, s32 style, MenuTarget *target) {
+void menuNumDrawTarget(GrPacket *packet, s32 x, s32 y, s32 value, s32 digits, s32 style, Ov01Object *target) {
     s32 mode;
 
     mode = 2;
@@ -257,8 +252,9 @@ void menuNumDrawTarget(s32 packet, s32 x, s32 y, s32 value, s32 digits, s32 styl
     menuNumDrawMode(packet, x, y, value, digits, style, mode);
 }
 
-/* Identical to menuNumDraw (kept as a separate function; no caller evidence separates them). */
-void func_00AA7A48(s32 packet, s32 x, s32 y, s32 value, s32 digits, s32 style) {
+/* Identical to menuNumDraw (kept as a separate function; no caller evidence separates them). target is unused;
+ * menuStatRecordDraw passes the unit as it does to menuNumDrawTarget. */
+void func_00AA7A48(GrPacket *packet, s32 x, s32 y, s32 value, s32 digits, s32 style, Ov01Object *target) {
     menuNumDrawMode(packet, x, y, value, digits, style, 0);
 }
 

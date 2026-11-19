@@ -12,10 +12,13 @@
 #include "main/pad.h"
 #include "main/sef.h"
 #include "main/xgl_font.h"
+#include "ov01/tu002.h"
 #include "ov01/tu008.h"
 #include "ov01/tu009.h"
+#include "ov01/tu010.h"
 #include "ov01/tu012.h"
 #include "ov01/tu017.h"
+#include "ov01/tu019.h"
 #include "ov01/tu022.h"
 #include "ov01/tu023.h"
 #include "ov01/tu036.h"
@@ -47,13 +50,11 @@ int VPadSet(SbThread *call)
 
 #include "shared.h"
 
-int msgPutObject(int, int, int, int, int, int);
-
 int msgPut(SbThread *call)
 {
     int index;
     int slot;
-    int key;
+    char *text;
     int posX;
     int posY;
     int size;
@@ -78,10 +79,10 @@ int msgPut(SbThread *call)
     if (sizeIsGiven) {
         size = vmArgGet(call, 6);
     }
-    key = vmKeyedEntryGet(call, vmArgGet(call, 3));
+    text = (char *)vmKeyedEntryGet(call, vmArgGet(call, 3));
     index = vmArgGet(call, 1);
     slot = vmArgGet(call, 2);
-    msgPutObject(index, slot, key, posX, posY, size);
+    msgPutObject(index, slot, text, posX, posY, size);
     return 1;
 }
 
@@ -96,10 +97,14 @@ int msgPutWait(int unused, int *waiting)
 }
 
 void sefSetOverrideVectors(void *, void *);
-void unitBodySetPosDir(Vector4 *pos, Vector4 *dir);
-void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir);
-extern Vector4 runtimePos;
-extern Vector4 runtimeDir;
+void unitBodySetPosDir(DoublewordVector4 *pos, DoublewordVector4 *dir);
+void unitTblBodySetPosDir(DoublewordVector4 *pos, DoublewordVector4 *dir);
+/* The runtime position and direction; tu010 copies them whole into every battle actor's runtimeVecA/B. */
+extern DoublewordVector4 runtimePos;
+extern DoublewordVector4 runtimeDir;
+
+/* Script values in hundredths. */
+#define VM_FIXED_SCALE 100.0f
 
 /* Script command: fills the runtime position and direction vectors from arguments 2 to 8, then copies them to units as flags ask. */
 int runtimeSetFog(SbThread *call)
@@ -111,13 +116,13 @@ int runtimeSetFog(SbThread *call)
         return 0;
     }
     flags = vmArgGet(call, 1);
-    runtimePos.x = (float) vmArgGet(call, 2) / 100.0f;
-    runtimePos.y = (float) vmArgGet(call, 3) / 100.0f;
-    runtimePos.z = (float) vmArgGet(call, 4) / 100.0f;
-    runtimePos.w = (float) vmArgGet(call, 5) / 100.0f;
-    runtimeDir.x = (float) vmArgGet(call, 6);
-    runtimeDir.y = (float) vmArgGet(call, 7);
-    runtimeDir.z = (float) vmArgGet(call, 8);
+    runtimePos.vector.x = (float) vmArgGet(call, 2) / VM_FIXED_SCALE;
+    runtimePos.vector.y = (float) vmArgGet(call, 3) / VM_FIXED_SCALE;
+    runtimePos.vector.z = (float) vmArgGet(call, 4) / VM_FIXED_SCALE;
+    runtimePos.vector.w = (float) vmArgGet(call, 5) / VM_FIXED_SCALE;
+    runtimeDir.vector.x = (float) vmArgGet(call, 6);
+    runtimeDir.vector.y = (float) vmArgGet(call, 7);
+    runtimeDir.vector.z = (float) vmArgGet(call, 8);
     sefSetOverrideVectors(&runtimePos, &runtimeDir);
     if (flags & 1) {
         unitBodySetPosDir(&runtimePos, &runtimeDir);
@@ -128,12 +133,29 @@ int runtimeSetFog(SbThread *call)
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", unitBodySetPosDir);
+/* Copies pos and dir into the runtime vectors of the first active monster slot's actor and sets its
+ * ACTOR_STATE_UNBOUND bit. The reads through the union keep the pos loads after the flag store. */
+void unitBodySetPosDir(DoublewordVector4 *pos, DoublewordVector4 *dir)
+{
+    struct MonsSlot **slots;
+    struct XenoActor *actor;
+
+    monsActiveSlotsGet(&slots);
+    actor = slots[0]->actor;
+    actor->drawFlags |= ACTOR_STATE_UNBOUND;
+    actor->runtimeVecA.vector.x = pos->vector.x;
+    actor->runtimeVecA.vector.y = pos->vector.y;
+    actor->runtimeVecA.vector.z = pos->vector.z;
+    actor->runtimeVecA.vector.w = pos->vector.w;
+    actor->runtimeVecB.vector.x = dir->vector.x;
+    actor->runtimeVecB.vector.y = dir->vector.y;
+    actor->runtimeVecB.vector.z = dir->vector.z;
+}
 
 int unitTblGet(int side, Ov01Object ***table);
 
 /* Copies pos and dir into the runtime vectors of the actor of every unit that unitTblGet(2) returns. */
-void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir)
+void unitTblBodySetPosDir(DoublewordVector4 *pos, DoublewordVector4 *dir)
 {
     Ov01Object **units;
     Ov01Object *unit;
@@ -146,19 +168,19 @@ void unitTblBodySetPosDir(Vector4 *pos, Vector4 *dir)
         unit = units[i];
         if (unit != 0) {
             actor = unit->unit;
-            actor->runtimeVecA.vector.x = pos->x;
-            actor->runtimeVecA.vector.y = pos->y;
-            actor->runtimeVecA.vector.z = pos->z;
-            actor->runtimeVecA.vector.w = pos->w;
-            actor->runtimeVecB.vector.x = dir->x;
-            actor->runtimeVecB.vector.y = dir->y;
-            actor->runtimeVecB.vector.z = dir->z;
+            actor->runtimeVecA.vector.x = pos->vector.x;
+            actor->runtimeVecA.vector.y = pos->vector.y;
+            actor->runtimeVecA.vector.z = pos->vector.z;
+            actor->runtimeVecA.vector.w = pos->vector.w;
+            actor->runtimeVecB.vector.x = dir->vector.x;
+            actor->runtimeVecB.vector.y = dir->vector.y;
+            actor->runtimeVecB.vector.z = dir->vector.z;
         }
     }
 }
 
 /* Hands out the addresses of the runtime position and direction vectors through its out-pointers. */
-void runtimeVecPtrGet(void **pos, void **dir)
+void runtimeVecPtrGet(DoublewordVector4 **pos, DoublewordVector4 **dir)
 {
     *pos = &runtimePos;
     *dir = &runtimeDir;
@@ -219,7 +241,50 @@ void unitTblBodySetLight(LightBlocks *light)
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/ov01/tu047", pari);
+/*
+ * Native pari(unit, count, state, velocity, value [, angle [, value3]]): sets the move parameters of the unit's
+ * actor: moveVelocity, shadowValue (default 1), moveAngle (default 0) and shadowValue3 (default 1) from
+ * hundredths, shadowCount and moveState as given. Jumps to SB_JUMP_ARGUMENTS with fewer than four arguments.
+ */
+int pari(SbThread *thread)
+{
+    struct XenoActor *actor;
+    float velocity;
+    float value;
+    float angle;
+    float value3;
+
+    if (VM_PLUGIN_CNT_GET(thread) < 4) {
+        sbSlotJumpRequest(thread, SB_JUMP_ARGUMENTS);
+        return 0;
+    }
+    actor = unitTblEntryGet(vmArgGet(thread, 1))->unit;
+    velocity = vmArgGet(thread, 4) / VM_FIXED_SCALE;
+    /* if/else (not a default before a plain if): the scale constant is then shared by the first two
+     * divisions only, as in the original. */
+    if (vmArgTagIsZero(thread, 5)) {
+        value = 1.0f;
+    } else {
+        value = vmArgGet(thread, 5) / VM_FIXED_SCALE;
+    }
+    if (vmArgTagIsZero(thread, 6)) {
+        angle = 0.0f;
+    } else {
+        angle = vmArgGet(thread, 6) / VM_FIXED_SCALE;
+    }
+    if (vmArgTagIsZero(thread, 7)) {
+        value3 = 1.0f;
+    } else {
+        value3 = vmArgGet(thread, 7) / VM_FIXED_SCALE;
+    }
+    actor->moveAngle = angle;
+    actor->shadowValue = value;
+    actor->moveVelocity = velocity;
+    actor->shadowCount = vmArgGet(thread, 2);
+    actor->shadowValue3 = value3;
+    actor->moveState = vmArgGet(thread, 3);
+    return 1;
+}
 
 int partyDataGetSlot(int, int);
 
@@ -860,8 +925,8 @@ void runtimeInitState(void)
     D_00AE0C30 = 0;
     bgmIndex = 0;
     memset(&lightBlock, 0, sizeof(LightBlocks));
-    memset(&runtimePos, 0, sizeof(Vector4));
-    memset(&runtimeDir, 0, sizeof(Vector4));
+    memset(&runtimePos, 0, sizeof(DoublewordVector4));
+    memset(&runtimeDir, 0, sizeof(DoublewordVector4));
 }
 
 void runtimeInitState(void);
